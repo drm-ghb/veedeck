@@ -7,8 +7,8 @@ import RenderViewer from "@/components/render/RenderViewer";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { getRoomIcon } from "@/lib/roomIcons";
-import { SettingsButton } from "@/components/dashboard/SettingsButton";
-import { ChevronLeft, MessageSquare, UserRound } from "lucide-react";
+import { ChevronLeft, MessageSquare, UserRound, Sun, Moon, Monitor } from "lucide-react";
+import { useTheme, type Theme } from "@/lib/theme";
 import { pusherClient } from "@/lib/pusher";
 import { toast } from "sonner";
 
@@ -285,13 +285,12 @@ export default function SharePage() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setView("settings")}
-              title="Ustawienia profilu"
+              title="Ustawienia"
               className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
             >
               <UserRound size={15} />
               <span className="hidden sm:inline">{authorName}</span>
             </button>
-            <SettingsButton />
           </div>
         </div>
       </nav>
@@ -400,6 +399,12 @@ export default function SharePage() {
   );
 }
 
+const THEME_OPTIONS: { value: Theme; label: string; Icon: React.ElementType }[] = [
+  { value: "light",  label: "Jasny",     Icon: Sun },
+  { value: "dark",   label: "Ciemny",    Icon: Moon },
+  { value: "system", label: "Systemowy", Icon: Monitor },
+];
+
 function ClientSettingsView({
   authorName,
   onSave,
@@ -410,6 +415,7 @@ function ClientSettingsView({
   onBack: () => void;
 }) {
   const [nameInput, setNameInput] = useState(authorName);
+  const { theme, setTheme } = useTheme();
 
   function handleSave() {
     if (!nameInput.trim()) return;
@@ -426,9 +432,9 @@ function ClientSettingsView({
           <ChevronLeft size={15} /> Wróć
         </button>
         <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Ustawienia</h2>
-        <p className="text-sm text-gray-500 mt-1">Zarządzaj swoją tożsamością w tym projekcie</p>
       </div>
 
+      {/* Tożsamość */}
       <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
         <div className="flex items-center gap-2">
           <UserRound size={18} className="text-gray-400" />
@@ -454,6 +460,27 @@ function ClientSettingsView({
         >
           Zapisz
         </Button>
+      </div>
+
+      {/* Motyw */}
+      <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
+        <h3 className="font-semibold text-gray-800 dark:text-gray-200">Motyw interfejsu</h3>
+        <div className="flex gap-2">
+          {THEME_OPTIONS.map(({ value, label, Icon }) => (
+            <button
+              key={value}
+              onClick={() => setTheme(value)}
+              className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm border transition-colors ${
+                theme === value
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "border-border text-foreground hover:bg-muted"
+              }`}
+            >
+              <Icon size={15} />
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );

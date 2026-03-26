@@ -4,7 +4,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { LayoutGrid, Settings } from "lucide-react";
 import { SignOutButton } from "@/components/dashboard/SignOutButton";
-import { SettingsButton } from "@/components/dashboard/SettingsButton";
 import NotificationBell from "@/components/dashboard/NotificationBell";
 
 export default async function DashboardLayout({
@@ -29,15 +28,17 @@ export default async function DashboardLayout({
               <LayoutGrid size={16} />
               Projekty
             </Link>
-            <Link href="/settings" className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-900 transition-colors">
-              <Settings size={16} />
-              Ustawienia
-            </Link>
             <NotificationBell userId={session.user.id!} />
           </div>
           <div className="flex items-center gap-4">
             <span className="text-sm text-gray-500">{session.user.name || session.user.email}</span>
-            <SettingsButton />
+            <Link
+              href="/settings"
+              title="Ustawienia"
+              className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-muted"
+            >
+              <Settings size={18} />
+            </Link>
             <SignOutButton />
           </div>
         </div>
