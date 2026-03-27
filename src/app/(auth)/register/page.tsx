@@ -51,7 +51,7 @@ export default function RegisterPage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-1.5">
-              <Label htmlFor="name">Imię i nazwisko</Label>
+              <Label htmlFor="name">Nazwa</Label>
               <Input
                 id="name"
                 value={name}
