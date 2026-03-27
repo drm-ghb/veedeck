@@ -7,9 +7,10 @@ import { pusherClient } from "@/lib/pusher";
 
 interface NotificationBellProps {
   userId: string;
+  iconOnly?: boolean;
 }
 
-export default function NotificationBell({ userId }: NotificationBellProps) {
+export default function NotificationBell({ userId, iconOnly }: NotificationBellProps) {
   const [unread, setUnread] = useState(0);
 
   const refetch = useCallback(() => {
@@ -45,7 +46,7 @@ export default function NotificationBell({ userId }: NotificationBellProps) {
       className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-900 transition-colors relative"
     >
       <Bell size={16} />
-      Powiadomienia
+      {!iconOnly && "Powiadomienia"}
       {unread > 0 && (
         <span className="absolute -top-1.5 -right-3 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center leading-none">
           {unread > 9 ? "9+" : unread}
