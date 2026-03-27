@@ -925,6 +925,9 @@ export default function RenderViewer({
                           {STATUS_LABEL[c.status]}
                         </span>
                       </div>
+                      {c.content && (
+                        <p className="text-xs text-gray-700 dark:text-gray-300 mt-1 line-clamp-2">{c.content}</p>
+                      )}
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                         {c.author} · {formatDate(c.createdAt)}
                         {totalReplies > 0 && (
