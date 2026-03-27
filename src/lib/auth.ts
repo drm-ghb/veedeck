@@ -3,6 +3,7 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "./prisma";
+import { logActivity } from "./activity-log";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
@@ -20,18 +21,27 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
 
+        const email = credentials.email as string;
+
         const user = await prisma.user.findUnique({
-          where: { email: credentials.email as string },
+          where: { email },
         });
 
-        if (!user || !user.password) return null;
+        if (!user || !user.password) {
+          await prisma.loginLog.create({ data: { email, success: false } });
+          await logActivity({ level: "warn", action: "LOGIN_FAILED", message: `Nieudane logowanie: ${email} (użytkownik nie istnieje)` });
+          return null;
+        }
 
-        const isValid = await bcrypt.compare(
-          credentials.password as string,
-          user.password
-        );
+        const isValid = await bcrypt.compare(credentials.password as string, user.password);
 
-        if (!isValid) return null;
+        if (!isValid) {
+          await prisma.loginLog.create({ data: { email, userId: user.id, success: false } });
+          await logActivity({ level: "warn", action: "LOGIN_FAILED", message: `Nieudane logowanie: ${email} (złe hasło)`, userId: user.id });
+          return null;
+        }
+
+        await prisma.loginLog.create({ data: { email, userId: user.id, success: true } });
 
         return { id: user.id, email: user.email, name: user.name, isAdmin: user.isAdmin };
       },

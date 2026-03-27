@@ -210,6 +210,24 @@ model Notification {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+model LoginLog {
+  id        String   @id @default(cuid())
+  email     String
+  userId    String?
+  success   Boolean
+  createdAt DateTime @default(now())
+}
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  level     String
+  action    String
+  message   String
+  userId    String?
+  meta      String?
+  createdAt DateTime @default(now())
+}
+
 model StatusChangeRequest {
   id         String   @id @default(cuid())
   renderId   String
