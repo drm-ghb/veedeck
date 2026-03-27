@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { ChevronLeft, Eye, EyeOff, Pin, List, X, Send, ZoomIn, ZoomOut, History, Upload, Maximize2, RotateCcw, Lock, LockOpen, SplitSquareHorizontal, ChevronsLeftRight } from "lucide-react";
+import RenderUploader from "./RenderUploader";
 import { useUploadThing } from "@/lib/uploadthing-client";
 
 type CommentStatus = "NEW" | "IN_PROGRESS" | "DONE";
@@ -599,12 +600,15 @@ export default function RenderViewer({
       {/* Content */}
       <div className="flex flex-1 min-h-0">
         {/* Thumbnails sidebar */}
-        {roomRenders.length > 1 && (
+        {isDesigner && (
           <div className="w-44 border-r bg-card flex flex-col flex-shrink-0 overflow-hidden">
-            <div className="px-3 py-2.5 border-b flex-shrink-0">
+            <div className="px-3 py-2.5 border-b flex-shrink-0 flex items-center justify-between gap-2">
               <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                 Pliki ({roomRenders.length})
               </p>
+              {projectId && roomId && (
+                <RenderUploader projectId={projectId} roomId={roomId} compact />
+              )}
             </div>
             <div className="flex-1 overflow-y-auto p-2 space-y-1.5">
               {roomRenders.map((r) => (

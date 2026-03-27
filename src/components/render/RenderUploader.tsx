@@ -19,9 +19,10 @@ import { Button } from "@/components/ui/button";
 interface RenderUploaderProps {
   projectId: string;
   roomId?: string;
+  compact?: boolean;
 }
 
-export default function RenderUploader({ projectId, roomId }: RenderUploaderProps) {
+export default function RenderUploader({ projectId, roomId, compact }: RenderUploaderProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
@@ -35,8 +36,8 @@ export default function RenderUploader({ projectId, roomId }: RenderUploaderProp
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger render={<Button />}>
-        + Dodaj plik
+      <DialogTrigger render={<Button size={compact ? "icon-sm" : "default"} variant={compact ? "ghost" : "default"} title="Dodaj plik" />}>
+        {compact ? "+" : "+ Dodaj plik"}
       </DialogTrigger>
 
       <DialogContent className="sm:max-w-sm">
