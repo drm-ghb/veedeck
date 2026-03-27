@@ -1,1 +1,1 @@
-(function(){try{var t=localStorage.getItem('renderflow-theme');var d=t==='dark'||(t!=='light'&&window.matchMedia('(prefers-color-scheme: dark)').matches);if(d)document.documentElement.classList.add('dark');}catch(e){}})();
+(function(){try{var t=localStorage.getItem('renderflow-theme');if(t==='dark')document.documentElement.classList.add('dark');}catch(e){}})();
