@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { ChevronLeft, Eye, EyeOff, MapPin, List, X, Send, ZoomIn, ZoomOut, History, Upload, Maximize2, RotateCcw, Lock, LockOpen, SplitSquareHorizontal, ChevronsLeftRight } from "lucide-react";
+import { ChevronLeft, Eye, EyeOff, Pin, List, X, Send, ZoomIn, ZoomOut, History, Upload, Maximize2, RotateCcw, Lock, LockOpen, SplitSquareHorizontal, ChevronsLeftRight } from "lucide-react";
 import { useUploadThing } from "@/lib/uploadthing-client";
 
 type CommentStatus = "NEW" | "IN_PROGRESS" | "DONE";
@@ -569,7 +569,7 @@ export default function RenderViewer({
                   : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted"
               }`}
             >
-              <MapPin size={14} /> Dodaj pin
+              <Pin size={14} /> Dodaj pin
             </button>
           )}
           <button
@@ -974,7 +974,7 @@ export default function RenderViewer({
                   }}
                   className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md font-medium transition-colors bg-white text-black hover:bg-white/90"
                 >
-                  <MapPin size={14} /> {mode === "pin" ? "Anuluj" : "Dodaj pin"}
+                  <Pin size={14} /> {mode === "pin" ? "Anuluj" : "Dodaj pin"}
                 </button>
               )}
               <button

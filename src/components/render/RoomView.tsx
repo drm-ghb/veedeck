@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArchiveRestore, Eye, LayoutGrid, List, MapPin, Trash2 } from "lucide-react";
+import { ArchiveRestore, Eye, LayoutGrid, List, Pin, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -143,7 +143,7 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders }
                         </span>
                         {render.commentCount > 0 && (
                           <span className="text-xs text-muted-foreground flex items-center gap-1">
-                            <MapPin size={11} />
+                            <Pin size={11} />
                             {render.commentCount}
                           </span>
                         )}
@@ -183,7 +183,7 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders }
                     <div className="flex items-center gap-2">
                       {render.commentCount > 0 && (
                         <span className="text-xs text-muted-foreground flex items-center gap-1">
-                          <MapPin size={10} />
+                          <Pin size={10} />
                           {render.commentCount}
                         </span>
                       )}
