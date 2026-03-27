@@ -36,8 +36,8 @@ export default function RenderUploader({ projectId, roomId, compact }: RenderUpl
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger render={<Button size={compact ? "icon-sm" : "default"} variant={compact ? "ghost" : "default"} title="Dodaj plik" />}>
-        {compact ? "+" : "+ Dodaj plik"}
+      <DialogTrigger render={<Button size={compact ? "icon-sm" : "default"} variant="default" className={compact ? "bg-gray-900 hover:bg-gray-700 dark:bg-white dark:hover:bg-gray-200 text-white dark:text-gray-900 h-6 w-6 rounded-md p-0 flex-shrink-0" : ""} title="Dodaj plik" />}>
+        {compact ? <span className="text-base leading-none">+</span> : "+ Dodaj plik"}
       </DialogTrigger>
 
       <DialogContent className="sm:max-w-sm">
