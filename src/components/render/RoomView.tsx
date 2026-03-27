@@ -146,7 +146,7 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders }
                         </span>
                       </div>
                       <div
-                        className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+                        className="flex-shrink-0"
                         onClick={(e) => e.preventDefault()}
                       >
                         <RenderMenu render={{ id: render.id, name: render.name }} />
