@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { ChevronLeft, ChevronRight, Eye, EyeOff, Pin, List, X, Send, ZoomIn, ZoomOut, History, Upload, Maximize2, RotateCcw, Lock, LockOpen, SplitSquareHorizontal, ChevronsLeftRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronDown, Eye, EyeOff, Pin, List, X, Send, ZoomIn, ZoomOut, History, Upload, Maximize2, RotateCcw, Lock, LockOpen, SplitSquareHorizontal, ChevronsLeftRight } from "lucide-react";
 import RenderUploader from "./RenderUploader";
 import { useUploadThing } from "@/lib/uploadthing-client";
 
@@ -715,14 +715,17 @@ export default function RenderViewer({
           <div className="flex items-center gap-1 px-2 py-1.5 w-max">
             {/* Status */}
             {isDesigner ? (
-              <select
-                value={renderStatus}
-                onChange={(e) => updateRenderStatus(e.target.value as RenderStatus)}
-                className={`text-xs pl-2.5 pr-6 py-1.5 rounded-md border font-medium cursor-pointer flex-shrink-0 ${renderStatus === "ACCEPTED" ? "bg-green-500 text-white border-green-600" : "bg-blue-500 text-white border-blue-600"}`}
-              >
-                <option value="REVIEW" className="bg-white text-gray-900">Do weryfikacji</option>
-                <option value="ACCEPTED" className="bg-white text-gray-900">Zaakceptowany</option>
-              </select>
+              <div className="relative flex-shrink-0">
+                <select
+                  value={renderStatus}
+                  onChange={(e) => updateRenderStatus(e.target.value as RenderStatus)}
+                  className={`appearance-none text-xs pl-2.5 pr-7 py-1.5 rounded-md border font-medium cursor-pointer ${renderStatus === "ACCEPTED" ? "bg-green-500 text-white border-green-600" : "bg-blue-500 text-white border-blue-600"}`}
+                >
+                  <option value="REVIEW" className="bg-white text-gray-900">Do weryfikacji</option>
+                  <option value="ACCEPTED" className="bg-white text-gray-900">Zaakceptowany</option>
+                </select>
+                <ChevronDown size={12} className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-white" />
+              </div>
             ) : renderStatus === "ACCEPTED" ? (
               <div className="flex items-center gap-1.5 flex-shrink-0">
                 <span className="text-xs font-semibold px-2 py-1.5 rounded-md bg-green-100 text-green-700">Zaakceptowany</span>
