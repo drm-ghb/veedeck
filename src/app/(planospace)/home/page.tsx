@@ -6,7 +6,6 @@ interface Module {
   name: string;
   description: string;
   href: string;
-  icon: string;
   iconDark: string;
   color: string;
 }
@@ -17,7 +16,6 @@ const modules: Module[] = [
     name: "RenderFlow",
     description: "Zarządzanie renderami i feedbackiem",
     href: "/dashboard",
-    icon: "/logo.svg",
     iconDark: "/logo-dark.svg",
     color: "#19213D",
   },
@@ -42,18 +40,10 @@ export default function HomePage() {
               style={{ backgroundColor: mod.color }}
             >
               <Image
-                src={mod.icon}
-                alt={mod.name}
-                width={36}
-                height={36}
-                className="block dark:hidden"
-              />
-              <Image
                 src={mod.iconDark}
                 alt={mod.name}
                 width={36}
                 height={36}
-                className="hidden dark:block"
               />
             </div>
             <div className="text-center">
