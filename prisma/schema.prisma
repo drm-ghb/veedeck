@@ -101,6 +101,7 @@ model Room {
 
   project Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   renders Render[]
+  folders Folder[]
 }
 
 enum RoomType {
@@ -110,6 +111,17 @@ enum RoomType {
   KUCHNIA
   SYPIALNIA
   INNE
+}
+
+model Folder {
+  id        String   @id @default(cuid())
+  name      String
+  roomId    String
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  room    Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  renders Render[]
 }
 
 model Render {
@@ -124,9 +136,11 @@ model Render {
   createdAt DateTime     @default(now())
   projectId String
   roomId    String?
+  folderId  String?
 
   project  Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
   room     Room?           @relation(fields: [roomId], references: [id], onDelete: SetNull)
+  folder   Folder?         @relation(fields: [folderId], references: [id], onDelete: SetNull)
   comments Comment[]
   versions RenderVersion[]
   versionRestoreRequests VersionRestoreRequest[]

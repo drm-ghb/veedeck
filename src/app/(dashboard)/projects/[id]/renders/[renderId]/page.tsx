@@ -20,6 +20,7 @@ export default async function RenderPage({ params }: Props) {
       },
       project: true,
       room: { select: { name: true } },
+      folder: { select: { name: true } },
       versions: { orderBy: { archivedAt: "desc" } },
     },
   });
@@ -28,7 +29,11 @@ export default async function RenderPage({ params }: Props) {
 
   const roomRenders = render.roomId
     ? await prisma.render.findMany({
-        where: { roomId: render.roomId, archived: false },
+        where: {
+          roomId: render.roomId,
+          folderId: render.folderId ?? null,
+          archived: false,
+        },
         orderBy: { order: "asc" },
         select: { id: true, name: true, fileUrl: true },
       })
@@ -43,6 +48,8 @@ export default async function RenderPage({ params }: Props) {
         projectTitle={render.project.title}
         roomId={render.roomId ?? undefined}
         roomName={render.room?.name ?? undefined}
+        folderId={render.folderId ?? undefined}
+        folderName={render.folder?.name ?? undefined}
         initialRenderStatus={render.status}
         imageUrl={render.fileUrl}
         initialComments={render.comments.map((c) => ({

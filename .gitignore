@@ -44,3 +44,5 @@ next-env.d.ts
 
 # Claude Code local settings
 .claude/
+
+.vercel

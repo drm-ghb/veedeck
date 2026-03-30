@@ -1,8 +1,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
-import Link from "next/link";
-import { ChevronLeft } from "lucide-react";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 import ProjectView from "@/components/dashboard/ProjectView";
 import ShareDialog from "@/components/dashboard/ShareDialog";
 import AddRoomDialog from "@/components/dashboard/AddRoomDialog";
@@ -38,11 +37,9 @@ export default async function ProjectPage({ params }: Props) {
 
   return (
     <div>
-      <div className="mb-2">
-        <Link href="/dashboard" className="text-sm text-gray-400 hover:text-gray-600 flex items-center gap-0.5 w-fit">
-          <ChevronLeft size={14} /> Projekty
-        </Link>
-      </div>
+      <Breadcrumb backHref="/dashboard" items={[
+        { label: project.title },
+      ]} />
 
       <div className="flex items-start justify-between mb-8">
         <div>

@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { projectId, name, fileUrl, fileKey, roomId } = await req.json();
+  const { projectId, name, fileUrl, fileKey, roomId, folderId } = await req.json();
 
   const project = await prisma.project.findFirst({
     where: { id: projectId, userId: session.user.id },
@@ -66,6 +66,7 @@ export async function POST(req: NextRequest) {
       fileKey,
       order: count,
       roomId: roomId || null,
+      folderId: folderId || null,
       status: project.user.defaultRenderStatus,
     },
   });

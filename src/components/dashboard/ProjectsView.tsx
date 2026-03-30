@@ -31,6 +31,7 @@ export default function ProjectsView({ projects, archivedProjects }: ProjectsVie
   const [tab, setTab] = useState<"active" | "archived">("active");
   const [view, setView] = useState<"grid" | "list">("grid");
   const [search, setSearch] = useState("");
+  const [sort, setSort] = useState<"newest" | "oldest" | "az" | "za" | "renders">("newest");
   const router = useRouter();
 
   useEffect(() => {
@@ -43,14 +44,24 @@ export default function ProjectsView({ projects, archivedProjects }: ProjectsVie
     localStorage.setItem("dashboard-view", v);
   }
 
-  const filtered = (tab === "active" ? projects : archivedProjects).filter((p) => {
-    const q = search.toLowerCase();
-    return (
-      p.title.toLowerCase().includes(q) ||
-      (p.clientName?.toLowerCase().includes(q) ?? false) ||
-      (p.description?.toLowerCase().includes(q) ?? false)
-    );
-  });
+  const filtered = (tab === "active" ? projects : archivedProjects)
+    .filter((p) => {
+      const q = search.toLowerCase();
+      return (
+        p.title.toLowerCase().includes(q) ||
+        (p.clientName?.toLowerCase().includes(q) ?? false) ||
+        (p.description?.toLowerCase().includes(q) ?? false)
+      );
+    })
+    .sort((a, b) => {
+      switch (sort) {
+        case "oldest": return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+        case "az": return a.title.localeCompare(b.title, "pl");
+        case "za": return b.title.localeCompare(a.title, "pl");
+        case "renders": return b.renderCount - a.renderCount;
+        default: return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      }
+    });
 
   async function handleRestore(id: string) {
     const res = await fetch(`/api/projects/${id}`, {
@@ -125,20 +136,35 @@ export default function ProjectsView({ projects, archivedProjects }: ProjectsVie
             )}
           </button>
         </div>
-        {tab === "active" && projects.length > 0 && (
-          <div className="flex items-center gap-0.5 bg-gray-100 rounded-md p-0.5 mb-1">
-            <button
-              onClick={() => toggleView("grid")}
-              className={`p-1.5 rounded transition-colors ${view === "grid" ? "bg-white shadow-sm text-gray-900" : "text-gray-400 hover:text-gray-600"}`}
+        {projects.length > 0 && (
+          <div className="flex items-center gap-2 mb-1">
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value as typeof sort)}
+              className="text-xs border border-gray-200 rounded-md px-2 py-1.5 bg-white text-gray-600 focus:outline-none focus:ring-1 focus:ring-gray-300"
             >
-              <LayoutGrid size={15} />
-            </button>
-            <button
-              onClick={() => toggleView("list")}
-              className={`p-1.5 rounded transition-colors ${view === "list" ? "bg-white shadow-sm text-gray-900" : "text-gray-400 hover:text-gray-600"}`}
-            >
-              <List size={15} />
-            </button>
+              <option value="newest">Najnowsze</option>
+              <option value="oldest">Najstarsze</option>
+              <option value="az">A–Z</option>
+              <option value="za">Z–A</option>
+              <option value="renders">Najwięcej renderów</option>
+            </select>
+            {tab === "active" && (
+              <div className="flex items-center gap-0.5 bg-gray-100 rounded-md p-0.5">
+                <button
+                  onClick={() => toggleView("grid")}
+                  className={`p-1.5 rounded transition-colors ${view === "grid" ? "bg-white shadow-sm text-gray-900" : "text-gray-400 hover:text-gray-600"}`}
+                >
+                  <LayoutGrid size={15} />
+                </button>
+                <button
+                  onClick={() => toggleView("list")}
+                  className={`p-1.5 rounded transition-colors ${view === "list" ? "bg-white shadow-sm text-gray-900" : "text-gray-400 hover:text-gray-600"}`}
+                >
+                  <List size={15} />
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>

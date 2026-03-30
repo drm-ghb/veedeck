@@ -1,10 +1,10 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
-import Link from "next/link";
-import { ChevronLeft } from "lucide-react";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 import RoomView from "@/components/render/RoomView";
 import RenderUploader from "@/components/render/RenderUploader";
+import AddFolderDialog from "@/components/render/AddFolderDialog";
 
 interface Props {
   params: Promise<{ id: string; roomId: string }>;
@@ -21,7 +21,7 @@ export default async function RoomPage({ params }: Props) {
 
   if (!room || room.project.userId !== session!.user!.id!) notFound();
 
-  const [renders, archivedRenders] = await Promise.all([
+  const [renders, archivedRenders, folders] = await Promise.all([
     prisma.render.findMany({
       where: { roomId, archived: false },
       include: { _count: { select: { comments: true } } },
@@ -32,22 +32,28 @@ export default async function RoomPage({ params }: Props) {
       include: { _count: { select: { comments: true } } },
       orderBy: { order: "asc" },
     }),
+    prisma.folder.findMany({
+      where: { roomId },
+      orderBy: { order: "asc" },
+    }),
   ]);
 
   return (
     <div>
-      <div className="mb-2">
-        <Link href={`/projects/${id}`} className="text-sm text-gray-400 hover:text-gray-600 flex items-center gap-0.5 w-fit">
-          <ChevronLeft size={14} /> {room.project.title}
-        </Link>
-      </div>
+      <Breadcrumb items={[
+        { label: room.project.title, href: `/projects/${id}` },
+        { label: room.name },
+      ]} />
 
       <div className="flex items-start justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold">{room.name}</h1>
           <p className="text-sm text-gray-400 mt-0.5">{renders.length} {renders.length === 1 ? "render" : "renderów"}</p>
         </div>
-        <RenderUploader projectId={id} roomId={roomId} />
+        <div className="flex items-center gap-2">
+          <AddFolderDialog roomId={roomId} />
+          <RenderUploader projectId={id} roomId={roomId} folders={folders} />
+        </div>
       </div>
 
       <RoomView
@@ -60,6 +66,7 @@ export default async function RoomPage({ params }: Props) {
           commentCount: r._count.comments,
           viewCount: r.viewCount,
           status: r.status,
+          folderId: r.folderId ?? null,
         }))}
         archivedRenders={archivedRenders.map((r) => ({
           id: r.id,
@@ -68,6 +75,12 @@ export default async function RoomPage({ params }: Props) {
           commentCount: r._count.comments,
           viewCount: r.viewCount,
           status: r.status,
+          folderId: r.folderId ?? null,
+        }))}
+        folders={folders.map((f) => ({
+          id: f.id,
+          name: f.name,
+          renderCount: renders.filter((r) => r.folderId === f.id).length,
         }))}
       />
     </div>

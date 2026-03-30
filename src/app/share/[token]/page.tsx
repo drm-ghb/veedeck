@@ -47,6 +47,7 @@ interface Render {
   status: RenderStatus;
   comments: Comment[];
   versions: RenderVersion[];
+  folder?: { id: string; name: string } | null;
 }
 
 interface Room {
@@ -424,6 +425,7 @@ export default function SharePage() {
           renderName={selectedRender.name}
           projectTitle={project.title}
           roomName={selectedRoom.name}
+          folderName={selectedRender.folder?.name ?? undefined}
           imageUrl={selectedRender.fileUrl}
           initialComments={selectedRender.comments}
           authorName={authorName}

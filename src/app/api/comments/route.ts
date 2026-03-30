@@ -2,6 +2,19 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { pusherServer } from "@/lib/pusher";
 
+export async function GET(req: NextRequest) {
+  const renderId = req.nextUrl.searchParams.get("renderId");
+  if (!renderId) return NextResponse.json({ error: "Brak renderId" }, { status: 400 });
+
+  const comments = await prisma.comment.findMany({
+    where: { renderId },
+    include: { replies: { orderBy: { createdAt: "asc" } } },
+    orderBy: { createdAt: "asc" },
+  });
+
+  return NextResponse.json(comments);
+}
+
 export async function POST(req: NextRequest) {
   const { renderId, title, content, posX, posY, author, isInternal } = await req.json();
 

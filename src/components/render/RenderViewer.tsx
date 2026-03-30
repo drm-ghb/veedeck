@@ -2,13 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { pusherClient } from "@/lib/pusher";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { ChevronLeft, Eye, EyeOff, Pin, List, X, Send, ZoomIn, ZoomOut, History, Upload, Maximize2, RotateCcw, Lock, LockOpen, SplitSquareHorizontal, ChevronsLeftRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Eye, EyeOff, Pin, List, X, Send, ZoomIn, ZoomOut, History, Upload, Maximize2, RotateCcw, Lock, LockOpen, SplitSquareHorizontal, ChevronsLeftRight } from "lucide-react";
 import RenderUploader from "./RenderUploader";
 import { useUploadThing } from "@/lib/uploadthing-client";
 
@@ -34,6 +34,11 @@ interface Comment {
   replies: Reply[];
 }
 
+interface CommentWithMeta extends Comment {
+  renderId: string;
+  renderName: string;
+}
+
 interface RoomRender {
   id: string;
   name: string;
@@ -55,6 +60,8 @@ interface RenderViewerProps {
   projectId?: string;
   projectTitle?: string;
   roomId?: string;
+  folderId?: string;
+  folderName?: string;
   imageUrl: string;
   initialComments: Comment[];
   authorName: string;
@@ -116,6 +123,8 @@ export default function RenderViewer({
   projectId,
   projectTitle,
   roomId,
+  folderId,
+  folderName,
   imageUrl,
   initialComments,
   authorName,
@@ -146,8 +155,15 @@ export default function RenderViewer({
   const [replying, setReplying] = useState(false);
   const [renderStatus, setRenderStatus] = useState<RenderStatus>(initialRenderStatus);
   const [mode, setMode] = useState<"view" | "pin">("view");
-  const [showComments, setShowComments] = useState(false);
+  const [showComments, setShowComments] = useState(() => {
+    if (typeof window !== "undefined") {
+      return sessionStorage.getItem("renderflow_showComments") === "true";
+    }
+    return false;
+  });
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [lightboxComments, setLightboxComments] = useState<Comment[]>([]);
   const [hidePins, setHidePins] = useState(false);
   const [showVersionHistory, setShowVersionHistory] = useState(false);
   const [restoringVersionId, setRestoringVersionId] = useState<string | null>(null);
@@ -156,10 +172,34 @@ export default function RenderViewer({
   const [isDragging, setIsDragging] = useState(false);
   const [newPinInternal, setNewPinInternal] = useState(false);
   const [zoom, setZoom] = useState(1);
+  const [pinFilter, setPinFilter] = useState<"current" | "all">(() => {
+    if (typeof window !== "undefined") {
+      return sessionStorage.getItem("renderflow_pinFilter") === "all" ? "all" : "current";
+    }
+    return "current";
+  });
+  const [allComments, setAllComments] = useState<CommentWithMeta[]>([]);
+  const [loadingAllComments, setLoadingAllComments] = useState(false);
   const imgRef = useRef<HTMLDivElement>(null);
   const lightboxImgRef = useRef<HTMLDivElement>(null);
   const versionFileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Auto-open pin popup and restore "all" filter when arriving via cross-render navigation
+  useEffect(() => {
+    const pinId = searchParams.get("pinId");
+    if (pinId && comments.some((c) => c.id === pinId)) {
+      setSelectedId(pinId);
+      setShowComments(true);
+      sessionStorage.setItem("renderflow_showComments", "true");
+    }
+    if (pinFilter === "all") {
+      fetchAllComments();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
 
   const { startUpload, isUploading: isVersionUploading } = useUploadThing("renderUploader", {
     onClientUploadComplete: async (res) => {
@@ -248,6 +288,7 @@ export default function RenderViewer({
 
   function openLightbox() {
     setZoom(1);
+    setLightboxIndex(currentRenderIndex >= 0 ? currentRenderIndex : 0);
     setLightboxOpen(true);
   }
 
@@ -281,7 +322,7 @@ export default function RenderViewer({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          renderId,
+          renderId: lightboxOpen ? lightboxRender.id : renderId,
           title: newTitle.trim() || null,
           content: newContent.trim(),
           posX: pending.x,
@@ -294,6 +335,12 @@ export default function RenderViewer({
         const data = await res.json().catch(() => ({}));
         toast.error(data.error || "Błąd dodawania komentarza");
         return;
+      }
+      const created: Comment = await res.json();
+      if (lightboxOpen && lightboxRender.id !== renderId) {
+        setLightboxComments((prev) => prev.some((c) => c.id === created.id) ? prev : [...prev, { ...created, replies: [] }]);
+      } else {
+        setComments((prev) => prev.some((c) => c.id === created.id) ? prev : [...prev, { ...created, replies: [] }]);
       }
       cancelPending();
       toast.success("Komentarz dodany");
@@ -401,6 +448,41 @@ export default function RenderViewer({
     }
   }
 
+  async function fetchAllComments() {
+    setLoadingAllComments(true);
+    try {
+      const otherRenders = roomRenders.filter((r) => r.id !== renderId);
+      const results = await Promise.all(
+        otherRenders.map((r) =>
+          fetch(`/api/comments?renderId=${r.id}`)
+            .then((res) => res.json())
+            .then((data: Comment[]) =>
+              (Array.isArray(data) ? data : []).map((c) => ({
+                ...c,
+                renderId: r.id,
+                renderName: r.name,
+              }))
+            )
+            .catch(() => [] as CommentWithMeta[])
+        )
+      );
+      const currentWithMeta: CommentWithMeta[] = comments.map((c) => ({
+        ...c,
+        renderId,
+        renderName: renderName ?? "",
+      }));
+      const renderOrder = new Map(roomRenders.map((r, i) => [r.id, i]));
+      const combined: CommentWithMeta[] = [...currentWithMeta, ...results.flat()].sort((a, b) => {
+        const orderDiff = (renderOrder.get(a.renderId) ?? 0) - (renderOrder.get(b.renderId) ?? 0);
+        if (orderDiff !== 0) return orderDiff;
+        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      });
+      setAllComments(combined);
+    } finally {
+      setLoadingAllComments(false);
+    }
+  }
+
   function handleSliderMouseMove(e: React.MouseEvent<HTMLDivElement>) {
     if (!isDragging) return;
     const rect = e.currentTarget.getBoundingClientRect();
@@ -416,6 +498,85 @@ export default function RenderViewer({
     return () => window.removeEventListener("keydown", onKey);
   }, [compareVersion]);
 
+  // Sync current render's comments in "all" mode when Pusher updates arrive
+  useEffect(() => {
+    if (pinFilter !== "all") return;
+    setAllComments((prev) => {
+      const withoutCurrent = prev.filter((c) => c.renderId !== renderId);
+      const currentWithMeta: CommentWithMeta[] = comments.map((c) => ({
+        ...c,
+        renderId,
+        renderName: renderName ?? "",
+      }));
+      const renderOrder = new Map(roomRenders.map((r, i) => [r.id, i]));
+      return [...withoutCurrent, ...currentWithMeta].sort((a, b) => {
+        const orderDiff = (renderOrder.get(a.renderId) ?? 0) - (renderOrder.get(b.renderId) ?? 0);
+        if (orderDiff !== 0) return orderDiff;
+        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      });
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [comments, pinFilter]);
+
+  // Re-fetch all comments when roomRenders changes and filter is "all"
+  useEffect(() => {
+    if (pinFilter === "all") fetchAllComments();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roomRenders]);
+
+  const currentRenderIndex = roomRenders.findIndex((r) => r.id === renderId);
+  const prevRender = currentRenderIndex > 0 ? roomRenders[currentRenderIndex - 1] : null;
+  const nextRender = currentRenderIndex < roomRenders.length - 1 ? roomRenders[currentRenderIndex + 1] : null;
+
+  const lightboxRender = roomRenders[lightboxIndex] ?? { id: renderId, name: renderName ?? "", fileUrl: imageUrl };
+  const lightboxPrevRender = lightboxIndex > 0 ? roomRenders[lightboxIndex - 1] : null;
+  const lightboxNextRender = lightboxIndex < roomRenders.length - 1 ? roomRenders[lightboxIndex + 1] : null;
+
+  // Subscribe to Pusher for the render currently viewed in lightbox (may differ from page render)
+  useEffect(() => {
+    const id = lightboxRender.id;
+    if (id === renderId) {
+      setLightboxComments([]);
+      return;
+    }
+    setLightboxComments([]);
+    // Fetch existing comments for this render
+    fetch(`/api/comments?renderId=${id}`)
+      .then((r) => r.json())
+      .then((data) => { if (Array.isArray(data)) setLightboxComments(data); })
+      .catch(() => {});
+    const channel = pusherClient.subscribe(`render-${id}`);
+    channel.bind("new-comment", (comment: Comment) => {
+      setLightboxComments((prev) => {
+        if (prev.some((c) => c.id === comment.id)) return prev;
+        return [...prev, { ...comment, replies: [] }];
+      });
+    });
+    channel.bind("comment-deleted", ({ id: cid }: { id: string }) => {
+      setLightboxComments((prev) => prev.filter((c) => c.id !== cid));
+    });
+    return () => {
+      channel.unbind_all();
+      pusherClient.unsubscribe(`render-${id}`);
+    };
+  }, [lightboxRender.id, renderId]);
+
+  useEffect(() => {
+    if (roomRenders.length <= 1) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (lightboxOpen) {
+        if (e.key === "ArrowLeft" && lightboxIndex > 0) { setLightboxIndex((i) => i - 1); setZoom(1); }
+        if (e.key === "ArrowRight" && lightboxIndex < roomRenders.length - 1) { setLightboxIndex((i) => i + 1); setZoom(1); }
+      } else if (projectId) {
+        if (e.key === "ArrowLeft" && prevRender) router.push(`/projects/${projectId}/renders/${prevRender.id}`);
+        if (e.key === "ArrowRight" && nextRender) router.push(`/projects/${projectId}/renders/${nextRender.id}`);
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [projectId, prevRender, nextRender, router, roomRenders.length, lightboxOpen, lightboxIndex]);
+
   const todoCount = comments.filter((c) => c.status === "NEW").length;
   const inProgressCount = comments.filter((c) => c.status === "IN_PROGRESS").length;
   const doneCount = comments.filter((c) => c.status === "DONE").length;
@@ -427,35 +588,79 @@ export default function RenderViewer({
     <div className="flex flex-col h-full bg-card">
       {/* Header bar */}
       <div className="flex items-center gap-3 px-4 py-2.5 border-b bg-card flex-shrink-0">
-        {(projectId || onBack) ? (
+        {/* Back arrow */}
+        {(onBack || projectId) && (
           <>
             {onBack ? (
               <button
                 onClick={onBack}
-                className="flex items-center gap-0.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors flex-shrink-0"
+                className="flex-shrink-0 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
               >
-                <ChevronLeft size={15} /> Wróć
+                <ChevronLeft size={20} />
               </button>
             ) : (
               <Link
-                href={roomId ? `/projects/${projectId}/rooms/${roomId}` : `/projects/${projectId}`}
-                className="flex items-center gap-0.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors flex-shrink-0"
+                href={folderId && roomId ? `/projects/${projectId}/rooms/${roomId}/folders/${folderId}` : roomId ? `/projects/${projectId}/rooms/${roomId}` : `/projects/${projectId}`}
+                className="flex-shrink-0 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
               >
-                <ChevronLeft size={15} /> Wróć
+                <ChevronLeft size={20} />
               </Link>
             )}
-            <div className="w-px h-4 bg-gray-200 flex-shrink-0" />
+            <div className="w-px h-4 bg-gray-200 dark:bg-gray-700 flex-shrink-0" />
           </>
-        ) : null}
-
-        <div className="min-w-0">
-          {roomName && (
-            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{roomName}</p>
-          )}
-          {renderName && (
-            <p className="text-xs text-gray-400 leading-none mt-0.5 truncate">{renderName}</p>
-          )}
-        </div>
+        )}
+        {/* Breadcrumb */}
+        <nav className="flex items-center gap-1 min-w-0 flex-1 text-sm">
+          {onBack ? null : projectId ? (
+            <>
+              {/* Project */}
+              {projectTitle && (
+                <>
+                  <Link
+                    href={`/projects/${projectId}`}
+                    className="flex-shrink-0 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors font-medium truncate max-w-[120px]"
+                    title={projectTitle}
+                  >
+                    {projectTitle}
+                  </Link>
+                  <ChevronLeft size={13} className="flex-shrink-0 text-gray-300 rotate-180" />
+                </>
+              )}
+              {/* Room */}
+              {roomId && roomName && (
+                <>
+                  <Link
+                    href={`/projects/${projectId}/rooms/${roomId}`}
+                    className="flex-shrink-0 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors font-medium truncate max-w-[120px]"
+                    title={roomName}
+                  >
+                    {roomName}
+                  </Link>
+                  <ChevronLeft size={13} className="flex-shrink-0 text-gray-300 rotate-180" />
+                </>
+              )}
+              {/* Folder */}
+              {folderId && folderName && roomId && (
+                <>
+                  <Link
+                    href={`/projects/${projectId}/rooms/${roomId}/folders/${folderId}`}
+                    className="flex-shrink-0 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors font-medium truncate max-w-[120px]"
+                    title={folderName}
+                  >
+                    {folderName}
+                  </Link>
+                  <ChevronLeft size={13} className="flex-shrink-0 text-gray-300 rotate-180" />
+                </>
+              )}
+              {/* File (current, not a link) */}
+              {renderName && (
+                <span className="text-gray-900 dark:text-gray-100 font-semibold truncate min-w-0" title={renderName}>
+                  {renderName}
+                </span>
+              )}
+            </>
+          ) : null}
+        </nav>
 
         <div className="ml-auto flex items-center gap-2 flex-shrink-0">
           {!hideCommentCount && todoCount > 0 && (
@@ -475,7 +680,7 @@ export default function RenderViewer({
           )}
 
           {isDesigner && (
-            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1 text-xs text-muted-foreground" title="Ilość wyświetleń pliku przez klienta">
               <Eye size={13} />
               {viewCount}
             </span>
@@ -585,7 +790,11 @@ export default function RenderViewer({
             {hidePins ? "Pokaż piny" : "Ukryj piny"}
           </button>
           <button
-            onClick={() => setShowComments((v) => !v)}
+            onClick={() => setShowComments((v) => {
+              const next = !v;
+              sessionStorage.setItem("renderflow_showComments", String(next));
+              return next;
+            })}
             className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md border transition-colors ${
               showComments
                 ? "bg-gray-900 text-white border-gray-900"
@@ -641,7 +850,28 @@ export default function RenderViewer({
         )}
 
         {/* Image area */}
-        <div className="flex-1 overflow-auto bg-muted flex items-start justify-center p-6">
+        <div className="flex-1 relative bg-muted">
+          {/* Left navigation arrow */}
+          {prevRender && projectId && (
+            <button
+              onClick={() => router.push(`/projects/${projectId}/renders/${prevRender.id}`)}
+              className="absolute left-3 top-1/2 -translate-y-1/2 z-10 bg-white/80 hover:bg-white dark:bg-gray-800/80 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full p-2 shadow-md text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 transition-all opacity-60 hover:opacity-100"
+              title={prevRender.name}
+            >
+              <ChevronLeft size={20} />
+            </button>
+          )}
+          {/* Right navigation arrow */}
+          {nextRender && projectId && (
+            <button
+              onClick={() => router.push(`/projects/${projectId}/renders/${nextRender.id}`)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 z-10 bg-white/80 hover:bg-white dark:bg-gray-800/80 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full p-2 shadow-md text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 transition-all opacity-60 hover:opacity-100"
+              title={nextRender.name}
+            >
+              <ChevronRight size={20} />
+            </button>
+          )}
+          <div className="absolute inset-0 overflow-auto flex items-start justify-center p-6">
           <div
             ref={imgRef}
             className={`relative select-none ${mode === "pin" ? "cursor-crosshair" : "cursor-default"}`}
@@ -890,68 +1120,118 @@ export default function RenderViewer({
               </div>
             )}
           </div>
+          </div>
         </div>
 
         {/* Sidebar */}
         {showComments && <div className="w-72 border-l bg-card flex flex-col flex-shrink-0">
           <div className="px-4 py-3 border-b flex-shrink-0">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-              Wszystkie piny ({comments.length})
-            </h3>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                {pinFilter === "current"
+                  ? `Piny tego renderu (${comments.length})`
+                  : `Wszystkie piny (${allComments.length})`}
+              </h3>
+            </div>
+            <div className="flex gap-1">
+              <button
+                onClick={() => { setPinFilter("current"); sessionStorage.setItem("renderflow_pinFilter", "current"); }}
+                className={`text-xs px-2.5 py-1 rounded-md border transition-colors font-medium ${
+                  pinFilter === "current"
+                    ? "bg-gray-900 text-white border-gray-900 dark:bg-gray-100 dark:text-gray-900 dark:border-gray-100"
+                    : "border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-gray-400"
+                }`}
+              >
+                Ten render
+              </button>
+              <button
+                onClick={() => {
+                  setPinFilter("all");
+                  sessionStorage.setItem("renderflow_pinFilter", "all");
+                  fetchAllComments();
+                }}
+                className={`text-xs px-2.5 py-1 rounded-md border transition-colors font-medium ${
+                  pinFilter === "all"
+                    ? "bg-gray-900 text-white border-gray-900 dark:bg-gray-100 dark:text-gray-900 dark:border-gray-100"
+                    : "border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-gray-400"
+                }`}
+              >
+                Wszystkie
+              </button>
+            </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto divide-y divide-gray-100">
-            {comments.length === 0 && (
-              <p className="text-xs text-gray-400 text-center py-8">
-                {mode === "pin" ? "Kliknij na obraz aby dodać pin" : "Brak pinów"}
-              </p>
-            )}
-            {comments.map((c, i) => {
-              const isSelected = selectedId === c.id;
-              const displayTitle = c.title || `Pin #${i + 1}`;
-              const totalReplies = c.replies.length;
-              return (
-                <div
-                  key={c.id}
-                  className={`px-4 py-3 cursor-pointer transition-colors ${
-                    isSelected ? "bg-blue-50 dark:bg-blue-900/20" : "hover:bg-muted/50"
-                  }`}
-                  onClick={() => {
-                    setSelectedId(c.id === selectedId ? null : c.id);
-                    cancelPending();
-                    setReplyContent("");
-                  }}
-                >
-                  <div className="flex items-start gap-2">
-                    <span
-                      className={`w-5 h-5 rounded-full text-white text-[10px] font-bold flex items-center justify-center flex-shrink-0 mt-0.5 ${c.isInternal ? "bg-slate-500" : STATUS_PIN_COLOR[c.status]}`}
-                    >
-                      {i + 1}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{displayTitle}</span>
-                        {c.isInternal && (
-                          <Lock size={11} className="text-slate-400 flex-shrink-0" aria-label="Notatka wewnętrzna — niewidoczna dla klienta" />
+          <div className="flex-1 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-800">
+            {pinFilter === "all" && loadingAllComments ? (
+              <p className="text-xs text-gray-400 text-center py-8">Ładowanie pinów...</p>
+            ) : (() => {
+              const listItems: CommentWithMeta[] = pinFilter === "all"
+                ? allComments
+                : comments.map((c) => ({ ...c, renderId, renderName: renderName ?? "" }));
+
+              if (listItems.length === 0) {
+                return (
+                  <p className="text-xs text-gray-400 text-center py-8">
+                    {mode === "pin" ? "Kliknij na obraz aby dodać pin" : "Brak pinów"}
+                  </p>
+                );
+              }
+
+              return listItems.map((c, i) => {
+                const isFromOtherRender = pinFilter === "all" && c.renderId !== renderId;
+                const isSelected = selectedId === c.id;
+                const displayTitle = c.title || `Pin #${i + 1}`;
+                const totalReplies = c.replies.length;
+                return (
+                  <div
+                    key={c.id}
+                    className={`px-4 py-3 cursor-pointer transition-colors ${
+                      isSelected ? "bg-blue-50 dark:bg-blue-900/20" : "hover:bg-muted/50"
+                    }`}
+                    onClick={() => {
+                      if (isFromOtherRender && projectId) {
+                        router.push(`/projects/${projectId}/renders/${c.renderId}?pinId=${c.id}`);
+                        return;
+                      }
+                      setSelectedId(c.id === selectedId ? null : c.id);
+                      cancelPending();
+                      setReplyContent("");
+                    }}
+                  >
+                    <div className="flex items-start gap-2">
+                      <span
+                        className={`w-5 h-5 rounded-full text-white text-[10px] font-bold flex items-center justify-center flex-shrink-0 mt-0.5 ${c.isInternal ? "bg-slate-500" : STATUS_PIN_COLOR[c.status]}`}
+                      >
+                        {i + 1}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{displayTitle}</span>
+                          {c.isInternal && (
+                            <Lock size={11} className="text-slate-400 flex-shrink-0" aria-label="Notatka wewnętrzna — niewidoczna dla klienta" />
+                          )}
+                          <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${STATUS_BADGE[c.status]}`}>
+                            {STATUS_LABEL[c.status]}
+                          </span>
+                        </div>
+                        {c.content && (
+                          <p className="text-xs text-gray-700 dark:text-gray-300 mt-1 line-clamp-2">{c.content}</p>
                         )}
-                        <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${STATUS_BADGE[c.status]}`}>
-                          {STATUS_LABEL[c.status]}
-                        </span>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                          {c.author} · {formatDate(c.createdAt)}
+                          {totalReplies > 0 && (
+                            <span className="ml-1 text-blue-500">{totalReplies} {totalReplies === 1 ? "odpowiedź" : totalReplies < 5 ? "odpowiedzi" : "odpowiedzi"}</span>
+                          )}
+                        </p>
+                        {isFromOtherRender && (
+                          <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5 italic truncate">{c.renderName}</p>
+                        )}
                       </div>
-                      {c.content && (
-                        <p className="text-xs text-gray-700 dark:text-gray-300 mt-1 line-clamp-2">{c.content}</p>
-                      )}
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                        {c.author} · {formatDate(c.createdAt)}
-                        {totalReplies > 0 && (
-                          <span className="ml-1 text-blue-500">{totalReplies} {totalReplies === 1 ? "odpowiedź" : totalReplies < 5 ? "odpowiedzi" : "odpowiedzi"}</span>
-                        )}
-                      </p>
                     </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              });
+            })()}
           </div>
         </div>}
       </div>
@@ -961,13 +1241,26 @@ export default function RenderViewer({
         <div className="fixed inset-0 z-50 bg-black/95 flex flex-col">
           {/* Lightbox header */}
           <div className="flex items-center justify-between px-5 py-3 flex-shrink-0 border-b border-white/10">
-            <div className="min-w-0">
+            <div className="flex items-center gap-1 min-w-0 text-sm">
+              {projectTitle && (
+                <>
+                  <span className="text-white/50 truncate max-w-[100px]">{projectTitle}</span>
+                  <ChevronLeft size={12} className="flex-shrink-0 text-white/30 rotate-180" />
+                </>
+              )}
               {roomName && (
-                <p className="text-sm font-semibold text-white truncate">{roomName}</p>
+                <>
+                  <span className="text-white/50 truncate max-w-[100px]">{roomName}</span>
+                  <ChevronLeft size={12} className="flex-shrink-0 text-white/30 rotate-180" />
+                </>
               )}
-              {renderName && (
-                <p className="text-xs text-white/50 mt-0.5 truncate">{renderName}</p>
+              {folderName && (
+                <>
+                  <span className="text-white/50 truncate max-w-[100px]">{folderName}</span>
+                  <ChevronLeft size={12} className="flex-shrink-0 text-white/30 rotate-180" />
+                </>
               )}
+              <span className="text-white font-semibold truncate max-w-[160px]">{lightboxRender.name || renderName}</span>
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">
               {(isDesigner || allowClientComments) && (
@@ -982,7 +1275,14 @@ export default function RenderViewer({
                 </button>
               )}
               <button
-                onClick={() => { setLightboxOpen(false); setMode("view"); cancelPending(); }}
+                onClick={() => {
+                  setLightboxOpen(false);
+                  setMode("view");
+                  cancelPending();
+                  if (projectId && lightboxRender.id !== renderId) {
+                    router.push(`/projects/${projectId}/renders/${lightboxRender.id}`);
+                  }
+                }}
                 className="p-2 text-white/60 hover:text-white hover:bg-white/10 rounded-md transition-colors"
               >
                 <X size={18} />
@@ -991,8 +1291,29 @@ export default function RenderViewer({
           </div>
 
           {/* Lightbox image area */}
+          <div className="flex-1 relative">
+          {/* Left navigation arrow */}
+          {lightboxPrevRender && (
+            <button
+              onClick={() => { setLightboxIndex((i) => i - 1); setZoom(1); cancelPending(); }}
+              className="absolute left-3 top-1/2 -translate-y-1/2 z-10 bg-white/10 hover:bg-white/20 border border-white/20 rounded-full p-2 text-white/70 hover:text-white transition-all opacity-60 hover:opacity-100"
+              title={lightboxPrevRender.name}
+            >
+              <ChevronLeft size={20} />
+            </button>
+          )}
+          {/* Right navigation arrow */}
+          {lightboxNextRender && (
+            <button
+              onClick={() => { setLightboxIndex((i) => i + 1); setZoom(1); cancelPending(); }}
+              className="absolute right-3 top-1/2 -translate-y-1/2 z-10 bg-white/10 hover:bg-white/20 border border-white/20 rounded-full p-2 text-white/70 hover:text-white transition-all opacity-60 hover:opacity-100"
+              title={lightboxNextRender.name}
+            >
+              <ChevronRight size={20} />
+            </button>
+          )}
           <div
-            className="flex-1 overflow-auto flex items-start justify-center p-8"
+            className="absolute inset-0 overflow-auto flex items-start justify-center p-8"
             onWheel={(e) => {
               e.preventDefault();
               const delta = e.deltaY > 0 ? -0.12 : 0.12;
@@ -1017,14 +1338,14 @@ export default function RenderViewer({
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={imageUrl}
+                src={lightboxRender.fileUrl}
                 alt="Render"
                 className="w-full h-auto block rounded-lg"
                 draggable={false}
               />
 
               {/* Pins overlay — interactive */}
-              {!hidePins && comments.map((c, i) => (
+              {!hidePins && (lightboxRender.id === renderId ? comments : lightboxComments).map((c, i) => (
                 <button
                   key={c.id}
                   className={`absolute w-7 h-7 rounded-full border-2 border-white text-white text-xs font-bold flex items-center justify-center shadow-lg z-10 transition-transform hover:scale-110 ${STATUS_PIN_COLOR[c.status]} ${
@@ -1102,18 +1423,18 @@ export default function RenderViewer({
               {/* Thread popup for existing pin */}
               {selectedComment && !pending && (
                 <div
-                  className="absolute z-20 bg-zinc-900 border border-white/10 rounded-xl shadow-2xl w-72 flex flex-col"
+                  className="absolute z-20 bg-card rounded-xl shadow-xl border border-border w-72 flex flex-col"
                   style={{
                     ...popupPosition(selectedComment.posX, selectedComment.posY),
                     maxHeight: "360px",
                   }}
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <div className="flex items-center gap-2 px-4 py-3 border-b border-white/10 flex-shrink-0">
+                  <div className="flex items-center gap-2 px-4 py-3 border-b flex-shrink-0">
                     <span className={`w-5 h-5 rounded-full text-white text-[10px] font-bold flex items-center justify-center flex-shrink-0 ${STATUS_PIN_COLOR[selectedComment.status]}`}>
                       {selectedIndex + 1}
                     </span>
-                    <span className="text-sm font-semibold text-white truncate flex-1">
+                    <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate flex-1">
                       {selectedComment.title || `Pin #${selectedIndex + 1}`}
                     </span>
                     <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0 ${STATUS_BADGE[selectedComment.status]}`}>
@@ -1121,55 +1442,55 @@ export default function RenderViewer({
                     </span>
                     <button
                       onClick={() => { setSelectedId(null); setReplyContent(""); }}
-                      className="text-white/40 hover:text-white flex-shrink-0"
+                      className="text-gray-400 hover:text-gray-700 flex-shrink-0"
                     >
                       <X size={14} />
                     </button>
                   </div>
 
-                  <div className="flex-1 overflow-y-auto divide-y divide-white/10 min-h-0">
+                  <div className="flex-1 overflow-y-auto divide-y divide-gray-100 min-h-0">
                     <div className="px-4 py-3">
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs font-semibold text-white">{selectedComment.author}</span>
+                        <span className="text-xs font-semibold text-gray-800 dark:text-gray-200">{selectedComment.author}</span>
                         <div className="flex items-center gap-1.5">
-                          <span className="text-[10px] text-white/40">{formatDate(selectedComment.createdAt)}</span>
+                          <span className="text-[10px] text-gray-400">{formatDate(selectedComment.createdAt)}</span>
                           {(isDesigner || selectedComment.author === authorName) && (
-                            <button onClick={() => deleteComment(selectedComment.id)} className="text-white/20 hover:text-red-400 transition-colors">
+                            <button onClick={() => deleteComment(selectedComment.id)} className="text-gray-300 hover:text-red-400 transition-colors">
                               <X size={11} />
                             </button>
                           )}
                         </div>
                       </div>
-                      <p className="text-sm text-white/80 leading-relaxed">{selectedComment.content}</p>
+                      <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{selectedComment.content}</p>
                     </div>
                     {selectedComment.replies.map((r) => (
-                      <div key={r.id} className="px-4 py-3 bg-white/5">
+                      <div key={r.id} className="px-4 py-3 bg-gray-50 dark:bg-gray-800/50">
                         <div className="flex items-center justify-between mb-1">
-                          <span className="text-xs font-semibold text-white">{r.author}</span>
+                          <span className="text-xs font-semibold text-gray-800 dark:text-gray-200">{r.author}</span>
                           <div className="flex items-center gap-1.5">
-                            <span className="text-[10px] text-white/40">{formatDate(r.createdAt)}</span>
+                            <span className="text-[10px] text-gray-400">{formatDate(r.createdAt)}</span>
                             {(isDesigner || r.author === authorName) && (
-                              <button onClick={() => deleteReply(selectedComment.id, r.id)} className="text-white/20 hover:text-red-400 transition-colors">
+                              <button onClick={() => deleteReply(selectedComment.id, r.id)} className="text-gray-300 hover:text-red-400 transition-colors">
                                 <X size={11} />
                               </button>
                             )}
                           </div>
                         </div>
-                        <p className="text-sm text-white/80 leading-relaxed">{r.content}</p>
+                        <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{r.content}</p>
                       </div>
                     ))}
                   </div>
 
                   {isDesigner && (
-                    <div className="px-4 py-2 border-t border-white/10 flex gap-1 flex-wrap flex-shrink-0">
+                    <div className="px-4 py-2 border-t flex gap-1 flex-wrap flex-shrink-0">
                       {(["NEW", "IN_PROGRESS", "DONE"] as CommentStatus[]).map((s) => (
                         <button
                           key={s}
                           onClick={() => updateStatus(selectedComment.id, s)}
                           className={`text-xs px-2 py-1 rounded-md border transition-colors ${
                             selectedComment.status === s
-                              ? "bg-white text-black border-white"
-                              : "border-white/20 text-white/60 hover:border-white/50"
+                              ? "bg-gray-900 text-white border-gray-900"
+                              : "border-gray-200 text-gray-500 hover:border-gray-400"
                           }`}
                         >
                           {STATUS_LABEL[s]}
@@ -1177,20 +1498,20 @@ export default function RenderViewer({
                       ))}
                       <button
                         onClick={() => deleteComment(selectedComment.id)}
-                        className="text-xs px-2 py-1 rounded-md border border-red-500/40 text-red-400 hover:bg-red-500/10 ml-auto"
+                        className="text-xs px-2 py-1 rounded-md border border-red-200 text-red-500 hover:bg-red-50 ml-auto"
                       >
                         Usuń
                       </button>
                     </div>
                   )}
 
-                  <div className="px-4 py-3 border-t border-white/10 flex-shrink-0">
+                  <div className="px-4 py-3 border-t flex-shrink-0">
                     <div className="flex gap-2">
                       <Textarea
                         value={replyContent}
                         onChange={(e) => setReplyContent(e.target.value)}
                         placeholder="Dodaj odpowiedź..."
-                        className="text-sm resize-none flex-1 bg-zinc-800 border-white/10 text-white placeholder:text-white/30"
+                        className="text-sm resize-none flex-1"
                         rows={2}
                         onKeyDown={(e) => {
                           if (e.key === "Enter" && e.ctrlKey) submitReply();
@@ -1210,6 +1531,7 @@ export default function RenderViewer({
                 </div>
               )}
             </div>
+          </div>
           </div>
 
           {/* Zoom controls */}

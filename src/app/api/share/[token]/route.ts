@@ -45,6 +45,7 @@ export async function GET(
                 orderBy: { archivedAt: "desc" },
                 select: { id: true, fileUrl: true, versionNumber: true, archivedAt: true },
               },
+              folder: { select: { id: true, name: true } },
             },
           },
         },
