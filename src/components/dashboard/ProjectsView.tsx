@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { LayoutGrid, List, Search, ArchiveRestore, Trash2 } from "lucide-react";
+import { LayoutGrid, List, Search, ArchiveRestore, Trash2, SlidersHorizontal } from "lucide-react";
 import ProjectCard from "./ProjectCard";
 import ProjectMenu from "./ProjectMenu";
 import NewProjectDialog from "./NewProjectDialog";
@@ -138,10 +138,27 @@ export default function ProjectsView({ projects, archivedProjects }: ProjectsVie
         </div>
         {projects.length > 0 && (
           <div className="flex items-center gap-2 mb-1">
+            {/* Mobile: icon-only, native picker on tap */}
+            <div className={`relative sm:hidden w-8 h-8 flex items-center justify-center rounded-md border ${sort !== "newest" ? "border-gray-900 bg-gray-900" : "border-gray-200 bg-white"}`}>
+              <SlidersHorizontal size={14} className={`pointer-events-none ${sort !== "newest" ? "text-white" : "text-gray-500"}`} />
+              <select
+                value={sort}
+                onChange={(e) => setSort(e.target.value as typeof sort)}
+                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                aria-label="Sortowanie"
+              >
+                <option value="newest">Najnowsze</option>
+                <option value="oldest">Najstarsze</option>
+                <option value="az">A–Z</option>
+                <option value="za">Z–A</option>
+                <option value="renders">Najwięcej renderów</option>
+              </select>
+            </div>
+            {/* Desktop: full select */}
             <select
               value={sort}
               onChange={(e) => setSort(e.target.value as typeof sort)}
-              className="text-xs border border-gray-200 rounded-md px-2 py-1.5 bg-white text-gray-600 focus:outline-none focus:ring-1 focus:ring-gray-300"
+              className="hidden sm:block text-xs border border-gray-200 rounded-md px-2 py-1.5 bg-white text-gray-600 focus:outline-none focus:ring-1 focus:ring-gray-300"
             >
               <option value="newest">Najnowsze</option>
               <option value="oldest">Najstarsze</option>
