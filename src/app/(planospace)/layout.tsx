@@ -24,7 +24,7 @@ export default async function PlanospaceLayout({
   return (
     <div className="min-h-screen flex flex-col bg-muted/30">
       <nav className="bg-card border-b">
-        <div className="px-4 sm:px-8 flex items-center justify-between py-3 gap-4">
+        <div className="container mx-auto px-3 sm:px-6 max-w-6xl flex items-center justify-between py-3 gap-4">
           {/* Logo */}
           <div className="flex items-center gap-2.5 shrink-0">
             <Image src="/planospace-logo.svg" alt="Planospace" width={28} height={28} className="block dark:hidden" />
@@ -51,7 +51,7 @@ export default async function PlanospaceLayout({
         </div>
       </nav>
 
-      <main className="flex-1 px-4 sm:px-8 py-8">
+      <main className="flex-1 container mx-auto px-3 sm:px-6 max-w-6xl py-4 sm:py-8">
         {children}
       </main>
     </div>
