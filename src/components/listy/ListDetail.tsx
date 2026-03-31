@@ -225,8 +225,12 @@ function ProductRow({
         {/* 3-dot menu */}
         <DropdownMenu>
           <DropdownMenuTrigger
-            disabled={deleting}
-            className="w-7 h-7 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-40"
+            render={
+              <button
+                disabled={deleting}
+                className="w-7 h-7 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-40"
+              />
+            }
           >
             <MoreHorizontal size={15} />
           </DropdownMenuTrigger>
