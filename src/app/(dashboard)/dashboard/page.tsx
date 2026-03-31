@@ -7,12 +7,12 @@ export default async function DashboardPage() {
 
   const [projects, archivedProjects] = await Promise.all([
     prisma.project.findMany({
-      where: { userId: session!.user!.id!, archived: false },
+      where: { userId: session!.user!.id!, archived: false, modules: { has: "renderflow" } },
       include: { _count: { select: { renders: true } } },
       orderBy: { createdAt: "desc" },
     }),
     prisma.project.findMany({
-      where: { userId: session!.user!.id!, archived: true },
+      where: { userId: session!.user!.id!, archived: true, modules: { has: "renderflow" } },
       include: { _count: { select: { renders: true } } },
       orderBy: { createdAt: "desc" },
     }),

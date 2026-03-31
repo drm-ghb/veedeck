@@ -78,10 +78,14 @@ export default function ProjectsView({ projects, archivedProjects }: ProjectsVie
   }
 
   async function handleDelete(id: string, title: string) {
-    if (!confirm(`Usunąć projekt "${title}"?`)) return;
-    const res = await fetch(`/api/projects/${id}`, { method: "DELETE" });
+    if (!confirm(`Usunąć projekt "${title}" z RenderFlow?`)) return;
+    const res = await fetch(`/api/projects/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ removeModule: "renderflow" }),
+    });
     if (res.ok) {
-      toast.success("Projekt usunięty");
+      toast.success("Projekt usunięty z RenderFlow");
       router.refresh();
     } else {
       toast.error("Błąd usuwania");
@@ -99,7 +103,7 @@ export default function ProjectsView({ projects, archivedProjects }: ProjectsVie
               : `${projects.length} projekt${projects.length === 1 ? "" : projects.length < 5 ? "y" : "ów"}`}
           </p>
         </div>
-        <NewProjectDialog />
+        <NewProjectDialog module="renderflow" />
       </div>
 
       {/* Tabs + view toggle */}

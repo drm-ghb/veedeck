@@ -40,6 +40,7 @@ model User {
   sessions      Session[]
   projects      Project[]
   notifications Notification[]
+  shoppingLists ShoppingList[]
 }
 
 model Account {
@@ -80,13 +81,59 @@ model Project {
   sharePassword String?
   shareExpiresAt DateTime?
   archived      Boolean   @default(false)
+  modules       String[]  @default([])
   createdAt     DateTime  @default(now())
   updatedAt   DateTime @updatedAt
   userId      String
 
-  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  rooms   Room[]
-  renders Render[]
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rooms         Room[]
+  renders       Render[]
+  shoppingLists ShoppingList[]
+}
+
+model ShoppingList {
+  id         String   @id @default(cuid())
+  name       String
+  shareToken String   @unique @default(cuid())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  userId     String
+  projectId  String?
+
+  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project  Project?      @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  sections ListSection[]
+}
+
+model ListSection {
+  id        String   @id @default(cuid())
+  name      String
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  listId    String
+
+  list     ShoppingList  @relation(fields: [listId], references: [id], onDelete: Cascade)
+  products ListProduct[]
+}
+
+model ListProduct {
+  id           String   @id @default(cuid())
+  name         String
+  url          String?
+  imageUrl     String?
+  price        String?
+  manufacturer String?
+  color        String?
+  size         String?
+  description  String?
+  deliveryTime String?
+  quantity     Int      @default(1)
+  order        Int      @default(0)
+  createdAt    DateTime @default(now())
+  sectionId    String
+
+  section ListSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
 }
 
 model Room {

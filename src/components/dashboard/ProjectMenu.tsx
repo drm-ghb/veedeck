@@ -42,10 +42,14 @@ export default function ProjectMenu({ project }: ProjectMenuProps) {
   }
 
   async function handleDelete() {
-    if (!confirm(`Usunąć projekt "${project.title}"?`)) return;
-    const res = await fetch(`/api/projects/${project.id}`, { method: "DELETE" });
+    if (!confirm(`Usunąć projekt "${project.title}" z RenderFlow?`)) return;
+    const res = await fetch(`/api/projects/${project.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ removeModule: "renderflow" }),
+    });
     if (res.ok) {
-      toast.success("Projekt usunięty");
+      toast.success("Projekt usunięty z RenderFlow");
       router.refresh();
     } else {
       toast.error("Błąd usuwania");

@@ -23,7 +23,11 @@ interface ExistingProject {
   renderCount: number;
 }
 
-export default function NewProjectDialog() {
+interface NewProjectDialogProps {
+  module?: string;
+}
+
+export default function NewProjectDialog({ module }: NewProjectDialogProps = {}) {
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<"new" | "existing">("new");
 
@@ -82,6 +86,7 @@ export default function NewProjectDialog() {
           clientName: clientName.trim() || undefined,
           clientEmail: clientEmail.trim() || undefined,
           description: description.trim() || undefined,
+          ...(module && { module }),
         }),
       });
 
@@ -101,7 +106,14 @@ export default function NewProjectDialog() {
     }
   }
 
-  function handleSelectProject(id: string) {
+  async function handleSelectProject(id: string) {
+    if (module) {
+      await fetch(`/api/projects/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ addModule: module }),
+      });
+    }
     setOpen(false);
     router.push(`/projects/${id}`);
   }

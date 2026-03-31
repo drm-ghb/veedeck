@@ -47,6 +47,18 @@ export async function PATCH(
   }
 
   const body = await req.json();
+
+  // If addModule is requested, add it to the modules array (avoid duplicates)
+  // If removeModule is requested, filter it out
+  let modulesUpdate: object | undefined;
+  if (body.addModule) {
+    if (!existing.modules.includes(body.addModule)) {
+      modulesUpdate = { modules: { set: [...existing.modules, body.addModule] } };
+    }
+  } else if (body.removeModule) {
+    modulesUpdate = { modules: { set: existing.modules.filter((m) => m !== body.removeModule) } };
+  }
+
   const updated = await prisma.project.update({
     where: { id },
     data: {
@@ -57,6 +69,7 @@ export async function PATCH(
       ...(body.archived !== undefined && { archived: body.archived }),
       ...(body.sharePassword !== undefined && { sharePassword: body.sharePassword || null }),
       ...(body.shareExpiresAt !== undefined && { shareExpiresAt: body.shareExpiresAt ? new Date(body.shareExpiresAt) : null }),
+      ...modulesUpdate,
     },
   });
 
