@@ -404,7 +404,7 @@ function ProductRow({
         <div className="w-14 h-14 shrink-0 rounded-lg overflow-hidden bg-muted flex items-center justify-center">
           {product.imageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={product.imageUrl} alt={product.name} className="w-full h-full object-contain cursor-pointer" onClick={() => setLightbox(product.imageUrl!)} />
+            <img src={product.imageUrl} alt={product.name} className="w-full h-full object-contain cursor-pointer" onClick={() => product.imageUrl && setLightbox(true)} />
           ) : (
             <span className="text-xl text-muted-foreground/30">📦</span>
           )}
