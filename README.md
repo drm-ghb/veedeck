@@ -1,4 +1,4 @@
-# RenderFlow
+# Veedeck
 
 Aplikacja webowa do zarządzania feedbackiem na wizualizacjach 3D. Projektant wgrywa rendery, organizuje je w projekty i pomieszczenia, a następnie udostępnia link klientowi. Klient przegląda pliki, dodaje komentarze z pinami bezpośrednio na renderze i zmienia statusy plików — wszystko w czasie rzeczywistym dzięki Pusherowi.
 
