@@ -104,7 +104,7 @@ export async function POST(
       price: price || null,
       manufacturer: manufacturer || null,
       color: color || null,
-      size: size || null,
+      dimensions: dimensions || null,
       description: description || null,
       deliveryTime: deliveryTime || null,
       quantity: typeof quantity === "number" && quantity >= 1 ? quantity : 1,
