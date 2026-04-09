@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json();
-  const { name, url, imageUrl, price, manufacturer, color, size, description, deliveryTime, quantity, category } = body;
+  const { name, url, imageUrl, price, manufacturer, color, dimensions, description, deliveryTime, quantity, category } = body;
 
   if (!name?.trim()) return NextResponse.json({ error: "Nazwa jest wymagana" }, { status: 400 });
 
@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
       price: price || null,
       manufacturer: manufacturer || null,
       color: color || null,
-      size: size || null,
+      dimensions: dimensions || null,
       description: description || null,
       deliveryTime: deliveryTime || null,
       quantity: typeof quantity === "number" && quantity >= 1 ? quantity : 1,

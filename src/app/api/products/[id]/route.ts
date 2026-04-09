@@ -18,28 +18,42 @@ export async function PATCH(
   if (!product) return NextResponse.json({ error: "Nie znaleziono" }, { status: 404 });
 
   const body = await req.json();
-  const { name, url, imageUrl, price, manufacturer, color, size, description, deliveryTime, quantity, category } = body;
+  const { name, url, imageUrl, price, manufacturer, color, dimensions, description, deliveryTime, quantity, category } = body;
 
   if (name !== undefined && !name?.trim()) return NextResponse.json({ error: "Nazwa jest wymagana" }, { status: 400 });
 
-  const updated = await prisma.product.update({
-    where: { id },
-    data: {
-      ...(name !== undefined ? { name: name.trim() } : {}),
-      ...(url !== undefined ? { url: url || null } : {}),
-      ...(imageUrl !== undefined ? { imageUrl: imageUrl || null } : {}),
-      ...(price !== undefined ? { price: price || null } : {}),
-      ...(manufacturer !== undefined ? { manufacturer: manufacturer || null } : {}),
-      ...(color !== undefined ? { color: color || null } : {}),
-      ...(size !== undefined ? { size: size || null } : {}),
-      ...(description !== undefined ? { description: description || null } : {}),
-      ...(deliveryTime !== undefined ? { deliveryTime: deliveryTime || null } : {}),
-      ...(quantity !== undefined ? { quantity: typeof quantity === "number" && quantity >= 1 ? quantity : 1 } : {}),
-      ...(category !== undefined ? { category: category || null } : {}),
-    },
-  });
+  const productData = {
+    ...(name !== undefined ? { name: name.trim() } : {}),
+    ...(url !== undefined ? { url: url || null } : {}),
+    ...(imageUrl !== undefined ? { imageUrl: imageUrl || null } : {}),
+    ...(price !== undefined ? { price: price || null } : {}),
+    ...(manufacturer !== undefined ? { manufacturer: manufacturer || null } : {}),
+    ...(color !== undefined ? { color: color || null } : {}),
+    ...(dimensions !== undefined ? { dimensions: dimensions || null } : {}),
+    ...(description !== undefined ? { description: description || null } : {}),
+    ...(deliveryTime !== undefined ? { deliveryTime: deliveryTime || null } : {}),
+    ...(quantity !== undefined ? { quantity: typeof quantity === "number" && quantity >= 1 ? quantity : 1 } : {}),
+    ...(category !== undefined ? { category: category || null } : {}),
+  };
 
-  return NextResponse.json(updated);
+  try {
+    const updated = await prisma.product.update({ where: { id }, data: productData });
+
+    // Sync fields (except quantity) to all linked ListProducts
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { quantity: _qty, ...listProductData } = productData;
+    if (Object.keys(listProductData).length > 0) {
+      await prisma.listProduct.updateMany({
+        where: { productId: id },
+        data: listProductData,
+      });
+    }
+
+    return NextResponse.json(updated);
+  } catch (err) {
+    console.error("[PATCH /api/products/[id]]", err);
+    return NextResponse.json({ error: "Błąd serwera", detail: String(err) }, { status: 500 });
+  }
 }
 
 export async function DELETE(

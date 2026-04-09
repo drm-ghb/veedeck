@@ -52,7 +52,7 @@ export async function GET(
         price: p.price,
         manufacturer: p.manufacturer,
         color: p.color,
-        size: p.size,
+        dimensions: p.dimensions,
         description: p.description,
         deliveryTime: p.deliveryTime,
         quantity: p.quantity,

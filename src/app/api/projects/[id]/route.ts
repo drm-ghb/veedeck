@@ -87,6 +87,10 @@ export async function PATCH(
       ...(body.shareExpiresAt !== undefined && { shareExpiresAt: body.shareExpiresAt ? new Date(body.shareExpiresAt) : null }),
       ...(body.pinned !== undefined && { pinned: body.pinned }),
       ...(body.hiddenModules !== undefined && { hiddenModules: body.hiddenModules }),
+      ...(body.addressCountry !== undefined && { addressCountry: body.addressCountry || null }),
+      ...(body.addressCity !== undefined && { addressCity: body.addressCity || null }),
+      ...(body.addressPostalCode !== undefined && { addressPostalCode: body.addressPostalCode || null }),
+      ...(body.addressStreet !== undefined && { addressStreet: body.addressStreet || null }),
       ...modulesUpdate,
     },
   });

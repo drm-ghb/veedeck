@@ -99,28 +99,40 @@ export async function PUT(
 
   const { id, sectionId, productId } = await params;
   const body = await req.json();
-  const { name, url, imageUrl, price, manufacturer, color, size, description, deliveryTime, category } = body;
+  const { name, url, imageUrl, price, manufacturer, color, dimensions, description, deliveryTime, category, supplier, catalogNumber } = body;
 
   if (!name?.trim()) return NextResponse.json({ error: "Nazwa jest wymagana" }, { status: 400 });
 
   const product = await findProduct(productId, sectionId, id, session.user.id);
   if (!product) return NextResponse.json({ error: "Nie znaleziono produktu" }, { status: 404 });
 
+  const sharedData = {
+    name: name.trim(),
+    url: url || null,
+    imageUrl: imageUrl || null,
+    price: price || null,
+    manufacturer: manufacturer || null,
+    color: color || null,
+    dimensions: dimensions || null,
+    description: description || null,
+    deliveryTime: deliveryTime || null,
+    category: category || null,
+    supplier: supplier || null,
+    catalogNumber: catalogNumber || null,
+  };
+
   const updated = await prisma.listProduct.update({
     where: { id: productId },
-    data: {
-      name: name.trim(),
-      url: url || null,
-      imageUrl: imageUrl || null,
-      price: price || null,
-      manufacturer: manufacturer || null,
-      color: color || null,
-      size: size || null,
-      description: description || null,
-      deliveryTime: deliveryTime || null,
-      category: category || null,
-    },
+    data: sharedData,
   });
+
+  // Sync to library product if linked
+  if (updated.productId) {
+    await prisma.product.update({
+      where: { id: updated.productId },
+      data: sharedData,
+    });
+  }
 
   return NextResponse.json(updated);
 }

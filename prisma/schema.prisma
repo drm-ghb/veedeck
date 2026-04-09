@@ -86,9 +86,13 @@ model Project {
   shareExpiresAt DateTime?
   sharePassword  String?
   modules        String[]        @default([])
-  pinned         Boolean         @default(false)
-  hiddenModules  String[]        @default([])
-  slug           String?         @unique
+  pinned             Boolean         @default(false)
+  hiddenModules      String[]        @default([])
+  slug               String?         @unique
+  addressCountry     String?
+  addressCity        String?
+  addressPostalCode  String?
+  addressStreet      String?
   user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   clients        ProjectClient[]
   renders        Render[]
@@ -131,6 +135,7 @@ model ListSection {
   listId    String
   sortBy    String        @default("manual")
   budget    Float?
+  unsorted  Boolean       @default(false)
   products  ListProduct[]
   list      ShoppingList  @relation(fields: [listId], references: [id], onDelete: Cascade)
 }
@@ -143,7 +148,7 @@ model ListProduct {
   price        String?
   manufacturer String?
   color        String?
-  size         String?
+  dimensions   String?
   description  String?
   deliveryTime String?
   order        Int                  @default(0)
@@ -151,9 +156,13 @@ model ListProduct {
   sectionId    String
   quantity     Int                  @default(1)
   category     ListProductCategory?
-  hidden       Boolean              @default(false)
-  approval     String?
+  hidden        Boolean              @default(false)
+  approval      String?
+  productId     String?
+  supplier      String?
+  catalogNumber String?
   section      ListSection          @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  product      Product?             @relation(fields: [productId], references: [id], onDelete: SetNull)
   comments     ListProductComment[]
 }
 
@@ -326,14 +335,17 @@ model Product {
   price        String?
   manufacturer String?
   color        String?
-  size         String?
+  dimensions   String?
   description  String?
-  deliveryTime String?
-  quantity     Int                  @default(1)
-  category     ListProductCategory?
-  createdAt    DateTime             @default(now())
-  userId       String
+  deliveryTime  String?
+  quantity      Int                  @default(1)
+  category      ListProductCategory?
+  supplier      String?
+  catalogNumber String?
+  createdAt     DateTime             @default(now())
+  userId        String
   user         User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listProducts ListProduct[]
 }
 
 enum ListProductCategory {

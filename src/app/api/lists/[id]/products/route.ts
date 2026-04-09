@@ -2,42 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-export async function PATCH(
+export async function POST(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string; sectionId: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { id, sectionId } = await params;
-  const { order } = await req.json();
-
-  if (!Array.isArray(order)) return NextResponse.json({ error: "Nieprawidłowe dane" }, { status: 400 });
-
-  const section = await prisma.listSection.findFirst({
-    where: { id: sectionId, listId: id, list: { userId: session.user.id } },
-  });
-  if (!section) return NextResponse.json({ error: "Nie znaleziono sekcji" }, { status: 404 });
-
-  await Promise.all(
-    (order as string[]).map((productId, index) =>
-      prisma.listProduct.update({ where: { id: productId }, data: { order: index } })
-    )
-  );
-
-  return NextResponse.json({ ok: true });
-}
-
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string; sectionId: string }> }
-) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const { id, sectionId } = await params;
+  const { id } = await params;
   const body = await req.json();
   const { name, url, imageUrl, price, manufacturer, color, dimensions, description, deliveryTime, quantity, category, supplier, catalogNumber, productId: bodyProductId } = body;
 
@@ -45,26 +17,30 @@ export async function POST(
     return NextResponse.json({ error: "Nazwa jest wymagana" }, { status: 400 });
   }
 
-  const section = await prisma.listSection.findFirst({
-    where: { id: sectionId, listId: id, list: { userId: session.user.id } },
+  const list = await prisma.shoppingList.findFirst({
+    where: { id, userId: session.user.id },
   });
+  if (!list) return NextResponse.json({ error: "Nie znaleziono listy" }, { status: 404 });
 
-  if (!section) {
-    return NextResponse.json({ error: "Nie znaleziono sekcji" }, { status: 404 });
+  // Find or create the unsorted section for this list
+  let unsortedSection = await prisma.listSection.findFirst({
+    where: { listId: id, unsorted: true },
+  });
+  if (!unsortedSection) {
+    unsortedSection = await prisma.listSection.create({
+      data: { listId: id, name: "__unsorted__", order: -1, unsorted: true },
+    });
   }
 
-  const count = await prisma.listProduct.count({ where: { sectionId } });
+  const sectionId = unsortedSection.id;
   const userId = session.user.id;
 
   // Link to library product only when explicitly added from library tab
   let finalProductId: string | null = null;
-
   if (bodyProductId) {
-    // Adding from library tab — verify ownership and link
     const owned = await prisma.product.findFirst({ where: { id: bodyProductId, userId } });
     if (owned) finalProductId = owned.id;
   } else {
-    // Adding via Link or Ręcznie — auto-save to library but do NOT link (no warning icon)
     const exists = await prisma.product.findFirst({
       where: {
         userId,
@@ -96,6 +72,7 @@ export async function POST(
     }
   }
 
+  const count = await prisma.listProduct.count({ where: { sectionId } });
   const product = await prisma.listProduct.create({
     data: {
       name: name.trim(),

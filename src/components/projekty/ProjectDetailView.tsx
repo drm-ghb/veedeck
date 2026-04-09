@@ -46,6 +46,10 @@ interface ProjectData {
   shareExpiresAt: string | null;
   createdAt: string;
   hiddenModules: string[];
+  addressCountry: string | null;
+  addressCity: string | null;
+  addressPostalCode: string | null;
+  addressStreet: string | null;
   hasRenders: boolean;
   hasLists: boolean;
   clients: ProjectClient[];
@@ -87,6 +91,13 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
   const [addingClient, setAddingClient] = useState(false);
   const [showAddClient, setShowAddClient] = useState(false);
 
+  // Address state
+  const [addressCountry, setAddressCountry] = useState(project.addressCountry ?? "");
+  const [addressCity, setAddressCity] = useState(project.addressCity ?? "");
+  const [addressPostalCode, setAddressPostalCode] = useState(project.addressPostalCode ?? "");
+  const [addressStreet, setAddressStreet] = useState(project.addressStreet ?? "");
+  const [savingAddress, setSavingAddress] = useState(false);
+
   // Modules state
   const [hiddenModules, setHiddenModules] = useState<string[]>(project.hiddenModules);
 
@@ -119,6 +130,28 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
       toast.error("Błąd zapisu");
     } finally {
       setSavingInfo(false);
+    }
+  }
+
+  async function saveAddress() {
+    setSavingAddress(true);
+    try {
+      const res = await fetch(`/api/projects/${project.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          addressCountry: addressCountry.trim() || null,
+          addressCity: addressCity.trim() || null,
+          addressPostalCode: addressPostalCode.trim() || null,
+          addressStreet: addressStreet.trim() || null,
+        }),
+      });
+      if (!res.ok) throw new Error();
+      toast.success("Adres zapisany");
+    } catch {
+      toast.error("Błąd zapisu");
+    } finally {
+      setSavingAddress(false);
     }
   }
 
@@ -304,6 +337,60 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
               </p>
               <Button onClick={saveInfo} disabled={savingInfo || !title.trim()} size="sm">
                 {savingInfo ? "Zapisywanie..." : "Zapisz"}
+              </Button>
+            </div>
+          </div>
+        </section>
+
+        {/* === Address section === */}
+        <section className="bg-card border border-border rounded-xl p-5">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground mb-4">
+            Adres inwestycji
+          </h2>
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="addr-street">Ulica</Label>
+                <Input
+                  id="addr-street"
+                  value={addressStreet}
+                  onChange={(e) => setAddressStreet(e.target.value)}
+                  placeholder="ul. Przykładowa 12/3"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="addr-city">Miasto</Label>
+                <Input
+                  id="addr-city"
+                  value={addressCity}
+                  onChange={(e) => setAddressCity(e.target.value)}
+                  placeholder="Warszawa"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="addr-postal">Kod pocztowy</Label>
+                <Input
+                  id="addr-postal"
+                  value={addressPostalCode}
+                  onChange={(e) => setAddressPostalCode(e.target.value)}
+                  placeholder="00-000"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="addr-country">Kraj</Label>
+                <Input
+                  id="addr-country"
+                  value={addressCountry}
+                  onChange={(e) => setAddressCountry(e.target.value)}
+                  placeholder="Polska"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end pt-1">
+              <Button onClick={saveAddress} disabled={savingAddress} size="sm">
+                {savingAddress ? "Zapisywanie..." : "Zapisz"}
               </Button>
             </div>
           </div>

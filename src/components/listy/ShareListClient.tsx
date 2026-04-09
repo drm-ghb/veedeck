@@ -27,7 +27,7 @@ interface Product {
   price: string | null;
   manufacturer: string | null;
   color: string | null;
-  size: string | null;
+  dimensions: string | null;
   description: string | null;
   deliveryTime: string | null;
   quantity: number;
@@ -278,7 +278,7 @@ export default function ShareListClient({
                         {product.manufacturer && <p className="text-xs text-muted-foreground mt-0.5">{product.manufacturer}</p>}
                         <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1">
                           {product.color && <span className="text-xs text-muted-foreground">Kolor: {product.color}</span>}
-                          {product.size && <span className="text-xs text-muted-foreground">Rozmiar: {product.size}</span>}
+                          {product.dimensions && <span className="text-xs text-muted-foreground">Wymiar: {product.dimensions}</span>}
                           {product.deliveryTime && <span className="text-xs text-muted-foreground">Dostawa: {product.deliveryTime}</span>}
                         </div>
                       </div>

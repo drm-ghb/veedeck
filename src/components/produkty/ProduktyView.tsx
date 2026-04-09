@@ -2,9 +2,17 @@
 
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Package, ChevronLeft, ArrowUpDown, Pencil, Trash2, ExternalLink, Plus } from "lucide-react";
+import { Search, Package, ChevronLeft, ArrowUpDown, Pencil, Trash2, ExternalLink, Plus, Check } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+} from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import AddProductToLibraryDialog from "./AddProductToLibraryDialog";
 
@@ -25,7 +33,7 @@ interface Product {
   price: string | null;
   manufacturer: string | null;
   color: string | null;
-  size: string | null;
+  dimensions: string | null;
   description: string | null;
   deliveryTime: string | null;
   category: string | null;
@@ -37,7 +45,15 @@ interface Props {
 }
 
 type GroupBy = "none" | "category" | "manufacturer";
-type SortDir = "asc" | "desc";
+type SortOption = "default" | "price-asc" | "price-desc" | "name-asc" | "name-desc";
+
+const SORT_LABELS: Record<SortOption, string> = {
+  "default": "Domyślne",
+  "price-asc": "Cena: od najniższej",
+  "price-desc": "Cena: od najwyższej",
+  "name-asc": "Nazwa: A–Z",
+  "name-desc": "Nazwa: Z–A",
+};
 
 function extractPrice(price: string | null): number {
   if (!price) return Infinity;
@@ -50,7 +66,7 @@ export default function ProduktyView({ initialProducts }: Props) {
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [query, setQuery] = useState("");
   const [groupBy, setGroupBy] = useState<GroupBy>("none");
-  const [sortDir, setSortDir] = useState<SortDir | null>(null);
+  const [sortOption, setSortOption] = useState<SortOption>("default");
   const [folderKey, setFolderKey] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [editProduct, setEditProduct] = useState<Product | null>(null);
@@ -73,15 +89,20 @@ export default function ProduktyView({ initialProducts }: Props) {
         list = list.filter((p) => (p.manufacturer ?? "Brak producenta") === folderKey);
       }
     }
-    if (sortDir) {
+    if (sortOption !== "default") {
       list = [...list].sort((a, b) => {
-        const pa = extractPrice(a.price);
-        const pb = extractPrice(b.price);
-        return sortDir === "asc" ? pa - pb : pb - pa;
+        if (sortOption === "price-asc" || sortOption === "price-desc") {
+          const pa = extractPrice(a.price);
+          const pb = extractPrice(b.price);
+          return sortOption === "price-asc" ? pa - pb : pb - pa;
+        }
+        const na = a.name.toLowerCase();
+        const nb = b.name.toLowerCase();
+        return sortOption === "name-asc" ? na.localeCompare(nb) : nb.localeCompare(na);
       });
     }
     return list;
-  }, [products, query, groupBy, sortDir, folderKey]);
+  }, [products, query, groupBy, sortOption, folderKey]);
 
   const folders = useMemo(() => {
     if (groupBy === "none") return [];
@@ -183,15 +204,24 @@ export default function ProduktyView({ initialProducts }: Props) {
           <option value="category">Grupuj: Kategoria</option>
           <option value="manufacturer">Grupuj: Producent</option>
         </select>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setSortDir((prev) => (prev === "asc" ? "desc" : prev === "desc" ? null : "asc"))}
-          className="gap-2 h-9"
-        >
-          <ArrowUpDown size={14} />
-          {sortDir === "asc" ? "Cena ↑" : sortDir === "desc" ? "Cena ↓" : "Sortuj"}
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger render={
+            <Button variant="outline" size="sm" className="gap-2 h-9">
+              <ArrowUpDown size={14} />
+              {sortOption === "default" ? "Sortuj" : SORT_LABELS[sortOption]}
+            </Button>
+          } />
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>Sortowanie</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {(["default", "name-asc", "name-desc", "price-asc", "price-desc"] as SortOption[]).map((opt) => (
+              <DropdownMenuItem key={opt} onClick={() => setSortOption(opt)} className="justify-between">
+                {SORT_LABELS[opt]}
+                {sortOption === opt && <Check size={14} className="text-primary" />}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Breadcrumb when inside folder */}
@@ -275,7 +305,7 @@ export default function ProduktyView({ initialProducts }: Props) {
           price: editProduct.price ?? undefined,
           manufacturer: editProduct.manufacturer ?? undefined,
           color: editProduct.color ?? undefined,
-          size: editProduct.size ?? undefined,
+          dimensions: editProduct.dimensions ?? undefined,
           description: editProduct.description ?? undefined,
           deliveryTime: editProduct.deliveryTime ?? undefined,
           category: editProduct.category ?? undefined,
@@ -333,8 +363,8 @@ function ProductCard({
           {product.color && (
             <span className="text-xs text-muted-foreground">{product.color}</span>
           )}
-          {product.size && (
-            <span className="text-xs text-muted-foreground">{product.size}</span>
+          {product.dimensions && (
+            <span className="text-xs text-muted-foreground">{product.dimensions}</span>
           )}
           {product.deliveryTime && (
             <span className="text-xs text-muted-foreground">Dostawa: {product.deliveryTime}</span>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,13 +22,13 @@ const CATEGORIES = [
 
 interface ProductData {
   name: string; url: string; imageUrl: string; price: string;
-  manufacturer: string; color: string; size: string; description: string;
+  manufacturer: string; color: string; dimensions: string; description: string;
   deliveryTime: string; category: string;
 }
 
 const empty = (): ProductData => ({
   name: "", url: "", imageUrl: "", price: "",
-  manufacturer: "", color: "", size: "", description: "", deliveryTime: "", category: "",
+  manufacturer: "", color: "", dimensions: "", description: "", deliveryTime: "", category: "",
 });
 
 interface Props {
@@ -44,9 +44,17 @@ export default function AddProductToLibraryDialog({ open, onOpenChange, onAdded,
   const [tab, setTab] = useState<"link" | "manual">("link");
   const [scrapeUrl, setScrapeUrl] = useState("");
   const [scraping, setScraping] = useState(false);
-  const [form, setForm] = useState<ProductData>(() => ({ ...empty(), ...initialData }));
+  const [form, setForm] = useState<ProductData>(empty);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setForm({ ...empty(), ...initialData });
+      setTab(editMode ? "manual" : "link");
+      setScrapeUrl("");
+    }
+  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function set(field: keyof ProductData, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -66,7 +74,7 @@ export default function AddProductToLibraryDialog({ open, onOpenChange, onAdded,
       setForm({
         name: data.name ?? "", url: scrapeUrl.trim(), imageUrl: data.imageUrl ?? "",
         price: data.price ?? "", manufacturer: data.manufacturer ?? "", color: data.color ?? "",
-        size: data.size ?? "", description: data.description ?? "", deliveryTime: data.deliveryTime ?? "", category: "",
+        dimensions: data.dimensions ?? "", description: data.description ?? "", deliveryTime: data.deliveryTime ?? "", category: "",
       });
       if (data.partial) toast.warning("Sklep blokuje automatyczne pobieranie — uzupełnij dane ręcznie");
       setTab("manual");
@@ -149,21 +157,21 @@ export default function AddProductToLibraryDialog({ open, onOpenChange, onAdded,
                     <button type="button" onClick={() => set("imageUrl", "")} className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 text-white rounded-full p-1"><X size={14} /></button>
                   </div>
                 ) : (
-                  <div className="rounded-lg border-2 border-dashed border-border h-32 flex flex-col items-center justify-center gap-2 bg-muted/30">
+                  <div className="rounded-lg border-2 border-dashed border-border h-32 bg-muted/30 flex items-center justify-center">
                     {uploading ? (
-                      <><Loader2 size={18} className="animate-spin text-muted-foreground" /><p className="text-xs text-muted-foreground">Przesyłanie...</p></>
+                      <div className="flex flex-col items-center gap-2">
+                        <Loader2 size={18} className="animate-spin text-muted-foreground" />
+                        <p className="text-xs text-muted-foreground">Przesyłanie...</p>
+                      </div>
                     ) : (
-                      <>
-                        <ImagePlus size={20} className="text-muted-foreground" />
-                        <UploadButton<OurFileRouter, "productImageUploader">
-                          endpoint="productImageUploader"
-                          onUploadBegin={() => setUploading(true)}
-                          onClientUploadComplete={(res) => { const url = res?.[0]?.url; if (url) set("imageUrl", url); setUploading(false); }}
-                          onUploadError={() => { toast.error("Błąd przesyłania zdjęcia"); setUploading(false); }}
-                          appearance={{ button: "bg-transparent text-xs text-muted-foreground hover:text-foreground underline cursor-pointer ut-uploading:opacity-50", allowedContent: "hidden" }}
-                          content={{ button: "Wybierz zdjęcie" }}
-                        />
-                      </>
+                      <UploadButton<OurFileRouter, "productImageUploader">
+                        endpoint="productImageUploader"
+                        onUploadBegin={() => setUploading(true)}
+                        onClientUploadComplete={(res) => { const url = res?.[0]?.url; if (url) set("imageUrl", url); setUploading(false); }}
+                        onUploadError={() => { toast.error("Błąd przesyłania zdjęcia"); setUploading(false); }}
+                        appearance={{ container: "flex flex-col items-center gap-2 !mt-0", button: "bg-transparent p-0 border-0 shadow-none text-xs text-muted-foreground hover:text-foreground underline cursor-pointer ut-uploading:opacity-50 flex flex-col items-center gap-1.5", allowedContent: "hidden" }}
+                        content={{ button: <><ImagePlus size={20} className="text-muted-foreground" /><span>Wybierz zdjęcie</span></> }}
+                      />
                     )}
                   </div>
                 )}
@@ -199,8 +207,8 @@ export default function AddProductToLibraryDialog({ open, onOpenChange, onAdded,
                   <Input id="p-color" value={form.color} onChange={(e) => set("color", e.target.value)} placeholder="np. Biały" />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="p-size">Rozmiar</Label>
-                  <Input id="p-size" value={form.size} onChange={(e) => set("size", e.target.value)} placeholder="np. 30x30 cm" />
+                  <Label htmlFor="p-size">Wymiar</Label>
+                  <Input id="p-size" value={form.dimensions} onChange={(e) => set("dimensions", e.target.value)} placeholder="np. 30x30 cm" />
                 </div>
               </div>
 

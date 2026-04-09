@@ -32,10 +32,12 @@ interface ProductData {
   price: string;
   manufacturer: string;
   color: string;
-  size: string;
+  dimensions: string;
   description: string;
   deliveryTime: string;
   category: string;
+  supplier: string;
+  catalogNumber: string;
 }
 
 interface EditProductDialogProps {
@@ -62,10 +64,12 @@ export default function EditProductDialog({
     price: product.price ?? "",
     manufacturer: product.manufacturer ?? "",
     color: product.color ?? "",
-    size: product.size ?? "",
+    dimensions: product.dimensions ?? "",
     description: product.description ?? "",
     deliveryTime: product.deliveryTime ?? "",
     category: product.category ?? "",
+    supplier: product.supplier ?? "",
+    catalogNumber: product.catalogNumber ?? "",
   });
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -179,14 +183,25 @@ export default function EditProductDialog({
               <Input id="ep-color" value={form.color} onChange={(e) => set("color", e.target.value)} placeholder="np. Biały" />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="ep-size">Rozmiar</Label>
-              <Input id="ep-size" value={form.size} onChange={(e) => set("size", e.target.value)} placeholder="np. 30x30 cm" />
+              <Label htmlFor="ep-size">Wymiar</Label>
+              <Input id="ep-size" value={form.dimensions} onChange={(e) => set("dimensions", e.target.value)} placeholder="np. 30x30 cm" />
             </div>
           </div>
 
           <div className="space-y-1.5">
             <Label htmlFor="ep-delivery">Czas dostawy</Label>
             <Input id="ep-delivery" value={form.deliveryTime} onChange={(e) => set("deliveryTime", e.target.value)} placeholder="np. 3-5 dni roboczych" />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="ep-supplier">Dostawca</Label>
+              <Input id="ep-supplier" value={form.supplier} onChange={(e) => set("supplier", e.target.value)} placeholder="np. sklum.com" />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="ep-catalog">Nr. katalogowy</Label>
+              <Input id="ep-catalog" value={form.catalogNumber} onChange={(e) => set("catalogNumber", e.target.value)} placeholder="np. 194309-497795" />
+            </div>
           </div>
 
           <div className="space-y-1.5">

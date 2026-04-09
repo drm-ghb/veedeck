@@ -19,18 +19,25 @@ export default async function ListPage({ params, searchParams }: { params: Promi
       },
       select: {
         id: true, name: true, shareToken: true, budget: true,
-        project: { select: { id: true, title: true, hiddenModules: true } },
+        project: {
+          select: {
+            id: true, title: true, hiddenModules: true,
+            addressStreet: true, addressCity: true, addressPostalCode: true, addressCountry: true,
+            clients: { where: { isMainContact: true }, select: { name: true }, take: 1 },
+          },
+        },
         sections: {
           orderBy: { order: "asc" },
           select: {
-            id: true, name: true, order: true, sortBy: true, budget: true,
+            id: true, name: true, order: true, sortBy: true, budget: true, unsorted: true,
             products: {
               orderBy: { order: "asc" },
               select: {
                 id: true, name: true, url: true, imageUrl: true, price: true,
-                manufacturer: true, color: true, size: true, description: true,
+                manufacturer: true, color: true, dimensions: true, description: true,
                 deliveryTime: true, quantity: true, order: true, category: true,
-                hidden: true, approval: true,
+                hidden: true, approval: true, productId: true,
+                supplier: true, catalogNumber: true,
                 _count: { select: { comments: true } },
               },
             },
@@ -45,6 +52,7 @@ export default async function ListPage({ params, searchParams }: { params: Promi
   return (
     <ListDetail
       designerName={(session.user as { name?: string }).name ?? "Projektant"}
+      designerEmail={(session.user as { email?: string }).email ?? undefined}
       designerLogoUrl={userSettings?.clientLogoUrl ?? undefined}
       initialOpenProductId={initialOpenProductId}
       categoryOrder={userSettings?.listsCategoryOrder ?? []}
@@ -53,13 +61,23 @@ export default async function ListPage({ params, searchParams }: { params: Promi
         name: list.name,
         shareToken: list.shareToken,
         budget: list.budget ?? null,
-        project: list.project ? { id: list.project.id, title: list.project.title, hiddenModules: list.project.hiddenModules } : null,
+        project: list.project ? {
+          id: list.project.id,
+          title: list.project.title,
+          hiddenModules: list.project.hiddenModules,
+          clientName: list.project.clients[0]?.name ?? null,
+          addressStreet: list.project.addressStreet ?? null,
+          addressCity: list.project.addressCity ?? null,
+          addressPostalCode: list.project.addressPostalCode ?? null,
+          addressCountry: list.project.addressCountry ?? null,
+        } : null,
         sections: list.sections.map((s) => ({
           id: s.id,
           name: s.name,
           order: s.order,
           sortBy: s.sortBy,
           budget: s.budget ?? null,
+          unsorted: s.unsorted,
           products: s.products.map((p) => ({
             id: p.id,
             name: p.name,
@@ -68,7 +86,7 @@ export default async function ListPage({ params, searchParams }: { params: Promi
             price: p.price,
             manufacturer: p.manufacturer,
             color: p.color,
-            size: p.size,
+            dimensions: p.dimensions,
             description: p.description,
             deliveryTime: p.deliveryTime,
             quantity: p.quantity,
@@ -76,6 +94,9 @@ export default async function ListPage({ params, searchParams }: { params: Promi
             category: p.category,
             hidden: p.hidden,
             approval: p.approval,
+            productId: p.productId,
+            supplier: p.supplier,
+            catalogNumber: p.catalogNumber,
             commentCount: p._count.comments,
           })),
         })),

@@ -40,12 +40,14 @@ function resolveAllImages(val: unknown): string[] {
   return [];
 }
 
-/** Extract first gallery image from raw HTML — tries multiple common patterns */
+/** Extract main product image from raw HTML — tries multiple platform-specific and generic patterns */
 function extractGalleryImage(html: string, baseUrl: string): string | null {
   const BLOCKED = /logo|icon|sprite|pixel|placeholder|blank|loading|avatar|flag|badge|star|rating|arrow|bullet|check|social|payment|brand|banner|header|footer|nav|menu|search|cart|wishlist|account|close|hamburger/i;
 
   function resolve(src: string): string | null {
-    if (!src || BLOCKED.test(src)) return null;
+    if (!src?.trim() || BLOCKED.test(src)) return null;
+    src = src.trim();
+    if (src.startsWith("data:")) return null;
     if (src.startsWith("//")) src = "https:" + src;
     if (src.startsWith("/")) {
       try { return new URL(src, baseUrl).href; } catch { return null; }
@@ -53,29 +55,90 @@ function extractGalleryImage(html: string, baseUrl: string): string | null {
     return src.startsWith("http") ? src : null;
   }
 
-  // 1. WooCommerce: data-large_image attribute (highest quality product image)
+  /** Pick highest-resolution URL from a srcset string (prefer largest width descriptor) */
+  function bestFromSrcset(srcset: string): string | null {
+    let bestUrl = "";
+    let bestW = -1;
+    for (const entry of srcset.split(",").map(s => s.trim()).filter(Boolean)) {
+      const parts = entry.split(/\s+/);
+      const w = parseInt(parts[1] ?? "0") || 0;
+      if (w > bestW) { bestW = w; bestUrl = parts[0]; }
+    }
+    return bestUrl ? resolve(bestUrl) : null;
+  }
+
+  // 1. Shopify: featured_image from JS variables
+  const shopifyFeatured = html.match(/["']featured_image["']\s*:\s*["'](https?:\/\/[^"']+)["']/i);
+  if (shopifyFeatured?.[1]) { const r = resolve(shopifyFeatured[1]); if (r) return r; }
+
+  // 2. WooCommerce: data-large_image (highest quality gallery image)
   const wcLarge = html.match(/data-large_image=["']([^"']+)["']/i);
   if (wcLarge?.[1]) { const r = resolve(wcLarge[1]); if (r) return r; }
 
-  // 2. data-zoom-image (common in product galleries)
+  // 3. data-zoom-image
   const zoomImg = html.match(/data-zoom-image=["']([^"']+)["']/i);
   if (zoomImg?.[1]) { const r = resolve(zoomImg[1]); if (r) return r; }
 
-  // 3. Collect src/data-src/data-lazy/data-original from <img> tags
-  const imgRe = /<img[^>]+>/gi;
-  const srcRe = /(?:data-(?:src|lazy|original|full|main|image)|src)\s*=\s*["']([^"']+\.(?:jpg|jpeg|png|webp|avif)[^"'?]*(?:\?[^"']*)?)["']/i;
+  // 4. data-main-image / data-primary-image / data-featured-image attributes
+  const dataMain = html.match(/data-(?:main|primary|featured)[-_]?image=["']([^"']+)["']/i);
+  if (dataMain?.[1]) { const r = resolve(dataMain[1]); if (r) return r; }
 
-  const candidates: string[] = [];
-  let imgMatch;
-  while ((imgMatch = imgRe.exec(html)) !== null) {
-    const tag = imgMatch[0];
-    const m = tag.match(srcRe);
-    if (!m) continue;
-    const r = resolve(m[1].trim());
-    if (r) candidates.push(r);
+  // 5. itemprop="image" (microdata)
+  const itempropImg =
+    html.match(/itemprop=["']image["'][^>]*(?:src|content)=["']([^"']+)["']/i) ??
+    html.match(/(?:src|content)=["']([^"']+)["'][^>]*itemprop=["']image["']/i);
+  if (itempropImg?.[1]) { const r = resolve(itempropImg[1]); if (r) return r; }
+
+  // 6. <img> with id/class explicitly naming main/primary/featured/hero image
+  const mainClassRe = /<img\b[^>]*(?:id|class)=["'][^"']*(?:main[-_\s]?(?:image|img|photo)|primary[-_\s]?(?:image|img)|featured[-_\s]?(?:image|img)|product[-_\s]?(?:main|hero|featured|primary)|hero[-_\s]?(?:image|img))[^"']*["'][^>]*>/gi;
+  let mainMatch: RegExpExecArray | null;
+  while ((mainMatch = mainClassRe.exec(html)) !== null) {
+    const tag = mainMatch[0];
+    const srcset = tag.match(/srcset=["']([^"']+)["']/i)?.[1];
+    if (srcset) { const r = bestFromSrcset(srcset); if (r) return r; }
+    const src = tag.match(/(?:data-(?:src|lazy|original|full|large)|src)=["']([^"']+)["']/i)?.[1];
+    if (src) { const r = resolve(src); if (r) return r; }
   }
 
-  return candidates[0] ?? null;
+  // 7. <picture> blocks — prefer <source srcset> (highest-res), fallback to <img src>
+  const pictureRe = /<picture\b[^>]*>([\s\S]*?)<\/picture>/gi;
+  let pictureMatch: RegExpExecArray | null;
+  while ((pictureMatch = pictureRe.exec(html)) !== null) {
+    const inner = pictureMatch[1];
+    const sourceRe = /<source\b[^>]*srcset=["']([^"']+)["'][^>]*>/gi;
+    let sourceMatch: RegExpExecArray | null;
+    while ((sourceMatch = sourceRe.exec(inner)) !== null) {
+      const r = bestFromSrcset(sourceMatch[1]);
+      if (r) return r;
+    }
+    const imgSrc = inner.match(/<img\b[^>]*src=["']([^"']+)["']/i)?.[1];
+    if (imgSrc) { const r = resolve(imgSrc); if (r) return r; }
+  }
+
+  // 8. Collect all <img> tags — prefer those with explicit large width or srcset
+  const imgRe = /<img\b[^>]+>/gi;
+  const srcRe = /(?:data-(?:src|lazy|original|full|main|image)|src)\s*=\s*["']([^"'?]+(?:\?[^"']*)?)["']/i;
+  const candidates: Array<{ url: string; w: number }> = [];
+  let imgMatch: RegExpExecArray | null;
+  while ((imgMatch = imgRe.exec(html)) !== null) {
+    const tag = imgMatch[0];
+    const srcset = tag.match(/srcset=["']([^"']+)["']/i)?.[1];
+    if (srcset) {
+      const r = bestFromSrcset(srcset);
+      if (r) { candidates.push({ url: r, w: 9999 }); continue; }
+    }
+    const m = tag.match(srcRe);
+    if (!m) continue;
+    const url = m[1].trim();
+    if (!/\.(jpg|jpeg|png|webp|avif)/i.test(url)) continue;
+    const r = resolve(url);
+    if (!r) continue;
+    const w = parseInt(tag.match(/\bwidth=["']?(\d+)/i)?.[1] ?? "0") || 0;
+    candidates.push({ url: r, w });
+  }
+
+  candidates.sort((a, b) => b.w - a.w);
+  return candidates[0]?.url ?? null;
 }
 
 /** Extract a numeric value and unit from a dimension string like "36 cm" */
@@ -86,8 +149,8 @@ function parseDim(val: string | null | undefined): { num: string; unit: string }
   return { num: m[1].replace(",", "."), unit: (m[2] ?? "").toLowerCase() };
 }
 
-/** Extract value of a named spec field from HTML table/list only (no free-text — too error-prone).
- *  Matches patterns like: <td>Szerokość:</td><td>36 cm</td> */
+/** Extract value of a named spec field from HTML tables, lists, and common inline patterns.
+ *  Matches patterns like: <td>Szerokość:</td><td>36 cm</td>, <strong>Szer.:</strong> 36 cm */
 function extractSpecField(html: string, ...names: string[]): string | null {
   for (const name of names) {
     const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -104,7 +167,19 @@ function extractSpecField(html: string, ...names: string[]): string | null {
     );
     if (dl?.[1]?.trim()) return dl[1].trim();
 
-    // Label inline (strict): only inside a <label> or <li> tag to avoid picking up descriptions
+    // <strong>Name:</strong> value  (very common in Polish shops)
+    const strong = html.match(
+      new RegExp(`<strong[^>]*>\\s*${escaped}[:\\s]*<\\/strong>\\s*([^<]{1,50})`, "i")
+    );
+    if (strong?.[1]?.trim()) return strong[1].trim();
+
+    // <p> or <li> containing "Name: value"
+    const para = html.match(
+      new RegExp(`<(?:p|li)[^>]*>[^<]*${escaped}[:\\s]+([^<]{2,50})<\\/(?:p|li)>`, "i")
+    );
+    if (para?.[1]?.trim()) return para[1].trim();
+
+    // Label inline (strict): only inside a <label>, <li>, or <span> tag
     const label = html.match(
       new RegExp(`<(?:label|li|span)[^>]*>\\s*${escaped}[:\\s]+([\\d][^<]{1,20})<\\/(?:label|li|span)>`, "i")
     );
@@ -113,16 +188,17 @@ function extractSpecField(html: string, ...names: string[]): string | null {
   return null;
 }
 
-/** Extract product dimensions and compose WxLxH string */
+/** Extract product dimensions */
 function extractSize(
   ld: Record<string, unknown> | null,
   html: string,
   productName: string | null,
 ): string | null {
-  // 1. Explicit size field in JSON-LD
-  if (ld?.size && typeof ld.size === "string") return ld.size;
+  // 1. Explicit size/dimensions field in JSON-LD
+  if (ld?.size && typeof ld.size === "string") return ld.size as string;
+  if (ld?.dimensions && typeof ld.dimensions === "string") return ld.dimensions as string;
 
-  // 2. JSON-LD width/height/depth fields
+  // 2. JSON-LD width/height/depth combination
   const ldW = parseDim(ld?.width as string);
   const ldH = parseDim(ld?.height as string);
   const ldD = parseDim(ld?.depth as string);
@@ -132,34 +208,34 @@ function extractSize(
     return ldParts.map((p) => p.num).join("x") + (unit ? " " + unit : "");
   }
 
-  // 3. Extract individual dimensions from HTML spec table
-  const rawWidth  = extractSpecField(html, "Szerokość", "Szerokosc", "Width",  "Szer");
-  const rawLength = extractSpecField(html, "Długość",   "Dlugosc",   "Length", "Głębokość", "Glebokosc", "Depth");
-  const rawHeight = extractSpecField(html, "Wysokość",  "Wysokosc",  "Height", "Wys");
-  const rawDepth  = extractSpecField(html, "Głębokość", "Glebokosc", "Depth");
+  // 3. "Wymiar:" / "Wymiary:" direct label (highest HTML priority)
+  const labelWymiar = html.match(/Wymiary?[:\s]+([^\n<]{2,40})/i);
+  if (labelWymiar?.[1]?.trim()) return labelWymiar[1].trim();
 
-  const w = parseDim(rawWidth);
-  const l = parseDim(rawLength);
-  const h = parseDim(rawHeight);
-  const d = parseDim(rawDepth);
+  // 4. "Rozmiar:" / "Rozmiary:" label
+  const labelRozmiar = html.match(/Rozmiary?[:\s]+([^\n<]{2,40})/i);
+  if (labelRozmiar?.[1]?.trim()) return labelRozmiar[1].trim();
 
-  const htmlParts: { num: string; unit: string }[] = [];
-  if (w) htmlParts.push(w);
-  // length and depth — pick whichever we found, avoid duplicating
-  if (l && (!d || l.num !== d.num)) htmlParts.push(l);
-  else if (d && !l) htmlParts.push(d);
-  if (h) htmlParts.push(h);
+  // 5. Individual dimension fields from spec table/list
+  const rawH = extractSpecField(html, "Wysokość", "Wysokosc", "Height", "Wys.", "Wys");
+  const rawW = extractSpecField(html, "Szerokość", "Szerokosc", "Width",  "Szer.", "Szer");
+  const rawL = extractSpecField(html, "Długość",   "Dlugosc",   "Length", "Dł.",  "Dl");
+  const rawD = extractSpecField(html, "Głębokość", "Glebokosc", "Depth",  "Gł.",  "Gl");
+  const rawT = extractSpecField(html, "Grubość",   "Grubosc",   "Thickness");
+  const rawDia = extractSpecField(html, "Średnica", "Srednica",  "Diameter", "Śr.");
 
-  if (htmlParts.length >= 2) {
-    const unit = htmlParts.find((p) => p.unit)?.unit ?? "";
-    return htmlParts.map((p) => p.num).join("x") + (unit ? " " + unit : "");
-  }
+  const parts: string[] = [];
+  if (rawH) parts.push(`Wys. ${rawH}`);
+  if (rawW) parts.push(`Szer. ${rawW}`);
+  if (rawL && rawL !== rawD) parts.push(`Dł. ${rawL}`);
+  else if (rawD) parts.push(`Gł. ${rawD}`);
+  if (rawT) parts.push(`Gr. ${rawT}`);
+  if (rawDia) parts.push(`Śr. ${rawDia}`);
 
-  // 4. "Rozmiar: 800x800" label
-  const labelSize = html.match(/(?:Rozmiar|Rozmiary|Wymiary?)[:\s]+([^\n<]{2,30})/i);
-  if (labelSize?.[1]?.trim()) return labelSize[1].trim();
+  if (parts.length >= 2) return parts.join(" / ");
+  if (parts.length === 1) return parts[0];
 
-  // 5. Dimension pattern with unit anywhere in name/description/HTML
+  // 6. Dimension pattern with unit (NxN cm) anywhere in name/description/HTML
   const DIM_WITH_UNIT = /\d+\s*[xX×]\s*\d+(?:\s*[xX×]\s*\d+)?\s*(?:cm|mm)\b/i;
   for (const text of [productName ?? "", (ld?.name as string) ?? "", (ld?.description as string) ?? "", html]) {
     const m = text.match(DIM_WITH_UNIT);
@@ -239,6 +315,41 @@ function extractManufacturerFromHtml(html: string, pageUrl: string): string | nu
   } catch { /* ignore */ }
 
   return null;
+}
+
+/** Extract catalog / reference / SKU number from HTML spec tables */
+function extractCatalogNumber(ld: Record<string, unknown> | null, html: string): string | null {
+  // 1. Nr. katalogowy / Nr. Kat.
+  const catNum = extractSpecField(html,
+    "Nr. katalogowy", "Nr katalogowy", "Numer katalogowy", "Nr. kat.", "Nr kat", "Nr. Kat."
+  );
+  if (catNum) return catNum;
+
+  // 2. Nr. referencyjny / REF
+  const refNum = extractSpecField(html,
+    "Nr. referencyjny", "Nr referencyjny", "Numer referencyjny", "REF", "Referencja"
+  );
+  if (refNum) return refNum;
+
+  // 3. SKU — JSON-LD first, then spec table, then itemprop
+  if (ld?.sku && typeof ld.sku === "string") return ld.sku;
+  const skuSpec = extractSpecField(html, "SKU", "Kod produktu", "Kod towaru");
+  if (skuSpec) return skuSpec;
+  const itemSku = html.match(/itemprop=["']sku["'][^>]*content=["']([^"']+)["']/i)
+    ?? html.match(/itemprop=["']sku["'][^>]*>([^<\s]+)/i);
+  if (itemSku?.[1]?.trim()) return itemSku[1].trim();
+
+  return null;
+}
+
+/** Derive supplier domain (always with www. prefix) from URL */
+function extractSupplier(url: string): string {
+  try {
+    const hostname = new URL(url).hostname;
+    return hostname.startsWith("www.") ? hostname : `www.${hostname}`;
+  } catch {
+    return "";
+  }
 }
 
 /** Extract color from HTML spec tables or meta */
@@ -346,7 +457,7 @@ export async function POST(req: NextRequest) {
       extractColorFromHtml(html) ||
       null;
 
-    const size =
+    const dimensions =
       extractSize(ld, html, name) ||
       getMetaTag(html, "product:size") ||
       null;
@@ -361,7 +472,10 @@ export async function POST(req: NextRequest) {
       (ld?.offers as Record<string, unknown>)?.deliveryLeadTime as string ||
       null;
 
-    return NextResponse.json({ name, imageUrl, price, manufacturer, color, size, description, deliveryTime });
+    const catalogNumber = extractCatalogNumber(ld, html);
+    const supplier = extractSupplier(url);
+
+    return NextResponse.json({ name, imageUrl, price, manufacturer, color, dimensions, description, deliveryTime, catalogNumber, supplier });
   } catch (err) {
     console.error("[POST /api/scrape] error:", err);
     return NextResponse.json({ error: "Nie udało się pobrać danych" }, { status: 500 });

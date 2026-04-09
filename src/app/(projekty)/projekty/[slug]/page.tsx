@@ -34,6 +34,10 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
     shareExpiresAt: project.shareExpiresAt ? project.shareExpiresAt.toISOString() : null,
     createdAt: project.createdAt.toISOString(),
     hiddenModules: project.hiddenModules,
+    addressCountry: project.addressCountry ?? null,
+    addressCity: project.addressCity ?? null,
+    addressPostalCode: project.addressPostalCode ?? null,
+    addressStreet: project.addressStreet ?? null,
     hasRenders: project.renders.length > 0,
     hasLists: project.shoppingLists.length > 0,
     clients: project.clients.map((c) => ({
