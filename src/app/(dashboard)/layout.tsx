@@ -24,7 +24,7 @@ export default async function DashboardLayout({
   });
 
   const displayName = dbUser?.name || dbUser?.email || null;
-  const navMode = dbUser?.navMode ?? "dashboard";
+  const navMode = dbUser?.navMode ?? "sidebar";
   const hiddenModules = dbUser?.globalHiddenModules ?? [];
   const logoUrl = dbUser?.clientLogoUrl ?? null;
 
