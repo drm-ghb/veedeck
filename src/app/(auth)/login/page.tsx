@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { signIn } from "next-auth/react";
+import { signIn, getSession } from "next-auth/react";
 import { Separator } from "@/components/ui/separator";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -43,7 +43,9 @@ export default function LoginPage() {
     if (result?.error) {
       toast.error(t.auth.invalidCredentials);
     } else {
-      router.push("/home");
+      const session = await getSession();
+      const dest = (session?.user as any)?.isAdmin ? "/admin" : "/home";
+      router.push(dest);
       router.refresh();
     }
     setLoading(false);
