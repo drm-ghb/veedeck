@@ -1,7 +1,6 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
 import { ShieldCheck } from "lucide-react";
 import { SignOutButton } from "@/components/dashboard/SignOutButton";
 import NotificationBell from "@/components/dashboard/NotificationBell";
@@ -37,10 +36,7 @@ export default async function DashboardLayout({
           <div className="flex items-center gap-2 shrink-0">
             <HomeLinkIcon hidden={navMode === "sidebar"} />
             <Link href="/renderflow" className="flex items-center gap-2 shrink-0">
-              <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center shrink-0 overflow-hidden">
-                <Image src="/logo2.png" alt="Veedeck" width={32} height={32} style={{ width: 32, height: 32 }} />
-              </div>
-              <span className="text-xl font-bold">Veedeck</span>
+              <span className="text-[1.5625rem] font-bold" style={{ fontFamily: "var(--font-story-script)" }}>veedeck</span>
             </Link>
             {dbUser?.isAdmin && (
               <Link href="/admin" className="hidden md:flex items-center gap-1.5 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 transition-colors ml-2">

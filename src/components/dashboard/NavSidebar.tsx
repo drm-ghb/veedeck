@@ -1,23 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
-import { LayoutDashboard, Briefcase, ShoppingCart, Package, PanelLeftClose, PanelLeftOpen, Settings, Sun, Moon, HelpCircle, X, CheckCircle } from "lucide-react";
+import { useState } from "react";
+import { LayoutDashboard, Briefcase, ShoppingCart, Package, PanelLeftClose, PanelLeftOpen, Settings, Sun, Moon, HelpCircle, X, CheckCircle, PictureInPicture } from "lucide-react";
 import { useTheme } from "@/lib/theme";
+import { useT } from "@/lib/i18n";
 
 interface NavSidebarProps {
   hiddenModules: string[];
 }
-
-const items = [
-  { label: "Dashboard", href: "/home", icon: <LayoutDashboard size={18} />, slug: null },
-  { label: "Projekty", href: "/projekty", icon: <Briefcase size={18} />, slug: null },
-  { label: "RenderFlow", href: "/renderflow", icon: null, slug: "renderflow" },
-  { label: "Listy", href: "/listy", icon: <ShoppingCart size={18} />, slug: "listy" },
-  { label: "Produkty", href: "/produkty", icon: <Package size={18} />, slug: "produkty" },
-];
 
 function getSettingsHref(pathname: string): string {
   if (pathname.startsWith("/renderflow")) return "/settings/renderflow";
@@ -33,16 +25,23 @@ const HIDDEN_ON: RegExp[] = [
 export default function NavSidebar({ hiddenModules }: NavSidebarProps) {
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
-  const [collapsed, setCollapsed] = useState(false);
+  const t = useT();
+  const [collapsed, setCollapsed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("nav-sidebar-collapsed") === "true";
+  });
   const [helpOpen, setHelpOpen] = useState(false);
   const [helpSubject, setHelpSubject] = useState("");
   const [helpDesc, setHelpDesc] = useState("");
   const [helpSent, setHelpSent] = useState(false);
 
-  useEffect(() => {
-    const saved = localStorage.getItem("nav-sidebar-collapsed");
-    if (saved === "true") setCollapsed(true);
-  }, []);
+  const items = [
+    { label: t.nav.dashboard, href: "/home", icon: <LayoutDashboard size={18} />, slug: null },
+    { label: t.nav.projects, href: "/projekty", icon: <Briefcase size={18} />, slug: null },
+    { label: t.nav.renderflow, href: "/renderflow", icon: <PictureInPicture size={18} />, slug: "renderflow" },
+    { label: t.nav.lists, href: "/listy", icon: <ShoppingCart size={18} />, slug: "listy" },
+    { label: t.nav.products, href: "/produkty", icon: <Package size={18} />, slug: "produkty" },
+  ];
 
   function toggle() {
     const next = !collapsed;
@@ -73,12 +72,7 @@ export default function NavSidebar({ hiddenModules }: NavSidebarProps) {
               }`}
             >
               <span className="flex-shrink-0 w-5 flex items-center justify-center">
-                {item.icon ?? (
-                  <>
-                    <Image src="/logo.svg" alt="RenderFlow" width={18} height={18} className="block dark:hidden" />
-                    <Image src="/logo-dark.svg" alt="RenderFlow" width={18} height={18} className="hidden dark:block" />
-                  </>
-                )}
+                {item.icon}
               </span>
               {!isCollapsed && item.label}
             </Link>
@@ -91,7 +85,7 @@ export default function NavSidebar({ hiddenModules }: NavSidebarProps) {
         {isCollapsed ? (
           <button
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            title={theme === "dark" ? "Przełącz na jasny" : "Przełącz na ciemny"}
+            title={theme === "dark" ? t.nav.switchLight : t.nav.switchDark}
             className="flex items-center justify-center w-full py-2 px-2.5 rounded-lg text-gray-400 hover:bg-muted hover:text-foreground transition-colors"
           >
             {theme === "dark" ? <Moon size={18} /> : <Sun size={18} />}
@@ -103,12 +97,12 @@ export default function NavSidebar({ hiddenModules }: NavSidebarProps) {
                 {theme === "dark" ? <Moon size={18} /> : <Sun size={18} />}
               </span>
               <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                {theme === "dark" ? "Ciemny" : "Jasny"}
+                {theme === "dark" ? t.nav.dark : t.nav.light}
               </span>
             </div>
             <button
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              title={theme === "dark" ? "Przełącz na jasny" : "Przełącz na ciemny"}
+              title={theme === "dark" ? t.nav.switchLight : t.nav.switchDark}
               className={`relative w-10 h-5 rounded-full transition-colors shrink-0 ${theme === "dark" ? "bg-primary" : "bg-muted-foreground/30"}`}
             >
               <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${theme === "dark" ? "left-5" : "left-0.5"}`} />
@@ -116,21 +110,21 @@ export default function NavSidebar({ hiddenModules }: NavSidebarProps) {
           </div>
         )}
 
-        {/* Pomoc */}
+        {/* Help */}
         <button
           onClick={() => { setHelpOpen(true); setHelpSent(false); setHelpSubject(""); setHelpDesc(""); }}
-          title={isCollapsed ? "Pomoc" : undefined}
+          title={isCollapsed ? t.nav.help : undefined}
           className="flex items-center gap-3 px-2.5 py-2.5 rounded-lg text-sm font-medium transition-colors w-full text-gray-600 dark:text-gray-400 hover:bg-muted hover:text-foreground"
         >
           <span className="flex-shrink-0 w-5 flex items-center justify-center">
             <HelpCircle size={18} />
           </span>
-          {!isCollapsed && "Pomoc"}
+          {!isCollapsed && t.nav.help}
         </button>
 
         <Link
           href={getSettingsHref(pathname)}
-          title={isCollapsed ? "Ustawienia" : undefined}
+          title={isCollapsed ? t.nav.settings : undefined}
           className={`flex items-center gap-3 px-2.5 py-2.5 rounded-lg text-sm font-medium transition-colors ${
             pathname.startsWith("/settings")
               ? "bg-primary/10 text-primary"
@@ -140,11 +134,11 @@ export default function NavSidebar({ hiddenModules }: NavSidebarProps) {
           <span className="flex-shrink-0 w-5 flex items-center justify-center">
             <Settings size={18} />
           </span>
-          {!isCollapsed && "Ustawienia"}
+          {!isCollapsed && t.nav.settings}
         </Link>
         <button
           onClick={toggle}
-          title={isCollapsed ? "Rozwiń pasek" : "Zwiń pasek"}
+          title={isCollapsed ? t.nav.expand : t.nav.collapse}
           className="flex items-center justify-center w-full py-2 px-2.5 rounded-lg text-gray-400 hover:bg-muted hover:text-foreground transition-colors"
         >
           {isCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
@@ -157,7 +151,7 @@ export default function NavSidebar({ hiddenModules }: NavSidebarProps) {
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setHelpOpen(false)}>
         <div className="bg-card rounded-2xl shadow-xl w-full max-w-md mx-4 p-6" onClick={(e) => e.stopPropagation()}>
           <div className="flex items-center justify-between mb-5">
-            <h2 className="text-lg font-semibold">Pomoc i wsparcie</h2>
+            <h2 className="text-lg font-semibold">{t.nav.helpTitle}</h2>
             <button onClick={() => setHelpOpen(false)} className="text-muted-foreground hover:text-foreground transition-colors">
               <X size={18} />
             </button>
@@ -166,39 +160,39 @@ export default function NavSidebar({ hiddenModules }: NavSidebarProps) {
           {helpSent ? (
             <div className="flex flex-col items-center text-center py-6 gap-3">
               <CheckCircle size={48} className="text-green-500" />
-              <p className="font-semibold text-lg">Dziękujemy za zgłoszenie!</p>
-              <p className="text-sm text-muted-foreground">Nasz zespół wsparcia zajmie się Twoim zgłoszeniem najszybciej jak to możliwe.</p>
+              <p className="font-semibold text-lg">{t.nav.helpSent}</p>
+              <p className="text-sm text-muted-foreground">{t.nav.helpSentDesc}</p>
               <button
                 onClick={() => setHelpOpen(false)}
                 className="mt-2 px-4 py-2 text-sm bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity"
               >
-                Zamknij
+                {t.common.close}
               </button>
             </div>
           ) : (
             <div className="space-y-4">
               <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 rounded-lg px-3 py-2">
-                <span>Email wsparcia:</span>
+                <span>{t.nav.helpEmail}:</span>
                 <a href="mailto:support@veedeck.com" className="text-primary font-medium hover:underline">support@veedeck.com</a>
               </div>
 
               <div className="space-y-1">
-                <label className="text-sm font-medium">Temat zgłoszenia</label>
+                <label className="text-sm font-medium">{t.nav.helpSubject}</label>
                 <input
                   type="text"
                   value={helpSubject}
                   onChange={(e) => setHelpSubject(e.target.value)}
-                  placeholder="Wpisz temat..."
+                  placeholder={t.nav.helpSubjectPlaceholder}
                   className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-sm font-medium">Opis</label>
+                <label className="text-sm font-medium">{t.nav.helpDescription}</label>
                 <textarea
                   value={helpDesc}
                   onChange={(e) => setHelpDesc(e.target.value)}
-                  placeholder="Opisz problem lub pytanie..."
+                  placeholder={t.nav.helpDescriptionPlaceholder}
                   rows={4}
                   className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
                 />
@@ -209,7 +203,7 @@ export default function NavSidebar({ hiddenModules }: NavSidebarProps) {
                 disabled={!helpSubject.trim() && !helpDesc.trim()}
                 className="w-full py-2 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                Wyślij zgłoszenie
+                {t.nav.helpSend}
               </button>
             </div>
           )}

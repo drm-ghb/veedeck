@@ -6,18 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { User, Mail, Lock, Info, Sun, Moon, Monitor, Palette, Image as ImageIcon, Layers, ShoppingCart, Package, LayoutDashboard, PanelLeft } from "lucide-react";
+import { User, Mail, Lock, Info, Sun, Moon, Monitor, Palette, Image as ImageIcon, Layers, ShoppingCart, Package, LayoutDashboard, PanelLeft, Globe } from "lucide-react";
 import Image from "next/image";
 import { useTheme, type Theme } from "@/lib/theme";
+import { useT, useLang } from "@/lib/i18n";
 import { UploadButton } from "@uploadthing/react";
 import type { OurFileRouter } from "@/lib/uploadthing";
 import { patchUser, SettingRow, SectionHeader, ToggleSwitch } from "./SettingsShared";
-
-const THEME_OPTIONS: { value: Theme; label: string; icon: React.ElementType }[] = [
-  { value: "light", label: "Jasny", icon: Sun },
-  { value: "dark", label: "Ciemny", icon: Moon },
-  { value: "system", label: "Systemowy", icon: Monitor },
-];
 
 interface Props {
   initialName: string;
@@ -40,6 +35,14 @@ export function SettingsGeneral({
 }: Props) {
   const router = useRouter();
   const { theme, setTheme } = useTheme();
+  const t = useT();
+  const { lang, setLang } = useLang();
+
+  const THEME_OPTIONS: { value: Theme; label: string; icon: React.ElementType }[] = [
+    { value: "light", label: t.theme.light, icon: Sun },
+    { value: "dark", label: t.theme.dark, icon: Moon },
+    { value: "system", label: t.theme.system, icon: Monitor },
+  ];
 
   const [name, setName] = useState(initialName);
   const [nameLoading, setNameLoading] = useState(false);
@@ -62,8 +65,8 @@ const [navMode, setNavMode] = useState(initialNavMode);
     setNameLoading(true);
     try {
       const res = await patchUser({ name: name.trim() });
-      if (!res.ok) { const d = await res.json(); toast.error(d.error || "Błąd podczas zapisywania"); return; }
-      toast.success("Imię zostało zaktualizowane");
+      if (!res.ok) { const d = await res.json(); toast.error(d.error || t.settings.saveError); return; }
+      toast.success(t.settings.nameUpdated);
       router.refresh();
     } finally { setNameLoading(false); }
   }
@@ -73,15 +76,15 @@ const [navMode, setNavMode] = useState(initialNavMode);
     setEmailLoading(true);
     try {
       const res = await patchUser({ email: email.trim() });
-      if (!res.ok) { const d = await res.json(); toast.error(d.error || "Błąd podczas zapisywania"); return; }
-      toast.success("Email zaktualizowany. Zaloguj się ponownie.");
+      if (!res.ok) { const d = await res.json(); toast.error(d.error || t.settings.saveError); return; }
+      toast.success(t.settings.emailUpdated);
       router.refresh();
     } finally { setEmailLoading(false); }
   }
 
   async function handlePasswordSave() {
-    if (newPassword !== confirmPassword) { toast.error("Nowe hasła nie są identyczne"); return; }
-    if (newPassword.length < 8) { toast.error("Nowe hasło musi mieć co najmniej 8 znaków"); return; }
+    if (newPassword !== confirmPassword) { toast.error(t.settings.passwordMismatch); return; }
+    if (newPassword.length < 8) { toast.error(t.settings.passwordTooShort); return; }
     setPasswordLoading(true);
     try {
       const res = await fetch("/api/user/password", {
@@ -90,8 +93,8 @@ const [navMode, setNavMode] = useState(initialNavMode);
         body: JSON.stringify({ currentPassword, newPassword }),
       });
       const data = await res.json();
-      if (!res.ok) { toast.error(data.error || "Błąd podczas zmiany hasła"); return; }
-      toast.success("Hasło zostało zmienione");
+      if (!res.ok) { toast.error(data.error || t.settings.passwordError); return; }
+      toast.success(t.settings.passwordChanged);
       setCurrentPassword(""); setNewPassword(""); setConfirmPassword("");
     } finally { setPasswordLoading(false); }
   }
@@ -99,8 +102,8 @@ const [navMode, setNavMode] = useState(initialNavMode);
   async function toggleShowProjectTitle() {
     const next = !showProjectTitle;
     const res = await patchUser({ showProjectTitle: next });
-    if (res.ok) { setShowProjectTitle(next); toast.success("Zapisano"); }
-    else toast.error("Błąd podczas zapisywania");
+    if (res.ok) { setShowProjectTitle(next); toast.success(t.settings.saved); }
+    else toast.error(t.settings.saveError);
   }
 
   async function toggleGlobalModule(slug: string) {
@@ -108,73 +111,73 @@ const [navMode, setNavMode] = useState(initialNavMode);
       ? globalHiddenModules.filter((m) => m !== slug)
       : [...globalHiddenModules, slug];
     const res = await patchUser({ globalHiddenModules: next });
-    if (res.ok) { setGlobalHiddenModules(next); toast.success("Zapisano"); }
-    else toast.error("Błąd podczas zapisywania");
+    if (res.ok) { setGlobalHiddenModules(next); toast.success(t.settings.saved); }
+    else toast.error(t.settings.saveError);
   }
 
   async function handleWelcomeSave() {
     setWelcomeLoading(true);
     try {
       const res = await patchUser({ clientWelcomeMessage: welcomeMsg.trim() || null });
-      if (res.ok) toast.success("Zapisano");
-      else toast.error("Błąd podczas zapisywania");
+      if (res.ok) toast.success(t.settings.saved);
+      else toast.error(t.settings.saveError);
     } finally { setWelcomeLoading(false); }
   }
 
   async function handleNavModeChange(mode: string) {
     setNavMode(mode);
     const res = await patchUser({ navMode: mode });
-    if (res.ok) { toast.success("Zapisano"); router.refresh(); }
-    else { setNavMode(navMode); toast.error("Błąd podczas zapisywania"); }
+    if (res.ok) { toast.success(t.settings.saved); router.refresh(); }
+    else { setNavMode(navMode); toast.error(t.settings.saveError); }
   }
 
 async function handleRemoveLogo() {
     const res = await patchUser({ clientLogoUrl: null });
-    if (res.ok) { setClientLogoUrl(null); toast.success("Logo usunięte"); }
-    else toast.error("Błąd podczas usuwania logo");
+    if (res.ok) { setClientLogoUrl(null); toast.success(t.settings.logoDeleted); }
+    else toast.error(t.settings.logoDeleteError);
   }
 
   return (
     <div className="max-w-3xl space-y-10">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Ustawienia ogólne</h1>
-        <p className="text-sm text-gray-500 mt-1">Zarządzaj swoim kontem i wyglądem dla klienta</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t.settings.general}</h1>
+        <p className="text-sm text-gray-500 mt-1">{t.settings.generalDesc}</p>
       </div>
 
       {/* ── Konto ── */}
       <section className="space-y-4">
-        <SectionHeader title="Ustawienia konta" />
+        <SectionHeader title={t.settings.account} />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
             <div className="flex items-center gap-2">
               <User size={16} className="text-gray-400" />
-              <h3 className="font-semibold text-gray-800 dark:text-gray-200">Profil</h3>
+              <h3 className="font-semibold text-gray-800 dark:text-gray-200">{t.settings.profile}</h3>
             </div>
             <div className="space-y-2">
-              <label className="text-sm text-gray-600 dark:text-gray-400">Nazwa</label>
-              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Twoje imię" onKeyDown={(e) => e.key === "Enter" && handleNameSave()} />
+              <label className="text-sm text-gray-600 dark:text-gray-400">{t.settings.profileName}</label>
+              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={t.settings.profileNamePlaceholder} onKeyDown={(e) => e.key === "Enter" && handleNameSave()} />
             </div>
             <Button onClick={handleNameSave} disabled={nameLoading || !name.trim() || name.trim() === initialName} size="sm">
-              {nameLoading ? "Zapisywanie..." : "Zapisz"}
+              {nameLoading ? t.common.saving : t.common.save}
             </Button>
           </div>
 
           <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
             <div className="flex items-center gap-2">
               <Mail size={16} className="text-gray-400" />
-              <h3 className="font-semibold text-gray-800 dark:text-gray-200">Adres email</h3>
+              <h3 className="font-semibold text-gray-800 dark:text-gray-200">{t.settings.emailLabel}</h3>
             </div>
             <div className="space-y-2">
               <label className="text-sm text-gray-600 dark:text-gray-400">Email</label>
-              <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="twoj@email.com" onKeyDown={(e) => e.key === "Enter" && handleEmailSave()} />
+              <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t.settings.emailPlaceholder} onKeyDown={(e) => e.key === "Enter" && handleEmailSave()} />
             </div>
             <div className="flex items-start gap-2 text-xs text-gray-400 bg-muted rounded-lg px-3 py-2">
               <Info size={13} className="mt-0.5 flex-shrink-0" />
-              <span>Zmiana wymaga ponownego zalogowania.</span>
+              <span>{t.settings.emailChangeNote}</span>
             </div>
             <Button onClick={handleEmailSave} disabled={emailLoading || !email.trim() || email.trim() === initialEmail} size="sm">
-              {emailLoading ? "Zapisywanie..." : "Zapisz"}
+              {emailLoading ? t.common.saving : t.common.save}
             </Button>
           </div>
         </div>
@@ -182,36 +185,36 @@ async function handleRemoveLogo() {
         <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
           <div className="flex items-center gap-2">
             <Lock size={16} className="text-gray-400" />
-            <h3 className="font-semibold text-gray-800 dark:text-gray-200">Hasło</h3>
+            <h3 className="font-semibold text-gray-800 dark:text-gray-200">{t.settings.password}</h3>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <label className="text-sm text-gray-600 dark:text-gray-400">Aktualne hasło</label>
+              <label className="text-sm text-gray-600 dark:text-gray-400">{t.settings.currentPassword}</label>
               <Input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} placeholder="••••••••" />
             </div>
             <div className="space-y-2">
-              <label className="text-sm text-gray-600 dark:text-gray-400">Nowe hasło</label>
-              <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="min. 8 znaków" />
+              <label className="text-sm text-gray-600 dark:text-gray-400">{t.settings.newPassword}</label>
+              <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder={t.settings.newPasswordPlaceholder} />
             </div>
             <div className="space-y-2">
-              <label className="text-sm text-gray-600 dark:text-gray-400">Powtórz nowe hasło</label>
+              <label className="text-sm text-gray-600 dark:text-gray-400">{t.settings.repeatPassword}</label>
               <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="••••••••" onKeyDown={(e) => e.key === "Enter" && handlePasswordSave()} />
             </div>
           </div>
           <Button onClick={handlePasswordSave} disabled={passwordLoading || !currentPassword || !newPassword || !confirmPassword} size="sm">
-            {passwordLoading ? "Zmienianie..." : "Zmień hasło"}
+            {passwordLoading ? t.settings.changingPassword : t.settings.changePassword}
           </Button>
         </div>
       </section>
 
       {/* ── Wygląd dla klienta ── */}
       <section className="space-y-4">
-        <SectionHeader title="Wygląd dla klienta" />
+        <SectionHeader title={t.settings.clientAppearance} />
 
         <div className="bg-card border border-border rounded-2xl p-6 space-y-6">
           <SettingRow
-            label="Wyświetlaj nazwę projektu"
-            description="Nazwa projektu jest widoczna obok logo i nazwy studia na stronie klienta."
+            label={t.settings.showProjectTitle}
+            description={t.settings.showProjectTitleDesc}
             checked={showProjectTitle}
             onToggle={toggleShowProjectTitle}
           />
@@ -219,14 +222,14 @@ async function handleRemoveLogo() {
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <ImageIcon size={15} className="text-gray-400" />
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Logo firmy</p>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{t.settings.logo}</p>
             </div>
-            <p className="text-xs text-gray-400">Wyświetlane zamiast logo RenderFlow na stronie klienta.</p>
+            <p className="text-xs text-gray-400">{t.settings.logoDesc}</p>
             {clientLogoUrl ? (
               <div className="flex items-center gap-3">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={clientLogoUrl} alt="Logo" className="h-10 object-contain rounded border border-border" />
-                <Button size="sm" variant="outline" onClick={handleRemoveLogo}>Usuń logo</Button>
+                <Button size="sm" variant="outline" onClick={handleRemoveLogo}>{t.settings.deleteLogo}</Button>
               </div>
             ) : (
               <UploadButton<OurFileRouter, "logoUploader">
@@ -236,10 +239,10 @@ async function handleRemoveLogo() {
                   if (url) {
                     await patchUser({ clientLogoUrl: url });
                     setClientLogoUrl(url);
-                    toast.success("Logo zapisane");
+                    toast.success(t.settings.saved);
                   }
                 }}
-                onUploadError={() => { toast.error("Błąd przesyłania logo"); }}
+                onUploadError={() => { toast.error(t.settings.logoUploadError); }}
                 appearance={{
                   button: "bg-primary text-primary-foreground hover:opacity-90 text-sm px-4 py-2 rounded-lg font-medium",
                   allowedContent: "text-xs text-gray-400",
@@ -249,16 +252,16 @@ async function handleRemoveLogo() {
           </div>
 
 <div className="space-y-3">
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Wiadomość powitalna</p>
-            <p className="text-xs text-gray-400">Tekst widoczny na stronie klienta przed listą pomieszczeń.</p>
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{t.settings.welcomeMessage}</p>
+            <p className="text-xs text-gray-400">{t.settings.welcomeMessageDesc}</p>
             <Textarea
               value={welcomeMsg}
               onChange={(e) => setWelcomeMsg(e.target.value)}
-              placeholder="np. Witaj! Poniżej znajdziesz rendery do akceptacji..."
+              placeholder={t.settings.welcomeMessagePlaceholder}
               rows={3}
             />
             <Button size="sm" onClick={handleWelcomeSave} disabled={welcomeLoading}>
-              {welcomeLoading ? "Zapisywanie..." : "Zapisz"}
+              {welcomeLoading ? t.common.saving : t.common.save}
             </Button>
           </div>
         </div>
@@ -266,15 +269,15 @@ async function handleRemoveLogo() {
 
       {/* ── Widoczność modułów ── */}
       <section className="space-y-4">
-        <SectionHeader title="Widoczność modułów" />
+        <SectionHeader title={t.settings.modulesVisibility} />
 
         <div className="bg-card border border-border rounded-2xl p-6 space-y-1">
-          <p className="text-xs text-gray-400 mb-4">Wybierz moduły widoczne na Twojej stronie głównej (/home). Wyłączenie modułu nie usuwa jego zasobów.</p>
+          <p className="text-xs text-gray-400 mb-4">{t.settings.modulesVisibilityDesc}</p>
           {[
             {
               slug: "renderflow",
               label: "RenderFlow",
-              description: "Wizualizacje projektu — moduł z renderami do akceptacji.",
+              description: t.settings.renderflowModuleDesc,
               icon: (
                 <div className="w-9 h-9 rounded-xl bg-[#C45824] flex items-center justify-center flex-shrink-0">
                   <Image src="/logo-dark.svg" alt="RenderFlow" width={22} height={22} />
@@ -283,8 +286,8 @@ async function handleRemoveLogo() {
             },
             {
               slug: "listy",
-              label: "Listy zakupowe",
-              description: "Listy produktów — moduł z listami do przeglądu.",
+              label: t.settings.lists,
+              description: t.settings.listsModuleDesc,
               icon: (
                 <div className="w-9 h-9 rounded-xl bg-[#0f766e] flex items-center justify-center flex-shrink-0">
                   <ShoppingCart size={18} className="text-white" />
@@ -294,7 +297,7 @@ async function handleRemoveLogo() {
             {
               slug: "produkty",
               label: "Produkty",
-              description: "Baza produktów projektanta — centralna biblioteka produktów.",
+              description: t.settings.productsModuleDesc,
               icon: (
                 <div className="w-9 h-9 rounded-xl bg-[#7c3aed] flex items-center justify-center flex-shrink-0">
                   <Package size={18} className="text-white" />
@@ -319,26 +322,26 @@ async function handleRemoveLogo() {
 
       {/* ── Nawigacja ── */}
       <section className="space-y-4">
-        <SectionHeader title="Nawigacja" />
+        <SectionHeader title={t.settings.navigation} />
 
         <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
           <div className="flex items-center gap-2">
             <PanelLeft size={16} className="text-gray-400" />
-            <h3 className="font-semibold text-gray-800 dark:text-gray-200">Sposób nawigacji między modułami</h3>
+            <h3 className="font-semibold text-gray-800 dark:text-gray-200">{t.settings.navigationDesc}</h3>
           </div>
-          <p className="text-xs text-gray-400">Wybierz jak chcesz poruszać się między modułami aplikacji.</p>
+          <p className="text-xs text-gray-400">{t.settings.navigationSubDesc}</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {[
               {
                 value: "dashboard",
-                label: "Dashboard",
-                description: "Strona główna z kafelkami modułów. Kliknij moduł, aby do niego przejść.",
+                label: t.settings.navDashboard,
+                description: t.settings.navDashboardDesc,
                 Icon: LayoutDashboard,
               },
               {
                 value: "sidebar",
-                label: "Panel boczny",
-                description: "Stały pasek po lewej stronie z listą modułów widoczny przez cały czas.",
+                label: t.settings.navSidebar,
+                description: t.settings.navSidebarDesc,
                 Icon: PanelLeft,
               },
             ].map(({ value, label, description, Icon }) => (
@@ -365,31 +368,56 @@ async function handleRemoveLogo() {
         </div>
       </section>
 
-      {/* ── Motyw interfejsu ── */}
+      {/* ── Ustawienia interfejsu ── */}
       <section className="space-y-4">
-        <SectionHeader title="Ustawienia interfejsu" />
+        <SectionHeader title={t.settings.interfaceSettings} />
 
-        <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
-          <div className="flex items-center gap-2">
-            <Palette size={16} className="text-gray-400" />
-            <h3 className="font-semibold text-gray-800 dark:text-gray-200">Motyw interfejsu</h3>
+        <div className="bg-card border border-border rounded-2xl p-6 space-y-6">
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Palette size={16} className="text-gray-400" />
+              <h3 className="font-semibold text-gray-800 dark:text-gray-200">{t.theme.label}</h3>
+            </div>
+            <div className="flex gap-2">
+              {THEME_OPTIONS.map(({ value, label, icon: Icon }) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setTheme(value)}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm border transition-colors ${
+                    theme === value
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "border-border text-foreground hover:bg-muted"
+                  }`}
+                >
+                  <Icon size={15} />
+                  {label}
+                </button>
+              ))}
+            </div>
           </div>
-          <div className="flex gap-2">
-            {THEME_OPTIONS.map(({ value, label, icon: Icon }) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() => setTheme(value)}
-                className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm border transition-colors ${
-                  theme === value
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "border-border text-foreground hover:bg-muted"
-                }`}
-              >
-                <Icon size={15} />
-                {label}
-              </button>
-            ))}
+
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Globe size={16} className="text-gray-400" />
+              <h3 className="font-semibold text-gray-800 dark:text-gray-200">{t.lang.label}</h3>
+            </div>
+            <div className="flex gap-2">
+              {(["pl", "en"] as const).map((value) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setLang(value)}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm border transition-colors ${
+                    lang === value
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "border-border text-foreground hover:bg-muted"
+                  }`}
+                >
+                  {t.lang[value]}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </section>

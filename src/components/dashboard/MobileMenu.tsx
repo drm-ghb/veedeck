@@ -7,20 +7,13 @@ import { usePathname } from "next/navigation";
 import { Menu, X, LayoutDashboard, Briefcase, ShoppingCart, Package, Settings, LogOut, HelpCircle, Sun, Moon, CheckCircle } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { useTheme } from "@/lib/theme";
+import { useT } from "@/lib/i18n";
 
 interface MobileMenuProps {
   userName: string | null;
   logoUrl?: string | null;
   hiddenModules?: string[];
 }
-
-const navItems = [
-  { label: "Dashboard", href: "/home", icon: <LayoutDashboard size={18} />, slug: null },
-  { label: "Projekty", href: "/projekty", icon: <Briefcase size={18} />, slug: null },
-  { label: "RenderFlow", href: "/renderflow", icon: null, slug: "renderflow" },
-  { label: "Listy", href: "/listy", icon: <ShoppingCart size={18} />, slug: "listy" },
-  { label: "Produkty", href: "/produkty", icon: <Package size={18} />, slug: "produkty" },
-];
 
 export default function MobileMenu({ userName, logoUrl, hiddenModules = [] }: MobileMenuProps) {
   const [open, setOpen] = useState(false);
@@ -30,6 +23,15 @@ export default function MobileMenu({ userName, logoUrl, hiddenModules = [] }: Mo
   const [helpSent, setHelpSent] = useState(false);
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
+  const t = useT();
+
+  const navItems = [
+    { label: t.nav.dashboard, href: "/home", icon: <LayoutDashboard size={18} />, slug: null },
+    { label: t.nav.projects, href: "/projekty", icon: <Briefcase size={18} />, slug: null },
+    { label: t.nav.renderflow, href: "/renderflow", icon: null, slug: "renderflow" },
+    { label: t.nav.lists, href: "/listy", icon: <ShoppingCart size={18} />, slug: "listy" },
+    { label: t.nav.products, href: "/produkty", icon: <Package size={18} />, slug: "produkty" },
+  ];
 
   // Close on route change
   useEffect(() => { setOpen(false); }, [pathname]);
@@ -55,7 +57,7 @@ export default function MobileMenu({ userName, logoUrl, hiddenModules = [] }: Mo
       <button
         onClick={() => setOpen(true)}
         className="p-1.5 rounded-md text-gray-500 dark:text-gray-400 hover:bg-muted transition-colors"
-        aria-label="Otwórz menu"
+        aria-label={t.nav.openMenu}
       >
         <Menu size={20} />
       </button>
@@ -131,7 +133,7 @@ export default function MobileMenu({ userName, logoUrl, hiddenModules = [] }: Mo
                 {theme === "dark" ? <Moon size={18} /> : <Sun size={18} />}
               </span>
               <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                {theme === "dark" ? "Ciemny" : "Jasny"}
+                {theme === "dark" ? t.nav.dark : t.nav.light}
               </span>
             </div>
             <button
@@ -147,7 +149,7 @@ export default function MobileMenu({ userName, logoUrl, hiddenModules = [] }: Mo
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-muted hover:text-foreground transition-colors"
           >
             <span className="w-5 flex items-center justify-center"><HelpCircle size={18} /></span>
-            Pomoc
+            {t.nav.help}
           </button>
 
           <Link
@@ -159,15 +161,15 @@ export default function MobileMenu({ userName, logoUrl, hiddenModules = [] }: Mo
             }`}
           >
             <span className="w-5 flex items-center justify-center"><Settings size={18} /></span>
-            Ustawienia
+            {t.nav.settings}
           </Link>
 
           <button
-            onClick={() => signOut({ callbackUrl: "/" })}
+            onClick={() => signOut({ callbackUrl: "/login" })}
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
           >
             <span className="w-5 flex items-center justify-center"><LogOut size={18} /></span>
-            Wyloguj
+            {t.nav.logout}
           </button>
         </div>
       </div>
@@ -177,7 +179,7 @@ export default function MobileMenu({ userName, logoUrl, hiddenModules = [] }: Mo
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" onClick={() => setHelpOpen(false)}>
           <div className="bg-card rounded-2xl shadow-xl w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-5">
-              <h2 className="text-lg font-semibold">Pomoc i wsparcie</h2>
+              <h2 className="text-lg font-semibold">{t.nav.helpTitle}</h2>
               <button onClick={() => setHelpOpen(false)} className="text-muted-foreground hover:text-foreground transition-colors">
                 <X size={18} />
               </button>
@@ -186,37 +188,37 @@ export default function MobileMenu({ userName, logoUrl, hiddenModules = [] }: Mo
             {helpSent ? (
               <div className="flex flex-col items-center text-center py-6 gap-3">
                 <CheckCircle size={48} className="text-green-500" />
-                <p className="font-semibold text-lg">Dziękujemy za zgłoszenie!</p>
-                <p className="text-sm text-muted-foreground">Nasz zespół wsparcia zajmie się Twoim zgłoszeniem najszybciej jak to możliwe.</p>
+                <p className="font-semibold text-lg">{t.nav.helpSent}</p>
+                <p className="text-sm text-muted-foreground">{t.nav.helpSentDesc}</p>
                 <button
                   onClick={() => setHelpOpen(false)}
                   className="mt-2 px-4 py-2 text-sm bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity"
                 >
-                  Zamknij
+                  {t.common.close}
                 </button>
               </div>
             ) : (
               <div className="space-y-4">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 rounded-lg px-3 py-2">
-                  <span>Email wsparcia:</span>
+                  <span>{t.nav.helpEmail}:</span>
                   <a href="mailto:support@veedeck.com" className="text-primary font-medium hover:underline">support@veedeck.com</a>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-sm font-medium">Temat zgłoszenia</label>
+                  <label className="text-sm font-medium">{t.nav.helpSubject}</label>
                   <input
                     type="text"
                     value={helpSubject}
                     onChange={(e) => setHelpSubject(e.target.value)}
-                    placeholder="Wpisz temat..."
+                    placeholder={t.nav.helpSubjectPlaceholder}
                     className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-sm font-medium">Opis</label>
+                  <label className="text-sm font-medium">{t.nav.helpDescription}</label>
                   <textarea
                     value={helpDesc}
                     onChange={(e) => setHelpDesc(e.target.value)}
-                    placeholder="Opisz problem lub pytanie..."
+                    placeholder={t.nav.helpDescriptionPlaceholder}
                     rows={4}
                     className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
                   />
@@ -226,7 +228,7 @@ export default function MobileMenu({ userName, logoUrl, hiddenModules = [] }: Mo
                   disabled={!helpSubject.trim() && !helpDesc.trim()}
                   className="w-full py-2 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                  Wyślij zgłoszenie
+                  {t.nav.helpSend}
                 </button>
               </div>
             )}

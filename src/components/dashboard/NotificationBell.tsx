@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import { Bell, Circle, ExternalLink } from "lucide-react";
 import { pusherClient } from "@/lib/pusher";
+import { useT } from "@/lib/i18n";
 
 interface Notification {
   id: string;
@@ -19,6 +20,7 @@ interface NotificationBellProps {
 }
 
 export default function NotificationBell({ userId }: NotificationBellProps) {
+  const t = useT();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -91,7 +93,7 @@ export default function NotificationBell({ userId }: NotificationBellProps) {
       {open && (
         <div className="absolute right-0 top-full mt-2 w-80 bg-card border border-border rounded-xl shadow-lg z-50 overflow-hidden">
           <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-            <span className="text-sm font-semibold">Powiadomienia</span>
+            <span className="text-sm font-semibold">{t.dashboard.notifications}</span>
             {unread > 0 && (
               <span className="text-xs bg-red-500 text-white rounded-full px-2 py-0.5 font-medium">
                 {unread} nowych
@@ -101,7 +103,7 @@ export default function NotificationBell({ userId }: NotificationBellProps) {
 
           {preview.length === 0 ? (
             <div className="py-8 text-center text-sm text-muted-foreground">
-              Brak nowych powiadomień
+              {t.dashboard.noNewNotifications}
             </div>
           ) : (
             <div className="divide-y divide-border">
@@ -131,7 +133,7 @@ export default function NotificationBell({ userId }: NotificationBellProps) {
               onClick={() => setOpen(false)}
               className="flex items-center justify-center w-full py-2.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
             >
-              Zobacz wszystkie
+              {t.dashboard.seeAll}
             </Link>
           </div>
         </div>

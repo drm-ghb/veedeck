@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { useT } from "@/lib/i18n";
 
 interface EditProjectDialogProps {
   project: {
@@ -23,6 +24,7 @@ interface EditProjectDialogProps {
     description?: string | null;
     sharePassword?: string | null;
     shareExpiresAt?: string | null;
+    clientCanUpload?: boolean;
   };
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -41,8 +43,10 @@ export default function EditProjectDialog({
   const [shareExpiresAt, setShareExpiresAt] = useState(
     project.shareExpiresAt ? new Date(project.shareExpiresAt).toISOString().slice(0, 10) : ""
   );
+  const [clientCanUpload, setClientCanUpload] = useState(project.clientCanUpload ?? false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const t = useT();
 
   useEffect(() => {
     if (open) {
@@ -52,6 +56,7 @@ export default function EditProjectDialog({
       setDescription(project.description ?? "");
       setSharePassword(project.sharePassword ?? "");
       setShareExpiresAt(project.shareExpiresAt ? new Date(project.shareExpiresAt).toISOString().slice(0, 10) : "");
+      setClientCanUpload(project.clientCanUpload ?? false);
     }
   }, [open, project]);
 
@@ -70,16 +75,17 @@ export default function EditProjectDialog({
           description: description.trim() || null,
           sharePassword: sharePassword.trim() || null,
           shareExpiresAt: shareExpiresAt || null,
+          clientCanUpload,
         }),
       });
 
       if (!res.ok) throw new Error();
 
-      toast.success("Projekt zaktualizowany");
+      toast.success(t.projekty.projectUpdated);
       onOpenChange(false);
       router.refresh();
     } catch {
-      toast.error("Błąd zapisu");
+      toast.error(t.projekty.projectUpdateError);
     } finally {
       setLoading(false);
     }
@@ -89,11 +95,11 @@ export default function EditProjectDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Edytuj projekt</DialogTitle>
+          <DialogTitle>{t.projekty.editProject}</DialogTitle>
         </DialogHeader>
         <div className="space-y-5">
           <div className="space-y-1.5">
-            <Label htmlFor="edit-title">Nazwa projektu *</Label>
+            <Label htmlFor="edit-title">{t.projekty.projectNameLabel}</Label>
             <Input
               id="edit-title"
               value={title}
@@ -104,16 +110,16 @@ export default function EditProjectDialog({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label htmlFor="edit-clientName">Nazwa klienta</Label>
+              <Label htmlFor="edit-clientName">{t.projekty.clientNameLabel}</Label>
               <Input
                 id="edit-clientName"
                 value={clientName}
                 onChange={(e) => setClientName(e.target.value)}
-                placeholder="np. Jan Kowalski"
+                placeholder={t.projekty.clientNamePlaceholder}
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="edit-clientEmail">Email klienta</Label>
+              <Label htmlFor="edit-clientEmail">{t.projekty.clientEmailLabel}</Label>
               <Input
                 id="edit-clientEmail"
                 value={clientEmail}
@@ -124,7 +130,7 @@ export default function EditProjectDialog({
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="edit-description">Opis (opcjonalnie)</Label>
+            <Label htmlFor="edit-description">{t.projekty.descriptionLabel}</Label>
             <Textarea
               id="edit-description"
               value={description}
@@ -135,17 +141,17 @@ export default function EditProjectDialog({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label htmlFor="edit-sharePassword">Hasło do linku (opcjonalnie)</Label>
+              <Label htmlFor="edit-sharePassword">{t.projekty.passwordLabel}</Label>
               <Input
                 id="edit-sharePassword"
                 type="password"
                 value={sharePassword}
                 onChange={(e) => setSharePassword(e.target.value)}
-                placeholder="Zostaw puste aby bez hasła"
+                placeholder={t.projekty.passwordPlaceholder}
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="edit-shareExpiresAt">Wygaśnięcie linku</Label>
+              <Label htmlFor="edit-shareExpiresAt">{t.projekty.expiresLabel}</Label>
               <Input
                 id="edit-shareExpiresAt"
                 type="date"
@@ -155,12 +161,33 @@ export default function EditProjectDialog({
             </div>
           </div>
 
+          <label className="flex items-start gap-3 cursor-pointer group">
+            <div className="relative mt-0.5 flex-shrink-0">
+              <input
+                type="checkbox"
+                checked={clientCanUpload}
+                onChange={(e) => setClientCanUpload(e.target.checked)}
+                className="sr-only"
+              />
+              <div
+                onClick={() => setClientCanUpload((v) => !v)}
+                className={`w-10 h-5 rounded-full transition-colors duration-200 cursor-pointer ${clientCanUpload ? "bg-gray-900 dark:bg-white" : "bg-gray-200 dark:bg-gray-700"}`}
+              >
+                <span className={`block w-4 h-4 bg-white dark:bg-gray-900 rounded-full shadow-sm transition-transform duration-200 mt-0.5 ${clientCanUpload ? "translate-x-5" : "translate-x-0.5"}`} />
+              </div>
+            </div>
+            <div>
+              <p className="text-sm font-medium leading-none">{t.projekty.clientCanUploadLabel}</p>
+              <p className="text-xs text-muted-foreground mt-1">{t.projekty.clientCanUploadHint}</p>
+            </div>
+          </label>
+
           <div className="flex gap-2 justify-end pt-1">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Anuluj
+              {t.common.cancel}
             </Button>
             <Button type="button" disabled={loading || !title.trim()} onClick={handleSave}>
-              {loading ? "Zapisywanie..." : "Zapisz"}
+              {loading ? t.common.saving : t.common.save}
             </Button>
           </div>
         </div>

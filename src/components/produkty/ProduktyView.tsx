@@ -14,6 +14,7 @@ import {
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
+import { useT } from "@/lib/i18n";
 import AddProductToLibraryDialog from "./AddProductToLibraryDialog";
 
 const CATEGORY_LABELS: Record<string, string> = {

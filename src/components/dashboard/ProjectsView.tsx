@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { useT } from "@/lib/i18n";
 
 interface Project {
   id: string;
@@ -31,6 +32,7 @@ interface ProjectsViewProps {
 }
 
 export default function ProjectsView({ projects, archivedProjects }: ProjectsViewProps) {
+  const t = useT();
   const [tab, setTab] = useState<"active" | "archived">("active");
   const [view, setView] = useState<"grid" | "list">("grid");
   const [search, setSearch] = useState("");
@@ -74,10 +76,10 @@ export default function ProjectsView({ projects, archivedProjects }: ProjectsVie
       body: JSON.stringify({ archived: false }),
     });
     if (res.ok) {
-      toast.success("Projekt przywrócony");
+      toast.success(t.projekty.projectRestored);
       router.refresh();
     } else {
-      toast.error("Błąd przywracania");
+      toast.error(t.projekty.projectRestoreError);
     }
   }
 
@@ -89,10 +91,10 @@ export default function ProjectsView({ projects, archivedProjects }: ProjectsVie
       body: JSON.stringify({ removeModule: "renderflow" }),
     });
     if (res.ok) {
-      toast.success("Projekt usunięty z RenderFlow");
+      toast.success(t.projekty.projectDeleted);
       router.refresh();
     } else {
-      toast.error("Błąd usuwania");
+      toast.error(t.projekty.projectDeleteError);
     }
   }
 
@@ -100,10 +102,10 @@ export default function ProjectsView({ projects, archivedProjects }: ProjectsVie
     <div>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Moje projekty</h1>
+          <h1 className="text-2xl font-bold">{t.dashboard.myProjects}</h1>
           <p className="text-gray-500 mt-1">
             {projects.length === 0
-              ? "Nie masz jeszcze żadnych projektów"
+              ? t.projekty.noProjectsEmpty
               : `${projects.length} projekt${projects.length === 1 ? "" : projects.length < 5 ? "y" : "ów"}`}
           </p>
         </div>
@@ -121,7 +123,7 @@ export default function ProjectsView({ projects, archivedProjects }: ProjectsVie
                 : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
-            Aktywne
+            {t.common.active}
             {projects.length > 0 && (
               <span className={`ml-1.5 text-xs px-1.5 py-0.5 rounded-full ${tab === "active" ? "bg-foreground text-background" : "bg-muted text-muted-foreground"}`}>
                 {projects.length}
@@ -136,7 +138,7 @@ export default function ProjectsView({ projects, archivedProjects }: ProjectsVie
                 : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
-            Zarchiwizowane
+            {t.common.archived}
             {archivedProjects.length > 0 && (
               <span className={`ml-1.5 text-xs px-1.5 py-0.5 rounded-full ${tab === "archived" ? "bg-foreground text-background" : "bg-muted text-muted-foreground"}`}>
                 {archivedProjects.length}
@@ -153,13 +155,13 @@ export default function ProjectsView({ projects, archivedProjects }: ProjectsVie
                 value={sort}
                 onChange={(e) => setSort(e.target.value as typeof sort)}
                 className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                aria-label="Sortowanie"
+                aria-label={t.common.sort}
               >
-                <option value="newest">Najnowsze</option>
-                <option value="oldest">Najstarsze</option>
-                <option value="az">A–Z</option>
-                <option value="za">Z–A</option>
-                <option value="renders">Najwięcej renderów</option>
+                <option value="newest">{t.common.newest}</option>
+                <option value="oldest">{t.common.oldest}</option>
+                <option value="az">{t.common.az}</option>
+                <option value="za">{t.common.za}</option>
+                <option value="renders">{t.projekty.mostRenders}</option>
               </select>
             </div>
             {/* Desktop: full select */}
@@ -168,11 +170,11 @@ export default function ProjectsView({ projects, archivedProjects }: ProjectsVie
               onChange={(e) => setSort(e.target.value as typeof sort)}
               className="hidden sm:block text-xs border border-gray-200 rounded-md px-2 py-1.5 bg-white text-gray-600 focus:outline-none focus:ring-1 focus:ring-gray-300"
             >
-              <option value="newest">Najnowsze</option>
-              <option value="oldest">Najstarsze</option>
-              <option value="az">A–Z</option>
-              <option value="za">Z–A</option>
-              <option value="renders">Najwięcej renderów</option>
+              <option value="newest">{t.common.newest}</option>
+              <option value="oldest">{t.common.oldest}</option>
+              <option value="az">{t.common.az}</option>
+              <option value="za">{t.common.za}</option>
+              <option value="renders">{t.projekty.mostRenders}</option>
             </select>
             {tab === "active" && (
               <div className="flex items-center gap-0.5 bg-gray-100 rounded-md p-0.5">
@@ -199,7 +201,7 @@ export default function ProjectsView({ projects, archivedProjects }: ProjectsVie
         <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
         <input
           type="text"
-          placeholder="Szukaj projektu..."
+          placeholder={t.projekty.searchPlaceholder}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
@@ -210,12 +212,12 @@ export default function ProjectsView({ projects, archivedProjects }: ProjectsVie
         projects.length === 0 ? (
           <div className="text-center py-16 text-gray-400">
             <p className="text-4xl mb-4">🏗️</p>
-            <p className="text-lg">Stwórz pierwszy projekt aby zacząć</p>
+            <p className="text-lg">{t.projekty.noProjectsHint}</p>
           </div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-16 text-gray-400">
             <p className="text-4xl mb-4">🔍</p>
-            <p className="text-lg">Brak projektów pasujących do &quot;{search}&quot;</p>
+            <p className="text-lg">{t.projekty.noProjectsActive.replace("{search}", search)}</p>
           </div>
         ) : view === "grid" ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4">
@@ -358,6 +360,7 @@ function ProjectListView({ projects }: { projects: Project[] }) {
                 clientEmail: p.clientEmail,
                 description: p.description,
                 pinned: p.pinned,
+                clientCanUpload: p.clientCanUpload,
               }}
             />
           </div>

@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { X, Send, Trash2, CornerDownRight } from "lucide-react";
+import { X, Send, Trash2, CornerDownRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { useT } from "@/lib/i18n";
 import { pusherClient } from "@/lib/pusher";
 import { toast } from "sonner";
 
@@ -73,8 +74,10 @@ export default function ProductCommentPanel({
   onClose,
   onCountChange,
 }: ProductCommentPanelProps) {
+  const t = useT();
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expanded, setExpanded] = useState(false);
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
@@ -177,7 +180,7 @@ export default function ProductCommentPanel({
       setText("");
       setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
     } catch {
-      toast.error("Błąd wysyłania wiadomości");
+      toast.error(t.share.sendError);
     } finally {
       setSending(false);
     }
@@ -188,7 +191,7 @@ export default function ProductCommentPanel({
       const res = await fetch(`/api/list-comments/${commentId}`, { method: "DELETE" });
       if (!res.ok) throw new Error();
     } catch {
-      toast.error("Błąd usuwania komentarza");
+      toast.error(t.share.deleteCommentError);
     }
   }
 
@@ -197,7 +200,7 @@ export default function ProductCommentPanel({
       const res = await fetch(`/api/list-comments/${commentId}/replies/${replyId}`, { method: "DELETE" });
       if (!res.ok) throw new Error();
     } catch {
-      toast.error("Błąd usuwania odpowiedzi");
+      toast.error(t.share.deleteReplyError);
     }
   }
 
@@ -215,7 +218,7 @@ export default function ProductCommentPanel({
       setReplyText("");
       setReplyingTo(null);
     } catch {
-      toast.error("Błąd wysyłania odpowiedzi");
+      toast.error(t.share.sendReplyError);
     } finally {
       setSendingReply(false);
     }
@@ -226,11 +229,22 @@ export default function ProductCommentPanel({
   }
 
   return (
-    <div className="fixed right-0 top-0 h-full w-80 bg-background border-l border-border shadow-xl z-50 flex flex-col">
+    <div className="fixed right-0 top-0 h-full z-50 flex flex-row items-end">
+      {/* Expand handle on left edge */}
+      <button
+        onClick={() => setExpanded(v => !v)}
+        className="hidden md:flex items-center justify-center w-5 h-12 bg-background border border-r-0 border-border rounded-l-md shadow-md text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
+        title={expanded ? t.share.collapsePanel : t.share.expandPanel}
+      >
+        {expanded ? <ChevronRight size={13} /> : <ChevronLeft size={13} />}
+      </button>
+
+      <div className={`h-full bg-background border-l border-border shadow-xl flex flex-col transition-[width] duration-200 ${expanded ? "w-[640px]" : "w-80"}`}>
+
       {/* Header */}
       <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-border shrink-0">
         <div className="min-w-0">
-          <p className="text-xs text-muted-foreground">Komentarze</p>
+          <p className="text-xs text-muted-foreground">{t.share.comments}</p>
           <p className="text-sm font-semibold truncate">{productName}</p>
         </div>
         <button
@@ -244,11 +258,11 @@ export default function ProductCommentPanel({
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-4">
         {loading && (
-          <p className="text-xs text-muted-foreground text-center py-8">Ładowanie...</p>
+          <p className="text-xs text-muted-foreground text-center py-8">{t.common.loading}</p>
         )}
         {!loading && comments.length === 0 && (
           <p className="text-xs text-muted-foreground text-center py-8">
-            Brak komentarzy.<br />Napisz pierwszą wiadomość.
+            {t.share.noComments}
           </p>
         )}
 
@@ -270,7 +284,7 @@ export default function ProductCommentPanel({
                   <span className="text-[10px] text-muted-foreground shrink-0">{formatDate(comment.createdAt)}</span>
                   {showHighlights && unread && (
                     <span className="text-[9px] font-semibold text-blue-500 bg-blue-100 dark:bg-blue-900/40 px-1 py-0.5 rounded leading-none transition-opacity duration-1000">
-                      Nowy
+                      {t.share.newBadge}
                     </span>
                   )}
                 </div>
@@ -280,7 +294,7 @@ export default function ProductCommentPanel({
                     onClick={() => { setReplyingTo(replyingTo === comment.id ? null : comment.id); setReplyText(""); }}
                     className="text-[10px] text-muted-foreground hover:text-foreground transition-colors"
                   >
-                    Odpowiedz
+                    {t.share.reply}
                   </button>
                   {canDelete(comment.author) && (
                     <button
@@ -328,7 +342,7 @@ export default function ProductCommentPanel({
                       if (e.key === "Enter" && e.ctrlKey) handleSendReply(comment.id);
                       if (e.key === "Escape") { setReplyingTo(null); setReplyText(""); }
                     }}
-                    placeholder="Odpowiedz..."
+                    placeholder={t.share.replyPlaceholder}
                     rows={1}
                     className="flex-1 px-2 py-1.5 text-xs border border-border rounded-lg bg-background focus:outline-none focus:ring-1 focus:ring-[#C45824]/30 resize-none"
                     autoFocus
@@ -359,7 +373,7 @@ export default function ProductCommentPanel({
             onKeyDown={(e) => {
               if (e.key === "Enter" && e.ctrlKey) handleSend();
             }}
-            placeholder="Napisz wiadomość... (Ctrl+Enter)"
+            placeholder={t.share.messagePlaceholder}
             rows={2}
             className="flex-1 px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-[#C45824]/20 focus:border-[#C45824]/40 resize-none"
           />
@@ -371,6 +385,7 @@ export default function ProductCommentPanel({
             <Send size={15} />
           </button>
         </div>
+      </div>
       </div>
     </div>
   );

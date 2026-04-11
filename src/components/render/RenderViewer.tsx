@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { ChevronLeft, ChevronRight, ChevronDown, Eye, EyeOff, Pin, X, Send, ZoomIn, ZoomOut, History, Upload, Maximize2, RotateCcw, Lock, LockOpen, SplitSquareHorizontal, ChevronsLeftRight, MessageSquare } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronDown, Eye, EyeOff, Pin, X, Send, ZoomIn, ZoomOut, History, Upload, Maximize2, RotateCcw, Lock, LockOpen, SplitSquareHorizontal, ChevronsLeftRight, MessageSquare, Sparkles } from "lucide-react";
 import RenderUploader from "./RenderUploader";
 import { useUploadThing } from "@/lib/uploadthing-client";
 
@@ -29,6 +29,7 @@ interface Comment {
   posY: number | null;
   status: CommentStatus;
   isInternal?: boolean;
+  isAiSummary?: boolean;
   author: string;
   createdAt: string;
   replies: Reply[];
@@ -82,6 +83,7 @@ interface RenderViewerProps {
   onStatusRequest?: () => Promise<void>;
   onBack?: () => void;
   onRenderSelect?: (render: RoomRender) => void;
+  shareToken?: string;
 }
 
 const STATUS_PIN_COLOR: Record<CommentStatus, string> = {
@@ -168,6 +170,7 @@ export default function RenderViewer({
   onStatusRequest,
   onBack,
   onRenderSelect,
+  shareToken,
 }: RenderViewerProps) {
   const [comments, setComments] = useState<Comment[]>(initialComments);
   const [pending, setPending] = useState<{ x: number; y: number } | null>(null);
@@ -207,6 +210,9 @@ export default function RenderViewer({
   const [sidebarTab, setSidebarTab] = useState<"pins" | "chat">("pins");
   const [chatMessage, setChatMessage] = useState("");
   const [sendingChatMessage, setSendingChatMessage] = useState(false);
+  const [localAiSummaries, setLocalAiSummaries] = useState<Comment[]>([]);
+  const [generatingSummary, setGeneratingSummary] = useState(false);
+  const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const [chatUnreadCount, setChatUnreadCount] = useState(() => {
     if (typeof window === "undefined") return 0;
     const lastReadAt = localStorage.getItem(`rf_chat_readAt_${renderId}`);
@@ -429,6 +435,49 @@ export default function RenderViewer({
       toast.error("Błąd wysyłania wiadomości");
     } finally {
       setSendingChatMessage(false);
+    }
+  }
+
+  async function generateAiSummary() {
+    setGeneratingSummary(true);
+    try {
+      if (isDesigner) {
+        const res = await fetch(`/api/renders/${renderId}/ai-summary`, { method: "POST" });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          toast.error(data.error || "Błąd generowania podsumowania");
+          return;
+        }
+        // Pusher (new-comment) automatically adds to comments state — no manual setComments needed
+      } else {
+        const res = await fetch(`/api/share/${shareToken}/renders/${renderId}/ai-summary`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ authorName }),
+        });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          toast.error(data.error || "Błąd generowania podsumowania");
+          return;
+        }
+        const { summary } = await res.json();
+        const localSummary: Comment = {
+          id: `local-ai-${Date.now()}`,
+          content: summary,
+          posX: null,
+          posY: null,
+          status: "NEW",
+          author: authorName,
+          createdAt: new Date().toISOString(),
+          replies: [],
+          isAiSummary: true,
+        };
+        setLocalAiSummaries(prev => [...prev, localSummary]);
+      }
+    } catch {
+      toast.error("Błąd generowania podsumowania");
+    } finally {
+      setGeneratingSummary(false);
     }
   }
 
@@ -1224,7 +1273,18 @@ export default function RenderViewer({
             className="fixed inset-0 z-20 bg-black/30 md:hidden"
             onClick={() => { setShowComments(false); sessionStorage.setItem("renderflow_showComments", "false"); }}
           />
-          <div className="fixed md:relative inset-y-0 right-0 z-30 md:z-auto w-[min(288px,100vw)] md:w-72 md:flex-shrink-0 border-l bg-card flex flex-col shadow-xl md:shadow-none">
+          <div className={`fixed md:relative inset-y-0 right-0 z-30 md:z-auto md:flex-shrink-0 transition-[width] duration-200 ${sidebarExpanded ? "md:w-[576px]" : "md:w-72"}`}>
+
+            {/* Expand handle — absolutely positioned outside the panel, bottom-left */}
+            <button
+              onClick={() => setSidebarExpanded(v => !v)}
+              className="hidden md:flex items-center justify-center w-5 h-12 bg-card border border-r-0 border-border rounded-l-md shadow-md text-muted-foreground hover:text-foreground transition-colors absolute left-0 bottom-0 -translate-x-full z-10"
+              title={sidebarExpanded ? "Zwiń panel" : "Rozwiń panel"}
+            >
+              {sidebarExpanded ? <ChevronRight size={13} /> : <ChevronLeft size={13} />}
+            </button>
+
+            <div className={`h-full w-[min(288px,100vw)] flex flex-col bg-card border-l shadow-xl md:shadow-none transition-[width] duration-200 ${sidebarExpanded ? "md:w-[576px]" : "md:w-72"}`}>
 
             {/* Tab switcher */}
             <div className="flex border-b flex-shrink-0">
@@ -1357,8 +1417,9 @@ export default function RenderViewer({
 
             {/* ── CZAT TAB ── */}
             {sidebarTab === "chat" && (() => {
-              const chatItems = [...comments]
+              const chatItems = [...comments, ...localAiSummaries]
                 .filter(c => !c.isInternal || isDesigner)
+                .filter(c => !c.isAiSummary || (isDesigner ? true : c.author === authorName))
                 .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
 
               // Group by calendar day
@@ -1373,6 +1434,18 @@ export default function RenderViewer({
 
               return (
                 <>
+                  {/* AI Summary button */}
+                  <div className="px-3 py-2 border-b flex-shrink-0">
+                    <button
+                      onClick={generateAiSummary}
+                      disabled={generatingSummary || comments.filter(c => !c.isInternal || isDesigner).filter(c => !c.isAiSummary).length === 0}
+                      className="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 text-xs font-medium rounded-lg bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300 hover:bg-violet-100 dark:hover:bg-violet-900/30 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <Sparkles size={12} />
+                      {generatingSummary ? "Generowanie…" : "Podsumowanie AI"}
+                    </button>
+                  </div>
+
                   <div className="flex-1 overflow-y-auto px-3 py-3 space-y-1">
                     {chatItems.length === 0 && (
                       <p className="text-xs text-gray-400 text-center py-8">Brak wiadomości — napisz pierwszą!</p>
@@ -1386,7 +1459,35 @@ export default function RenderViewer({
                           <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
                         </div>
                         {group.items.map(item => {
-                          if (item.posX !== null) {
+                          if (item.isAiSummary) {
+                            // AI Summary bubble
+                            const isLocal = item.id.startsWith("local-ai-");
+                            return (
+                              <div key={item.id} className="mb-3">
+                                <div className="rounded-xl border border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-900/20 px-3 py-2.5">
+                                  <div className="flex items-center gap-1.5 mb-1.5">
+                                    <Sparkles size={11} className="text-violet-500 flex-shrink-0" />
+                                    <span className="text-[10px] font-semibold text-violet-600 dark:text-violet-400">Podsumowanie AI</span>
+                                    <span className="text-[10px] text-gray-400 ml-auto">{formatDate(item.createdAt)}</span>
+                                    <button
+                                      onClick={() => {
+                                        if (isLocal) {
+                                          setLocalAiSummaries(prev => prev.filter(s => s.id !== item.id));
+                                        } else {
+                                          deleteComment(item.id);
+                                        }
+                                      }}
+                                      className="text-violet-300 hover:text-violet-600 dark:hover:text-violet-200 transition-colors flex-shrink-0"
+                                      title="Usuń podsumowanie"
+                                    >
+                                      <X size={11} />
+                                    </button>
+                                  </div>
+                                  <p className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">{item.content}</p>
+                                </div>
+                              </div>
+                            );
+                          } else if (item.posX !== null) {
                             // Pin card
                             const pinIdx = pinComments.findIndex(c => c.id === item.id);
                             const isSelected = selectedId === item.id;
@@ -1491,6 +1592,7 @@ export default function RenderViewer({
               );
             })()}
 
+          </div>
           </div>
         </>}
       </div>

@@ -5,7 +5,7 @@
 Platforma do zarządzania projektami wnętrzarskimi. Umożliwia projektantom udostępnianie renderów klientom, zbieranie komentarzy/pinezek, zarządzanie listami zakupowymi i akceptację plików przez klientów.
 
 Trzy moduły:
-- **RenderFlow** — pokoje z renderami, komentarze/pinezki, wersjonowanie plików
+- **RenderFlow** — pokoje z renderami, komentarze/pinezki, wersjonowanie plików1
 - **Listy** — listy zakupowe z sekcjami i produktami, akceptacja przez klienta
 - **Projekty** (dawniej Veedeck) — ogólny widok projektów
 
@@ -25,6 +25,7 @@ Trzy moduły:
 - **Powiadomienia toast:** Sonner
 - **Drag & drop:** @dnd-kit
 
+---
 ---
 
 ## Komendy

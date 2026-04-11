@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import EditProjectDialog from "@/components/dashboard/EditProjectDialog";
+import { useT } from "@/lib/i18n";
 
 interface ProjektyMenuProps {
   project: {
@@ -31,10 +32,12 @@ interface ProjektyMenuProps {
     clientEmail?: string | null;
     description?: string | null;
     pinned?: boolean;
+    clientCanUpload?: boolean;
   };
 }
 
 export default function ProjektyMenu({ project }: ProjektyMenuProps) {
+  const t = useT();
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -47,10 +50,10 @@ export default function ProjektyMenu({ project }: ProjektyMenuProps) {
       body: JSON.stringify({ pinned: !project.pinned }),
     });
     if (res.ok) {
-      toast.success(project.pinned ? "Odpięto projekt" : "Projekt przypięty");
+      toast.success(project.pinned ? t.projekty.projectUnpinned : t.projekty.projectPinned);
       router.refresh();
     } else {
-      toast.error("Błąd operacji");
+      toast.error(t.projekty.pinError);
     }
   }
 
@@ -61,10 +64,10 @@ export default function ProjektyMenu({ project }: ProjektyMenuProps) {
       body: JSON.stringify({ archived: true }),
     });
     if (res.ok) {
-      toast.success("Projekt zarchiwizowany");
+      toast.success(t.projekty.projectArchivedToast);
       router.refresh();
     } else {
-      toast.error("Błąd archiwizacji projektu");
+      toast.error(t.projekty.projectArchiveError);
     }
   }
 
@@ -73,10 +76,10 @@ export default function ProjektyMenu({ project }: ProjektyMenuProps) {
     try {
       const res = await fetch(`/api/projects/${project.id}`, { method: "DELETE" });
       if (res.ok) {
-        toast.success("Projekt usunięty");
+        toast.success(t.projekty.projectDeleted);
         router.refresh();
       } else {
-        toast.error("Błąd usuwania projektu");
+        toast.error(t.projekty.projectDeleteError);
       }
     } finally {
       setDeleting(false);
@@ -96,21 +99,21 @@ export default function ProjektyMenu({ project }: ProjektyMenuProps) {
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={handlePin}>
             {project.pinned ? <PinOff size={14} /> : <Pin size={14} />}
-            {project.pinned ? "Odepnij" : "Przypnij"}
+            {project.pinned ? t.common.unpinAction : t.common.pinAction}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => setEditOpen(true)}>
             <Pencil size={14} />
-            Edytuj
+            {t.common.edit}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={handleArchive}>
             <Archive size={14} />
-            Archiwizuj
+            {t.common.archive}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem variant="destructive" onClick={() => setDeleteOpen(true)}>
             <Trash2 size={14} />
-            Usuń projekt
+            {t.common.delete}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -124,20 +127,20 @@ export default function ProjektyMenu({ project }: ProjektyMenuProps) {
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Usunąć projekt „{project.title}"?</AlertDialogTitle>
+            <AlertDialogTitle>{t.projekty.confirmDeleteProject.replace("{title}", project.title)}</AlertDialogTitle>
             <AlertDialogDescription>
               Czy jesteś pewien, że chcesz trwale usunąć ten projekt? Wszystkie dane
               z nim związane zostaną usunięte na zawsze.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleting}>Anuluj</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleting}>{t.common.cancel}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               disabled={deleting}
               className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
             >
-              {deleting ? "Usuwanie..." : "Usuń na zawsze"}
+              {deleting ? "Usuwanie..." : t.projekty.deleteForever}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

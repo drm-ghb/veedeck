@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Search, Briefcase, DoorOpen, Image, ShoppingCart, User } from "lucide-react";
+import { useT } from "@/lib/i18n";
 
 interface SearchResult {
   id: string;
@@ -19,16 +20,17 @@ interface SearchResults {
   clients: SearchResult[];
 }
 
-const CATEGORIES: { key: keyof SearchResults; label: string; icon: React.ReactNode }[] = [
-  { key: "projects", label: "Projekty", icon: <Briefcase size={13} /> },
-  { key: "rooms", label: "Pokoje", icon: <DoorOpen size={13} /> },
-  { key: "renders", label: "Rendery", icon: <Image size={13} /> },
-  { key: "lists", label: "Listy", icon: <ShoppingCart size={13} /> },
-  { key: "clients", label: "Klienci", icon: <User size={13} /> },
-];
-
 export default function GlobalSearch() {
+  const t = useT();
   const router = useRouter();
+
+  const CATEGORIES: { key: keyof SearchResults; label: string; icon: React.ReactNode }[] = [
+    { key: "projects", label: t.dashboard.searchProjects, icon: <Briefcase size={13} /> },
+    { key: "rooms", label: t.dashboard.searchRooms, icon: <DoorOpen size={13} /> },
+    { key: "renders", label: t.dashboard.searchRenders, icon: <Image size={13} /> },
+    { key: "lists", label: t.dashboard.searchLists, icon: <ShoppingCart size={13} /> },
+    { key: "clients", label: t.dashboard.searchClients, icon: <User size={13} /> },
+  ];
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResults | null>(null);
   const [loading, setLoading] = useState(false);
@@ -103,17 +105,17 @@ export default function GlobalSearch() {
         onChange={(e) => setQuery(e.target.value)}
         onFocus={() => { if (results && query.length >= 2) setOpen(true); }}
         onKeyDown={handleKeyDown}
-        placeholder="Szukaj..."
+        placeholder={t.dashboard.search}
         className="w-full pl-8 pr-4 py-1.5 text-sm bg-background rounded-lg border-0 focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground"
       />
 
       {open && (
         <div className="absolute top-full mt-1.5 left-0 right-0 bg-card border border-border rounded-xl shadow-lg z-50 overflow-hidden max-h-80 overflow-y-auto">
           {loading && (
-            <div className="px-4 py-3 text-sm text-muted-foreground">Szukam...</div>
+            <div className="px-4 py-3 text-sm text-muted-foreground">{t.dashboard.searching}</div>
           )}
           {!loading && !hasResults && (
-            <div className="px-4 py-3 text-sm text-muted-foreground">Brak wyników dla „{query}"</div>
+            <div className="px-4 py-3 text-sm text-muted-foreground">{t.dashboard.noResultsFor} „{query}"</div>
           )}
           {!loading && hasResults && CATEGORIES.map((cat) => {
             const items = results![cat.key];

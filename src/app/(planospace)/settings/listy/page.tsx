@@ -4,25 +4,28 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { GripVertical, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-const ALL_CATEGORIES = [
-  { value: "LAMPY", label: "Lampy" },
-  { value: "AKCESORIA", label: "Akcesoria" },
-  { value: "MEBLE", label: "Meble" },
-  { value: "ARMATURA", label: "Armatura" },
-  { value: "OKLADZINY_SCIENNE", label: "Okładziny ścienne" },
-  { value: "PODLOGA", label: "Podłoga" },
-];
-
-function buildOrderedList(saved: string[]) {
-  const ordered = saved
-    .map((v) => ALL_CATEGORIES.find((c) => c.value === v))
-    .filter(Boolean) as typeof ALL_CATEGORIES;
-  const rest = ALL_CATEGORIES.filter((c) => !saved.includes(c.value));
-  return [...ordered, ...rest];
-}
+import { useT } from "@/lib/i18n";
 
 export default function SettingsListyPage() {
+  const t = useT();
+
+  const ALL_CATEGORIES = [
+    { value: "LAMPY", label: t.listSettings.lampy },
+    { value: "AKCESORIA", label: t.listSettings.akcesoria },
+    { value: "MEBLE", label: t.listSettings.meble },
+    { value: "ARMATURA", label: t.listSettings.armatura },
+    { value: "OKLADZINY_SCIENNE", label: t.listSettings.okladziny },
+    { value: "PODLOGA", label: t.listSettings.podloga },
+  ];
+
+  function buildOrderedList(saved: string[]) {
+    const ordered = saved
+      .map((v) => ALL_CATEGORIES.find((c) => c.value === v))
+      .filter(Boolean) as typeof ALL_CATEGORIES;
+    const rest = ALL_CATEGORIES.filter((c) => !saved.includes(c.value));
+    return [...ordered, ...rest];
+  }
+
   const [categories, setCategories] = useState(ALL_CATEGORIES);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -38,6 +41,7 @@ export default function SettingsListyPage() {
         }
       })
       .finally(() => setLoading(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function handleSave() {
@@ -49,9 +53,9 @@ export default function SettingsListyPage() {
         body: JSON.stringify({ listsCategoryOrder: categories.map((c) => c.value) }),
       });
       if (!res.ok) throw new Error();
-      toast.success("Hierarchia kategorii zapisana");
+      toast.success(t.listSettings.saved);
     } catch {
-      toast.error("Błąd zapisu");
+      toast.error(t.listSettings.saveError);
     } finally {
       setSaving(false);
     }
@@ -83,16 +87,15 @@ export default function SettingsListyPage() {
   return (
     <div className="max-w-3xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Listy</h1>
-        <p className="text-sm text-gray-500 mt-1">Ustawienia modułu list zakupowych</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t.settings.lists}</h1>
+        <p className="text-sm text-gray-500 mt-1">{t.settings.listsDesc}</p>
       </div>
 
       <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
         <div>
-          <h2 className="text-base font-semibold">Hierarchia kategorii</h2>
+          <h2 className="text-base font-semibold">{t.listSettings.categoryOrder}</h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Ustaw kolejność kategorii używaną przy sortowaniu produktów w sekcjach listy.
-            Przeciągnij kategorie, aby zmienić ich kolejność.
+            {t.listSettings.categoryOrderDesc}
           </p>
         </div>
 
@@ -136,10 +139,10 @@ export default function SettingsListyPage() {
             className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
           >
             <RotateCcw size={13} />
-            Przywróć domyślną kolejność
+            {t.listSettings.restoreDefault}
           </button>
           <Button onClick={handleSave} disabled={saving || loading}>
-            {saving ? "Zapisywanie..." : "Zapisz kolejność"}
+            {saving ? t.listSettings.savingOrder : t.listSettings.saveOrder}
           </Button>
         </div>
       </div>

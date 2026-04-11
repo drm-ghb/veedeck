@@ -34,6 +34,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
     shareExpiresAt: project.shareExpiresAt ? project.shareExpiresAt.toISOString() : null,
     createdAt: project.createdAt.toISOString(),
     hiddenModules: project.hiddenModules,
+    clientCanUpload: project.clientCanUpload,
     addressCountry: project.addressCountry ?? null,
     addressCity: project.addressCity ?? null,
     addressPostalCode: project.addressPostalCode ?? null,

@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Plus, Search, ChevronRight } from "lucide-react";
+import { useT } from "@/lib/i18n";
 
 interface Project {
   id: string;
@@ -32,6 +33,7 @@ export default function NewListDialog() {
   const [loading, setLoading] = useState(false);
 
   const router = useRouter();
+  const t = useT();
 
   async function fetchProjects() {
     setLoadingProjects(true);
@@ -78,11 +80,11 @@ export default function NewListDialog() {
 
       if (!res.ok) throw new Error();
 
-      toast.success("Lista utworzona");
+      toast.success(t.listy.listCreated);
       setOpen(false);
       router.refresh();
     } catch {
-      toast.error("Błąd tworzenia listy");
+      toast.error(t.listy.listCreateError);
     } finally {
       setLoading(false);
     }
@@ -112,28 +114,28 @@ export default function NewListDialog() {
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger render={<Button className="flex items-center gap-2 sm:self-start" />}>
         <Plus size={16} />
-        Nowa lista
+        {t.listy.newList}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Nowa lista</DialogTitle>
+          <DialogTitle>{t.listy.newList}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="space-y-1.5">
-            <Label htmlFor="name">Nazwa listy *</Label>
+            <Label htmlFor="name">{t.listy.listName}</Label>
             <Input
               id="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="np. Meble do salonu"
+              placeholder={t.listy.listNamePlaceholder}
               required
               autoFocus
             />
           </div>
 
           <div className="space-y-2">
-            <Label>Przypisz do projektu</Label>
+            <Label>{t.listy.assignProject}</Label>
             <div className="flex gap-2">
               <button
                 type="button"
@@ -144,7 +146,7 @@ export default function NewListDialog() {
                     : "border-border text-muted-foreground hover:text-foreground hover:border-foreground/30"
                 }`}
               >
-                Bez projektu
+                {t.listy.noProject}
               </button>
               <button
                 type="button"
@@ -155,7 +157,7 @@ export default function NewListDialog() {
                     : "border-border text-muted-foreground hover:text-foreground hover:border-foreground/30"
                 }`}
               >
-                Wybierz projekt
+                {t.listy.selectProject}
               </button>
             </div>
 
@@ -182,7 +184,7 @@ export default function NewListDialog() {
                     <div className="relative">
                       <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
                       <Input
-                        placeholder="Szukaj projektu..."
+                        placeholder={t.listy.searchProject}
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         className="pl-9"
@@ -190,10 +192,10 @@ export default function NewListDialog() {
                     </div>
                     <div className="max-h-48 overflow-y-auto rounded-lg border border-border">
                       {loadingProjects ? (
-                        <p className="text-sm text-muted-foreground text-center py-6">Ładowanie...</p>
+                        <p className="text-sm text-muted-foreground text-center py-6">{t.common.loading}</p>
                       ) : filtered.length === 0 ? (
                         <p className="text-sm text-muted-foreground text-center py-6">
-                          {search ? "Brak wyników" : "Brak projektów"}
+                          {search ? t.common.noResults : t.listy.noProjects}
                         </p>
                       ) : (
                         filtered.map((p, i) => (
@@ -224,10 +226,10 @@ export default function NewListDialog() {
 
           <div className="flex gap-2 justify-end pt-1">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              Anuluj
+              {t.common.cancel}
             </Button>
             <Button type="submit" disabled={loading || !canSubmit}>
-              {loading ? "Tworzenie..." : "Utwórz listę"}
+              {loading ? t.listy.creating : t.listy.createList}
             </Button>
           </div>
         </form>

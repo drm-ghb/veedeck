@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useT } from "@/lib/i18n";
 import { patchUser, SettingRow, SectionHeader } from "./SettingsShared";
 
 type BoolField =
@@ -52,6 +53,8 @@ export function SettingsRenderFlow({
   initialNotifyClientOnReply,
   initialAllowClientVersionRestore,
 }: Props) {
+  const t = useT();
+
   const [bools, setBools] = useState<Record<BoolField, boolean>>({
     allowDirectStatusChange: initialAllowDirectStatusChange,
     allowClientComments: initialAllowClientComments,
@@ -73,79 +76,79 @@ export function SettingsRenderFlow({
   async function toggleBool(field: BoolField) {
     const next = !bools[field];
     const res = await patchUser({ [field]: next });
-    if (res.ok) { setBools((s) => ({ ...s, [field]: next })); toast.success("Zapisano"); }
-    else toast.error("Błąd podczas zapisywania");
+    if (res.ok) { setBools((s) => ({ ...s, [field]: next })); toast.success(t.settings.saved); }
+    else toast.error(t.settings.saveError);
   }
 
   async function handleMaxPinsSave() {
     const val = maxPins === "" ? null : parseInt(maxPins, 10);
     if (maxPins !== "" && (isNaN(val as number) || (val as number) < 1)) {
-      toast.error("Podaj liczbę większą od 0 lub pozostaw puste");
+      toast.error(t.renderflow.pinLimitError);
       return;
     }
     const res = await patchUser({ maxPinsPerRender: val });
-    if (res.ok) toast.success("Zapisano");
-    else toast.error("Błąd podczas zapisywania");
+    if (res.ok) toast.success(t.settings.saved);
+    else toast.error(t.settings.saveError);
   }
 
   async function handleDefaultStatusChange(val: string) {
     setDefaultStatus(val);
     const res = await patchUser({ defaultRenderStatus: val });
-    if (res.ok) toast.success("Zapisano");
-    else toast.error("Błąd podczas zapisywania");
+    if (res.ok) toast.success(t.settings.saved);
+    else toast.error(t.settings.saveError);
   }
 
   async function handleDefaultOrderChange(val: string) {
     setDefaultOrder(val);
     const res = await patchUser({ defaultRenderOrder: val });
-    if (res.ok) toast.success("Zapisano");
-    else toast.error("Błąd podczas zapisywania");
+    if (res.ok) toast.success(t.settings.saved);
+    else toast.error(t.settings.saveError);
   }
 
   return (
     <div className="max-w-3xl space-y-10">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">RenderFlow</h1>
-        <p className="text-sm text-gray-500 mt-1">Ustawienia modułu wizualizacji i feedbacku</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t.settings.renderflow}</h1>
+        <p className="text-sm text-gray-500 mt-1">{t.settings.renderflowDesc2}</p>
       </div>
 
       {/* ── Uprawnienia klientów ── */}
       <section className="space-y-4">
-        <SectionHeader title="Uprawnienia klientów" />
+        <SectionHeader title={t.renderflow.clientPermissions} />
         <div className="bg-card border border-border rounded-2xl p-6 divide-y divide-border">
           <SettingRow
-            label="Samodzielne cofanie akceptacji"
-            description="Klient może bezpośrednio cofnąć status &quot;Zaakceptowany&quot; bez zatwierdzenia projektanta."
+            label={t.renderflow.selfRevertAcceptance}
+            description={t.renderflow.selfRevertAcceptanceDesc}
             checked={bools.allowDirectStatusChange}
             onToggle={() => toggleBool("allowDirectStatusChange")}
           />
           <SettingRow
-            label="Komentowanie przez klienta"
-            description="Klient może dodawać piny i komentarze do renderów."
+            label={t.renderflow.clientComments}
+            description={t.renderflow.clientCommentsDesc}
             checked={bools.allowClientComments}
             onToggle={() => toggleBool("allowClientComments")}
           />
           <SettingRow
-            label="Akceptacja przez klienta"
-            description="Klient widzi przycisk &quot;Zaakceptuj&quot; i może samodzielnie zaakceptować render."
+            label={t.renderflow.clientAcceptance}
+            description={t.renderflow.clientAcceptanceDesc}
             checked={bools.allowClientAcceptance}
             onToggle={() => toggleBool("allowClientAcceptance")}
           />
           <SettingRow
-            label="Wymagaj podania emaila przez klienta"
-            description="Przed pierwszą wizytą klient podaje email (widoczny przy komentarzach)."
+            label={t.renderflow.requireEmail}
+            description={t.renderflow.requireEmailDesc}
             checked={bools.requireClientEmail}
             onToggle={() => toggleBool("requireClientEmail")}
           />
           <SettingRow
-            label="Ukryj licznik komentarzy"
-            description="Klient nie widzi liczby pinów na liście renderów."
+            label={t.renderflow.hideCommentCount}
+            description={t.renderflow.hideCommentCountDesc}
             checked={bools.hideCommentCount}
             onToggle={() => toggleBool("hideCommentCount")}
           />
           <SettingRow
-            label="Samodzielne przywracanie wersji przez klienta"
-            description="Klient może bezpośrednio przywrócić poprzednią wersję renderu."
+            label={t.renderflow.selfRestoreVersion}
+            description={t.renderflow.selfRestoreVersionDesc}
             checked={bools.allowClientVersionRestore}
             onToggle={() => toggleBool("allowClientVersionRestore")}
           />
@@ -154,31 +157,31 @@ export function SettingsRenderFlow({
 
       {/* ── Komentarze i piny ── */}
       <section className="space-y-4">
-        <SectionHeader title="Komentarze i piny" />
+        <SectionHeader title={t.renderflow.commentsAndPins} />
         <div className="bg-card border border-border rounded-2xl p-6 divide-y divide-border">
           <SettingRow
-            label="Wymagaj tytułu pinu"
-            description="Każdy pin musi mieć tytuł — pole &quot;Tytuł&quot; staje się obowiązkowe."
+            label={t.renderflow.requirePinTitle}
+            description={t.renderflow.requirePinTitleDesc}
             checked={bools.requirePinTitle}
             onToggle={() => toggleBool("requirePinTitle")}
           />
           <SettingRow
-            label="Automatyczne zamknięcie pinów przy akceptacji"
-            description="Wszystkie otwarte piny zmieniają status na &quot;Gotowe&quot; gdy render zostanie zaakceptowany."
+            label={t.renderflow.autoClosePins}
+            description={t.renderflow.autoClosePinsDesc}
             checked={bools.autoClosePinsOnAccept}
             onToggle={() => toggleBool("autoClosePinsOnAccept")}
           />
           <SettingRow
-            label="Automatyczne archiwizowanie przy akceptacji"
-            description="Render jest archiwizowany po zaakceptowaniu przez klienta."
+            label={t.renderflow.autoArchive}
+            description={t.renderflow.autoArchiveDesc}
             checked={bools.autoArchiveOnAccept}
             onToggle={() => toggleBool("autoArchiveOnAccept")}
           />
           <div className="py-2">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Limit pinów na render</p>
-                <p className="text-xs text-gray-400 mt-0.5">Maksymalna liczba pinów jaką klient może dodać. Zostaw puste aby nie ograniczać.</p>
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{t.renderflow.pinLimit}</p>
+                <p className="text-xs text-gray-400 mt-0.5">{t.renderflow.pinLimitDesc}</p>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
                 <Input
@@ -190,7 +193,7 @@ export function SettingsRenderFlow({
                   className="w-20 text-sm"
                   onKeyDown={(e) => e.key === "Enter" && handleMaxPinsSave()}
                 />
-                <Button size="sm" onClick={handleMaxPinsSave} variant="outline">Zapisz</Button>
+                <Button size="sm" onClick={handleMaxPinsSave} variant="outline">{t.common.save}</Button>
               </div>
             </div>
           </div>
@@ -199,12 +202,12 @@ export function SettingsRenderFlow({
 
       {/* ── Nowe rendery ── */}
       <section className="space-y-4">
-        <SectionHeader title="Nowe rendery" />
+        <SectionHeader title={t.renderflow.newRenders} />
         <div className="bg-card border border-border rounded-2xl p-6 space-y-5">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Domyślny status nowych renderów</p>
-              <p className="text-xs text-gray-400 mt-0.5">Status przypisywany automatycznie przy dodawaniu nowego renderu.</p>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{t.renderflow.defaultStatus}</p>
+              <p className="text-xs text-gray-400 mt-0.5">{t.renderflow.defaultStatusDesc}</p>
             </div>
             <div className="flex gap-1.5 bg-muted rounded-lg p-1 flex-shrink-0">
               {(["REVIEW", "ACCEPTED"] as const).map((val) => (
@@ -218,7 +221,7 @@ export function SettingsRenderFlow({
                       : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
                   }`}
                 >
-                  {val === "REVIEW" ? "Do weryfikacji" : "Zaakceptowany"}
+                  {val === "REVIEW" ? t.renderflow.statusReview : t.renderflow.statusAccepted}
                 </button>
               ))}
             </div>
@@ -226,11 +229,11 @@ export function SettingsRenderFlow({
 
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Domyślna kolejność renderów</p>
-              <p className="text-xs text-gray-400 mt-0.5">Sposób sortowania renderów na widoku klienta.</p>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{t.renderflow.defaultOrder}</p>
+              <p className="text-xs text-gray-400 mt-0.5">{t.renderflow.defaultOrderDesc}</p>
             </div>
             <div className="flex gap-1.5 bg-muted rounded-lg p-1 flex-shrink-0">
-              {([["order", "Ręczna"], ["name", "Nazwa"], ["newest", "Najnowsze"]] as const).map(([val, label]) => (
+              {([["order", t.renderflow.orderManual], ["name", t.renderflow.orderName], ["newest", t.renderflow.orderNewest]] as const).map(([val, label]) => (
                 <button
                   key={val}
                   type="button"
@@ -251,17 +254,17 @@ export function SettingsRenderFlow({
 
       {/* ── Powiadomienia klientów ── */}
       <section className="space-y-4">
-        <SectionHeader title="Powiadomienia klientów" />
+        <SectionHeader title={t.renderflow.clientNotifications} />
         <div className="bg-card border border-border rounded-2xl p-6 divide-y divide-border">
           <SettingRow
-            label="Powiadamiaj klienta o zmianie statusu"
-            description="Klient otrzymuje powiadomienie gdy projektant zmienia status renderu."
+            label={t.renderflow.notifyStatusChange}
+            description={t.renderflow.notifyStatusChangeDesc}
             checked={bools.notifyClientOnStatusChange}
             onToggle={() => toggleBool("notifyClientOnStatusChange")}
           />
           <SettingRow
-            label="Powiadamiaj klienta o nowych odpowiedziach"
-            description="Klient widzi toast gdy projektant odpowiada na jego komentarz."
+            label={t.renderflow.notifyReplies}
+            description={t.renderflow.notifyRepliesDesc}
             checked={bools.notifyClientOnReply}
             onToggle={() => toggleBool("notifyClientOnReply")}
           />

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useT } from "@/lib/i18n";
 import { ShoppingCart, Search, LayoutGrid, List, SlidersHorizontal, Link2, MoreHorizontal, Pencil, Archive, ArchiveRestore, Trash2, Pin, PinOff, AlertTriangle, Check, MessageSquare } from "lucide-react";
 import { pusherClient } from "@/lib/pusher";
 import { getUnreadSet, syncListUnread } from "@/lib/list-unread-store";
@@ -45,6 +46,7 @@ type Tab = "active" | "archived";
 
 export default function ListyView({ lists: initialLists }: ListyViewProps) {
   const router = useRouter();
+  const t = useT();
   const [lists, setLists] = useState<ShoppingList[]>(initialLists);
   const [tab, setTab] = useState<Tab>("active");
   const [view, setView] = useState<"grid" | "list">("list");
@@ -111,22 +113,22 @@ export default function ListyView({ lists: initialLists }: ListyViewProps) {
         body: JSON.stringify({ archived }),
       });
       if (!res.ok) throw new Error();
-      toast.success(archived ? "Lista zarchiwizowana" : "Lista przywrócona");
+      toast.success(archived ? t.listy.listArchived : t.listy.listRestored);
     } catch {
-      toast.error("Błąd operacji");
+      toast.error(t.listy.operationError);
       setLists(initialLists);
     }
   }
 
   async function deleteList(id: string) {
-    if (!confirm("Czy na pewno chcesz usunąć tę listę? Tej operacji nie można cofnąć.")) return;
+    if (!confirm(t.listy.confirmDelete)) return;
     setLists((prev) => prev.filter((l) => l.id !== id));
     try {
       const res = await fetch(`/api/lists/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error();
-      toast.success("Lista usunięta");
+      toast.success(t.listy.listDeleted);
     } catch {
-      toast.error("Błąd usuwania listy");
+      toast.error(t.listy.listDeleteError);
       setLists(initialLists);
     }
   }
@@ -138,7 +140,7 @@ export default function ListyView({ lists: initialLists }: ListyViewProps) {
       return;
     }
     navigator.clipboard.writeText(url);
-    toast.success("Link skopiowany do schowka");
+    toast.success(t.common.linkCopied);
   }
 
   const activeLists = lists.filter((l) => !l.archived);
@@ -155,9 +157,9 @@ export default function ListyView({ lists: initialLists }: ListyViewProps) {
         body: JSON.stringify({ pinned }),
       });
       if (!res.ok) throw new Error();
-      toast.success(pinned ? "Lista przypięta" : "Odpięto listę");
+      toast.success(pinned ? t.common.pinAction : t.common.unpinAction);
     } catch {
-      toast.error("Błąd operacji");
+      toast.error(t.listy.operationError);
       setLists(initialLists);
     }
   }
@@ -187,21 +189,21 @@ export default function ListyView({ lists: initialLists }: ListyViewProps) {
         <DropdownMenuContent align="end" className="w-44">
           <DropdownMenuItem onClick={() => togglePin(list)}>
             {list.pinned ? <PinOff size={13} className="mr-2" /> : <Pin size={13} className="mr-2" />}
-            {list.pinned ? "Odepnij" : "Przypnij"}
+            {list.pinned ? t.common.unpinAction : t.common.pinAction}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => setEditingList(list)}>
             <Pencil size={13} className="mr-2" />
-            Edytuj
+            {t.common.edit}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => toggleArchive(list)}>
             {list.archived ? <ArchiveRestore size={13} className="mr-2" /> : <Archive size={13} className="mr-2" />}
-            {list.archived ? "Przywróć" : "Archiwizuj"}
+            {list.archived ? t.common.restore : t.common.archive}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => deleteList(list.id)} className="text-destructive focus:text-destructive">
             <Trash2 size={13} className="mr-2" />
-            Usuń listę
+            {t.common.delete}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -214,10 +216,10 @@ export default function ListyView({ lists: initialLists }: ListyViewProps) {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-4">
         <div>
-          <h1 className="text-2xl font-bold">Listy zakupowe</h1>
+          <h1 className="text-2xl font-bold">{t.listy.title}</h1>
           <p className="text-gray-500 mt-1">
             {activeLists.length === 0
-              ? "Nie masz jeszcze żadnych list"
+              ? t.listy.noLists
               : `${activeLists.length} aktywna${activeLists.length === 1 ? "" : activeLists.length < 5 ? "" : ""}`}
           </p>
         </div>
@@ -235,7 +237,7 @@ export default function ListyView({ lists: initialLists }: ListyViewProps) {
                 : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
-            Aktywne
+            {t.common.active}
             {activeLists.length > 0 && (
               <span className={`ml-1.5 text-xs px-1.5 py-0.5 rounded-full ${tab === "active" ? "bg-foreground text-background" : "bg-muted text-muted-foreground"}`}>
                 {activeLists.length}
@@ -250,7 +252,7 @@ export default function ListyView({ lists: initialLists }: ListyViewProps) {
                 : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
-            Zarchiwizowane
+            {t.common.archived}
             {archivedLists.length > 0 && (
               <span className={`ml-1.5 text-xs px-1.5 py-0.5 rounded-full ${tab === "archived" ? "bg-foreground text-background" : "bg-muted text-muted-foreground"}`}>
                 {archivedLists.length}
@@ -267,7 +269,7 @@ export default function ListyView({ lists: initialLists }: ListyViewProps) {
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
             <input
               type="text"
-              placeholder="Szukaj listy..."
+              placeholder={t.listy.searchPlaceholder}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full pl-9 pr-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm bg-white dark:bg-card focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
@@ -276,26 +278,26 @@ export default function ListyView({ lists: initialLists }: ListyViewProps) {
 
           <div className={`relative sm:hidden w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-md border ${sort !== "newest" ? "border-gray-900 bg-gray-900" : "border-gray-200 bg-white dark:border-gray-700 dark:bg-card"}`}>
             <SlidersHorizontal size={14} className={`pointer-events-none ${sort !== "newest" ? "text-white" : "text-gray-500"}`} />
-            <select value={sort} onChange={(e) => setSort(e.target.value as SortOption)} className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" aria-label="Sortowanie">
-              <option value="newest">Najnowsze</option>
-              <option value="oldest">Najstarsze</option>
-              <option value="az">A–Z</option>
-              <option value="za">Z–A</option>
+            <select value={sort} onChange={(e) => setSort(e.target.value as SortOption)} className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" aria-label={t.common.sort}>
+              <option value="newest">{t.common.newest}</option>
+              <option value="oldest">{t.common.oldest}</option>
+              <option value="az">{t.common.az}</option>
+              <option value="za">{t.common.za}</option>
             </select>
           </div>
 
           <select value={sort} onChange={(e) => setSort(e.target.value as SortOption)} className="hidden sm:block flex-shrink-0 text-xs border border-gray-200 dark:border-gray-700 rounded-md px-2 py-2 bg-white dark:bg-card text-gray-600 dark:text-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-300">
-            <option value="newest">Najnowsze</option>
-            <option value="oldest">Najstarsze</option>
-            <option value="az">A–Z</option>
-            <option value="za">Z–A</option>
+            <option value="newest">{t.common.newest}</option>
+            <option value="oldest">{t.common.oldest}</option>
+            <option value="az">{t.common.az}</option>
+            <option value="za">{t.common.za}</option>
           </select>
 
           <div className="flex items-center gap-0.5 bg-muted rounded-md p-0.5 flex-shrink-0">
-            <button onClick={() => toggleView("grid")} className={`p-1.5 rounded transition-colors ${view === "grid" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`} title="Widok siatki">
+            <button onClick={() => toggleView("grid")} className={`p-1.5 rounded transition-colors ${view === "grid" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`} title={t.listy.gridView}>
               <LayoutGrid size={15} />
             </button>
-            <button onClick={() => toggleView("list")} className={`p-1.5 rounded transition-colors ${view === "list" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`} title="Widok listy">
+            <button onClick={() => toggleView("list")} className={`p-1.5 rounded transition-colors ${view === "list" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`} title={t.listy.listView}>
               <List size={15} />
             </button>
           </div>
@@ -308,15 +310,15 @@ export default function ListyView({ lists: initialLists }: ListyViewProps) {
           <div className="w-16 h-16 rounded-2xl bg-[#C45824]/10 flex items-center justify-center mb-4">
             <ShoppingCart size={28} className="text-[#C45824]" />
           </div>
-          <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-1">Brak list zakupowych</h2>
-          <p className="text-sm text-gray-400 max-w-xs">Kliknij „Nowa lista" aby stworzyć pierwszą listę zakupową dla swojego klienta.</p>
+          <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-1">{t.listy.noListsEmpty}</h2>
+          <p className="text-sm text-gray-400 max-w-xs">{t.listy.noListsHint}</p>
         </div>
       )}
 
       {/* Empty state — tab empty */}
       {lists.length > 0 && tabLists.length === 0 && (
         <div className="text-center py-16 text-muted-foreground">
-          <p className="text-sm">{tab === "archived" ? "Brak zarchiwizowanych list." : "Brak aktywnych list."}</p>
+          <p className="text-sm">{tab === "archived" ? t.listy.noListsArchived : t.listy.noListsActive}</p>
         </div>
       )}
 
@@ -324,7 +326,7 @@ export default function ListyView({ lists: initialLists }: ListyViewProps) {
       {tabLists.length > 0 && filtered.length === 0 && (
         <div className="text-center py-16 text-gray-400">
           <p className="text-4xl mb-4">🔍</p>
-          <p className="text-lg">Brak list pasujących do &quot;{search}&quot;</p>
+          <p className="text-lg">{t.listy.noListsMatching} &quot;{search}&quot;</p>
         </div>
       )}
 
@@ -347,7 +349,7 @@ export default function ListyView({ lists: initialLists }: ListyViewProps) {
                   {list.project ? (
                     <p className="text-xs text-muted-foreground truncate mt-0.5">{list.project.title}</p>
                   ) : (
-                    <p className="text-xs text-muted-foreground/50 mt-0.5">Bez projektu</p>
+                    <p className="text-xs text-muted-foreground/50 mt-0.5">{t.listy.noProject}</p>
                   )}
                 </div>
               </Link>
@@ -361,7 +363,7 @@ export default function ListyView({ lists: initialLists }: ListyViewProps) {
                 <button
                   onClick={(e) => { e.preventDefault(); handleCopyLink(list); }}
                   className="w-7 h-7 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                  title="Skopiuj link"
+                  title={t.common.copyLink}
                 >
                   <Link2 size={14} />
                 </button>
@@ -406,7 +408,7 @@ export default function ListyView({ lists: initialLists }: ListyViewProps) {
                 <button
                   onClick={() => handleCopyLink(list)}
                   className="w-7 h-7 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                  title="Skopiuj link"
+                  title={t.common.copyLink}
                 >
                   <Link2 size={14} />
                 </button>
@@ -431,21 +433,21 @@ export default function ListyView({ lists: initialLists }: ListyViewProps) {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <AlertTriangle size={18} className="text-amber-500" />
-              Moduł jest ukryty dla klienta
+              {t.common.moduleHiddenForClient}
             </DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            Moduł <strong>Listy zakupowe</strong> jest oznaczony jako <strong>NIE WIDOCZNY</strong> dla klienta. Przed udostępnieniem linku zmień to w ustawieniach projektu.
+            {t.listy.moduleHiddenWarning}
           </p>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setWarningLink(null)}>Zamknij</Button>
+            <Button variant="outline" onClick={() => setWarningLink(null)}>{t.common.close}</Button>
             <Button variant="ghost" className="gap-1.5" onClick={() => {
               if (warningLink) navigator.clipboard.writeText(warningLink);
               setWarningLink(null);
-              toast.success("Link skopiowany do schowka");
+              toast.success(t.common.linkCopied);
             }}>
               <Check size={14} />
-              Mimo to skopiuj
+              {t.common.copyAnyway}
             </Button>
           </DialogFooter>
         </DialogContent>

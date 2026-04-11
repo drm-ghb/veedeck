@@ -6,6 +6,7 @@ import { Grid2x2, Settings, Sun, Moon, Monitor, UserRound } from "lucide-react";
 import { useTheme, type Theme } from "@/lib/theme";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useT } from "@/lib/i18n";
 
 interface ShareNavbarProps {
   backHref?: string;
@@ -16,14 +17,15 @@ interface ShareNavbarProps {
   projectShareToken?: string;
 }
 
-const THEME_OPTIONS: { value: Theme; label: string; Icon: React.ElementType }[] = [
-  { value: "light", label: "Jasny", Icon: Sun },
-  { value: "dark", label: "Ciemny", Icon: Moon },
-  { value: "system", label: "Systemowy", Icon: Monitor },
-];
-
 export default function ShareNavbar({ backHref, backLabel, clientLogoUrl, designerName, listToken, projectShareToken }: ShareNavbarProps) {
+  const t = useT();
   const { theme, setTheme } = useTheme();
+
+  const THEME_OPTIONS: { value: Theme; label: string; Icon: React.ElementType }[] = [
+    { value: "light", label: t.theme.light, Icon: Sun },
+    { value: "dark", label: t.theme.dark, Icon: Moon },
+    { value: "system", label: t.theme.system, Icon: Monitor },
+  ];
   const [authorName, setAuthorName] = useState("");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [nameInput, setNameInput] = useState("");
@@ -53,26 +55,19 @@ export default function ShareNavbar({ backHref, backLabel, clientLogoUrl, design
             {backHref && (
               <Link
                 href={backHref}
-                title={backLabel ?? "Strona główna projektu"}
+                title={backLabel ?? t.share.home}
                 className="text-muted-foreground hover:text-foreground transition-colors p-1.5 rounded-md hover:bg-muted"
               >
                 <Grid2x2 size={18} />
               </Link>
             )}
             <div className="flex items-center gap-2.5">
-              {clientLogoUrl ? (
+              {clientLogoUrl && (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={clientLogoUrl} alt="Logo" className="h-8 object-contain" />
-              ) : (
-                <>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/planospace-logo.svg" alt="Veedeck" width={28} height={28} className="block dark:hidden" />
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/planospace-logo-dark.svg" alt="Veedeck" width={28} height={28} className="hidden dark:block" />
-                </>
               )}
-              <span className="text-xl font-bold tracking-tight">
-                {designerName ?? "Veedeck"}
+              <span className="text-[1.5625rem] font-bold tracking-tight" style={{ fontFamily: "var(--font-story-script)" }}>
+                {designerName ?? "veedeck"}
               </span>
             </div>
           </div>
@@ -81,7 +76,7 @@ export default function ShareNavbar({ backHref, backLabel, clientLogoUrl, design
           <div className="flex items-center gap-3">
             <button
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              title={theme === "dark" ? "Tryb jasny" : "Tryb ciemny"}
+              title={theme === "dark" ? t.share.lightMode : t.share.darkMode}
               className={`relative flex items-center w-14 h-7 rounded-full transition-colors duration-300 flex-shrink-0 ${
                 theme === "dark" ? "bg-slate-700" : "bg-gray-200"
               }`}
@@ -98,7 +93,7 @@ export default function ShareNavbar({ backHref, backLabel, clientLogoUrl, design
               className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
             >
               <Settings size={15} />
-              <span className="hidden sm:inline">{authorName || "Ustawienia"}</span>
+              <span className="hidden sm:inline">{authorName || t.nav.settings}</span>
             </button>
           </div>
         </div>
@@ -108,25 +103,25 @@ export default function ShareNavbar({ backHref, backLabel, clientLogoUrl, design
       {settingsOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={() => setSettingsOpen(false)}>
           <div className="bg-card border border-border rounded-2xl p-6 w-full max-w-sm space-y-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-lg font-bold">Ustawienia</h2>
+            <h2 className="text-lg font-bold">{t.nav.settings}</h2>
 
             <div className="space-y-3">
               <div className="flex items-center gap-2">
                 <UserRound size={16} className="text-gray-400" />
-                <span className="font-medium text-sm">Twoja tożsamość</span>
+                <span className="font-medium text-sm">{t.share.identity}</span>
               </div>
-              <p className="text-xs text-muted-foreground">Imię widoczne przy Twoich komentarzach.</p>
+              <p className="text-xs text-muted-foreground">{t.share.identityDesc}</p>
               <Input
                 value={nameInput}
                 onChange={(e) => setNameInput(e.target.value)}
-                placeholder="Twoje imię"
+                placeholder={t.share.yourName}
                 onKeyDown={(e) => e.key === "Enter" && saveSettings()}
                 autoFocus
               />
             </div>
 
             <div className="space-y-3">
-              <span className="font-medium text-sm">Motyw interfejsu</span>
+              <span className="font-medium text-sm">{t.theme.label}</span>
               <div className="flex gap-2">
                 {THEME_OPTIONS.map(({ value, label, Icon }) => (
                   <button
@@ -144,8 +139,8 @@ export default function ShareNavbar({ backHref, backLabel, clientLogoUrl, design
             </div>
 
             <div className="flex justify-end gap-2">
-              <Button variant="ghost" size="sm" onClick={() => setSettingsOpen(false)}>Anuluj</Button>
-              <Button size="sm" onClick={saveSettings}>Zapisz</Button>
+              <Button variant="ghost" size="sm" onClick={() => setSettingsOpen(false)}>{t.common.cancel}</Button>
+              <Button size="sm" onClick={saveSettings}>{t.common.save}</Button>
             </div>
           </div>
         </div>

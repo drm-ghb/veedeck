@@ -1,5 +1,6 @@
 import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { auth } from "./auth";
+import { prisma } from "./prisma";
 
 const f = createUploadthing();
 
@@ -30,6 +31,22 @@ export const ourFileRouter = {
     })
     .onUploadComplete(async ({ file }) => {
       return { url: file.url, key: file.key };
+    }),
+  clientRenderUploader: f({ image: { maxFileSize: "16MB", maxFileCount: 10 } })
+    .middleware(async ({ req }) => {
+      const token = req.headers.get("x-share-token");
+      if (!token) throw new Error("Unauthorized");
+      const project = await prisma.project.findUnique({
+        where: { shareToken: token },
+        select: { id: true, clientCanUpload: true, archived: true },
+      });
+      if (!project || project.archived || !project.clientCanUpload) {
+        throw new Error("Unauthorized");
+      }
+      return { projectId: project.id };
+    })
+    .onUploadComplete(async ({ metadata, file }) => {
+      return { url: file.url, key: file.key, projectId: metadata.projectId };
     }),
 } satisfies FileRouter;
 

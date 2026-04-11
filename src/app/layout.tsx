@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
-import { Inter, DM_Sans } from "next/font/google";
+import { Inter, DM_Sans, Story_Script, Lato } from "next/font/google";
 import { cookies } from "next/headers";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/lib/theme";
+import { Providers } from "@/components/providers";
+import { LanguageProvider } from "@/lib/i18n";
+import type { Lang } from "@/lib/i18n";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -15,8 +18,20 @@ const dmSans = DM_Sans({
   subsets: ["latin", "latin-ext"],
 });
 
+const storyScript = Story_Script({
+  variable: "--font-story-script",
+  subsets: ["latin"],
+  weight: ["400"],
+});
+
+const lato = Lato({
+  variable: "--font-lato",
+  subsets: ["latin", "latin-ext"],
+  weight: ["400", "700"],
+});
+
 export const metadata: Metadata = {
-  title: "Veedeck – cały projekt w jednym miejscu",
+  title: "veedeck – cały projekt w jednym miejscu",
   description: "Centralizuj feedback do renderów w jednym miejscu",
 };
 
@@ -28,18 +43,25 @@ export default async function RootLayout({
   const cookieStore = await cookies();
   const themeCookie = cookieStore.get("veedeck-theme")?.value;
   const isDark = themeCookie === "dark";
+  const langCookie = cookieStore.get("veedeck-lang")?.value as Lang | undefined;
+  const initialLang: Lang | null =
+    langCookie === "pl" || langCookie === "en" ? langCookie : null;
 
   return (
     <html
-      lang="pl"
-      className={`${inter.variable} ${dmSans.variable} h-full antialiased${isDark ? " dark" : ""}`}
+      lang={initialLang ?? "pl"}
+      className={`${inter.variable} ${dmSans.variable} ${storyScript.variable} ${lato.variable} h-full antialiased${isDark ? " dark" : ""}`}
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col bg-background" suppressHydrationWarning>
-        <ThemeProvider>
-          {children}
-          <Toaster richColors />
-        </ThemeProvider>
+        <Providers>
+          <LanguageProvider initialLang={initialLang}>
+            <ThemeProvider>
+              {children}
+              <Toaster richColors />
+            </ThemeProvider>
+          </LanguageProvider>
+        </Providers>
       </body>
     </html>
   );

@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
-import { LayoutDashboard, ShoppingCart, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { LayoutDashboard, ShoppingCart, PanelLeftClose, PanelLeftOpen, PictureInPicture } from "lucide-react";
+import { useT } from "@/lib/i18n";
 
 interface ShoppingListLink {
   id: string;
@@ -28,6 +28,7 @@ export default function ShareSidebar({
   shoppingLists = [],
   onRenderFlowClick,
 }: ShareSidebarProps) {
+  const t = useT();
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
 
@@ -72,13 +73,13 @@ export default function ShareSidebar({
         {/* Dashboard */}
         <Link
           href={homeHref}
-          title={isCollapsed ? "Dashboard" : undefined}
+          title={isCollapsed ? t.share.dashboard : undefined}
           className={linkCls(isHomeActive)}
         >
           <span className="flex-shrink-0 w-5 flex items-center justify-center">
             <LayoutDashboard size={18} />
           </span>
-          {!isCollapsed && "Dashboard"}
+          {!isCollapsed && t.share.dashboard}
         </Link>
 
         {/* RenderFlow */}
@@ -86,26 +87,24 @@ export default function ShareSidebar({
           (onRenderFlowClick ? (
             <button
               onClick={onRenderFlowClick}
-              title={isCollapsed ? "RenderFlow" : undefined}
+              title={isCollapsed ? t.share.renderflow : undefined}
               className={`w-full ${linkCls(isRenderActive)}`}
             >
               <span className="flex-shrink-0 w-5 flex items-center justify-center">
-                <Image src="/logo.svg" alt="" width={18} height={18} className="block dark:hidden" />
-                <Image src="/logo-dark.svg" alt="" width={18} height={18} className="hidden dark:block" />
+                <PictureInPicture size={18} />
               </span>
-              {!isCollapsed && "RenderFlow"}
+              {!isCollapsed && t.share.renderflow}
             </button>
           ) : (
             <Link
               href={renderHref}
-              title={isCollapsed ? "RenderFlow" : undefined}
+              title={isCollapsed ? t.share.renderflow : undefined}
               className={linkCls(isRenderActive)}
             >
               <span className="flex-shrink-0 w-5 flex items-center justify-center">
-                <Image src="/logo.svg" alt="" width={18} height={18} className="block dark:hidden" />
-                <Image src="/logo-dark.svg" alt="" width={18} height={18} className="hidden dark:block" />
+                <PictureInPicture size={18} />
               </span>
-              {!isCollapsed && "RenderFlow"}
+              {!isCollapsed && t.share.renderflow}
             </Link>
           ))}
 
@@ -113,13 +112,13 @@ export default function ShareSidebar({
         {showListy && shoppingLists.length > 0 && (
           <Link
             href={listHref}
-            title={isCollapsed ? "Listy" : undefined}
+            title={isCollapsed ? t.share.lists : undefined}
             className={linkCls(isListyActive)}
           >
             <span className="flex-shrink-0 w-5 flex items-center justify-center">
               <ShoppingCart size={18} />
             </span>
-            {!isCollapsed && "Listy"}
+            {!isCollapsed && t.share.lists}
           </Link>
         )}
       </nav>
@@ -127,7 +126,7 @@ export default function ShareSidebar({
       <div className="p-2 border-t">
         <button
           onClick={toggle}
-          title={isCollapsed ? "Rozwiń pasek" : "Zwiń pasek"}
+          title={isCollapsed ? t.share.expandSidebar : t.share.collapseSidebar}
           className="flex items-center justify-center w-full py-2 px-2.5 rounded-lg text-gray-400 hover:bg-muted hover:text-foreground transition-colors"
         >
           {isCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}

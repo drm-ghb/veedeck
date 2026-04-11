@@ -13,22 +13,21 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Loader2, ExternalLink, ImagePlus, X, Search, Package } from "lucide-react";
+import { useT } from "@/lib/i18n";
 import { UploadButton } from "@uploadthing/react";
 import type { OurFileRouter } from "@/lib/uploadthing";
 
-const CATEGORIES = [
-  { value: "LAMPY", label: "Lampy" },
-  { value: "AKCESORIA", label: "Akcesoria" },
-  { value: "MEBLE", label: "Meble" },
-  { value: "ARMATURA", label: "Armatura" },
-  { value: "OKLADZINY_SCIENNE", label: "Okładziny ścienne" },
-  { value: "PODLOGA", label: "Podłoga" },
-];
+const CATEGORY_VALUES = ["LAMPY", "AKCESORIA", "MEBLE", "ARMATURA", "OKLADZINY_SCIENNE", "PODLOGA"] as const;
 
-const CATEGORY_LABELS: Record<string, string> = {
-  LAMPY: "Lampy", AKCESORIA: "Akcesoria", MEBLE: "Meble",
-  ARMATURA: "Armatura", OKLADZINY_SCIENNE: "Okładziny ścienne", PODLOGA: "Podłoga",
+type TProducts = ReturnType<typeof useT>["products"];
+const CAT_KEY_MAP: Record<string, keyof TProducts> = {
+  LAMPY: "catLampy", AKCESORIA: "catAkcesoria", MEBLE: "catMeble",
+  ARMATURA: "catArmatura", OKLADZINY_SCIENNE: "catOkladziny", PODLOGA: "catPodloga",
 };
+function getCategoryLabel(cat: string, t: ReturnType<typeof useT>) {
+  const key = CAT_KEY_MAP[cat];
+  return key ? t.products[key] : cat;
+}
 
 interface ProductData {
   name: string;
@@ -81,6 +80,7 @@ export default function AddProductDialog({
   sectionId,
   onAdded,
 }: AddProductDialogProps) {
+  const t = useT();
   const [tab, setTab] = useState<"link" | "manual" | "library">("link");
   const [scrapeUrl, setScrapeUrl] = useState("");
   const [scraping, setScraping] = useState(false);
@@ -145,11 +145,11 @@ export default function AddProductDialog({
         catalogNumber: data.catalogNumber ?? "",
       });
       if (data.partial) {
-        toast.warning("Sklep blokuje automatyczne pobieranie — uzupełnij dane ręcznie");
+        toast.warning(t.products.fetchBlockedError);
       }
       setTab("manual");
     } catch {
-      toast.error("Nie udało się pobrać danych produktu");
+      toast.error(t.products.fetchError);
     } finally {
       setScraping(false);
     }
@@ -170,11 +170,11 @@ export default function AddProductDialog({
       });
       if (!res.ok) throw new Error();
       const product = await res.json();
-      toast.success("Produkt dodany");
+      toast.success(t.products.productAdded);
       onAdded(product);
       handleClose();
     } catch {
-      toast.error("Błąd dodawania produktu");
+      toast.error(t.products.productAddError);
     } finally {
       setSaving(false);
     }
@@ -206,11 +206,11 @@ export default function AddProductDialog({
       });
       if (!res.ok) throw new Error();
       const product = await res.json();
-      toast.success("Produkt dodany");
+      toast.success(t.products.productAdded);
       onAdded(product);
       handleClose();
     } catch {
-      toast.error("Błąd dodawania produktu");
+      toast.error(t.products.productAddError);
     } finally {
       setSaving(false);
     }
@@ -229,23 +229,23 @@ export default function AddProductDialog({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-2xl overflow-x-hidden">
         <DialogHeader>
-          <DialogTitle>Dodaj produkt</DialogTitle>
+          <DialogTitle>{t.products.addProduct}</DialogTitle>
         </DialogHeader>
 
         {/* Tabs */}
         <div className="flex gap-1 bg-muted rounded-lg p-1 mb-2 overflow-hidden">
-          {(["link", "library", "manual"] as const).map((t) => (
+          {(["link", "library", "manual"] as const).map((tabKey) => (
             <button
-              key={t}
+              key={tabKey}
               type="button"
-              onClick={() => setTab(t)}
+              onClick={() => setTab(tabKey)}
               className={`flex-1 min-w-0 text-sm py-1.5 rounded-md font-medium transition-colors truncate ${
-                tab === t
+                tab === tabKey
                   ? "bg-background shadow-sm text-foreground"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              {t === "link" ? "Link" : t === "library" ? "Produkty" : "Ręcznie"}
+              {tabKey === "link" ? t.products.linkTab : tabKey === "library" ? t.products.libraryTab : t.products.manualTab}
             </button>
           ))}
         </div>
@@ -253,7 +253,7 @@ export default function AddProductDialog({
         {tab === "link" && (
           <div className="space-y-4">
             <div className="space-y-1.5">
-              <Label htmlFor="scrape-url">Link do produktu</Label>
+              <Label htmlFor="scrape-url">{t.products.productLink}</Label>
               <Input
                 id="scrape-url"
                 value={scrapeUrl}
@@ -269,9 +269,9 @@ export default function AddProductDialog({
               className="w-full"
             >
               {scraping ? (
-                <><Loader2 size={15} className="animate-spin mr-2" />Pobieranie danych...</>
+                <><Loader2 size={15} className="animate-spin mr-2" />{t.products.fetching}</>
               ) : (
-                "Pobierz dane produktu"
+                t.products.fetchData
               )}
             </Button>
           </div>
@@ -284,7 +284,7 @@ export default function AddProductDialog({
               <Input
                 value={libraryQuery}
                 onChange={(e) => setLibraryQuery(e.target.value)}
-                placeholder="Szukaj po nazwie lub producencie..."
+                placeholder={t.products.searchByName}
                 className="pl-9"
                 autoFocus
               />
@@ -298,7 +298,7 @@ export default function AddProductDialog({
                 <div className="flex flex-col items-center justify-center py-10 text-muted-foreground gap-2">
                   <Package size={32} className="opacity-30" />
                   <p className="text-sm">
-                    {libraryQuery ? "Brak wyników dla podanej frazy" : "Brak produktów w bazie"}
+                    {libraryQuery ? t.common.noResults : t.products.noProductsInDB}
                   </p>
                 </div>
               ) : (
@@ -329,7 +329,7 @@ export default function AddProductDialog({
                         )}
                         {lp.category && (
                           <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary font-medium shrink-0">
-                            {CATEGORY_LABELS[lp.category] ?? lp.category}
+                            {getCategoryLabel(lp.category, t)}
                           </span>
                         )}
                       </div>
@@ -347,7 +347,7 @@ export default function AddProductDialog({
             <div className="space-y-4 overflow-y-auto pr-1 max-h-[45dvh] sm:max-h-[55dvh]">
             {/* Image */}
             <div className="space-y-1.5">
-              <Label>Zdjęcie produktu</Label>
+              <Label>{t.products.productImage}</Label>
               {form.imageUrl ? (
                 <div className="relative rounded-lg overflow-hidden border border-border h-40 bg-muted flex items-center justify-center">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -365,7 +365,7 @@ export default function AddProductDialog({
                   {uploading ? (
                     <div className="flex flex-col items-center gap-2">
                       <Loader2 size={18} className="animate-spin text-muted-foreground" />
-                      <p className="text-xs text-muted-foreground">Przesyłanie...</p>
+                      <p className="text-xs text-muted-foreground">{t.products.uploading}</p>
                     </div>
                   ) : (
                     <UploadButton<OurFileRouter, "productImageUploader">
@@ -377,7 +377,7 @@ export default function AddProductDialog({
                         setUploading(false);
                       }}
                       onUploadError={() => {
-                        toast.error("Błąd przesyłania zdjęcia");
+                        toast.error(t.products.imageUploadError);
                         setUploading(false);
                       }}
                       appearance={{
@@ -386,7 +386,7 @@ export default function AddProductDialog({
                         allowedContent: "hidden",
                       }}
                       content={{
-                        button: <><ImagePlus size={20} className="text-muted-foreground" /><span>Wybierz zdjęcie</span></>,
+                        button: <><ImagePlus size={20} className="text-muted-foreground" /><span>{t.products.chooseImage}</span></>,
                       }}
                     />
                   )}
@@ -395,71 +395,71 @@ export default function AddProductDialog({
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="p-category">Kategoria</Label>
+              <Label htmlFor="p-category">{t.products.category}</Label>
               <select
                 id="p-category"
                 value={form.category}
                 onChange={(e) => set("category", e.target.value)}
                 className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C45824]/20 focus:border-[#C45824]/40"
               >
-                <option value="">Brak kategorii</option>
-                {CATEGORIES.map((c) => (
-                  <option key={c.value} value={c.value}>{c.label}</option>
+                <option value="">{t.products.noCategory}</option>
+                {CATEGORY_VALUES.map((v) => (
+                  <option key={v} value={v}>{getCategoryLabel(v, t)}</option>
                 ))}
               </select>
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="p-name">Nazwa *</Label>
+              <Label htmlFor="p-name">{t.products.nameLabel}</Label>
               <Input
                 id="p-name"
                 value={form.name}
                 onChange={(e) => set("name", e.target.value)}
-                placeholder="np. Lampa sufitowa Jaxal"
+                placeholder={t.products.namePlaceholder}
                 required
               />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="p-price">Cena</Label>
-                <Input id="p-price" value={form.price} onChange={(e) => set("price", e.target.value)} placeholder="np. 299 PLN" />
+                <Label htmlFor="p-price">{t.products.priceLabel}</Label>
+                <Input id="p-price" value={form.price} onChange={(e) => set("price", e.target.value)} placeholder={t.products.pricePlaceholder} />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="p-manufacturer">Producent</Label>
-                <Input id="p-manufacturer" value={form.manufacturer} onChange={(e) => set("manufacturer", e.target.value)} placeholder="np. Sklum" />
+                <Label htmlFor="p-manufacturer">{t.products.brandLabel}</Label>
+                <Input id="p-manufacturer" value={form.manufacturer} onChange={(e) => set("manufacturer", e.target.value)} placeholder={t.products.brandPlaceholder} />
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="p-color">Kolor</Label>
-                <Input id="p-color" value={form.color} onChange={(e) => set("color", e.target.value)} placeholder="np. Biały" />
+                <Label htmlFor="p-color">{t.products.colorLabel}</Label>
+                <Input id="p-color" value={form.color} onChange={(e) => set("color", e.target.value)} placeholder={t.products.colorPlaceholder} />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="p-size">Wymiar</Label>
-                <Input id="p-size" value={form.dimensions} onChange={(e) => set("dimensions", e.target.value)} placeholder="np. 30x30 cm" />
+                <Label htmlFor="p-size">{t.products.dimensionsLabel}</Label>
+                <Input id="p-size" value={form.dimensions} onChange={(e) => set("dimensions", e.target.value)} placeholder={t.products.dimensionsPlaceholder} />
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="p-delivery">Czas dostawy</Label>
-              <Input id="p-delivery" value={form.deliveryTime} onChange={(e) => set("deliveryTime", e.target.value)} placeholder="np. 3-5 dni roboczych" />
+              <Label htmlFor="p-delivery">{t.products.deliveryLabel}</Label>
+              <Input id="p-delivery" value={form.deliveryTime} onChange={(e) => set("deliveryTime", e.target.value)} placeholder={t.products.deliveryPlaceholder} />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="p-supplier">Dostawca</Label>
-                <Input id="p-supplier" value={form.supplier} onChange={(e) => set("supplier", e.target.value)} placeholder="np. sklum.com" />
+                <Label htmlFor="p-supplier">{t.products.supplierLabel}</Label>
+                <Input id="p-supplier" value={form.supplier} onChange={(e) => set("supplier", e.target.value)} placeholder={t.products.supplierPlaceholder} />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="p-catalog">Nr. katalogowy</Label>
-                <Input id="p-catalog" value={form.catalogNumber} onChange={(e) => set("catalogNumber", e.target.value)} placeholder="np. 194309-497795" />
+                <Label htmlFor="p-catalog">{t.products.catalogNumberLabel}</Label>
+                <Input id="p-catalog" value={form.catalogNumber} onChange={(e) => set("catalogNumber", e.target.value)} placeholder={t.products.catalogNumberPlaceholder} />
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="p-url">Link do produktu</Label>
+              <Label htmlFor="p-url">{t.products.productLink}</Label>
               <div className="relative">
                 <Input id="p-url" value={form.url} onChange={(e) => set("url", e.target.value)} placeholder="https://..." className="pr-8" />
                 {form.url && (
@@ -471,15 +471,15 @@ export default function AddProductDialog({
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="p-desc">Opis</Label>
-              <Textarea id="p-desc" value={form.description} onChange={(e) => set("description", e.target.value)} placeholder="Opis produktu..." rows={2} />
+              <Label htmlFor="p-desc">{t.products.descriptionLabel}</Label>
+              <Textarea id="p-desc" value={form.description} onChange={(e) => set("description", e.target.value)} placeholder={t.products.descriptionPlaceholder} rows={2} />
             </div>
 
             </div>
             <div className="flex gap-2 justify-end pt-3 border-t border-border mt-3">
-              <Button type="button" variant="outline" onClick={handleClose}>Anuluj</Button>
+              <Button type="button" variant="outline" onClick={handleClose}>{t.common.cancel}</Button>
               <Button type="submit" disabled={saving || !form.name.trim() || uploading}>
-                {saving ? "Dodawanie..." : "Dodaj produkt"}
+                {saving ? t.products.addingProduct : t.products.addProduct}
               </Button>
             </div>
           </form>

@@ -4,36 +4,38 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { Settings, ShoppingCart, ChevronLeft } from "lucide-react";
-
-const items = [
-  {
-    href: "/settings/ogolne",
-    label: "Ustawienia ogólne",
-    icon: <Settings size={16} />,
-    module: null,
-  },
-  {
-    href: "/settings/renderflow",
-    label: "RenderFlow",
-    icon: (
-      <span className="flex items-center justify-center w-4 h-4">
-        <Image src="/logo-dark.svg" alt="RenderFlow" width={16} height={16} className="hidden dark:block" />
-        <Image src="/logo.svg" alt="RenderFlow" width={16} height={16} className="block dark:hidden" />
-      </span>
-    ),
-    module: { href: "/projekty", label: "RenderFlow" },
-  },
-  {
-    href: "/settings/listy",
-    label: "Listy",
-    icon: <ShoppingCart size={16} />,
-    module: { href: "/listy", label: "Listy" },
-  },
-];
+import { useT } from "@/lib/i18n";
 
 export default function SettingsSidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const t = useT();
+
+  const items = [
+    {
+      href: "/settings/ogolne",
+      label: t.settings.generalNav,
+      icon: <Settings size={16} />,
+      module: null,
+    },
+    {
+      href: "/settings/renderflow",
+      label: t.settings.renderflow,
+      icon: (
+        <span className="flex items-center justify-center w-4 h-4">
+          <Image src="/logo-dark.svg" alt="RenderFlow" width={16} height={16} className="hidden dark:block" />
+          <Image src="/logo.svg" alt="RenderFlow" width={16} height={16} className="block dark:hidden" />
+        </span>
+      ),
+      module: { href: "/projekty", label: "RenderFlow" },
+    },
+    {
+      href: "/settings/listy",
+      label: t.settings.lists,
+      icon: <ShoppingCart size={16} />,
+      module: { href: "/listy", label: t.settings.lists },
+    },
+  ];
 
   const activeItem = items.find(
     (item) => pathname === item.href || pathname.startsWith(item.href + "/")
@@ -47,7 +49,7 @@ export default function SettingsSidebar() {
         className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors group w-full"
       >
         <ChevronLeft size={16} className="group-hover:-translate-x-0.5 transition-transform" />
-        {backModule ? `Wróć do ${backModule.label}` : "Wróć"}
+        {backModule ? t.settings.backTo.replace("{module}", backModule.label) : t.common.back}
       </button>
 
       <ul className="space-y-0.5">

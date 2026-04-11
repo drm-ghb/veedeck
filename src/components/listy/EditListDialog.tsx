@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Search, ChevronRight } from "lucide-react";
+import { useT } from "@/lib/i18n";
 
 interface Project {
   id: string;
@@ -32,6 +33,7 @@ interface EditListDialogProps {
 
 export default function EditListDialog({ list, open, onOpenChange }: EditListDialogProps) {
   const router = useRouter();
+  const t = useT();
   const [name, setName] = useState(list.name);
   const [mode, setMode] = useState<"none" | "project">(list.project ? "project" : "none");
   const [projects, setProjects] = useState<Project[]>([]);
@@ -96,11 +98,11 @@ export default function EditListDialog({ list, open, onOpenChange }: EditListDia
 
       if (!res.ok) throw new Error();
 
-      toast.success("Lista zaktualizowana");
+      toast.success(t.listy.listUpdated);
       onOpenChange(false);
       router.refresh();
     } catch {
-      toast.error("Błąd zapisu");
+      toast.error(t.listy.listUpdateError);
     } finally {
       setLoading(false);
     }
@@ -120,24 +122,24 @@ export default function EditListDialog({ list, open, onOpenChange }: EditListDia
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Edytuj listę</DialogTitle>
+          <DialogTitle>{t.listy.editList}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="space-y-1.5">
-            <Label htmlFor="edit-list-name">Nazwa listy *</Label>
+            <Label htmlFor="edit-list-name">{t.listy.listName}</Label>
             <Input
               id="edit-list-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="np. Meble do salonu"
+              placeholder={t.listy.listNamePlaceholder}
               required
               autoFocus
             />
           </div>
 
           <div className="space-y-2">
-            <Label>Przypisz do projektu</Label>
+            <Label>{t.listy.assignProject}</Label>
             <div className="flex gap-2">
               <button
                 type="button"
@@ -148,7 +150,7 @@ export default function EditListDialog({ list, open, onOpenChange }: EditListDia
                     : "border-border text-muted-foreground hover:text-foreground hover:border-foreground/30"
                 }`}
               >
-                Bez projektu
+                {t.listy.noProject}
               </button>
               <button
                 type="button"
@@ -159,7 +161,7 @@ export default function EditListDialog({ list, open, onOpenChange }: EditListDia
                     : "border-border text-muted-foreground hover:text-foreground hover:border-foreground/30"
                 }`}
               >
-                Wybierz projekt
+                {t.listy.selectProject}
               </button>
             </div>
 
@@ -186,7 +188,7 @@ export default function EditListDialog({ list, open, onOpenChange }: EditListDia
                     <div className="relative">
                       <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
                       <Input
-                        placeholder="Szukaj projektu..."
+                        placeholder={t.listy.searchProject}
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         className="pl-9"
@@ -194,10 +196,10 @@ export default function EditListDialog({ list, open, onOpenChange }: EditListDia
                     </div>
                     <div className="max-h-48 overflow-y-auto rounded-lg border border-border">
                       {loadingProjects ? (
-                        <p className="text-sm text-muted-foreground text-center py-6">Ładowanie...</p>
+                        <p className="text-sm text-muted-foreground text-center py-6">{t.common.loading}</p>
                       ) : filtered.length === 0 ? (
                         <p className="text-sm text-muted-foreground text-center py-6">
-                          {search ? "Brak wyników" : "Brak projektów"}
+                          {search ? t.common.noResults : t.listy.noProjects}
                         </p>
                       ) : (
                         filtered.map((p, i) => (
@@ -228,10 +230,10 @@ export default function EditListDialog({ list, open, onOpenChange }: EditListDia
 
           <div className="flex gap-2 justify-end pt-1">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Anuluj
+              {t.common.cancel}
             </Button>
             <Button type="submit" disabled={loading || !canSubmit}>
-              {loading ? "Zapisywanie..." : "Zapisz"}
+              {loading ? t.common.saving : t.common.save}
             </Button>
           </div>
         </form>

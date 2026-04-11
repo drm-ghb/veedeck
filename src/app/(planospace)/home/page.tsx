@@ -3,8 +3,15 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import Image from "next/image";
 import { ShoppingCart, Briefcase, Package } from "lucide-react";
+import { cookies } from "next/headers";
+import { pl } from "@/lib/translations/pl";
+import { en } from "@/lib/translations/en";
 
 export default async function HomePage() {
+  const cookieStore = await cookies();
+  const lang = cookieStore.get("veedeck-lang")?.value;
+  const t = lang === "en" ? en : pl;
+
   const session = await auth();
   const user = session?.user?.id
     ? await prisma.user.findUnique({
@@ -21,9 +28,9 @@ export default async function HomePage() {
     return (
       <div className="flex flex-col items-start justify-start">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-          {displayName ? `Witamy, ${displayName}!` : "Witamy w Veedeck!"}
+          {displayName ? t.home.welcome.replace("{name}", displayName) : t.home.welcomeDefault}
         </h1>
-        <p className="text-sm text-muted-foreground mt-2">Wybierz moduł z paska bocznego, aby rozpocząć pracę.</p>
+        <p className="text-sm text-muted-foreground mt-2">{t.home.sidebarHint}</p>
       </div>
     );
   }
@@ -31,10 +38,10 @@ export default async function HomePage() {
   return (
     <div>
       <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">
-        {displayName ? `Witamy, ${displayName}!` : "Witamy w Veedeck!"}
+        {displayName ? t.home.welcome.replace("{name}", displayName) : t.home.welcomeDefault}
       </h1>
       <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-6">
-        MODUŁY
+        {t.home.modules}
       </h2>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
@@ -48,8 +55,8 @@ export default async function HomePage() {
             <Briefcase size={32} className="text-white" />
           </div>
           <div className="text-center">
-            <p className="text-sm font-medium text-foreground leading-tight">Projekty</p>
-            <p className="text-[11px] text-muted-foreground mt-0.5 leading-tight">Centralne zarządzanie projektami</p>
+            <p className="text-sm font-medium text-foreground leading-tight">{t.nav.projects}</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5 leading-tight">{t.home.projectsDesc}</p>
           </div>
         </Link>
 
@@ -63,8 +70,8 @@ export default async function HomePage() {
               <Image src="/logo-dark.svg" alt="RenderFlow" width={48} height={48} />
             </div>
             <div className="text-center">
-              <p className="text-sm font-medium text-foreground leading-tight">RenderFlow</p>
-              <p className="text-[11px] text-muted-foreground mt-0.5 leading-tight">Zarządzanie renderami i feedbackiem</p>
+              <p className="text-sm font-medium text-foreground leading-tight">{t.nav.renderflow}</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5 leading-tight">{t.home.renderflowDesc}</p>
             </div>
           </Link>
         )}
@@ -79,8 +86,8 @@ export default async function HomePage() {
               <ShoppingCart size={32} className="text-white" />
             </div>
             <div className="text-center">
-              <p className="text-sm font-medium text-foreground leading-tight">Listy</p>
-              <p className="text-[11px] text-muted-foreground mt-0.5 leading-tight">Listy zakupowe dla klientów</p>
+              <p className="text-sm font-medium text-foreground leading-tight">{t.nav.lists}</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5 leading-tight">{t.home.listsDesc}</p>
             </div>
           </Link>
         )}
@@ -95,8 +102,8 @@ export default async function HomePage() {
               <Package size={32} className="text-white" />
             </div>
             <div className="text-center">
-              <p className="text-sm font-medium text-foreground leading-tight">Produkty</p>
-              <p className="text-[11px] text-muted-foreground mt-0.5 leading-tight">Baza produktów projektanta</p>
+              <p className="text-sm font-medium text-foreground leading-tight">{t.nav.products}</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5 leading-tight">{t.home.productsDesc}</p>
             </div>
           </Link>
         )}

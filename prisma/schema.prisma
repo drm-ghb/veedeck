@@ -35,6 +35,7 @@ model User {
   allowClientVersionRestore  Boolean        @default(true)
   showProjectTitle           Boolean        @default(true)
   isAdmin                    Boolean        @default(false)
+  needsNameSetup             Boolean        @default(false)
   globalHiddenModules        String[]       @default([])
   listsCategoryOrder         String[]       @default([])
   navMode                    String         @default("dashboard")
@@ -93,6 +94,7 @@ model Project {
   addressCity        String?
   addressPostalCode  String?
   addressStreet      String?
+  clientCanUpload    Boolean         @default(false)
   user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   clients        ProjectClient[]
   renders        Render[]
@@ -269,8 +271,9 @@ model Comment {
   updatedAt  DateTime      @updatedAt
   renderId   String
   title      String?
-  isInternal Boolean       @default(false)
-  render     Render        @relation(fields: [renderId], references: [id], onDelete: Cascade)
+  isInternal  Boolean       @default(false)
+  isAiSummary Boolean       @default(false)
+  render      Render        @relation(fields: [renderId], references: [id], onDelete: Cascade)
   replies    Reply[]
 }
 

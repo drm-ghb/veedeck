@@ -1,7 +1,6 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
 import GlobalSearch from "@/components/dashboard/GlobalSearch";
 import { SignOutButton } from "@/components/dashboard/SignOutButton";
 import NotificationBell from "@/components/dashboard/NotificationBell";
@@ -36,10 +35,7 @@ export default async function ProjektyLayout({
           <div className="flex items-center gap-2 shrink-0">
             <HomeLinkIcon hidden={navMode === "sidebar"} />
             <Link href="/home" className="flex items-center gap-2 shrink-0">
-              <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center shrink-0 overflow-hidden">
-                <Image src="/logo2.png" alt="Veedeck" width={32} height={32} style={{ width: 32, height: 32 }} />
-              </div>
-              <span className="text-xl font-bold tracking-tight">Veedeck</span>
+              <span className="text-[1.5625rem] font-bold tracking-tight" style={{ fontFamily: "var(--font-story-script)" }}>veedeck</span>
             </Link>
           </div>
 

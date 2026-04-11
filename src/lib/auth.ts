@@ -1,17 +1,22 @@
 import NextAuth from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import CredentialsProvider from "next-auth/providers/credentials";
+import GoogleProvider from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import { prisma } from "./prisma";
 import { logActivity } from "./activity-log";
+import { authConfig } from "./auth.config";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  ...authConfig,
   adapter: PrismaAdapter(prisma),
-  session: { strategy: "jwt" },
-  pages: {
-    signIn: "/login",
-  },
   providers: [
+    ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+      ? [GoogleProvider({
+          clientId: process.env.GOOGLE_CLIENT_ID,
+          clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+        })]
+      : []),
     CredentialsProvider({
       name: "credentials",
       credentials: {
@@ -47,11 +52,37 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
     }),
   ],
+  events: {
+    async linkAccount({ user, account }) {
+      // When a Google account is linked for the first time, require the user to set their name
+      if (account.provider === "google") {
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { needsNameSetup: true },
+        });
+      }
+    },
+  },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       if (user) {
         token.id = user.id;
         token.isAdmin = (user as any).isAdmin;
+        // Read needsNameSetup from DB on sign-in
+        const dbUser = await prisma.user.findUnique({
+          where: { id: user.id as string },
+          select: { needsNameSetup: true },
+        });
+        token.needsNameSetup = dbUser?.needsNameSetup ?? false;
+      }
+      if (trigger === "update") {
+        // Refresh needsNameSetup from DB after session update
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          select: { needsNameSetup: true, name: true },
+        });
+        token.needsNameSetup = dbUser?.needsNameSetup ?? false;
+        token.name = dbUser?.name ?? token.name;
       }
       return token;
     },
@@ -59,6 +90,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (token && session.user) {
         session.user.id = token.id as string;
         (session.user as any).isAdmin = token.isAdmin as boolean;
+        (session.user as any).needsNameSetup = token.needsNameSetup as boolean;
       }
       return session;
     },

@@ -13,17 +13,21 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Loader2, ExternalLink, ImagePlus, X } from "lucide-react";
+import { useT } from "@/lib/i18n";
 import { UploadButton } from "@uploadthing/react";
 import type { OurFileRouter } from "@/lib/uploadthing";
 
-const CATEGORIES = [
-  { value: "LAMPY", label: "Lampy" },
-  { value: "AKCESORIA", label: "Akcesoria" },
-  { value: "MEBLE", label: "Meble" },
-  { value: "ARMATURA", label: "Armatura" },
-  { value: "OKLADZINY_SCIENNE", label: "Okładziny ścienne" },
-  { value: "PODLOGA", label: "Podłoga" },
-];
+const CATEGORY_VALUES = ["LAMPY", "AKCESORIA", "MEBLE", "ARMATURA", "OKLADZINY_SCIENNE", "PODLOGA"] as const;
+
+type TProducts = ReturnType<typeof useT>["products"];
+const CAT_KEY_MAP: Record<string, keyof TProducts> = {
+  LAMPY: "catLampy", AKCESORIA: "catAkcesoria", MEBLE: "catMeble",
+  ARMATURA: "catArmatura", OKLADZINY_SCIENNE: "catOkladziny", PODLOGA: "catPodloga",
+};
+function getCategoryLabel(cat: string, t: ReturnType<typeof useT>) {
+  const key = CAT_KEY_MAP[cat];
+  return key ? t.products[key] : cat;
+}
 
 interface ProductData {
   name: string;
@@ -71,6 +75,7 @@ export default function EditProductDialog({
     supplier: product.supplier ?? "",
     catalogNumber: product.catalogNumber ?? "",
   });
+  const t = useT();
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
 
@@ -90,11 +95,11 @@ export default function EditProductDialog({
       });
       if (!res.ok) throw new Error();
       const updated = await res.json();
-      toast.success("Produkt zaktualizowany");
+      toast.success(t.products.productUpdated);
       onUpdated(updated);
       onOpenChange(false);
     } catch {
-      toast.error("Błąd aktualizacji produktu");
+      toast.error(t.products.productUpdateError);
     } finally {
       setSaving(false);
     }
@@ -104,14 +109,14 @@ export default function EditProductDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Edytuj produkt</DialogTitle>
+          <DialogTitle>{t.products.editProduct}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-0">
           <div className="space-y-4 overflow-y-auto pr-1" style={{ maxHeight: "calc(60vh - 48px)" }}>
           {/* Image */}
           <div className="space-y-1.5">
-            <Label>Zdjęcie produktu</Label>
+            <Label>{t.products.productImage}</Label>
             {form.imageUrl ? (
               <div className="relative rounded-lg overflow-hidden border border-border h-40 bg-muted flex items-center justify-center">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -127,7 +132,7 @@ export default function EditProductDialog({
             ) : (
               <div className="rounded-lg border-2 border-dashed border-border h-32 flex flex-col items-center justify-center gap-2 bg-muted/30">
                 {uploading ? (
-                  <><Loader2 size={18} className="animate-spin text-muted-foreground" /><p className="text-xs text-muted-foreground">Przesyłanie...</p></>
+                  <><Loader2 size={18} className="animate-spin text-muted-foreground" /><p className="text-xs text-muted-foreground">{t.products.uploading}</p></>
                 ) : (
                   <>
                     <ImagePlus size={20} className="text-muted-foreground" />
@@ -140,14 +145,14 @@ export default function EditProductDialog({
                         setUploading(false);
                       }}
                       onUploadError={() => {
-                        toast.error("Błąd przesyłania zdjęcia");
+                        toast.error(t.products.imageUploadError);
                         setUploading(false);
                       }}
                       appearance={{
                         button: "bg-transparent text-xs text-muted-foreground hover:text-foreground underline cursor-pointer ut-uploading:opacity-50",
                         allowedContent: "hidden",
                       }}
-                      content={{ button: "Wybierz zdjęcie" }}
+                      content={{ button: t.products.chooseImage }}
                     />
                   </>
                 )}
@@ -156,71 +161,71 @@ export default function EditProductDialog({
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="ep-name">Nazwa *</Label>
+            <Label htmlFor="ep-name">{t.products.nameLabel}</Label>
             <Input
               id="ep-name"
               value={form.name}
               onChange={(e) => set("name", e.target.value)}
-              placeholder="np. Lampa sufitowa Jaxal"
+              placeholder={t.products.namePlaceholder}
               required
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label htmlFor="ep-price">Cena</Label>
-              <Input id="ep-price" value={form.price} onChange={(e) => set("price", e.target.value)} placeholder="np. 299 PLN" />
+              <Label htmlFor="ep-price">{t.products.priceLabel}</Label>
+              <Input id="ep-price" value={form.price} onChange={(e) => set("price", e.target.value)} placeholder={t.products.pricePlaceholder} />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="ep-manufacturer">Producent</Label>
-              <Input id="ep-manufacturer" value={form.manufacturer} onChange={(e) => set("manufacturer", e.target.value)} placeholder="np. Sklum" />
+              <Label htmlFor="ep-manufacturer">{t.products.brandLabel}</Label>
+              <Input id="ep-manufacturer" value={form.manufacturer} onChange={(e) => set("manufacturer", e.target.value)} placeholder={t.products.brandPlaceholder} />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label htmlFor="ep-color">Kolor</Label>
-              <Input id="ep-color" value={form.color} onChange={(e) => set("color", e.target.value)} placeholder="np. Biały" />
+              <Label htmlFor="ep-color">{t.products.colorLabel}</Label>
+              <Input id="ep-color" value={form.color} onChange={(e) => set("color", e.target.value)} placeholder={t.products.colorPlaceholder} />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="ep-size">Wymiar</Label>
-              <Input id="ep-size" value={form.dimensions} onChange={(e) => set("dimensions", e.target.value)} placeholder="np. 30x30 cm" />
+              <Label htmlFor="ep-size">{t.products.dimensionsLabel}</Label>
+              <Input id="ep-size" value={form.dimensions} onChange={(e) => set("dimensions", e.target.value)} placeholder={t.products.dimensionsPlaceholder} />
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="ep-delivery">Czas dostawy</Label>
-            <Input id="ep-delivery" value={form.deliveryTime} onChange={(e) => set("deliveryTime", e.target.value)} placeholder="np. 3-5 dni roboczych" />
+            <Label htmlFor="ep-delivery">{t.products.deliveryLabel}</Label>
+            <Input id="ep-delivery" value={form.deliveryTime} onChange={(e) => set("deliveryTime", e.target.value)} placeholder={t.products.deliveryPlaceholder} />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label htmlFor="ep-supplier">Dostawca</Label>
-              <Input id="ep-supplier" value={form.supplier} onChange={(e) => set("supplier", e.target.value)} placeholder="np. sklum.com" />
+              <Label htmlFor="ep-supplier">{t.products.supplierLabel}</Label>
+              <Input id="ep-supplier" value={form.supplier} onChange={(e) => set("supplier", e.target.value)} placeholder={t.products.supplierPlaceholder} />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="ep-catalog">Nr. katalogowy</Label>
-              <Input id="ep-catalog" value={form.catalogNumber} onChange={(e) => set("catalogNumber", e.target.value)} placeholder="np. 194309-497795" />
+              <Label htmlFor="ep-catalog">{t.products.catalogNumberLabel}</Label>
+              <Input id="ep-catalog" value={form.catalogNumber} onChange={(e) => set("catalogNumber", e.target.value)} placeholder={t.products.catalogNumberPlaceholder} />
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="ep-category">Kategoria</Label>
+            <Label htmlFor="ep-category">{t.products.category}</Label>
             <select
               id="ep-category"
               value={form.category}
               onChange={(e) => set("category", e.target.value)}
               className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C45824]/20 focus:border-[#C45824]/40"
             >
-              <option value="">Brak kategorii</option>
-              {CATEGORIES.map((c) => (
-                <option key={c.value} value={c.value}>{c.label}</option>
+              <option value="">{t.products.noCategory}</option>
+              {CATEGORY_VALUES.map((v) => (
+                <option key={v} value={v}>{getCategoryLabel(v, t)}</option>
               ))}
             </select>
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="ep-url">Link do produktu</Label>
+            <Label htmlFor="ep-url">{t.products.productLink}</Label>
             <div className="relative">
               <Input id="ep-url" value={form.url} onChange={(e) => set("url", e.target.value)} placeholder="https://..." className="pr-8" />
               {form.url && (
@@ -232,15 +237,15 @@ export default function EditProductDialog({
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="ep-desc">Opis</Label>
-            <Textarea id="ep-desc" value={form.description} onChange={(e) => set("description", e.target.value)} placeholder="Opis produktu..." rows={2} />
+            <Label htmlFor="ep-desc">{t.products.descriptionLabel}</Label>
+            <Textarea id="ep-desc" value={form.description} onChange={(e) => set("description", e.target.value)} placeholder={t.products.descriptionPlaceholder} rows={2} />
           </div>
 
           </div>
           <div className="flex gap-2 justify-end pt-3 border-t border-border mt-3">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Anuluj</Button>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>{t.common.cancel}</Button>
             <Button type="submit" disabled={saving || !form.name.trim() || uploading}>
-              {saving ? "Zapisywanie..." : "Zapisz zmiany"}
+              {saving ? t.common.saving : t.products.saveChanges}
             </Button>
           </div>
         </form>

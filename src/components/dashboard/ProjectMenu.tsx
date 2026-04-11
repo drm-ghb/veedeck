@@ -12,6 +12,7 @@ import {
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import EditProjectDialog from "./EditProjectDialog";
+import { useT } from "@/lib/i18n";
 
 interface ProjectMenuProps {
   project: {
@@ -21,10 +22,12 @@ interface ProjectMenuProps {
     clientEmail?: string | null;
     description?: string | null;
     pinned?: boolean;
+    clientCanUpload?: boolean;
   };
 }
 
 export default function ProjectMenu({ project }: ProjectMenuProps) {
+  const t = useT();
   const [editOpen, setEditOpen] = useState(false);
   const router = useRouter();
 
@@ -35,10 +38,10 @@ export default function ProjectMenu({ project }: ProjectMenuProps) {
       body: JSON.stringify({ pinned: !project.pinned }),
     });
     if (res.ok) {
-      toast.success(project.pinned ? "Odpięto projekt" : "Projekt przypięty");
+      toast.success(project.pinned ? t.projekty.projectUnpinned : t.projekty.projectPinned);
       router.refresh();
     } else {
-      toast.error("Błąd operacji");
+      toast.error(t.projekty.pinError);
     }
   }
 
@@ -49,10 +52,10 @@ export default function ProjectMenu({ project }: ProjectMenuProps) {
       body: JSON.stringify({ archived: true }),
     });
     if (res.ok) {
-      toast.success("Projekt zarchiwizowany");
+      toast.success(t.projekty.projectArchivedToast);
       router.refresh();
     } else {
-      toast.error("Błąd archiwizacji");
+      toast.error(t.projekty.projectArchiveError);
     }
   }
 
@@ -64,10 +67,10 @@ export default function ProjectMenu({ project }: ProjectMenuProps) {
       body: JSON.stringify({ removeModule: "renderflow" }),
     });
     if (res.ok) {
-      toast.success("Projekt usunięty z RenderFlow");
+      toast.success(t.projekty.projectDeleted);
       router.refresh();
     } else {
-      toast.error("Błąd usuwania");
+      toast.error(t.projekty.projectDeleteError);
     }
   }
 
@@ -80,21 +83,21 @@ export default function ProjectMenu({ project }: ProjectMenuProps) {
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={handlePin}>
             {project.pinned ? <PinOff size={14} /> : <Pin size={14} />}
-            {project.pinned ? "Odepnij" : "Przypnij"}
+            {project.pinned ? t.common.unpinAction : t.common.pinAction}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => setEditOpen(true)}>
             <Pencil size={14} />
-            Edytuj
+            {t.common.edit}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={handleArchive}>
             <Archive size={14} />
-            Archiwizuj
+            {t.common.archive}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem variant="destructive" onClick={handleDelete}>
             <Trash2 size={14} />
-            Usuń
+            {t.common.delete}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

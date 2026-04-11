@@ -9,10 +9,12 @@ import ShareSidebar from "@/components/share/ShareSidebar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { getRoomIcon } from "@/lib/roomIcons";
-import { ChevronLeft, ChevronRight, MessageSquare, UserRound, Sun, Moon, Monitor, Lock, Settings, Folder, Grid2x2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, MessageSquare, UserRound, Sun, Moon, Monitor, Lock, Settings, Folder, Grid2x2, FolderPlus } from "lucide-react";
 import { useTheme, type Theme } from "@/lib/theme";
 import { pusherClient } from "@/lib/pusher";
 import { toast } from "sonner";
+import { UploadButton } from "@uploadthing/react";
+import type { OurFileRouter } from "@/lib/uploadthing";
 
 type RenderStatus = "REVIEW" | "ACCEPTED";
 
@@ -87,6 +89,7 @@ interface Project {
   shareExpiresAt: string | null;
   navMode: string;
   hiddenModules: string[];
+  clientCanUpload: boolean;
   shoppingLists: { id: string; name: string; shareToken: string }[];
 }
 
@@ -118,6 +121,11 @@ export default function SharePage() {
   const [selectedRender, setSelectedRender] = useState<Render | null>(null);
   const [pendingRequests, setPendingRequests] = useState<Set<string>>(new Set());
   const [pendingRestoreRequests, setPendingRestoreRequests] = useState<Set<string>>(new Set());
+
+  // Client upload
+  const [newFolderName, setNewFolderName] = useState("");
+  const [showNewFolder, setShowNewFolder] = useState(false);
+  const [addingFolder, setAddingFolder] = useState(false);
 
   function buildHeaders(): HeadersInit {
     const h: Record<string, string> = {};
@@ -320,6 +328,69 @@ export default function SharePage() {
     updateRenderInState(renderId, status);
   }
 
+  async function handleAddFolder() {
+    if (!newFolderName.trim() || !selectedRoom) return;
+    setAddingFolder(true);
+    try {
+      const res = await fetch(`/api/share/${token}/folders`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...buildHeaders() },
+        body: JSON.stringify({ name: newFolderName.trim(), roomId: selectedRoom.id }),
+      });
+      if (!res.ok) throw new Error();
+      const folder = await res.json();
+      setProject((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          rooms: prev.rooms.map((r) =>
+            r.id === selectedRoom.id
+              ? { ...r, folders: [...r.folders, { id: folder.id, name: folder.name, pinned: false }] }
+              : r
+          ),
+        };
+      });
+      setSelectedRoom((prev) =>
+        prev ? { ...prev, folders: [...prev.folders, { id: folder.id, name: folder.name, pinned: false }] } : prev
+      );
+      setNewFolderName("");
+      setShowNewFolder(false);
+      toast.success("Folder dodany");
+    } catch {
+      toast.error("Błąd dodawania folderu");
+    } finally {
+      setAddingFolder(false);
+    }
+  }
+
+  function addRenderToState(render: { id: string; name: string; fileUrl: string; status: RenderStatus; roomId?: string | null; folderId?: string | null }) {
+    const newRender: Render = {
+      id: render.id,
+      name: render.name,
+      fileUrl: render.fileUrl,
+      status: render.status,
+      comments: [],
+      versions: [],
+      folder: null,
+    };
+    setProject((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        rooms: prev.rooms.map((r) =>
+          r.id === render.roomId
+            ? { ...r, renders: [...r.renders, newRender] }
+            : r
+        ),
+      };
+    });
+    if (selectedRoom?.id === render.roomId) {
+      setSelectedRoom((prev) =>
+        prev ? { ...prev, renders: [...prev.renders, newRender] } : prev
+      );
+    }
+  }
+
   const accent = project?.accentColor ?? "#2563eb";
   const { theme, setTheme } = useTheme();
 
@@ -495,6 +566,7 @@ export default function SharePage() {
           const full = selectedRoom.renders.find((render) => render.id === r.id);
           if (full) setSelectedRender(full);
         }}
+        shareToken={token}
       />
     );
 
@@ -660,7 +732,75 @@ export default function SharePage() {
                 )}
               </ol>
             </nav>
-            <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-6">{selectedFolder ? selectedFolder.name : selectedRoom.name}</h2>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">{selectedFolder ? selectedFolder.name : selectedRoom.name}</h2>
+              {project.clientCanUpload && (
+                <div className="flex items-center gap-2">
+                  {!selectedFolder && (
+                    <div className="flex items-center gap-2">
+                      {showNewFolder ? (
+                        <>
+                          <Input
+                            value={newFolderName}
+                            onChange={(e) => setNewFolderName(e.target.value)}
+                            placeholder="Nazwa folderu"
+                            className="h-8 text-sm w-40"
+                            autoFocus
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") handleAddFolder();
+                              if (e.key === "Escape") { setShowNewFolder(false); setNewFolderName(""); }
+                            }}
+                          />
+                          <Button size="sm" variant="outline" className="h-8" onClick={() => { setShowNewFolder(false); setNewFolderName(""); }}>
+                            Anuluj
+                          </Button>
+                          <Button size="sm" className="h-8" disabled={!newFolderName.trim() || addingFolder} onClick={handleAddFolder}>
+                            Dodaj
+                          </Button>
+                        </>
+                      ) : (
+                        <Button size="sm" variant="outline" className="h-8 gap-1.5" onClick={() => setShowNewFolder(true)}>
+                          <FolderPlus size={14} />
+                          Nowy folder
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                  <UploadButton<OurFileRouter, "clientRenderUploader">
+                    endpoint="clientRenderUploader"
+                    headers={{ "x-share-token": token }}
+                    content={{ button: "+ Dodaj pliki", allowedContent: "" }}
+                    onClientUploadComplete={async (res) => {
+                      for (const file of res) {
+                        const name = file.name.replace(/\.[^.]+$/, "");
+                        const r = await fetch(`/api/share/${token}/renders`, {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json", ...buildHeaders() },
+                          body: JSON.stringify({
+                            name,
+                            fileUrl: file.url,
+                            fileKey: file.key,
+                            roomId: selectedRoom.id,
+                            folderId: selectedFolder?.id ?? null,
+                          }),
+                        });
+                        if (r.ok) {
+                          const render = await r.json();
+                          addRenderToState({ ...render, roomId: selectedRoom.id });
+                        }
+                      }
+                      toast.success(`Dodano ${res.length} plik${res.length === 1 ? "" : res.length < 5 ? "i" : "ów"}`);
+                    }}
+                    onUploadError={(err) => toast.error(`Błąd uploadu: ${err.message}`)}
+                    appearance={{
+                      button: "bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-700 dark:hover:bg-gray-200 rounded-md text-sm font-medium px-3 h-8 ut-uploading:opacity-70",
+                      allowedContent: "hidden",
+                      container: "flex-shrink-0",
+                    }}
+                  />
+                </div>
+              )}
+            </div>
             {!hasContent ? (
               <p className="text-gray-400 text-center py-16">Brak plików w tym pomieszczeniu.</p>
             ) : selectedFolder ? (

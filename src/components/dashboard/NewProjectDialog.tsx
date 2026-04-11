@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Search, ChevronRight } from "lucide-react";
+import { useT } from "@/lib/i18n";
 
 interface ExistingProject {
   id: string;
@@ -28,6 +29,7 @@ interface NewProjectDialogProps {
 }
 
 export default function NewProjectDialog({ module }: NewProjectDialogProps = {}) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<"new" | "existing">("new");
 
@@ -92,7 +94,7 @@ export default function NewProjectDialog({ module }: NewProjectDialogProps = {})
 
       if (!res.ok) throw new Error();
 
-      toast.success("Projekt utworzony");
+      toast.success(t.projekty.projectCreated);
       setOpen(false);
       setTitle("");
       setClientName("");
@@ -100,7 +102,7 @@ export default function NewProjectDialog({ module }: NewProjectDialogProps = {})
       setDescription("");
       router.refresh();
     } catch {
-      toast.error("Błąd tworzenia projektu");
+      toast.error(t.projekty.projectCreateError);
     } finally {
       setLoading(false);
     }
@@ -140,10 +142,10 @@ export default function NewProjectDialog({ module }: NewProjectDialogProps = {})
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger render={<Button />}>+ Nowy projekt</DialogTrigger>
+      <DialogTrigger render={<Button />}>+ {t.projekty.newProject}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Projekt</DialogTitle>
+          <DialogTitle>{t.projekty.newProject}</DialogTitle>
         </DialogHeader>
 
         {/* Tabs */}
@@ -156,7 +158,7 @@ export default function NewProjectDialog({ module }: NewProjectDialogProps = {})
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            Nowy projekt
+            {t.projekty.newProjectTab}
           </button>
           <button
             onClick={() => setTab("existing")}
@@ -166,19 +168,19 @@ export default function NewProjectDialog({ module }: NewProjectDialogProps = {})
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            Wybierz istniejący
+            {t.projekty.existingProjectTab}
           </button>
         </div>
 
         {tab === "new" ? (
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-1.5">
-              <Label htmlFor="title">Nazwa projektu *</Label>
+              <Label htmlFor="title">{t.projekty.projectNameLabel}</Label>
               <Input
                 id="title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="np. Apartament Kowalskich"
+                placeholder={t.projekty.projectNamePlaceholder}
                 required
                 autoFocus
               />
@@ -186,43 +188,43 @@ export default function NewProjectDialog({ module }: NewProjectDialogProps = {})
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label htmlFor="clientName">Nazwa klienta</Label>
+                <Label htmlFor="clientName">{t.projekty.clientNameLabel}</Label>
                 <Input
                   id="clientName"
                   value={clientName}
                   onChange={(e) => setClientName(e.target.value)}
-                  placeholder="np. Jan Kowalski"
+                  placeholder={t.projekty.clientNamePlaceholder}
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="clientEmail">Email klienta</Label>
+                <Label htmlFor="clientEmail">{t.projekty.clientEmailLabel}</Label>
                 <Input
                   id="clientEmail"
                   type="email"
                   value={clientEmail}
                   onChange={(e) => setClientEmail(e.target.value)}
-                  placeholder="jan@example.com"
+                  placeholder={t.projekty.clientEmailPlaceholder}
                 />
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="description">Opis (opcjonalnie)</Label>
+              <Label htmlFor="description">{t.projekty.descriptionLabel}</Label>
               <Textarea
                 id="description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Krótki opis projektu..."
+                placeholder={t.projekty.descriptionPlaceholder}
                 rows={3}
               />
             </div>
 
             <div className="flex gap-2 justify-end pt-1">
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-                Anuluj
+                {t.common.cancel}
               </Button>
               <Button type="submit" disabled={loading || !title.trim()}>
-                {loading ? "Tworzenie..." : "Utwórz projekt"}
+                {loading ? t.projekty.creating : t.projekty.createProject}
               </Button>
             </div>
           </form>
@@ -232,7 +234,7 @@ export default function NewProjectDialog({ module }: NewProjectDialogProps = {})
               <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
               <Input
                 autoFocus
-                placeholder="Szukaj projektu..."
+                placeholder={t.projekty.searchPlaceholder}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-9"
@@ -241,10 +243,10 @@ export default function NewProjectDialog({ module }: NewProjectDialogProps = {})
 
             <div className="max-h-64 overflow-y-auto rounded-lg border border-border">
               {loadingProjects ? (
-                <p className="text-sm text-muted-foreground text-center py-8">Ładowanie...</p>
+                <p className="text-sm text-muted-foreground text-center py-8">{t.common.loading}</p>
               ) : filtered.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-8">
-                  {search ? "Brak wyników" : "Brak projektów"}
+                  {search ? t.common.noResults : t.projekty.noProjects}
                 </p>
               ) : (
                 filtered.map((p, i) => (
@@ -263,7 +265,7 @@ export default function NewProjectDialog({ module }: NewProjectDialogProps = {})
                     </div>
                     <div className="flex items-center gap-2 ml-3 shrink-0">
                       {p.renderCount > 0 && (
-                        <span className="text-xs text-muted-foreground">{p.renderCount} renderów</span>
+                        <span className="text-xs text-muted-foreground">{p.renderCount} {t.projekty.renders}</span>
                       )}
                       <ChevronRight size={14} className="text-muted-foreground" />
                     </div>

@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
@@ -11,9 +10,8 @@ export default async function Home() {
   return (
     <main className="flex flex-col items-center justify-center min-h-screen px-4 text-center">
       <div className="max-w-2xl">
-        <Image src="/icon.svg" alt="Veedeck" width={80} height={80} className="mx-auto mb-6" />
-        <h1 className="text-5xl font-bold tracking-tight mb-4">
-          Veedeck
+        <h1 className="text-[3.75rem] font-bold tracking-tight mb-4" style={{ fontFamily: "var(--font-story-script)" }}>
+          veedeck
         </h1>
         <p className="text-xl text-gray-600 mb-8">
           Centralizuj feedback do wizualizacji wnętrz. Komentarze przypięte

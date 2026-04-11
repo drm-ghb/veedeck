@@ -28,6 +28,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { useT } from "@/lib/i18n";
 
 interface ProjectClient {
   id: string;
@@ -46,6 +47,7 @@ interface ProjectData {
   shareExpiresAt: string | null;
   createdAt: string;
   hiddenModules: string[];
+  clientCanUpload: boolean;
   addressCountry: string | null;
   addressCity: string | null;
   addressPostalCode: string | null;
@@ -55,16 +57,16 @@ interface ProjectData {
   clients: ProjectClient[];
 }
 
-const MODULES = [
+const MODULES_CONFIG = [
   {
     slug: "renderflow",
-    label: "RenderFlow",
+    labelKey: "moduleRenderflow" as const,
     description: "Wizualizacje projektu",
     icon: "renderflow" as const,
   },
   {
     slug: "listy",
-    label: "Listy zakupowe",
+    labelKey: "moduleLists" as const,
     description: "Listy produktów dla klienta",
     icon: "cart" as const,
   },
@@ -72,6 +74,7 @@ const MODULES = [
 
 export default function ProjectDetailView({ project }: { project: ProjectData }) {
   const router = useRouter();
+  const t = useT();
 
   // Info form state
   const [title, setTitle] = useState(project.title);
@@ -100,6 +103,7 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
 
   // Modules state
   const [hiddenModules, setHiddenModules] = useState<string[]>(project.hiddenModules);
+  const [clientCanUpload, setClientCanUpload] = useState(project.clientCanUpload);
 
   // Warning dialog state
   const [warningDialog, setWarningDialog] = useState<{
@@ -124,10 +128,10 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
         }),
       });
       if (!res.ok) throw new Error();
-      toast.success("Zapisano");
+      toast.success(t.common.saved);
       router.refresh();
     } catch {
-      toast.error("Błąd zapisu");
+      toast.error(t.settings.saveError);
     } finally {
       setSavingInfo(false);
     }
@@ -147,9 +151,9 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
         }),
       });
       if (!res.ok) throw new Error();
-      toast.success("Adres zapisany");
+      toast.success(t.common.saved);
     } catch {
-      toast.error("Błąd zapisu");
+      toast.error(t.settings.saveError);
     } finally {
       setSavingAddress(false);
     }
@@ -171,9 +175,9 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
       setNewClientEmail("");
       setNewClientIsMain(false);
       setShowAddClient(false);
-      toast.success("Klient dodany");
+      toast.success(t.projekty.clientAdded);
     } catch {
-      toast.error("Błąd dodawania klienta");
+      toast.error(t.projekty.clientAddError);
     } finally {
       setAddingClient(false);
     }
@@ -190,9 +194,9 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
       setClients((prev) =>
         prev.map((c) => ({ ...c, isMainContact: c.id === clientId }))
       );
-      toast.success("Główny kontakt ustawiony");
+      toast.success(t.projekty.mainContactSet);
     } catch {
-      toast.error("Błąd zapisu");
+      toast.error(t.settings.saveError);
     }
   }
 
@@ -204,7 +208,23 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
       if (!res.ok) throw new Error();
       setClients((prev) => prev.filter((c) => c.id !== clientId));
     } catch {
-      toast.error("Błąd usuwania klienta");
+      toast.error(t.projekty.clientDeleteError);
+    }
+  }
+
+  async function toggleClientCanUpload() {
+    const newValue = !clientCanUpload;
+    setClientCanUpload(newValue);
+    try {
+      const res = await fetch(`/api/projects/${project.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ clientCanUpload: newValue }),
+      });
+      if (!res.ok) throw new Error();
+    } catch {
+      setClientCanUpload(clientCanUpload);
+      toast.error(t.settings.saveError);
     }
   }
 
@@ -223,7 +243,7 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
       if (!res.ok) throw new Error();
     } catch {
       setHiddenModules(hiddenModules);
-      toast.error("Błąd zapisu");
+      toast.error(t.settings.saveError);
     }
   }
 
@@ -240,13 +260,13 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
       return;
     }
     navigator.clipboard.writeText(getModuleLink(slug));
-    toast.success("Link skopiowany");
+    toast.success(t.common.linkCopied);
   }
 
   function forceCopy(link: string) {
     navigator.clipboard.writeText(link);
     setWarningDialog((d) => ({ ...d, open: false }));
-    toast.success("Link skopiowany");
+    toast.success(t.common.linkCopied);
   }
 
   const hasResources = (slug: string) => {
@@ -264,7 +284,7 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft size={15} />
-          Projekty
+          {t.projekty.title}
         </Link>
         <h1 className="text-2xl font-bold mt-2">{project.title}</h1>
       </div>
@@ -273,11 +293,11 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
         {/* === Info section === */}
         <section className="bg-card border border-border rounded-xl p-5">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground mb-4">
-            Informacje o projekcie
+            {t.projekty.projectInfo}
           </h2>
           <div className="space-y-4">
             <div className="space-y-1.5">
-              <Label htmlFor="proj-title">Nazwa projektu *</Label>
+              <Label htmlFor="proj-title">{t.projekty.projectNameLabel}</Label>
               <Input
                 id="proj-title"
                 value={title}
@@ -286,7 +306,7 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="proj-desc">Opis</Label>
+              <Label htmlFor="proj-desc">{t.projekty.descriptionLabel}</Label>
               <Textarea
                 id="proj-desc"
                 value={description}
@@ -297,14 +317,14 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label htmlFor="proj-password">Hasło do linka</Label>
+                <Label htmlFor="proj-password">{t.projekty.passwordLink}</Label>
                 <div className="relative">
                   <Input
                     id="proj-password"
                     type={showPassword ? "text" : "password"}
                     value={sharePassword}
                     onChange={(e) => setSharePassword(e.target.value)}
-                    placeholder="Brak hasła"
+                    placeholder={t.projekty.noPassword}
                     className="pr-9"
                   />
                   <button
@@ -317,7 +337,7 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
                 </div>
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="proj-expires">Data wygaśnięcia</Label>
+                <Label htmlFor="proj-expires">{t.projekty.expiresDate}</Label>
                 <Input
                   id="proj-expires"
                   type="date"
@@ -328,7 +348,7 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
             </div>
             <div className="flex items-center justify-between pt-1">
               <p className="text-xs text-muted-foreground">
-                Utworzono:{" "}
+                {t.projekty.createdAt}{" "}
                 {new Date(project.createdAt).toLocaleDateString("pl-PL", {
                   day: "2-digit",
                   month: "long",
@@ -336,7 +356,7 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
                 })}
               </p>
               <Button onClick={saveInfo} disabled={savingInfo || !title.trim()} size="sm">
-                {savingInfo ? "Zapisywanie..." : "Zapisz"}
+                {savingInfo ? t.common.saving : t.common.save}
               </Button>
             </div>
           </div>
@@ -345,52 +365,52 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
         {/* === Address section === */}
         <section className="bg-card border border-border rounded-xl p-5">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground mb-4">
-            Adres inwestycji
+            {t.projekty.address}
           </h2>
           <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label htmlFor="addr-street">Ulica</Label>
+                <Label htmlFor="addr-street">{t.projekty.street}</Label>
                 <Input
                   id="addr-street"
                   value={addressStreet}
                   onChange={(e) => setAddressStreet(e.target.value)}
-                  placeholder="ul. Przykładowa 12/3"
+                  placeholder={t.projekty.streetPlaceholder}
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="addr-city">Miasto</Label>
+                <Label htmlFor="addr-city">{t.projekty.city}</Label>
                 <Input
                   id="addr-city"
                   value={addressCity}
                   onChange={(e) => setAddressCity(e.target.value)}
-                  placeholder="Warszawa"
+                  placeholder={t.projekty.cityPlaceholder}
                 />
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label htmlFor="addr-postal">Kod pocztowy</Label>
+                <Label htmlFor="addr-postal">{t.projekty.postalCode}</Label>
                 <Input
                   id="addr-postal"
                   value={addressPostalCode}
                   onChange={(e) => setAddressPostalCode(e.target.value)}
-                  placeholder="00-000"
+                  placeholder={t.projekty.postalCodePlaceholder}
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="addr-country">Kraj</Label>
+                <Label htmlFor="addr-country">{t.projekty.country}</Label>
                 <Input
                   id="addr-country"
                   value={addressCountry}
                   onChange={(e) => setAddressCountry(e.target.value)}
-                  placeholder="Polska"
+                  placeholder={t.projekty.countryPlaceholder}
                 />
               </div>
             </div>
             <div className="flex justify-end pt-1">
               <Button onClick={saveAddress} disabled={savingAddress} size="sm">
-                {savingAddress ? "Zapisywanie..." : "Zapisz"}
+                {savingAddress ? t.common.saving : t.common.save}
               </Button>
             </div>
           </div>
@@ -400,7 +420,7 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
         <section id="klienci" className="bg-card border border-border rounded-xl p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-              Klienci
+              {t.projekty.clients}
             </h2>
             <Button
               size="sm"
@@ -409,7 +429,7 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
               onClick={() => setShowAddClient((v) => !v)}
             >
               <Plus size={13} />
-              Dodaj klienta
+              {t.projekty.addClient}
             </Button>
           </div>
 
@@ -417,16 +437,16 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
             <div className="mb-4 p-4 rounded-lg border border-border bg-muted/30 space-y-3">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <Label>Imię i nazwisko *</Label>
+                  <Label>{t.projekty.clientFullName}</Label>
                   <Input
                     value={newClientName}
                     onChange={(e) => setNewClientName(e.target.value)}
-                    placeholder="Jan Kowalski"
+                    placeholder={t.projekty.clientFullNamePlaceholder}
                     onKeyDown={(e) => e.key === "Enter" && addClient()}
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label>Email (opcjonalnie)</Label>
+                  <Label>{t.projekty.clientEmailOpt}</Label>
                   <Input
                     type="email"
                     value={newClientEmail}
@@ -444,7 +464,7 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
                     onChange={(e) => setNewClientIsMain(e.target.checked)}
                     className="rounded border-border"
                   />
-                  <span className="text-sm">Główny kontakt</span>
+                  <span className="text-sm">{t.projekty.mainContact}</span>
                 </label>
                 <div className="flex gap-2">
                   <Button
@@ -457,14 +477,14 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
                       setNewClientIsMain(false);
                     }}
                   >
-                    Anuluj
+                    {t.common.cancel}
                   </Button>
                   <Button
                     size="sm"
                     onClick={addClient}
                     disabled={addingClient || !newClientName.trim()}
                   >
-                    {addingClient ? "Dodawanie..." : "Dodaj"}
+                    {addingClient ? "Dodawanie..." : t.common.add}
                   </Button>
                 </div>
               </div>
@@ -473,7 +493,7 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
 
           {clients.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-6">
-              Brak przypisanych klientów
+              {t.projekty.noClients}
             </p>
           ) : (
             <div className="space-y-2">
@@ -489,7 +509,7 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
                       <p className="text-sm font-medium truncate">{client.name}</p>
                       {client.isMainContact && (
                         <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[#C45824] text-white flex-shrink-0">
-                          Główny kontakt
+                          {t.projekty.mainContact}
                         </span>
                       )}
                     </div>
@@ -502,9 +522,9 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
                       <button
                         onClick={() => setMainContact(client.id)}
                         className="text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded hover:bg-muted"
-                        title="Ustaw jako główny kontakt"
+                        title={t.projekty.setAsMain}
                       >
-                        Ustaw głównym
+                        {t.projekty.setAsMain}
                       </button>
                     )}
                     <button
@@ -524,10 +544,11 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
         {/* === Modules section === */}
         <section className="bg-card border border-border rounded-xl p-5">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground mb-4">
-            Moduły
+            {t.projekty.modules}
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {MODULES.map((mod) => {
+            {MODULES_CONFIG.map((mod) => {
+              const label = t.projekty[mod.labelKey];
               const active = hasResources(mod.slug);
               const hidden = hiddenModules.includes(mod.slug);
               return (
@@ -561,7 +582,7 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-0.5">
                         <p className={`text-sm font-semibold ${active ? "" : "text-muted-foreground"}`}>
-                          {mod.label}
+                          {label}
                         </p>
                         <span
                           className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
@@ -570,7 +591,7 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
                               : "bg-muted text-muted-foreground"
                           }`}
                         >
-                          {active ? "Aktywny" : "Brak zasobów"}
+                          {active ? t.projekty.moduleActive : t.projekty.moduleNoResources}
                         </span>
                       </div>
                       <p className="text-xs text-muted-foreground">{mod.description}</p>
@@ -589,21 +610,33 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
                         className="text-xs cursor-pointer"
                       >
                         {hidden ? (
-                          <span className="text-muted-foreground">Ukryty dla klienta</span>
+                          <span className="text-muted-foreground">{t.projekty.moduleHiddenClient}</span>
                         ) : (
-                          <span>Widoczny dla klienta</span>
+                          <span>{t.projekty.moduleVisibleClient}</span>
                         )}
                       </Label>
                     </div>
                     <button
-                      onClick={() => handleCopyLink(mod.slug, mod.label)}
+                      onClick={() => handleCopyLink(mod.slug, label)}
                       className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-                      title="Kopiuj link"
+                      title={t.common.copyLink}
                     >
                       <Copy size={13} />
-                      Kopiuj link
+                      {t.common.copyLink}
                     </button>
                   </div>
+                  {mod.slug === "renderflow" && (
+                    <div className="mt-2 pt-2 border-t border-border/50 flex items-center gap-2">
+                      <Switch
+                        checked={clientCanUpload}
+                        onCheckedChange={toggleClientCanUpload}
+                        id="client-can-upload"
+                      />
+                      <Label htmlFor="client-can-upload" className="text-xs cursor-pointer">
+                        {t.projekty.clientCanUploadLabel}
+                      </Label>
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -620,20 +653,18 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <AlertTriangle size={18} className="text-amber-500" />
-              Moduł jest ukryty dla klienta
+              {t.common.moduleHiddenForClient}
             </DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            Moduł <strong>{warningDialog.label}</strong> jest oznaczony jako{" "}
-            <strong>NIE WIDOCZNY</strong> dla klienta. Przed udostępnieniem linku zmień to
-            w ustawieniach projektu.
+            {t.common.moduleNotVisible.replace("{module}", warningDialog.label)}
           </p>
           <DialogFooter className="gap-2">
             <Button
               variant="outline"
               onClick={() => setWarningDialog((d) => ({ ...d, open: false }))}
             >
-              Zamknij
+              {t.common.close}
             </Button>
             <Button
               variant="ghost"
@@ -641,7 +672,7 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
               onClick={() => forceCopy(warningDialog.link)}
             >
               <Check size={14} />
-              Mimo to skopiuj
+              {t.common.copyAnyway}
             </Button>
           </DialogFooter>
         </DialogContent>
