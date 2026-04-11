@@ -791,7 +791,7 @@ export default function SharePage() {
                       }
                       toast.success(`Dodano ${res.length} plik${res.length === 1 ? "" : res.length < 5 ? "i" : "ów"}`);
                     }}
-                    onUploadError={(err) => toast.error(`Błąd uploadu: ${err.message}`)}
+                    onUploadError={(err) => { toast.error(`Błąd uploadu: ${err.message}`); }}
                     appearance={{
                       button: "bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-700 dark:hover:bg-gray-200 rounded-md text-sm font-medium px-3 h-8 ut-uploading:opacity-70",
                       allowedContent: "hidden",
