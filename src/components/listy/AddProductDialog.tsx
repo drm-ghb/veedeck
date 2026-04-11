@@ -16,6 +16,7 @@ import { Loader2, ExternalLink, ImagePlus, X, Search, Package } from "lucide-rea
 import { useT } from "@/lib/i18n";
 import { UploadButton } from "@uploadthing/react";
 import type { OurFileRouter } from "@/lib/uploadthing";
+import { useUploadThing } from "@/lib/uploadthing-client";
 
 const CATEGORY_VALUES = ["LAMPY", "AKCESORIA", "MEBLE", "ARMATURA", "OKLADZINY_SCIENNE", "PODLOGA"] as const;
 
@@ -87,6 +88,28 @@ export default function AddProductDialog({
   const [form, setForm] = useState<ProductData>(empty());
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
+
+  const { startUpload } = useUploadThing("productImageUploader", {
+    onUploadBegin: () => setUploading(true),
+    onClientUploadComplete: (res) => {
+      const url = res?.[0]?.url;
+      if (url) set("imageUrl", url);
+      setUploading(false);
+    },
+    onUploadError: () => {
+      toast.error(t.products.imageUploadError);
+      setUploading(false);
+    },
+  });
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setIsDragOver(false);
+    const file = e.dataTransfer.files?.[0];
+    if (!file || !file.type.startsWith("image/")) return;
+    startUpload([file]);
+  }
 
   // Library tab state
   const [libraryQuery, setLibraryQuery] = useState("");
@@ -361,11 +384,26 @@ export default function AddProductDialog({
                   </button>
                 </div>
               ) : (
-                <div className="rounded-lg border-2 border-dashed border-border h-32 bg-muted/30 flex items-center justify-center">
+                <div
+                  className={`rounded-lg border-2 border-dashed h-32 flex items-center justify-center transition-colors ${
+                    isDragOver
+                      ? "border-primary bg-primary/5"
+                      : "border-border bg-muted/30"
+                  }`}
+                  onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
+                  onDragEnter={(e) => { e.preventDefault(); setIsDragOver(true); }}
+                  onDragLeave={() => setIsDragOver(false)}
+                  onDrop={handleDrop}
+                >
                   {uploading ? (
                     <div className="flex flex-col items-center gap-2">
                       <Loader2 size={18} className="animate-spin text-muted-foreground" />
                       <p className="text-xs text-muted-foreground">{t.products.uploading}</p>
+                    </div>
+                  ) : isDragOver ? (
+                    <div className="flex flex-col items-center gap-2 pointer-events-none">
+                      <ImagePlus size={22} className="text-primary" />
+                      <p className="text-xs font-medium text-primary">Upuść zdjęcie tutaj</p>
                     </div>
                   ) : (
                     <UploadButton<OurFileRouter, "productImageUploader">
@@ -386,7 +424,7 @@ export default function AddProductDialog({
                         allowedContent: "hidden",
                       }}
                       content={{
-                        button: <><ImagePlus size={20} className="text-muted-foreground" /><span>{t.products.chooseImage}</span></>,
+                        button: <><ImagePlus size={20} className="text-muted-foreground" /><span>{t.products.chooseImage}</span><span className="text-[10px] text-muted-foreground/60">lub przeciągnij zdjęcie</span></>,
                       }}
                     />
                   )}
