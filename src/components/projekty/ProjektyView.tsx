@@ -178,7 +178,7 @@ export default function ProjektyView({ projects, archivedProjects }: ProjektyVie
                 <span className="text-right">{t.projekty.colActions}</span>
               </div>
               {filtered.map((p, i) => (
-                <div key={p.id} className={`grid grid-cols-[1fr_auto] sm:grid-cols-[1fr_140px_200px_96px] gap-4 px-5 py-4 items-center hover:bg-muted/30 transition-colors ${i !== filtered.length - 1 ? "border-b border-border" : ""}`}>
+                <div key={p.id} onClick={() => router.push(`/projekty/${p.slug ?? p.id}`)} className={`grid grid-cols-[1fr_auto] sm:grid-cols-[1fr_140px_200px_96px] gap-4 px-5 py-4 items-center hover:bg-muted/30 transition-colors cursor-pointer ${i !== filtered.length - 1 ? "border-b border-border" : ""}`}>
                   <div className="min-w-0">
                     <p className="font-semibold text-gray-900 dark:text-gray-100 truncate flex items-center gap-1.5">
                       {p.pinned && <Pin size={12} className="text-red-500 fill-red-500 flex-shrink-0" />}
@@ -202,7 +202,7 @@ export default function ProjektyView({ projects, archivedProjects }: ProjektyVie
                       {p.listCount > 0 && <span className="text-[10px] opacity-60">({p.listCount})</span>}
                     </span>
                   </div>
-                  <div className="flex items-center justify-end gap-1">
+                  <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
                     <Link href={`/projekty/${p.slug ?? p.id}`}>
                       <Button size="sm" variant="ghost" className="text-muted-foreground hover:text-foreground gap-1">
                         <span className="hidden sm:inline text-xs">{t.common.open}</span>

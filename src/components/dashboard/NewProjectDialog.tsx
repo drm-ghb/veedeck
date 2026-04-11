@@ -142,7 +142,7 @@ export default function NewProjectDialog({ module }: NewProjectDialogProps = {})
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger render={<Button />}>+ {t.projekty.newProject}</DialogTrigger>
+      <DialogTrigger render={<Button />}>{t.projekty.newProject}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t.projekty.newProject}</DialogTitle>
