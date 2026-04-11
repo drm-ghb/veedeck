@@ -1,6 +1,7 @@
 export const pl = {
   common: {
     save: "Zapisz",
+    saved: "Zapisano",
     saving: "Zapisywanie...",
     cancel: "Anuluj",
     delete: "Usuń",
@@ -508,4 +509,8 @@ export const pl = {
   },
 } as const;
 
-export type TranslationKeys = typeof pl;
+type DeepStringify<T> = {
+  [K in keyof T]: T[K] extends string ? string : DeepStringify<T[K]>;
+};
+
+export type TranslationKeys = DeepStringify<typeof pl>;

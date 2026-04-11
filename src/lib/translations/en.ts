@@ -3,6 +3,7 @@ import type { TranslationKeys } from "./pl";
 export const en: TranslationKeys = {
   common: {
     save: "Save",
+    saved: "Saved",
     saving: "Saving...",
     cancel: "Cancel",
     delete: "Delete",

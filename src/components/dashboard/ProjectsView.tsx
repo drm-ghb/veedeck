@@ -24,6 +24,7 @@ interface Project {
   shareToken: string;
   pinned: boolean;
   hiddenModules: string[];
+  clientCanUpload?: boolean;
 }
 
 interface ProjectsViewProps {

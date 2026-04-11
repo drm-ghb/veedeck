@@ -30,6 +30,7 @@ export default async function DashboardPage() {
       shareToken: p.shareToken,
       pinned: p.pinned,
       hiddenModules: p.hiddenModules,
+      clientCanUpload: p.clientCanUpload,
     };
   }
 
