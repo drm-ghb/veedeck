@@ -62,27 +62,44 @@ export default async function PublicListPage({ params }: { params: Promise<{ tok
   const showListy = !list.project?.hiddenModules.includes("listy");
   const hasRenders = (list.project?.renders.length ?? 0) > 0;
 
-  const sections = list.sections.map((s) => ({
-    id: s.id,
-    name: s.name,
-    order: s.order,
-    products: s.products.map((p) => ({
-      id: p.id,
-      name: p.name,
-      url: p.url,
-      imageUrl: p.imageUrl,
-      price: p.price,
-      manufacturer: p.manufacturer,
-      color: p.color,
-      dimensions: p.dimensions,
-      description: p.description,
-      deliveryTime: p.deliveryTime,
-      quantity: p.quantity,
-      order: p.order,
-      commentCount: p._count.comments,
-      approval: p.approval,
-    })),
-  }));
+  const mapProduct = (p: typeof list.sections[0]["products"][0]) => ({
+    id: p.id,
+    name: p.name,
+    url: p.url,
+    imageUrl: p.imageUrl,
+    price: p.price,
+    manufacturer: p.manufacturer,
+    color: p.color,
+    dimensions: p.dimensions,
+    description: p.description,
+    deliveryTime: p.deliveryTime,
+    quantity: p.quantity,
+    order: p.order,
+    commentCount: p._count.comments,
+    approval: p.approval,
+  });
+
+  // Separate unsorted products — they will be shown as "Pozostałe" at the bottom
+  const unsortedProducts = list.sections
+    .filter((s) => s.unsorted)
+    .flatMap((s) => s.products)
+    .map(mapProduct);
+
+  const regularSections = list.sections
+    .filter((s) => !s.unsorted)
+    .map((s) => ({
+      id: s.id,
+      name: s.name,
+      order: s.order,
+      products: s.products.map(mapProduct),
+    }));
+
+  const sections = [
+    ...regularSections,
+    ...(unsortedProducts.length > 0
+      ? [{ id: "__unsorted__", name: "Pozostałe", order: 9999, products: unsortedProducts }]
+      : []),
+  ];
 
   const mainContent = (
     <main className="flex-1 overflow-y-auto px-3 sm:px-6 py-4 sm:py-8">

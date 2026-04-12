@@ -1167,7 +1167,16 @@ export default function ListDetail({ list, designerName, designerEmail, designer
     doc.addFont("Geist-Bold.ttf", FONT, "bold");
 
     // ── Pre-load images via same-origin proxy (avoids CORS/canvas taint) ─
-    const exportSections = sections.filter((s) => !s.unsorted);
+    const regularSections = sections.filter((s) => !s.unsorted);
+    const unsortedProducts = sections
+      .filter((s) => s.unsorted)
+      .flatMap((s) => s.products.filter((p) => !p.hidden));
+    const exportSections = [
+      ...regularSections,
+      ...(unsortedProducts.length > 0
+        ? [{ id: "__unsorted__", name: "Pozostałe", unsorted: false, products: unsortedProducts }]
+        : []),
+    ];
     const allVisible = exportSections.flatMap((s) => s.products.filter((p) => !p.hidden));
     const imgCache: Record<string, string> = {};
 
