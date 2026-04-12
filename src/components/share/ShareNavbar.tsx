@@ -49,7 +49,7 @@ export default function ShareNavbar({ backHref, backLabel, clientLogoUrl, design
 
   return (
     <>
-      <nav className="bg-card border-b">
+      <nav>
         <div className="px-3 sm:px-6 flex items-center justify-between py-3 gap-4">
           {/* Left: back icon + logo */}
           <div className="flex items-center gap-3 shrink-0">
@@ -73,7 +73,7 @@ export default function ShareNavbar({ backHref, backLabel, clientLogoUrl, design
             </div>
           </div>
 
-          {/* Right: client label + settings */}
+          {/* Right: client label */}
           <div className="flex items-center gap-3">
             {clientName && (
               <span className="hidden sm:flex items-center gap-1.5 text-sm text-muted-foreground">
@@ -81,13 +81,6 @@ export default function ShareNavbar({ backHref, backLabel, clientLogoUrl, design
                 {clientName}
               </span>
             )}
-            <button
-              onClick={() => { setNameInput(authorName); setSettingsOpen(true); }}
-              title="Ustawienia"
-              className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
-            >
-              <Settings size={15} />
-            </button>
           </div>
         </div>
       </nav>

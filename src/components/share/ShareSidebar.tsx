@@ -98,7 +98,7 @@ export default function ShareSidebar({
   return (
     <>
     <aside
-      className={`hidden md:flex flex-col border-r bg-card flex-shrink-0 transition-all duration-200 ${
+      className={`hidden md:flex flex-col flex-shrink-0 transition-all duration-200 ${
         isCollapsed ? "w-14" : "w-52"
       }`}
     >

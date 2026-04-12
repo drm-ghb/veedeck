@@ -84,7 +84,7 @@ export default async function ProjectHomePage({ params }: { params: Promise<{ to
   );
 
   return (
-    <div className={`${isSidebar ? "h-screen" : "min-h-screen"} flex flex-col bg-muted/30`}>
+    <div className={`${isSidebar ? "h-screen" : "min-h-screen"} flex flex-col bg-muted/60`}>
       <ShareNavbar
         clientLogoUrl={project.user.clientLogoUrl}
         designerName={project.user.name}
@@ -99,7 +99,7 @@ export default async function ProjectHomePage({ params }: { params: Promise<{ to
             showListy={showListy}
             shoppingLists={project.shoppingLists}
           />
-          <main className="flex-1 overflow-y-auto px-3 sm:px-6 py-4 sm:py-8">
+          <main className="flex-1 overflow-y-auto px-6 py-6 bg-background rounded-tl-2xl">
             {welcomeContent}
           </main>
         </div>

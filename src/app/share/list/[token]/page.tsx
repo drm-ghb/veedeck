@@ -103,7 +103,7 @@ export default async function PublicListPage({ params }: { params: Promise<{ tok
   ];
 
   const mainContent = (
-    <main className="flex-1 overflow-y-auto px-3 sm:px-6 py-4 sm:py-8">
+    <main className="flex-1 overflow-y-auto px-6 py-6 bg-background rounded-tl-2xl">
       {/* Header */}
       <div className="flex items-center justify-between gap-3 mb-6">
         <div className="flex items-center gap-2 min-w-0">
@@ -147,7 +147,7 @@ export default async function PublicListPage({ params }: { params: Promise<{ tok
   );
 
   return (
-    <div className={`${isSidebar ? "h-screen" : "min-h-screen"} flex flex-col bg-muted/30`}>
+    <div className={`${isSidebar ? "h-screen" : "min-h-screen"} flex flex-col bg-muted/60`}>
       <ShareNavbar
         backHref={isSidebar ? undefined : (projectToken ? `/share/${projectToken}/home` : undefined)}
         backLabel={list.project?.title}
