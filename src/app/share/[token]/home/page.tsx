@@ -88,7 +88,7 @@ export default async function ProjectHomePage({ params }: { params: Promise<{ to
       <ShareNavbar
         clientLogoUrl={project.user.clientLogoUrl}
         designerName={project.user.name}
-        clientName={project.clientName}
+        projectShareToken={token}
       />
 
       {isSidebar ? (

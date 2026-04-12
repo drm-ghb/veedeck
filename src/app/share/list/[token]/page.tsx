@@ -153,7 +153,6 @@ export default async function PublicListPage({ params }: { params: Promise<{ tok
         backLabel={list.project?.title}
         clientLogoUrl={list.project?.user?.clientLogoUrl}
         designerName={list.project?.user?.name}
-        clientName={list.project?.clientName}
         listToken={token}
         projectShareToken={list.project?.shareToken}
       />

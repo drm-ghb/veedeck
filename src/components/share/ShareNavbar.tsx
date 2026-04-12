@@ -13,12 +13,11 @@ interface ShareNavbarProps {
   backLabel?: string;
   clientLogoUrl?: string | null;
   designerName?: string | null;
-  clientName?: string | null;
   listToken?: string;
   projectShareToken?: string;
 }
 
-export default function ShareNavbar({ backHref, backLabel, clientLogoUrl, designerName, clientName, listToken, projectShareToken }: ShareNavbarProps) {
+export default function ShareNavbar({ backHref, backLabel, clientLogoUrl, designerName, listToken, projectShareToken }: ShareNavbarProps) {
   const t = useT();
   const { theme, setTheme } = useTheme();
 
@@ -32,16 +31,22 @@ export default function ShareNavbar({ backHref, backLabel, clientLogoUrl, design
   const [nameInput, setNameInput] = useState("");
 
   useEffect(() => {
-    const key = listToken ? `renderflow-author-${listToken}` : "renderflow-author";
-    const saved = localStorage.getItem(key) || "";
+    if (!projectShareToken) return;
+    const saved = localStorage.getItem(`veedeck-author-${projectShareToken}`) || "";
     setAuthorName(saved);
     setNameInput(saved);
-  }, [listToken]);
+
+    function onStorage(e: StorageEvent) {
+      if (e.key === `veedeck-author-${projectShareToken}`) {
+        setAuthorName(e.newValue || "");
+      }
+    }
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, [projectShareToken]);
 
   function saveSettings() {
     const name = nameInput.trim();
-    const key = listToken ? `renderflow-author-${listToken}` : "renderflow-author";
-    localStorage.setItem(key, name);
     if (projectShareToken) localStorage.setItem(`veedeck-author-${projectShareToken}`, name);
     setAuthorName(name);
     setSettingsOpen(false);
@@ -75,10 +80,10 @@ export default function ShareNavbar({ backHref, backLabel, clientLogoUrl, design
 
           {/* Right: client label */}
           <div className="flex items-center gap-3">
-            {clientName && (
+            {authorName && (
               <span className="hidden sm:flex items-center gap-1.5 text-sm text-muted-foreground">
                 <span className="font-medium text-foreground">Panel klienta:</span>
-                {clientName}
+                {authorName}
               </span>
             )}
           </div>
