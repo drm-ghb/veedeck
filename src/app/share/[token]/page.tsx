@@ -3,13 +3,13 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Image from "next/image";
-import Link from "next/link";
 import RenderViewer from "@/components/render/RenderViewer";
 import ShareSidebar from "@/components/share/ShareSidebar";
+import ShareNavbar from "@/components/share/ShareNavbar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { getRoomIcon } from "@/lib/roomIcons";
-import { ChevronLeft, ChevronRight, MessageSquare, UserRound, Sun, Moon, Monitor, Lock, Settings, Folder, Grid2x2, FolderPlus } from "lucide-react";
+import { ChevronLeft, ChevronRight, MessageSquare, UserRound, Sun, Moon, Monitor, Lock, Folder, FolderPlus } from "lucide-react";
 import { useTheme, type Theme } from "@/lib/theme";
 import { pusherClient } from "@/lib/pusher";
 import { toast } from "sonner";
@@ -391,8 +391,6 @@ export default function SharePage() {
     }
   }
 
-  const accent = project?.accentColor ?? "#2563eb";
-  const { theme, setTheme } = useTheme();
 
   if (loading) return (
     <div className="flex items-center justify-center min-h-screen bg-background">
@@ -571,63 +569,17 @@ export default function SharePage() {
     );
 
     const renderNav = (
-      <nav className="bg-card border-b flex-shrink-0">
-        <div className="flex items-center justify-between px-3 sm:px-6 py-3 gap-4">
-          <div className="flex items-center gap-3">
-            {!isSidebar && (
-              <Link
-                href={`/share/${token}/home`}
-                title="Strona główna projektu"
-                className="text-muted-foreground hover:text-foreground transition-colors p-1.5 rounded-md hover:bg-muted"
-              >
-                <Grid2x2 size={18} />
-              </Link>
-            )}
-            {project.clientLogoUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={project.clientLogoUrl} alt="Logo" className="h-8 object-contain" />
-            ) : (
-              <>
-                <Image src="/logo.svg" alt="RenderFlow" width={26} height={26} className="block dark:hidden" />
-                <Image src="/logo-dark.svg" alt="RenderFlow" width={26} height={26} className="hidden dark:block" />
-              </>
-            )}
-            {project.designerName ? (
-              <span className="font-bold text-gray-900 dark:text-gray-100">{project.designerName}</span>
-            ) : !project.clientLogoUrl && (
-              <span className="font-bold text-lg">Render<span style={{ color: accent }}>Flow</span></span>
-            )}
-          </div>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              title={theme === "dark" ? "Tryb jasny" : "Tryb ciemny"}
-              className={`relative flex items-center w-14 h-7 rounded-full transition-colors duration-300 flex-shrink-0 ${
-                theme === "dark" ? "bg-slate-700" : "bg-gray-200"
-              }`}
-            >
-              <Sun size={12} className={`absolute left-1.5 transition-opacity duration-200 ${theme === "dark" ? "opacity-30 text-gray-400" : "opacity-100 text-yellow-500"}`} />
-              <Moon size={12} className={`absolute right-1.5 transition-opacity duration-200 ${theme === "dark" ? "opacity-100 text-blue-300" : "opacity-30 text-gray-400"}`} />
-              <span className={`absolute w-5 h-5 bg-white rounded-full shadow-md transition-transform duration-300 ${
-                theme === "dark" ? "translate-x-7" : "translate-x-1"
-              }`} />
-            </button>
-            <button
-              onClick={() => setView("settings")}
-              title="Ustawienia"
-              className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
-            >
-              <Settings size={15} />
-              <span className="hidden sm:inline">{authorName}</span>
-            </button>
-          </div>
-        </div>
-      </nav>
+      <ShareNavbar
+        backHref={isSidebar ? undefined : `/share/${token}/home`}
+        clientLogoUrl={project.clientLogoUrl}
+        designerName={project.designerName ?? undefined}
+        projectShareToken={token}
+      />
     );
 
     if (isSidebar) {
       return (
-        <div className="h-screen flex flex-col bg-background">
+        <div className="h-screen flex flex-col bg-muted/60">
           {renderNav}
           <div className="flex flex-1 min-h-0">
             <ShareSidebar
@@ -637,7 +589,7 @@ export default function SharePage() {
               shoppingLists={project.shoppingLists}
               onRenderFlowClick={() => setView("rooms")}
             />
-            <div className="flex-1 min-h-0">
+            <div className="flex-1 min-h-0 bg-background">
               {renderViewer}
             </div>
           </div>
@@ -876,42 +828,12 @@ export default function SharePage() {
   return (
     <div className={`${isSidebar ? "h-screen" : "min-h-screen"} flex flex-col bg-muted/60`}>
       {/* Nav */}
-      <nav className="flex-shrink-0">
-        <div className="flex items-center justify-between px-3 sm:px-6 py-3 gap-4">
-          <div className="flex items-center gap-3">
-            {!isSidebar && (
-              <Link href={`/share/${token}/home`} title="Strona główna projektu" className="text-muted-foreground hover:text-foreground transition-colors p-1.5 rounded-md hover:bg-muted">
-                <Grid2x2 size={18} />
-              </Link>
-            )}
-            {project.clientLogoUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={project.clientLogoUrl} alt="Logo" className="h-8 object-contain" />
-            ) : (
-              <>
-                <Image src="/logo.svg" alt="RenderFlow" width={26} height={26} className="block dark:hidden" />
-                <Image src="/logo-dark.svg" alt="RenderFlow" width={26} height={26} className="hidden dark:block" />
-              </>
-            )}
-            {project.designerName ? (
-              <span className="font-bold text-gray-900 dark:text-gray-100">{project.designerName}</span>
-            ) : !project.clientLogoUrl && (
-              <span className="font-bold text-lg">Render<span style={{ color: accent }}>Flow</span></span>
-            )}
-          </div>
-          <div className="flex items-center gap-3">
-            <button onClick={() => setTheme(theme === "dark" ? "light" : "dark")} title={theme === "dark" ? "Tryb jasny" : "Tryb ciemny"} className={`relative flex items-center w-14 h-7 rounded-full transition-colors duration-300 flex-shrink-0 ${theme === "dark" ? "bg-slate-700" : "bg-gray-200"}`}>
-              <Sun size={12} className={`absolute left-1.5 transition-opacity duration-200 ${theme === "dark" ? "opacity-30 text-gray-400" : "opacity-100 text-yellow-500"}`} />
-              <Moon size={12} className={`absolute right-1.5 transition-opacity duration-200 ${theme === "dark" ? "opacity-100 text-blue-300" : "opacity-30 text-gray-400"}`} />
-              <span className={`absolute w-5 h-5 bg-white rounded-full shadow-md transition-transform duration-300 ${theme === "dark" ? "translate-x-7" : "translate-x-1"}`} />
-            </button>
-            <button onClick={() => setView("settings")} title="Ustawienia" className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors">
-              <Settings size={15} />
-              <span className="hidden sm:inline">{authorName}</span>
-            </button>
-          </div>
-        </div>
-      </nav>
+      <ShareNavbar
+        backHref={isSidebar ? undefined : `/share/${token}/home`}
+        clientLogoUrl={project.clientLogoUrl}
+        designerName={project.designerName ?? undefined}
+        projectShareToken={token}
+      />
 
       {isSidebar ? (
         <div className="flex flex-1 min-h-0">
