@@ -5,6 +5,7 @@ import Image from "next/image";
 import { ShoppingCart } from "lucide-react";
 import ShareNavbar from "@/components/share/ShareNavbar";
 import ShareSidebar from "@/components/share/ShareSidebar";
+import ClientGreeting from "@/components/share/ClientGreeting";
 
 export default async function ProjectHomePage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
@@ -29,7 +30,7 @@ export default async function ProjectHomePage({ params }: { params: Promise<{ to
 
   const tilesContent = (
     <>
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">{greeting}</h1>
+      <ClientGreeting projectShareToken={token} fallbackGreeting={greeting} className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2" />
       {welcomeMessage && (
         <p className="text-sm text-muted-foreground mb-4">{welcomeMessage}</p>
       )}
@@ -76,7 +77,7 @@ export default async function ProjectHomePage({ params }: { params: Promise<{ to
 
   const welcomeContent = (
     <div className="flex flex-col items-start justify-start">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{greeting}</h1>
+      <ClientGreeting projectShareToken={token} fallbackGreeting={greeting} className="text-2xl font-bold text-gray-900 dark:text-gray-100" />
       <p className="text-sm text-muted-foreground mt-2">
         {welcomeMessage ?? "Wybierz moduł z paska bocznego, aby przeglądać projekt."}
       </p>
