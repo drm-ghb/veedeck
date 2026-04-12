@@ -73,21 +73,8 @@ export default function ShareNavbar({ backHref, backLabel, clientLogoUrl, design
             </div>
           </div>
 
-          {/* Right: dark mode toggle + settings */}
+          {/* Right: client label + settings */}
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              title={theme === "dark" ? t.share.lightMode : t.share.darkMode}
-              className={`relative flex items-center w-14 h-7 rounded-full transition-colors duration-300 flex-shrink-0 ${
-                theme === "dark" ? "bg-slate-700" : "bg-gray-200"
-              }`}
-            >
-              <Sun size={12} className={`absolute left-1.5 transition-opacity duration-200 ${theme === "dark" ? "opacity-30 text-gray-400" : "opacity-100 text-yellow-500"}`} />
-              <Moon size={12} className={`absolute right-1.5 transition-opacity duration-200 ${theme === "dark" ? "opacity-100 text-blue-300" : "opacity-30 text-gray-400"}`} />
-              <span className={`absolute w-5 h-5 bg-white rounded-full shadow-md transition-transform duration-300 ${
-                theme === "dark" ? "translate-x-7" : "translate-x-1"
-              }`} />
-            </button>
             {clientName && (
               <span className="hidden sm:flex items-center gap-1.5 text-sm text-muted-foreground">
                 <span className="font-medium text-foreground">Panel klienta:</span>
