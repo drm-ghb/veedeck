@@ -141,7 +141,7 @@ export default function ProjectView({ projectId, rooms, archivedRooms }: Project
                   }`}
                 >
                   <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <Icon size={16} className="text-[#C45824]" />
+                    <Icon size={16} className="text-primary" />
                   </div>
                   <a href={`/projects/${projectId}/rooms/${room.id}`} className="flex-1 min-w-0 flex items-center gap-1.5">
                     {room.pinned && <Pin size={11} className="text-red-500 fill-red-500 flex-shrink-0" />}

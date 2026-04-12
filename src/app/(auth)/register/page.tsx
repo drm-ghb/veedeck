@@ -44,7 +44,7 @@ export default function RegisterPage() {
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-2xl text-center">
-            Render<span className="text-[#C45824] dark:text-white">Flow</span>
+            Render<span className="text-primary dark:text-white">Flow</span>
           </CardTitle>
           <p className="text-center text-gray-500">Utwórz konto projektanta</p>
         </CardHeader>
@@ -88,7 +88,7 @@ export default function RegisterPage() {
           </form>
           <p className="text-center text-sm text-gray-500 mt-4">
             Masz już konto?{" "}
-            <Link href="/login" className="text-blue-600 hover:underline">
+            <Link href="/login" className="text-primary hover:underline">
               Zaloguj się
             </Link>
           </p>

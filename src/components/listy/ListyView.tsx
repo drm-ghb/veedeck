@@ -307,8 +307,8 @@ export default function ListyView({ lists: initialLists }: ListyViewProps) {
       {/* Empty state — no lists at all */}
       {lists.length === 0 && (
         <div className="flex flex-col items-center justify-center py-24 text-center">
-          <div className="w-16 h-16 rounded-2xl bg-[#C45824]/10 flex items-center justify-center mb-4">
-            <ShoppingCart size={28} className="text-[#C45824]" />
+          <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+            <ShoppingCart size={28} className="text-primary" />
           </div>
           <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-1">{t.listy.noListsEmpty}</h2>
           <p className="text-sm text-gray-400 max-w-xs">{t.listy.noListsHint}</p>
@@ -334,15 +334,15 @@ export default function ListyView({ lists: initialLists }: ListyViewProps) {
       {filtered.length > 0 && view === "grid" && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4">
           {filtered.map((list) => (
-            <div key={list.id} className="rounded-xl border border-border bg-card hover:shadow-sm hover:border-[#C45824]/20 transition-all group relative">
+            <div key={list.id} className="rounded-xl border border-border bg-card hover:shadow-sm hover:border-primary/20 transition-all group relative">
               {list.pinned && (
                 <div className="absolute top-3 left-3 z-10">
                   <Pin size={12} className="text-red-500 fill-red-500" />
                 </div>
               )}
               <Link href={`/listy/${list.slug ?? list.id}`} className={`flex items-start gap-3 p-4 pr-16 block ${list.pinned ? "pl-8" : ""}`}>
-                <div className="w-9 h-9 rounded-lg bg-[#C45824]/10 flex items-center justify-center shrink-0">
-                  <ShoppingCart size={16} className="text-[#C45824]" />
+                <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                  <ShoppingCart size={16} className="text-primary" />
                 </div>
                 <div className="min-w-0">
                   <p className="font-semibold text-sm text-foreground truncate">{list.name}</p>
@@ -355,7 +355,7 @@ export default function ListyView({ lists: initialLists }: ListyViewProps) {
               </Link>
               <div className="absolute top-3 right-3 flex items-center gap-0.5">
                 {(unreadListCounts[list.id] ?? 0) > 0 && (
-                  <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-blue-500 text-white text-[10px] font-bold leading-none mr-1">
+                  <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-primary text-white text-[10px] font-bold leading-none mr-1">
                     <MessageSquare size={10} />
                     {unreadListCounts[list.id]}
                   </div>
@@ -383,13 +383,13 @@ export default function ListyView({ lists: initialLists }: ListyViewProps) {
               onClick={() => router.push(`/listy/${list.slug ?? list.id}`)}
               className={`flex items-center gap-3 px-4 py-3 hover:bg-muted/30 transition-colors cursor-pointer ${i !== filtered.length - 1 ? "border-b border-border" : ""}`}
             >
-              <div className="w-8 h-8 rounded-lg bg-[#C45824]/10 flex items-center justify-center shrink-0">
-                <ShoppingCart size={14} className="text-[#C45824]" />
+              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                <ShoppingCart size={14} className="text-primary" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5">
                   {list.pinned && <Pin size={11} className="text-red-500 fill-red-500 flex-shrink-0" />}
-                  <span className="font-semibold text-sm text-gray-900 dark:text-gray-100 truncate">{list.name}</span>
+                  <span className="font-semibold text-sm text-foreground truncate">{list.name}</span>
                 </div>
                 <div className="flex items-center gap-2 mt-0.5">
                   {list.project && <span className="text-xs text-muted-foreground truncate">{list.project.title}</span>}
@@ -400,7 +400,7 @@ export default function ListyView({ lists: initialLists }: ListyViewProps) {
               </div>
               <div className="flex items-center gap-0.5 shrink-0" onClick={(e) => e.stopPropagation()}>
                 {(unreadListCounts[list.id] ?? 0) > 0 && (
-                  <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-blue-500 text-white text-[10px] font-bold leading-none mr-1">
+                  <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-primary text-white text-[10px] font-bold leading-none mr-1">
                     <MessageSquare size={10} />
                     {unreadListCounts[list.id]}
                   </div>

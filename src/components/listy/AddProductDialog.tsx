@@ -438,7 +438,7 @@ export default function AddProductDialog({
                 id="p-category"
                 value={form.category}
                 onChange={(e) => set("category", e.target.value)}
-                className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C45824]/20 focus:border-[#C45824]/40"
+                className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40"
               >
                 <option value="">{t.products.noCategory}</option>
                 {CATEGORY_VALUES.map((v) => (

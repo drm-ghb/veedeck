@@ -89,8 +89,8 @@ export default function NavSidebar({ hiddenModules, isAdmin }: NavSidebarProps) 
               title={isCollapsed ? "Admin" : undefined}
               className={`flex items-center gap-3 px-2.5 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                 pathname.startsWith("/admin")
-                  ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
-                  : "text-blue-600 dark:text-blue-400 hover:bg-blue-500/10"
+                  ? "bg-primary/10 text-primary"
+                  : "text-primary hover:bg-primary/10"
               }`}
             >
               <span className="flex-shrink-0 w-5 flex items-center justify-center">
@@ -115,10 +115,10 @@ export default function NavSidebar({ hiddenModules, isAdmin }: NavSidebarProps) 
         ) : (
           <div className="flex items-center justify-between px-2.5 py-2.5 rounded-lg">
             <div className="flex items-center gap-3">
-              <span className="flex-shrink-0 w-5 flex items-center justify-center text-gray-600 dark:text-gray-400">
+              <span className="flex-shrink-0 w-5 flex items-center justify-center text-gray-400">
                 {theme === "dark" ? <Moon size={18} /> : <Sun size={18} />}
               </span>
-              <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+              <span className="text-sm font-medium text-gray-400">
                 {theme === "dark" ? t.nav.dark : t.nav.light}
               </span>
             </div>
@@ -136,7 +136,7 @@ export default function NavSidebar({ hiddenModules, isAdmin }: NavSidebarProps) 
         <button
           onClick={() => { setHelpOpen(true); setHelpSent(false); setHelpSubject(""); setHelpDesc(""); }}
           title={isCollapsed ? t.nav.help : undefined}
-          className="flex items-center gap-3 px-2.5 py-2.5 rounded-lg text-sm font-medium transition-colors w-full text-gray-600 dark:text-gray-400 hover:bg-muted hover:text-foreground"
+          className="flex items-center gap-3 px-2.5 py-2.5 rounded-lg text-sm font-medium transition-colors w-full text-gray-400 hover:bg-muted hover:text-foreground"
         >
           <span className="flex-shrink-0 w-5 flex items-center justify-center">
             <HelpCircle size={18} />
@@ -150,7 +150,7 @@ export default function NavSidebar({ hiddenModules, isAdmin }: NavSidebarProps) 
           className={`flex items-center gap-3 px-2.5 py-2.5 rounded-lg text-sm font-medium transition-colors ${
             pathname.startsWith("/settings")
               ? "bg-primary/10 text-primary"
-              : "text-gray-600 dark:text-gray-400 hover:bg-muted hover:text-foreground"
+              : "text-gray-400 hover:bg-muted hover:text-foreground"
           }`}
         >
           <span className="flex-shrink-0 w-5 flex items-center justify-center">

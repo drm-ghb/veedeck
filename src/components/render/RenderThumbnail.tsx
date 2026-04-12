@@ -19,7 +19,7 @@ export default function RenderThumbnail({
 }: RenderThumbnailProps) {
   return (
     <Link href={`/projects/${projectId}/renders/${id}`}>
-      <Card className="overflow-hidden hover:shadow-[0_4px_16px_rgba(25,33,61,0.2)] hover:border-[#C45824]/30 transition-all cursor-pointer group">
+      <Card className="overflow-hidden hover:shadow-[0_4px_16px_rgba(25,33,61,0.2)] hover:border-primary/30 transition-all cursor-pointer group">
         <div className="aspect-video bg-gray-100 overflow-hidden">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img

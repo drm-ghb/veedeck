@@ -57,7 +57,7 @@ function Avatar({ name, logoUrl }: { name: string; logoUrl?: string }) {
     .toUpperCase()
     .slice(0, 2);
   return (
-    <div className="w-7 h-7 rounded-full bg-[#C45824]/10 flex items-center justify-center text-xs font-semibold text-[#C45824] shrink-0">
+    <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-xs font-semibold text-primary shrink-0">
       {initials}
     </div>
   );
@@ -272,7 +272,7 @@ export default function ProductCommentPanel({
           <div
             key={comment.id}
             className={`space-y-1.5 rounded-lg px-2 -mx-2 transition-colors duration-1000 ${
-              showHighlights && unread ? "bg-blue-50 dark:bg-blue-950/20" : "bg-transparent"
+              showHighlights && unread ? "bg-primary/5 dark:bg-primary/10" : "bg-transparent"
             }`}
           >
             {/* Comment */}
@@ -283,7 +283,7 @@ export default function ProductCommentPanel({
                   <span className="text-xs font-semibold truncate">{comment.author}</span>
                   <span className="text-[10px] text-muted-foreground shrink-0">{formatDate(comment.createdAt)}</span>
                   {showHighlights && unread && (
-                    <span className="text-[9px] font-semibold text-blue-500 bg-blue-100 dark:bg-blue-900/40 px-1 py-0.5 rounded leading-none transition-opacity duration-1000">
+                    <span className="text-[9px] font-semibold text-primary bg-primary/10 dark:bg-primary/20 px-1 py-0.5 rounded leading-none transition-opacity duration-1000">
                       {t.share.newBadge}
                     </span>
                   )}
@@ -344,13 +344,13 @@ export default function ProductCommentPanel({
                     }}
                     placeholder={t.share.replyPlaceholder}
                     rows={1}
-                    className="flex-1 px-2 py-1.5 text-xs border border-border rounded-lg bg-background focus:outline-none focus:ring-1 focus:ring-[#C45824]/30 resize-none"
+                    className="flex-1 px-2 py-1.5 text-xs border border-border rounded-lg bg-background focus:outline-none focus:ring-1 focus:ring-primary/30 resize-none"
                     autoFocus
                   />
                   <button
                     onClick={() => handleSendReply(comment.id)}
                     disabled={!replyText.trim() || sendingReply}
-                    className="w-7 h-7 rounded-lg bg-[#C45824] text-white flex items-center justify-center disabled:opacity-40 hover:bg-[#C45824]/80 transition-colors shrink-0 mt-0.5"
+                    className="w-7 h-7 rounded-lg bg-primary text-white flex items-center justify-center disabled:opacity-40 hover:bg-primary/80 transition-colors shrink-0 mt-0.5"
                   >
                     <Send size={11} />
                   </button>
@@ -375,12 +375,12 @@ export default function ProductCommentPanel({
             }}
             placeholder={t.share.messagePlaceholder}
             rows={2}
-            className="flex-1 px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-[#C45824]/20 focus:border-[#C45824]/40 resize-none"
+            className="flex-1 px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 resize-none"
           />
           <button
             onClick={handleSend}
             disabled={!text.trim() || sending}
-            className="w-9 h-9 rounded-lg bg-[#C45824] text-white flex items-center justify-center disabled:opacity-40 hover:bg-[#C45824]/80 transition-colors self-end shrink-0"
+            className="w-9 h-9 rounded-lg bg-primary text-white flex items-center justify-center disabled:opacity-40 hover:bg-primary/80 transition-colors self-end shrink-0"
           >
             <Send size={15} />
           </button>

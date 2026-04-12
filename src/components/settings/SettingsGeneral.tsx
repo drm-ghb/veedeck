@@ -279,7 +279,7 @@ async function handleRemoveLogo() {
               label: "RenderFlow",
               description: t.settings.renderflowModuleDesc,
               icon: (
-                <div className="w-9 h-9 rounded-xl bg-[#C45824] flex items-center justify-center flex-shrink-0">
+                <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center flex-shrink-0">
                   <Image src="/logo-dark.svg" alt="RenderFlow" width={22} height={22} />
                 </div>
               ),

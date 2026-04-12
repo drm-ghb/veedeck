@@ -65,7 +65,7 @@ function NotificationRow({
   const isVersionRestoreRequest = n.type === "version_restore_request";
 
   return (
-    <div className={`flex items-start gap-3 px-4 py-3.5 ${!n.read ? "bg-blue-50/40" : ""}`}>
+    <div className={`flex items-start gap-3 px-4 py-3.5 ${!n.read ? "bg-primary/5" : ""}`}>
       <input
         type="checkbox"
         checked={selected}
@@ -113,7 +113,7 @@ function NotificationRow({
         <Link
           href={n.link}
           onClick={onSee}
-          className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 flex-shrink-0 mt-0.5 whitespace-nowrap"
+          className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 flex-shrink-0 mt-0.5 whitespace-nowrap"
         >
           Zobacz
           <ExternalLink size={12} />
@@ -294,7 +294,7 @@ export default function NotificationsClient({ userId }: { userId: string }) {
                 {unreadCount > 0 && (
                   <span
                     className={`inline-flex items-center justify-center w-4 h-4 rounded-full text-[10px] font-bold leading-none ${
-                      isActive ? "bg-white text-gray-900" : "bg-blue-500 text-white"
+                      isActive ? "bg-white text-gray-900" : "bg-primary text-white"
                     }`}
                   >
                     {unreadCount}

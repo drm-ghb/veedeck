@@ -59,7 +59,7 @@ function ToggleSwitch({ checked, onToggle }: { checked: boolean; onToggle: () =>
     <button
       onClick={onToggle}
       className={`relative flex-shrink-0 w-11 h-6 rounded-full transition-colors focus:outline-none ${
-        checked ? "bg-blue-500" : "bg-gray-200 dark:bg-gray-700"
+        checked ? "bg-primary" : "bg-muted"
       }`}
       role="switch"
       aria-checked={checked}
@@ -458,7 +458,7 @@ export function SettingsPage({
                   onClick={() => handleDefaultStatusChange(val)}
                   className={`text-xs px-3 py-1.5 rounded-md font-medium transition-colors ${
                     defaultStatus === val
-                      ? val === "ACCEPTED" ? "bg-green-500 text-white shadow-sm" : "bg-blue-500 text-white shadow-sm"
+                      ? val === "ACCEPTED" ? "bg-green-500 text-white shadow-sm" : "bg-primary text-white shadow-sm"
                       : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
                   }`}
                 >

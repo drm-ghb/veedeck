@@ -51,7 +51,7 @@ export default async function HomePage() {
           href="/projekty"
           className="group flex flex-col items-center gap-3 p-4 rounded-xl bg-card border border-border hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600 transition-all cursor-pointer"
         >
-          <div className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform duration-150 bg-[#C45824]">
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform duration-150 bg-primary">
             <Briefcase size={32} className="text-white" />
           </div>
           <div className="text-center">
@@ -66,7 +66,7 @@ export default async function HomePage() {
             href="/renderflow"
             className="group flex flex-col items-center gap-3 p-4 rounded-xl bg-card border border-border hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600 transition-all cursor-pointer"
           >
-            <div className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform duration-150 bg-[#C45824]">
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform duration-150 bg-primary">
               <Image src="/logo-dark.svg" alt="RenderFlow" width={48} height={48} />
             </div>
             <div className="text-center">
@@ -82,7 +82,7 @@ export default async function HomePage() {
             href="/listy"
             className="group flex flex-col items-center gap-3 p-4 rounded-xl bg-card border border-border hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600 transition-all cursor-pointer"
           >
-            <div className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform duration-150 bg-[#C45824]">
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform duration-150 bg-primary">
               <ShoppingCart size={32} className="text-white" />
             </div>
             <div className="text-center">

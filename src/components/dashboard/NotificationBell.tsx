@@ -112,7 +112,7 @@ export default function NotificationBell({ userId }: NotificationBellProps) {
                   key={n.id}
                   href={n.link}
                   onClick={() => { markRead(n.id); setOpen(false); }}
-                  className="flex items-start gap-2.5 px-4 py-3 bg-blue-50/40 dark:bg-blue-950/20 hover:bg-blue-50/70 dark:hover:bg-blue-950/30 transition-colors cursor-pointer"
+                  className="flex items-start gap-2.5 px-4 py-3 bg-primary/5 dark:bg-primary/10 hover:bg-primary/10 dark:hover:bg-primary/15 transition-colors cursor-pointer"
                 >
                   <Circle size={7} className="text-blue-500 fill-blue-500 mt-1.5 shrink-0" />
                   <div className="flex-1 min-w-0">

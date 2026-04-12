@@ -179,7 +179,7 @@ export default function AddProductToLibraryDialog({ open, onOpenChange, onAdded,
 
               <div className="space-y-1.5">
                 <Label htmlFor="p-category">Kategoria</Label>
-                <select id="p-category" value={form.category} onChange={(e) => set("category", e.target.value)} className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C45824]/20 focus:border-[#C45824]/40">
+                <select id="p-category" value={form.category} onChange={(e) => set("category", e.target.value)} className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40">
                   <option value="">Brak kategorii</option>
                   {CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
                 </select>

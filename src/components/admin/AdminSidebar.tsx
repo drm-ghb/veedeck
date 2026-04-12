@@ -32,11 +32,11 @@ export default function AdminSidebar() {
                 href={item.href}
                 className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors ${
                   active
-                    ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 font-medium"
+                    ? "bg-primary/10 text-primary font-medium"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted"
                 }`}
               >
-                <span className={active ? "text-blue-600 dark:text-blue-400" : "text-muted-foreground"}>
+                <span className={active ? "text-primary" : "text-muted-foreground"}>
                   {item.icon}
                 </span>
                 {item.label}

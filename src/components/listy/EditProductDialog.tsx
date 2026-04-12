@@ -161,6 +161,21 @@ export default function EditProductDialog({
           </div>
 
           <div className="space-y-1.5">
+            <Label htmlFor="ep-category">{t.products.category}</Label>
+            <select
+              id="ep-category"
+              value={form.category}
+              onChange={(e) => set("category", e.target.value)}
+              className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40"
+            >
+              <option value="">{t.products.noCategory}</option>
+              {CATEGORY_VALUES.map((v) => (
+                <option key={v} value={v}>{getCategoryLabel(v, t)}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="space-y-1.5">
             <Label htmlFor="ep-name">{t.products.nameLabel}</Label>
             <Input
               id="ep-name"
@@ -207,21 +222,6 @@ export default function EditProductDialog({
               <Label htmlFor="ep-catalog">{t.products.catalogNumberLabel}</Label>
               <Input id="ep-catalog" value={form.catalogNumber} onChange={(e) => set("catalogNumber", e.target.value)} placeholder={t.products.catalogNumberPlaceholder} />
             </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="ep-category">{t.products.category}</Label>
-            <select
-              id="ep-category"
-              value={form.category}
-              onChange={(e) => set("category", e.target.value)}
-              className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C45824]/20 focus:border-[#C45824]/40"
-            >
-              <option value="">{t.products.noCategory}</option>
-              {CATEGORY_VALUES.map((v) => (
-                <option key={v} value={v}>{getCategoryLabel(v, t)}</option>
-              ))}
-            </select>
           </div>
 
           <div className="space-y-1.5">

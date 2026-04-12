@@ -435,7 +435,7 @@ export default function SharePage() {
         <div className="flex items-center justify-center gap-2 mb-2">
           <Image src="/logo.svg" alt="RenderFlow" width={32} height={32} className="block dark:hidden" />
           <Image src="/logo-dark.svg" alt="RenderFlow" width={32} height={32} className="hidden dark:block" />
-          <h1 className="text-2xl font-bold">Render<span className="text-[#C45824] dark:text-white">Flow</span></h1>
+          <h1 className="text-2xl font-bold">Render<span className="text-primary dark:text-white">Flow</span></h1>
         </div>
         <div className="flex justify-center mb-4">
           <Lock size={20} className="text-gray-400" />
@@ -683,9 +683,9 @@ export default function SharePage() {
                 const Icon = getRoomIcon(room.type, room.icon);
                 const renderCount = room.renders.length;
                 return (
-                  <button key={room.id} onClick={() => { setSelectedRoom(room); setSelectedFolder(null); setView("room"); }} className="group text-left bg-card border border-border rounded-2xl p-5 shadow-sm hover:shadow-[0_4px_16px_rgba(25,33,61,0.2)] hover:border-[#C45824]/30 transition-all">
+                  <button key={room.id} onClick={() => { setSelectedRoom(room); setSelectedFolder(null); setView("room"); }} className="group text-left bg-card border border-border rounded-2xl p-5 shadow-sm hover:shadow-[0_4px_16px_rgba(25,33,61,0.2)] hover:border-primary/30 transition-all">
                     <div className="w-14 h-14 bg-gray-100 rounded-xl flex items-center justify-center mb-4 group-hover:bg-gray-200 transition-colors">
-                      <Icon size={28} className="text-[#C45824]" />
+                      <Icon size={28} className="text-primary" />
                     </div>
                     <p className="font-semibold text-gray-800 dark:text-gray-100 truncate">{room.name}</p>
                     <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{renderCount} render{renderCount === 1 ? "" : renderCount < 5 ? "y" : "ów"}</p>
@@ -809,7 +809,7 @@ export default function SharePage() {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4">
                   {folderRenders.map((render) => (
-                    <button key={render.id} onClick={() => { setSelectedRender(render); setView("render"); fetch(`/api/share/${token}/renders/${render.id}/view`, { method: "POST" }); }} className="text-left bg-card border border-border rounded-xl overflow-hidden shadow-sm hover:shadow-[0_4px_16px_rgba(25,33,61,0.2)] hover:border-[#C45824]/30 transition-all group">
+                    <button key={render.id} onClick={() => { setSelectedRender(render); setView("render"); fetch(`/api/share/${token}/renders/${render.id}/view`, { method: "POST" }); }} className="text-left bg-card border border-border rounded-xl overflow-hidden shadow-sm hover:shadow-[0_4px_16px_rgba(25,33,61,0.2)] hover:border-primary/30 transition-all group">
                       <div className="aspect-video bg-muted overflow-hidden">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={render.fileUrl} alt={render.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" />
@@ -832,12 +832,12 @@ export default function SharePage() {
                     {sortedFolders.map((folder) => {
                       const count = selectedRoom.renders.filter((r) => r.folder?.id === folder.id).length;
                       return (
-                        <button key={folder.id} onClick={() => setSelectedFolder(folder)} className="group relative text-left bg-white dark:bg-card border border-gray-100 dark:border-border rounded-2xl p-5 shadow-sm hover:shadow-[0_4px_16px_rgba(25,33,61,0.2)] hover:border-[#C45824]/30 transition-all">
-                          <div className="w-14 h-14 bg-gray-100 dark:bg-muted rounded-xl flex items-center justify-center mb-4 group-hover:bg-gray-200 dark:group-hover:bg-muted/80 transition-colors">
-                            <Folder size={28} className="text-[#C45824] dark:text-foreground" />
+                        <button key={folder.id} onClick={() => setSelectedFolder(folder)} className="group relative text-left bg-card border border-border rounded-2xl p-5 shadow-sm hover:shadow-[0_4px_16px_rgba(25,33,61,0.2)] hover:border-primary/30 transition-all">
+                          <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+                            <Folder size={28} className="text-primary" />
                           </div>
-                          <p className="font-semibold text-gray-800 dark:text-foreground truncate">{folder.name}</p>
-                          <p className="text-xs text-gray-400 mt-1">{count} plik{count === 1 ? "" : count < 5 ? "i" : "ów"}</p>
+                          <p className="font-semibold text-foreground truncate">{folder.name}</p>
+                          <p className="text-xs text-muted-foreground mt-1">{count} plik{count === 1 ? "" : count < 5 ? "i" : "ów"}</p>
                         </button>
                       );
                     })}
@@ -848,7 +848,7 @@ export default function SharePage() {
                     {sortedFolders.length > 0 && <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Pozostałe pliki</p>}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4">
                       {ungrouped.map((render) => (
-                        <button key={render.id} onClick={() => { setSelectedRender(render); setView("render"); fetch(`/api/share/${token}/renders/${render.id}/view`, { method: "POST" }); }} className="text-left bg-card border border-border rounded-xl overflow-hidden shadow-sm hover:shadow-[0_4px_16px_rgba(25,33,61,0.2)] hover:border-[#C45824]/30 transition-all group">
+                        <button key={render.id} onClick={() => { setSelectedRender(render); setView("render"); fetch(`/api/share/${token}/renders/${render.id}/view`, { method: "POST" }); }} className="text-left bg-card border border-border rounded-xl overflow-hidden shadow-sm hover:shadow-[0_4px_16px_rgba(25,33,61,0.2)] hover:border-primary/30 transition-all group">
                           <div className="aspect-video bg-muted overflow-hidden">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img src={render.fileUrl} alt={render.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" />

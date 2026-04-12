@@ -39,7 +39,7 @@ export default async function DashboardLayout({
               <span className="text-[1.5625rem] font-bold" style={{ fontFamily: "var(--font-story-script)" }}>veedeck</span>
             </Link>
             {dbUser?.isAdmin && (
-              <Link href="/admin" className="hidden md:flex items-center gap-1.5 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 transition-colors ml-2">
+              <Link href="/admin" className="hidden md:flex items-center gap-1.5 text-sm text-primary hover:text-primary/80 transition-colors ml-2">
                 <ShieldCheck size={16} />
                 Admin
               </Link>

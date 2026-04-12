@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, Plus, ExternalLink, Minus, MoreHorizontal, Pencil, Trash2, GripVertical, FileDown, Sheet, MessageSquare, ArrowUpDown, Eye, EyeOff, Check, X, RotateCcw, FolderInput, Wallet, AlertCircle } from "lucide-react";
+import { ChevronLeft, ChevronDown, ChevronUp, Plus, ExternalLink, Minus, MoreHorizontal, Pencil, Trash2, GripVertical, FileDown, Sheet, MessageSquare, ArrowUpDown, Eye, EyeOff, Check, X, RotateCcw, FolderInput, Wallet, AlertCircle } from "lucide-react";
 import ProductCommentPanel from "./ProductCommentPanel";
 import { pusherClient } from "@/lib/pusher";
 import { Button } from "@/components/ui/button";
@@ -134,7 +134,7 @@ function SectionTotal({ products, budget }: { products: Product[]; budget?: numb
   let currency = "";
   let hasAny = false;
 
-  for (const p of products) {
+  for (const p of products.filter((p) => !p.hidden)) {
     const n = parsePrice(p.price);
     if (n !== null) {
       total += n * p.quantity;
@@ -374,17 +374,17 @@ function ProductRow({
           <div className="flex items-center gap-2 flex-wrap">
             <p className="font-medium text-sm text-foreground truncate">{product.name}</p>
             {product.category && (
-              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#C45824]/8 text-[#C45824] dark:bg-[#C45824]/20 shrink-0">
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-primary/8 text-primary dark:bg-primary/20 shrink-0">
                 {getCategoryLabel(product.category)}
               </span>
             )}
           </div>
-          {product.manufacturer && <p className="text-xs text-muted-foreground mt-0.5">{product.manufacturer}</p>}
+          {product.manufacturer && <p className="text-xs text-muted-foreground mt-0.5">Producent: {product.manufacturer}</p>}
+          {product.supplier && <p className="text-xs text-muted-foreground mt-0.5">Dostawca: {product.supplier}</p>}
+          {product.color && <p className="text-xs text-muted-foreground mt-0.5">Kolor: {product.color}</p>}
           <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1">
-            {product.color && <span className="text-xs text-muted-foreground">Kolor: {product.color}</span>}
             {product.dimensions && <span className="text-xs text-muted-foreground">Wymiar: {product.dimensions}</span>}
             {product.deliveryTime && <span className="text-xs text-muted-foreground">Dostawa: {product.deliveryTime}</span>}
-            {product.supplier && <span className="text-xs text-muted-foreground">Dostawca: {product.supplier}</span>}
             {product.catalogNumber && <span className="text-xs text-muted-foreground">Nr kat.: {product.catalogNumber}</span>}
           </div>
         </div>
@@ -417,7 +417,7 @@ function ProductRow({
           ) : <span className="w-7" />}
           <button onClick={onOpenComments} className="relative flex items-center justify-center w-7 h-7 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors" title="Komentarze">
             <MessageSquare size={15} className={unread ? "text-blue-500" : ""} />
-            {commentCount > 0 && <span className={`absolute -top-1 -right-1 min-w-[14px] h-[14px] rounded-full text-white text-[9px] font-bold flex items-center justify-center px-0.5 leading-none transition-colors ${unread ? "bg-blue-500" : "bg-muted-foreground/40"}`}>{commentCount > 99 ? "99+" : commentCount}</span>}
+            {commentCount > 0 && <span className={`absolute -top-1 -right-1 min-w-[14px] h-[14px] rounded-full text-white text-[9px] font-bold flex items-center justify-center px-0.5 leading-none transition-colors ${unread ? "bg-primary" : "bg-muted-foreground/40"}`}>{commentCount > 99 ? "99+" : commentCount}</span>}
           </button>
           {dropdown}
         </div>
@@ -439,7 +439,9 @@ function ProductRow({
           <div className="flex items-start justify-between gap-1">
             <div className="min-w-0 flex-1">
               <p className="font-medium text-sm text-foreground leading-tight truncate">{product.name}</p>
-              {product.manufacturer && <p className="text-xs text-muted-foreground truncate">{product.manufacturer}</p>}
+              {product.manufacturer && <p className="text-xs text-muted-foreground truncate">Producent: {product.manufacturer}</p>}
+              {product.supplier && <p className="text-xs text-muted-foreground truncate">Dostawca: {product.supplier}</p>}
+              {product.color && <p className="text-xs text-muted-foreground truncate">Kolor: {product.color}</p>}
             </div>
             <div className="shrink-0 -mt-0.5">{dropdown}</div>
           </div>
@@ -461,7 +463,7 @@ function ProductRow({
               </span>
             )}
             {product.category && (
-              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#C45824]/8 text-[#C45824] dark:bg-[#C45824]/20 shrink-0">
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-primary/8 text-primary dark:bg-primary/20 shrink-0">
                 {getCategoryLabel(product.category)}
               </span>
             )}
@@ -484,7 +486,7 @@ function ProductRow({
             </div>
             <button onClick={onOpenComments} className="relative flex items-center justify-center w-7 h-7 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
               <MessageSquare size={14} className={unread ? "text-blue-500" : ""} />
-              {commentCount > 0 && <span className={`absolute -top-1 -right-1 min-w-[14px] h-[14px] rounded-full text-white text-[9px] font-bold flex items-center justify-center px-0.5 leading-none ${unread ? "bg-blue-500" : "bg-muted-foreground/40"}`}>{commentCount > 99 ? "99+" : commentCount}</span>}
+              {commentCount > 0 && <span className={`absolute -top-1 -right-1 min-w-[14px] h-[14px] rounded-full text-white text-[9px] font-bold flex items-center justify-center px-0.5 leading-none ${unread ? "bg-primary" : "bg-muted-foreground/40"}`}>{commentCount > 99 ? "99+" : commentCount}</span>}
             </button>
           </div>
         </div>
@@ -578,6 +580,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
     Object.fromEntries(list.sections.map((s) => [s.id, s.budget != null ? String(s.budget) : ""]))
   );
   const [savingBudget, setSavingBudget] = useState(false);
+  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
   const [addingSection, setAddingSection] = useState(false);
   const [newSectionName, setNewSectionName] = useState("");
   const [savingSection, setSavingSection] = useState(false);
@@ -1099,8 +1102,8 @@ export default function ListDetail({ list, designerName, designerEmail, designer
     }
   }
 
-  // Grand total across all sections
-  const allProducts = sections.flatMap((s) => s.products);
+  // Grand total across all sections (excluding hidden products)
+  const allProducts = sections.flatMap((s) => s.products.filter((p) => !p.hidden));
   const grandTotal = allProducts.reduce((sum, p) => {
     const n = parsePrice(p.price);
     return n !== null ? sum + n * p.quantity : sum;
@@ -1114,8 +1117,8 @@ export default function ListDetail({ list, designerName, designerEmail, designer
     const { default: jsPDF } = await import("jspdf");
 
     // ── Design tokens ──────────────────────────────────────────────────
-    const ACCENT: [number, number, number] = [196, 88, 36];
-    const ACCENT_BG: [number, number, number] = [253, 241, 232];
+    const ACCENT: [number, number, number] = [79, 70, 229];      // #4F46E5 primary
+    const ACCENT_BG: [number, number, number] = [238, 242, 255]; // indigo-50
     const DARK: [number, number, number] = [28, 28, 28];
     const MUTED: [number, number, number] = [110, 110, 110];
     const BORDER: [number, number, number] = [225, 225, 225];
@@ -1226,7 +1229,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
 
     // Divider line between two columns
     const MID = PAGE_W / 2;
-    doc.setDrawColor(220, 120, 70);
+    doc.setDrawColor(165, 180, 252);
     doc.setLineWidth(0.3);
     doc.line(MID, 5, MID, BANNER_H - 5);
 
@@ -1247,7 +1250,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
 
     doc.setFont(FONT, "normal");
     doc.setFontSize(7);
-    doc.setTextColor(255, 210, 185);
+    doc.setTextColor(199, 210, 254);
     doc.text("Oferta przygotowana przez", lx, ly + 3);
 
     doc.setFont(FONT, "bold");
@@ -1259,7 +1262,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
       const contactY = ly + 3 + LINE_H * 2 + 2;
       doc.setFont(FONT, "normal");
       doc.setFontSize(6.5);
-      doc.setTextColor(255, 210, 185);
+      doc.setTextColor(199, 210, 254);
       doc.text("Dane kontaktowe", lx, contactY);
       doc.setFontSize(8);
       doc.text(designerEmail, lx, contactY + LINE_H);
@@ -1277,7 +1280,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
 
     doc.setFont(FONT, "normal");
     doc.setFontSize(7);
-    doc.setTextColor(255, 210, 185);
+    doc.setTextColor(199, 210, 254);
     doc.text("Oferta przygotowana dla", rx, ry + 3);
 
     ry += 3 + LINE_H + 1.5;
@@ -1293,7 +1296,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
     if (addressLines.length > 0) {
       doc.setFont(FONT, "normal");
       doc.setFontSize(8);
-      doc.setTextColor(255, 210, 185);
+      doc.setTextColor(199, 210, 254);
       for (const line of addressLines) {
         doc.text(line, rx, ry, { maxWidth: COL_W });
         ry += LINE_H;
@@ -1659,7 +1662,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
             onChange={(e) => setNewSectionName(e.target.value)}
             onKeyDown={(e) => e.key === "Escape" && setAddingSection(false)}
             placeholder="Nazwa sekcji, np. Salon"
-            className="flex-1 px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-[#C45824]/20 focus:border-[#C45824]/40"
+            className="flex-1 px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40"
           />
           <Button type="submit" disabled={savingSection || !newSectionName.trim()}>
             {savingSection ? "Tworzenie..." : "Utwórz"}
@@ -1673,8 +1676,8 @@ export default function ListDetail({ list, designerName, designerEmail, designer
       {/* Empty state */}
       {sections.filter((s) => !s.unsorted).length === 0 && !addingSection && (
         <div className="flex flex-col items-center justify-center py-24 text-center">
-          <div className="w-16 h-16 rounded-2xl bg-[#C45824]/10 flex items-center justify-center mb-4">
-            <Plus size={28} className="text-[#C45824]" />
+          <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+            <Plus size={28} className="text-primary" />
           </div>
           <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-1">Brak sekcji</h2>
           <p className="text-sm text-gray-400 max-w-xs">
@@ -1746,17 +1749,28 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                               if (e.key === "Enter") handleSaveSectionName(section.id);
                               if (e.key === "Escape") setEditingSectionId(null);
                             }}
-                            className="text-base font-semibold bg-transparent border-b border-[#C45824]/40 focus:outline-none focus:border-[#C45824] px-0 min-w-0 w-auto"
+                            className="text-base font-semibold bg-transparent border-b border-primary/40 focus:outline-none focus:border-primary px-0 min-w-0 w-auto"
                           />
                         ) : (
                           <h2
-                            className="text-base font-semibold text-foreground cursor-pointer hover:text-[#C45824] transition-colors"
+                            className="text-base font-semibold text-foreground cursor-pointer hover:text-primary transition-colors"
                             onClick={() => startEditSection(section)}
                             title="Kliknij aby edytować"
                           >
                             {section.name}
                           </h2>
                         )}
+                        <button
+                          onClick={() => setCollapsedSections((prev) => {
+                            const next = new Set(prev);
+                            next.has(section.id) ? next.delete(section.id) : next.add(section.id);
+                            return next;
+                          })}
+                          className="w-6 h-6 flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
+                          title={collapsedSections.has(section.id) ? "Rozwiń sekcję" : "Zwiń sekcję"}
+                        >
+                          {collapsedSections.has(section.id) ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
+                        </button>
                       </div>
                       <div className="flex items-center gap-3">
                         {/* Sort dropdown */}
@@ -1765,7 +1779,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                             onClick={() => setSortDropdownOpen(sortDropdownOpen === section.id ? null : section.id)}
                             className={`flex items-center gap-1 text-xs px-2 py-1 rounded-md border transition-colors ${
                               getSortBy(section.sortBy) !== "manual"
-                                ? "border-[#C45824]/40 bg-[#C45824]/5 text-[#C45824] dark:text-blue-300"
+                                ? "border-primary/40 bg-primary/5 text-primary dark:text-[#A5B4FC]"
                                 : "border-border text-muted-foreground hover:text-foreground hover:border-foreground/30"
                             }`}
                             title="Sortuj sekcję"
@@ -1782,10 +1796,10 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                                     key={opt.value}
                                     onClick={() => handleSectionSortBy(section.id, opt.value)}
                                     className={`w-full text-left px-3 py-1.5 text-sm hover:bg-muted transition-colors flex items-center gap-2 ${
-                                      getSortBy(section.sortBy) === opt.value ? "text-[#C45824] font-medium dark:text-blue-300" : "text-foreground"
+                                      getSortBy(section.sortBy) === opt.value ? "text-primary font-medium dark:text-[#A5B4FC]" : "text-foreground"
                                     }`}
                                   >
-                                    {getSortBy(section.sortBy) === opt.value && <span className="w-1.5 h-1.5 rounded-full bg-[#C45824] dark:bg-blue-400 shrink-0" />}
+                                    {getSortBy(section.sortBy) === opt.value && <span className="w-1.5 h-1.5 rounded-full bg-primary dark:bg-[#A5B4FC] shrink-0" />}
                                     {getSortBy(section.sortBy) !== opt.value && <span className="w-1.5 h-1.5 shrink-0" />}
                                     {opt.label}
                                   </button>
@@ -1798,9 +1812,9 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                       </div>
                     </div>
 
-                    {!isDraggingSection && section.products.length === 0 ? (
+                    {collapsedSections.has(section.id) ? null : !isDraggingSection && section.products.length === 0 ? (
                       <div
-                        className="border-2 border-dashed border-border rounded-xl p-8 text-center cursor-pointer hover:border-[#C45824]/30 hover:bg-[#C45824]/5 transition-colors"
+                        className="border-2 border-dashed border-border rounded-xl p-8 text-center cursor-pointer hover:border-primary/30 hover:bg-primary/5 transition-colors"
                         onClick={() => setDialogState({ open: true, sectionId: section.id })}
                       >
                         <Plus size={20} className="mx-auto mb-2 text-muted-foreground" />

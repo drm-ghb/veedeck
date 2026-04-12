@@ -158,8 +158,8 @@ export default function ProjektyView({ projects, archivedProjects }: ProjektyVie
         <>
           {projects.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-24 text-center">
-              <div className="w-16 h-16 rounded-2xl bg-[#C45824]/10 flex items-center justify-center mb-4">
-                <Briefcase size={28} className="text-[#C45824]" />
+              <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+                <Briefcase size={28} className="text-primary" />
               </div>
               <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-1">{t.projekty.noProjects}</h2>
               <p className="text-sm text-gray-400 max-w-xs">{t.projekty.noProjectsHint}</p>
@@ -191,7 +191,7 @@ export default function ProjektyView({ projects, archivedProjects }: ProjektyVie
                     {new Date(p.createdAt).toLocaleDateString("pl-PL", { day: "2-digit", month: "short", year: "numeric" })}
                   </p>
                   <div className="hidden sm:flex items-center gap-2 flex-wrap">
-                    <Link href={`/projects/${p.id}`} onClick={(e) => e.stopPropagation()} className="inline-flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-md bg-[#C45824]/10 text-[#C45824] dark:bg-white/10 dark:text-white hover:bg-[#C45824]/20 dark:hover:bg-white/20 transition-colors">
+                    <Link href={`/projects/${p.id}`} onClick={(e) => e.stopPropagation()} className="inline-flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-md bg-primary/10 text-primary dark:bg-white/10 dark:text-white hover:bg-primary/20 dark:hover:bg-white/20 transition-colors">
                       <ImageIcon size={11} />
                       {t.nav.renderflow}
                       {p.renderCount > 0 && <span className="text-[10px] opacity-60">({p.renderCount} {t.projekty.renders})</span>}

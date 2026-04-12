@@ -150,8 +150,8 @@ export default function ProjectsView({ projects, archivedProjects }: ProjectsVie
         {projects.length > 0 && (
           <div className="flex items-center gap-2 mb-1">
             {/* Mobile: icon-only, native picker on tap */}
-            <div className={`relative sm:hidden w-8 h-8 flex items-center justify-center rounded-md border ${sort !== "newest" ? "border-gray-900 bg-gray-900" : "border-gray-200 bg-white"}`}>
-              <SlidersHorizontal size={14} className={`pointer-events-none ${sort !== "newest" ? "text-white" : "text-gray-500"}`} />
+            <div className={`relative sm:hidden w-8 h-8 flex items-center justify-center rounded-md border ${sort !== "newest" ? "border-primary bg-primary" : "border-border bg-card"}`}>
+              <SlidersHorizontal size={14} className={`pointer-events-none ${sort !== "newest" ? "text-white" : "text-muted-foreground"}`} />
               <select
                 value={sort}
                 onChange={(e) => setSort(e.target.value as typeof sort)}
@@ -169,7 +169,7 @@ export default function ProjectsView({ projects, archivedProjects }: ProjectsVie
             <select
               value={sort}
               onChange={(e) => setSort(e.target.value as typeof sort)}
-              className="hidden sm:block text-xs border border-gray-200 rounded-md px-2 py-1.5 bg-white text-gray-600 focus:outline-none focus:ring-1 focus:ring-gray-300"
+              className="hidden sm:block text-xs border border-border rounded-md px-2 py-1.5 bg-card text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/30"
             >
               <option value="newest">{t.common.newest}</option>
               <option value="oldest">{t.common.oldest}</option>
@@ -178,16 +178,16 @@ export default function ProjectsView({ projects, archivedProjects }: ProjectsVie
               <option value="renders">{t.projekty.mostRenders}</option>
             </select>
             {tab === "active" && (
-              <div className="flex items-center gap-0.5 bg-gray-100 rounded-md p-0.5">
+              <div className="flex items-center gap-0.5 bg-muted rounded-md p-0.5">
                 <button
                   onClick={() => toggleView("grid")}
-                  className={`p-1.5 rounded transition-colors ${view === "grid" ? "bg-white shadow-sm text-gray-900" : "text-gray-400 hover:text-gray-600"}`}
+                  className={`p-1.5 rounded transition-colors ${view === "grid" ? "bg-card shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
                 >
                   <LayoutGrid size={15} />
                 </button>
                 <button
                   onClick={() => toggleView("list")}
-                  className={`p-1.5 rounded transition-colors ${view === "list" ? "bg-white shadow-sm text-gray-900" : "text-gray-400 hover:text-gray-600"}`}
+                  className={`p-1.5 rounded transition-colors ${view === "list" ? "bg-card shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
                 >
                   <List size={15} />
                 </button>
@@ -205,7 +205,7 @@ export default function ProjectsView({ projects, archivedProjects }: ProjectsVie
           placeholder={t.projekty.searchPlaceholder}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+          className="w-full pl-9 pr-4 py-2 border border-border rounded-lg text-sm bg-card focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-transparent"
         />
       </div>
 
@@ -241,12 +241,12 @@ export default function ProjectsView({ projects, archivedProjects }: ProjectsVie
             <p className="text-lg">Brak projektów pasujących do &quot;{search}&quot;</p>
           </div>
         ) : (
-          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+          <div className="bg-card border border-border rounded-xl overflow-hidden">
             {filtered.map((p, i) => (
               <div
                 key={p.id}
                 className={`flex items-center justify-between px-5 py-4 ${
-                  i !== filtered.length - 1 ? "border-b border-gray-100" : ""
+                  i !== filtered.length - 1 ? "border-b border-border" : ""
                 }`}
               >
                 <div className="min-w-0">
@@ -294,9 +294,9 @@ function ProjectListView({ projects }: { projects: Project[] }) {
 
   return (
     <>
-    <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+    <div className="bg-card border border-border rounded-xl overflow-hidden">
       {/* Header */}
-      <div className="grid grid-cols-[1fr_80px] sm:grid-cols-[1fr_180px_160px_80px] gap-4 px-5 py-3 bg-gray-50 border-b border-gray-200 text-xs font-medium text-gray-400 uppercase tracking-wide">
+      <div className="grid grid-cols-[1fr_80px] sm:grid-cols-[1fr_180px_160px_80px] gap-4 px-5 py-3 bg-muted/50 border-b border-border text-xs font-medium text-muted-foreground uppercase tracking-wide">
         <span>Projekt</span>
         <span className="hidden sm:block">Klient</span>
         <span className="hidden sm:block">Data</span>
@@ -307,11 +307,11 @@ function ProjectListView({ projects }: { projects: Project[] }) {
       {projects.map((p, i) => (
         <div
           key={p.id}
-          className={`grid grid-cols-[1fr_80px] sm:grid-cols-[1fr_180px_160px_80px] gap-4 px-5 py-4 items-center hover:bg-gray-50 transition-colors ${i !== projects.length - 1 ? "border-b border-gray-100" : ""}`}
+          className={`grid grid-cols-[1fr_80px] sm:grid-cols-[1fr_180px_160px_80px] gap-4 px-5 py-4 items-center hover:bg-muted/30 transition-colors ${i !== projects.length - 1 ? "border-b border-border" : ""}`}
         >
           {/* Title + description */}
           <div className="min-w-0">
-            <Link href={`/projects/${p.id}`} className="font-semibold text-gray-900 truncate flex items-center gap-1.5">
+            <Link href={`/projects/${p.id}`} className="font-semibold text-foreground truncate flex items-center gap-1.5">
               {p.pinned && <Pin size={12} className="text-red-500 fill-red-500 flex-shrink-0" />}
               {p.title}
             </Link>
@@ -325,8 +325,8 @@ function ProjectListView({ projects }: { projects: Project[] }) {
           <div className="hidden sm:block min-w-0">
             {p.clientName ? (
               <>
-                <p className="text-sm text-gray-700 truncate">{p.clientName}</p>
-                {p.clientEmail && <p className="text-xs text-gray-400 truncate">{p.clientEmail}</p>}
+                <p className="text-sm text-foreground truncate">{p.clientName}</p>
+                {p.clientEmail && <p className="text-xs text-muted-foreground truncate">{p.clientEmail}</p>}
               </>
             ) : (
               <span className="text-xs text-gray-300">—</span>
@@ -347,7 +347,7 @@ function ProjectListView({ projects }: { projects: Project[] }) {
             <Button
               size="sm"
               variant="ghost"
-              className="text-xs text-gray-400 hover:text-blue-600"
+              className="text-xs text-muted-foreground hover:text-primary"
               onClick={() => handleCopyLink(p)}
               title="Skopiuj link"
             >

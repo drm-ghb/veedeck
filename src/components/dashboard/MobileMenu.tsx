@@ -129,10 +129,10 @@ export default function MobileMenu({ userName, logoUrl, hiddenModules = [] }: Mo
           {/* Theme toggle */}
           <div className="flex items-center justify-between px-3 py-2.5 rounded-lg">
             <div className="flex items-center gap-3">
-              <span className="w-5 flex items-center justify-center text-gray-600 dark:text-gray-400">
+              <span className="w-5 flex items-center justify-center text-gray-400">
                 {theme === "dark" ? <Moon size={18} /> : <Sun size={18} />}
               </span>
-              <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+              <span className="text-sm font-medium text-gray-400">
                 {theme === "dark" ? t.nav.dark : t.nav.light}
               </span>
             </div>
@@ -146,7 +146,7 @@ export default function MobileMenu({ userName, logoUrl, hiddenModules = [] }: Mo
 
           <button
             onClick={openHelp}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-muted hover:text-foreground transition-colors"
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:bg-muted hover:text-foreground transition-colors"
           >
             <span className="w-5 flex items-center justify-center"><HelpCircle size={18} /></span>
             {t.nav.help}
@@ -157,7 +157,7 @@ export default function MobileMenu({ userName, logoUrl, hiddenModules = [] }: Mo
             className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
               pathname.startsWith("/settings")
                 ? "bg-primary/10 text-primary"
-                : "text-gray-600 dark:text-gray-400 hover:bg-muted hover:text-foreground"
+                : "text-gray-400 hover:bg-muted hover:text-foreground"
             }`}
           >
             <span className="w-5 flex items-center justify-center"><Settings size={18} /></span>
