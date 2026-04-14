@@ -79,7 +79,7 @@ export async function GET(req: NextRequest) {
           { catalogNumber: { contains: q, mode: "insensitive" } },
         ],
       },
-      select: { id: true, name: true, manufacturer: true, category: true },
+      select: { id: true, name: true, manufacturer: true, category: true, imageUrl: true },
       take: 5,
     }),
   ]);
