@@ -13,7 +13,7 @@ export async function POST(
   const project = await prisma.project.findFirst({ where: { id, userId: session.user.id } });
   if (!project) return NextResponse.json({ error: "Nie znaleziono" }, { status: 404 });
 
-  const { name, email, isMainContact } = await req.json();
+  const { name, email, phone, isMainContact } = await req.json();
   if (!name?.trim()) return NextResponse.json({ error: "Imię jest wymagane" }, { status: 400 });
 
   // If this is the main contact, unset all others first
@@ -28,16 +28,17 @@ export async function POST(
     data: {
       name: name.trim(),
       email: email?.trim() || null,
+      phone: phone?.trim() || null,
       isMainContact: !!isMainContact,
       projectId: id,
     },
   });
 
-  // Sync project clientName/clientEmail if main contact
+  // Sync project clientName/clientEmail/clientPhone if main contact
   if (isMainContact) {
     await prisma.project.update({
       where: { id },
-      data: { clientName: client.name, clientEmail: client.email ?? null },
+      data: { clientName: client.name, clientEmail: client.email ?? null, clientPhone: client.phone ?? null },
     });
   }
 

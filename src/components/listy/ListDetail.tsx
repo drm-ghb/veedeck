@@ -425,8 +425,7 @@ function ProductRow({
 
       {/* ── MOBILE layout (< md) — compact ── */}
       <div className="md:hidden flex items-start gap-2 px-3 py-2.5">
-        {dragHandle ?? <span className="w-4 shrink-0" />}
-        <div className="w-14 h-14 shrink-0 rounded-lg overflow-hidden bg-muted flex items-center justify-center">
+        <div className="w-20 h-20 shrink-0 rounded-lg overflow-hidden bg-muted flex items-center justify-center">
           {product.imageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={product.imageUrl} alt={product.name} className="w-full h-full object-contain cursor-pointer" onClick={() => product.imageUrl && setLightbox(true)} />

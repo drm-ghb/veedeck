@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Package, ChevronLeft, ArrowUpDown, Pencil, Trash2, ExternalLink, Plus, Check } from "lucide-react";
+import { Search, Package, ChevronLeft, ArrowUpDown, Pencil, Trash2, ExternalLink, Plus, Check, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -172,14 +172,14 @@ export default function ProduktyView({ initialProducts }: Props) {
       : null;
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Produkty</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Twoja baza produktów ({products.length})</p>
+          <h1 className="text-2xl font-bold">Produkty</h1>
+          <p className="text-gray-500 mt-1">Twoja baza produktów ({products.length})</p>
         </div>
-        <Button onClick={() => { setEditProduct(null); setAddOpen(true); }} className="gap-2">
+        <Button onClick={() => { setEditProduct(null); setAddOpen(true); }} className="gap-2 shrink-0">
           <Plus size={15} />
           Dodaj produkt
         </Button>
@@ -329,10 +329,15 @@ function ProductCard({
   onDelete: () => void;
   deleting: boolean;
 }) {
+  const [lightbox, setLightbox] = useState(false);
+
   return (
     <div className="flex gap-3 p-3 rounded-xl border border-border bg-card hover:bg-muted/30 transition-colors">
       {/* Image */}
-      <div className="w-20 h-20 rounded-lg overflow-hidden border border-border bg-muted flex-shrink-0 flex items-center justify-center">
+      <div
+        className={`w-20 h-20 rounded-lg overflow-hidden border border-border bg-muted flex-shrink-0 flex items-center justify-center ${product.imageUrl ? "cursor-zoom-in" : ""}`}
+        onClick={() => product.imageUrl && setLightbox(true)}
+      >
         {product.imageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={product.imageUrl} alt={product.name} className="w-full h-full object-contain" />
@@ -340,6 +345,29 @@ function ProductCard({
           <Package size={24} className="text-muted-foreground/40" />
         )}
       </div>
+
+      {/* Lightbox */}
+      {lightbox && product.imageUrl && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+          onClick={() => setLightbox(false)}
+        >
+          <button
+            className="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
+            onClick={() => setLightbox(false)}
+          >
+            <X size={18} />
+          </button>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={product.imageUrl}
+            alt={product.name}
+            className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+            style={{ maxWidth: "90vw", maxHeight: "90vh" }}
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
 
       {/* Info */}
       <div className="flex-1 min-w-0">

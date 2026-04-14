@@ -83,6 +83,7 @@ model Project {
   userId         String
   clientEmail    String?
   clientName     String?
+  clientPhone    String?
   archived       Boolean         @default(false)
   shareExpiresAt DateTime?
   sharePassword  String?
@@ -106,6 +107,7 @@ model ProjectClient {
   id            String   @id @default(cuid())
   name          String
   email         String?
+  phone         String?
   projectId     String
   createdAt     DateTime @default(now())
   isMainContact Boolean  @default(false)

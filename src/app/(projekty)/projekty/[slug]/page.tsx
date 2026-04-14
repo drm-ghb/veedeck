@@ -45,6 +45,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
       id: c.id,
       name: c.name,
       email: c.email,
+      phone: c.phone ?? null,
       isMainContact: c.isMainContact,
       createdAt: c.createdAt.toISOString(),
     })),

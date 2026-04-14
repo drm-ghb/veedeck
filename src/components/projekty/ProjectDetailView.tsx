@@ -14,6 +14,7 @@ import {
   Plus,
   AlertTriangle,
   Check,
+  Pencil,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,6 +35,7 @@ interface ProjectClient {
   id: string;
   name: string;
   email: string | null;
+  phone: string | null;
   isMainContact: boolean;
   createdAt: string;
 }
@@ -90,9 +92,16 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
   const [clients, setClients] = useState<ProjectClient[]>(project.clients);
   const [newClientName, setNewClientName] = useState("");
   const [newClientEmail, setNewClientEmail] = useState("");
+  const [newClientPhone, setNewClientPhone] = useState("");
   const [newClientIsMain, setNewClientIsMain] = useState(false);
   const [addingClient, setAddingClient] = useState(false);
   const [showAddClient, setShowAddClient] = useState(false);
+
+  // Inline editing state
+  const [editingClientId, setEditingClientId] = useState<string | null>(null);
+  const [editEmail, setEditEmail] = useState("");
+  const [editPhone, setEditPhone] = useState("");
+  const [savingEdit, setSavingEdit] = useState(false);
 
   // Address state
   const [addressCountry, setAddressCountry] = useState(project.addressCountry ?? "");
@@ -166,13 +175,19 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
       const res = await fetch(`/api/projects/${project.id}/clients`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: newClientName.trim(), email: newClientEmail.trim() || null, isMainContact: newClientIsMain }),
+        body: JSON.stringify({
+          name: newClientName.trim(),
+          email: newClientEmail.trim() || null,
+          phone: newClientPhone.trim() || null,
+          isMainContact: newClientIsMain,
+        }),
       });
       if (!res.ok) throw new Error();
       const created = await res.json();
       setClients((prev) => [...prev, created]);
       setNewClientName("");
       setNewClientEmail("");
+      setNewClientPhone("");
       setNewClientIsMain(false);
       setShowAddClient(false);
       toast.success(t.projekty.clientAdded);
@@ -180,6 +195,38 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
       toast.error(t.projekty.clientAddError);
     } finally {
       setAddingClient(false);
+    }
+  }
+
+  function startEditing(client: ProjectClient) {
+    setEditingClientId(client.id);
+    setEditEmail(client.email ?? "");
+    setEditPhone(client.phone ?? "");
+  }
+
+  function cancelEditing() {
+    setEditingClientId(null);
+    setEditEmail("");
+    setEditPhone("");
+  }
+
+  async function saveClientEdit(clientId: string) {
+    setSavingEdit(true);
+    try {
+      const res = await fetch(`/api/projects/${project.id}/clients/${clientId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: editEmail.trim() || null, phone: editPhone.trim() || null }),
+      });
+      if (!res.ok) throw new Error();
+      const updated = await res.json();
+      setClients((prev) => prev.map((c) => c.id === clientId ? { ...c, email: updated.email, phone: updated.phone } : c));
+      cancelEditing();
+      toast.success(t.common.saved);
+    } catch {
+      toast.error(t.settings.saveError);
+    } finally {
+      setSavingEdit(false);
     }
   }
 
@@ -435,7 +482,7 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
 
           {showAddClient && (
             <div className="mb-4 p-4 rounded-lg border border-border bg-muted/30 space-y-3">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="space-y-1.5">
                   <Label>{t.projekty.clientFullName}</Label>
                   <Input
@@ -452,6 +499,16 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
                     value={newClientEmail}
                     onChange={(e) => setNewClientEmail(e.target.value)}
                     placeholder="jan@example.com"
+                    onKeyDown={(e) => e.key === "Enter" && addClient()}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Telefon (opcjonalnie)</Label>
+                  <Input
+                    type="tel"
+                    value={newClientPhone}
+                    onChange={(e) => setNewClientPhone(e.target.value)}
+                    placeholder="+48 123 456 789"
                     onKeyDown={(e) => e.key === "Enter" && addClient()}
                   />
                 </div>
@@ -474,6 +531,7 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
                       setShowAddClient(false);
                       setNewClientName("");
                       setNewClientEmail("");
+                      setNewClientPhone("");
                       setNewClientIsMain(false);
                     }}
                   >
@@ -500,41 +558,80 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
               {clients.map((client) => (
                 <div
                   key={client.id}
-                  className={`flex items-center justify-between px-4 py-3 rounded-lg border bg-background transition-colors ${
+                  className={`rounded-lg border bg-background transition-colors ${
                     client.isMainContact ? "border-primary/30 bg-primary/5" : "border-border"
                   }`}
                 >
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium truncate">{client.name}</p>
-                      {client.isMainContact && (
-                        <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-primary text-white flex-shrink-0">
-                          {t.projekty.mainContact}
-                        </span>
+                  <div className="flex items-center justify-between px-4 py-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium truncate">{client.name}</p>
+                        {client.isMainContact && (
+                          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-primary text-white flex-shrink-0">
+                            {t.projekty.mainContact}
+                          </span>
+                        )}
+                      </div>
+                      {(client.email || client.phone) && editingClientId !== client.id && (
+                        <p className="text-xs text-muted-foreground truncate">
+                          {[client.email, client.phone].filter(Boolean).join(" · ")}
+                        </p>
                       )}
                     </div>
-                    {client.email && (
-                      <p className="text-xs text-muted-foreground truncate">{client.email}</p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-1 ml-3 flex-shrink-0">
-                    {!client.isMainContact && (
+                    <div className="flex items-center gap-1 ml-3 flex-shrink-0">
+                      {!client.isMainContact && (
+                        <button
+                          onClick={() => setMainContact(client.id)}
+                          className="text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded hover:bg-muted"
+                          title={t.projekty.setAsMain}
+                        >
+                          {t.projekty.setAsMain}
+                        </button>
+                      )}
                       <button
-                        onClick={() => setMainContact(client.id)}
-                        className="text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded hover:bg-muted"
-                        title={t.projekty.setAsMain}
+                        onClick={() => editingClientId === client.id ? cancelEditing() : startEditing(client)}
+                        className="text-muted-foreground hover:text-foreground transition-colors p-1"
+                        title="Edytuj email / telefon"
                       >
-                        {t.projekty.setAsMain}
+                        <Pencil size={14} />
                       </button>
-                    )}
-                    <button
-                      onClick={() => removeClient(client.id)}
-                      className="text-muted-foreground hover:text-destructive transition-colors p-1"
-                      title="Usuń klienta"
-                    >
-                      <X size={15} />
-                    </button>
+                      <button
+                        onClick={() => removeClient(client.id)}
+                        className="text-muted-foreground hover:text-destructive transition-colors p-1"
+                        title="Usuń klienta"
+                      >
+                        <X size={15} />
+                      </button>
+                    </div>
                   </div>
+                  {editingClientId === client.id && (
+                    <div className="px-4 pb-3 space-y-2 border-t border-border/50 pt-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <Input
+                          type="email"
+                          value={editEmail}
+                          onChange={(e) => setEditEmail(e.target.value)}
+                          placeholder="Email"
+                          className="h-8 text-sm"
+                        />
+                        <Input
+                          type="tel"
+                          value={editPhone}
+                          onChange={(e) => setEditPhone(e.target.value)}
+                          placeholder="Telefon"
+                          className="h-8 text-sm"
+                        />
+                      </div>
+                      <div className="flex gap-2 justify-end">
+                        <Button size="sm" variant="outline" className="h-7 text-xs" onClick={cancelEditing}>
+                          {t.common.cancel}
+                        </Button>
+                        <Button size="sm" className="h-7 text-xs" onClick={() => saveClientEdit(client.id)} disabled={savingEdit}>
+                          {savingEdit ? t.common.saving : t.common.save}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

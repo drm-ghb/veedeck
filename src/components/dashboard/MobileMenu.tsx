@@ -26,7 +26,7 @@ export default function MobileMenu({ userName, logoUrl, hiddenModules = [] }: Mo
   const t = useT();
 
   const navItems = [
-    { label: t.nav.dashboard, href: "/home", icon: <LayoutDashboard size={18} />, slug: null },
+    { label: t.nav.dashboard, href: "/dashboard", icon: <LayoutDashboard size={18} />, slug: null },
     { label: t.nav.projects, href: "/projekty", icon: <Briefcase size={18} />, slug: null },
     { label: t.nav.renderflow, href: "/renderflow", icon: null, slug: "renderflow" },
     { label: t.nav.lists, href: "/listy", icon: <ShoppingCart size={18} />, slug: "listy" },

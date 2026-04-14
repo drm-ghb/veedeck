@@ -239,7 +239,7 @@ export default function ListyView({ lists: initialLists }: ListyViewProps) {
           >
             {t.common.active}
             {activeLists.length > 0 && (
-              <span className={`ml-1.5 text-xs px-1.5 py-0.5 rounded-full ${tab === "active" ? "bg-foreground text-background" : "bg-muted text-muted-foreground"}`}>
+              <span className={`ml-1.5 text-xs px-1.5 py-0.5 rounded-full ${tab === "active" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
                 {activeLists.length}
               </span>
             )}
@@ -254,7 +254,7 @@ export default function ListyView({ lists: initialLists }: ListyViewProps) {
           >
             {t.common.archived}
             {archivedLists.length > 0 && (
-              <span className={`ml-1.5 text-xs px-1.5 py-0.5 rounded-full ${tab === "archived" ? "bg-foreground text-background" : "bg-muted text-muted-foreground"}`}>
+              <span className={`ml-1.5 text-xs px-1.5 py-0.5 rounded-full ${tab === "archived" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
                 {archivedLists.length}
               </span>
             )}

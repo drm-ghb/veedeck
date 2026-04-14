@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 
 export default async function Home() {
   const session = await auth();
-  if (session?.user) redirect("/home");
+  if (session?.user) redirect("/dashboard");
 
   return (
     <main className="flex flex-col items-center justify-center min-h-screen px-4 text-center">

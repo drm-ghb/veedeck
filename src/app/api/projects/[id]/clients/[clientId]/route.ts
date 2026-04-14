@@ -13,7 +13,26 @@ export async function PATCH(
   const project = await prisma.project.findFirst({ where: { id, userId: session.user.id } });
   if (!project) return NextResponse.json({ error: "Nie znaleziono" }, { status: 404 });
 
-  const { isMainContact } = await req.json();
+  const { isMainContact, email, phone } = await req.json();
+
+  // Edit email / phone
+  if (email !== undefined || phone !== undefined) {
+    const updated = await prisma.projectClient.update({
+      where: { id: clientId },
+      data: {
+        ...(email !== undefined ? { email: email?.trim() || null } : {}),
+        ...(phone !== undefined ? { phone: phone?.trim() || null } : {}),
+      },
+    });
+    // Sync to project if main contact
+    if (updated.isMainContact) {
+      await prisma.project.update({
+        where: { id },
+        data: { clientEmail: updated.email ?? null, clientPhone: updated.phone ?? null },
+      });
+    }
+    return NextResponse.json(updated);
+  }
 
   if (isMainContact) {
     // Unset all others, set this one
@@ -25,10 +44,10 @@ export async function PATCH(
       where: { id: clientId },
       data: { isMainContact: true },
     });
-    // Sync project clientName/clientEmail
+    // Sync project clientName/clientEmail/clientPhone
     await prisma.project.update({
       where: { id },
-      data: { clientName: updated.name, clientEmail: updated.email ?? null },
+      data: { clientName: updated.name, clientEmail: updated.email ?? null, clientPhone: updated.phone ?? null },
     });
     return NextResponse.json(updated);
   }
@@ -59,7 +78,7 @@ export async function DELETE(
   if (client?.isMainContact) {
     await prisma.project.update({
       where: { id },
-      data: { clientName: null, clientEmail: null },
+      data: { clientName: null, clientEmail: null, clientPhone: null },
     });
   }
 

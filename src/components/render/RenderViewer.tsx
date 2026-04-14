@@ -118,6 +118,8 @@ function getPopupStyle(
   y: number,
   imgEl: HTMLElement | null,
   popupWidth = 288,
+  vvHeight?: number,
+  vvOffsetTop = 0,
 ): React.CSSProperties {
   if (!imgEl || typeof window === "undefined") {
     return {
@@ -125,6 +127,7 @@ function getPopupStyle(
       top: y > 60 ? `calc(${y}% - 220px)` : `calc(${y}% + 10px)`,
     };
   }
+  const viewportHeight = vvHeight ?? window.innerHeight;
   const rect = imgEl.getBoundingClientRect();
   const popupH = 400;
   const pad = 8;
@@ -136,8 +139,8 @@ function getPopupStyle(
   left = Math.max(pad, Math.min(left, window.innerWidth - popupWidth - pad));
 
   let top = pinY - 20;
-  if (top + popupH > window.innerHeight - pad) top = window.innerHeight - popupH - pad;
-  top = Math.max(pad, top);
+  if (top + popupH > vvOffsetTop + viewportHeight - pad) top = vvOffsetTop + viewportHeight - popupH - pad;
+  top = Math.max(vvOffsetTop + pad, top);
 
   return { position: "fixed", left, top };
 }
@@ -221,6 +224,20 @@ export default function RenderViewer({
     const lastRead = new Date(lastReadAt);
     return chatMessages.filter(c => new Date(c.createdAt) > lastRead).length;
   });
+  const [visualVP, setVisualVP] = useState({ height: 0, offsetTop: 0 });
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const update = () => setVisualVP({ height: vv.height, offsetTop: vv.offsetTop });
+    update();
+    vv.addEventListener("resize", update);
+    vv.addEventListener("scroll", update);
+    return () => {
+      vv.removeEventListener("resize", update);
+      vv.removeEventListener("scroll", update);
+    };
+  }, []);
+
   const imgRef = useRef<HTMLDivElement>(null);
   const lightboxImgRef = useRef<HTMLDivElement>(null);
   const versionFileInputRef = useRef<HTMLInputElement>(null);
@@ -804,13 +821,13 @@ export default function RenderViewer({
           {/* Desktop toolbar (hidden on mobile) */}
           <div className="hidden sm:flex ml-auto items-center gap-2 flex-shrink-0">
             {!hideCommentCount && todoCount > 0 && (
-              <span className="inline-flex items-center gap-1 bg-red-100 text-red-700 text-xs font-medium px-2 py-1 rounded-md">{todoCount} to do</span>
+              <span className="hidden xl:inline-flex items-center gap-1 bg-red-100 text-red-700 text-xs font-medium px-2 py-1 rounded-md">{todoCount} to do</span>
             )}
             {!hideCommentCount && inProgressCount > 0 && (
-              <span className="inline-flex items-center gap-1 bg-yellow-100 text-yellow-700 text-xs font-medium px-2 py-1 rounded-md">{inProgressCount} in progress</span>
+              <span className="hidden xl:inline-flex items-center gap-1 bg-yellow-100 text-yellow-700 text-xs font-medium px-2 py-1 rounded-md">{inProgressCount} in progress</span>
             )}
             {!hideCommentCount && doneCount > 0 && (
-              <span className="inline-flex items-center gap-1 bg-green-100 text-green-700 text-xs font-medium px-2 py-1 rounded-md">{doneCount} done</span>
+              <span className="hidden xl:inline-flex items-center gap-1 bg-green-100 text-green-700 text-xs font-medium px-2 py-1 rounded-md">{doneCount} done</span>
             )}
             {isDesigner && (
               <span className="flex items-center gap-1 text-xs text-muted-foreground" title="Ilość wyświetleń pliku przez klienta">
@@ -819,10 +836,25 @@ export default function RenderViewer({
             )}
             <div className="w-px h-4 bg-gray-200 mx-1" />
             {isDesigner ? (
-              <div className="flex items-center gap-1 bg-muted rounded-md p-0.5">
-                <button onClick={() => updateRenderStatus("REVIEW")} className={`text-xs px-2.5 py-1 rounded transition-colors font-medium ${renderStatus === "REVIEW" ? "bg-blue-500 text-white shadow-sm" : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"}`}>Do weryfikacji</button>
-                <button onClick={() => updateRenderStatus("ACCEPTED")} className={`text-xs px-2.5 py-1 rounded transition-colors font-medium ${renderStatus === "ACCEPTED" ? "bg-green-500 text-white shadow-sm" : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"}`}>Zaakceptowany</button>
-              </div>
+              <>
+                {/* Tablet: select dropdown */}
+                <div className="relative flex xl:hidden flex-shrink-0">
+                  <select
+                    value={renderStatus}
+                    onChange={(e) => updateRenderStatus(e.target.value as RenderStatus)}
+                    className={`appearance-none text-xs pl-2.5 pr-7 py-1.5 rounded-md border font-medium cursor-pointer ${renderStatus === "ACCEPTED" ? "bg-green-500 text-white border-green-600" : "bg-blue-500 text-white border-blue-600"}`}
+                  >
+                    <option value="REVIEW" className="bg-white text-gray-900">Do weryfikacji</option>
+                    <option value="ACCEPTED" className="bg-white text-gray-900">Zaakceptowany</option>
+                  </select>
+                  <ChevronDown size={12} className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-white" />
+                </div>
+                {/* Desktop: two buttons */}
+                <div className="hidden xl:flex items-center gap-1 bg-muted rounded-md p-0.5">
+                  <button onClick={() => updateRenderStatus("REVIEW")} className={`text-xs px-2.5 py-1 rounded transition-colors font-medium ${renderStatus === "REVIEW" ? "bg-blue-500 text-white shadow-sm" : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"}`}>Do weryfikacji</button>
+                  <button onClick={() => updateRenderStatus("ACCEPTED")} className={`text-xs px-2.5 py-1 rounded transition-colors font-medium ${renderStatus === "ACCEPTED" ? "bg-green-500 text-white shadow-sm" : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"}`}>Zaakceptowany</button>
+                </div>
+              </>
             ) : renderStatus === "ACCEPTED" ? (
               <div className="flex items-center gap-2">
                 <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-green-100 text-green-700">Zaakceptowany</span>
@@ -1073,7 +1105,7 @@ export default function RenderViewer({
             {pending && (
               <div
                 className="fixed z-50 bg-card rounded-xl shadow-xl border border-border p-4 w-64"
-                style={getPopupStyle(pending.x, pending.y, imgRef.current, 256)}
+                style={getPopupStyle(pending.x, pending.y, imgRef.current, 256, visualVP.height || undefined, visualVP.offsetTop)}
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="flex items-center justify-between mb-3">
@@ -1129,7 +1161,7 @@ export default function RenderViewer({
               <div
                 className="fixed z-50 bg-card rounded-xl shadow-xl border border-border w-72 flex flex-col"
                 style={{
-                  ...getPopupStyle(selectedComment.posX!, selectedComment.posY!, imgRef.current),
+                  ...getPopupStyle(selectedComment.posX!, selectedComment.posY!, imgRef.current, 288, visualVP.height || undefined, visualVP.offsetTop),
                   maxHeight: "360px",
                 }}
                 onClick={(e) => e.stopPropagation()}
@@ -1744,7 +1776,7 @@ export default function RenderViewer({
               {pending && (
                 <div
                   className="fixed z-50 bg-card rounded-xl shadow-xl border border-border p-4 w-64"
-                  style={getPopupStyle(pending.x, pending.y, lightboxImgRef.current, 256)}
+                  style={getPopupStyle(pending.x, pending.y, lightboxImgRef.current, 256, visualVP.height || undefined, visualVP.offsetTop)}
                   onClick={(e) => e.stopPropagation()}
                 >
                   <div className="flex items-center justify-between mb-3">
@@ -1786,7 +1818,7 @@ export default function RenderViewer({
                 <div
                   className="fixed z-50 bg-card rounded-xl shadow-xl border border-border w-72 flex flex-col"
                   style={{
-                    ...getPopupStyle(selectedComment.posX!, selectedComment.posY!, lightboxImgRef.current),
+                    ...getPopupStyle(selectedComment.posX!, selectedComment.posY!, lightboxImgRef.current, 288, visualVP.height || undefined, visualVP.offsetTop),
                     maxHeight: "360px",
                   }}
                   onClick={(e) => e.stopPropagation()}

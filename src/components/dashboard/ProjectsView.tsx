@@ -101,7 +101,7 @@ export default function ProjectsView({ projects, archivedProjects }: ProjectsVie
 
   return (
     <div>
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-4 gap-3">
         <div>
           <h1 className="text-2xl font-bold">{t.dashboard.myProjects}</h1>
           <p className="text-gray-500 mt-1">
@@ -126,7 +126,7 @@ export default function ProjectsView({ projects, archivedProjects }: ProjectsVie
           >
             {t.common.active}
             {projects.length > 0 && (
-              <span className={`ml-1.5 text-xs px-1.5 py-0.5 rounded-full ${tab === "active" ? "bg-foreground text-background" : "bg-muted text-muted-foreground"}`}>
+              <span className={`ml-1.5 text-xs px-1.5 py-0.5 rounded-full ${tab === "active" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
                 {projects.length}
               </span>
             )}
@@ -141,7 +141,7 @@ export default function ProjectsView({ projects, archivedProjects }: ProjectsVie
           >
             {t.common.archived}
             {archivedProjects.length > 0 && (
-              <span className={`ml-1.5 text-xs px-1.5 py-0.5 rounded-full ${tab === "archived" ? "bg-foreground text-background" : "bg-muted text-muted-foreground"}`}>
+              <span className={`ml-1.5 text-xs px-1.5 py-0.5 rounded-full ${tab === "archived" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
                 {archivedProjects.length}
               </span>
             )}

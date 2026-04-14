@@ -7,6 +7,7 @@ import NotificationBell from "@/components/dashboard/NotificationBell";
 import { HomeLinkIcon } from "@/components/dashboard/HomeLinkIcon";
 import NavSidebar from "@/components/dashboard/NavSidebar";
 import MobileMenu from "@/components/dashboard/MobileMenu";
+import MobileSearch from "@/components/dashboard/MobileSearch";
 import { prisma } from "@/lib/prisma";
 
 export default async function ListyLayout({
@@ -34,7 +35,7 @@ export default async function ListyLayout({
           {/* Left: home + logo */}
           <div className="flex items-center gap-2 shrink-0">
             <HomeLinkIcon hidden={navMode === "sidebar"} />
-            <Link href="/home" className="flex items-center gap-2 shrink-0">
+            <Link href="/dashboard" className="flex items-center gap-2 shrink-0">
               <span className="text-[1.5625rem] font-bold tracking-tight" style={{ fontFamily: "var(--font-story-script)" }}>veedeck</span>
             </Link>
           </div>
@@ -46,6 +47,7 @@ export default async function ListyLayout({
 
           {/* Right: bell + avatar + logout */}
           <div className="flex items-center gap-2 shrink-0 ml-auto">
+            <div className="md:hidden"><MobileSearch /></div>
             <NotificationBell userId={session.user.id!} iconOnly />
             {displayName && (
               <div className="hidden md:flex items-center gap-2">

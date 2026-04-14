@@ -35,7 +35,7 @@ export default function RegisterPage() {
     }
 
     await signIn("credentials", { email, password, redirect: false });
-    router.push("/home");
+    router.push("/dashboard");
     router.refresh();
   }
 

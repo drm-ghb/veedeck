@@ -37,6 +37,7 @@ export default function NewProjectDialog({ module }: NewProjectDialogProps = {})
   const [title, setTitle] = useState("");
   const [clientName, setClientName] = useState("");
   const [clientEmail, setClientEmail] = useState("");
+  const [clientPhone, setClientPhone] = useState("");
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -74,8 +75,7 @@ export default function NewProjectDialog({ module }: NewProjectDialogProps = {})
     }
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleSubmit() {
     if (!title.trim()) return;
     setLoading(true);
 
@@ -87,6 +87,7 @@ export default function NewProjectDialog({ module }: NewProjectDialogProps = {})
           title: title.trim(),
           clientName: clientName.trim() || undefined,
           clientEmail: clientEmail.trim() || undefined,
+          clientPhone: clientPhone.trim() || undefined,
           description: description.trim() || undefined,
           ...(module && { module }),
         }),
@@ -99,6 +100,7 @@ export default function NewProjectDialog({ module }: NewProjectDialogProps = {})
       setTitle("");
       setClientName("");
       setClientEmail("");
+      setClientPhone("");
       setDescription("");
       router.refresh();
     } catch {
@@ -128,6 +130,7 @@ export default function NewProjectDialog({ module }: NewProjectDialogProps = {})
       setTitle("");
       setClientName("");
       setClientEmail("");
+      setClientPhone("");
       setDescription("");
     }
   }
@@ -148,45 +151,47 @@ export default function NewProjectDialog({ module }: NewProjectDialogProps = {})
           <DialogTitle>{t.projekty.newProject}</DialogTitle>
         </DialogHeader>
 
-        {/* Tabs */}
-        <div className="flex gap-1 bg-muted rounded-lg p-1 mb-2">
-          <button
-            onClick={() => setTab("new")}
-            className={`flex-1 text-sm py-1.5 rounded-md font-medium transition-colors ${
-              tab === "new"
-                ? "bg-background shadow-sm text-foreground"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            {t.projekty.newProjectTab}
-          </button>
-          <button
-            onClick={() => setTab("existing")}
-            className={`flex-1 text-sm py-1.5 rounded-md font-medium transition-colors ${
-              tab === "existing"
-                ? "bg-background shadow-sm text-foreground"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            {t.projekty.existingProjectTab}
-          </button>
-        </div>
+        {/* Tabs — only when adding to a specific module */}
+        {module && (
+          <div className="flex gap-1 bg-muted rounded-lg p-1 mb-2">
+            <button
+              onClick={() => setTab("new")}
+              className={`flex-1 text-sm py-1.5 rounded-md font-medium transition-colors ${
+                tab === "new"
+                  ? "bg-background shadow-sm text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {t.projekty.newProjectTab}
+            </button>
+            <button
+              onClick={() => setTab("existing")}
+              className={`flex-1 text-sm py-1.5 rounded-md font-medium transition-colors ${
+                tab === "existing"
+                  ? "bg-background shadow-sm text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {t.projekty.existingProjectTab}
+            </button>
+          </div>
+        )}
 
-        {tab === "new" ? (
-          <form onSubmit={handleSubmit} className="space-y-5">
+        {(!module || tab === "new") ? (
+          <div className="space-y-5">
             <div className="space-y-1.5">
               <Label htmlFor="title">{t.projekty.projectNameLabel}</Label>
               <Input
                 id="title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
                 placeholder={t.projekty.projectNamePlaceholder}
-                required
                 autoFocus
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <div className="space-y-1.5">
                 <Label htmlFor="clientName">{t.projekty.clientNameLabel}</Label>
                 <Input
@@ -206,6 +211,16 @@ export default function NewProjectDialog({ module }: NewProjectDialogProps = {})
                   placeholder={t.projekty.clientEmailPlaceholder}
                 />
               </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="clientPhone">Telefon klienta</Label>
+                <Input
+                  id="clientPhone"
+                  type="tel"
+                  value={clientPhone}
+                  onChange={(e) => setClientPhone(e.target.value)}
+                  placeholder="+48 123 456 789"
+                />
+              </div>
             </div>
 
             <div className="space-y-1.5">
@@ -223,11 +238,11 @@ export default function NewProjectDialog({ module }: NewProjectDialogProps = {})
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>
                 {t.common.cancel}
               </Button>
-              <Button type="submit" disabled={loading || !title.trim()}>
+              <Button type="button" onClick={handleSubmit} disabled={loading || !title.trim()}>
                 {loading ? t.projekty.creating : t.projekty.createProject}
               </Button>
             </div>
-          </form>
+          </div>
         ) : (
           <div className="space-y-3">
             <div className="relative">

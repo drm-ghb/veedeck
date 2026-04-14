@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Briefcase, DoorOpen, Image, ShoppingCart, User } from "lucide-react";
+import { Search, Briefcase, DoorOpen, Image, ShoppingCart, User, Package } from "lucide-react";
 import { useT } from "@/lib/i18n";
 
 interface SearchResult {
@@ -10,6 +10,7 @@ interface SearchResult {
   title: string;
   subtitle?: string;
   href: string;
+  imageUrl?: string;
 }
 
 interface SearchResults {
@@ -18,6 +19,7 @@ interface SearchResults {
   renders: SearchResult[];
   lists: SearchResult[];
   clients: SearchResult[];
+  products: SearchResult[];
 }
 
 export default function GlobalSearch() {
@@ -30,6 +32,7 @@ export default function GlobalSearch() {
     { key: "renders", label: t.dashboard.searchRenders, icon: <Image size={13} /> },
     { key: "lists", label: t.dashboard.searchLists, icon: <ShoppingCart size={13} /> },
     { key: "clients", label: t.dashboard.searchClients, icon: <User size={13} /> },
+    { key: "products", label: t.dashboard.searchProducts, icon: <Package size={13} /> },
   ];
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResults | null>(null);
@@ -130,9 +133,13 @@ export default function GlobalSearch() {
                   <button
                     key={item.id}
                     onClick={() => handleSelect(item.href)}
-                    className="w-full flex items-center justify-between px-3 py-2 text-sm hover:bg-muted transition-colors text-left"
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted transition-colors text-left"
                   >
-                    <span className="font-medium truncate">{item.title}</span>
+                    {item.imageUrl && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={item.imageUrl} alt={item.title} className="w-8 h-8 rounded object-cover shrink-0 bg-muted" />
+                    )}
+                    <span className="font-medium truncate flex-1">{item.title}</span>
                     {item.subtitle && (
                       <span className="ml-2 text-xs text-muted-foreground shrink-0">{item.subtitle}</span>
                     )}

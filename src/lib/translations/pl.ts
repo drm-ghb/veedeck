@@ -504,6 +504,7 @@ export const pl = {
     searchRenders: "Rendery",
     searchLists: "Listy",
     searchClients: "Klienci",
+    searchProducts: "Produkty",
     settingsTitle: "Ustawienia",
     settingsDesc: "Zarządzaj swoim kontem i preferencjami",
   },

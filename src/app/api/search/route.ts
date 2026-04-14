@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
 
   const userId = session.user.id;
 
-  const [projects, rooms, renders, lists, clients] = await Promise.all([
+  const [projects, rooms, renders, lists, clients, products] = await Promise.all([
     prisma.project.findMany({
       where: {
         userId,
@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
         archived: false,
         name: { contains: q, mode: "insensitive" },
       },
-      select: { id: true, name: true, projectId: true, project: { select: { title: true, slug: true } } },
+      select: { id: true, name: true, projectId: true, fileUrl: true, project: { select: { title: true, slug: true } } },
       take: 5,
     }),
 
@@ -67,6 +67,21 @@ export async function GET(req: NextRequest) {
       select: { id: true, name: true, email: true, projectId: true, project: { select: { title: true, slug: true } } },
       take: 5,
     }),
+
+    prisma.product.findMany({
+      where: {
+        userId,
+        OR: [
+          { name: { contains: q, mode: "insensitive" } },
+          { manufacturer: { contains: q, mode: "insensitive" } },
+          { description: { contains: q, mode: "insensitive" } },
+          { supplier: { contains: q, mode: "insensitive" } },
+          { catalogNumber: { contains: q, mode: "insensitive" } },
+        ],
+      },
+      select: { id: true, name: true, manufacturer: true, category: true },
+      take: 5,
+    }),
   ]);
 
   return NextResponse.json({
@@ -88,6 +103,7 @@ export async function GET(req: NextRequest) {
         title: r.name,
         subtitle: r.project.title,
         href: `/projects/${r.projectId}/renders/${r.id}`,
+        imageUrl: r.fileUrl,
       })),
       lists: lists.map((l) => ({
         id: l.id,
@@ -99,6 +115,13 @@ export async function GET(req: NextRequest) {
         title: c.name,
         subtitle: c.email ?? c.project.title,
         href: `/projekty/${c.project.slug ?? c.projectId}#klienci`,
+      })),
+      products: products.map((p) => ({
+        id: p.id,
+        title: p.name,
+        subtitle: p.manufacturer ?? p.category ?? undefined,
+        href: `/produkty`,
+        imageUrl: p.imageUrl ?? undefined,
       })),
     },
   });

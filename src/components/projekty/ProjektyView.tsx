@@ -101,7 +101,7 @@ export default function ProjektyView({ projects, archivedProjects }: ProjektyVie
           }`}
         >
           {t.common.active}
-          <span className={`ml-1.5 text-xs px-1.5 py-0.5 rounded-full ${tab === "active" ? "bg-foreground text-background" : "bg-muted text-muted-foreground"}`}>
+          <span className={`ml-1.5 text-xs px-1.5 py-0.5 rounded-full ${tab === "active" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
             {projects.length}
           </span>
         </button>
@@ -114,7 +114,7 @@ export default function ProjektyView({ projects, archivedProjects }: ProjektyVie
           }`}
         >
           {t.common.archived}
-          <span className={`ml-1.5 text-xs px-1.5 py-0.5 rounded-full ${tab === "archived" ? "bg-foreground text-background" : "bg-muted text-muted-foreground"}`}>
+          <span className={`ml-1.5 text-xs px-1.5 py-0.5 rounded-full ${tab === "archived" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
             {archivedProjects.length}
           </span>
         </button>

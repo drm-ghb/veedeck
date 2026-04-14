@@ -503,6 +503,7 @@ export const en: TranslationKeys = {
     searchRenders: "Renders",
     searchLists: "Lists",
     searchClients: "Clients",
+    searchProducts: "Products",
     settingsTitle: "Settings",
     settingsDesc: "Manage your account and preferences",
   },

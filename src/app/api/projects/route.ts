@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { title, clientName, clientEmail, description, module: moduleName } = await req.json();
+  const { title, clientName, clientEmail, clientPhone, description, module: moduleName } = await req.json();
   if (!title) {
     return NextResponse.json({ error: "Tytuł jest wymagany" }, { status: 400 });
   }
@@ -39,9 +39,20 @@ export async function POST(req: NextRequest) {
         slug,
         clientName: clientName || null,
         clientEmail: clientEmail || null,
+        clientPhone: clientPhone || null,
         description: description || null,
         userId: session.user.id,
         modules: moduleName ? [moduleName] : [],
+        ...(clientName && {
+          clients: {
+            create: {
+              name: clientName,
+              email: clientEmail || null,
+              phone: clientPhone || null,
+              isMainContact: true,
+            },
+          },
+        }),
       },
     });
     return NextResponse.json(project, { status: 201 });
