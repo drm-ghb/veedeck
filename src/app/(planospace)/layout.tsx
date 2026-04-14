@@ -30,7 +30,7 @@ export default async function VeedeckLayout({
 
   return (
     <div className="h-screen flex flex-col bg-muted/60">
-      <nav>
+      <nav className="relative z-10">
         <div className="px-4 flex items-center gap-4 py-3 relative">
           {/* Left: home + logo */}
           <div className="flex items-center gap-2 shrink-0">
