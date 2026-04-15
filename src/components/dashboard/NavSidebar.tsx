@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { LayoutDashboard, Briefcase, ShoppingCart, Package, PanelLeftClose, PanelLeftOpen, Settings, Sun, Moon, HelpCircle, X, CheckCircle, PictureInPicture, ShieldCheck } from "lucide-react";
+import { LayoutDashboard, Briefcase, ShoppingCart, Package, PanelLeftClose, PanelLeftOpen, Settings, Sun, Moon, HelpCircle, X, CheckCircle, PictureInPicture, ShieldCheck, CalendarDays } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import { useT } from "@/lib/i18n";
 
@@ -42,6 +42,7 @@ export default function NavSidebar({ hiddenModules, isAdmin }: NavSidebarProps) 
     { label: t.nav.renderflow, href: "/renderflow", icon: <PictureInPicture size={18} />, slug: "renderflow" },
     { label: t.nav.lists, href: "/listy", icon: <ShoppingCart size={18} />, slug: "listy" },
     { label: t.nav.products, href: "/produkty", icon: <Package size={18} />, slug: "produkty" },
+    { label: t.nav.calendar, href: "/kalendarz", icon: <CalendarDays size={18} />, slug: null },
   ];
 
   function toggle() {

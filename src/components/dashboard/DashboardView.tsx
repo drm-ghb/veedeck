@@ -397,7 +397,7 @@ export default function DashboardView({
                 {recentProjects.map((project, i) => (
                   <Link
                     key={project.id}
-                    href={`/projekty/${project.slug ?? project.id}`}
+                    href={`/projects/${project.id}`}
                     className={`group flex flex-col rounded-xl border border-border bg-card overflow-hidden hover:border-primary/30 hover:shadow-md transition-all${i > 0 ? " hidden sm:flex" : ""}`}
                   >
                     <div className="w-full aspect-[4/3] bg-muted flex items-center justify-center overflow-hidden">

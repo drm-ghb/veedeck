@@ -50,6 +50,7 @@ export const en: TranslationKeys = {
     renderflow: "RenderFlow",
     lists: "Shopping Lists",
     products: "Products",
+    calendar: "Calendar",
     help: "Help",
     settings: "Settings",
     logout: "Log out",

@@ -40,11 +40,43 @@ model User {
   listsCategoryOrder         String[]       @default([])
   navMode                    String         @default("dashboard")
   accounts                   Account[]
+  calendarEvents             CalendarEvent[]
   notifications              Notification[]
   products                   Product[]
   projects                   Project[]
   sessions                   Session[]
   shoppingLists              ShoppingList[]
+}
+
+model CalendarEvent {
+  id             String            @id @default(cuid())
+  title          String
+  type           CalendarEventType
+  startAt        DateTime
+  endAt          DateTime?
+  location       String?
+  description    String?
+  reminder       Boolean           @default(false)
+  reminderOffset String?
+  userId         String
+  user           User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  guests         CalendarGuest[]
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+}
+
+model CalendarGuest {
+  id      String        @id @default(cuid())
+  eventId String
+  name    String?
+  email   String?
+  event   CalendarEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+}
+
+enum CalendarEventType {
+  WYDARZENIE
+  ZADANIE
+  PRZYPOMNIENIE
 }
 
 model Account {

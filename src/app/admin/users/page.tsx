@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import AdminUsersClient from "../AdminUsersClient";
+import AdminUsersClient from "@/components/admin/AdminUsersClient";
 
 export default async function AdminUsersPage() {
   const session = await auth();
@@ -22,8 +22,10 @@ export default async function AdminUsersPage() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-xl font-semibold">Użytkownicy</h1>
-        <p className="text-sm text-muted-foreground mt-1">Zarządzaj zarejestrowanymi kontami</p>
+        <h1 className="text-xl font-semibold text-white">Użytkownicy</h1>
+        <p className="text-sm text-white/40 mt-1">
+          Zarządzaj zarejestrowanymi kontami
+        </p>
       </div>
       <AdminUsersClient users={users} currentUserId={session!.user!.id!} />
     </div>

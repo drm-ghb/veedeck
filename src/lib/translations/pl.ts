@@ -48,6 +48,7 @@ export const pl = {
     renderflow: "RenderFlow",
     lists: "Listy zakupowe",
     products: "Produkty",
+    calendar: "Kalendarz",
     help: "Pomoc",
     settings: "Ustawienia",
     logout: "Wyloguj",

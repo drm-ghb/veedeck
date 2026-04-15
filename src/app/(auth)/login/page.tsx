@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { signIn, getSession } from "next-auth/react";
+import { signIn, signOut, getSession } from "next-auth/react";
 import { Separator } from "@/components/ui/separator";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -44,8 +44,13 @@ export default function LoginPage() {
       toast.error(t.auth.invalidCredentials);
     } else {
       const session = await getSession();
-      const dest = (session?.user as any)?.isAdmin ? "/admin" : "/dashboard";
-      router.push(dest);
+      if ((session?.user as any)?.isAdmin) {
+        await signOut({ redirect: false });
+        toast.error("Konta administracyjne logują się przez /admin");
+        setLoading(false);
+        return;
+      }
+      router.push("/dashboard");
       router.refresh();
     }
     setLoading(false);

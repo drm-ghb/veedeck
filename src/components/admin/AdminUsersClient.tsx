@@ -23,13 +23,21 @@ export default function AdminUsersClient({
   currentUserId: string;
 }) {
   const [list, setList] = useState(users);
-  const [passwordModal, setPasswordModal] = useState<{ id: string; name: string | null } | null>(null);
+  const [passwordModal, setPasswordModal] = useState<{
+    id: string;
+    name: string | null;
+  } | null>(null);
   const [newPassword, setNewPassword] = useState("");
   const [savingPassword, setSavingPassword] = useState(false);
   const router = useRouter();
 
   async function handleDelete(id: string, name: string | null) {
-    if (!confirm(`Usunąć użytkownika "${name ?? "bez nazwy"}"? Wszystkie jego projekty zostaną usunięte.`)) return;
+    if (
+      !confirm(
+        `Usunąć użytkownika "${name ?? "bez nazwy"}"? Wszystkie jego projekty zostaną usunięte.`
+      )
+    )
+      return;
 
     const res = await fetch(`/api/admin/users/${id}`, { method: "DELETE" });
     if (res.ok) {
@@ -55,7 +63,9 @@ export default function AdminUsersClient({
     });
     setSavingPassword(false);
     if (res.ok) {
-      toast.success(`Hasło zmienione dla ${passwordModal.name ?? passwordModal.id}`);
+      toast.success(
+        `Hasło zmienione dla ${passwordModal.name ?? passwordModal.id}`
+      );
       setPasswordModal(null);
       setNewPassword("");
     } else {
@@ -66,9 +76,9 @@ export default function AdminUsersClient({
 
   return (
     <>
-      <div className="bg-white dark:bg-card border border-border rounded-xl overflow-hidden">
+      <div className="bg-white/3 border border-white/8 rounded-xl overflow-hidden">
         {/* Header */}
-        <div className="grid grid-cols-[1fr_200px_80px_80px] gap-4 px-5 py-3 bg-muted/50 border-b border-border text-xs font-medium text-muted-foreground uppercase tracking-wide">
+        <div className="grid grid-cols-[1fr_200px_80px_80px] gap-4 px-5 py-3 bg-white/3 border-b border-white/8 text-xs font-medium text-white/30 uppercase tracking-wide">
           <span>Użytkownik</span>
           <span>Dołączył</span>
           <span>Projekty</span>
@@ -76,39 +86,41 @@ export default function AdminUsersClient({
         </div>
 
         {list.length === 0 && (
-          <p className="text-center text-muted-foreground py-12">Brak użytkowników</p>
+          <p className="text-center text-white/30 py-12 text-sm">
+            Brak użytkowników
+          </p>
         )}
 
         {list.map((user, i) => (
           <div
             key={user.id}
             className={`grid grid-cols-[1fr_200px_80px_80px] gap-4 px-5 py-4 items-center ${
-              i !== list.length - 1 ? "border-b border-border" : ""
-            } ${user.id === currentUserId ? "bg-blue-50/50 dark:bg-blue-900/10" : ""}`}
+              i !== list.length - 1 ? "border-b border-white/5" : ""
+            } ${user.id === currentUserId ? "bg-blue-500/5" : ""}`}
           >
             {/* Name + email */}
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <p className="text-sm font-semibold text-foreground truncate">
+                <p className="text-sm font-semibold text-white truncate">
                   {user.name ?? "—"}
                 </p>
                 {user.isAdmin && (
-                  <span className="flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 flex-shrink-0">
-                    <ShieldCheck size={10} />
+                  <span className="flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-blue-500/15 text-blue-400 border border-blue-500/20 flex-shrink-0">
+                    <ShieldCheck size={9} />
                     Admin
                   </span>
                 )}
                 {user.id === currentUserId && (
-                  <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 flex-shrink-0">
+                  <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-white/8 text-white/40 flex-shrink-0">
                     Ty
                   </span>
                 )}
               </div>
-              <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+              <p className="text-xs text-white/30 truncate">{user.email}</p>
             </div>
 
             {/* Date */}
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-white/30">
               {new Date(user.createdAt).toLocaleDateString("pl-PL", {
                 day: "2-digit",
                 month: "short",
@@ -117,7 +129,7 @@ export default function AdminUsersClient({
             </p>
 
             {/* Projects */}
-            <div className="flex items-center gap-1 text-sm text-muted-foreground">
+            <div className="flex items-center gap-1 text-sm text-white/30">
               <FolderOpen size={13} />
               {user._count.projects}
             </div>
@@ -128,8 +140,11 @@ export default function AdminUsersClient({
                 size="icon-sm"
                 variant="ghost"
                 title="Zmień hasło"
-                className="text-gray-400 hover:text-gray-700 hover:bg-muted"
-                onClick={() => { setPasswordModal({ id: user.id, name: user.name }); setNewPassword(""); }}
+                className="text-white/25 hover:text-white/70 hover:bg-white/8"
+                onClick={() => {
+                  setPasswordModal({ id: user.id, name: user.name });
+                  setNewPassword("");
+                }}
               >
                 <KeyRound size={14} />
               </Button>
@@ -137,7 +152,7 @@ export default function AdminUsersClient({
                 <Button
                   size="icon-sm"
                   variant="ghost"
-                  className="text-red-400 hover:text-red-600 hover:bg-red-50"
+                  className="text-red-400/60 hover:text-red-400 hover:bg-red-500/10"
                   onClick={() => handleDelete(user.id, user.name)}
                 >
                   <Trash2 size={14} />
@@ -150,16 +165,28 @@ export default function AdminUsersClient({
 
       {/* Password modal */}
       {passwordModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setPasswordModal(null)}>
-          <div className="bg-card rounded-2xl shadow-xl w-full max-w-sm mx-4 p-6" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
+          onClick={() => setPasswordModal(null)}
+        >
+          <div
+            className="bg-[#1a1d24] border border-white/10 rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between mb-5">
-              <h2 className="text-base font-semibold">Zmień hasło</h2>
-              <button onClick={() => setPasswordModal(null)} className="text-muted-foreground hover:text-foreground transition-colors">
+              <h2 className="text-base font-semibold text-white">Zmień hasło</h2>
+              <button
+                onClick={() => setPasswordModal(null)}
+                className="text-white/30 hover:text-white/70 transition-colors"
+              >
                 <X size={18} />
               </button>
             </div>
-            <p className="text-sm text-muted-foreground mb-4">
-              Ustawiasz nowe hasło dla: <span className="font-medium text-foreground">{passwordModal.name ?? passwordModal.id}</span>
+            <p className="text-sm text-white/40 mb-4">
+              Ustawiasz nowe hasło dla:{" "}
+              <span className="font-medium text-white/80">
+                {passwordModal.name ?? passwordModal.id}
+              </span>
             </p>
             <input
               type="password"
@@ -168,13 +195,23 @@ export default function AdminUsersClient({
               onKeyDown={(e) => e.key === "Enter" && handleChangePassword()}
               placeholder="Nowe hasło (min. 8 znaków)"
               autoFocus
-              className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 mb-4"
+              className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/20 focus:outline-none focus:border-blue-500/40 focus:ring-1 focus:ring-blue-500/20 mb-4 transition-all"
             />
             <div className="flex gap-2 justify-end">
-              <Button variant="ghost" size="sm" onClick={() => setPasswordModal(null)}>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-white/40 hover:text-white/80"
+                onClick={() => setPasswordModal(null)}
+              >
                 Anuluj
               </Button>
-              <Button size="sm" onClick={handleChangePassword} disabled={savingPassword || newPassword.length < 8}>
+              <Button
+                size="sm"
+                className="bg-blue-600 hover:bg-blue-500 text-white border-0"
+                onClick={handleChangePassword}
+                disabled={savingPassword || newPassword.length < 8}
+              >
                 {savingPassword ? "Zapisywanie..." : "Ustaw hasło"}
               </Button>
             </div>
