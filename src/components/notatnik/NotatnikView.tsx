@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { Plus, Search, Archive, Trash2, X, ArchiveRestore, NotebookText, ChevronDown, FileText } from "lucide-react";
+import { Plus, Search, Archive, Trash2, X, ArchiveRestore, ChevronDown, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { useT } from "@/lib/i18n";
 import { NoteEditor } from "./NoteEditor";
@@ -228,10 +228,7 @@ export default function NotatnikView({ initialNotes, initialArchivedNotes }: Pro
       `}>
         <div className="px-4 pt-4 pb-3 space-y-3 border-b border-border">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <NotebookText size={18} className="text-primary" />
-              <h1 className="font-semibold text-base">{t.notatnik.title}</h1>
-            </div>
+            <h1 className="font-semibold text-base">{t.notatnik.title}</h1>
             <button
               onClick={handleNewNote}
               title={t.notatnik.newNote}
