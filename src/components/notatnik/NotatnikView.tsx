@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Plus, Search, Archive, Trash2, X, ArchiveRestore, NotebookText, ChevronDown, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { useT } from "@/lib/i18n";
+import { NoteEditor } from "./NoteEditor";
 
 interface Note {
   id: string;
@@ -29,9 +30,17 @@ function formatDate(iso: string) {
 function formatDateShort(iso: string) {
   const d = new Date(iso);
   const now = new Date();
-  const isToday = d.toDateString() === now.toDateString();
-  if (isToday) return d.toLocaleTimeString("pl-PL", { hour: "2-digit", minute: "2-digit" });
+  if (d.toDateString() === now.toDateString())
+    return d.toLocaleTimeString("pl-PL", { hour: "2-digit", minute: "2-digit" });
   return d.toLocaleDateString("pl-PL", { day: "numeric", month: "short" });
+}
+
+function stripHtml(html: string) {
+  return html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function hasText(html: string) {
+  return stripHtml(html).length > 0;
 }
 
 export default function NotatnikView({ initialNotes, initialArchivedNotes }: Props) {
@@ -43,11 +52,10 @@ export default function NotatnikView({ initialNotes, initialArchivedNotes }: Pro
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<SortOrder>("newest");
 
-  // Selected note / new note
   const [selectedId, setSelectedId] = useState<string | null>(initialNotes[0]?.id ?? null);
   const [creating, setCreating] = useState(false);
 
-  // Right-panel edit state
+  // Right-panel state
   const [editTitle, setEditTitle] = useState("");
   const [editContent, setEditContent] = useState("");
   const [isDirty, setIsDirty] = useState(false);
@@ -58,14 +66,8 @@ export default function NotatnikView({ initialNotes, initialArchivedNotes }: Pro
   const [newContent, setNewContent] = useState("");
   const [newSaving, setNewSaving] = useState(false);
 
-  // Delete confirm
   const [confirmDelete, setConfirmDelete] = useState(false);
-
-  // Mobile: show right panel
   const [mobileShowDetail, setMobileShowDetail] = useState(false);
-
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const newTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   const activeList = showArchived ? archivedNotes : notes;
 
@@ -73,7 +75,7 @@ export default function NotatnikView({ initialNotes, initialArchivedNotes }: Pro
     return activeList
       .filter((n) => {
         const q = search.toLowerCase();
-        return !q || n.title?.toLowerCase().includes(q) || n.content.toLowerCase().includes(q);
+        return !q || n.title?.toLowerCase().includes(q) || stripHtml(n.content).toLowerCase().includes(q);
       })
       .sort((a, b) => {
         const da = new Date(a.updatedAt).getTime();
@@ -87,7 +89,6 @@ export default function NotatnikView({ initialNotes, initialArchivedNotes }: Pro
     [notes, archivedNotes, selectedId]
   );
 
-  // Load selected note into editor
   useEffect(() => {
     if (selectedNote) {
       setEditTitle(selectedNote.title ?? "");
@@ -97,7 +98,6 @@ export default function NotatnikView({ initialNotes, initialArchivedNotes }: Pro
     }
   }, [selectedNote?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Sync from router.refresh() (e.g. after QuickNoteButton)
   useEffect(() => {
     setNotes(initialNotes);
     setArchivedNotes(initialArchivedNotes);
@@ -114,35 +114,31 @@ export default function NotatnikView({ initialNotes, initialArchivedNotes }: Pro
     setCreating(true);
     setSelectedId(null);
     setNewTitle("");
-    setNewContent("");
+    setNewContent("<p></p>");
     setConfirmDelete(false);
     setMobileShowDetail(true);
-    setTimeout(() => newTextareaRef.current?.focus(), 50);
   }
 
   function handleCancelNew() {
     setCreating(false);
-    const first = notes[0];
-    setSelectedId(first?.id ?? null);
+    setSelectedId(notes[0]?.id ?? null);
     setMobileShowDetail(false);
   }
 
   async function handleCreateSave() {
-    if (!newContent.trim()) return;
+    if (!hasText(newContent)) return;
     setNewSaving(true);
     try {
       const res = await fetch("/api/notes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: newTitle.trim() || null, content: newContent.trim() }),
+        body: JSON.stringify({ title: newTitle.trim() || null, content: newContent }),
       });
       if (!res.ok) throw new Error();
       const note: Note = await res.json();
       setNotes((prev) => [note, ...prev]);
       setSelectedId(note.id);
       setCreating(false);
-      setNewTitle("");
-      setNewContent("");
       toast.success(t.notatnik.noteAdded);
     } catch {
       toast.error(t.notatnik.noteAddError);
@@ -152,13 +148,13 @@ export default function NotatnikView({ initialNotes, initialArchivedNotes }: Pro
   }
 
   async function handleSave() {
-    if (!selectedId || !editContent.trim()) return;
+    if (!selectedId || !hasText(editContent)) return;
     setSaving(true);
     try {
       const res = await fetch(`/api/notes/${selectedId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: editTitle.trim() || null, content: editContent.trim() }),
+        body: JSON.stringify({ title: editTitle.trim() || null, content: editContent }),
       });
       if (!res.ok) throw new Error();
       const updated: Note = await res.json();
@@ -207,8 +203,7 @@ export default function NotatnikView({ initialNotes, initialArchivedNotes }: Pro
       const res = await fetch(`/api/notes/${selectedNote.id}`, { method: "DELETE" });
       if (!res.ok) throw new Error();
       const wasArchived = selectedNote.archived;
-      const listToUpdate = wasArchived ? archivedNotes : notes;
-      const remaining = listToUpdate.filter((n) => n.id !== selectedNote.id);
+      const remaining = (wasArchived ? archivedNotes : notes).filter((n) => n.id !== selectedNote.id);
       if (wasArchived) setArchivedNotes(remaining);
       else setNotes(remaining);
       setSelectedId(remaining[0]?.id ?? null);
@@ -222,10 +217,7 @@ export default function NotatnikView({ initialNotes, initialArchivedNotes }: Pro
 
   // ── Render ────────────────────────────────────────────────────────────────
 
-  const rightPanelVisible = creating || selectedNote;
-
   return (
-    /* Stretch edge-to-edge inside the planospace layout padding */
     <div className="flex h-full -mx-3 sm:-mx-6 -my-4 sm:-my-6 overflow-hidden">
 
       {/* ── LEFT PANEL ────────────────────────────────────────────────── */}
@@ -234,7 +226,6 @@ export default function NotatnikView({ initialNotes, initialArchivedNotes }: Pro
         w-full md:w-72 lg:w-80 flex-shrink-0
         flex-col border-r border-border bg-muted/30
       `}>
-        {/* Header */}
         <div className="px-4 pt-4 pb-3 space-y-3 border-b border-border">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -250,7 +241,6 @@ export default function NotatnikView({ initialNotes, initialArchivedNotes }: Pro
             </button>
           </div>
 
-          {/* Search */}
           <div className="relative">
             <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
             <input
@@ -261,16 +251,12 @@ export default function NotatnikView({ initialNotes, initialArchivedNotes }: Pro
               className="w-full pl-7 pr-7 py-1.5 text-sm bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
             {search && (
-              <button
-                onClick={() => setSearch("")}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              >
+              <button onClick={() => setSearch("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
                 <X size={13} />
               </button>
             )}
           </div>
 
-          {/* Tabs + sort row */}
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-0.5 text-xs">
               <button
@@ -289,7 +275,6 @@ export default function NotatnikView({ initialNotes, initialArchivedNotes }: Pro
                 )}
               </button>
             </div>
-
             <div className="relative">
               <select
                 value={sort}
@@ -304,7 +289,6 @@ export default function NotatnikView({ initialNotes, initialArchivedNotes }: Pro
           </div>
         </div>
 
-        {/* Note list */}
         <div className="flex-1 overflow-y-auto">
           {filtered.length === 0 ? (
             <div className="px-4 py-8 text-center text-sm text-muted-foreground">
@@ -313,20 +297,19 @@ export default function NotatnikView({ initialNotes, initialArchivedNotes }: Pro
           ) : (
             filtered.map((note) => {
               const isSelected = note.id === selectedId && !creating;
-              const preview = note.content.replace(/\n+/g, " ").slice(0, 80);
+              const firstLine = stripHtml(note.content).split(/\s+/).slice(0, 8).join(" ");
+              const preview = stripHtml(note.content).slice(0, 80);
               return (
                 <button
                   key={note.id}
                   onClick={() => handleSelect(note)}
                   className={`w-full text-left px-4 py-3 border-b border-border/50 transition-colors ${
-                    isSelected
-                      ? "bg-primary/10 border-l-2 border-l-primary"
-                      : "hover:bg-muted/60"
+                    isSelected ? "bg-primary/10 border-l-2 border-l-primary" : "hover:bg-muted/60"
                   }`}
                 >
                   <div className="flex items-start justify-between gap-2 mb-0.5">
                     <p className={`text-sm font-medium truncate ${isSelected ? "text-primary" : "text-foreground"}`}>
-                      {note.title || note.content.split("\n")[0].slice(0, 40) || "—"}
+                      {note.title || firstLine || "—"}
                     </p>
                     <span className="text-xs text-muted-foreground shrink-0 mt-0.5">
                       {formatDateShort(note.updatedAt)}
@@ -348,65 +331,59 @@ export default function NotatnikView({ initialNotes, initialArchivedNotes }: Pro
         flex-1 flex-col overflow-hidden bg-background
       `}>
         {creating ? (
-          /* ── New note ── */
           <div className="flex flex-col h-full">
-            {/* Toolbar */}
-            <div className="flex items-center justify-between px-6 py-3 border-b border-border gap-3">
-              <button
-                onClick={handleCancelNew}
-                className="md:hidden flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-              >
+            {/* Action bar */}
+            <div className="flex items-center justify-between px-6 py-3 border-b border-border gap-3 shrink-0">
+              <button onClick={handleCancelNew} className="md:hidden flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
                 ← {t.common.back}
               </button>
-              <span className="text-sm font-medium text-muted-foreground">{t.notatnik.newNote}</span>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handleCancelNew}
-                  className="hidden md:inline-flex px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-                >
+              <input
+                type="text"
+                value={newTitle}
+                onChange={(e) => setNewTitle(e.target.value)}
+                placeholder={t.notatnik.noteTitlePlaceholder}
+                className="flex-1 text-base font-semibold bg-transparent border-none outline-none placeholder:text-muted-foreground/40 min-w-0"
+              />
+              <div className="flex items-center gap-2 shrink-0">
+                <button onClick={handleCancelNew} className="hidden md:inline-flex px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
                   {t.common.cancel}
                 </button>
                 <button
                   onClick={handleCreateSave}
-                  disabled={!newContent.trim() || newSaving}
+                  disabled={!hasText(newContent) || newSaving}
                   className="px-3 py-1.5 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   {newSaving ? t.notatnik.saving : t.common.save}
                 </button>
               </div>
             </div>
-            {/* Editor */}
-            <div className="flex flex-col flex-1 overflow-hidden px-6 py-4 gap-3">
-              <input
-                type="text"
-                value={newTitle}
-                onChange={(e) => setNewTitle(e.target.value)}
-                placeholder={t.notatnik.noteTitlePlaceholder}
-                className="text-xl font-semibold bg-transparent border-none outline-none placeholder:text-muted-foreground/40 w-full"
-              />
-              <textarea
-                ref={newTextareaRef}
-                value={newContent}
-                onChange={(e) => setNewContent(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter" && e.ctrlKey) handleCreateSave(); }}
-                placeholder={t.notatnik.noteContentPlaceholder}
-                className="flex-1 resize-none bg-transparent border-none outline-none text-sm leading-relaxed placeholder:text-muted-foreground/40 w-full"
-              />
-            </div>
+            <NoteEditor
+              content="<p></p>"
+              contentKey="new"
+              onChange={setNewContent}
+              placeholder={t.notatnik.noteContentPlaceholder}
+              autoFocus
+            />
           </div>
         ) : selectedNote ? (
-          /* ── Note detail / edit ── */
           <div className="flex flex-col h-full">
-            {/* Toolbar */}
-            <div className="flex items-center justify-between px-6 py-3 border-b border-border gap-3">
-              <button
-                onClick={() => setMobileShowDetail(false)}
-                className="md:hidden flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-              >
+            {/* Action bar */}
+            <div className="flex items-center gap-2 px-6 py-3 border-b border-border shrink-0">
+              <button onClick={() => setMobileShowDetail(false)} className="md:hidden flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mr-1">
                 ← {t.common.back}
               </button>
 
-              <div className="flex items-center gap-1 ml-auto">
+              {/* Title input */}
+              <input
+                type="text"
+                value={editTitle}
+                onChange={(e) => { setEditTitle(e.target.value); setIsDirty(true); }}
+                placeholder={t.notatnik.noteTitlePlaceholder}
+                className="flex-1 text-base font-semibold bg-transparent border-none outline-none placeholder:text-muted-foreground/40 min-w-0"
+              />
+
+              {/* Right actions */}
+              <div className="flex items-center gap-1 shrink-0">
                 {isDirty && (
                   <>
                     <button
@@ -417,7 +394,7 @@ export default function NotatnikView({ initialNotes, initialArchivedNotes }: Pro
                     </button>
                     <button
                       onClick={handleSave}
-                      disabled={!editContent.trim() || saving}
+                      disabled={!hasText(editContent) || saving}
                       className="px-3 py-1.5 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                       {saving ? t.notatnik.saving : t.common.save}
@@ -446,17 +423,11 @@ export default function NotatnikView({ initialNotes, initialArchivedNotes }: Pro
 
                 {confirmDelete && (
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">{t.notatnik.confirmDelete}</span>
-                    <button
-                      onClick={() => setConfirmDelete(false)}
-                      className="px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-                    >
+                    <span className="text-sm text-muted-foreground hidden sm:block">{t.notatnik.confirmDelete}</span>
+                    <button onClick={() => setConfirmDelete(false)} className="px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
                       {t.common.cancel}
                     </button>
-                    <button
-                      onClick={handleDelete}
-                      className="px-3 py-1.5 text-sm font-medium bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
-                    >
+                    <button onClick={handleDelete} className="px-3 py-1.5 text-sm font-medium bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">
                       {t.common.delete}
                     </button>
                   </div>
@@ -464,27 +435,20 @@ export default function NotatnikView({ initialNotes, initialArchivedNotes }: Pro
               </div>
             </div>
 
-            {/* Editor */}
-            <div className="flex flex-col flex-1 overflow-y-auto px-6 py-5 gap-2">
-              <p className="text-xs text-muted-foreground/50 text-center">{formatDate(selectedNote.createdAt)}</p>
-              <input
-                type="text"
-                value={editTitle}
-                onChange={(e) => { setEditTitle(e.target.value); setIsDirty(true); }}
-                placeholder={t.notatnik.noteTitlePlaceholder}
-                className="text-xl font-semibold bg-transparent border-none outline-none placeholder:text-muted-foreground/40 w-full"
-              />
-              <textarea
-                ref={textareaRef}
-                value={editContent}
-                onChange={(e) => { setEditContent(e.target.value); setIsDirty(true); }}
-                onKeyDown={(e) => { if (e.key === "Enter" && e.ctrlKey && isDirty) handleSave(); }}
-                className="flex-1 resize-none bg-transparent border-none outline-none text-sm leading-relaxed placeholder:text-muted-foreground/40 w-full min-h-64"
-              />
-            </div>
+            {/* Date */}
+            <p className="text-xs text-muted-foreground/50 text-center py-2 shrink-0">
+              {formatDate(selectedNote.createdAt)}
+            </p>
+
+            {/* TipTap editor */}
+            <NoteEditor
+              content={selectedNote.content}
+              contentKey={selectedNote.id}
+              onChange={(html) => { setEditContent(html); setIsDirty(true); }}
+              placeholder={t.notatnik.noteContentPlaceholder}
+            />
           </div>
         ) : (
-          /* ── Empty state ── */
           <div className="flex flex-col items-center justify-center h-full gap-3 text-muted-foreground">
             <FileText size={48} className="opacity-20" />
             <p className="font-medium">{t.notatnik.noNotes}</p>
