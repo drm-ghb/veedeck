@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Menu, X, LayoutDashboard, Briefcase, ShoppingCart, Package, Settings, LogOut, HelpCircle, Sun, Moon, CheckCircle, CalendarDays } from "lucide-react";
+import { Menu, X, LayoutDashboard, Briefcase, ShoppingCart, Package, Settings, LogOut, HelpCircle, Sun, Moon, CheckCircle, CalendarDays, NotebookText } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { useTheme } from "@/lib/theme";
 import { useT } from "@/lib/i18n";
@@ -32,6 +32,7 @@ export default function MobileMenu({ userName, logoUrl, hiddenModules = [] }: Mo
     { label: t.nav.lists, href: "/listy", icon: <ShoppingCart size={18} />, slug: "listy" },
     { label: t.nav.products, href: "/produkty", icon: <Package size={18} />, slug: "produkty" },
     { label: t.nav.calendar, href: "/kalendarz", icon: <CalendarDays size={18} />, slug: null },
+    { label: t.nav.notes, href: "/notatnik", icon: <NotebookText size={18} />, slug: null },
   ];
 
   // Close on route change

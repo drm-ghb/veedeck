@@ -1,6 +1,5 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import GlobalSearch from "@/components/dashboard/GlobalSearch";
 import { HomeLinkIcon } from "@/components/dashboard/HomeLinkIcon";
 import { SignOutButton } from "@/components/dashboard/SignOutButton";
@@ -8,6 +7,8 @@ import NotificationBell from "@/components/dashboard/NotificationBell";
 import NavSidebar from "@/components/dashboard/NavSidebar";
 import MobileMenu from "@/components/dashboard/MobileMenu";
 import MobileSearch from "@/components/dashboard/MobileSearch";
+import { LogoBrand } from "@/components/dashboard/LogoBrand";
+import { QuickNoteButton } from "@/components/notatnik/QuickNoteButton";
 import { prisma } from "@/lib/prisma";
 
 export default async function VeedeckLayout({
@@ -35,9 +36,7 @@ export default async function VeedeckLayout({
           {/* Left: home + logo */}
           <div className="flex items-center gap-2 shrink-0">
             <HomeLinkIcon hidden={navMode === "sidebar"} />
-            <Link href="/dashboard" className="flex items-center gap-2.5 shrink-0">
-              <span className="text-[1.5625rem] font-bold tracking-tight" style={{ fontFamily: "var(--font-story-script)" }}>veedeck</span>
-            </Link>
+            <LogoBrand navMode={navMode} />
           </div>
 
           {/* Search - centered */}
@@ -48,6 +47,7 @@ export default async function VeedeckLayout({
           {/* Right: bell + avatar + logout */}
           <div className="flex items-center gap-2 shrink-0 ml-auto">
             <div className="md:hidden"><MobileSearch /></div>
+            <QuickNoteButton />
             <NotificationBell userId={session.user.id!} iconOnly />
             {displayName && (
               <div className="hidden md:flex items-center gap-2">
