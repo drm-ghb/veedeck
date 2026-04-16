@@ -2,15 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { uniqueSlug } from "@/lib/slug";
+import { getWorkspaceUserId } from "@/lib/workspace";
 
 export async function GET() {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  const userId = getWorkspaceUserId(session);
 
   const projects = await prisma.project.findMany({
-    where: { userId: session.user.id },
+    where: { userId },
     include: { _count: { select: { renders: true } } },
     orderBy: { createdAt: "desc" },
   });
@@ -23,6 +25,7 @@ export async function POST(req: NextRequest) {
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  const userId = getWorkspaceUserId(session);
 
   const { title, clientName, clientEmail, clientPhone, description, module: moduleName } = await req.json();
   if (!title) {
@@ -41,7 +44,7 @@ export async function POST(req: NextRequest) {
         clientEmail: clientEmail || null,
         clientPhone: clientPhone || null,
         description: description || null,
-        userId: session.user.id,
+        userId,
         modules: moduleName ? [moduleName] : [],
         ...(clientName && {
           clients: {

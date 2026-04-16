@@ -71,12 +71,12 @@ export default async function VeedeckLayout({
       {navMode === "sidebar" ? (
         <div className="flex flex-1 min-h-0">
           <NavSidebar hiddenModules={hiddenModules} />
-          <main className="flex-1 px-6 py-6 overflow-y-auto bg-background rounded-tl-2xl">
+          <main className="flex-1 flex flex-col min-h-0 px-6 py-6 overflow-y-auto bg-background rounded-tl-2xl">
             {children}
           </main>
         </div>
       ) : (
-        <main className="flex-1 px-3 sm:px-6 py-4 sm:py-6 overflow-y-auto">
+        <main className="flex-1 flex flex-col min-h-0 px-3 sm:px-6 py-4 sm:py-6 overflow-y-auto">
           {children}
         </main>
       )}

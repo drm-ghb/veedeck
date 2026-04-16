@@ -2,15 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { uniqueSlug } from "@/lib/slug";
+import { getWorkspaceUserId } from "@/lib/workspace";
 
 export async function GET() {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  const userId = getWorkspaceUserId(session);
 
   const lists = await prisma.shoppingList.findMany({
-    where: { userId: session.user.id },
+    where: { userId },
     include: { project: { select: { id: true, title: true } } },
     orderBy: { createdAt: "desc" },
   });
@@ -23,6 +25,7 @@ export async function POST(req: NextRequest) {
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  const userId = getWorkspaceUserId(session);
 
   const { name, projectId } = await req.json();
   if (!name?.trim()) {
@@ -31,7 +34,7 @@ export async function POST(req: NextRequest) {
 
   if (projectId) {
     const project = await prisma.project.findFirst({
-      where: { id: projectId, userId: session.user.id },
+      where: { id: projectId, userId },
     });
     if (!project) {
       return NextResponse.json({ error: "Projekt nie istnieje" }, { status: 403 });
@@ -46,7 +49,7 @@ export async function POST(req: NextRequest) {
       data: {
         name: name.trim(),
         slug,
-        userId: session.user.id,
+        userId,
         projectId: projectId ?? null,
         shareToken: crypto.randomUUID(),
       },

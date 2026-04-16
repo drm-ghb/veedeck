@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { pusherServer } from "@/lib/pusher";
+import { getWorkspaceUserId } from "@/lib/workspace";
 
 export async function PATCH(
   req: NextRequest,
@@ -11,6 +12,7 @@ export async function PATCH(
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  const userId = getWorkspaceUserId(session);
 
   const { id } = await params;
   const render = await prisma.render.findUnique({
@@ -30,7 +32,7 @@ export async function PATCH(
     },
   });
 
-  if (!render || render.project.userId !== session.user.id) {
+  if (!render || render.project.userId !== userId) {
     return NextResponse.json({ error: "Brak dostępu" }, { status: 403 });
   }
 
@@ -116,6 +118,7 @@ export async function DELETE(
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  const userId = getWorkspaceUserId(session);
 
   const { id } = await params;
   const render = await prisma.render.findUnique({
@@ -123,7 +126,7 @@ export async function DELETE(
     include: { project: true },
   });
 
-  if (!render || render.project.userId !== session.user.id) {
+  if (!render || render.project.userId !== userId) {
     return NextResponse.json({ error: "Brak dostępu" }, { status: 403 });
   }
 

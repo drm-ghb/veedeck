@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getWorkspaceUserId } from "@/lib/workspace";
 
 export async function GET(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const userId = getWorkspaceUserId(session);
 
   const { searchParams } = new URL(req.url);
   const from = searchParams.get("from");
@@ -12,7 +14,7 @@ export async function GET(req: NextRequest) {
 
   const events = await prisma.calendarEvent.findMany({
     where: {
-      userId: session.user.id,
+      userId,
       startAt: {
         gte: from ? new Date(from) : undefined,
         lte: to ? new Date(to) : undefined,
@@ -28,6 +30,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const userId = getWorkspaceUserId(session);
 
   const body = await req.json();
   const { title, type, startAt, endAt, location, description, guests } = body;
@@ -44,7 +47,7 @@ export async function POST(req: NextRequest) {
       endAt: endAt ? new Date(endAt) : null,
       location: location?.trim() || null,
       description: description?.trim() || null,
-      userId: session.user.id,
+      userId,
       guests: {
         create: (guests ?? [])
           .filter((g: any) => g.name?.trim() || g.email?.trim())

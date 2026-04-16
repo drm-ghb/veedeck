@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getWorkspaceUserId } from "@/lib/workspace";
 
 export async function GET(req: NextRequest) {
   const session = await auth();
@@ -9,7 +10,7 @@ export async function GET(req: NextRequest) {
   const q = req.nextUrl.searchParams.get("q")?.trim() ?? "";
   if (q.length < 2) return NextResponse.json({ results: [] });
 
-  const userId = session.user.id;
+  const userId = getWorkspaceUserId(session);
 
   const [projects, rooms, renders, lists, clients, products] = await Promise.all([
     prisma.project.findMany({

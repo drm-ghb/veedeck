@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { uniqueSlug } from "@/lib/slug";
+import { getWorkspaceUserId } from "@/lib/workspace";
 
 export async function GET(
   _req: NextRequest,
@@ -11,10 +12,11 @@ export async function GET(
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  const userId = getWorkspaceUserId(session);
 
   const { id } = await params;
   const project = await prisma.project.findFirst({
-    where: { id, userId: session.user.id },
+    where: { id, userId },
     include: {
       renders: {
         include: { _count: { select: { comments: true } } },
@@ -38,10 +40,11 @@ export async function PATCH(
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  const userId = getWorkspaceUserId(session);
 
   const { id } = await params;
   const existing = await prisma.project.findFirst({
-    where: { id, userId: session.user.id },
+    where: { id, userId },
   });
   if (!existing) {
     return NextResponse.json({ error: "Brak dostępu" }, { status: 403 });
@@ -107,10 +110,11 @@ export async function DELETE(
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  const userId = getWorkspaceUserId(session);
 
   const { id } = await params;
   await prisma.project.deleteMany({
-    where: { id, userId: session.user.id },
+    where: { id, userId },
   });
 
   return NextResponse.json({ success: true });

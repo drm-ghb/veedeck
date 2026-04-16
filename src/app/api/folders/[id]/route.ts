@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getWorkspaceUserId } from "@/lib/workspace";
 
 export async function DELETE(
   _req: NextRequest,
@@ -8,6 +9,7 @@ export async function DELETE(
 ) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const userId = getWorkspaceUserId(session);
 
   const { id } = await params;
 
@@ -16,7 +18,7 @@ export async function DELETE(
     include: { room: { include: { project: { select: { userId: true } } } } },
   });
 
-  if (!folder || folder.room.project.userId !== session.user.id) {
+  if (!folder || folder.room.project.userId !== userId) {
     return NextResponse.json({ error: "Brak dostępu" }, { status: 403 });
   }
 
@@ -30,6 +32,7 @@ export async function PATCH(
 ) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const userId = getWorkspaceUserId(session);
 
   const { id } = await params;
   const body = await req.json();
@@ -39,7 +42,7 @@ export async function PATCH(
     include: { room: { include: { project: { select: { userId: true } } } } },
   });
 
-  if (!folder || folder.room.project.userId !== session.user.id) {
+  if (!folder || folder.room.project.userId !== userId) {
     return NextResponse.json({ error: "Brak dostępu" }, { status: 403 });
   }
 

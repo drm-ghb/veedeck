@@ -39,6 +39,9 @@ model User {
   globalHiddenModules        String[]       @default([])
   listsCategoryOrder         String[]       @default([])
   navMode                    String         @default("dashboard")
+  ownerId                    String?
+  owner                      User?          @relation("TeamMembers", fields: [ownerId], references: [id])
+  teamMembers                User[]         @relation("TeamMembers")
   accounts                   Account[]
   calendarEvents             CalendarEvent[]
   notifications              Notification[]
@@ -47,6 +50,18 @@ model User {
   projects                   Project[]
   sessions                   Session[]
   shoppingLists              ShoppingList[]
+  sentInvitations            Invitation[]   @relation("InvitationDesigner")
+}
+
+model Invitation {
+  id         String   @id @default(cuid())
+  email      String
+  token      String   @unique @default(cuid())
+  designerId String
+  designer   User     @relation("InvitationDesigner", fields: [designerId], references: [id], onDelete: Cascade)
+  status     String   @default("PENDING")
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
 }
 
 model Note {

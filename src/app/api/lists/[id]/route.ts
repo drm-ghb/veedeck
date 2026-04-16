@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { uniqueSlug } from "@/lib/slug";
+import { getWorkspaceUserId } from "@/lib/workspace";
 
 async function getOwnedList(id: string, userId: string) {
   return prisma.shoppingList.findFirst({ where: { id, userId } });
@@ -13,9 +14,10 @@ export async function PATCH(
 ) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const userId = getWorkspaceUserId(session);
 
   const { id } = await params;
-  const list = await getOwnedList(id, session.user.id);
+  const list = await getOwnedList(id, userId);
   if (!list) return NextResponse.json({ error: "Nie znaleziono" }, { status: 404 });
 
   const body = await req.json();
@@ -41,9 +43,10 @@ export async function DELETE(
 ) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const userId = getWorkspaceUserId(session);
 
   const { id } = await params;
-  const list = await getOwnedList(id, session.user.id);
+  const list = await getOwnedList(id, userId);
   if (!list) return NextResponse.json({ error: "Nie znaleziono" }, { status: 404 });
 
   await prisma.shoppingList.delete({ where: { id } });

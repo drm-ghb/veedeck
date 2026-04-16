@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getWorkspaceUserId } from "@/lib/workspace";
 
 export async function DELETE(
   _req: NextRequest,
@@ -8,10 +9,11 @@ export async function DELETE(
 ) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const userId = getWorkspaceUserId(session);
 
   const { id } = await params;
 
-  const event = await prisma.calendarEvent.findFirst({ where: { id, userId: session.user.id } });
+  const event = await prisma.calendarEvent.findFirst({ where: { id, userId } });
   if (!event) return NextResponse.json({ error: "Nie znaleziono" }, { status: 404 });
 
   await prisma.calendarEvent.delete({ where: { id } });
@@ -24,9 +26,10 @@ export async function PATCH(
 ) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const userId = getWorkspaceUserId(session);
 
   const { id } = await params;
-  const event = await prisma.calendarEvent.findFirst({ where: { id, userId: session.user.id } });
+  const event = await prisma.calendarEvent.findFirst({ where: { id, userId } });
   if (!event) return NextResponse.json({ error: "Nie znaleziono" }, { status: 404 });
 
   const body = await req.json();

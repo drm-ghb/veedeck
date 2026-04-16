@@ -7,7 +7,7 @@ import TaskItem from "@tiptap/extension-task-item";
 import Underline from "@tiptap/extension-underline";
 import Placeholder from "@tiptap/extension-placeholder";
 import Image from "@tiptap/extension-image";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState, lazy, Suspense } from "react";
 import { toast } from "sonner";
 import { useUploadThing } from "@/lib/uploadthing-client";
 import {
@@ -20,7 +20,12 @@ import {
   ListChecks,
   Paperclip,
   Loader2,
+  PenLine,
 } from "lucide-react";
+
+const DrawingCanvas = lazy(() =>
+  import("./DrawingCanvas").then((m) => ({ default: m.DrawingCanvas }))
+);
 
 const IMAGE_EXTENSIONS = /\.(jpg|jpeg|png|svg|heif|heic)$/i;
 const IMAGE_MIME_TYPES = ["image/jpeg", "image/png", "image/svg+xml", "image/heif", "image/heic"];
@@ -85,6 +90,7 @@ export function NoteEditor({
 }: NoteEditorProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pendingFileRef = useRef<{ isImage: boolean; name: string } | null>(null);
+  const [drawingOpen, setDrawingOpen] = useState(false);
 
   const { startUpload, isUploading } = useUploadThing("noteAttachmentUploader", {
     onClientUploadComplete: (res) => {
@@ -136,6 +142,14 @@ export function NoteEditor({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contentKey]);
+
+  async function handleDrawingSave(blob: Blob, filename: string) {
+    setDrawingOpen(false);
+    if (!noteId) return;
+    const file = new File([blob], filename, { type: "image/png" });
+    pendingFileRef.current = { isImage: true, name: filename };
+    startUpload([file]);
+  }
 
   function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -212,6 +226,17 @@ export function NoteEditor({
 
         <div className="w-px h-4 bg-border mx-1" />
 
+        {/* Drawing */}
+        <button
+          type="button"
+          title={noteId ? "Dodaj rysunek (rysik / mysz)" : "Zapisz notatkę, aby dodać rysunek"}
+          disabled={!canAttach}
+          onClick={() => setDrawingOpen(true)}
+          className="p-1.5 rounded transition-colors text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          <PenLine size={15} />
+        </button>
+
         {/* File attachment */}
         <button
           type="button"
@@ -236,6 +261,16 @@ export function NoteEditor({
         editor={editor}
         className="note-editor flex-1 overflow-y-auto px-6 py-4"
       />
+
+      {/* Drawing canvas modal */}
+      {drawingOpen && (
+        <Suspense fallback={null}>
+          <DrawingCanvas
+            onSave={handleDrawingSave}
+            onClose={() => setDrawingOpen(false)}
+          />
+        </Suspense>
+      )}
     </div>
   );
 }

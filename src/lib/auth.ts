@@ -68,21 +68,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user) {
         token.id = user.id;
         token.isAdmin = (user as any).isAdmin;
-        // Read needsNameSetup from DB on sign-in
         const dbUser = await prisma.user.findUnique({
           where: { id: user.id as string },
-          select: { needsNameSetup: true },
+          select: { needsNameSetup: true, ownerId: true },
         });
         token.needsNameSetup = dbUser?.needsNameSetup ?? false;
+        token.ownerId = dbUser?.ownerId ?? null;
       }
       if (trigger === "update") {
-        // Refresh needsNameSetup from DB after session update
         const dbUser = await prisma.user.findUnique({
           where: { id: token.id as string },
-          select: { needsNameSetup: true, name: true },
+          select: { needsNameSetup: true, name: true, ownerId: true },
         });
         token.needsNameSetup = dbUser?.needsNameSetup ?? false;
         token.name = dbUser?.name ?? token.name;
+        token.ownerId = dbUser?.ownerId ?? null;
       }
       return token;
     },
@@ -91,6 +91,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.id = token.id as string;
         (session.user as any).isAdmin = token.isAdmin as boolean;
         (session.user as any).needsNameSetup = token.needsNameSetup as boolean;
+        (session.user as any).ownerId = token.ownerId ?? null;
       }
       return session;
     },

@@ -1,16 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getWorkspaceUserId } from "@/lib/workspace";
 
 export async function GET(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const userId = getWorkspaceUserId(session);
 
   const q = req.nextUrl.searchParams.get("q")?.trim() ?? "";
 
   const products = await prisma.product.findMany({
     where: {
-      userId: session.user.id,
+      userId,
       ...(q
         ? {
             OR: [
@@ -29,6 +31,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const userId = getWorkspaceUserId(session);
 
   const body = await req.json();
   const { name, url, imageUrl, price, manufacturer, color, dimensions, description, deliveryTime, quantity, category } = body;
@@ -48,7 +51,7 @@ export async function POST(req: NextRequest) {
       deliveryTime: deliveryTime || null,
       quantity: typeof quantity === "number" && quantity >= 1 ? quantity : 1,
       category: category || null,
-      userId: session.user.id,
+      userId,
     },
   });
 

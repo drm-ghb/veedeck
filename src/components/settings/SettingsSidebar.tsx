@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { Settings, ShoppingCart, ChevronLeft } from "lucide-react";
+import { Settings, ShoppingCart, ChevronLeft, Users } from "lucide-react";
 import { useT } from "@/lib/i18n";
 
 export default function SettingsSidebar() {
@@ -34,6 +34,12 @@ export default function SettingsSidebar() {
       label: t.settings.lists,
       icon: <ShoppingCart size={16} />,
       module: { href: "/listy", label: t.settings.lists },
+    },
+    {
+      href: "/settings/uzytkownicy",
+      label: "Użytkownicy",
+      icon: <Users size={16} />,
+      module: null,
     },
   ];
 
