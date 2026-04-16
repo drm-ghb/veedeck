@@ -1,9 +1,9 @@
 "use client";
 
-import { useRef, useCallback } from "react";
+import { useRef, useCallback, useEffect } from "react";
 import { Tldraw, Editor } from "@tldraw/tldraw";
 import "@tldraw/tldraw/tldraw.css";
-import { X, Download, Check } from "lucide-react";
+import { X, Check } from "lucide-react";
 
 interface DrawingCanvasProps {
   onSave: (blob: Blob, filename: string) => void;
@@ -12,6 +12,25 @@ interface DrawingCanvasProps {
 
 export function DrawingCanvas({ onSave, onClose }: DrawingCanvasProps) {
   const editorRef = useRef<Editor | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Blokuj scroll/pull-to-refresh przeglądarki (iPad Safari)
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const prevent = (e: TouchEvent) => e.preventDefault();
+    el.addEventListener("touchmove", prevent, { passive: false });
+
+    // Zablokuj scroll na body gdy szkicownik otwarty
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      el.removeEventListener("touchmove", prevent);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, []);
 
   const handleSave = useCallback(async () => {
     const editor = editorRef.current;
@@ -34,7 +53,11 @@ export function DrawingCanvas({ onSave, onClose }: DrawingCanvasProps) {
   }, [onSave, onClose]);
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-background">
+    <div
+      ref={containerRef}
+      className="fixed inset-0 z-50 flex flex-col bg-background"
+      style={{ touchAction: "none", overscrollBehavior: "none" }}
+    >
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-border shrink-0 bg-card">
         <span className="text-sm font-medium text-foreground">Szkicownik</span>
@@ -57,7 +80,7 @@ export function DrawingCanvas({ onSave, onClose }: DrawingCanvasProps) {
       </div>
 
       {/* Canvas */}
-      <div className="flex-1 min-h-0">
+      <div className="flex-1 min-h-0" style={{ touchAction: "none" }}>
         <Tldraw
           onMount={(editor) => {
             editorRef.current = editor;
