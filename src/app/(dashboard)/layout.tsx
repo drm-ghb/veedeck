@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ShieldCheck } from "lucide-react";
+import { LogoBrand } from "@/components/dashboard/LogoBrand";
 import { SignOutButton } from "@/components/dashboard/SignOutButton";
 import NotificationBell from "@/components/dashboard/NotificationBell";
 import { HomeLinkIcon } from "@/components/dashboard/HomeLinkIcon";
@@ -37,9 +38,7 @@ export default async function DashboardLayout({
           {/* Left: home + logo */}
           <div className="flex items-center gap-2 shrink-0">
             <HomeLinkIcon hidden={navMode === "sidebar"} />
-            <Link href="/dashboard" className="flex items-center gap-2 shrink-0">
-              <span className="text-[1.5625rem] font-bold" style={{ fontFamily: "var(--font-story-script)" }}>veedeck</span>
-            </Link>
+            <LogoBrand navMode={navMode} />
             {dbUser?.isAdmin && (
               <Link href="/admin" className="hidden md:flex items-center gap-1.5 text-sm text-primary hover:text-primary/80 transition-colors ml-2">
                 <ShieldCheck size={16} />

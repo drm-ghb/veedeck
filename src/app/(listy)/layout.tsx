@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import GlobalSearch from "@/components/dashboard/GlobalSearch";
+import { LogoBrand } from "@/components/dashboard/LogoBrand";
 import { SignOutButton } from "@/components/dashboard/SignOutButton";
 import NotificationBell from "@/components/dashboard/NotificationBell";
 import { HomeLinkIcon } from "@/components/dashboard/HomeLinkIcon";
@@ -36,9 +36,7 @@ export default async function ListyLayout({
           {/* Left: home + logo */}
           <div className="flex items-center gap-2 shrink-0">
             <HomeLinkIcon hidden={navMode === "sidebar"} />
-            <Link href="/dashboard" className="flex items-center gap-2 shrink-0">
-              <span className="text-[1.5625rem] font-bold tracking-tight" style={{ fontFamily: "var(--font-story-script)" }}>veedeck</span>
-            </Link>
+            <LogoBrand navMode={navMode} />
           </div>
 
           {/* Search - centered */}
