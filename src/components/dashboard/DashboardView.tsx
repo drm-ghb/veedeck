@@ -325,11 +325,14 @@ export default function DashboardView({
         </div>
       )}
 
-      {/* Main grid — flat 5 items; order-* = mobile, lg:col/row = desktop */}
+      {/* Main grid — two independent flex columns */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-        {/* Stats: order-1 mobile | col1-2 row1 desktop */}
-        <div className="order-1 lg:col-span-2 lg:row-start-1">
+        {/* Left column: Stats → Projekty → Listy */}
+        <div className="contents lg:col-span-2 lg:flex lg:flex-col lg:gap-6">
+
+        {/* Stats */}
+        <div className="order-1">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <Link
               href="/projekty"
@@ -395,8 +398,8 @@ export default function DashboardView({
           </div>
         </div>{/* end stats */}
 
-        {/* Projekty: order-6 mobile | col1-2 row2 desktop */}
-        <div className="order-6 lg:col-span-2 lg:row-start-2 space-y-3">
+        {/* Projekty */}
+        <div className="order-6 space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-semibold text-foreground">Ostatnie projekty RenderFlow</h2>
               <Link href="/renderflow" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-0.5 transition-colors">
@@ -444,8 +447,8 @@ export default function DashboardView({
             )}
         </div>{/* end Projekty */}
 
-        {/* Listy: order-5 mobile | col1-2 row3 desktop */}
-        <div className="order-5 lg:col-span-2 lg:row-start-3 space-y-3">
+        {/* Listy */}
+        <div className="order-5 space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-semibold text-foreground">Ostatnie listy zakupowe</h2>
               <Link href="/listy" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-0.5 transition-colors">
@@ -481,8 +484,128 @@ export default function DashboardView({
             )}
         </div>{/* end Listy */}
 
-        {/* Do zrobienia: order-4 mobile | col3 row4 desktop */}
-        <div className="order-4 lg:col-start-3 lg:row-start-4 space-y-3">
+        </div>{/* end left column */}
+
+        {/* Right column: Kalendarz → Nieprzeczytane → Do zrobienia */}
+        <div className="contents lg:flex lg:flex-col lg:gap-6">
+
+        {/* Kalendarz dziś */}
+        <div className="order-2 space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-foreground">Kalendarz — dziś</h2>
+            <Link href="/kalendarz" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-0.5 transition-colors">
+              Otwórz <ChevronRight size={13} />
+            </Link>
+          </div>
+          <div className="rounded-xl border border-border bg-card overflow-hidden">
+            {/* Date header */}
+            <div className="px-4 py-3 border-b border-border flex items-center justify-between bg-primary/5">
+              <div>
+                <p className="text-[11px] text-muted-foreground capitalize">
+                  {new Date().toLocaleDateString("pl-PL", { weekday: "long" })}
+                </p>
+                <p className="text-base font-bold leading-tight">
+                  {new Date().toLocaleDateString("pl-PL", { day: "numeric", month: "long" })}
+                </p>
+              </div>
+              <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center shrink-0">
+                <span className="text-primary-foreground text-sm font-bold">{new Date().getDate()}</span>
+              </div>
+            </div>
+            {/* Events list */}
+            {todayEvents.length === 0 ? (
+              <div className="px-4 py-5 flex flex-col items-center gap-1.5 text-center">
+                <CalendarDays size={24} className="text-muted-foreground/30" />
+                <p className="text-sm text-muted-foreground">Brak wydarzeń na dziś</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-border">
+                {todayEvents.map((ev) => {
+                  const c = EVENT_TYPE_COLORS[ev.type] ?? EVENT_TYPE_COLORS["WYDARZENIE"];
+                  const timeStr = new Date(ev.startAt).toLocaleTimeString("pl-PL", { hour: "2-digit", minute: "2-digit" });
+                  return (
+                    <div key={ev.id} className="flex items-center gap-3 px-4 py-2.5">
+                      <div className={`w-1 h-8 rounded-full shrink-0 ${c.bar}`} />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium truncate">{ev.title}</p>
+                        <p className="text-xs text-muted-foreground">{timeStr}</p>
+                      </div>
+                      <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-md ${c.bg} ${c.text} shrink-0`}>
+                        {ev.type === "WYDARZENIE" ? "Wydarzenie" : ev.type === "ZADANIE" ? "Zadanie" : "Przyp."}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>{/* end Kalendarz */}
+
+        {/* Nieprzeczytane */}
+        <div className="order-3 space-y-3">
+            <div className="flex items-center gap-1.5">
+              <h2 className="text-sm font-semibold text-foreground">Nieprzeczytane wiadomości</h2>
+              <InfoTooltip items={["Nieprzeczytane wiadomości z dyskusji w projektach RenderFlow", "Nieprzeczytane komentarze na listach zakupowych"]} />
+            </div>
+
+            {(() => {
+              const visibleD = renderDiscussions.filter((c) => !viewedMessageIds.has(c.id));
+              const visibleL = listMessages.filter((c) => !viewedMessageIds.has(c.id));
+              type MI = { type: "discussion"; data: RenderDiscussion } | { type: "list"; data: ListMessage };
+              const msgs: MI[] = [
+                ...visibleD.map((d) => ({ type: "discussion" as const, data: d })),
+                ...visibleL.map((m) => ({ type: "list" as const, data: m })),
+              ].sort((a, b) => new Date(b.data.createdAt).getTime() - new Date(a.data.createdAt).getTime());
+              if (msgs.length === 0) return (
+                <div className="rounded-xl border border-border bg-card p-6 text-center">
+                  <CheckCircle2 size={28} className="mx-auto mb-2 text-green-500" />
+                  <p className="text-sm font-medium text-foreground">Jesteś na bieżąco!</p>
+                  <p className="text-xs text-muted-foreground mt-1">Brak nieprzeczytanych wiadomości</p>
+                </div>
+              );
+              return (
+                <div className="rounded-xl border border-border bg-card overflow-hidden">
+                  <div className="divide-y divide-border max-h-[260px] overflow-y-auto">
+                    {msgs.map((item) => {
+                      if (item.type === "discussion") {
+                        const d = item.data;
+                        return (
+                          <div key={d.id} className="flex items-center hover:bg-muted/50 transition-colors">
+                            <Link href={`/projects/${d.projectId}/renders/${d.renderId}`} onClick={() => markDiscussionViewed(d.id)} className="flex items-start gap-3 px-4 py-3 flex-1 min-w-0">
+                              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5"><MessageSquare size={15} className="text-primary" /></div>
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm font-medium truncate">{d.content}</p>
+                                <p className="text-xs text-muted-foreground truncate">{d.author} · {d.renderName} · {d.projectTitle}</p>
+                              </div>
+                              <span className="shrink-0 text-xs text-muted-foreground mr-2">{timeAgo(d.createdAt)}</span>
+                            </Link>
+                            <button onClick={() => markDiscussionViewed(d.id)} title="Oznacz jako przeczytane" className="shrink-0 mr-3 p-1 rounded-md text-muted-foreground/40 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-950/30 transition-colors"><CheckCircle2 size={16} /></button>
+                          </div>
+                        );
+                      }
+                      const m = item.data;
+                      return (
+                        <div key={m.id} className="flex items-center hover:bg-muted/50 transition-colors">
+                          <Link href={`/listy/${m.listSlug ?? m.listId}?product=${m.productId}`} onClick={() => markListMessageViewed(m.id)} className="flex items-start gap-3 px-4 py-3 flex-1 min-w-0">
+                            <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center shrink-0 mt-0.5"><ShoppingCart size={15} className="text-emerald-600 dark:text-emerald-400" /></div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-medium truncate">{m.content}</p>
+                              <p className="text-xs text-muted-foreground truncate">{m.author} · {m.productName} · {m.listName}</p>
+                            </div>
+                            <span className="shrink-0 text-xs text-muted-foreground mr-2">{timeAgo(m.createdAt)}</span>
+                          </Link>
+                          <button onClick={() => markListMessageViewed(m.id)} title="Oznacz jako przeczytane" className="shrink-0 mr-3 p-1 rounded-md text-muted-foreground/40 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-950/30 transition-colors"><CheckCircle2 size={16} /></button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
+        </div>{/* end Nieprzeczytane */}
+
+        {/* Do zrobienia */}
+        <div className="order-4 space-y-3">
             <div className="flex items-center gap-1.5">
               <h2 className="text-sm font-semibold text-foreground">Do zrobienia</h2>
               <InfoTooltip items={[
@@ -628,119 +751,7 @@ export default function DashboardView({
           )}
         </div>{/* end Do zrobienia */}
 
-        {/* Kalendarz dziś: order-2 mobile | col3 row1 desktop */}
-        <div className="order-2 lg:col-start-3 lg:row-start-1 space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-foreground">Kalendarz — dziś</h2>
-            <Link href="/kalendarz" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-0.5 transition-colors">
-              Otwórz <ChevronRight size={13} />
-            </Link>
-          </div>
-          <div className="rounded-xl border border-border bg-card overflow-hidden">
-            {/* Date header */}
-            <div className="px-4 py-3 border-b border-border flex items-center justify-between bg-primary/5">
-              <div>
-                <p className="text-[11px] text-muted-foreground capitalize">
-                  {new Date().toLocaleDateString("pl-PL", { weekday: "long" })}
-                </p>
-                <p className="text-base font-bold leading-tight">
-                  {new Date().toLocaleDateString("pl-PL", { day: "numeric", month: "long" })}
-                </p>
-              </div>
-              <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center shrink-0">
-                <span className="text-primary-foreground text-sm font-bold">{new Date().getDate()}</span>
-              </div>
-            </div>
-            {/* Events list */}
-            {todayEvents.length === 0 ? (
-              <div className="px-4 py-5 flex flex-col items-center gap-1.5 text-center">
-                <CalendarDays size={24} className="text-muted-foreground/30" />
-                <p className="text-sm text-muted-foreground">Brak wydarzeń na dziś</p>
-              </div>
-            ) : (
-              <div className="divide-y divide-border">
-                {todayEvents.map((ev) => {
-                  const c = EVENT_TYPE_COLORS[ev.type] ?? EVENT_TYPE_COLORS["WYDARZENIE"];
-                  const timeStr = new Date(ev.startAt).toLocaleTimeString("pl-PL", { hour: "2-digit", minute: "2-digit" });
-                  return (
-                    <div key={ev.id} className="flex items-center gap-3 px-4 py-2.5">
-                      <div className={`w-1 h-8 rounded-full shrink-0 ${c.bar}`} />
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium truncate">{ev.title}</p>
-                        <p className="text-xs text-muted-foreground">{timeStr}</p>
-                      </div>
-                      <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-md ${c.bg} ${c.text} shrink-0`}>
-                        {ev.type === "WYDARZENIE" ? "Wydarzenie" : ev.type === "ZADANIE" ? "Zadanie" : "Przyp."}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </div>{/* end Kalendarz */}
-
-        {/* Nieprzeczytane: order-3 mobile | col3 rows2-3 desktop */}
-        <div className="order-3 lg:col-start-3 lg:row-start-2 lg:row-span-2 space-y-3">
-            <div className="flex items-center gap-1.5">
-              <h2 className="text-sm font-semibold text-foreground">Nieprzeczytane wiadomości</h2>
-              <InfoTooltip items={["Nieprzeczytane wiadomości z dyskusji w projektach RenderFlow", "Nieprzeczytane komentarze na listach zakupowych"]} />
-            </div>
-            {(() => {
-              const visibleD = renderDiscussions.filter((c) => !viewedMessageIds.has(c.id));
-              const visibleL = listMessages.filter((c) => !viewedMessageIds.has(c.id));
-              type MI = { type: "discussion"; data: RenderDiscussion } | { type: "list"; data: ListMessage };
-              const msgs: MI[] = [
-                ...visibleD.map((d) => ({ type: "discussion" as const, data: d })),
-                ...visibleL.map((m) => ({ type: "list" as const, data: m })),
-              ].sort((a, b) => new Date(b.data.createdAt).getTime() - new Date(a.data.createdAt).getTime());
-              if (msgs.length === 0) return (
-                <div className="rounded-xl border border-border bg-card p-6 text-center">
-                  <CheckCircle2 size={28} className="mx-auto mb-2 text-green-500" />
-                  <p className="text-sm font-medium text-foreground">Jesteś na bieżąco!</p>
-                  <p className="text-xs text-muted-foreground mt-1">Brak nieprzeczytanych wiadomości</p>
-                </div>
-              );
-              return (
-                <div className="rounded-xl border border-border bg-card overflow-hidden">
-                  <div className="divide-y divide-border max-h-[260px] overflow-y-auto">
-                    {msgs.map((item) => {
-                      if (item.type === "discussion") {
-                        const d = item.data;
-                        return (
-                          <div key={d.id} className="flex items-center hover:bg-muted/50 transition-colors">
-                            <Link href={`/projects/${d.projectId}/renders/${d.renderId}`} onClick={() => markDiscussionViewed(d.id)} className="flex items-start gap-3 px-4 py-3 flex-1 min-w-0">
-                              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5"><MessageSquare size={15} className="text-primary" /></div>
-                              <div className="min-w-0 flex-1">
-                                <p className="text-sm font-medium truncate">{d.content}</p>
-                                <p className="text-xs text-muted-foreground truncate">{d.author} · {d.renderName} · {d.projectTitle}</p>
-                              </div>
-                              <span className="shrink-0 text-xs text-muted-foreground mr-2">{timeAgo(d.createdAt)}</span>
-                            </Link>
-                            <button onClick={() => markDiscussionViewed(d.id)} title="Oznacz jako przeczytane" className="shrink-0 mr-3 p-1 rounded-md text-muted-foreground/40 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-950/30 transition-colors"><CheckCircle2 size={16} /></button>
-                          </div>
-                        );
-                      }
-                      const m = item.data;
-                      return (
-                        <div key={m.id} className="flex items-center hover:bg-muted/50 transition-colors">
-                          <Link href={`/listy/${m.listSlug ?? m.listId}?product=${m.productId}`} onClick={() => markListMessageViewed(m.id)} className="flex items-start gap-3 px-4 py-3 flex-1 min-w-0">
-                            <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center shrink-0 mt-0.5"><ShoppingCart size={15} className="text-emerald-600 dark:text-emerald-400" /></div>
-                            <div className="min-w-0 flex-1">
-                              <p className="text-sm font-medium truncate">{m.content}</p>
-                              <p className="text-xs text-muted-foreground truncate">{m.author} · {m.productName} · {m.listName}</p>
-                            </div>
-                            <span className="shrink-0 text-xs text-muted-foreground mr-2">{timeAgo(m.createdAt)}</span>
-                          </Link>
-                          <button onClick={() => markListMessageViewed(m.id)} title="Oznacz jako przeczytane" className="shrink-0 mr-3 p-1 rounded-md text-muted-foreground/40 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-950/30 transition-colors"><CheckCircle2 size={16} /></button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })()}
-        </div>{/* end Nieprzeczytane */}
+        </div>{/* end right column */}
 
       </div>{/* end main grid */}
     </div>
