@@ -466,6 +466,7 @@ export default function NotatnikView({ initialNotes, initialArchivedNotes }: Pro
 
             {/* Editor */}
             <div className="flex flex-col flex-1 overflow-y-auto px-6 py-5 gap-2">
+              <p className="text-xs text-muted-foreground/50 text-center">{formatDate(selectedNote.createdAt)}</p>
               <input
                 type="text"
                 value={editTitle}
@@ -473,7 +474,6 @@ export default function NotatnikView({ initialNotes, initialArchivedNotes }: Pro
                 placeholder={t.notatnik.noteTitlePlaceholder}
                 className="text-xl font-semibold bg-transparent border-none outline-none placeholder:text-muted-foreground/40 w-full"
               />
-              <p className="text-xs text-muted-foreground/60 mb-2">{formatDate(selectedNote.updatedAt)}</p>
               <textarea
                 ref={textareaRef}
                 value={editContent}
