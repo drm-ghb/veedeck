@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X, Clock, MapPin, Users, Bell, FileText, Trash2, Pencil } from "lucide-react";
+import { X, Clock, MapPin, Users, FileText, Trash2, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import type { CalendarEvent, EventType } from "./CalendarView";
 
@@ -46,12 +46,6 @@ export default function EventDetailDialog({
       setDeleting(false);
     }
   }
-
-  const reminderLabels: Record<string, string> = {
-    "30min": "30 minut przed",
-    "1h": "1 godzinę przed",
-    "24h": "24 godziny przed",
-  };
 
   return (
     <div
@@ -126,15 +120,6 @@ export default function EventDetailDialog({
             </div>
           )}
 
-          {/* Reminder */}
-          {event.reminder && event.reminderOffset && (
-            <div className="flex items-center gap-2.5 text-sm">
-              <Bell size={15} className="text-muted-foreground flex-shrink-0" />
-              <p className="text-muted-foreground">
-                Przypomnienie {reminderLabels[event.reminderOffset] ?? event.reminderOffset}
-              </p>
-            </div>
-          )}
         </div>
 
         {/* Footer */}

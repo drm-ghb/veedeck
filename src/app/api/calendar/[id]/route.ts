@@ -30,7 +30,7 @@ export async function PATCH(
   if (!event) return NextResponse.json({ error: "Nie znaleziono" }, { status: 404 });
 
   const body = await req.json();
-  const { title, type, startAt, endAt, location, description, reminder, reminderOffset, guests } = body;
+  const { title, type, startAt, endAt, location, description, guests } = body;
 
   const updated = await prisma.calendarEvent.update({
     where: { id },
@@ -41,8 +41,6 @@ export async function PATCH(
       endAt: endAt ? new Date(endAt) : null,
       location: location?.trim() || null,
       description: description?.trim() || null,
-      reminder: reminder ?? event.reminder,
-      reminderOffset: (reminder ?? event.reminder) ? reminderOffset : null,
       guests: guests !== undefined
         ? {
             deleteMany: {},

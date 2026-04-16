@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json();
-  const { title, type, startAt, endAt, location, description, reminder, reminderOffset, guests } = body;
+  const { title, type, startAt, endAt, location, description, guests } = body;
 
   if (!title?.trim()) return NextResponse.json({ error: "Tytuł jest wymagany" }, { status: 400 });
   if (!type) return NextResponse.json({ error: "Typ jest wymagany" }, { status: 400 });
@@ -44,8 +44,6 @@ export async function POST(req: NextRequest) {
       endAt: endAt ? new Date(endAt) : null,
       location: location?.trim() || null,
       description: description?.trim() || null,
-      reminder: !!reminder,
-      reminderOffset: reminder ? reminderOffset : null,
       userId: session.user.id,
       guests: {
         create: (guests ?? [])

@@ -42,7 +42,6 @@ model User {
   accounts                   Account[]
   calendarEvents             CalendarEvent[]
   notifications              Notification[]
-  pushSubscriptions          PushSubscription[]
   products                   Product[]
   projects                   Project[]
   sessions                   Session[]
@@ -50,31 +49,18 @@ model User {
 }
 
 model CalendarEvent {
-  id              String            @id @default(cuid())
-  title           String
-  type            CalendarEventType
-  startAt         DateTime
-  endAt           DateTime?
-  location        String?
-  description     String?
-  reminder        Boolean           @default(false)
-  reminderOffset  String?
-  reminderSentAt  DateTime?
-  userId          String
-  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  guests          CalendarGuest[]
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-}
-
-model PushSubscription {
-  id        String   @id @default(cuid())
-  userId    String
-  endpoint  String   @unique
-  p256dh    String
-  auth      String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
+  id          String            @id @default(cuid())
+  title       String
+  type        CalendarEventType
+  startAt     DateTime
+  endAt       DateTime?
+  location    String?
+  description String?
+  userId      String
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  guests      CalendarGuest[]
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
 }
 
 model CalendarGuest {

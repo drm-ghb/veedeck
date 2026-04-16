@@ -47,8 +47,6 @@ export default function AddEventDialog({
   const [endAt, setEndAt] = useState("");
   const [location, setLocation] = useState("");
   const [description, setDescription] = useState("");
-  const [reminder, setReminder] = useState(false);
-  const [reminderOffset, setReminderOffset] = useState<"24h" | "1h" | "30min">("1h");
   const [guests, setGuests] = useState<Guest[]>([]);
   const [guestQuery, setGuestQuery] = useState("");
   const [suggestions, setSuggestions] = useState<ClientSuggestion[]>([]);
@@ -67,8 +65,6 @@ export default function AddEventDialog({
       setEndAt(editEvent.endAt ? toLocalDatetimeValue(editEvent.endAt) : "");
       setLocation(editEvent.location ?? "");
       setDescription(editEvent.description ?? "");
-      setReminder(editEvent.reminder);
-      setReminderOffset((editEvent.reminderOffset as any) ?? "1h");
       setGuests(editEvent.guests.map((g) => ({ name: g.name ?? "", email: g.email ?? "" })));
     } else {
       setTitle("");
@@ -77,8 +73,6 @@ export default function AddEventDialog({
       setEndAt("");
       setLocation("");
       setDescription("");
-      setReminder(false);
-      setReminderOffset("1h");
       setGuests([]);
     }
     setGuestQuery("");
@@ -138,8 +132,6 @@ export default function AddEventDialog({
         endAt: endAt ? new Date(endAt).toISOString() : null,
         location: type === "WYDARZENIE" ? location : null,
         description: type !== "WYDARZENIE" ? description : null,
-        reminder: type !== "PRZYPOMNIENIE" ? reminder : false,
-        reminderOffset: type !== "PRZYPOMNIENIE" && reminder ? reminderOffset : null,
         guests: type === "WYDARZENIE" ? guests : [],
       };
 
@@ -360,40 +352,6 @@ export default function AddEventDialog({
             </div>
           )}
 
-          {/* Reminder */}
-          {type !== "PRZYPOMNIENIE" && (
-            <div className="border border-border rounded-lg p-3">
-              <label className="flex items-center gap-2.5 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={reminder}
-                  onChange={(e) => setReminder(e.target.checked)}
-                  className="w-4 h-4 rounded accent-primary"
-                />
-                <span className="text-sm font-medium">Ustaw przypomnienie</span>
-              </label>
-              {reminder && (
-                <div className="mt-3 flex gap-1.5">
-                  {(["30min", "1h", "24h"] as const).map((opt) => {
-                    const labels = { "30min": "30 min przed", "1h": "1 h przed", "24h": "24 h przed" };
-                    return (
-                      <button
-                        key={opt}
-                        onClick={() => setReminderOffset(opt)}
-                        className={`flex-1 py-1 text-xs rounded-lg border transition-all ${
-                          reminderOffset === opt
-                            ? "bg-primary/10 text-primary border-primary/30 font-medium"
-                            : "border-border text-muted-foreground hover:border-primary/30 hover:text-foreground"
-                        }`}
-                      >
-                        {labels[opt]}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          )}
         </div>
 
         {/* Footer */}
