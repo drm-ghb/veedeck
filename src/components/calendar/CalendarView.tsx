@@ -79,11 +79,13 @@ function TimeGrid({
   onEventClick: (ev: CalendarEvent) => void;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const stickyHeaderRef = useRef<HTMLDivElement>(null);
 
-  // Scroll to 8:00 on mount
+  // Scroll to 8:00 on mount, offset by sticky header height so label isn't hidden
   useEffect(() => {
     if (scrollRef.current) {
-      scrollRef.current.scrollTop = 8 * HOUR_HEIGHT;
+      const headerHeight = stickyHeaderRef.current?.offsetHeight ?? 0;
+      scrollRef.current.scrollTop = 8 * HOUR_HEIGHT - headerHeight;
     }
   }, []);
 
@@ -94,7 +96,7 @@ function TimeGrid({
       {/* Scrollable container — header inside as sticky so widths always match */}
       <div ref={scrollRef} className="flex-1 overflow-y-scroll min-h-0">
         {/* Sticky header row */}
-        <div className="flex border-b border-border sticky top-0 z-20 bg-background">
+        <div ref={stickyHeaderRef} className="flex border-b border-border sticky top-0 z-20 bg-background">
           <div style={{ width: TIME_COL_W }} className="flex-shrink-0" />
           {columns.map((col, i) => (
             <div
