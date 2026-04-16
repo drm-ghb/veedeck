@@ -2,12 +2,13 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import DashboardView from "@/components/dashboard/DashboardView";
+import { getWorkspaceUserId } from "@/lib/workspace";
 
 export default async function DashboardPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
-  const userId = session.user.id;
+  const userId = getWorkspaceUserId(session);
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -15,7 +16,7 @@ export default async function DashboardPage() {
   });
 
   const hiddenModules = user?.globalHiddenModules ?? [];
-  const navMode = user?.navMode ?? "dashboard";
+  const navMode = user?.navMode ?? "sidebar";
   const displayName = user?.name || user?.email || null;
 
   // Fetch all active projects (for stats + recent + requests)

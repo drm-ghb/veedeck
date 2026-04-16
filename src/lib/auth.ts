@@ -74,6 +74,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         });
         token.needsNameSetup = dbUser?.needsNameSetup ?? false;
         token.ownerId = dbUser?.ownerId ?? null;
+      } else if (token.ownerId === undefined) {
+        // Stary token bez ownerId — jednorazowe doładowanie z bazy
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          select: { ownerId: true },
+        });
+        token.ownerId = dbUser?.ownerId ?? null;
       }
       if (trigger === "update") {
         const dbUser = await prisma.user.findUnique({
