@@ -637,6 +637,14 @@ export default function RenderViewer({
     setSliderPos(Math.max(2, Math.min(98, pos)));
   }
 
+  function handleSliderTouchMove(e: React.TouchEvent<HTMLDivElement>) {
+    if (!isDragging) return;
+    const touch = e.touches[0];
+    const rect = e.currentTarget.getBoundingClientRect();
+    const pos = ((touch.clientX - rect.left) / rect.width) * 100;
+    setSliderPos(Math.max(2, Math.min(98, pos)));
+  }
+
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") setCompareVersion(null);
@@ -1972,6 +1980,8 @@ export default function RenderViewer({
             onMouseMove={handleSliderMouseMove}
             onMouseUp={() => setIsDragging(false)}
             onMouseLeave={() => setIsDragging(false)}
+            onTouchMove={handleSliderTouchMove}
+            onTouchEnd={() => setIsDragging(false)}
           >
             {/* Left — old version */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -1996,6 +2006,7 @@ export default function RenderViewer({
               className="absolute top-0 bottom-0 w-0.5 bg-white z-10"
               style={{ left: `${sliderPos}%` }}
               onMouseDown={(e) => { e.preventDefault(); setIsDragging(true); }}
+              onTouchStart={(e) => { e.preventDefault(); setIsDragging(true); }}
             >
               <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-9 h-9 bg-white rounded-full flex items-center justify-center shadow-xl cursor-col-resize">
                 <ChevronsLeftRight size={16} className="text-gray-700" />
