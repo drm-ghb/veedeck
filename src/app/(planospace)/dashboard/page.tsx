@@ -79,10 +79,13 @@ export default async function DashboardPage() {
   }),
   ]);
 
+  // Fetch ±1 day UTC to cover all timezones; client filters to local "today"
   const todayStart = new Date();
-  todayStart.setHours(0, 0, 0, 0);
+  todayStart.setUTCHours(0, 0, 0, 0);
+  todayStart.setUTCDate(todayStart.getUTCDate() - 1);
   const todayEnd = new Date();
-  todayEnd.setHours(23, 59, 59, 999);
+  todayEnd.setUTCHours(23, 59, 59, 999);
+  todayEnd.setUTCDate(todayEnd.getUTCDate() + 1);
 
   const [renderCount, listCount, notificationCount, todayEvents, pins, statusRequests, versionRequests, renderDiscussions, listMessages] =
     await Promise.all([

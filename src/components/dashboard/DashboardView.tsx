@@ -187,6 +187,15 @@ export default function DashboardView({
 
   const [viewedMessageIds, setViewedMessageIds] = useState<Set<string>>(new Set());
 
+  // Filter to client's local "today" (server sends ±1 day to cover all timezones)
+  const localToday = new Date();
+  const localTodayEvents = todayEvents.filter((ev) => {
+    const d = new Date(ev.startAt);
+    return d.getFullYear() === localToday.getFullYear() &&
+      d.getMonth() === localToday.getMonth() &&
+      d.getDate() === localToday.getDate();
+  });
+
   function markPinViewed(pinId: string) {
     setViewedPinIds((prev) => new Set([...prev, pinId]));
     fetch(`/api/comments/${pinId}`, {
@@ -513,14 +522,14 @@ export default function DashboardView({
               </div>
             </div>
             {/* Events list */}
-            {todayEvents.length === 0 ? (
+            {localTodayEvents.length === 0 ? (
               <div className="px-4 py-5 flex flex-col items-center gap-1.5 text-center">
                 <CalendarDays size={24} className="text-muted-foreground/30" />
                 <p className="text-sm text-muted-foreground">Brak wydarzeń na dziś</p>
               </div>
             ) : (
               <div className="divide-y divide-border">
-                {todayEvents.map((ev) => {
+                {localTodayEvents.map((ev) => {
                   const c = EVENT_TYPE_COLORS[ev.type] ?? EVENT_TYPE_COLORS["WYDARZENIE"];
                   const timeStr = new Date(ev.startAt).toLocaleTimeString("pl-PL", { hour: "2-digit", minute: "2-digit" });
                   return (
