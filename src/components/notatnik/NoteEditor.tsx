@@ -68,6 +68,7 @@ export function NoteEditor({
       Placeholder.configure({ placeholder }),
     ],
     content,
+    immediatelyRender: false,
     autofocus: autoFocus ? "end" : false,
     onUpdate({ editor }) {
       onChange(editor.getHTML());
