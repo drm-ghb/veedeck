@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Bell, BellOff } from "lucide-react";
+import { Bell, BellOff, BellRing } from "lucide-react";
 import { toast } from "sonner";
 
 export default function PushNotificationButton() {
@@ -39,9 +39,15 @@ export default function PushNotificationButton() {
         setSubscribed(false);
         toast.success("Powiadomienia wyłączone");
       } else {
+        // If already denied — browser won't show a dialog, explain manually
+        if (Notification.permission === "denied") {
+          toast.error("Powiadomienia są zablokowane w przeglądarce. Odblokuj je w ustawieniach witryny (ikona kłódki przy adresie).");
+          return;
+        }
+
         const permission = await Notification.requestPermission();
         if (permission !== "granted") {
-          toast.error("Brak zgody na powiadomienia");
+          toast.error("Nie udzielono zgody na powiadomienia.");
           return;
         }
 
@@ -69,18 +75,28 @@ export default function PushNotificationButton() {
     }
   }
 
+  const blocked = Notification.permission === "denied";
+
   return (
     <button
       onClick={toggle}
       disabled={loading}
-      title={subscribed ? "Wyłącz powiadomienia push" : "Włącz powiadomienia push"}
+      title={
+        blocked
+          ? "Powiadomienia zablokowane — odblokuj w ustawieniach przeglądarki"
+          : subscribed
+          ? "Wyłącz powiadomienia push"
+          : "Włącz powiadomienia push"
+      }
       className={`p-1.5 rounded-lg transition-colors disabled:opacity-50 ${
-        subscribed
+        blocked
+          ? "text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+          : subscribed
           ? "text-primary hover:bg-primary/10"
           : "text-muted-foreground hover:bg-muted hover:text-foreground"
       }`}
     >
-      {subscribed ? <Bell size={16} /> : <BellOff size={16} />}
+      {blocked ? <BellOff size={16} /> : subscribed ? <BellRing size={16} /> : <Bell size={16} />}
     </button>
   );
 }
