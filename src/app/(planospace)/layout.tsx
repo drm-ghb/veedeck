@@ -21,13 +21,22 @@ export default async function VeedeckLayout({
 
   const dbUser = await prisma.user.findUnique({
     where: { id: session.user.id! },
-    select: { name: true, email: true, navMode: true, globalHiddenModules: true, clientLogoUrl: true },
+    select: { name: true, email: true, navMode: true, globalHiddenModules: true, clientLogoUrl: true, ownerId: true },
   });
 
+  // Jeśli to członek zespołu — pobierz ustawienia projektanta
+  const ownerId = dbUser?.ownerId;
+  const ownerSettings = ownerId
+    ? await prisma.user.findUnique({
+        where: { id: ownerId },
+        select: { navMode: true, globalHiddenModules: true, clientLogoUrl: true },
+      })
+    : null;
+
   const displayName = dbUser?.name || dbUser?.email || null;
-  const navMode = dbUser?.navMode ?? "dashboard";
-  const hiddenModules = dbUser?.globalHiddenModules ?? [];
-  const logoUrl = dbUser?.clientLogoUrl ?? null;
+  const navMode = (ownerSettings ?? dbUser)?.navMode ?? "dashboard";
+  const hiddenModules = (ownerSettings ?? dbUser)?.globalHiddenModules ?? [];
+  const logoUrl = (ownerSettings ?? dbUser)?.clientLogoUrl ?? null;
 
   return (
     <div className="h-dvh flex flex-col bg-muted/60">
