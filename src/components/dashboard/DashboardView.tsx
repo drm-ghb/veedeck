@@ -395,8 +395,8 @@ export default function DashboardView({
           </div>
         </div>{/* end stats */}
 
-        {/* Projekty: order-5 mobile | col1-2 row2 desktop */}
-        <div className="order-5 lg:col-span-2 lg:row-start-2 space-y-3">
+        {/* Projekty: order-6 mobile | col1-2 row2 desktop */}
+        <div className="order-6 lg:col-span-2 lg:row-start-2 space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-semibold text-foreground">Ostatnie projekty RenderFlow</h2>
               <Link href="/renderflow" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-0.5 transition-colors">
@@ -444,8 +444,8 @@ export default function DashboardView({
             )}
         </div>{/* end Projekty */}
 
-        {/* Listy: order-4 mobile | col1-2 row3 desktop */}
-        <div className="order-4 lg:col-span-2 lg:row-start-3 space-y-3">
+        {/* Listy: order-5 mobile | col1-2 row3 desktop */}
+        <div className="order-5 lg:col-span-2 lg:row-start-3 space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-semibold text-foreground">Ostatnie listy zakupowe</h2>
               <Link href="/listy" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-0.5 transition-colors">
@@ -481,8 +481,8 @@ export default function DashboardView({
             )}
         </div>{/* end Listy */}
 
-        {/* Do zrobienia: order-6 mobile | col3 row4 desktop */}
-        <div className="order-6 lg:col-start-3 lg:row-start-4 space-y-3">
+        {/* Do zrobienia: order-4 mobile | col3 row4 desktop */}
+        <div className="order-4 lg:col-start-3 lg:row-start-4 space-y-3">
             <div className="flex items-center gap-1.5">
               <h2 className="text-sm font-semibold text-foreground">Do zrobienia</h2>
               <InfoTooltip items={[
