@@ -11,25 +11,31 @@ export async function GET(req: NextRequest) {
   const from = searchParams.get("from");
   const to = searchParams.get("to");
 
-  const dateFilter = {
-    gte: from ? new Date(from) : undefined,
-    lte: to ? new Date(to) : undefined,
+  const dateWhere = {
+    startAt: {
+      gte: from ? new Date(from) : undefined,
+      lte: to ? new Date(to) : undefined,
+    },
   };
 
-  const events = await prisma.calendarEvent.findMany({
-    where: {
-      startAt: dateFilter,
-      OR: [
-        { userId },
-        { guests: { some: { userId } } },
-      ],
-    },
-    include: { guests: true },
-    orderBy: { startAt: "asc" },
-  });
+  const [ownEvents, guestEvents] = await Promise.all([
+    prisma.calendarEvent.findMany({
+      where: { userId, ...dateWhere },
+      include: { guests: true },
+      orderBy: { startAt: "asc" },
+    }),
+    prisma.calendarEvent.findMany({
+      where: { guests: { some: { userId } }, ...dateWhere },
+      include: { guests: true },
+      orderBy: { startAt: "asc" },
+    }),
+  ]);
 
-  // Mark events where user is only a guest (not the owner)
-  const result = events.map((e) => ({ ...e, isGuest: e.userId !== userId }));
+  const ownIds = new Set(ownEvents.map((e) => e.id));
+  const result = [
+    ...ownEvents.map((e) => ({ ...e, isGuest: false })),
+    ...guestEvents.filter((e) => !ownIds.has(e.id)).map((e) => ({ ...e, isGuest: true })),
+  ].sort((a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime());
 
   return NextResponse.json(result);
 }
