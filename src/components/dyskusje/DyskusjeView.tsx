@@ -225,13 +225,12 @@ export default function DyskusjeView({ initialDiscussions }: Props) {
             </div>
           ) : (
             discussions.map((d) => (
-              <button
-                key={d.id}
-                onClick={() => { setSelectedId(d.id); setEditingId(null); }}
-                className={`w-full text-left px-4 py-3 border-b border-border/50 hover:bg-muted/50 transition-colors ${selectedId === d.id ? "bg-muted" : ""}`}
-              >
-                {editingId === d.id ? (
-                  <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+              editingId === d.id ? (
+                <div
+                  key={d.id}
+                  className={`w-full text-left px-4 py-3 border-b border-border/50 ${selectedId === d.id ? "bg-muted" : ""}`}
+                >
+                  <div className="flex gap-1">
                     <input
                       autoFocus
                       value={editTitle}
@@ -242,7 +241,13 @@ export default function DyskusjeView({ initialDiscussions }: Props) {
                     <button onClick={() => renameDiscussion(d.id)} className="text-primary"><Check size={13} /></button>
                     <button onClick={() => setEditingId(null)} className="text-muted-foreground"><X size={13} /></button>
                   </div>
-                ) : (
+                </div>
+              ) : (
+              <button
+                key={d.id}
+                onClick={() => { setSelectedId(d.id); setEditingId(null); }}
+                className={`w-full text-left px-4 py-3 border-b border-border/50 hover:bg-muted/50 transition-colors ${selectedId === d.id ? "bg-muted" : ""}`}
+              >
                   <>
                     <div className="flex items-center justify-between gap-1">
                       <div className="flex items-center gap-1.5 min-w-0">
@@ -280,8 +285,8 @@ export default function DyskusjeView({ initialDiscussions }: Props) {
                       </p>
                     )}
                   </>
-                )}
               </button>
+              )
             ))
           )}
         </div>
