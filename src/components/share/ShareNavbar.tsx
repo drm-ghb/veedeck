@@ -72,7 +72,7 @@ export default function ShareNavbar({ backHref, backLabel, clientLogoUrl, design
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={clientLogoUrl} alt="Logo" className="h-8 object-contain" />
               )}
-              <span className="text-[1.5625rem] font-bold tracking-tight" style={{ fontFamily: "var(--font-story-script)" }}>
+              <span className="text-2xl font-bold">
                 {designerName ?? "veedeck"}
               </span>
             </div>
