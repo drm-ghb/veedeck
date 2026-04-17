@@ -193,7 +193,7 @@ export default function ProduktyView({ initialProducts }: Props) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Szukaj po nazwie lub producencie..."
-            className="pl-9"
+            className="pl-9 bg-background dark:bg-background"
           />
         </div>
         <select

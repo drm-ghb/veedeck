@@ -9,15 +9,22 @@ export default async function DyskusjePage() {
   if (!session?.user?.id) redirect("/login");
   const userId = getWorkspaceUserId(session);
 
-  const discussions = await prisma.discussion.findMany({
-    where: { ownerId: userId },
-    include: {
-      project: { select: { id: true, title: true } },
-      _count: { select: { messages: true } },
-      messages: { orderBy: { createdAt: "desc" }, take: 1 },
-    },
-    orderBy: { updatedAt: "desc" },
-  });
+  const [discussions, projects] = await Promise.all([
+    prisma.discussion.findMany({
+      where: { ownerId: userId },
+      include: {
+        project: { select: { id: true, title: true } },
+        _count: { select: { messages: true } },
+        messages: { orderBy: { createdAt: "desc" }, take: 1 },
+      },
+      orderBy: { updatedAt: "desc" },
+    }),
+    prisma.project.findMany({
+      where: { userId, archived: false },
+      select: { id: true, title: true },
+      orderBy: { title: "asc" },
+    }),
+  ]);
 
   return (
     <DyskusjeView
@@ -37,6 +44,7 @@ export default async function DyskusjePage() {
           : null,
         updatedAt: d.updatedAt.toISOString(),
       }))}
+      projects={projects}
     />
   );
 }

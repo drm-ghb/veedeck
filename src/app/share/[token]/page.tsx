@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import Link from "next/link";
 import Image from "next/image";
 import RenderViewer from "@/components/render/RenderViewer";
 import ShareSidebar from "@/components/share/ShareSidebar";
@@ -91,6 +92,7 @@ interface Project {
   hiddenModules: string[];
   clientCanUpload: boolean;
   shoppingLists: { id: string; name: string; shareToken: string }[];
+  hasDiscussion: boolean;
 }
 
 export default function SharePage() {
@@ -586,6 +588,7 @@ export default function SharePage() {
               token={token}
               showRenderFlow={!project.hiddenModules.includes("renderflow")}
               showListy={!project.hiddenModules.includes("listy")}
+              showDyskusje={project.hasDiscussion}
               shoppingLists={project.shoppingLists}
               onRenderFlowClick={() => setView("rooms")}
             />
@@ -639,6 +642,23 @@ export default function SharePage() {
                   </button>
                 );
               })}
+            </div>
+          )}
+          {!isSidebar && project.hasDiscussion && (
+            <div className="mt-8">
+              <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3">Inne moduły</h3>
+              <Link
+                href={`/share/${token}/dyskusje`}
+                className="inline-flex items-center gap-3 p-4 rounded-xl bg-card border border-border hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600 transition-all"
+              >
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-primary">
+                  <MessageSquare size={20} className="text-white" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-foreground">Dyskusje</p>
+                  <p className="text-[11px] text-muted-foreground">Czat z projektantem</p>
+                </div>
+              </Link>
             </div>
           )}
         </>
@@ -836,6 +856,7 @@ export default function SharePage() {
             token={token}
             showRenderFlow={!project.hiddenModules.includes("renderflow")}
             showListy={!project.hiddenModules.includes("listy")}
+            showDyskusje={project.hasDiscussion}
             shoppingLists={project.shoppingLists}
             onRenderFlowClick={() => setView("rooms")}
           />

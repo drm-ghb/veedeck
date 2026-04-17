@@ -105,6 +105,39 @@ describe("PATCH /api/user", () => {
       })
     );
   });
+
+  it("aktualizuje colorTheme na poprawną wartość", async () => {
+    vi.mocked(auth).mockResolvedValue(SESSION as any);
+    vi.mocked(prisma.user.update).mockResolvedValue({
+      id: SESSION.user.id,
+      name: "Jan",
+      email: SESSION.user.email,
+    } as any);
+
+    const res = await PATCH(makeRequest("PATCH", { colorTheme: "navy" }));
+    expect(res.status).toBe(200);
+    expect(prisma.user.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ colorTheme: "navy" }),
+      })
+    );
+  });
+
+  it("zwraca 400 dla nieprawidłowego colorTheme", async () => {
+    vi.mocked(auth).mockResolvedValue(SESSION as any);
+
+    const res = await PATCH(makeRequest("PATCH", { colorTheme: "xyz" }));
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error).toMatch(/motyw/i);
+  });
+
+  it("zwraca 401 bez sesji dla colorTheme", async () => {
+    vi.mocked(auth).mockResolvedValue(null);
+
+    const res = await PATCH(makeRequest("PATCH", { colorTheme: "obsidian" }));
+    expect(res.status).toBe(401);
+  });
 });
 
 describe("PATCH /api/user/password", () => {

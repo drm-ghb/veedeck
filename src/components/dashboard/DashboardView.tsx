@@ -473,8 +473,8 @@ export default function DashboardView({
               <div className="rounded-xl border border-border bg-card divide-y divide-border overflow-hidden">
                 {recentLists.map((list) => (
                   <Link key={list.id} href={`/listy/${list.slug ?? list.id}`} className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors">
-                    <div className="w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center shrink-0">
-                      <ShoppingCart size={18} className="text-emerald-600 dark:text-emerald-400" />
+                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                      <ShoppingCart size={18} className="text-primary" />
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium truncate flex items-center gap-1.5">
@@ -596,7 +596,7 @@ export default function DashboardView({
                       return (
                         <div key={m.id} className="flex items-center hover:bg-muted/50 transition-colors">
                           <Link href={`/listy/${m.listSlug ?? m.listId}?product=${m.productId}`} onClick={() => markListMessageViewed(m.id)} className="flex items-start gap-3 px-4 py-3 flex-1 min-w-0">
-                            <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center shrink-0 mt-0.5"><ShoppingCart size={15} className="text-emerald-600 dark:text-emerald-400" /></div>
+                            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5"><ShoppingCart size={15} className="text-primary" /></div>
                             <div className="min-w-0 flex-1">
                               <p className="text-sm font-medium truncate">{m.content}</p>
                               <p className="text-xs text-muted-foreground truncate">{m.author} · {m.productName} · {m.listName}</p>

@@ -10,6 +10,8 @@ import MobileSearch from "@/components/dashboard/MobileSearch";
 import { LogoBrand } from "@/components/dashboard/LogoBrand";
 import { QuickNoteButton } from "@/components/notatnik/QuickNoteButton";
 import { prisma } from "@/lib/prisma";
+import { ColorThemeSync } from "@/components/dashboard/ColorThemeSync";
+import type { ColorTheme } from "@/lib/theme";
 
 export default async function VeedeckLayout({
   children,
@@ -21,7 +23,7 @@ export default async function VeedeckLayout({
 
   const dbUser = await prisma.user.findUnique({
     where: { id: session.user.id! },
-    select: { name: true, email: true, navMode: true, globalHiddenModules: true, clientLogoUrl: true, ownerId: true },
+    select: { name: true, email: true, navMode: true, globalHiddenModules: true, clientLogoUrl: true, ownerId: true, colorTheme: true },
   });
 
   // Jeśli to członek zespołu — pobierz ustawienia projektanta
@@ -37,9 +39,11 @@ export default async function VeedeckLayout({
   const navMode = (ownerSettings ?? dbUser)?.navMode ?? "dashboard";
   const hiddenModules = (ownerSettings ?? dbUser)?.globalHiddenModules ?? [];
   const logoUrl = (ownerSettings ?? dbUser)?.clientLogoUrl ?? null;
+  const colorTheme = (dbUser?.colorTheme ?? "champagne") as ColorTheme;
 
   return (
     <div className="h-dvh flex flex-col bg-muted/60">
+      <ColorThemeSync dbTheme={colorTheme} />
       <nav className="relative z-30">
         <div className="px-4 flex items-center gap-4 py-3 relative">
           {/* Left: home + logo */}

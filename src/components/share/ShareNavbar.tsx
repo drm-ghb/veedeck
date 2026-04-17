@@ -82,7 +82,10 @@ export default function ShareNavbar({ backHref, backLabel, clientLogoUrl, design
                     <img src={clientLogoUrl} alt="Logo" className="h-8 object-contain" />
                   )}
                   {designerName && (
-                    <span className="text-2xl font-bold tracking-tight">{designerName}</span>
+                    <span
+                      className="text-2xl"
+                      style={{ fontFamily: "var(--font-nunito)", fontWeight: 300, letterSpacing: "-0.05em" }}
+                    >{designerName}</span>
                   )}
                 </>
               )}

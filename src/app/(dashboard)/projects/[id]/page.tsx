@@ -6,6 +6,7 @@ import { Breadcrumb } from "@/components/ui/breadcrumb";
 import ProjectView from "@/components/dashboard/ProjectView";
 import ShareDialog from "@/components/dashboard/ShareDialog";
 import AddRoomDialog from "@/components/dashboard/AddRoomDialog";
+import CopyClientLinkButton from "@/components/dashboard/CopyClientLinkButton";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -35,6 +36,7 @@ export default async function ProjectPage({ params }: Props) {
   ]);
 
   const shareUrl = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/share/${project.shareToken}`;
+  const clientPanelUrl = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/share/${project.shareToken}/home`;
 
   return (
     <div>
@@ -52,6 +54,7 @@ export default async function ProjectPage({ params }: Props) {
           )}
         </div>
         <div className="flex items-center gap-2">
+          <CopyClientLinkButton url={clientPanelUrl} />
           <ShareDialog shareUrl={shareUrl} hiddenModules={project.hiddenModules} />
           <AddRoomDialog projectId={id} />
         </div>

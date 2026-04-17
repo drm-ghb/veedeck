@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { User, Mail, Lock, Info, Sun, Moon, Monitor, Palette, Image as ImageIcon, Layers, ShoppingCart, Package, LayoutDashboard, PanelLeft, Globe } from "lucide-react";
 import Image from "next/image";
-import { useTheme, type Theme } from "@/lib/theme";
+import { useTheme, type Theme, type ColorTheme } from "@/lib/theme";
 import { useT, useLang } from "@/lib/i18n";
 import { UploadButton } from "@uploadthing/react";
 import type { OurFileRouter } from "@/lib/uploadthing";
@@ -23,6 +23,7 @@ interface Props {
   initialClientLogoUrl: string | null;
   initialClientWelcomeMessage: string | null;
   initialNavMode: string;
+  initialColorTheme: ColorTheme;
 }
 
 export function SettingsGeneral({
@@ -34,9 +35,10 @@ export function SettingsGeneral({
   initialClientLogoUrl,
   initialClientWelcomeMessage,
   initialNavMode,
+  initialColorTheme,
 }: Props) {
   const router = useRouter();
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, colorTheme, setColorTheme } = useTheme();
   const t = useT();
   const { lang, setLang } = useLang();
 
@@ -141,7 +143,30 @@ const [navMode, setNavMode] = useState(initialNavMode);
     else { setNavMode(navMode); toast.error(t.settings.saveError); }
   }
 
-async function handleRemoveLogo() {
+const COLOR_THEMES: {
+    slug: ColorTheme;
+    name: string;
+    subtitle: string;
+    // hardcoded hex for thumbnail previews (always light variant)
+    sidebar: string;
+    background: string;
+    primary: string;
+    accent: string;
+  }[] = [
+    { slug: "champagne", name: "Champagne Linen", subtitle: "Len i brąz — domyślny", sidebar: "#F7F3EA", background: "#EEE9DF", primary: "#8B613C", accent: "#C2A878" },
+    { slug: "obsidian", name: "Obsidian Gold", subtitle: "Złoto na czerni", sidebar: "#12110F", background: "#F7F5F0", primary: "#C7A46C", accent: "#8A6A3A" },
+    { slug: "navy", name: "Royal Navy", subtitle: "Granat i srebro", sidebar: "#0A1230", background: "#F2F3F6", primary: "#15224F", accent: "#B8C0DB" },
+    { slug: "plum", name: "Plum Noir", subtitle: "Śliwka i róż", sidebar: "#1F1320", background: "#F5F1ED", primary: "#5A2545", accent: "#C98A6B" },
+  ];
+
+  async function handleColorThemeChange(slug: ColorTheme) {
+    setColorTheme(slug);
+    const res = await patchUser({ colorTheme: slug });
+    if (res.ok) toast.success(t.settings.saved);
+    else toast.error(t.settings.saveError);
+  }
+
+  async function handleRemoveLogo() {
     const res = await patchUser({ clientLogoUrl: null });
     if (res.ok) { setClientLogoUrl(null); toast.success(t.settings.logoDeleted); }
     else toast.error(t.settings.logoDeleteError);
@@ -381,6 +406,41 @@ async function handleRemoveLogo() {
               </button>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* ── Motyw kolorystyczny ── */}
+      <section className="space-y-4">
+        <SectionHeader title="Motyw kolorystyczny" />
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {COLOR_THEMES.map(({ slug, name, subtitle, sidebar, background, primary, accent }) => {
+            const active = colorTheme === slug;
+            return (
+              <button
+                key={slug}
+                type="button"
+                aria-pressed={active}
+                onClick={() => handleColorThemeChange(slug)}
+                className={`flex flex-col items-start p-3 rounded-2xl border text-left transition-all ${
+                  active
+                    ? "border-primary ring-2 ring-primary bg-primary/5"
+                    : "border-border hover:border-gray-300 dark:hover:border-gray-600 hover:bg-muted"
+                }`}
+              >
+                {/* Miniatura */}
+                <div className="w-full h-12 rounded-lg overflow-hidden flex mb-3">
+                  <div className="w-1/3 h-full" style={{ background: sidebar }} />
+                  <div className="flex-1 h-full flex flex-col p-1.5 gap-1" style={{ background: background }}>
+                    <div className="h-2 w-3/4 rounded-sm" style={{ background: primary }} />
+                    <div className="h-1.5 w-1/2 rounded-sm" style={{ background: accent }} />
+                  </div>
+                </div>
+                <p className={`text-sm font-semibold leading-tight ${active ? "text-primary" : "text-foreground"}`}>{name}</p>
+                <p className="text-xs text-muted-foreground mt-0.5 leading-tight">{subtitle}</p>
+              </button>
+            );
+          })}
         </div>
       </section>
 

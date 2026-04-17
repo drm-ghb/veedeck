@@ -34,6 +34,7 @@ export async function GET(
         where: { archived: false },
         select: { id: true, name: true, shareToken: true },
       },
+      discussion: { select: { id: true } },
       rooms: {
         where: { archived: false },
         orderBy: { order: "asc" },
@@ -90,7 +91,7 @@ export async function GET(
     return NextResponse.json({ error: "Brak dostępu", moduleHidden: true }, { status: 403 });
   }
 
-  const { user, sharePassword, shareExpiresAt, ...rest } = project;
+  const { user, sharePassword, shareExpiresAt, discussion, ...rest } = project;
   const { name, showProfileName, showClientLogo, clientLogoUrl, ...userSettings } = user;
   return NextResponse.json({
     ...rest,
@@ -99,5 +100,6 @@ export async function GET(
     clientLogoUrl: showClientLogo ? clientLogoUrl : null,
     hasPassword: !!project.sharePassword,
     shareExpiresAt: project.shareExpiresAt?.toISOString() ?? null,
+    hasDiscussion: !!discussion,
   });
 }

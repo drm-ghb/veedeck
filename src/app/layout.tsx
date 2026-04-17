@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, DM_Sans, Story_Script, Lato } from "next/font/google";
+import { Inter, DM_Sans, Story_Script, Lato, Nunito } from "next/font/google";
 import { cookies } from "next/headers";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
@@ -30,6 +30,12 @@ const lato = Lato({
   weight: ["400", "700"],
 });
 
+const nunito = Nunito({
+  variable: "--font-nunito",
+  subsets: ["latin", "latin-ext"],
+  weight: ["300"],
+});
+
 export const metadata: Metadata = {
   title: "veedeck – cały projekt w jednym miejscu",
   description: "Centralizuj feedback do renderów w jednym miejscu",
@@ -43,6 +49,7 @@ export default async function RootLayout({
   const cookieStore = await cookies();
   const themeCookie = cookieStore.get("veedeck-theme")?.value;
   const isDark = themeCookie === "dark";
+  const colorThemeCookie = cookieStore.get("color-theme")?.value ?? "champagne";
   const langCookie = cookieStore.get("veedeck-lang")?.value as Lang | undefined;
   const initialLang: Lang | null =
     langCookie === "pl" || langCookie === "en" ? langCookie : null;
@@ -50,7 +57,8 @@ export default async function RootLayout({
   return (
     <html
       lang={initialLang ?? "pl"}
-      className={`${inter.variable} ${dmSans.variable} ${storyScript.variable} ${lato.variable} h-full antialiased${isDark ? " dark" : ""}`}
+      className={`${inter.variable} ${dmSans.variable} ${storyScript.variable} ${lato.variable} ${nunito.variable} h-full antialiased${isDark ? " dark" : ""}`}
+      data-theme={colorThemeCookie}
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col bg-background" suppressHydrationWarning>

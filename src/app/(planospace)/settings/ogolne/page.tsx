@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { SettingsGeneral } from "@/components/settings/SettingsGeneral";
+import type { ColorTheme } from "@/lib/theme";
 
 export default async function SettingsOgolnePage() {
   const session = await auth();
@@ -18,6 +19,7 @@ export default async function SettingsOgolnePage() {
       clientLogoUrl: true,
       clientWelcomeMessage: true,
       navMode: true,
+      colorTheme: true,
     },
   });
 
@@ -33,6 +35,7 @@ export default async function SettingsOgolnePage() {
       initialClientLogoUrl={user.clientLogoUrl}
       initialClientWelcomeMessage={user.clientWelcomeMessage}
       initialNavMode={user.navMode}
+      initialColorTheme={(user.colorTheme ?? "champagne") as ColorTheme}
     />
   );
 }

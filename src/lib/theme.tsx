@@ -3,18 +3,25 @@
 import { createContext, useContext, useEffect, useState } from "react";
 
 export type Theme = "light" | "dark" | "system";
+export type ColorTheme = "champagne" | "obsidian" | "navy" | "plum";
 
 const ThemeContext = createContext<{
   theme: Theme;
   setTheme: (t: Theme) => void;
-}>({ theme: "light", setTheme: () => {} });
+  colorTheme: ColorTheme;
+  setColorTheme: (t: ColorTheme) => void;
+}>({ theme: "light", setTheme: () => {}, colorTheme: "champagne", setColorTheme: () => {} });
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<Theme>("light");
+  const [colorTheme, setColorThemeState] = useState<ColorTheme>("champagne");
 
   useEffect(() => {
     const saved = localStorage.getItem("veedeck-theme") as Theme | null;
     if (saved) setThemeState(saved);
+
+    const savedColor = localStorage.getItem("color-theme") as ColorTheme | null;
+    if (savedColor) setColorThemeState(savedColor);
   }, []);
 
   useEffect(() => {
@@ -47,8 +54,14 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     return () => mq.removeEventListener("change", handler);
   }, [theme]);
 
+  useEffect(() => {
+    document.documentElement.dataset.theme = colorTheme;
+    localStorage.setItem("color-theme", colorTheme);
+    document.cookie = `color-theme=${colorTheme}; path=/; max-age=31536000; SameSite=Lax`;
+  }, [colorTheme]);
+
   return (
-    <ThemeContext.Provider value={{ theme, setTheme: setThemeState }}>
+    <ThemeContext.Provider value={{ theme, setTheme: setThemeState, colorTheme, setColorTheme: setColorThemeState }}>
       {children}
     </ThemeContext.Provider>
   );

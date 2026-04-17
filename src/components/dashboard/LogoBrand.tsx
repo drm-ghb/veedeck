@@ -21,20 +21,33 @@ export function LogoBrand({ navMode }: LogoBrandProps) {
   }, []);
 
   // Wordmark visible when: no sidebar mode (always), or sidebar mode + expanded
+  // Wordmark visible when: no sidebar mode (always), or sidebar mode + expanded
   const showWordmark = navMode !== "sidebar" || !sidebarCollapsed;
 
   return (
     <Link href="/dashboard" className="flex items-center gap-2 shrink-0">
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/logo_veedeck.svg" alt="veedeck" className="h-7 w-7 shrink-0" />
-      {/* Wordmark: always hidden on mobile, visible md+ depending on sidebar state */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src="/veedeck_wordmark.svg"
-        alt="veedeck"
-        className={`hidden shrink-0 transition-opacity duration-200 ${showWordmark ? "md:block" : ""}`}
-        style={{ height: "17px", width: "auto" }}
-      />
+      <img src="/logo_vee.png" alt="veedeck" className="h-7 w-7 shrink-0 object-contain" />
+      {showWordmark && (
+        <>
+          {/* Light mode: black wordmark (md+, hidden in dark) */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/vee_black.png"
+            alt="veedeck"
+            className="hidden md:block dark:hidden shrink-0"
+            style={{ height: "17px", width: "auto" }}
+          />
+          {/* Dark mode: white wordmark (md+ dark only) */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/vee_white.png"
+            alt=""
+            className="hidden md:dark:block shrink-0"
+            style={{ height: "17px", width: "auto" }}
+          />
+        </>
+      )}
     </Link>
   );
 }

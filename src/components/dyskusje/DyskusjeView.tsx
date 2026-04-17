@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { MessageSquare, Plus, Trash2, Edit2, Check, X, ExternalLink, Info } from "lucide-react";
+import { MessageSquare, Plus, Trash2, Edit2, Check, X, ExternalLink, Info, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import Pusher from "pusher-js";
@@ -30,8 +30,14 @@ interface DiscussionMessage {
   createdAt: string;
 }
 
+interface ProjectOption {
+  id: string;
+  title: string;
+}
+
 interface Props {
   initialDiscussions: DiscussionSummary[];
+  projects: ProjectOption[];
 }
 
 const SOURCE_LABELS: Record<string, string> = {
@@ -51,7 +57,7 @@ function formatTime(iso: string) {
   return d.toLocaleDateString("pl-PL", { day: "numeric", month: "short" });
 }
 
-export default function DyskusjeView({ initialDiscussions }: Props) {
+export default function DyskusjeView({ initialDiscussions, projects }: Props) {
   const router = useRouter();
   const [discussions, setDiscussions] = useState<DiscussionSummary[]>(initialDiscussions);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -63,10 +69,27 @@ export default function DyskusjeView({ initialDiscussions }: Props) {
   const [editTitle, setEditTitle] = useState("");
   const [showNewForm, setShowNewForm] = useState(false);
   const [newTitle, setNewTitle] = useState("");
+  const [headerEditing, setHeaderEditing] = useState(false);
+  const [headerTitle, setHeaderTitle] = useState("");
+  const [headerProjectId, setHeaderProjectId] = useState<string | null>(null);
+  const [savingHeader, setSavingHeader] = useState(false);
+  const [showProjectDropdown, setShowProjectDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const pusherRef = useRef<Pusher | null>(null);
 
   const selected = discussions.find((d) => d.id === selectedId) ?? null;
+
+  // Close project dropdown on outside click
+  useEffect(() => {
+    function handle(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setShowProjectDropdown(false);
+      }
+    }
+    document.addEventListener("mousedown", handle);
+    return () => document.removeEventListener("mousedown", handle);
+  }, []);
 
   // Load messages when discussion selected
   useEffect(() => {
@@ -115,6 +138,67 @@ export default function DyskusjeView({ initialDiscussions }: Props) {
       pusherRef.current?.unsubscribe(`discussion-${selectedId}`);
     };
   }, [selectedId]);
+
+  function startHeaderEdit() {
+    if (!selected) return;
+    setHeaderTitle(selected.title);
+    setHeaderProjectId(selected.projectId);
+    setHeaderEditing(true);
+    setShowProjectDropdown(false);
+  }
+
+  function cancelHeaderEdit() {
+    setHeaderEditing(false);
+    setShowProjectDropdown(false);
+  }
+
+  async function saveHeaderEdit() {
+    if (!selected || savingHeader) return;
+    setSavingHeader(true);
+    try {
+      const body: Record<string, unknown> = {};
+      if (headerTitle.trim() && headerTitle.trim() !== selected.title) {
+        body.title = headerTitle.trim();
+      }
+      if (headerProjectId !== selected.projectId) {
+        body.projectId = headerProjectId;
+      }
+      if (Object.keys(body).length === 0) {
+        setHeaderEditing(false);
+        return;
+      }
+      const res = await fetch(`/api/discussions/${selected.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        toast.error(err.error || "Nie udało się zapisać zmian");
+        return;
+      }
+      const updated = await res.json();
+      setDiscussions((prev) =>
+        prev.map((d) =>
+          d.id === selected.id
+            ? {
+                ...d,
+                title: updated.title,
+                projectId: updated.projectId,
+                project: updated.project ?? null,
+                type: updated.type,
+              }
+            : d
+        )
+      );
+      setHeaderEditing(false);
+      router.refresh();
+    } catch {
+      toast.error("Nie udało się zapisać zmian");
+    } finally {
+      setSavingHeader(false);
+    }
+  }
 
   const sendMessage = useCallback(async () => {
     if (!selectedId || !input.trim() || sending) return;
@@ -174,17 +258,23 @@ export default function DyskusjeView({ initialDiscussions }: Props) {
   }
 
   async function deleteDiscussion(id: string) {
-    if (!confirm("Usunąć tę dyskusję i wszystkie wiadomości?")) return;
+    const d = discussions.find((x) => x.id === id);
+    const msg = d?.type === "project"
+      ? "Usunąć tę dyskusję projektu i wszystkie wiadomości? Projekt nie straci danych."
+      : "Usunąć tę dyskusję i wszystkie wiadomości?";
+    if (!confirm(msg)) return;
     try {
       const res = await fetch(`/api/discussions/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error();
       setDiscussions((prev) => prev.filter((d) => d.id !== id));
-      if (selectedId === id) { setSelectedId(null); setMessages([]); }
+      if (selectedId === id) { setSelectedId(null); setMessages([]); setHeaderEditing(false); }
       router.refresh();
     } catch {
       toast.error("Nie udało się usunąć dyskusji");
     }
   }
+
+  const selectedProjectLabel = projects.find((p) => p.id === headerProjectId)?.title ?? "Brak przypisania";
 
   return (
     <div className="flex h-[calc(100vh-120px)] gap-0 rounded-xl overflow-hidden border border-border bg-background">
@@ -243,49 +333,43 @@ export default function DyskusjeView({ initialDiscussions }: Props) {
                   </div>
                 </div>
               ) : (
-              <button
-                key={d.id}
-                onClick={() => { setSelectedId(d.id); setEditingId(null); }}
-                className={`w-full text-left px-4 py-3 border-b border-border/50 hover:bg-muted/50 transition-colors ${selectedId === d.id ? "bg-muted" : ""}`}
-              >
-                  <>
-                    <div className="flex items-center justify-between gap-1">
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        <span className={`w-2 h-2 rounded-full flex-shrink-0 ${d.type === "project" ? "bg-primary" : "bg-muted-foreground"}`} />
-                        <span className="text-sm font-medium truncate">{d.title}</span>
-                      </div>
-                      <div className="flex items-center gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100">
-                        {d.type !== "project" && (
-                          <>
-                            <span
-                              onClick={(e) => { e.stopPropagation(); setEditingId(d.id); setEditTitle(d.title); }}
-                              className="p-0.5 rounded text-muted-foreground hover:text-foreground"
-                            >
-                              <Edit2 size={12} />
-                            </span>
-                            <span
-                              onClick={(e) => { e.stopPropagation(); deleteDiscussion(d.id); }}
-                              className="p-0.5 rounded text-muted-foreground hover:text-destructive"
-                            >
-                              <Trash2 size={12} />
-                            </span>
-                          </>
-                        )}
-                      </div>
-                      {d.lastMessage && (
-                        <span className="text-xs text-muted-foreground flex-shrink-0">{formatTime(d.lastMessage.createdAt)}</span>
-                      )}
+                <button
+                  key={d.id}
+                  onClick={() => { setSelectedId(d.id); setEditingId(null); setHeaderEditing(false); }}
+                  className={`group w-full text-left px-4 py-3 border-b border-border/50 hover:bg-muted/50 transition-colors ${selectedId === d.id ? "bg-muted" : ""}`}
+                >
+                  <div className="flex items-center justify-between gap-1">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <span className={`w-2 h-2 rounded-full flex-shrink-0 ${d.type === "project" ? "bg-primary" : "bg-muted-foreground"}`} />
+                      <span className="text-sm font-medium truncate">{d.title}</span>
                     </div>
-                    {d.project && (
-                      <p className="text-xs text-muted-foreground mt-0.5 truncate pl-3.5">{d.project.title}</p>
-                    )}
-                    {d.lastMessage && (
-                      <p className="text-xs text-muted-foreground mt-1 truncate pl-3.5">
+                    <div className="flex items-center gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100">
+                      <span
+                        onClick={(e) => { e.stopPropagation(); setEditingId(d.id); setEditTitle(d.title); }}
+                        className="p-0.5 rounded text-muted-foreground hover:text-foreground"
+                      >
+                        <Edit2 size={12} />
+                      </span>
+                      <span
+                        onClick={(e) => { e.stopPropagation(); deleteDiscussion(d.id); }}
+                        className="p-0.5 rounded text-muted-foreground hover:text-destructive"
+                      >
+                        <Trash2 size={12} />
+                      </span>
+                    </div>
+                  </div>
+                  {d.lastMessage && (
+                    <div className="flex items-center justify-between mt-0.5">
+                      <p className="text-xs text-muted-foreground truncate pl-3.5 flex-1">
                         <span className="font-medium">{d.lastMessage.authorName}:</span> {d.lastMessage.content}
                       </p>
-                    )}
-                  </>
-              </button>
+                      <span className="text-xs text-muted-foreground flex-shrink-0 ml-1">{formatTime(d.lastMessage.createdAt)}</span>
+                    </div>
+                  )}
+                  {d.project && !d.lastMessage && (
+                    <p className="text-xs text-muted-foreground mt-0.5 truncate pl-3.5">{d.project.title}</p>
+                  )}
+                </button>
               )
             ))
           )}
@@ -296,35 +380,98 @@ export default function DyskusjeView({ initialDiscussions }: Props) {
       {selected ? (
         <div className="flex-1 flex flex-col min-w-0">
           {/* Header */}
-          <div className="px-5 py-3 border-b border-border flex items-center gap-3">
-            <div>
-              <h2 className="font-semibold text-sm">{selected.title}</h2>
-              {selected.project && (
-                <a
-                  href={`/projects/${selected.project.id}`}
-                  className="text-xs text-primary hover:underline flex items-center gap-1"
-                >
-                  {selected.project.title}
-                  <ExternalLink size={10} />
-                </a>
-              )}
-            </div>
-            {selected.type !== "project" && (
-              <div className="ml-auto flex gap-2">
-                <button
-                  onClick={() => { setEditingId(selected.id); setEditTitle(selected.title); setSelectedId(null); setTimeout(() => setSelectedId(selected.id), 0); }}
-                  className="p-1.5 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-                  title="Zmień nazwę"
-                >
-                  <Edit2 size={14} />
-                </button>
-                <button
-                  onClick={() => deleteDiscussion(selected.id)}
-                  className="p-1.5 rounded-lg text-muted-foreground hover:bg-muted hover:text-destructive transition-colors"
-                  title="Usuń dyskusję"
-                >
-                  <Trash2 size={14} />
-                </button>
+          <div className="px-5 py-3 border-b border-border">
+            {headerEditing ? (
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2">
+                  <input
+                    autoFocus
+                    value={headerTitle}
+                    onChange={(e) => setHeaderTitle(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") saveHeaderEdit(); if (e.key === "Escape") cancelHeaderEdit(); }}
+                    className="flex-1 text-sm font-semibold px-2 py-1 rounded border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  />
+                  <button
+                    onClick={saveHeaderEdit}
+                    disabled={savingHeader}
+                    className="p-1.5 rounded-lg text-primary hover:bg-primary/10 transition-colors disabled:opacity-40"
+                    title="Zapisz"
+                  >
+                    <Check size={14} />
+                  </button>
+                  <button
+                    onClick={cancelHeaderEdit}
+                    className="p-1.5 rounded-lg text-muted-foreground hover:bg-muted transition-colors"
+                    title="Anuluj"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+                {/* Project selector */}
+                <div className="relative" ref={dropdownRef}>
+                  <button
+                    type="button"
+                    onClick={() => setShowProjectDropdown((v) => !v)}
+                    className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground border border-border rounded-md px-2 py-1 bg-background transition-colors"
+                  >
+                    <span className="truncate max-w-[200px]">{selectedProjectLabel}</span>
+                    <ChevronDown size={12} className="flex-shrink-0" />
+                  </button>
+                  {showProjectDropdown && (
+                    <div className="absolute top-full left-0 mt-1 w-64 bg-popover border border-border rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
+                      <button
+                        type="button"
+                        onClick={() => { setHeaderProjectId(null); setShowProjectDropdown(false); }}
+                        className={`w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors ${headerProjectId === null ? "font-medium text-primary" : "text-muted-foreground"}`}
+                      >
+                        Brak przypisania
+                      </button>
+                      {projects.map((p) => (
+                        <button
+                          key={p.id}
+                          type="button"
+                          onClick={() => { setHeaderProjectId(p.id); setShowProjectDropdown(false); }}
+                          className={`w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors truncate ${headerProjectId === p.id ? "font-medium text-primary" : "text-foreground"}`}
+                        >
+                          {p.title}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center gap-3">
+                <div className="min-w-0">
+                  <h2 className="font-semibold text-sm">{selected.title}</h2>
+                  {selected.project ? (
+                    <a
+                      href={`/projects/${selected.project.id}`}
+                      className="text-xs text-primary hover:underline flex items-center gap-1"
+                    >
+                      {selected.project.title}
+                      <ExternalLink size={10} />
+                    </a>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">Brak przypisania do projektu</span>
+                  )}
+                </div>
+                <div className="ml-auto flex gap-1">
+                  <button
+                    onClick={startHeaderEdit}
+                    className="p-1.5 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                    title="Edytuj"
+                  >
+                    <Edit2 size={14} />
+                  </button>
+                  <button
+                    onClick={() => deleteDiscussion(selected.id)}
+                    className="p-1.5 rounded-lg text-muted-foreground hover:bg-muted hover:text-destructive transition-colors"
+                    title="Usuń dyskusję"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -384,7 +531,7 @@ function MessageBubble({ msg }: { msg: DiscussionMessage }) {
   const sourceLabel = SOURCE_LABELS[msg.sourceType] || "";
 
   return (
-    <div className={`flex flex-col gap-1 ${isAggregated ? "items-start" : "items-start"}`}>
+    <div className="flex flex-col gap-1 items-start">
       {isAggregated ? (
         <div className="max-w-[85%] bg-muted/60 border border-border rounded-xl px-3 py-2 text-sm">
           <div className="flex items-center gap-2 mb-1 flex-wrap">

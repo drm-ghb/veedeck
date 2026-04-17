@@ -114,6 +114,14 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
   const [hiddenModules, setHiddenModules] = useState<string[]>(project.hiddenModules);
   const [clientCanUpload, setClientCanUpload] = useState(project.clientCanUpload);
 
+  const [copiedPanel, setCopiedPanel] = useState(false);
+
+  function copyPanelLink() {
+    navigator.clipboard.writeText(`${window.location.origin}/share/${project.shareToken}/home`);
+    setCopiedPanel(true);
+    setTimeout(() => setCopiedPanel(false), 2000);
+  }
+
   // Warning dialog state
   const [warningDialog, setWarningDialog] = useState<{
     open: boolean;
@@ -333,7 +341,13 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
           <ArrowLeft size={15} />
           {t.projekty.title}
         </Link>
-        <h1 className="text-2xl font-bold mt-2">{project.title}</h1>
+        <div className="flex items-center justify-between gap-3 mt-2">
+          <h1 className="text-2xl font-bold">{project.title}</h1>
+          <Button variant="outline" size="sm" onClick={copyPanelLink} className="gap-2 flex-shrink-0">
+            {copiedPanel ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
+            {copiedPanel ? "Skopiowano!" : "Kopiuj link do panelu"}
+          </Button>
+        </div>
       </div>
 
       <div className="space-y-6">
