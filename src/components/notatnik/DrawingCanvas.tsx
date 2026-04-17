@@ -12,23 +12,47 @@ interface DrawingCanvasProps {
 
 export function DrawingCanvas({ onSave, onClose }: DrawingCanvasProps) {
   const editorRef = useRef<Editor | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
 
-  // Blokuj scroll/pull-to-refresh przeglądarki (iPad Safari)
   useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
+    // Zapisz aktualny scroll żeby przywrócić po zamknięciu
+    const scrollY = window.scrollY;
 
-    const prevent = (e: TouchEvent) => e.preventDefault();
-    el.addEventListener("touchmove", prevent, { passive: false });
+    // Blokuj body — position:fixed to najskuteczniejsza metoda na iOS Safari
+    // zatrzymuje pull-to-refresh i chowanie/pokazywanie paska adresu
+    const prevBodyOverflow = document.body.style.overflow;
+    const prevBodyPosition = document.body.style.position;
+    const prevBodyTop = document.body.style.top;
+    const prevBodyWidth = document.body.style.width;
+    const prevHtmlOverflow = document.documentElement.style.overflow;
 
-    // Zablokuj scroll na body gdy szkicownik otwarty
-    const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = "100%";
+    document.documentElement.style.overflow = "hidden";
+
+    // Blokuj touchmove na document (pull-to-refresh, scroll strony)
+    const preventTouch = (e: TouchEvent) => e.preventDefault();
+    document.addEventListener("touchmove", preventTouch, { passive: false });
+
+    // Blokuj gesturestart (pinch-zoom Safari)
+    const preventGesture = (e: Event) => e.preventDefault();
+    document.addEventListener("gesturestart", preventGesture, { passive: false });
+    document.addEventListener("gesturechange", preventGesture, { passive: false });
 
     return () => {
-      el.removeEventListener("touchmove", prevent);
-      document.body.style.overflow = prevOverflow;
+      document.removeEventListener("touchmove", preventTouch);
+      document.removeEventListener("gesturestart", preventGesture);
+      document.removeEventListener("gesturechange", preventGesture);
+
+      document.body.style.overflow = prevBodyOverflow;
+      document.body.style.position = prevBodyPosition;
+      document.body.style.top = prevBodyTop;
+      document.body.style.width = prevBodyWidth;
+      document.documentElement.style.overflow = prevHtmlOverflow;
+
+      // Przywróć pozycję scroll
+      window.scrollTo(0, scrollY);
     };
   }, []);
 
@@ -54,9 +78,8 @@ export function DrawingCanvas({ onSave, onClose }: DrawingCanvasProps) {
 
   return (
     <div
-      ref={containerRef}
       className="fixed inset-0 z-50 flex flex-col bg-background"
-      style={{ touchAction: "none", overscrollBehavior: "none" }}
+      style={{ touchAction: "none" }}
     >
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-border shrink-0 bg-card">
@@ -84,6 +107,8 @@ export function DrawingCanvas({ onSave, onClose }: DrawingCanvasProps) {
         <Tldraw
           onMount={(editor) => {
             editorRef.current = editor;
+            // Wyłącz animacje które mogą powodować problemy z WebGL na iOS
+            editor.updateInstanceState({ isChangingStyle: false });
           }}
         />
       </div>
