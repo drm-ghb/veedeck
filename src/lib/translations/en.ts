@@ -52,6 +52,7 @@ export const en: TranslationKeys = {
     products: "Products",
     calendar: "Calendar",
     notes: "Notebook",
+    discussions: "Discussions",
     help: "Help",
     settings: "Settings",
     logout: "Log out",
@@ -491,6 +492,7 @@ export const en: TranslationKeys = {
     lists: "Shopping Lists",
     expandSidebar: "Expand sidebar",
     collapseSidebar: "Collapse sidebar",
+    discussions: "Discussions",
   },
   notatnik: {
     title: "Notebook",

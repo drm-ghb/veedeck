@@ -56,6 +56,13 @@ export async function POST(req: NextRequest) {
             },
           },
         }),
+        discussion: {
+          create: {
+            title,
+            type: "project",
+            ownerId: userId,
+          },
+        },
       },
     });
     return NextResponse.json(project, { status: 201 });

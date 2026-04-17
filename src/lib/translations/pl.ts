@@ -50,6 +50,7 @@ export const pl = {
     products: "Produkty",
     calendar: "Kalendarz",
     notes: "Notatnik",
+    discussions: "Dyskusje",
     help: "Pomoc",
     settings: "Ustawienia",
     logout: "Wyloguj",
@@ -492,6 +493,7 @@ export const pl = {
     lists: "Listy zakupowe",
     expandSidebar: "Rozwiń pasek",
     collapseSidebar: "Zwiń pasek",
+    discussions: "Dyskusje",
   },
   notatnik: {
     title: "Notatnik",

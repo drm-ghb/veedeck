@@ -52,6 +52,8 @@ model User {
   sessions                   Session[]
   shoppingLists              ShoppingList[]
   sentInvitations            Invitation[]   @relation("InvitationDesigner")
+  ownedDiscussions           Discussion[]   @relation("DiscussionOwner")
+  discussionMessages         DiscussionMessage[] @relation("DiscussionMessageUser")
 }
 
 model Invitation {
@@ -172,6 +174,7 @@ model Project {
   renders        Render[]
   rooms          Room[]
   shoppingLists  ShoppingList[]
+  discussion     Discussion?
 }
 
 model ProjectClient {
@@ -424,6 +427,37 @@ model Product {
   userId        String
   user         User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   listProducts ListProduct[]
+}
+
+model Discussion {
+  id        String   @id @default(cuid())
+  title     String
+  type      String   @default("internal") // "project" | "internal"
+  ownerId   String
+  projectId String?  @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  owner    User               @relation("DiscussionOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  project  Project?           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  messages DiscussionMessage[]
+}
+
+model DiscussionMessage {
+  id           String   @id @default(cuid())
+  discussionId String
+  content      String
+  authorName   String
+  userId       String?
+  clientEmail  String?
+  sourceType   String   @default("chat") // "chat" | "render_comment" | "render_pin" | "product_comment"
+  sourceId     String?
+  sourceUrl    String?
+  sourceName   String?
+  createdAt    DateTime @default(now())
+
+  discussion Discussion @relation(fields: [discussionId], references: [id], onDelete: Cascade)
+  user       User?      @relation("DiscussionMessageUser", fields: [userId], references: [id], onDelete: SetNull)
 }
 
 enum ListProductCategory {

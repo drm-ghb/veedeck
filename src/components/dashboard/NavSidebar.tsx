@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { LayoutDashboard, Briefcase, ShoppingCart, Package, PanelLeftClose, PanelLeftOpen, Settings, Sun, Moon, HelpCircle, X, CheckCircle, PictureInPicture, ShieldCheck, CalendarDays, NotebookText } from "lucide-react";
+import { LayoutDashboard, Briefcase, ShoppingCart, Package, PanelLeftClose, PanelLeftOpen, Settings, Sun, Moon, HelpCircle, X, CheckCircle, PictureInPicture, ShieldCheck, CalendarDays, NotebookText, MessageSquare } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import { useT } from "@/lib/i18n";
 
@@ -44,6 +44,7 @@ export default function NavSidebar({ hiddenModules, isAdmin }: NavSidebarProps) 
     { label: t.nav.products, href: "/produkty", icon: <Package size={18} />, slug: "produkty" },
     { label: t.nav.calendar, href: "/kalendarz", icon: <CalendarDays size={18} />, slug: null },
     { label: t.nav.notes, href: "/notatnik", icon: <NotebookText size={18} />, slug: null },
+    { label: t.nav.discussions, href: "/dyskusje", icon: <MessageSquare size={18} />, slug: null },
   ];
 
   function toggle() {

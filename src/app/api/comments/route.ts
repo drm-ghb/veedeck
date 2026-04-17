@@ -63,6 +63,29 @@ export async function POST(req: NextRequest) {
 
   await pusherServer.trigger(`render-${renderId}`, "new-comment", comment);
 
+  // Aggregate non-internal root comments into project discussion
+  if (!isInternal) {
+    const discussion = await prisma.discussion.findUnique({
+      where: { projectId: render.projectId },
+    });
+    if (discussion) {
+      const sourceType = isPin ? "render_pin" : "render_comment";
+      const sourceUrl = `/projects/${render.projectId}/renders/${renderId}${isPin ? `?pinId=${comment.id}` : `?chatId=${comment.id}`}`;
+      const msg = await prisma.discussionMessage.create({
+        data: {
+          discussionId: discussion.id,
+          content,
+          authorName: author,
+          sourceType,
+          sourceId: comment.id,
+          sourceUrl,
+          sourceName: render.name,
+        },
+      });
+      await pusherServer.trigger(`discussion-${discussion.id}`, "new-message", msg);
+    }
+  }
+
   if (render.project.userId) {
     const notifMessage = isPin
       ? `${author} dodał pin w projekcie "${render.project.title}"`

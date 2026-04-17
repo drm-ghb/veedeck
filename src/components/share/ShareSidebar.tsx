@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { LayoutDashboard, ShoppingCart, PanelLeftClose, PanelLeftOpen, PictureInPicture, Sun, Moon, HelpCircle, Settings, UserRound, X, CheckCircle } from "lucide-react";
+import { LayoutDashboard, ShoppingCart, PanelLeftClose, PanelLeftOpen, PictureInPicture, Sun, Moon, HelpCircle, Settings, UserRound, X, CheckCircle, MessageSquare } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { type Theme } from "@/lib/theme";
@@ -20,6 +20,7 @@ interface ShareSidebarProps {
   token: string;
   showRenderFlow?: boolean;
   showListy?: boolean;
+  showDyskusje?: boolean;
   shoppingLists?: ShoppingListLink[];
   /** When provided, clicking RenderFlow calls this instead of navigating (for SPA-style view) */
   onRenderFlowClick?: () => void;
@@ -29,6 +30,7 @@ export default function ShareSidebar({
   token,
   showRenderFlow = true,
   showListy = true,
+  showDyskusje = false,
   shoppingLists = [],
   onRenderFlowClick,
 }: ShareSidebarProps) {
@@ -83,10 +85,12 @@ export default function ShareSidebar({
     shoppingLists.length === 1
       ? `/share/list/${shoppingLists[0].shareToken}`
       : homeHref;
+  const dyskusjeHref = `/share/${token}/dyskusje`;
 
   const isHomeActive = pathname === homeHref;
   const isRenderActive = pathname === renderHref;
   const isListyActive = pathname.startsWith("/share/list/");
+  const isDyskusjeActive = pathname === dyskusjeHref;
 
   const linkCls = (active: boolean) =>
     `flex items-center gap-3 px-2.5 py-2.5 rounded-lg text-sm font-medium transition-colors ${
@@ -152,6 +156,20 @@ export default function ShareSidebar({
               <ShoppingCart size={18} />
             </span>
             {!isCollapsed && t.share.lists}
+          </Link>
+        )}
+
+        {/* Dyskusje */}
+        {showDyskusje && (
+          <Link
+            href={dyskusjeHref}
+            title={isCollapsed ? t.share.discussions : undefined}
+            className={linkCls(isDyskusjeActive)}
+          >
+            <span className="flex-shrink-0 w-5 flex items-center justify-center">
+              <MessageSquare size={18} />
+            </span>
+            {!isCollapsed && t.share.discussions}
           </Link>
         )}
       </nav>

@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
     include: {
       section: {
         include: {
-          list: { select: { id: true, slug: true, name: true, userId: true } },
+          list: { select: { id: true, slug: true, name: true, userId: true, projectId: true } },
         },
       },
     },
@@ -55,6 +55,28 @@ export async function POST(req: NextRequest) {
       },
     });
     await pusherServer.trigger(`user-${list.userId}`, "new-notification", notification);
+
+    // Aggregate into project discussion if list is linked to a project
+    if (list.projectId) {
+      const discussion = await prisma.discussion.findUnique({
+        where: { projectId: list.projectId },
+      });
+      if (discussion) {
+        const sourceUrl = `/listy/${listPath}?product=${productId}`;
+        const msg = await prisma.discussionMessage.create({
+          data: {
+            discussionId: discussion.id,
+            content,
+            authorName: author,
+            sourceType: "product_comment",
+            sourceId: comment.id,
+            sourceUrl,
+            sourceName: `${list.name} › ${product.name}`,
+          },
+        });
+        await pusherServer.trigger(`discussion-${discussion.id}`, "new-message", msg);
+      }
+    }
   }
 
   return NextResponse.json(comment, { status: 201 });
