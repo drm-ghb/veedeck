@@ -17,7 +17,7 @@ import { patchUser, SettingRow, SectionHeader, ToggleSwitch } from "./SettingsSh
 interface Props {
   initialName: string;
   initialEmail: string;
-  initialShowProjectTitle: boolean;
+  initialShowProfileName: boolean;
   initialGlobalHiddenModules: string[];
   initialClientLogoUrl: string | null;
   initialClientWelcomeMessage: string | null;
@@ -27,7 +27,7 @@ interface Props {
 export function SettingsGeneral({
   initialName,
   initialEmail,
-  initialShowProjectTitle,
+  initialShowProfileName,
   initialGlobalHiddenModules,
   initialClientLogoUrl,
   initialClientWelcomeMessage,
@@ -53,7 +53,7 @@ export function SettingsGeneral({
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordLoading, setPasswordLoading] = useState(false);
 
-  const [showProjectTitle, setShowProjectTitle] = useState(initialShowProjectTitle);
+  const [showProfileName, setShowProfileName] = useState(initialShowProfileName);
   const [globalHiddenModules, setGlobalHiddenModules] = useState<string[]>(initialGlobalHiddenModules);
   const [clientLogoUrl, setClientLogoUrl] = useState<string | null>(initialClientLogoUrl);
   const [welcomeMsg, setWelcomeMsg] = useState(initialClientWelcomeMessage ?? "");
@@ -99,10 +99,10 @@ const [navMode, setNavMode] = useState(initialNavMode);
     } finally { setPasswordLoading(false); }
   }
 
-  async function toggleShowProjectTitle() {
-    const next = !showProjectTitle;
-    const res = await patchUser({ showProjectTitle: next });
-    if (res.ok) { setShowProjectTitle(next); toast.success(t.settings.saved); }
+  async function toggleShowProfileName() {
+    const next = !showProfileName;
+    const res = await patchUser({ showProfileName: next });
+    if (res.ok) { setShowProfileName(next); toast.success(t.settings.saved); }
     else toast.error(t.settings.saveError);
   }
 
@@ -213,10 +213,10 @@ async function handleRemoveLogo() {
 
         <div className="bg-card border border-border rounded-2xl p-6 space-y-6">
           <SettingRow
-            label={t.settings.showProjectTitle}
-            description={t.settings.showProjectTitleDesc}
-            checked={showProjectTitle}
-            onToggle={toggleShowProjectTitle}
+            label={t.settings.showProfileName}
+            description={t.settings.showProfileNameDesc}
+            checked={showProfileName}
+            onToggle={toggleShowProfileName}
           />
 
           <div className="space-y-3">

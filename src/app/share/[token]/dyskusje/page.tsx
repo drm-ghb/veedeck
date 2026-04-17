@@ -11,7 +11,7 @@ export default async function ShareDyskusjePage({ params }: { params: Promise<{ 
     where: { shareToken: token },
     include: {
       shoppingLists: { select: { id: true, name: true, shareToken: true } },
-      user: { select: { clientLogoUrl: true, name: true, navMode: true } },
+      user: { select: { clientLogoUrl: true, name: true, navMode: true, showProfileName: true } },
       discussion: {
         select: {
           id: true,
@@ -38,7 +38,7 @@ export default async function ShareDyskusjePage({ params }: { params: Promise<{ 
     <div className={`${isSidebar ? "h-screen" : "min-h-screen"} flex flex-col bg-muted/60`}>
       <ShareNavbar
         clientLogoUrl={project.user.clientLogoUrl}
-        designerName={project.user.name}
+        designerName={project.user.showProfileName ? project.user.name : null}
         projectShareToken={token}
       />
 

@@ -15,7 +15,7 @@ export default async function ProjectHomePage({ params }: { params: Promise<{ to
     include: {
       renders: { where: { archived: false }, select: { id: true }, take: 1 },
       shoppingLists: { select: { id: true, name: true, shareToken: true } },
-      user: { select: { clientLogoUrl: true, name: true, navMode: true, clientWelcomeMessage: true } },
+      user: { select: { clientLogoUrl: true, name: true, navMode: true, clientWelcomeMessage: true, showProfileName: true } },
       discussion: { select: { id: true } },
     },
   });
@@ -105,7 +105,7 @@ export default async function ProjectHomePage({ params }: { params: Promise<{ to
     <div className={`${isSidebar ? "h-screen" : "min-h-screen"} flex flex-col bg-muted/60`}>
       <ShareNavbar
         clientLogoUrl={project.user.clientLogoUrl}
-        designerName={project.user.name}
+        designerName={project.user.showProfileName ? project.user.name : null}
         projectShareToken={token}
       />
 

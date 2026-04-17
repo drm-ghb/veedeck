@@ -22,7 +22,7 @@ export async function PATCH(req: NextRequest) {
     "allowDirectStatusChange", "allowClientComments", "allowClientAcceptance",
     "requireClientEmail", "requirePinTitle", "autoClosePinsOnAccept",
     "autoArchiveOnAccept", "hideCommentCount", "notifyClientOnStatusChange",
-    "notifyClientOnReply", "allowClientVersionRestore", "showProjectTitle",
+    "notifyClientOnReply", "allowClientVersionRestore", "showProfileName",
   ] as const;
   const stringFields = ["clientWelcomeMessage", "clientLogoUrl", "accentColor", "defaultRenderOrder", "defaultRenderStatus", "navMode"] as const;
 

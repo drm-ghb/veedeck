@@ -31,7 +31,7 @@ export default async function PublicListPage({ params }: { params: Promise<{ tok
           clientName: true,
           renders: { select: { id: true }, take: 1 },
           shoppingLists: { where: { archived: false }, select: { id: true, name: true, shareToken: true } },
-          user: { select: { clientLogoUrl: true, name: true, navMode: true } },
+          user: { select: { clientLogoUrl: true, name: true, navMode: true, showProfileName: true } },
         },
       },
       sections: {
@@ -140,7 +140,7 @@ export default async function PublicListPage({ params }: { params: Promise<{ tok
         grandTotal={grandTotal}
         grandCurrency={grandCurrency}
         hasTotal={hasTotal}
-        designerName={list.project?.user?.name ?? undefined}
+        designerName={list.project?.user?.showProfileName ? (list.project.user.name ?? undefined) : undefined}
         designerLogoUrl={list.project?.user?.clientLogoUrl ?? undefined}
       />
     </main>
@@ -152,7 +152,7 @@ export default async function PublicListPage({ params }: { params: Promise<{ tok
         backHref={isSidebar ? undefined : (projectToken ? `/share/${projectToken}/home` : undefined)}
         backLabel={list.project?.title}
         clientLogoUrl={list.project?.user?.clientLogoUrl}
-        designerName={list.project?.user?.name}
+        designerName={list.project?.user?.showProfileName ? (list.project.user.name ?? undefined) : undefined}
         listToken={token}
         projectShareToken={list.project?.shareToken}
       />

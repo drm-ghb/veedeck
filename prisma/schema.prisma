@@ -33,7 +33,7 @@ model User {
   requireClientEmail         Boolean        @default(false)
   requirePinTitle            Boolean        @default(false)
   allowClientVersionRestore  Boolean        @default(true)
-  showProjectTitle           Boolean        @default(true)
+  showProfileName            Boolean        @default(false)
   isAdmin                    Boolean        @default(false)
   needsNameSetup             Boolean        @default(false)
   globalHiddenModules        String[]       @default([])

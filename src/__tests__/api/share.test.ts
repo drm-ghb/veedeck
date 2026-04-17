@@ -33,7 +33,7 @@ const mockProject = {
     notifyClientOnStatusChange: true,
     notifyClientOnReply: true,
     allowClientVersionRestore: true,
-    showProjectTitle: true,
+    showProfileName: true,
     navMode: "dashboard",
   },
   rooms: [],
