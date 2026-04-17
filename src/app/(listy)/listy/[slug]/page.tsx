@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { redirect, notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { getWorkspaceUserId } from "@/lib/workspace";
 import ListDetail from "@/components/listy/ListDetail";
 
 export default async function ListPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ product?: string }> }) {
@@ -10,11 +11,13 @@ export default async function ListPage({ params, searchParams }: { params: Promi
   const { slug } = await params;
   const { product: initialOpenProductId } = await searchParams;
 
+  const userId = getWorkspaceUserId(session);
+
   const [userSettings, list] = await Promise.all([
-    prisma.user.findUnique({ where: { id: session.user.id }, select: { listsCategoryOrder: true, clientLogoUrl: true } }),
+    prisma.user.findUnique({ where: { id: userId }, select: { listsCategoryOrder: true, clientLogoUrl: true } }),
     prisma.shoppingList.findFirst({
       where: {
-        userId: session.user.id,
+        userId,
         OR: [{ slug }, { id: slug }],
       },
       select: {

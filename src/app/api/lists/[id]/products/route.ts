@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getWorkspaceUserId } from "@/lib/workspace";
 
 export async function POST(
   req: NextRequest,
@@ -17,8 +18,10 @@ export async function POST(
     return NextResponse.json({ error: "Nazwa jest wymagana" }, { status: 400 });
   }
 
+  const userId = getWorkspaceUserId(session);
+
   const list = await prisma.shoppingList.findFirst({
-    where: { id, userId: session.user.id },
+    where: { id, userId },
   });
   if (!list) return NextResponse.json({ error: "Nie znaleziono listy" }, { status: 404 });
 
@@ -33,7 +36,6 @@ export async function POST(
   }
 
   const sectionId = unsortedSection.id;
-  const userId = session.user.id;
 
   // Link to library product only when explicitly added from library tab
   let finalProductId: string | null = null;

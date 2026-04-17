@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getWorkspaceUserId } from "@/lib/workspace";
 
 export async function POST(
   req: NextRequest,
@@ -19,7 +20,7 @@ export async function POST(
     include: { project: true, _count: { select: { versions: true } } },
   });
 
-  if (!render || render.project.userId !== session.user.id) {
+  if (!render || render.project.userId !== getWorkspaceUserId(session)) {
     return NextResponse.json({ error: "Brak dostępu" }, { status: 403 });
   }
 

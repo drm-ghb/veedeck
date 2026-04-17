@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getWorkspaceUserId } from "@/lib/workspace";
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
@@ -11,7 +12,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   if (!Array.isArray(order)) return NextResponse.json({ error: "Nieprawidłowe dane" }, { status: 400 });
 
-  const list = await prisma.shoppingList.findFirst({ where: { id, userId: session.user.id } });
+  const list = await prisma.shoppingList.findFirst({ where: { id, userId: getWorkspaceUserId(session) } });
   if (!list) return NextResponse.json({ error: "Nie znaleziono listy" }, { status: 404 });
 
   await Promise.all(
@@ -40,7 +41,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   }
 
   const list = await prisma.shoppingList.findFirst({
-    where: { id, userId: session.user.id },
+    where: { id, userId: getWorkspaceUserId(session) },
   });
 
   if (!list) {

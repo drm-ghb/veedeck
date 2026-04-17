@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getWorkspaceUserId } from "@/lib/workspace";
 import { pusherServer } from "@/lib/pusher";
 import Anthropic from "@anthropic-ai/sdk";
 
@@ -28,7 +29,7 @@ export async function POST(
     },
   });
 
-  if (!render || render.project.userId !== session.user.id) {
+  if (!render || render.project.userId !== getWorkspaceUserId(session)) {
     return NextResponse.json({ error: "Brak dostępu" }, { status: 403 });
   }
 

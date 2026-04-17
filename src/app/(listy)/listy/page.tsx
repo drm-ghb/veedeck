@@ -1,14 +1,17 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { getWorkspaceUserId } from "@/lib/workspace";
 import ListyView from "@/components/listy/ListyView";
 
 export default async function ListyPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
+  const userId = getWorkspaceUserId(session);
+
   const lists = await prisma.shoppingList.findMany({
-    where: { userId: session.user.id },
+    where: { userId },
     include: { project: { select: { id: true, title: true, hiddenModules: true, slug: true } } },
     orderBy: { createdAt: "desc" },
   });

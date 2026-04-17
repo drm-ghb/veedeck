@@ -1,10 +1,11 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getWorkspaceUserId } from "@/lib/workspace";
 import ProjektyView from "@/components/projekty/ProjektyView";
 
 export default async function ProjektyPage() {
   const session = await auth();
-  const userId = session!.user!.id!;
+  const userId = getWorkspaceUserId(session!);
 
   const [projects, archivedProjects] = await Promise.all([
     prisma.project.findMany({

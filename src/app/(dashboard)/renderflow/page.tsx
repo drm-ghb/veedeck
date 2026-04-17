@@ -1,18 +1,20 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getWorkspaceUserId } from "@/lib/workspace";
 import ProjectsView from "@/components/dashboard/ProjectsView";
 
 export default async function DashboardPage() {
   const session = await auth();
+  const userId = getWorkspaceUserId(session!);
 
   const [projects, archivedProjects] = await Promise.all([
     prisma.project.findMany({
-      where: { userId: session!.user!.id!, archived: false, modules: { has: "renderflow" } },
+      where: { userId, archived: false, modules: { has: "renderflow" } },
       include: { _count: { select: { renders: true } } },
       orderBy: { createdAt: "desc" },
     }),
     prisma.project.findMany({
-      where: { userId: session!.user!.id!, archived: true, modules: { has: "renderflow" } },
+      where: { userId, archived: true, modules: { has: "renderflow" } },
       include: { _count: { select: { renders: true } } },
       orderBy: { createdAt: "desc" },
     }),
