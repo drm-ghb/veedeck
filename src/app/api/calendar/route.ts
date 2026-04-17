@@ -1,6 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { pusherServer } from "@/lib/pusher";
+
+async function notifyGuestUsers(
+  guestList: { userId?: string | null }[],
+  eventTitle: string,
+  organizerName: string
+) {
+  const guestUserIds = guestList.map((g) => g.userId).filter(Boolean) as string[];
+  if (guestUserIds.length === 0) return;
+
+  await Promise.all(
+    guestUserIds.map(async (guestUserId) => {
+      await prisma.notification.create({
+        data: {
+          userId: guestUserId,
+          message: `${organizerName} zaprosił/a Cię do wydarzenia: „${eventTitle}"`,
+          link: "/kalendarz",
+          type: "info",
+        },
+      });
+      await pusherServer.trigger(`user-${guestUserId}`, "new-notification", {});
+    })
+  );
+}
 
 export async function GET(req: NextRequest) {
   const session = await auth();
@@ -52,6 +76,20 @@ export async function POST(req: NextRequest) {
   if (!type) return NextResponse.json({ error: "Typ jest wymagany" }, { status: 400 });
   if (!startAt) return NextResponse.json({ error: "Data jest wymagana" }, { status: 400 });
 
+  const organizer = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { name: true, email: true },
+  });
+  const organizerName = organizer?.name || organizer?.email || "Projektant";
+
+  const guestData = (guests ?? [])
+    .filter((g: any) => g.name?.trim() || g.email?.trim())
+    .map((g: any) => ({
+      name: g.name?.trim() || null,
+      email: g.email?.trim() || null,
+      userId: g.userId || null,
+    }));
+
   const event = await prisma.calendarEvent.create({
     data: {
       title: title.trim(),
@@ -61,18 +99,12 @@ export async function POST(req: NextRequest) {
       location: location?.trim() || null,
       description: description?.trim() || null,
       userId,
-      guests: {
-        create: (guests ?? [])
-          .filter((g: any) => g.name?.trim() || g.email?.trim())
-          .map((g: any) => ({
-            name: g.name?.trim() || null,
-            email: g.email?.trim() || null,
-            userId: g.userId || null,
-          })),
-      },
+      guests: { create: guestData },
     },
     include: { guests: true },
   });
+
+  await notifyGuestUsers(guestData, title.trim(), organizerName);
 
   return NextResponse.json({ ...event, isGuest: false }, { status: 201 });
 }
