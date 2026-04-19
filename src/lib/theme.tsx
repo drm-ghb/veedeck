@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 
 export type Theme = "light" | "dark" | "system";
-export type ColorTheme = "champagne" | "obsidian" | "navy" | "plum";
+export type ColorTheme = "champagne" | "obsidian" | "navy" | "plum" | "mono";
 
 const ThemeContext = createContext<{
   theme: Theme;

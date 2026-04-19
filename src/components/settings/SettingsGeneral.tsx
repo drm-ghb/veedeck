@@ -157,6 +157,7 @@ const COLOR_THEMES: {
     { slug: "obsidian", name: "Obsidian Gold", subtitle: "Złoto na czerni", sidebar: "#12110F", background: "#F7F5F0", primary: "#C7A46C", accent: "#8A6A3A" },
     { slug: "navy", name: "Royal Navy", subtitle: "Granat i srebro", sidebar: "#0A1230", background: "#F2F3F6", primary: "#15224F", accent: "#B8C0DB" },
     { slug: "plum", name: "Plum Noir", subtitle: "Śliwka i róż", sidebar: "#1F1320", background: "#F5F1ED", primary: "#5A2545", accent: "#C98A6B" },
+    { slug: "mono", name: "Monochrome", subtitle: "Czerń, szarość i biel", sidebar: "#EAEAEA", background: "#F0F0F0", primary: "#111111", accent: "#333333" },
   ];
 
   async function handleColorThemeChange(slug: ColorTheme) {

@@ -587,6 +587,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
     open: false,
     sectionId: null,
   });
+  const [fabMenuOpen, setFabMenuOpen] = useState(false);
   const [editState, setEditState] = useState<{ product: Product; sectionId: string } | null>(null);
   const [moveState, setMoveState] = useState<{ product: Product; sectionId: string } | null>(null);
   const [activeDragProduct, setActiveDragProduct] = useState<Product | null>(null);
@@ -1781,11 +1782,11 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                         )}
                         <button
                           onClick={() => setDialogState({ open: true, sectionId: section.id })}
-                          className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground border border-border hover:border-foreground/30 rounded-md px-2 py-0.5 transition-colors shrink-0"
+                          className="hidden sm:flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground border border-border hover:border-foreground/30 rounded-md px-2 py-0.5 transition-colors shrink-0"
                           title="Dodaj produkt"
                         >
                           <Plus size={13} />
-                          <span className="hidden sm:inline">Dodaj produkt</span>
+                          Dodaj produkt
                         </button>
                       </div>
                       <div className="flex items-center gap-3">
@@ -2049,6 +2050,43 @@ export default function ListDetail({ list, designerName, designerEmail, designer
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* FAB — mobile only */}
+      {sections.filter((s) => !s.unsorted).length > 0 && (
+        <div className="sm:hidden fixed bottom-6 right-5 z-40">
+          {fabMenuOpen && (
+            <>
+              <div className="fixed inset-0" onClick={() => setFabMenuOpen(false)} />
+              <div className="absolute bottom-16 right-0 bg-popover border border-border rounded-2xl shadow-xl overflow-hidden min-w-[180px]">
+                <p className="text-[11px] font-medium text-muted-foreground px-4 pt-3 pb-1.5 uppercase tracking-wide">Dodaj produkt do</p>
+                {sections.filter((s) => !s.unsorted).map((s) => (
+                  <button
+                    key={s.id}
+                    onClick={() => { setFabMenuOpen(false); setDialogState({ open: true, sectionId: s.id }); }}
+                    className="w-full text-left px-4 py-2.5 text-sm hover:bg-muted transition-colors"
+                  >
+                    {s.name}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+          <button
+            onClick={() => {
+              const real = sections.filter((s) => !s.unsorted);
+              if (real.length === 1) {
+                setDialogState({ open: true, sectionId: real[0].id });
+              } else {
+                setFabMenuOpen((v) => !v);
+              }
+            }}
+            className="w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center hover:opacity-90 active:scale-95 transition-all"
+            title="Dodaj produkt"
+          >
+            <Plus size={24} />
+          </button>
         </div>
       )}
     </div>
