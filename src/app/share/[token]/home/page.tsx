@@ -120,6 +120,7 @@ export default async function ProjectHomePage({ params }: { params: Promise<{ to
         <div className="flex flex-1 min-h-0">
           <ShareSidebar
             token={token}
+            discussionId={project.discussion?.id}
             showRenderFlow={showRenderFlow && hasRenders}
             showListy={showListy}
             showDyskusje={hasDyskusje}

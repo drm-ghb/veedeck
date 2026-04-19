@@ -53,6 +53,7 @@ export default async function ShareDyskusjePage({ params }: { params: Promise<{ 
         <div className="flex flex-1 min-h-0">
           <ShareSidebar
             token={token}
+            discussionId={project.discussion.id}
             showRenderFlow={!project.hiddenModules.includes("renderflow")}
             showListy={!project.hiddenModules.includes("listy")}
             showDyskusje={true}

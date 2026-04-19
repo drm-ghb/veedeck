@@ -121,6 +121,13 @@ export default function DyskusjeView({ currentUserId, initialDiscussions, projec
     return [...unread, ...read];
   }, [discussions, lastReadTimes]);
 
+  // Sync unread count to localStorage for NavSidebar badge
+  useEffect(() => {
+    const count = discussions.filter((d) => hasUnread(d)).length;
+    localStorage.setItem("discussions-unread-count", String(count));
+    window.dispatchEvent(new Event("discussions-unread-updated"));
+  }, [discussions, lastReadTimes]);
+
   // Close project dropdown on outside click
   useEffect(() => {
     function handle(e: MouseEvent) {

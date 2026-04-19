@@ -80,6 +80,9 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
       .then((data) => {
         setMessages(Array.isArray(data) ? data : []);
         setLoading(false);
+        // Notify ShareSidebar that messages have been read
+        localStorage.setItem(`share-discussion-unread-${token}`, "0");
+        window.dispatchEvent(new CustomEvent("share-discussion-read", { detail: { token } }));
       })
       .catch(() => setLoading(false));
   }, [token, discussionId]);

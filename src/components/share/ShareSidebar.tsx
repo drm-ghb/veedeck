@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { LayoutDashboard, ShoppingCart, PanelLeftClose, PanelLeftOpen, PictureInPicture, Sun, Moon, HelpCircle, Settings, UserRound, X, CheckCircle, MessageSquare } from "lucide-react";
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { type Theme } from "@/lib/theme";
 import { useTheme } from "@/lib/theme";
 import { useT } from "@/lib/i18n";
+import Pusher from "pusher-js";
 
 interface ShoppingListLink {
   id: string;
@@ -18,6 +19,7 @@ interface ShoppingListLink {
 
 interface ShareSidebarProps {
   token: string;
+  discussionId?: string | null;
   showRenderFlow?: boolean;
   showListy?: boolean;
   showDyskusje?: boolean;
@@ -28,6 +30,7 @@ interface ShareSidebarProps {
 
 export default function ShareSidebar({
   token,
+  discussionId,
   showRenderFlow = true,
   showListy = true,
   showDyskusje = false,
@@ -45,6 +48,9 @@ export default function ShareSidebar({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [authorName, setAuthorName] = useState("");
   const [nameInput, setNameInput] = useState("");
+  const [discussionUnread, setDiscussionUnread] = useState(0);
+  const pusherRef = useRef<Pusher | null>(null);
+  const isDyskusjeActiveRef = useRef(false);
 
   const THEME_OPTIONS: { value: Theme; label: string; Icon: React.ElementType }[] = [
     { value: "light", label: t.theme.light, Icon: Sun },
@@ -70,6 +76,62 @@ export default function ShareSidebar({
     const saved = localStorage.getItem("nav-sidebar-collapsed");
     if (saved === "true") setCollapsed(true);
   }, []);
+
+  // Unread discussion count
+  useEffect(() => {
+    const stored = localStorage.getItem(`share-discussion-unread-${token}`);
+    if (stored) setDiscussionUnread(parseInt(stored, 10) || 0);
+  }, [token]);
+
+  // Reset when navigating to dyskusje page
+  useEffect(() => {
+    if (isDyskusjeActive) {
+      setDiscussionUnread(0);
+      localStorage.setItem(`share-discussion-unread-${token}`, "0");
+    }
+  }, [isDyskusjeActive, token]);
+
+  // Listen for read event from ClientDiscussionView
+  useEffect(() => {
+    function onRead(e: Event) {
+      const detail = (e as CustomEvent<{ token: string }>).detail;
+      if (detail?.token === token) {
+        setDiscussionUnread(0);
+        localStorage.setItem(`share-discussion-unread-${token}`, "0");
+      }
+    }
+    window.addEventListener("share-discussion-read", onRead);
+    return () => window.removeEventListener("share-discussion-read", onRead);
+  }, [token]);
+
+  // Keep ref in sync for Pusher callback (avoids stale closure)
+  const dyskusjeHrefForRef = `/share/${token}/dyskusje`;
+  useEffect(() => {
+    isDyskusjeActiveRef.current = pathname === dyskusjeHrefForRef;
+  }, [pathname, dyskusjeHrefForRef]);
+
+  // Pusher — track incoming messages when not on dyskusje page
+  useEffect(() => {
+    if (!discussionId) return;
+    if (!pusherRef.current) {
+      pusherRef.current = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY!, {
+        cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
+      });
+    }
+    const channel = pusherRef.current.subscribe(`discussion-${discussionId}`);
+    channel.bind("new-message", () => {
+      if (!isDyskusjeActiveRef.current) {
+        setDiscussionUnread((prev) => {
+          const next = prev + 1;
+          localStorage.setItem(`share-discussion-unread-${token}`, String(next));
+          return next;
+        });
+      }
+    });
+    return () => {
+      pusherRef.current?.unsubscribe(`discussion-${discussionId}`);
+    };
+  }, [discussionId, token]);
 
   function toggle() {
     const next = !collapsed;
@@ -166,10 +228,20 @@ export default function ShareSidebar({
             title={isCollapsed ? t.share.discussions : undefined}
             className={linkCls(isDyskusjeActive)}
           >
-            <span className="flex-shrink-0 w-5 flex items-center justify-center">
+            <span className="flex-shrink-0 w-5 flex items-center justify-center relative">
               <MessageSquare size={18} />
+              {discussionUnread > 0 && isCollapsed && (
+                <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-0.5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center leading-none">
+                  {discussionUnread > 99 ? "99+" : discussionUnread}
+                </span>
+              )}
             </span>
-            {!isCollapsed && t.share.discussions}
+            {!isCollapsed && <span className="flex-1">{t.share.discussions}</span>}
+            {!isCollapsed && discussionUnread > 0 && (
+              <span className="ml-auto min-w-[20px] h-5 px-1.5 rounded-full bg-primary text-primary-foreground text-[11px] font-bold flex items-center justify-center leading-none">
+                {discussionUnread > 99 ? "99+" : discussionUnread}
+              </span>
+            )}
           </Link>
         )}
       </nav>

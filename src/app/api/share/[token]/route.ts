@@ -101,5 +101,6 @@ export async function GET(
     hasPassword: !!project.sharePassword,
     shareExpiresAt: project.shareExpiresAt?.toISOString() ?? null,
     hasDiscussion: !!discussion,
+    discussionId: discussion?.id ?? null,
   });
 }

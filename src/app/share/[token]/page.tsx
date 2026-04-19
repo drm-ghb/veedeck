@@ -93,6 +93,7 @@ interface Project {
   clientCanUpload: boolean;
   shoppingLists: { id: string; name: string; shareToken: string }[];
   hasDiscussion: boolean;
+  discussionId: string | null;
 }
 
 export default function SharePage() {
@@ -586,6 +587,7 @@ export default function SharePage() {
           <div className="flex flex-1 min-h-0">
             <ShareSidebar
               token={token}
+              discussionId={project.discussionId}
               showRenderFlow={!project.hiddenModules.includes("renderflow")}
               showListy={!project.hiddenModules.includes("listy")}
               showDyskusje={project.hasDiscussion}
@@ -854,6 +856,7 @@ export default function SharePage() {
         <div className="flex flex-1 min-h-0">
           <ShareSidebar
             token={token}
+            discussionId={project.discussionId}
             showRenderFlow={!project.hiddenModules.includes("renderflow")}
             showListy={!project.hiddenModules.includes("listy")}
             showDyskusje={project.hasDiscussion}

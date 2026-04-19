@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { LayoutDashboard, Briefcase, ShoppingCart, Package, PanelLeftClose, PanelLeftOpen, Settings, Sun, Moon, HelpCircle, X, CheckCircle, PictureInPicture, ShieldCheck, CalendarDays, NotebookText, MessageSquare } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import { useT } from "@/lib/i18n";
@@ -36,15 +36,31 @@ export default function NavSidebar({ hiddenModules, isAdmin }: NavSidebarProps) 
   const [helpDesc, setHelpDesc] = useState("");
   const [helpSent, setHelpSent] = useState(false);
 
+  const [discussionUnread, setDiscussionUnread] = useState(0);
+
+  useEffect(() => {
+    function read() {
+      const val = localStorage.getItem("discussions-unread-count");
+      setDiscussionUnread(val ? parseInt(val, 10) : 0);
+    }
+    read();
+    window.addEventListener("discussions-unread-updated", read);
+    window.addEventListener("storage", read);
+    return () => {
+      window.removeEventListener("discussions-unread-updated", read);
+      window.removeEventListener("storage", read);
+    };
+  }, []);
+
   const items = [
-    { label: t.nav.dashboard, href: "/dashboard", icon: <LayoutDashboard size={18} />, slug: null },
-    { label: t.nav.projects, href: "/projekty", icon: <Briefcase size={18} />, slug: null },
-    { label: t.nav.renderflow, href: "/renderflow", icon: <PictureInPicture size={18} />, slug: "renderflow" },
-    { label: t.nav.lists, href: "/listy", icon: <ShoppingCart size={18} />, slug: "listy" },
-    { label: t.nav.products, href: "/produkty", icon: <Package size={18} />, slug: "produkty" },
-    { label: t.nav.calendar, href: "/kalendarz", icon: <CalendarDays size={18} />, slug: null },
-    { label: t.nav.notes, href: "/notatnik", icon: <NotebookText size={18} />, slug: null },
-    { label: t.nav.discussions, href: "/dyskusje", icon: <MessageSquare size={18} />, slug: null },
+    { label: t.nav.dashboard, href: "/dashboard", icon: <LayoutDashboard size={18} />, slug: null, badge: 0 },
+    { label: t.nav.projects, href: "/projekty", icon: <Briefcase size={18} />, slug: null, badge: 0 },
+    { label: t.nav.renderflow, href: "/renderflow", icon: <PictureInPicture size={18} />, slug: "renderflow", badge: 0 },
+    { label: t.nav.lists, href: "/listy", icon: <ShoppingCart size={18} />, slug: "listy", badge: 0 },
+    { label: t.nav.products, href: "/produkty", icon: <Package size={18} />, slug: "produkty", badge: 0 },
+    { label: t.nav.calendar, href: "/kalendarz", icon: <CalendarDays size={18} />, slug: null, badge: 0 },
+    { label: t.nav.notes, href: "/notatnik", icon: <NotebookText size={18} />, slug: null, badge: 0 },
+    { label: t.nav.discussions, href: "/dyskusje", icon: <MessageSquare size={18} />, slug: null, badge: discussionUnread },
   ];
 
   function toggle() {
@@ -65,6 +81,7 @@ export default function NavSidebar({ hiddenModules, isAdmin }: NavSidebarProps) 
       <nav className="flex-1 p-2 space-y-0.5 overflow-y-auto">
         {visible.map((item) => {
           const active = pathname === item.href || pathname.startsWith(item.href + "/");
+          const badge = item.badge > 0 ? item.badge : null;
           return (
             <Link
               key={item.href}
@@ -76,10 +93,20 @@ export default function NavSidebar({ hiddenModules, isAdmin }: NavSidebarProps) 
                   : "text-gray-600 dark:text-gray-400 hover:bg-muted hover:text-foreground"
               }`}
             >
-              <span className="flex-shrink-0 w-5 flex items-center justify-center">
+              <span className="flex-shrink-0 w-5 flex items-center justify-center relative">
                 {item.icon}
+                {badge !== null && isCollapsed && (
+                  <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-0.5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center leading-none">
+                    {badge > 99 ? "99+" : badge}
+                  </span>
+                )}
               </span>
-              {!isCollapsed && item.label}
+              {!isCollapsed && <span className="flex-1">{item.label}</span>}
+              {!isCollapsed && badge !== null && (
+                <span className="ml-auto min-w-[20px] h-5 px-1.5 rounded-full bg-primary text-primary-foreground text-[11px] font-bold flex items-center justify-center leading-none">
+                  {badge > 99 ? "99+" : badge}
+                </span>
+              )}
             </Link>
           );
         })}

@@ -32,6 +32,7 @@ export default async function PublicListPage({ params }: { params: Promise<{ tok
           renders: { select: { id: true }, take: 1 },
           shoppingLists: { where: { archived: false }, select: { id: true, name: true, shareToken: true } },
           user: { select: { clientLogoUrl: true, name: true, navMode: true, showProfileName: true, showClientLogo: true } },
+          discussion: { select: { id: true } },
         },
       },
       sections: {
@@ -161,6 +162,7 @@ export default async function PublicListPage({ params }: { params: Promise<{ tok
         <div className="flex flex-1 min-h-0">
           <ShareSidebar
             token={projectToken}
+            discussionId={list.project?.discussion?.id ?? null}
             showRenderFlow={showRenderFlow && hasRenders}
             showListy={showListy}
             shoppingLists={list.project?.shoppingLists ?? []}
