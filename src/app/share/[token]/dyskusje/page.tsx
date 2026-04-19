@@ -4,6 +4,7 @@ import ShareNavbar from "@/components/share/ShareNavbar";
 import ShareSidebar from "@/components/share/ShareSidebar";
 import ClientDiscussionView from "@/components/dyskusje/ClientDiscussionView";
 import ClientNameGate from "@/components/share/ClientNameGate";
+import ClientThemeApplier from "@/components/share/ClientThemeApplier";
 
 export default async function ShareDyskusjePage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
@@ -12,7 +13,7 @@ export default async function ShareDyskusjePage({ params }: { params: Promise<{ 
     where: { shareToken: token },
     include: {
       shoppingLists: { select: { id: true, name: true, shareToken: true } },
-      user: { select: { clientLogoUrl: true, name: true, navMode: true, showProfileName: true, showClientLogo: true, requireClientEmail: true } },
+      user: { select: { clientLogoUrl: true, name: true, navMode: true, showProfileName: true, showClientLogo: true, requireClientEmail: true, colorTheme: true } },
       discussion: {
         select: {
           id: true,
@@ -42,6 +43,7 @@ export default async function ShareDyskusjePage({ params }: { params: Promise<{ 
       clientLogoUrl={project.user.showClientLogo ? project.user.clientLogoUrl : null}
       designerName={project.user.showProfileName ? project.user.name : null}
     >
+    <ClientThemeApplier colorTheme={project.user.colorTheme} />
     <div className={`${isSidebar ? "h-screen" : "min-h-screen"} flex flex-col bg-muted/60`}>
       <ShareNavbar
         clientLogoUrl={project.user.showClientLogo ? project.user.clientLogoUrl : null}

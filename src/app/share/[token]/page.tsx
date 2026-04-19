@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import RenderViewer from "@/components/render/RenderViewer";
 import ShareSidebar from "@/components/share/ShareSidebar";
+import ClientThemeApplier from "@/components/share/ClientThemeApplier";
 import ShareNavbar from "@/components/share/ShareNavbar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -94,6 +95,7 @@ interface Project {
   shoppingLists: { id: string; name: string; shareToken: string }[];
   hasDiscussion: boolean;
   discussionId: string | null;
+  colorTheme: string;
 }
 
 export default function SharePage() {
@@ -514,6 +516,8 @@ export default function SharePage() {
 
   const isSidebar = project.navMode === "sidebar";
 
+  const themeApplier = <ClientThemeApplier colorTheme={project.colorTheme} />;
+
   // Render view — full screen
   if (view === "render" && selectedRender && selectedRoom) {
     // Scope navigation to current folder if one is selected, otherwise to renders without folder
@@ -583,6 +587,7 @@ export default function SharePage() {
     if (isSidebar) {
       return (
         <div className="h-screen flex flex-col bg-muted/60">
+          {themeApplier}
           {renderNav}
           <div className="flex flex-1 min-h-0">
             <ShareSidebar
@@ -604,6 +609,7 @@ export default function SharePage() {
 
     return (
       <div className="fixed inset-0 z-20 bg-background flex flex-col">
+        {themeApplier}
         {renderNav}
         <div className="flex-1 min-h-0">
           {renderViewer}
@@ -844,6 +850,7 @@ export default function SharePage() {
 
   return (
     <div className={`${isSidebar ? "h-screen" : "min-h-screen"} flex flex-col bg-muted/60`}>
+      {themeApplier}
       {/* Nav */}
       <ShareNavbar
         backHref={isSidebar ? undefined : `/share/${token}/home`}

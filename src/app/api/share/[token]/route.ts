@@ -28,6 +28,7 @@ export async function GET(
           showProfileName: true,
           showClientLogo: true,
           navMode: true,
+          colorTheme: true,
         },
       },
       shoppingLists: {

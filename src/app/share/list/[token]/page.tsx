@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import ShareNavbar from "@/components/share/ShareNavbar";
 import ShareListClient from "@/components/listy/ShareListClient";
 import ShareSidebar from "@/components/share/ShareSidebar";
+import ClientThemeApplier from "@/components/share/ClientThemeApplier";
 
 function parsePrice(price: string | null): number | null {
   if (!price) return null;
@@ -31,7 +32,7 @@ export default async function PublicListPage({ params }: { params: Promise<{ tok
           clientName: true,
           renders: { select: { id: true }, take: 1 },
           shoppingLists: { where: { archived: false }, select: { id: true, name: true, shareToken: true } },
-          user: { select: { clientLogoUrl: true, name: true, navMode: true, showProfileName: true, showClientLogo: true } },
+          user: { select: { clientLogoUrl: true, name: true, navMode: true, showProfileName: true, showClientLogo: true, colorTheme: true } },
           discussion: { select: { id: true } },
         },
       },
@@ -149,6 +150,7 @@ export default async function PublicListPage({ params }: { params: Promise<{ tok
 
   return (
     <div className={`${isSidebar ? "h-screen" : "min-h-screen"} flex flex-col bg-muted/60`}>
+      {list.project?.user?.colorTheme && <ClientThemeApplier colorTheme={list.project.user.colorTheme} />}
       <ShareNavbar
         backHref={isSidebar ? undefined : (projectToken ? `/share/${projectToken}/home` : undefined)}
         backLabel={list.project?.title}
