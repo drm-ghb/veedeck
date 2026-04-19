@@ -12,6 +12,7 @@ export default async function ShareDyskusjePage({ params }: { params: Promise<{ 
   const project = await prisma.project.findUnique({
     where: { shareToken: token },
     include: {
+      renders: { where: { archived: false }, select: { id: true }, take: 1 },
       shoppingLists: { select: { id: true, name: true, shareToken: true } },
       user: { select: { clientLogoUrl: true, name: true, navMode: true, showProfileName: true, showClientLogo: true, requireClientEmail: true, colorTheme: true } },
       discussion: {
@@ -27,6 +28,7 @@ export default async function ShareDyskusjePage({ params }: { params: Promise<{ 
   if (!project.discussion) notFound();
 
   const isSidebar = project.user.navMode === "sidebar";
+  const hasRenders = project.renders.length > 0;
 
   const content = (
     <ClientDiscussionView
@@ -56,7 +58,7 @@ export default async function ShareDyskusjePage({ params }: { params: Promise<{ 
           <ShareSidebar
             token={token}
             discussionId={project.discussion.id}
-            showRenderFlow={!project.hiddenModules.includes("renderflow")}
+            showRenderFlow={!project.hiddenModules.includes("renderflow") && hasRenders}
             showListy={!project.hiddenModules.includes("listy")}
             showDyskusje={true}
             shoppingLists={project.shoppingLists}
