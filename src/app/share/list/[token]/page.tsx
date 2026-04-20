@@ -4,6 +4,7 @@ import ShareNavbar from "@/components/share/ShareNavbar";
 import ShareListClient from "@/components/listy/ShareListClient";
 import ShareSidebar from "@/components/share/ShareSidebar";
 import ClientThemeApplier from "@/components/share/ClientThemeApplier";
+import ClientNameGate from "@/components/share/ClientNameGate";
 
 function parsePrice(price: string | null): number | null {
   if (!price) return null;
@@ -32,7 +33,7 @@ export default async function PublicListPage({ params }: { params: Promise<{ tok
           clientName: true,
           renders: { select: { id: true }, take: 1 },
           shoppingLists: { where: { archived: false }, select: { id: true, name: true, shareToken: true } },
-          user: { select: { clientLogoUrl: true, name: true, navMode: true, showProfileName: true, showClientLogo: true, colorTheme: true } },
+          user: { select: { clientLogoUrl: true, name: true, navMode: true, showProfileName: true, showClientLogo: true, colorTheme: true, requireClientEmail: true } },
           discussion: { select: { id: true } },
         },
       },
@@ -149,7 +150,18 @@ export default async function PublicListPage({ params }: { params: Promise<{ tok
     </main>
   );
 
+  const gateToken = list.project?.shareToken ?? token;
+  const requireClientEmail = list.project?.user?.requireClientEmail ?? false;
+  const gateClientLogoUrl = list.project?.user?.showClientLogo ? (list.project.user.clientLogoUrl ?? undefined) : undefined;
+  const gateDesignerName = list.project?.user?.showProfileName ? (list.project.user.name ?? undefined) : undefined;
+
   return (
+    <ClientNameGate
+      token={gateToken}
+      requireClientEmail={requireClientEmail}
+      clientLogoUrl={gateClientLogoUrl}
+      designerName={gateDesignerName}
+    >
     <div className={`${isSidebar ? "h-screen" : "min-h-screen"} flex flex-col bg-muted/60`}>
       {list.project?.user?.colorTheme && <ClientThemeApplier colorTheme={list.project.user.colorTheme} />}
       <ShareNavbar
@@ -178,5 +190,6 @@ export default async function PublicListPage({ params }: { params: Promise<{ tok
         </div>
       )}
     </div>
+    </ClientNameGate>
   );
 }

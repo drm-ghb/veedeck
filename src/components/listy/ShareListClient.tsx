@@ -107,7 +107,7 @@ export default function ShareListClient({
   }, [commentsPanelProductId]);
 
   useEffect(() => {
-    const stored = localStorage.getItem(`renderflow-author-${listShareToken}`);
+    const stored = localStorage.getItem(`veedeck-author-${projectShareToken ?? listShareToken}`);
     if (stored) setAuthorName(stored);
     // Initialize unread set from localStorage + module-level store
     const store = getUnreadSet(listId);
