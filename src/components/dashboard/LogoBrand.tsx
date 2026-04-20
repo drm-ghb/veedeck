@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { useTheme } from "@/lib/theme";
 
 interface LogoBrandProps {
   navMode: string;
@@ -9,6 +10,7 @@ interface LogoBrandProps {
 
 export function LogoBrand({ navMode }: LogoBrandProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const { colorTheme } = useTheme();
 
   useEffect(() => {
     setSidebarCollapsed(localStorage.getItem("nav-sidebar-collapsed") === "true");
@@ -21,13 +23,13 @@ export function LogoBrand({ navMode }: LogoBrandProps) {
   }, []);
 
   // Wordmark visible when: no sidebar mode (always), or sidebar mode + expanded
-  // Wordmark visible when: no sidebar mode (always), or sidebar mode + expanded
   const showWordmark = navMode !== "sidebar" || !sidebarCollapsed;
+  const iconSrc = colorTheme === "violet" ? "/logo_violet.png" : "/logo_vee.png";
 
   return (
     <Link href="/dashboard" className="flex items-center gap-2 shrink-0">
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/logo_vee.png" alt="veedeck" className="h-7 w-7 shrink-0 object-contain" />
+      <img src={iconSrc} alt="veedeck" className="h-7 w-7 shrink-0 object-contain" />
       {showWordmark && (
         <>
           {/* Light mode: black wordmark (md+, hidden in dark) */}

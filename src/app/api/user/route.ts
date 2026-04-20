@@ -26,7 +26,7 @@ export async function PATCH(req: NextRequest) {
   ] as const;
   const stringFields = ["clientWelcomeMessage", "clientLogoUrl", "accentColor", "defaultRenderOrder", "defaultRenderStatus", "navMode"] as const;
 
-  const VALID_COLOR_THEMES = ["champagne", "obsidian", "navy", "plum", "mono"] as const;
+  const VALID_COLOR_THEMES = ["violet", "champagne", "obsidian", "navy", "plum", "mono"] as const;
   if (body.colorTheme !== undefined && !VALID_COLOR_THEMES.includes(body.colorTheme)) {
     return NextResponse.json({ error: "Nieprawidłowy motyw kolorystyczny" }, { status: 400 });
   }

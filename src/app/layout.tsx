@@ -49,7 +49,7 @@ export default async function RootLayout({
   const cookieStore = await cookies();
   const themeCookie = cookieStore.get("veedeck-theme")?.value;
   const isDark = themeCookie === "dark";
-  const colorThemeCookie = cookieStore.get("color-theme")?.value ?? "champagne";
+  const colorThemeCookie = cookieStore.get("color-theme")?.value ?? "violet";
   const langCookie = cookieStore.get("veedeck-lang")?.value as Lang | undefined;
   const initialLang: Lang | null =
     langCookie === "pl" || langCookie === "en" ? langCookie : null;

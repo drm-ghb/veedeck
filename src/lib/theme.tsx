@@ -3,18 +3,18 @@
 import { createContext, useContext, useEffect, useState } from "react";
 
 export type Theme = "light" | "dark" | "system";
-export type ColorTheme = "champagne" | "obsidian" | "navy" | "plum" | "mono";
+export type ColorTheme = "violet" | "champagne" | "obsidian" | "navy" | "plum" | "mono";
 
 const ThemeContext = createContext<{
   theme: Theme;
   setTheme: (t: Theme) => void;
   colorTheme: ColorTheme;
   setColorTheme: (t: ColorTheme) => void;
-}>({ theme: "light", setTheme: () => {}, colorTheme: "champagne", setColorTheme: () => {} });
+}>({ theme: "light", setTheme: () => {}, colorTheme: "violet", setColorTheme: () => {} });
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<Theme>("light");
-  const [colorTheme, setColorThemeState] = useState<ColorTheme>("champagne");
+  const [colorTheme, setColorThemeState] = useState<ColorTheme>("violet");
 
   useEffect(() => {
     const saved = localStorage.getItem("veedeck-theme") as Theme | null;

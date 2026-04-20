@@ -153,7 +153,8 @@ const COLOR_THEMES: {
     primary: string;
     accent: string;
   }[] = [
-    { slug: "champagne", name: "Champagne Linen", subtitle: "Len i brąz — domyślny", sidebar: "#F7F3EA", background: "#EEE9DF", primary: "#8B613C", accent: "#C2A878" },
+    { slug: "violet", name: "Violet", subtitle: "Indygo — domyślny", sidebar: "#EDEEF2", background: "#FFFFFF", primary: "#4F46E5", accent: "#A5B4FC" },
+    { slug: "champagne", name: "Champagne Linen", subtitle: "Len i brąz", sidebar: "#F7F3EA", background: "#EEE9DF", primary: "#8B613C", accent: "#C2A878" },
     { slug: "obsidian", name: "Obsidian Gold", subtitle: "Złoto na czerni", sidebar: "#12110F", background: "#F7F5F0", primary: "#C7A46C", accent: "#8A6A3A" },
     { slug: "navy", name: "Royal Navy", subtitle: "Granat i srebro", sidebar: "#0A1230", background: "#F2F3F6", primary: "#15224F", accent: "#B8C0DB" },
     { slug: "plum", name: "Plum Noir", subtitle: "Śliwka i róż", sidebar: "#1F1320", background: "#F5F1ED", primary: "#5A2545", accent: "#C98A6B" },
@@ -414,7 +415,7 @@ const COLOR_THEMES: {
       <section className="space-y-4">
         <SectionHeader title="Motyw kolorystyczny" />
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           {COLOR_THEMES.map(({ slug, name, subtitle, sidebar, background, primary, accent }) => {
             const active = colorTheme === slug;
             return (
