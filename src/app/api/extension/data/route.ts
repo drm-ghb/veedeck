@@ -2,12 +2,21 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { validateExtensionKey } from "@/lib/extension-auth";
 
-/** GET — returns lists (with sections) and projects for the extension popup */
+const BUILT_IN_CATEGORIES = [
+  { value: "LAMPY", label: "Lampy" },
+  { value: "AKCESORIA", label: "Akcesoria" },
+  { value: "MEBLE", label: "Meble" },
+  { value: "ARMATURA", label: "Armatura" },
+  { value: "OKLADZINY_SCIENNE", label: "Okładziny ścienne" },
+  { value: "PODLOGA", label: "Podłoga" },
+];
+
+/** GET — returns lists (with sections), projects and categories for the extension popup */
 export async function GET(req: Request) {
   const user = await validateExtensionKey(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const [lists, projects] = await Promise.all([
+  const [lists, projects, userData] = await Promise.all([
     prisma.shoppingList.findMany({
       where: { userId: user.workspaceId, archived: false },
       orderBy: [{ pinned: "desc" }, { createdAt: "desc" }],
@@ -27,7 +36,21 @@ export async function GET(req: Request) {
       orderBy: { createdAt: "desc" },
       select: { id: true, title: true },
     }),
+    prisma.user.findUnique({
+      where: { id: user.workspaceId },
+      select: { customCategories: true, listsCategoryOrder: true },
+    }),
   ]);
 
-  return NextResponse.json({ lists, projects });
+  const customCats = (userData?.customCategories ?? []).map((c) => ({ value: c, label: c }));
+  const allCats = [...BUILT_IN_CATEGORIES, ...customCats];
+  const order = userData?.listsCategoryOrder ?? [];
+  const categories = order.length
+    ? [
+        ...order.map((v) => allCats.find((c) => c.value === v)).filter(Boolean) as typeof allCats,
+        ...allCats.filter((c) => !order.includes(c.value)),
+      ]
+    : allCats;
+
+  return NextResponse.json({ lists, projects, categories });
 }
