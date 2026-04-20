@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { GripVertical, RotateCcw } from "lucide-react";
+import { GripVertical, RotateCcw, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useT } from "@/lib/i18n";
 
 export default function SettingsListyPage() {
@@ -32,12 +33,19 @@ export default function SettingsListyPage() {
   const [dragging, setDragging] = useState<number | null>(null);
   const [dragOver, setDragOver] = useState<number | null>(null);
 
+  const [customCategories, setCustomCategories] = useState<string[]>([]);
+  const [newCatName, setNewCatName] = useState("");
+  const [savingCustom, setSavingCustom] = useState(false);
+
   useEffect(() => {
     fetch("/api/settings/lists")
       .then((r) => r.json())
       .then((data) => {
         if (data.listsCategoryOrder?.length > 0) {
           setCategories(buildOrderedList(data.listsCategoryOrder));
+        }
+        if (Array.isArray(data.customCategories)) {
+          setCustomCategories(data.customCategories);
         }
       })
       .finally(() => setLoading(false));
@@ -82,6 +90,34 @@ export default function SettingsListyPage() {
   function handleDragEnd() {
     setDragging(null);
     setDragOver(null);
+  }
+
+  function handleAddCustomCategory() {
+    const trimmed = newCatName.trim();
+    if (!trimmed || customCategories.includes(trimmed)) return;
+    setCustomCategories((prev) => [...prev, trimmed]);
+    setNewCatName("");
+  }
+
+  function handleRemoveCustomCategory(name: string) {
+    setCustomCategories((prev) => prev.filter((c) => c !== name));
+  }
+
+  async function handleSaveCustomCategories() {
+    setSavingCustom(true);
+    try {
+      const res = await fetch("/api/settings/lists", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ customCategories }),
+      });
+      if (!res.ok) throw new Error();
+      toast.success("Kategorie własne zapisane");
+    } catch {
+      toast.error("Błąd zapisu kategorii");
+    } finally {
+      setSavingCustom(false);
+    }
   }
 
   return (
@@ -143,6 +179,53 @@ export default function SettingsListyPage() {
           </button>
           <Button onClick={handleSave} disabled={saving || loading}>
             {saving ? t.listSettings.savingOrder : t.listSettings.saveOrder}
+          </Button>
+        </div>
+      </div>
+
+      {/* Custom categories */}
+      <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
+        <div>
+          <h2 className="text-base font-semibold">Własne kategorie</h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Dodaj własne kategorie produktów, które pojawią się obok wbudowanych.
+          </p>
+        </div>
+
+        <div className="space-y-2">
+          {customCategories.length === 0 && !loading && (
+            <p className="text-sm text-muted-foreground py-2">Brak własnych kategorii.</p>
+          )}
+          {customCategories.map((cat) => (
+            <div key={cat} className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-background">
+              <span className="flex-1 text-sm font-medium">{cat}</span>
+              <button
+                type="button"
+                onClick={() => handleRemoveCustomCategory(cat)}
+                className="text-muted-foreground hover:text-red-500 transition-colors"
+              >
+                <X size={14} />
+              </button>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex gap-2">
+          <Input
+            value={newCatName}
+            onChange={(e) => setNewCatName(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleAddCustomCategory()}
+            placeholder="np. Łóżka"
+            className="flex-1"
+          />
+          <Button type="button" variant="outline" onClick={handleAddCustomCategory} disabled={!newCatName.trim()}>
+            <Plus size={15} />
+          </Button>
+        </div>
+
+        <div className="flex justify-end pt-1">
+          <Button onClick={handleSaveCustomCategories} disabled={savingCustom || loading}>
+            {savingCustom ? "Zapisywanie..." : "Zapisz kategorie"}
           </Button>
         </div>
       </div>

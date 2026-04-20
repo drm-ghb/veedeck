@@ -66,6 +66,7 @@ interface AddProductDialogProps {
   listId: string;
   sectionId?: string | null;
   onAdded: (product: unknown) => void;
+  customCategories?: string[];
 }
 
 const empty = (): ProductData => ({
@@ -80,6 +81,7 @@ export default function AddProductDialog({
   listId,
   sectionId,
   onAdded,
+  customCategories = [],
 }: AddProductDialogProps) {
   const t = useT();
   const [tab, setTab] = useState<"link" | "manual" | "library">("link");
@@ -443,6 +445,9 @@ export default function AddProductDialog({
                 <option value="">{t.products.noCategory}</option>
                 {CATEGORY_VALUES.map((v) => (
                   <option key={v} value={v}>{getCategoryLabel(v, t)}</option>
+                ))}
+                {customCategories.map((c) => (
+                  <option key={c} value={c}>{c}</option>
                 ))}
               </select>
             </div>

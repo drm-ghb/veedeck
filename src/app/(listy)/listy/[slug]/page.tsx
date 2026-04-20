@@ -14,14 +14,14 @@ export default async function ListPage({ params, searchParams }: { params: Promi
   const userId = getWorkspaceUserId(session);
 
   const [userSettings, list] = await Promise.all([
-    prisma.user.findUnique({ where: { id: userId }, select: { listsCategoryOrder: true, clientLogoUrl: true } }),
+    prisma.user.findUnique({ where: { id: userId }, select: { listsCategoryOrder: true, clientLogoUrl: true, customCategories: true } }),
     prisma.shoppingList.findFirst({
       where: {
         userId,
         OR: [{ slug }, { id: slug }],
       },
       select: {
-        id: true, name: true, shareToken: true, budget: true,
+        id: true, name: true, shareToken: true, budget: true, hidePrices: true,
         project: {
           select: {
             id: true, title: true, hiddenModules: true,
@@ -59,11 +59,13 @@ export default async function ListPage({ params, searchParams }: { params: Promi
       designerLogoUrl={userSettings?.clientLogoUrl ?? undefined}
       initialOpenProductId={initialOpenProductId}
       categoryOrder={userSettings?.listsCategoryOrder ?? []}
+      customCategories={userSettings?.customCategories ?? []}
       list={{
         id: list.id,
         name: list.name,
         shareToken: list.shareToken,
         budget: list.budget ?? null,
+        hidePrices: list.hidePrices,
         project: list.project ? {
           id: list.project.id,
           title: list.project.title,

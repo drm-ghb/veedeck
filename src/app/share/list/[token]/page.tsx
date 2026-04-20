@@ -122,7 +122,7 @@ export default async function PublicListPage({ params }: { params: Promise<{ tok
           )}
           <h1 className="text-xl font-bold truncate">{list.name}</h1>
         </div>
-        {hasTotal && (
+        {hasTotal && !list.hidePrices && (
           <div className="flex items-center gap-1.5 shrink-0">
             <span className="text-xs text-muted-foreground">Suma:</span>
             <span className="text-sm font-semibold tabular-nums">
@@ -142,6 +142,7 @@ export default async function PublicListPage({ params }: { params: Promise<{ tok
         grandTotal={grandTotal}
         grandCurrency={grandCurrency}
         hasTotal={hasTotal}
+        hidePrices={list.hidePrices}
         designerName={list.project?.user?.showProfileName ? (list.project.user.name ?? undefined) : undefined}
         designerLogoUrl={list.project?.user?.showClientLogo ? (list.project.user.clientLogoUrl ?? undefined) : undefined}
       />

@@ -19,6 +19,11 @@ function getCurrency(price: string | null): string {
   return price.replace(/[\d.,\s]/g, "").trim();
 }
 
+function formatPriceNum(n: number): string {
+  const hasDec = n % 1 !== 0;
+  return n.toLocaleString("pl-PL", { minimumFractionDigits: hasDec ? 2 : 0, maximumFractionDigits: 2 });
+}
+
 interface Product {
   id: string;
   name: string;
@@ -53,6 +58,7 @@ interface ShareListClientProps {
   grandTotal: number;
   grandCurrency: string;
   hasTotal: boolean;
+  hidePrices: boolean;
   designerName?: string;
   designerLogoUrl?: string;
 }
@@ -67,6 +73,7 @@ export default function ShareListClient({
   grandTotal,
   grandCurrency,
   hasTotal,
+  hidePrices,
   designerName,
   designerLogoUrl,
 }: ShareListClientProps) {
@@ -218,7 +225,7 @@ export default function ShareListClient({
             {(() => {
               let total = 0; let cur = ""; let has = false;
               for (const p of section.products) { const n = parsePrice(p.price); if (n !== null) { total += n * p.quantity; if (!cur) cur = getCurrency(p.price); has = true; } }
-              return has ? <span className="text-sm font-semibold">{total.toLocaleString("pl-PL", { minimumFractionDigits: 0, maximumFractionDigits: 2 })} {cur}</span> : null;
+              return has && !hidePrices ? <span className="text-sm font-semibold">{formatPriceNum(total)} {cur}</span> : null;
             })()}
           </div>
 
@@ -287,10 +294,10 @@ export default function ShareListClient({
                           <span className="text-xs text-muted-foreground">Szt.:</span>
                           <span className="text-sm font-medium tabular-nums">{product.quantity}</span>
                         </div>
-                        {totalPrice !== null && (
+                        {totalPrice !== null && !hidePrices && (
                           <div className="text-right min-w-[72px]">
-                            <p className="text-sm font-semibold tabular-nums">{totalPrice.toLocaleString("pl-PL", { minimumFractionDigits: 0, maximumFractionDigits: 2 })} {currency}</p>
-                            {product.quantity > 1 && unitPrice !== null && <p className="text-xs text-muted-foreground tabular-nums">{unitPrice.toLocaleString("pl-PL", { minimumFractionDigits: 0, maximumFractionDigits: 2 })} / szt.</p>}
+                            <p className="text-sm font-semibold tabular-nums">{formatPriceNum(totalPrice)} {currency}</p>
+                            {product.quantity > 1 && unitPrice !== null && <p className="text-xs text-muted-foreground tabular-nums">{formatPriceNum(unitPrice)} / szt.</p>}
                           </div>
                         )}
                         {product.url ? <a href={product.url} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors"><ExternalLink size={13} /></a> : <span className="w-4" />}
@@ -322,7 +329,7 @@ export default function ShareListClient({
                         </div>
                         {/* Row 2: price + approval badge */}
                         <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-                          {totalPrice !== null && <span className="text-sm font-semibold text-foreground tabular-nums">{totalPrice.toLocaleString("pl-PL", { minimumFractionDigits: 0, maximumFractionDigits: 2 })} {currency}</span>}
+                          {totalPrice !== null && !hidePrices && <span className="text-sm font-semibold text-foreground tabular-nums">{formatPriceNum(totalPrice)} {currency}</span>}
                           {approval === "accepted" && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">Zaakceptowane</span>}
                           {approval === "rejected" && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">Odrzucone</span>}
                         </div>

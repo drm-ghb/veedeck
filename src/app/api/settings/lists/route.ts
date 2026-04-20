@@ -8,25 +8,32 @@ export async function GET() {
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { listsCategoryOrder: true },
+    select: { listsCategoryOrder: true, customCategories: true },
   });
 
-  return NextResponse.json({ listsCategoryOrder: user?.listsCategoryOrder ?? [] });
+  return NextResponse.json({
+    listsCategoryOrder: user?.listsCategoryOrder ?? [],
+    customCategories: user?.customCategories ?? [],
+  });
 }
 
 export async function PATCH(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { listsCategoryOrder } = await req.json();
+  const { listsCategoryOrder, customCategories } = await req.json();
 
-  if (!Array.isArray(listsCategoryOrder)) {
+  const data: Record<string, unknown> = {};
+  if (Array.isArray(listsCategoryOrder)) data.listsCategoryOrder = listsCategoryOrder;
+  if (Array.isArray(customCategories)) data.customCategories = customCategories.map((c: string) => c.trim()).filter(Boolean);
+
+  if (Object.keys(data).length === 0) {
     return NextResponse.json({ error: "Nieprawidłowe dane" }, { status: 400 });
   }
 
   await prisma.user.update({
     where: { id: session.user.id },
-    data: { listsCategoryOrder },
+    data,
   });
 
   return NextResponse.json({ ok: true });

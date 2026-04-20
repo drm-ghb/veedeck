@@ -51,6 +51,7 @@ interface EditProductDialogProps {
   sectionId: string;
   product: { id: string } & ProductData;
   onUpdated: (product: unknown) => void;
+  customCategories?: string[];
 }
 
 export default function EditProductDialog({
@@ -60,6 +61,7 @@ export default function EditProductDialog({
   sectionId,
   product,
   onUpdated,
+  customCategories = [],
 }: EditProductDialogProps) {
   const [form, setForm] = useState<ProductData>({
     name: product.name,
@@ -171,6 +173,9 @@ export default function EditProductDialog({
               <option value="">{t.products.noCategory}</option>
               {CATEGORY_VALUES.map((v) => (
                 <option key={v} value={v}>{getCategoryLabel(v, t)}</option>
+              ))}
+              {customCategories.map((c) => (
+                <option key={c} value={c}>{c}</option>
               ))}
             </select>
           </div>

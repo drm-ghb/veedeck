@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, ChevronDown, ChevronUp, Plus, ExternalLink, Minus, MoreHorizontal, Pencil, Trash2, GripVertical, FileDown, Sheet, MessageSquare, ArrowUpDown, Eye, EyeOff, Check, X, RotateCcw, FolderInput, Wallet, AlertCircle } from "lucide-react";
+import { ChevronLeft, ChevronDown, ChevronUp, Plus, ExternalLink, Minus, MoreHorizontal, Pencil, Trash2, GripVertical, FileDown, Sheet, MessageSquare, ArrowUpDown, Eye, EyeOff, Check, X, RotateCcw, FolderInput, Wallet, AlertCircle, DollarSign } from "lucide-react";
 import ProductCommentPanel from "./ProductCommentPanel";
 import { pusherClient } from "@/lib/pusher";
 import { Button } from "@/components/ui/button";
@@ -39,8 +39,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 
 import { getUnreadSet, syncListUnread } from "@/lib/list-unread-store";
 
-const CATEGORIES = [
-  { value: "LAMPY", label: "Lampy" },
+const BUILT_IN_CATEGORIES = [
+  { value: "LAMPY", label: "Oświetlenie" },
   { value: "AKCESORIA", label: "Akcesoria" },
   { value: "MEBLE", label: "Meble" },
   { value: "ARMATURA", label: "Armatura" },
@@ -55,9 +55,15 @@ const SORT_OPTIONS = [
   { value: "price", label: "Cena" },
 ];
 
-function getCategoryLabel(value: string | null | undefined): string {
+function getCategoryLabel(value: string | null | undefined, allCategories: { value: string; label: string }[] = BUILT_IN_CATEGORIES): string {
   if (!value) return "";
-  return CATEGORIES.find((c) => c.value === value)?.label ?? value;
+  return allCategories.find((c) => c.value === value)?.label ?? value;
+}
+
+/** Formats a price number: shows 2 decimal places only when the number has a decimal part. */
+function formatPriceNum(n: number): string {
+  const hasDec = n % 1 !== 0;
+  return n.toLocaleString("pl-PL", { minimumFractionDigits: hasDec ? 2 : 0, maximumFractionDigits: 2 });
 }
 
 interface Product {
@@ -99,6 +105,7 @@ interface ListDetailProps {
     name: string;
     shareToken: string;
     budget: number | null;
+    hidePrices: boolean;
     project: {
       id: string;
       title: string;
@@ -112,6 +119,7 @@ interface ListDetailProps {
     sections: Section[];
   };
   categoryOrder: string[];
+  customCategories: string[];
 }
 
 function getSortBy(sortBy: string | null | undefined): string {
@@ -149,7 +157,7 @@ function SectionTotal({ products, budget }: { products: Product[]; budget?: numb
 
   return (
     <span className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
-      {total.toLocaleString("pl-PL", { minimumFractionDigits: 0, maximumFractionDigits: 2 })} {currency}
+      {formatPriceNum(total)} {currency}
       {pct !== null && (
         <span className={`text-xs font-medium tabular-nums ${total > budget! ? "text-red-500" : pct >= 80 ? "text-amber-500" : "text-green-600 dark:text-green-400"}`}>
           ({pct}%)
@@ -214,11 +222,13 @@ function ProductRow({
   onToggleHidden,
   onMove,
   onApprovalChange,
+  onFieldUpdate,
   approval,
   commentCount,
   unread,
   deleting,
   dragHandle,
+  allCategories,
 }: {
   product: Product;
   index: number;
@@ -232,15 +242,20 @@ function ProductRow({
   onToggleHidden: () => void;
   onMove: () => void;
   onApprovalChange: (value: string | null) => void;
+  onFieldUpdate: (productId: string, field: string, value: string | null) => void;
   approval: string | null;
   commentCount: number;
   unread: boolean;
   deleting?: boolean;
   dragHandle?: React.ReactNode;
+  allCategories: { value: string; label: string }[];
 }) {
   const [qty, setQty] = useState(product.quantity);
   const [saving, setSaving] = useState(false);
   const [lightbox, setLightbox] = useState(false);
+  const [categoryMenuOpen, setCategoryMenuOpen] = useState(false);
+  const [editingField, setEditingField] = useState<string | null>(null);
+  const [editingValue, setEditingValue] = useState("");
 
   async function updateQty(next: number) {
     if (next < 1 || saving) return;
@@ -258,6 +273,18 @@ function ProductRow({
     } finally {
       setSaving(false);
     }
+  }
+
+  function startFieldEdit(field: string, value: string | null) {
+    setEditingField(field);
+    setEditingValue(value ?? "");
+  }
+
+  async function saveFieldEdit() {
+    if (editingField === null) return;
+    const value = editingValue.trim() || null;
+    setEditingField(null);
+    onFieldUpdate(product.id, editingField, value);
   }
 
   const unitPrice = parsePrice(product.price);
@@ -372,21 +399,97 @@ function ProductRow({
         <div className="w-32 h-32">{image}</div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <p className="font-medium text-sm text-foreground truncate">{product.name}</p>
-            {product.category && (
-              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-primary/8 text-primary dark:bg-primary/20 shrink-0">
-                {getCategoryLabel(product.category)}
-              </span>
+            {product.url ? (
+              <a href={product.url} target="_blank" rel="noopener noreferrer" className="font-medium text-sm text-foreground hover:text-primary hover:underline truncate transition-colors">
+                {product.name}
+              </a>
+            ) : (
+              <p className="font-medium text-sm text-foreground truncate">{product.name}</p>
             )}
+            {/* Inline category badge */}
+            <div className="relative">
+              <button
+                onClick={() => setCategoryMenuOpen((v) => !v)}
+                className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors shrink-0 ${product.category ? "bg-primary/8 text-primary dark:bg-primary/20 hover:bg-primary/15" : "border border-dashed border-border text-muted-foreground hover:border-primary/40 hover:text-primary"}`}
+                title="Zmień kategorię"
+              >
+                {product.category ? getCategoryLabel(product.category, allCategories) : "+ kategoria"}
+              </button>
+              {categoryMenuOpen && (
+                <>
+                  <div className="fixed inset-0 z-20" onClick={() => setCategoryMenuOpen(false)} />
+                  <div className="absolute left-0 top-full mt-1 z-30 bg-popover border border-border rounded-lg shadow-lg py-1 min-w-[160px]">
+                    <button
+                      onClick={() => { onFieldUpdate(product.id, "category", null); setCategoryMenuOpen(false); }}
+                      className={`w-full text-left px-3 py-1.5 text-xs hover:bg-muted transition-colors ${!product.category ? "text-primary font-medium" : "text-muted-foreground"}`}
+                    >
+                      Brak kategorii
+                    </button>
+                    {allCategories.map((cat) => (
+                      <button
+                        key={cat.value}
+                        onClick={() => { onFieldUpdate(product.id, "category", cat.value); setCategoryMenuOpen(false); }}
+                        className={`w-full text-left px-3 py-1.5 text-xs hover:bg-muted transition-colors flex items-center gap-2 ${product.category === cat.value ? "text-primary font-medium" : "text-foreground"}`}
+                      >
+                        {product.category === cat.value && <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />}
+                        {product.category !== cat.value && <span className="w-1.5 h-1.5 shrink-0" />}
+                        {cat.label}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
           </div>
-          {product.manufacturer && <p className="text-xs text-muted-foreground mt-0.5">Producent: {product.manufacturer}</p>}
-          {product.supplier && <p className="text-xs text-muted-foreground mt-0.5">Dostawca: {product.supplier}</p>}
-          {product.color && <p className="text-xs text-muted-foreground mt-0.5">Kolor: {product.color}</p>}
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1">
-            {product.dimensions && <span className="text-xs text-muted-foreground">Wymiar: {product.dimensions}</span>}
-            {product.deliveryTime && <span className="text-xs text-muted-foreground">Dostawa: {product.deliveryTime}</span>}
-            {product.catalogNumber && <span className="text-xs text-muted-foreground">Nr kat.: {product.catalogNumber}</span>}
-          </div>
+          {/* Inline-editable fields */}
+          {(["manufacturer", "supplier", "color", "dimensions", "deliveryTime", "catalogNumber"] as const).map((field) => {
+            const labels: Record<string, string> = { manufacturer: "Producent", supplier: "Dostawca", color: "Kolor", dimensions: "Wymiar", deliveryTime: "Dostawa", catalogNumber: "Nr kat." };
+            const val = product[field] as string | null;
+            if (editingField === field) {
+              return (
+                <div key={field} className="flex items-center gap-1 mt-0.5">
+                  <span className="text-xs text-muted-foreground shrink-0">{labels[field]}:</span>
+                  <input
+                    autoFocus
+                    value={editingValue}
+                    onChange={(e) => setEditingValue(e.target.value)}
+                    onBlur={saveFieldEdit}
+                    onKeyDown={(e) => { if (e.key === "Enter") saveFieldEdit(); if (e.key === "Escape") setEditingField(null); }}
+                    className="text-xs bg-transparent border-b border-primary/40 focus:outline-none focus:border-primary px-0 min-w-0 flex-1"
+                  />
+                </div>
+              );
+            }
+            if (!val && editingField !== field) return null;
+            return (
+              <div key={field} className="group flex items-center gap-1 mt-0.5">
+                <p className="text-xs text-muted-foreground">{labels[field]}: {val}</p>
+                <button
+                  onClick={() => startFieldEdit(field, val)}
+                  className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground"
+                  title={`Edytuj ${labels[field].toLowerCase()}`}
+                >
+                  <Pencil size={10} />
+                </button>
+              </div>
+            );
+          })}
+          {/* Add empty fields on hover */}
+          {(["manufacturer", "supplier", "color", "dimensions", "deliveryTime", "catalogNumber"] as const).map((field) => {
+            const val = product[field] as string | null;
+            if (val || editingField === field) return null;
+            const labels: Record<string, string> = { manufacturer: "Producent", supplier: "Dostawca", color: "Kolor", dimensions: "Wymiar", deliveryTime: "Dostawa", catalogNumber: "Nr kat." };
+            return (
+              <button
+                key={`add-${field}`}
+                onClick={() => startFieldEdit(field, null)}
+                className="opacity-0 group-hover:opacity-0 hover:opacity-100 text-xs text-muted-foreground/50 hover:text-muted-foreground transition-opacity block mt-0.5"
+                title={`Dodaj ${labels[field].toLowerCase()}`}
+              >
+                + {labels[field]}
+              </button>
+            );
+          })}
         </div>
         <div className="flex items-center gap-3 shrink-0">
           {approval === "accepted" && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 shrink-0">Zaakceptowane</span>}
@@ -399,7 +502,7 @@ function ProductRow({
           {totalPrice !== null && (
             <div className="text-right min-w-[72px]">
               <div className="flex items-center justify-end gap-1">
-                <p className="text-sm font-semibold text-foreground tabular-nums">{totalPrice.toLocaleString("pl-PL", { minimumFractionDigits: 0, maximumFractionDigits: 2 })} {currency}</p>
+                <p className="text-sm font-semibold text-foreground tabular-nums">{formatPriceNum(totalPrice)} {currency}</p>
                 {product.productId && (
                   <div className="relative group">
                     <AlertCircle size={15} className="text-red-500 cursor-default shrink-0" />
@@ -409,7 +512,7 @@ function ProductRow({
                   </div>
                 )}
               </div>
-              {qty > 1 && unitPrice !== null && <p className="text-xs text-muted-foreground tabular-nums">{unitPrice.toLocaleString("pl-PL", { minimumFractionDigits: 0, maximumFractionDigits: 2 })} / szt.</p>}
+              {qty > 1 && unitPrice !== null && <p className="text-xs text-muted-foreground tabular-nums">{formatPriceNum(unitPrice)} / szt.</p>}
             </div>
           )}
           {product.url ? (
@@ -437,7 +540,13 @@ function ProductRow({
           {/* Row 1: name + menu */}
           <div className="flex items-start justify-between gap-1">
             <div className="min-w-0 flex-1">
-              <p className="font-medium text-sm text-foreground leading-tight truncate">{product.name}</p>
+              {product.url ? (
+                <a href={product.url} target="_blank" rel="noopener noreferrer" className="font-medium text-sm text-foreground hover:text-primary hover:underline leading-tight truncate block transition-colors">
+                  {product.name}
+                </a>
+              ) : (
+                <p className="font-medium text-sm text-foreground leading-tight truncate">{product.name}</p>
+              )}
               {product.manufacturer && <p className="text-xs text-muted-foreground truncate">Producent: {product.manufacturer}</p>}
               {product.supplier && <p className="text-xs text-muted-foreground truncate">Dostawca: {product.supplier}</p>}
               {product.color && <p className="text-xs text-muted-foreground truncate">Kolor: {product.color}</p>}
@@ -449,7 +558,7 @@ function ProductRow({
             {totalPrice !== null && (
               <span className="inline-flex items-center gap-1">
                 <span className="text-sm font-semibold text-foreground tabular-nums">
-                  {totalPrice.toLocaleString("pl-PL", { minimumFractionDigits: 0, maximumFractionDigits: 2 })} {currency}
+                  {formatPriceNum(totalPrice)} {currency}
                 </span>
                 {product.productId && (
                   <div className="relative group">
@@ -461,11 +570,12 @@ function ProductRow({
                 )}
               </span>
             )}
-            {product.category && (
-              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-primary/8 text-primary dark:bg-primary/20 shrink-0">
-                {getCategoryLabel(product.category)}
-              </span>
-            )}
+            <button
+              onClick={() => setCategoryMenuOpen((v) => !v)}
+              className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors shrink-0 ${product.category ? "bg-primary/8 text-primary dark:bg-primary/20" : "border border-dashed border-border text-muted-foreground"}`}
+            >
+              {product.category ? getCategoryLabel(product.category, allCategories) : "+ kat."}
+            </button>
             {approval === "accepted" && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">Zaakceptowane</span>}
             {approval === "rejected" && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">Odrzucone</span>}
           </div>
@@ -555,7 +665,7 @@ function sortProducts(products: Product[], sortBy: string, categoryOrder: string
       return pa - pb;
     });
   } else if (sortBy === "category") {
-    const order = categoryOrder.length > 0 ? categoryOrder : CATEGORIES.map((c) => c.value);
+    const order = categoryOrder.length > 0 ? categoryOrder : BUILT_IN_CATEGORIES.map((c) => c.value);
     sorted.sort((a, b) => {
       const ia = a.category ? order.indexOf(a.category) : order.length;
       const ib = b.category ? order.indexOf(b.category) : order.length;
@@ -567,9 +677,11 @@ function sortProducts(products: Product[], sortBy: string, categoryOrder: string
   return sorted;
 }
 
-export default function ListDetail({ list, designerName, designerEmail, designerLogoUrl, initialOpenProductId, categoryOrder }: ListDetailProps & { designerName?: string; designerEmail?: string; designerLogoUrl?: string; initialOpenProductId?: string }) {
+export default function ListDetail({ list, designerName, designerEmail, designerLogoUrl, initialOpenProductId, categoryOrder, customCategories }: ListDetailProps & { designerName?: string; designerEmail?: string; designerLogoUrl?: string; initialOpenProductId?: string }) {
   const [sections, setSections] = useState<Section[]>(list.sections);
   const [budget, setBudget] = useState<number | null>(list.budget);
+  const [hidePrices, setHidePrices] = useState(list.hidePrices);
+  const allCategories = [...BUILT_IN_CATEGORIES, ...customCategories.map((c) => ({ value: c, label: c }))];
   const [sectionBudgets, setSectionBudgets] = useState<Record<string, number | null>>(() =>
     Object.fromEntries(list.sections.map((s) => [s.id, s.budget ?? null]))
   );
@@ -648,6 +760,56 @@ export default function ListDetail({ list, designerName, designerEmail, designer
   const sectionEditRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
+
+  async function handleDeleteSection(sectionId: string) {
+    if (!confirm("Usunąć sekcję wraz ze wszystkimi produktami?")) return;
+    setSections((prev) => prev.filter((s) => s.id !== sectionId));
+    try {
+      const res = await fetch(`/api/lists/${list.id}/sections/${sectionId}`, { method: "DELETE" });
+      if (!res.ok) throw new Error();
+      toast.success("Sekcja usunięta");
+    } catch {
+      toast.error("Błąd usuwania sekcji");
+      router.refresh();
+    }
+  }
+
+  async function toggleHidePrices() {
+    const next = !hidePrices;
+    setHidePrices(next);
+    try {
+      await fetch(`/api/lists/${list.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ hidePrices: next }),
+      });
+      toast.success(next ? "Ceny ukryte dla klienta" : "Ceny widoczne dla klienta");
+    } catch {
+      setHidePrices(!next);
+      toast.error("Błąd zapisu ustawienia");
+    }
+  }
+
+  async function handleProductFieldUpdate(sectionId: string, productId: string, field: string, value: string | null) {
+    setSections((prev) =>
+      prev.map((s) =>
+        s.id === sectionId
+          ? { ...s, products: s.products.map((p) => p.id === productId ? { ...p, [field]: value } : p) }
+          : s
+      )
+    );
+    try {
+      const res = await fetch(`/api/lists/${list.id}/sections/${sectionId}/products/${productId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ [field]: value }),
+      });
+      if (!res.ok) throw new Error();
+    } catch {
+      toast.error("Błąd zapisu");
+      router.refresh();
+    }
+  }
 
   async function handleSectionSortBy(sectionId: string, sortBy: string) {
     setSections((prev) => prev.map((s) => s.id === sectionId ? { ...s, sortBy } : s));
@@ -1639,17 +1801,25 @@ export default function ListDetail({ list, designerName, designerEmail, designer
             <Wallet size={13} />
             <span className="hidden sm:inline">{budget != null ? "Budżet" : "Ustaw budżet"}</span>
           </button>
+          <button
+            onClick={toggleHidePrices}
+            className={`flex items-center gap-1 h-8 px-2 sm:px-3 text-xs rounded-lg border transition-colors ${hidePrices ? "border-amber-400 bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-700" : "border-border bg-background hover:bg-muted text-foreground"}`}
+            title={hidePrices ? "Ceny ukryte dla klienta — kliknij aby pokazać" : "Ukryj ceny dla klienta"}
+          >
+            <DollarSign size={13} />
+            <span className="hidden sm:inline">{hidePrices ? "Ceny ukryte" : "Ukryj ceny"}</span>
+          </button>
         </div>
         {hasTotal && (
           <div className="flex flex-col items-end gap-1 shrink-0 pr-1 min-w-0">
             <div className="flex items-center gap-1.5 text-sm">
               <span className="text-muted-foreground text-xs">Suma:</span>
               <span className={`font-semibold tabular-nums ${budget != null && budget > 0 && grandTotal > budget ? "text-red-500" : ""}`}>
-                {grandTotal.toLocaleString("pl-PL", { minimumFractionDigits: 0, maximumFractionDigits: 2 })} {grandCurrency}
+                {formatPriceNum(grandTotal)} {grandCurrency}
               </span>
               {budget != null && budget > 0 && (
                 <span className="text-xs text-muted-foreground tabular-nums">
-                  / {budget.toLocaleString("pl-PL", { minimumFractionDigits: 0, maximumFractionDigits: 2 })} {grandCurrency}
+                  / {formatPriceNum(budget)} {grandCurrency}
                 </span>
               )}
               {budget != null && budget > 0 && (
@@ -1723,11 +1893,13 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                           onToggleHidden={() => handleToggleHidden(unsortedSection.id, product.id)}
                           onMove={() => setMoveState({ product, sectionId: unsortedSection.id })}
                           onApprovalChange={(value) => handleApprovalChange(unsortedSection.id, product.id, value)}
+                          onFieldUpdate={(pid, field, value) => handleProductFieldUpdate(unsortedSection.id, pid, field, value)}
                           approval={approvals[product.id] ?? null}
                           commentCount={commentCounts[product.id] ?? 0}
                           unread={unreadProducts.has(product.id)}
                           deleting={deletingId === product.id}
                           dragHandle={dragHandle}
+                          allCategories={allCategories}
                         />
                       )}
                     </SortableProduct>
@@ -1826,6 +1998,13 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                           )}
                         </div>
                         <SectionTotal products={section.products} budget={sectionBudgets[section.id]} />
+                        <button
+                          onClick={() => handleDeleteSection(section.id)}
+                          className="w-7 h-7 flex items-center justify-center rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                          title="Usuń sekcję"
+                        >
+                          <Trash2 size={13} />
+                        </button>
                       </div>
                     </div>
 
@@ -1859,11 +2038,13 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                                     onToggleHidden={() => handleToggleHidden(section.id, product.id)}
                                     onMove={() => setMoveState({ product, sectionId: section.id })}
                                     onApprovalChange={(value) => handleApprovalChange(section.id, product.id, value)}
+                                    onFieldUpdate={(pid, field, value) => handleProductFieldUpdate(section.id, pid, field, value)}
                                     approval={approvals[product.id] ?? null}
                                     commentCount={commentCounts[product.id] ?? 0}
                                     unread={unreadProducts.has(product.id)}
                                     deleting={deletingId === product.id}
                                     dragHandle={dragHandle}
+                                    allCategories={allCategories}
                                   />
                                 )}
                               </SortableProduct>
@@ -1916,6 +2097,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
         listId={list.id}
         sectionId={dialogState.sectionId}
         onAdded={(product) => handleProductAdded(dialogState.sectionId, product)}
+        customCategories={customCategories}
       />
 
       {editState && (
@@ -1924,6 +2106,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
           onOpenChange={(open) => { if (!open) setEditState(null); }}
           listId={list.id}
           sectionId={editState.sectionId}
+          customCategories={customCategories}
           product={{
             id: editState.product.id,
             name: editState.product.name,

@@ -42,6 +42,7 @@ model User {
   navMode                    String         @default("dashboard")
   colorTheme                 String         @default("champagne")
   extensionKey               String?        @unique
+  customCategories           String[]       @default([])
   ownerId                    String?
   owner                      User?          @relation("TeamMembers", fields: [ownerId], references: [id])
   teamMembers                User[]         @relation("TeamMembers")
@@ -203,6 +204,7 @@ model ShoppingList {
   pinned     Boolean       @default(false)
   slug       String?       @unique
   budget     Float?
+  hidePrices Boolean       @default(false)
   sections   ListSection[]
   project    Project?      @relation(fields: [projectId], references: [id])
   user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -236,7 +238,7 @@ model ListProduct {
   createdAt    DateTime             @default(now())
   sectionId    String
   quantity     Int                  @default(1)
-  category     ListProductCategory?
+  category     String?
   hidden        Boolean              @default(false)
   approval      String?
   productId     String?
@@ -423,7 +425,7 @@ model Product {
   description  String?
   deliveryTime  String?
   quantity      Int                  @default(1)
-  category      ListProductCategory?
+  category      String?
   supplier      String?
   catalogNumber String?
   createdAt     DateTime             @default(now())
@@ -466,14 +468,6 @@ model DiscussionMessage {
   user       User?      @relation("DiscussionMessageUser", fields: [userId], references: [id], onDelete: SetNull)
 }
 
-enum ListProductCategory {
-  LAMPY
-  AKCESORIA
-  MEBLE
-  ARMATURA
-  OKLADZINY_SCIENNE
-  PODLOGA
-}
 
 enum RoomType {
   TOALETA

@@ -12,7 +12,7 @@ import { UploadButton } from "@uploadthing/react";
 import type { OurFileRouter } from "@/lib/uploadthing";
 
 const CATEGORIES = [
-  { value: "LAMPY", label: "Lampy" },
+  { value: "LAMPY", label: "Oświetlenie" },
   { value: "AKCESORIA", label: "Akcesoria" },
   { value: "MEBLE", label: "Meble" },
   { value: "ARMATURA", label: "Armatura" },

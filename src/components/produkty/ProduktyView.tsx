@@ -18,7 +18,7 @@ import { useT } from "@/lib/i18n";
 import AddProductToLibraryDialog from "./AddProductToLibraryDialog";
 
 const CATEGORY_LABELS: Record<string, string> = {
-  LAMPY: "Lampy",
+  LAMPY: "Oświetlenie",
   AKCESORIA: "Akcesoria",
   MEBLE: "Meble",
   ARMATURA: "Armatura",

@@ -87,6 +87,21 @@ export async function PATCH(
     return NextResponse.json({ error: "Błąd serwera", detail: String(err) }, { status: 500 });
   }
 
+  // Inline field updates (single field patches from product tile)
+  const patchableFields = ["category", "color", "dimensions", "manufacturer", "supplier", "deliveryTime", "catalogNumber", "price", "name"] as const;
+  const patchField = patchableFields.find((f) => body[f] !== undefined);
+  if (patchField) {
+    try {
+      const updated = await prisma.listProduct.update({
+        where: { id: productId },
+        data: { [patchField]: body[patchField] || null },
+      });
+      return NextResponse.json(updated);
+    } catch (err) {
+      return NextResponse.json({ error: "Błąd aktualizacji pola", detail: String(err) }, { status: 500 });
+    }
+  }
+
   return NextResponse.json({ error: "Brak danych do aktualizacji" }, { status: 400 });
 }
 
