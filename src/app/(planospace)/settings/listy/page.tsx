@@ -13,7 +13,7 @@ export default function SettingsListyPage() {
   const t = useT();
 
   const BUILT_IN: Category[] = [
-    { value: "LAMPY", label: t.listSettings.lampy },
+    { value: "OSWIETLENIE", label: t.listSettings.lampy },
     { value: "AKCESORIA", label: t.listSettings.akcesoria },
     { value: "MEBLE", label: t.listSettings.meble },
     { value: "ARMATURA", label: t.listSettings.armatura },

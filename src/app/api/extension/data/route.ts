@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { validateExtensionKey } from "@/lib/extension-auth";
 
 const BUILT_IN_CATEGORIES = [
-  { value: "LAMPY", label: "Lampy" },
+  { value: "OSWIETLENIE", label: "Oświetlenie" },
   { value: "AKCESORIA", label: "Akcesoria" },
   { value: "MEBLE", label: "Meble" },
   { value: "ARMATURA", label: "Armatura" },

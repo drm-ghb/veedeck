@@ -41,7 +41,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { getUnreadSet, syncListUnread } from "@/lib/list-unread-store";
 
 const BUILT_IN_CATEGORIES = [
-  { value: "LAMPY", label: "Oświetlenie" },
+  { value: "OSWIETLENIE", label: "Oświetlenie" },
   { value: "AKCESORIA", label: "Akcesoria" },
   { value: "MEBLE", label: "Meble" },
   { value: "ARMATURA", label: "Armatura" },

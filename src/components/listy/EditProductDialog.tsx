@@ -17,11 +17,11 @@ import { useT } from "@/lib/i18n";
 import { UploadButton } from "@uploadthing/react";
 import type { OurFileRouter } from "@/lib/uploadthing";
 
-const CATEGORY_VALUES = ["LAMPY", "AKCESORIA", "MEBLE", "ARMATURA", "OKLADZINY_SCIENNE", "PODLOGA"] as const;
+const CATEGORY_VALUES = ["OSWIETLENIE", "AKCESORIA", "MEBLE", "ARMATURA", "OKLADZINY_SCIENNE", "PODLOGA"] as const;
 
 type TProducts = ReturnType<typeof useT>["products"];
 const CAT_KEY_MAP: Record<string, keyof TProducts> = {
-  LAMPY: "catLampy", AKCESORIA: "catAkcesoria", MEBLE: "catMeble",
+  OSWIETLENIE: "catLampy", AKCESORIA: "catAkcesoria", MEBLE: "catMeble",
   ARMATURA: "catArmatura", OKLADZINY_SCIENNE: "catOkladziny", PODLOGA: "catPodloga",
 };
 function getCategoryLabel(cat: string, t: ReturnType<typeof useT>) {
