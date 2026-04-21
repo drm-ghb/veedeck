@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { validateExtensionKey } from "@/lib/extension-auth";
+import { pusherServer } from "@/lib/pusher";
 
 /**
  * POST — add a product to a list section from the extension.
@@ -41,6 +42,19 @@ export async function POST(req: NextRequest) {
     },
   });
   if (!section) return NextResponse.json({ error: "Nie znaleziono sekcji" }, { status: 404 });
+
+  // Duplicate check — same URL or (when no URL) same name in the section
+  if (url?.trim()) {
+    const duplicate = await prisma.listProduct.findFirst({
+      where: { sectionId, url: url.trim() },
+    });
+    if (duplicate) return NextResponse.json({ error: "Produkt już istnieje w tej sekcji" }, { status: 409 });
+  } else {
+    const duplicate = await prisma.listProduct.findFirst({
+      where: { sectionId, name: { equals: name.trim(), mode: "insensitive" } },
+    });
+    if (duplicate) return NextResponse.json({ error: "Produkt już istnieje w tej sekcji" }, { status: 409 });
+  }
 
   // Auto-save to product library (no link — same logic as manual/link tab)
   const exists = await prisma.product.findFirst({
@@ -90,6 +104,8 @@ export async function POST(req: NextRequest) {
       order: count,
     },
   });
+
+  await pusherServer.trigger(`shopping-list-${listId}`, "product-added", { sectionId });
 
   return NextResponse.json(product, { status: 201 });
 }

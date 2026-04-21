@@ -858,9 +858,13 @@ export default function ListDetail({ list, designerName, designerEmail, designer
     channel.bind("approval-change", ({ productId, approval }: { productId: string; approval: string | null }) => {
       setApprovals((prev) => ({ ...prev, [productId]: approval }));
     });
+    channel.bind("product-added", () => {
+      router.refresh();
+    });
     return () => {
       channel.unbind("comment-activity");
       channel.unbind("approval-change");
+      channel.unbind("product-added");
       pusherClient.unsubscribe(`shopping-list-${list.id}`);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps

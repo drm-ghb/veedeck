@@ -27,7 +27,11 @@ export async function GET(req: Request) {
         project: { select: { title: true } },
         sections: {
           orderBy: { order: "asc" },
-          select: { id: true, name: true },
+          select: {
+            id: true,
+            name: true,
+            products: { select: { url: true, name: true } },
+          },
         },
       },
     }),
