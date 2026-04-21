@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { pusherServer } from "@/lib/pusher";
+import { auth } from "@/lib/auth";
+import { getWorkspaceUserId } from "@/lib/workspace";
 
 export async function GET(req: NextRequest) {
   const productId = req.nextUrl.searchParams.get("productId");
@@ -16,6 +18,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const session = await auth();
   const { productId, content, author } = await req.json();
 
   if (!productId || !content || !author) {
@@ -74,6 +77,7 @@ export async function POST(req: NextRequest) {
           });
         }
         const sourceUrl = `/listy/${listPath}?product=${productId}`;
+        const isDesigner = session?.user?.id && getWorkspaceUserId(session) === list.userId;
         const msg = await prisma.discussionMessage.create({
           data: {
             discussionId: discussion.id,
@@ -84,6 +88,7 @@ export async function POST(req: NextRequest) {
             sourceUrl,
             sourceName: `${list.name} › ${product.name}`,
             sourceImageUrl: product.imageUrl ?? null,
+            userId: isDesigner ? session!.user!.id : null,
           },
         });
         await pusherServer.trigger(`discussion-${discussion.id}`, "new-message", msg);

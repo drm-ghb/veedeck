@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { pusherServer } from "@/lib/pusher";
+import { auth } from "@/lib/auth";
+import { getWorkspaceUserId } from "@/lib/workspace";
 
 export async function GET(req: NextRequest) {
   const renderId = req.nextUrl.searchParams.get("renderId");
@@ -16,6 +18,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const session = await auth();
   const { renderId, title, content, posX, posY, author, isInternal } = await req.json();
 
   const isPin = posX !== null && posX !== undefined && posY !== null && posY !== undefined;
@@ -82,6 +85,7 @@ export async function POST(req: NextRequest) {
       }
       const sourceType = isPin ? "render_pin" : "render_comment";
       const sourceUrl = `/projects/${render.projectId}/renders/${renderId}${isPin ? `?pinId=${comment.id}` : `?chatId=${comment.id}`}`;
+      const isDesigner = session?.user?.id && getWorkspaceUserId(session) === render.project.userId;
       const msg = await prisma.discussionMessage.create({
         data: {
           discussionId: discussion.id,
@@ -92,6 +96,7 @@ export async function POST(req: NextRequest) {
           sourceUrl,
           sourceName: render.name,
           sourceImageUrl: render.fileUrl,
+          userId: isDesigner ? session!.user!.id : null,
         },
       });
       await pusherServer.trigger(`discussion-${discussion.id}`, "new-message", msg);
