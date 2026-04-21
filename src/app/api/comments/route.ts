@@ -63,12 +63,23 @@ export async function POST(req: NextRequest) {
 
   await pusherServer.trigger(`render-${renderId}`, "new-comment", comment);
 
-  // Aggregate non-internal root comments into project discussion
+  // Aggregate non-internal root comments into project discussion (non-blocking)
   if (!isInternal) {
-    const discussion = await prisma.discussion.findUnique({
-      where: { projectId: render.projectId },
-    });
-    if (discussion) {
+    try {
+      let discussion = await prisma.discussion.findUnique({
+        where: { projectId: render.projectId },
+      });
+      // Auto-create project discussion if it doesn't exist yet
+      if (!discussion) {
+        discussion = await prisma.discussion.create({
+          data: {
+            title: render.project.title,
+            type: "project",
+            ownerId: render.project.userId,
+            projectId: render.projectId,
+          },
+        });
+      }
       const sourceType = isPin ? "render_pin" : "render_comment";
       const sourceUrl = `/projects/${render.projectId}/renders/${renderId}${isPin ? `?pinId=${comment.id}` : `?chatId=${comment.id}`}`;
       const msg = await prisma.discussionMessage.create({
@@ -84,6 +95,8 @@ export async function POST(req: NextRequest) {
         },
       });
       await pusherServer.trigger(`discussion-${discussion.id}`, "new-message", msg);
+    } catch (e) {
+      console.error("[comments] Discussion aggregation failed:", e);
     }
   }
 

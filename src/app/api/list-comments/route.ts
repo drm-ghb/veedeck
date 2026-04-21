@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
     include: {
       section: {
         include: {
-          list: { select: { id: true, slug: true, name: true, userId: true, projectId: true } },
+          list: { select: { id: true, slug: true, name: true, userId: true, projectId: true, project: { select: { title: true } } } },
         },
       },
     },
@@ -56,12 +56,23 @@ export async function POST(req: NextRequest) {
     });
     await pusherServer.trigger(`user-${list.userId}`, "new-notification", notification);
 
-    // Aggregate into project discussion if list is linked to a project
+    // Aggregate into project discussion if list is linked to a project (non-blocking)
     if (list.projectId) {
-      const discussion = await prisma.discussion.findUnique({
-        where: { projectId: list.projectId },
-      });
-      if (discussion) {
+      try {
+        let discussion = await prisma.discussion.findUnique({
+          where: { projectId: list.projectId },
+        });
+        // Auto-create project discussion if it doesn't exist yet
+        if (!discussion) {
+          discussion = await prisma.discussion.create({
+            data: {
+              title: list.project?.title ?? list.name,
+              type: "project",
+              ownerId: list.userId,
+              projectId: list.projectId,
+            },
+          });
+        }
         const sourceUrl = `/listy/${listPath}?product=${productId}`;
         const msg = await prisma.discussionMessage.create({
           data: {
@@ -76,6 +87,8 @@ export async function POST(req: NextRequest) {
           },
         });
         await pusherServer.trigger(`discussion-${discussion.id}`, "new-message", msg);
+      } catch (e) {
+        console.error("[list-comments] Discussion aggregation failed:", e);
       }
     }
   }
