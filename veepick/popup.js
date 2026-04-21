@@ -289,6 +289,21 @@ btnAdd.addEventListener("click", async () => {
     // Notify background to flush pending products too
     chrome.runtime.sendMessage({ type: "FLUSH_PENDING", appUrl, apiKey });
 
+    // Remove image picker from page and close popup after brief delay
+    try {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (tab?.id) {
+        chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          func: () => {
+            document.getElementById("veepick-picker")?.remove();
+            document.getElementById("veepick-picker-styles")?.remove();
+          },
+        }).catch(() => {});
+      }
+    } catch {}
+    setTimeout(() => window.close(), 1200);
+
   } catch (err) {
     log("Add product error:", err);
 
