@@ -72,6 +72,7 @@ export async function POST(req: NextRequest) {
             sourceId: comment.id,
             sourceUrl,
             sourceName: `${list.name} › ${product.name}`,
+            sourceImageUrl: product.imageUrl ?? null,
           },
         });
         await pusherServer.trigger(`discussion-${discussion.id}`, "new-message", msg);

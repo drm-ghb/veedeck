@@ -80,6 +80,7 @@ export async function POST(req: NextRequest) {
           sourceId: comment.id,
           sourceUrl,
           sourceName: render.name,
+          sourceImageUrl: render.fileUrl,
         },
       });
       await pusherServer.trigger(`discussion-${discussion.id}`, "new-message", msg);

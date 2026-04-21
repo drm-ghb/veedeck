@@ -15,6 +15,7 @@ interface DiscussionMessage {
   sourceId: string | null;
   sourceUrl: string | null;
   sourceName: string | null;
+  sourceImageUrl: string | null;
   attachmentUrl: string | null;
   attachmentName: string | null;
   attachmentType: string | null;
@@ -224,7 +225,7 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
                 <div key={msg.id} className={`flex ${isOwn && !isAggregated ? "justify-end" : "justify-start"}`}>
                   {isAggregated ? (
                     <div className="max-w-[85%] bg-muted/60 border border-border rounded-xl px-3 py-2 text-sm">
-                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                         <span className="text-xs font-medium">{msg.authorName}</span>
                         {sourceLabel && (
                           <span className="text-xs text-muted-foreground flex items-center gap-1">
@@ -234,8 +235,20 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
                           </span>
                         )}
                       </div>
-                      <p>{msg.content}</p>
-                      <p className="text-xs text-muted-foreground mt-1">{formatTime(msg.createdAt)}</p>
+                      <div className={`flex gap-2.5 ${msg.sourceImageUrl ? "items-start" : ""}`}>
+                        {msg.sourceImageUrl && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={msg.sourceImageUrl}
+                            alt=""
+                            className="w-14 h-14 rounded-lg object-cover shrink-0 border border-border"
+                          />
+                        )}
+                        <div className="min-w-0">
+                          <p className="break-words">{msg.content}</p>
+                          <p className="text-xs text-muted-foreground mt-1">{formatTime(msg.createdAt)}</p>
+                        </div>
+                      </div>
                     </div>
                   ) : (
                     <div className={`max-w-[75%] flex flex-col gap-0.5 ${isOwn ? "items-end" : "items-start"}`}>

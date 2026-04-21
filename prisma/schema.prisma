@@ -456,9 +456,10 @@ model DiscussionMessage {
   userId       String?
   clientEmail  String?
   sourceType   String   @default("chat") // "chat" | "render_comment" | "render_pin" | "product_comment"
-  sourceId       String?
-  sourceUrl      String?
-  sourceName     String?
+  sourceId        String?
+  sourceUrl       String?
+  sourceName      String?
+  sourceImageUrl  String?
   attachmentUrl  String?
   attachmentName String?
   attachmentType String? // "image" | "document"
