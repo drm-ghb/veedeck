@@ -5,7 +5,7 @@ import { useState } from "react";
 import {
   Users,
   PictureInPicture,
-  ShoppingCart,
+  ScrollText,
   Package,
   MapPin,
   Pin,
@@ -312,7 +312,7 @@ export default function DashboardView({
                 className="group flex flex-col items-center gap-2 p-3 rounded-xl bg-card border border-border hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600 transition-all"
               >
                 <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform bg-primary">
-                  <ShoppingCart size={24} className="text-white" />
+                  <ScrollText size={24} className="text-white" />
                 </div>
                 <p className="text-xs font-medium text-foreground text-center leading-tight">{t.nav.lists}</p>
               </Link>
@@ -376,7 +376,7 @@ export default function DashboardView({
                 className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border hover:border-primary/30 hover:bg-primary/5 transition-colors"
               >
                 <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                  <ShoppingCart size={16} className="text-primary" />
+                  <ScrollText size={16} className="text-primary" />
                 </div>
                 <div className="min-w-0">
                   <p className="text-xl font-bold leading-none">{stats.lists}</p>
@@ -465,7 +465,7 @@ export default function DashboardView({
             </div>
             {recentLists.length === 0 ? (
               <div className="rounded-xl border border-dashed border-border bg-card p-6 text-center">
-                <ShoppingCart size={28} className="mx-auto mb-2 text-muted-foreground/40" />
+                <ScrollText size={28} className="mx-auto mb-2 text-muted-foreground/40" />
                 <p className="text-sm text-muted-foreground">Brak list zakupowych</p>
               </div>
             ) : (
@@ -473,7 +473,7 @@ export default function DashboardView({
                 {recentLists.map((list) => (
                   <Link key={list.id} href={`/listy/${list.slug ?? list.id}`} className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors">
                     <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                      <ShoppingCart size={18} className="text-primary" />
+                      <ScrollText size={18} className="text-primary" />
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium truncate flex items-center gap-1.5">
@@ -595,7 +595,7 @@ export default function DashboardView({
                       return (
                         <div key={m.id} className="flex items-center hover:bg-muted/50 transition-colors">
                           <Link href={`/listy/${m.listSlug ?? m.listId}?product=${m.productId}`} onClick={() => markListMessageViewed(m.id)} className="flex items-start gap-3 px-4 py-3 flex-1 min-w-0">
-                            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5"><ShoppingCart size={15} className="text-primary" /></div>
+                            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5"><ScrollText size={15} className="text-primary" /></div>
                             <div className="min-w-0 flex-1">
                               <p className="text-sm font-medium truncate">{m.content}</p>
                               <p className="text-xs text-muted-foreground truncate">{m.author} · {m.productName} · {m.listName}</p>

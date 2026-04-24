@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowLeft,
-  ShoppingCart,
+  ScrollText,
   PictureInPicture,
   Copy,
   Eye,
@@ -38,6 +38,8 @@ interface ProjectClient {
   phone: string | null;
   isMainContact: boolean;
   createdAt: string;
+  startDate: string | null;
+  endDate: string | null;
 }
 
 interface ProjectData {
@@ -56,6 +58,8 @@ interface ProjectData {
   addressStreet: string | null;
   hasRenders: boolean;
   hasLists: boolean;
+  startDate: string | null;
+  endDate: string | null;
   clients: ProjectClient[];
 }
 
@@ -85,6 +89,8 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
   const [shareExpiresAt, setShareExpiresAt] = useState(
     project.shareExpiresAt ? project.shareExpiresAt.slice(0, 10) : ""
   );
+  const [projectStartDate, setProjectStartDate] = useState(project.startDate ?? "");
+  const [projectEndDate, setProjectEndDate] = useState(project.endDate ?? "");
   const [showPassword, setShowPassword] = useState(false);
   const [savingInfo, setSavingInfo] = useState(false);
 
@@ -94,6 +100,8 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
   const [newClientEmail, setNewClientEmail] = useState("");
   const [newClientPhone, setNewClientPhone] = useState("");
   const [newClientIsMain, setNewClientIsMain] = useState(false);
+  const [newClientStartDate, setNewClientStartDate] = useState("");
+  const [newClientEndDate, setNewClientEndDate] = useState("");
   const [addingClient, setAddingClient] = useState(false);
   const [showAddClient, setShowAddClient] = useState(false);
 
@@ -101,6 +109,8 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
   const [editingClientId, setEditingClientId] = useState<string | null>(null);
   const [editEmail, setEditEmail] = useState("");
   const [editPhone, setEditPhone] = useState("");
+  const [editStartDate, setEditStartDate] = useState("");
+  const [editEndDate, setEditEndDate] = useState("");
   const [savingEdit, setSavingEdit] = useState(false);
 
   // Address state
@@ -142,6 +152,8 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
           description: description.trim() || null,
           sharePassword: sharePassword.trim() || null,
           shareExpiresAt: shareExpiresAt || null,
+          startDate: projectStartDate || null,
+          endDate: projectEndDate || null,
         }),
       });
       if (!res.ok) throw new Error();
@@ -188,15 +200,23 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
           email: newClientEmail.trim() || null,
           phone: newClientPhone.trim() || null,
           isMainContact: newClientIsMain,
+          startDate: newClientStartDate || null,
+          endDate: newClientEndDate || null,
         }),
       });
       if (!res.ok) throw new Error();
       const created = await res.json();
-      setClients((prev) => [...prev, created]);
+      setClients((prev) => [...prev, {
+        ...created,
+        startDate: created.startDate ? created.startDate.slice(0, 10) : null,
+        endDate: created.endDate ? created.endDate.slice(0, 10) : null,
+      }]);
       setNewClientName("");
       setNewClientEmail("");
       setNewClientPhone("");
       setNewClientIsMain(false);
+      setNewClientStartDate("");
+      setNewClientEndDate("");
       setShowAddClient(false);
       toast.success(t.projekty.clientAdded);
     } catch {
@@ -210,12 +230,16 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
     setEditingClientId(client.id);
     setEditEmail(client.email ?? "");
     setEditPhone(client.phone ?? "");
+    setEditStartDate(client.startDate ?? "");
+    setEditEndDate(client.endDate ?? "");
   }
 
   function cancelEditing() {
     setEditingClientId(null);
     setEditEmail("");
     setEditPhone("");
+    setEditStartDate("");
+    setEditEndDate("");
   }
 
   async function saveClientEdit(clientId: string) {
@@ -224,11 +248,22 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
       const res = await fetch(`/api/projects/${project.id}/clients/${clientId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: editEmail.trim() || null, phone: editPhone.trim() || null }),
+        body: JSON.stringify({
+          email: editEmail.trim() || null,
+          phone: editPhone.trim() || null,
+          startDate: editStartDate || null,
+          endDate: editEndDate || null,
+        }),
       });
       if (!res.ok) throw new Error();
       const updated = await res.json();
-      setClients((prev) => prev.map((c) => c.id === clientId ? { ...c, email: updated.email, phone: updated.phone } : c));
+      setClients((prev) => prev.map((c) => c.id === clientId ? {
+        ...c,
+        email: updated.email,
+        phone: updated.phone,
+        startDate: updated.startDate ? updated.startDate.slice(0, 10) : null,
+        endDate: updated.endDate ? updated.endDate.slice(0, 10) : null,
+      } : c));
       cancelEditing();
       toast.success(t.common.saved);
     } catch {
@@ -331,7 +366,7 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
   };
 
   return (
-    <div className="max-w-3xl">
+    <div className="max-w-3xl mx-auto">
       {/* Back nav */}
       <div className="mb-6">
         <Link
@@ -378,6 +413,26 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
+                <Label htmlFor="proj-start">Data rozpoczęcia współpracy</Label>
+                <Input
+                  id="proj-start"
+                  type="date"
+                  value={projectStartDate}
+                  onChange={(e) => setProjectStartDate(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="proj-end">Data zakończenia współpracy</Label>
+                <Input
+                  id="proj-end"
+                  type="date"
+                  value={projectEndDate}
+                  onChange={(e) => setProjectEndDate(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
                 <Label htmlFor="proj-password">{t.projekty.passwordLink}</Label>
                 <div className="relative">
                   <Input
@@ -396,15 +451,6 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
                     {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
                   </button>
                 </div>
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="proj-expires">{t.projekty.expiresDate}</Label>
-                <Input
-                  id="proj-expires"
-                  type="date"
-                  value={shareExpiresAt}
-                  onChange={(e) => setShareExpiresAt(e.target.value)}
-                />
               </div>
             </div>
             <div className="flex items-center justify-between pt-1">
@@ -527,6 +573,24 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
                   />
                 </div>
               </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label>Data rozpoczęcia (opcjonalnie)</Label>
+                  <Input
+                    type="date"
+                    value={newClientStartDate}
+                    onChange={(e) => setNewClientStartDate(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Data zakończenia (opcjonalnie)</Label>
+                  <Input
+                    type="date"
+                    value={newClientEndDate}
+                    onChange={(e) => setNewClientEndDate(e.target.value)}
+                  />
+                </div>
+              </div>
               <div className="flex items-center justify-between">
                 <label className="flex items-center gap-2 cursor-pointer select-none">
                   <input
@@ -547,6 +611,8 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
                       setNewClientEmail("");
                       setNewClientPhone("");
                       setNewClientIsMain(false);
+                      setNewClientStartDate("");
+                      setNewClientEndDate("");
                     }}
                   >
                     {t.common.cancel}
@@ -591,6 +657,13 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
                           {[client.email, client.phone].filter(Boolean).join(" · ")}
                         </p>
                       )}
+                      {(client.startDate || client.endDate) && editingClientId !== client.id && (
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {client.startDate && `Od: ${client.startDate.split("-").reverse().join(".")}`}
+                          {client.startDate && client.endDate && " – "}
+                          {client.endDate && `Do: ${client.endDate.split("-").reverse().join(".")}`}
+                        </p>
+                      )}
                     </div>
                     <div className="flex items-center gap-1 ml-3 flex-shrink-0">
                       {!client.isMainContact && (
@@ -605,7 +678,7 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
                       <button
                         onClick={() => editingClientId === client.id ? cancelEditing() : startEditing(client)}
                         className="text-muted-foreground hover:text-foreground transition-colors p-1"
-                        title="Edytuj email / telefon"
+                        title="Edytuj dane kontaktowe i daty"
                       >
                         <Pencil size={14} />
                       </button>
@@ -635,6 +708,26 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
                           placeholder="Telefon"
                           className="h-8 text-sm"
                         />
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div className="space-y-1">
+                          <label className="text-xs text-muted-foreground">Data rozpoczęcia</label>
+                          <Input
+                            type="date"
+                            value={editStartDate}
+                            onChange={(e) => setEditStartDate(e.target.value)}
+                            className="h-8 text-sm"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-xs text-muted-foreground">Data zakończenia</label>
+                          <Input
+                            type="date"
+                            value={editEndDate}
+                            onChange={(e) => setEditEndDate(e.target.value)}
+                            className="h-8 text-sm"
+                          />
+                        </div>
                       </div>
                       <div className="flex gap-2 justify-end">
                         <Button size="sm" variant="outline" className="h-7 text-xs" onClick={cancelEditing}>
@@ -681,7 +774,7 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
                           className={active ? "text-white" : "text-muted-foreground opacity-40"}
                         />
                       ) : (
-                        <ShoppingCart
+                        <ScrollText
                           size={18}
                           className={active ? "text-white" : "text-muted-foreground"}
                         />

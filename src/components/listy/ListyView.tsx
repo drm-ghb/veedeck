@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useT } from "@/lib/i18n";
-import { ShoppingCart, Search, LayoutGrid, List, SlidersHorizontal, Link2, MoreHorizontal, Pencil, Archive, ArchiveRestore, Trash2, Pin, PinOff, AlertTriangle, Check, MessageSquare } from "lucide-react";
+import { ScrollText, Search, LayoutGrid, List, SlidersHorizontal, Link2, MoreHorizontal, Pencil, Archive, ArchiveRestore, Trash2, Pin, PinOff, AlertTriangle, Check, MessageSquare } from "lucide-react";
 import { pusherClient } from "@/lib/pusher";
 import { getUnreadSet, syncListUnread } from "@/lib/list-unread-store";
 import NewListDialog from "./NewListDialog";
@@ -308,7 +308,7 @@ export default function ListyView({ lists: initialLists }: ListyViewProps) {
       {lists.length === 0 && (
         <div className="flex flex-col items-center justify-center py-24 text-center">
           <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
-            <ShoppingCart size={28} className="text-primary" />
+            <ScrollText size={28} className="text-primary" />
           </div>
           <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-1">{t.listy.noListsEmpty}</h2>
           <p className="text-sm text-gray-400 max-w-xs">{t.listy.noListsHint}</p>
@@ -342,7 +342,7 @@ export default function ListyView({ lists: initialLists }: ListyViewProps) {
               )}
               <Link href={`/listy/${list.slug ?? list.id}`} className={`flex items-start gap-3 p-4 pr-16 block ${list.pinned ? "pl-8" : ""}`}>
                 <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                  <ShoppingCart size={16} className="text-primary" />
+                  <ScrollText size={16} className="text-primary" />
                 </div>
                 <div className="min-w-0">
                   <p className="font-semibold text-sm text-foreground truncate">{list.name}</p>
@@ -384,7 +384,7 @@ export default function ListyView({ lists: initialLists }: ListyViewProps) {
               className={`flex items-center gap-3 px-4 py-3 hover:bg-muted/30 transition-colors cursor-pointer ${i !== filtered.length - 1 ? "border-b border-border" : ""}`}
             >
               <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                <ShoppingCart size={14} className="text-primary" />
+                <ScrollText size={14} className="text-primary" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5">

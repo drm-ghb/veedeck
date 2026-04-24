@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Users, Image as ImageIcon, ShoppingCart, ChevronRight, SlidersHorizontal, Search, ArchiveRestore, Trash2, Pin } from "lucide-react";
+import { Users, Image as ImageIcon, ScrollText, ChevronRight, SlidersHorizontal, Search, ArchiveRestore, Trash2, Pin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import NewProjectDialog from "@/components/dashboard/NewProjectDialog";
@@ -197,7 +197,7 @@ export default function ProjektyView({ projects, archivedProjects }: ProjektyVie
                       {p.renderCount > 0 && <span className="text-[10px] opacity-60">({p.renderCount} {t.projekty.renders})</span>}
                     </Link>
                     <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-md bg-[#0f766e]/10 text-[#0f766e] cursor-default">
-                      <ShoppingCart size={11} />
+                      <ScrollText size={11} />
                       {t.nav.lists}
                       {p.listCount > 0 && <span className="text-[10px] opacity-60">({p.listCount})</span>}
                     </span>

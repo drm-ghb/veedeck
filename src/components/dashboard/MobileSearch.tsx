@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Search, X, Users, DoorOpen, Image as LucideImage, ShoppingCart, User, Package } from "lucide-react";
+import { Search, X, Users, DoorOpen, Image as LucideImage, ScrollText, User, Package } from "lucide-react";
 import { useT } from "@/lib/i18n";
 
 interface SearchResult {
@@ -37,7 +37,7 @@ export default function MobileSearch() {
     { key: "projects", label: t.dashboard.searchProjects, icon: <Users size={13} /> },
     { key: "rooms", label: t.dashboard.searchRooms, icon: <DoorOpen size={13} /> },
     { key: "renders", label: t.dashboard.searchRenders, icon: <LucideImage size={13} /> },
-    { key: "lists", label: t.dashboard.searchLists, icon: <ShoppingCart size={13} /> },
+    { key: "lists", label: t.dashboard.searchLists, icon: <ScrollText size={13} /> },
     { key: "clients", label: t.dashboard.searchClients, icon: <User size={13} /> },
     { key: "products", label: t.dashboard.searchProducts, icon: <Package size={13} /> },
   ];

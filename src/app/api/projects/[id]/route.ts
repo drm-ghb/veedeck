@@ -95,6 +95,8 @@ export async function PATCH(
       ...(body.addressPostalCode !== undefined && { addressPostalCode: body.addressPostalCode || null }),
       ...(body.addressStreet !== undefined && { addressStreet: body.addressStreet || null }),
       ...(body.clientCanUpload !== undefined && { clientCanUpload: body.clientCanUpload }),
+      ...(body.startDate !== undefined && { startDate: body.startDate ? new Date(body.startDate) : null }),
+      ...(body.endDate !== undefined && { endDate: body.endDate ? new Date(body.endDate) : null }),
       ...modulesUpdate,
     },
   });

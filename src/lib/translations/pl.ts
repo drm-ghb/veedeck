@@ -394,7 +394,7 @@ export const pl = {
     newProjectTab: "Nowy klient",
     existingProjectTab: "Istniejący klient",
     // Project detail
-    projectInfo: "Informacje o projekcie",
+    projectInfo: "Informacje o kliencie",
     address: "Adres inwestycji",
     street: "Ulica",
     streetPlaceholder: "ul. Przykładowa 12/3",
@@ -405,7 +405,7 @@ export const pl = {
     country: "Kraj",
     countryPlaceholder: "Polska",
     createdAt: "Utworzono:",
-    passwordLink: "Hasło do linka",
+    passwordLink: "Hasło do panelu klienta",
     noPassword: "Brak hasła",
     expiresDate: "Data wygaśnięcia",
     clients: "Klienci",

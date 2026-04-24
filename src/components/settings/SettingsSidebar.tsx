@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Settings, ShoppingCart, ChevronLeft, Users, Puzzle, PictureInPicture } from "lucide-react";
+import { Settings, ScrollText, ChevronLeft, Users, Puzzle, PictureInPicture } from "lucide-react";
 import { useT } from "@/lib/i18n";
 
 export default function SettingsSidebar() {
@@ -26,7 +26,7 @@ export default function SettingsSidebar() {
     {
       href: "/settings/listy",
       label: t.settings.lists,
-      icon: <ShoppingCart size={16} />,
+      icon: <ScrollText size={16} />,
       module: { href: "/listy", label: t.settings.lists },
     },
     {

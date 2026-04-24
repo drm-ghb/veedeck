@@ -546,6 +546,7 @@ export default function RenderViewer({
   }
 
   async function updateStatus(id: string, status: CommentStatus) {
+    setComments((prev) => prev.map((c) => c.id === id ? { ...c, status } : c));
     await fetch(`/api/comments/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },

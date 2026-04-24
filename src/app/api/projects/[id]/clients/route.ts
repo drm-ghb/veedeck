@@ -13,7 +13,7 @@ export async function POST(
   const project = await prisma.project.findFirst({ where: { id, userId: session.user.id } });
   if (!project) return NextResponse.json({ error: "Nie znaleziono" }, { status: 404 });
 
-  const { name, email, phone, isMainContact } = await req.json();
+  const { name, email, phone, isMainContact, startDate, endDate } = await req.json();
   if (!name?.trim()) return NextResponse.json({ error: "Imię jest wymagane" }, { status: 400 });
 
   // If this is the main contact, unset all others first
@@ -31,6 +31,8 @@ export async function POST(
       phone: phone?.trim() || null,
       isMainContact: !!isMainContact,
       projectId: id,
+      startDate: startDate ? new Date(startDate) : null,
+      endDate: endDate ? new Date(endDate) : null,
     },
   });
 

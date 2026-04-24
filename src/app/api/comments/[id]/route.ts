@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { pusherServer } from "@/lib/pusher";
 import { getWorkspaceUserId } from "@/lib/workspace";
 
 export async function PATCH(
@@ -14,11 +15,15 @@ export async function PATCH(
   const userId = getWorkspaceUserId(session);
 
   const { id } = await params;
-  const { viewedByDesigner } = await req.json();
+  const body = await req.json();
+  const { viewedByDesigner, status } = body;
 
   const comment = await prisma.comment.findUnique({
     where: { id },
-    select: { render: { select: { project: { select: { userId: true } } } } },
+    select: {
+      renderId: true,
+      render: { select: { project: { select: { userId: true } } } },
+    },
   });
 
   if (!comment) {
@@ -29,10 +34,18 @@ export async function PATCH(
     return NextResponse.json({ error: "Brak dostępu" }, { status: 403 });
   }
 
-  await prisma.comment.update({
+  const updated = await prisma.comment.update({
     where: { id },
-    data: { viewedByDesigner },
+    data: {
+      ...(viewedByDesigner !== undefined ? { viewedByDesigner } : {}),
+      ...(status !== undefined ? { status } : {}),
+    },
+    include: { replies: true },
   });
 
-  return NextResponse.json({ ok: true });
+  if (status !== undefined) {
+    await pusherServer.trigger(`render-${comment.renderId}`, "comment-updated", updated);
+  }
+
+  return NextResponse.json(updated);
 }

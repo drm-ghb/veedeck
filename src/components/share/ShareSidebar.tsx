@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { LayoutDashboard, ShoppingCart, PanelLeftClose, PanelLeftOpen, PictureInPicture, Sun, Moon, HelpCircle, Settings, UserRound, X, CheckCircle, MessageSquare, Menu } from "lucide-react";
+import { LayoutDashboard, ScrollText, PanelLeftClose, PanelLeftOpen, PictureInPicture, Sun, Moon, HelpCircle, Settings, UserRound, X, CheckCircle, MessageSquare, Menu } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { type Theme } from "@/lib/theme";
@@ -263,7 +263,7 @@ export default function ShareSidebar({
             onClick={() => setMobileSidebarOpen(false)}
           >
             <span className="flex-shrink-0 w-5 flex items-center justify-center">
-              <ShoppingCart size={18} />
+              <ScrollText size={18} />
             </span>
             {showLabels && t.share.lists}
           </Link>

@@ -13,15 +13,17 @@ export async function PATCH(
   const project = await prisma.project.findFirst({ where: { id, userId: session.user.id } });
   if (!project) return NextResponse.json({ error: "Nie znaleziono" }, { status: 404 });
 
-  const { isMainContact, email, phone } = await req.json();
+  const { isMainContact, email, phone, startDate, endDate } = await req.json();
 
-  // Edit email / phone
-  if (email !== undefined || phone !== undefined) {
+  // Edit email / phone / dates
+  if (email !== undefined || phone !== undefined || startDate !== undefined || endDate !== undefined) {
     const updated = await prisma.projectClient.update({
       where: { id: clientId },
       data: {
         ...(email !== undefined ? { email: email?.trim() || null } : {}),
         ...(phone !== undefined ? { phone: phone?.trim() || null } : {}),
+        ...(startDate !== undefined ? { startDate: startDate ? new Date(startDate) : null } : {}),
+        ...(endDate !== undefined ? { endDate: endDate ? new Date(endDate) : null } : {}),
       },
     });
     // Sync to project if main contact

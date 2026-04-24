@@ -173,6 +173,8 @@ model Project {
   addressPostalCode  String?
   addressStreet      String?
   clientCanUpload    Boolean         @default(false)
+  startDate          DateTime?
+  endDate            DateTime?
   user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   clients        ProjectClient[]
   renders        Render[]
@@ -182,14 +184,16 @@ model Project {
 }
 
 model ProjectClient {
-  id            String   @id @default(cuid())
+  id            String    @id @default(cuid())
   name          String
   email         String?
   phone         String?
   projectId     String
-  createdAt     DateTime @default(now())
-  isMainContact Boolean  @default(false)
-  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdAt     DateTime  @default(now())
+  isMainContact Boolean   @default(false)
+  startDate     DateTime?
+  endDate       DateTime?
+  project       Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
 }
 
 model ShoppingList {

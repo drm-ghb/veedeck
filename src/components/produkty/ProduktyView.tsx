@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Package, ChevronLeft, ArrowUpDown, Pencil, Trash2, ExternalLink, Plus, Check, X } from "lucide-react";
+import { Search, Package, ChevronLeft, ArrowUpDown, Pencil, Trash2, ExternalLink, Plus, Check, X, SlidersHorizontal } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,6 +16,7 @@ import {
 import { toast } from "sonner";
 import { useT } from "@/lib/i18n";
 import AddProductToLibraryDialog from "./AddProductToLibraryDialog";
+import { SearchProductDialog } from "./SearchProductDialog";
 
 const CATEGORY_LABELS: Record<string, string> = {
   OSWIETLENIE: "Oświetlenie",
@@ -72,6 +73,7 @@ export default function ProduktyView({ initialProducts }: Props) {
   const [addOpen, setAddOpen] = useState(false);
   const [editProduct, setEditProduct] = useState<Product | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [advancedSearchOpen, setAdvancedSearchOpen] = useState(false);
 
   const filtered = useMemo(() => {
     let list = products;
@@ -193,8 +195,16 @@ export default function ProduktyView({ initialProducts }: Props) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Szukaj po nazwie lub producencie..."
-            className="pl-9 bg-background dark:bg-background"
+            className="pl-9 pr-9 bg-background dark:bg-background"
           />
+          <button
+            type="button"
+            onClick={() => setAdvancedSearchOpen(true)}
+            title="Zaawansowane wyszukiwanie"
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <SlidersHorizontal size={15} />
+          </button>
         </div>
         <select
           value={groupBy}
@@ -294,6 +304,16 @@ export default function ProduktyView({ initialProducts }: Props) {
         </div>
       )}
 
+      {/* Advanced search dialog */}
+      <SearchProductDialog
+        open={advancedSearchOpen}
+        onOpenChange={setAdvancedSearchOpen}
+        onSelectProduct={(product) => {
+          setQuery(product.name);
+          setAdvancedSearchOpen(false);
+        }}
+      />
+
       {/* Add/Edit dialog */}
       <AddProductToLibraryDialog
         open={addOpen}
@@ -313,6 +333,7 @@ export default function ProduktyView({ initialProducts }: Props) {
         } : undefined}
         editMode={!!editProduct}
         editId={editProduct?.id}
+        hideAddFromLibrary
       />
     </div>
   );

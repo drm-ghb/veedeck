@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import Image from "next/image";
-import { ShoppingCart, MessageSquare } from "lucide-react";
+import { ScrollText, MessageSquare } from "lucide-react";
 import ShareNavbar from "@/components/share/ShareNavbar";
 import ShareSidebar from "@/components/share/ShareSidebar";
 import ClientGreeting from "@/components/share/ClientGreeting";
@@ -66,7 +66,7 @@ export default async function ProjectHomePage({ params }: { params: Promise<{ to
             className="group flex flex-col items-center gap-3 p-4 rounded-xl bg-card border border-border hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600 transition-all cursor-pointer"
           >
             <div className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform duration-150 bg-primary">
-              <ShoppingCart size={32} className="text-white" />
+              <ScrollText size={32} className="text-white" />
             </div>
             <div className="text-center">
               <p className="text-sm font-medium text-foreground leading-tight">Listy</p>

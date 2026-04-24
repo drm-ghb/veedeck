@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { Loader2, ExternalLink, ImagePlus, X } from "lucide-react";
 import { UploadButton } from "@uploadthing/react";
 import type { OurFileRouter } from "@/lib/uploadthing";
+import { SearchProductDialog } from "./SearchProductDialog";
 
 const CATEGORIES = [
   { value: "OSWIETLENIE", label: "Oświetlenie" },
@@ -38,15 +39,17 @@ interface Props {
   initialData?: Partial<ProductData>;
   editMode?: boolean;
   editId?: string;
+  hideAddFromLibrary?: boolean;
 }
 
-export default function AddProductToLibraryDialog({ open, onOpenChange, onAdded, initialData, editMode, editId }: Props) {
+export default function AddProductToLibraryDialog({ open, onOpenChange, onAdded, initialData, editMode, editId, hideAddFromLibrary }: Props) {
   const [tab, setTab] = useState<"link" | "manual">("link");
   const [scrapeUrl, setScrapeUrl] = useState("");
   const [scraping, setScraping] = useState(false);
   const [form, setForm] = useState<ProductData>(empty);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -115,6 +118,23 @@ export default function AddProductToLibraryDialog({ open, onOpenChange, onAdded,
     setTab("link");
   }
 
+  function handleSelectProduct(product: any) {
+    setForm({
+      name: product.name || "",
+      url: product.url || "",
+      imageUrl: product.imageUrl || "",
+      price: product.price || "",
+      manufacturer: product.manufacturer || "",
+      color: product.color || "",
+      dimensions: product.dimensions || "",
+      description: product.description || "",
+      deliveryTime: product.deliveryTime || "",
+      category: product.category || "",
+    });
+    setTab("manual");
+    toast.success("Produkt załadowany — uzupełnij brakujące dane");
+  }
+
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-lg">
@@ -144,6 +164,21 @@ export default function AddProductToLibraryDialog({ open, onOpenChange, onAdded,
             <Button onClick={handleScrape} disabled={scraping || !scrapeUrl.trim()} className="w-full">
               {scraping ? <><Loader2 size={15} className="animate-spin mr-2" />Pobieranie danych...</> : "Pobierz dane produktu"}
             </Button>
+            {!hideAddFromLibrary && (
+              <>
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-border"></div>
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">lub</span>
+                  </div>
+                </div>
+                <Button onClick={() => setSearchOpen(true)} variant="outline" className="w-full">
+                  Dodaj z bazy
+                </Button>
+              </>
+            )}
           </div>
         ) : (
           <div className="flex flex-col gap-0">
@@ -240,6 +275,12 @@ export default function AddProductToLibraryDialog({ open, onOpenChange, onAdded,
           </div>
         )}
       </DialogContent>
+
+      <SearchProductDialog
+        open={searchOpen}
+        onOpenChange={setSearchOpen}
+        onSelectProduct={handleSelectProduct}
+      />
     </Dialog>
   );
 }

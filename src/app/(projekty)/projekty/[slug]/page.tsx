@@ -41,6 +41,8 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
     addressStreet: project.addressStreet ?? null,
     hasRenders: project.renders.length > 0,
     hasLists: project.shoppingLists.length > 0,
+    startDate: project.startDate ? project.startDate.toISOString().slice(0, 10) : null,
+    endDate: project.endDate ? project.endDate.toISOString().slice(0, 10) : null,
     clients: project.clients.map((c) => ({
       id: c.id,
       name: c.name,
@@ -48,6 +50,8 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
       phone: c.phone ?? null,
       isMainContact: c.isMainContact,
       createdAt: c.createdAt.toISOString(),
+      startDate: c.startDate ? c.startDate.toISOString().slice(0, 10) : null,
+      endDate: c.endDate ? c.endDate.toISOString().slice(0, 10) : null,
     })),
   };
 
