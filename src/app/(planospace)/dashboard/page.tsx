@@ -216,6 +216,7 @@ export default async function DashboardPage() {
   return (
     <DashboardView
       displayName={displayName}
+      userId={userId}
       navMode={navMode}
       hiddenModules={hiddenModules}
       stats={{

@@ -66,6 +66,8 @@ export async function POST(req: NextRequest) {
 
   await pusherServer.trigger(`render-${renderId}`, "new-comment", comment);
 
+  const isDesigner = !!(session?.user?.id && getWorkspaceUserId(session) === render.project.userId);
+
   // Aggregate non-internal root comments into project discussion (non-blocking)
   if (!isInternal) {
     try {
@@ -85,7 +87,6 @@ export async function POST(req: NextRequest) {
       }
       const sourceType = isPin ? "render_pin" : "render_comment";
       const sourceUrl = `/projects/${render.projectId}/renders/${renderId}${isPin ? `?pinId=${comment.id}` : `?chatId=${comment.id}`}`;
-      const isDesigner = session?.user?.id && getWorkspaceUserId(session) === render.project.userId;
       const msg = await prisma.discussionMessage.create({
         data: {
           discussionId: discussion.id,
@@ -105,7 +106,7 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  if (render.project.userId) {
+  if (render.project.userId && !isDesigner) {
     const notifMessage = isPin
       ? `${author} dodał pin w projekcie "${render.project.title}"`
       : `${author} wysłał wiadomość w projekcie "${render.project.title}"`;

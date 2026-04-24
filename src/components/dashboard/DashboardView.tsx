@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { pusherClient } from "@/lib/pusher";
 import {
   Users,
   PictureInPicture,
@@ -117,6 +118,7 @@ interface TodayEvent {
 
 interface DashboardViewProps {
   displayName: string | null;
+  userId: string;
   navMode: string;
   hiddenModules: string[];
   stats: Stats;
@@ -166,6 +168,7 @@ const EVENT_TYPE_COLORS: Record<string, { bar: string; bg: string; text: string 
 
 export default function DashboardView({
   displayName,
+  userId,
   navMode,
   hiddenModules,
   stats,
@@ -179,6 +182,27 @@ export default function DashboardView({
   todayEvents,
 }: DashboardViewProps) {
   const t = useT();
+
+  const [notifCount, setNotifCount] = useState(stats.notificationCount);
+
+  useEffect(() => {
+    function onUpdated() {
+      fetch("/api/notifications")
+        .then((r) => (r.ok ? r.json() : []))
+        .then((data: { read: boolean }[]) => setNotifCount(data.filter((n) => !n.read).length))
+        .catch(() => {});
+    }
+    window.addEventListener("notifications-updated", onUpdated);
+
+    const channel = pusherClient.subscribe(`user-${userId}`);
+    channel.bind("new-notification", () => setNotifCount((c) => c + 1));
+
+    return () => {
+      window.removeEventListener("notifications-updated", onUpdated);
+      channel.unbind("new-notification");
+      pusherClient.unsubscribe(`user-${userId}`);
+    };
+  }, [userId]);
 
   const [resolvedIds, setResolvedIds] = useState<Set<string>>(new Set());
   const [viewedPinIds, setViewedPinIds] = useState<Set<string>>(new Set());
@@ -388,18 +412,18 @@ export default function DashboardView({
             <Link
               href="/notifications"
               className={`flex items-center gap-3 p-3 rounded-xl border transition-colors ${
-                stats.notificationCount > 0
+                notifCount > 0
                   ? "bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800 hover:border-amber-300 dark:hover:border-amber-700"
                   : "bg-card border-border hover:border-primary/30 hover:bg-primary/5"
               }`}
             >
-              <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${stats.notificationCount > 0 ? "bg-amber-100 dark:bg-amber-900/40" : "bg-muted"}`}>
-                {stats.notificationCount > 0
+              <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${notifCount > 0 ? "bg-amber-100 dark:bg-amber-900/40" : "bg-muted"}`}>
+                {notifCount > 0
                   ? <Bell size={16} className="text-amber-600 dark:text-amber-400" />
                   : <CheckCircle2 size={16} className="text-muted-foreground" />}
               </div>
               <div className="min-w-0">
-                <p className="text-xl font-bold leading-none">{stats.notificationCount}</p>
+                <p className="text-xl font-bold leading-none">{notifCount}</p>
                 <p className="text-xs text-muted-foreground mt-0.5 truncate">Powiadomień</p>
               </div>
             </Link>

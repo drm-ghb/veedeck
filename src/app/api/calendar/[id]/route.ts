@@ -84,7 +84,7 @@ export async function PATCH(
 
     await Promise.all(
       newGuestUserIds.map(async (guestUserId: string) => {
-        await prisma.notification.create({
+        const notif = await prisma.notification.create({
           data: {
             userId: guestUserId,
             message: `${organizerName} zaprosił/a Cię do wydarzenia: „${eventTitle}"`,
@@ -92,7 +92,10 @@ export async function PATCH(
             type: "info",
           },
         });
-        await pusherServer.trigger(`user-${guestUserId}`, "new-notification", {});
+        await pusherServer.trigger(`user-${guestUserId}`, "new-notification", {
+          ...notif,
+          createdAt: notif.createdAt.toISOString(),
+        });
       })
     );
   }

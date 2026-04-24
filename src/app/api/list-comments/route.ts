@@ -46,18 +46,21 @@ export async function POST(req: NextRequest) {
 
   if (product) {
     const list = product.section.list;
+    const isDesigner = !!(session?.user?.id && getWorkspaceUserId(session) === list.userId);
     // Trigger list-level event for real-time badge updates
     await pusherServer.trigger(`shopping-list-${list.id}`, "comment-activity", { productId, action: "new" });
     const listPath = list.slug ?? list.id;
-    const notification = await prisma.notification.create({
-      data: {
-        userId: list.userId,
-        message: `${author} dodał komentarz do produktu „${product.name}" w liście „${list.name}"`,
-        link: `/listy/${listPath}?product=${productId}`,
-        type: "list_comment",
-      },
-    });
-    await pusherServer.trigger(`user-${list.userId}`, "new-notification", notification);
+    if (!isDesigner) {
+      const notification = await prisma.notification.create({
+        data: {
+          userId: list.userId,
+          message: `${author} dodał komentarz do produktu „${product.name}" w liście „${list.name}"`,
+          link: `/listy/${listPath}?product=${productId}`,
+          type: "list_comment",
+        },
+      });
+      await pusherServer.trigger(`user-${list.userId}`, "new-notification", notification);
+    }
 
     // Aggregate into project discussion if list is linked to a project (non-blocking)
     if (list.projectId) {
@@ -77,7 +80,6 @@ export async function POST(req: NextRequest) {
           });
         }
         const sourceUrl = `/listy/${listPath}?product=${productId}`;
-        const isDesigner = session?.user?.id && getWorkspaceUserId(session) === list.userId;
         const msg = await prisma.discussionMessage.create({
           data: {
             discussionId: discussion.id,

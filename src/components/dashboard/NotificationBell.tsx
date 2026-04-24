@@ -39,6 +39,14 @@ export default function NotificationBell({ userId }: NotificationBellProps) {
     refetch();
     window.addEventListener("notifications-updated", refetch);
 
+    let bc: BroadcastChannel | null = null;
+    try {
+      bc = new BroadcastChannel("notifications");
+      bc.onmessage = (e) => {
+        if (e.data?.type === "mark-read") refetch();
+      };
+    } catch {}
+
     const channel = pusherClient.subscribe(`user-${userId}`);
     channel.unbind_all();
     channel.bind("new-notification", (notif: Notification) => {
@@ -52,6 +60,7 @@ export default function NotificationBell({ userId }: NotificationBellProps) {
       channel.unbind_all();
       window.removeEventListener("notifications-updated", refetch);
       pusherClient.unsubscribe(`user-${userId}`);
+      bc?.close();
     };
   }, [userId, refetch]);
 
@@ -74,6 +83,11 @@ export default function NotificationBell({ userId }: NotificationBellProps) {
     });
     setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
     window.dispatchEvent(new Event("notifications-updated"));
+    try {
+      const bc = new BroadcastChannel("notifications");
+      bc.postMessage({ type: "mark-read" });
+      bc.close();
+    } catch {}
   }
 
   return (
