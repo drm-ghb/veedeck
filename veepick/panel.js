@@ -1,7 +1,7 @@
 // Veepick Panel — injected into the page on extension icon click
 (function () {
   const PANEL_ID = "veepick-panel";
-  const PANEL_VERSION = "1.7";
+  const PANEL_VERSION = "1.8";
 
   // Toggle if already exists and version matches; replace if outdated
   const existing = document.getElementById(PANEL_ID);
@@ -146,7 +146,7 @@
         <div class="vp-field"><label>Kolor</label><input id="vp-fieldColor" type="text" placeholder="np. Biały" /></div>
       </div>
       <div class="vp-field"><label>Wymiar</label><input id="vp-fieldDimensions" type="text" placeholder="np. 60x80 cm" /></div>
-      <div class="vp-field"><label>Notatka</label><textarea id="vp-fieldNote" placeholder="Dodatkowe uwagi dla klienta..." style="resize:none;height:36px;min-height:36px"></textarea></div>
+      <div class="vp-field"><label>Notatka</label><input id="vp-fieldNote" type="text" placeholder="Dodatkowe uwagi dla klienta..." /></div>
       <div id="vp-duplicateWarning" class="vp-status error vp-hidden"></div>
       <button class="vp-btn vp-btn-primary" id="vp-btnAdd" disabled>Dodaj do listy</button>
       <div id="vp-mainStatus"></div>
