@@ -16,7 +16,7 @@ export async function GET() {
 
   // Non-blocking cleanup: delete read notifications older than 30 days
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-  prisma.notification.deleteMany({
+  void prisma.notification.deleteMany({
     where: { userId: session.user.id, read: true, createdAt: { lt: thirtyDaysAgo } },
   }).catch(() => {});
 
