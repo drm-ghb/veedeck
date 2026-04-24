@@ -1,7 +1,7 @@
 // Veepick Panel — injected into the page on extension icon click
 (function () {
   const PANEL_ID = "veepick-panel";
-  const PANEL_VERSION = "1.6";
+  const PANEL_VERSION = "1.7";
 
   // Toggle if already exists and version matches; replace if outdated
   const existing = document.getElementById(PANEL_ID);
@@ -146,7 +146,8 @@
         <div class="vp-field"><label>Kolor</label><input id="vp-fieldColor" type="text" placeholder="np. Biały" /></div>
       </div>
       <div class="vp-field"><label>Wymiar</label><input id="vp-fieldDimensions" type="text" placeholder="np. 60x80 cm" /></div>
-      <div class="vp-field"><label>Notatka</label><textarea id="vp-fieldNote" placeholder="Dodatkowe uwagi dla klienta..." style="resize:vertical;min-height:48px"></textarea></div>
+      <div class="vp-field"><label>Notatka</label><textarea id="vp-fieldNote" placeholder="Dodatkowe uwagi dla klienta..." style="resize:none;height:36px;min-height:36px"></textarea></div>
+      <div id="vp-duplicateWarning" class="vp-status error vp-hidden"></div>
       <button class="vp-btn vp-btn-primary" id="vp-btnAdd" disabled>Dodaj do listy</button>
       <div id="vp-mainStatus"></div>
       <div class="vp-user-info" id="vp-userInfo"></div>
@@ -393,16 +394,22 @@
     const section = list?.sections.find((s) => s.id === sectionId);
     const url = productData.url?.trim();
 
+    const warning = vp("vp-duplicateWarning");
     if (section?.products) {
       const isDuplicate = url
         ? section.products.some((p) => p.url === url)
         : section.products.some((p) => p.name.toLowerCase() === name.toLowerCase());
 
-      if (isDuplicate) {
-        vp("vp-btnAdd").disabled = true;
-        vp("vp-btnAdd").textContent = "Ten produkt jest w tej sekcji";
-        return;
+      if (warning) {
+        if (isDuplicate) {
+          warning.textContent = `Ten produkt jest już na tej liście w sekcji „${section.name}"`;
+          warning.classList.remove("vp-hidden");
+        } else {
+          warning.classList.add("vp-hidden");
+        }
       }
+    } else if (warning) {
+      warning.classList.add("vp-hidden");
     }
 
     vp("vp-btnAdd").disabled = false;
@@ -518,14 +525,6 @@
         method: "POST",
         body: JSON.stringify({ listId, sectionId, name, url: productData.url || null, imageUrl: productData.imageUrl || null, price: price || null, manufacturer: manufacturer || null, color: color || null, dimensions: dimensions || null, note: note || null, category: category || null, supplier: productData.supplier || null, description: productData.description || null, quantity }),
       });
-      if (res.status === 409) {
-        const err = await res.json();
-        setStatus("vp-mainStatus", err.error || "Ten produkt jest już w tej sekcji.", "error");
-        const dupSection = lists.find((l) => l.id === listId)?.sections.find((s) => s.id === sectionId);
-        if (dupSection?.products) dupSection.products.push({ url: productData.url?.trim() || null, name });
-        updateAddBtn();
-        return;
-      }
       if (!res.ok) { const err = await res.json(); throw new Error(err.error || "Błąd serwera"); }
       const addedSection = lists.find((l) => l.id === listId)?.sections.find((s) => s.id === sectionId);
       if (addedSection?.products) addedSection.products.push({ url: productData.url?.trim() || null, name });
@@ -540,9 +539,7 @@
     } catch (e) {
       setStatus("vp-mainStatus", e.message || "Błąd dodawania.", "error");
     } finally {
-      if (vp("vp-btnAdd").textContent !== "Ten produkt jest w tej sekcji") {
-        vp("vp-btnAdd").innerHTML = "Dodaj do listy";
-      }
+      vp("vp-btnAdd").innerHTML = "Dodaj do listy";
     }
   }
 
