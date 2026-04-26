@@ -13,7 +13,7 @@ async function notifyGuestUsers(
 
   await Promise.all(
     guestUserIds.map(async (guestUserId) => {
-      await prisma.notification.create({
+      const notif = await prisma.notification.create({
         data: {
           userId: guestUserId,
           message: `${organizerName} zaprosił/a Cię do wydarzenia: „${eventTitle}"`,
@@ -21,7 +21,10 @@ async function notifyGuestUsers(
           type: "info",
         },
       });
-      await pusherServer.trigger(`user-${guestUserId}`, "new-notification", {});
+      await pusherServer.trigger(`user-${guestUserId}`, "new-notification", {
+        ...notif,
+        createdAt: notif.createdAt.toISOString(),
+      });
     })
   );
 }

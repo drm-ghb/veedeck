@@ -68,44 +68,6 @@ export async function POST(req: NextRequest) {
 
   const isDesigner = !!(session?.user?.id && getWorkspaceUserId(session) === render.project.userId);
 
-  // Aggregate non-internal root comments into project discussion (non-blocking)
-  if (!isInternal) {
-    try {
-      let discussion = await prisma.discussion.findUnique({
-        where: { projectId: render.projectId },
-      });
-      // Auto-create project discussion if it doesn't exist yet
-      if (!discussion) {
-        discussion = await prisma.discussion.create({
-          data: {
-            title: render.project.title,
-            type: "project",
-            ownerId: render.project.userId,
-            projectId: render.projectId,
-          },
-        });
-      }
-      const sourceType = isPin ? "render_pin" : "render_comment";
-      const sourceUrl = `/projects/${render.projectId}/renders/${renderId}${isPin ? `?pinId=${comment.id}` : `?chatId=${comment.id}`}`;
-      const msg = await prisma.discussionMessage.create({
-        data: {
-          discussionId: discussion.id,
-          content,
-          authorName: author,
-          sourceType,
-          sourceId: comment.id,
-          sourceUrl,
-          sourceName: render.name,
-          sourceImageUrl: render.fileUrl,
-          userId: isDesigner ? session!.user!.id : null,
-        },
-      });
-      await pusherServer.trigger(`discussion-${discussion.id}`, "new-message", msg);
-    } catch (e) {
-      console.error("[comments] Discussion aggregation failed:", e);
-    }
-  }
-
   if (render.project.userId && !isDesigner) {
     const notifMessage = isPin
       ? `${author} dodał pin w projekcie "${render.project.title}"`

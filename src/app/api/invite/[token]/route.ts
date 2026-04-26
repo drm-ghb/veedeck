@@ -73,7 +73,6 @@ export async function POST(
       where: { token },
       data: { status: "ACCEPTED" },
     }),
-    // Powiadomienie dla nowego użytkownika
     prisma.notification.create({
       data: {
         userId: newUser.id,
@@ -82,19 +81,22 @@ export async function POST(
         type: "info",
       },
     }),
-    // Powiadomienie dla projektanta
-    prisma.notification.create({
-      data: {
-        userId: invitation.designerId,
-        message: `${displayName || invitation.email} dołączył/a do Twojego zespołu.`,
-        link: "/settings/uzytkownicy",
-        type: "info",
-      },
-    }),
   ]);
 
-  // Real-time dla projektanta
-  await pusherServer.trigger(`user-${invitation.designerId}`, "new-notification", {});
+  // Powiadomienie dla projektanta — osobno, żeby mieć obiekt do Pushera
+  const designerNotif = await prisma.notification.create({
+    data: {
+      userId: invitation.designerId,
+      message: `${displayName || invitation.email} dołączył/a do Twojego zespołu.`,
+      link: "/settings/uzytkownicy",
+      type: "info",
+    },
+  });
+
+  await pusherServer.trigger(`user-${invitation.designerId}`, "new-notification", {
+    ...designerNotif,
+    createdAt: designerNotif.createdAt.toISOString(),
+  });
 
   return NextResponse.json({ ok: true });
 }

@@ -44,19 +44,6 @@ export async function POST(req: NextRequest) {
   });
   if (!section) return NextResponse.json({ error: "Nie znaleziono sekcji" }, { status: 404 });
 
-  // Duplicate check — same URL or (when no URL) same name in the section
-  if (url?.trim()) {
-    const duplicate = await prisma.listProduct.findFirst({
-      where: { sectionId, url: url.trim() },
-    });
-    if (duplicate) return NextResponse.json({ error: "Produkt już istnieje w tej sekcji" }, { status: 409 });
-  } else {
-    const duplicate = await prisma.listProduct.findFirst({
-      where: { sectionId, name: { equals: name.trim(), mode: "insensitive" } },
-    });
-    if (duplicate) return NextResponse.json({ error: "Produkt już istnieje w tej sekcji" }, { status: 409 });
-  }
-
   // Auto-save to product library (no link — same logic as manual/link tab)
   const exists = await prisma.product.findFirst({
     where: {

@@ -1,16 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { User, Mail, Lock, Info, Sun, Moon, Monitor, Palette, Image as ImageIcon, Layers, ScrollText, Package, LayoutDashboard, PanelLeft, Globe, PictureInPicture } from "lucide-react";
+import { User, Mail, Lock, Info, Sun, Moon, Monitor, Palette, Image as ImageIcon, Layers, ScrollText, Package, LayoutDashboard, PanelLeft, Globe, PictureInPicture, Pencil, X } from "lucide-react";
 import { useTheme, type Theme, type ColorTheme } from "@/lib/theme";
 import { useT, useLang } from "@/lib/i18n";
-import { UploadButton } from "@uploadthing/react";
-import type { OurFileRouter } from "@/lib/uploadthing";
+import Cropper from "react-easy-crop";
+import type { Area } from "react-easy-crop";
+import { useUploadThing } from "@/lib/uploadthing-client";
 import { patchUser, SettingRow, SectionHeader, ToggleSwitch } from "./SettingsShared";
 
 interface Props {
@@ -62,7 +63,52 @@ export function SettingsGeneral({
   const [clientLogoUrl, setClientLogoUrl] = useState<string | null>(initialClientLogoUrl);
   const [welcomeMsg, setWelcomeMsg] = useState(initialClientWelcomeMessage ?? "");
   const [welcomeLoading, setWelcomeLoading] = useState(false);
-const [navMode, setNavMode] = useState(initialNavMode);
+  const [navMode, setNavMode] = useState(initialNavMode);
+
+  // Logo crop state
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
+  const [cropUploading, setCropUploading] = useState(false);
+  const logoFileInputRef = useRef<HTMLInputElement>(null);
+  const { startUpload: startLogoUpload } = useUploadThing("logoUploader");
+
+  function handleLogoFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = "";
+    const reader = new FileReader();
+    reader.onload = () => {
+      setCropSrc(reader.result as string);
+      setCrop({ x: 0, y: 0 });
+      setZoom(1);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  const handleCropComplete = useCallback((_: Area, pixels: Area) => {
+    setCroppedAreaPixels(pixels);
+  }, []);
+
+  async function handleCropApply() {
+    if (!cropSrc || !croppedAreaPixels) return;
+    setCropUploading(true);
+    try {
+      const file = await getCroppedImg(cropSrc, croppedAreaPixels);
+      const res = await startLogoUpload([file]);
+      const url = res?.[0]?.url;
+      if (!url) throw new Error();
+      await patchUser({ clientLogoUrl: url });
+      setClientLogoUrl(url);
+      setCropSrc(null);
+      toast.success(t.settings.saved);
+    } catch {
+      toast.error(t.settings.logoUploadError);
+    } finally {
+      setCropUploading(false);
+    }
+  }
 
   async function handleNameSave() {
     if (!name.trim()) return;
@@ -267,29 +313,21 @@ const COLOR_THEMES: {
               <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{t.settings.logo}</p>
             </div>
             <p className="text-xs text-gray-400">{t.settings.logoDesc}</p>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <input ref={logoFileInputRef} type="file" accept="image/*" className="hidden" onChange={handleLogoFileChange} />
             {clientLogoUrl ? (
               <div className="flex items-center gap-3">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={clientLogoUrl} alt="Logo" className="h-10 object-contain rounded border border-border" />
+                <img src={clientLogoUrl} alt="Logo" className="w-12 h-12 object-cover rounded-full border border-border" />
+                <Button size="sm" variant="outline" onClick={() => logoFileInputRef.current?.click()} disabled={cropUploading}>
+                  <Pencil size={14} className="mr-1.5" />Edytuj
+                </Button>
                 <Button size="sm" variant="outline" onClick={handleRemoveLogo}>{t.settings.deleteLogo}</Button>
               </div>
             ) : (
-              <UploadButton<OurFileRouter, "logoUploader">
-                endpoint="logoUploader"
-                onClientUploadComplete={async (res) => {
-                  const url = res?.[0]?.url;
-                  if (url) {
-                    await patchUser({ clientLogoUrl: url });
-                    setClientLogoUrl(url);
-                    toast.success(t.settings.saved);
-                  }
-                }}
-                onUploadError={() => { toast.error(t.settings.logoUploadError); }}
-                appearance={{
-                  button: "bg-primary text-primary-foreground hover:opacity-90 text-sm px-4 py-2 rounded-lg font-medium",
-                  allowedContent: "text-xs text-gray-400",
-                }}
-              />
+              <Button size="sm" onClick={() => logoFileInputRef.current?.click()} disabled={cropUploading}>
+                {cropUploading ? "Przesyłanie..." : "Dodaj logo"}
+              </Button>
             )}
           </div>
 
@@ -410,6 +448,51 @@ const COLOR_THEMES: {
         </div>
       </section>
 
+      {/* ── Crop modal ── */}
+      {cropSrc && (
+        <div className="fixed inset-0 z-50 flex flex-col bg-black/90">
+          <div className="flex items-center justify-between px-6 py-4 bg-card border-b border-border flex-shrink-0">
+            <h3 className="font-semibold text-sm">Kadrowanie logo</h3>
+            <button onClick={() => setCropSrc(null)} className="text-muted-foreground hover:text-foreground transition-colors">
+              <X size={18} />
+            </button>
+          </div>
+          <div className="relative flex-1">
+            <Cropper
+              image={cropSrc}
+              crop={crop}
+              zoom={zoom}
+              aspect={1}
+              cropShape="round"
+              showGrid={false}
+              onCropChange={setCrop}
+              onZoomChange={setZoom}
+              onCropComplete={handleCropComplete}
+            />
+          </div>
+          <div className="px-6 py-4 bg-card border-t border-border flex-shrink-0 space-y-4">
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-muted-foreground w-10">Zoom</span>
+              <input
+                type="range"
+                min={1}
+                max={3}
+                step={0.01}
+                value={zoom}
+                onChange={(e) => setZoom(Number(e.target.value))}
+                className="flex-1 accent-primary"
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setCropSrc(null)}>Anuluj</Button>
+              <Button onClick={handleCropApply} disabled={cropUploading}>
+                {cropUploading ? "Przesyłanie..." : "Zastosuj"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Motyw kolorystyczny ── */}
       <section className="space-y-4">
         <SectionHeader title="Motyw kolorystyczny" />
@@ -500,4 +583,25 @@ const COLOR_THEMES: {
       </section>
     </div>
   );
+}
+
+async function getCroppedImg(imageSrc: string, pixelCrop: Area): Promise<File> {
+  const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = imageSrc;
+  });
+  const size = Math.min(pixelCrop.width, pixelCrop.height, 512);
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext("2d")!;
+  ctx.drawImage(image, pixelCrop.x, pixelCrop.y, pixelCrop.width, pixelCrop.height, 0, 0, size, size);
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (!blob) { reject(new Error("Canvas empty")); return; }
+      resolve(new File([blob], "logo.png", { type: "image/png" }));
+    }, "image/png");
+  });
 }

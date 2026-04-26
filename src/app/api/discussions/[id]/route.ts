@@ -16,11 +16,12 @@ export async function PATCH(
   if (!discussion) return NextResponse.json({ error: "Nie znaleziono" }, { status: 404 });
   if (discussion.ownerId !== userId) return NextResponse.json({ error: "Brak dostępu" }, { status: 403 });
 
-  const { title, projectId } = await req.json();
-  if (!title && projectId === undefined) return NextResponse.json({ error: "Brak danych do aktualizacji" }, { status: 400 });
+  const { title, projectId, archived } = await req.json();
+  if (!title && projectId === undefined && archived === undefined) return NextResponse.json({ error: "Brak danych do aktualizacji" }, { status: 400 });
 
   const updateData: Record<string, unknown> = {};
   if (title) updateData.title = title;
+  if (typeof archived === "boolean") updateData.archived = archived;
 
   if (projectId !== undefined) {
     if (projectId === null) {

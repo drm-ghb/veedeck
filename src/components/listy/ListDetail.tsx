@@ -896,6 +896,17 @@ export default function ListDetail({ list, designerName, designerEmail, designer
     return init;
   });
   const [unreadProducts, setUnreadProducts] = useState<Set<string>>(() => new Set(getUnreadSet(list.id)));
+  const [seenCounts, setSeenCounts] = useState<Record<string, number>>(() => {
+    if (typeof window === "undefined") return {};
+    const init: Record<string, number> = {};
+    for (const s of list.sections) {
+      for (const p of s.products) {
+        const stored = localStorage.getItem(`lc_seen_${p.id}`);
+        init[p.id] = stored !== null ? parseInt(stored) : (p.commentCount ?? 0);
+      }
+    }
+    return init;
+  });
   const [approvals, setApprovals] = useState<Record<string, string | null>>(() => {
     const init: Record<string, string | null> = {};
     for (const s of list.sections) {
@@ -1058,6 +1069,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
       next.delete(productId);
       return next;
     });
+    setSeenCounts((prev) => ({ ...prev, [productId]: commentCounts[productId] ?? 0 }));
     setPanelLastReadAt(lastReadAt);
     setCommentsPanelProductId(productId);
   }
@@ -1066,6 +1078,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
     if (commentsPanelProductId) {
       const currentCount = commentCounts[commentsPanelProductId] ?? 0;
       localStorage.setItem(`lc_seen_${commentsPanelProductId}`, String(currentCount));
+      setSeenCounts((prev) => ({ ...prev, [commentsPanelProductId]: currentCount }));
     }
     setCommentsPanelProductId(null);
   }
@@ -2125,7 +2138,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                           onApprovalChange={(value) => handleApprovalChange(unsortedSection.id, product.id, value)}
                           onFieldUpdate={(pid, field, value) => handleProductFieldUpdate(unsortedSection.id, pid, field, value)}
                           approval={approvals[product.id] ?? null}
-                          commentCount={commentCounts[product.id] ?? 0}
+                          commentCount={unreadProducts.has(product.id) ? Math.max(0, (commentCounts[product.id] ?? 0) - (seenCounts[product.id] ?? 0)) : 0}
                           unread={unreadProducts.has(product.id)}
                           deleting={deletingId === product.id}
                           dragHandle={dragHandle}
@@ -2276,7 +2289,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                                     onApprovalChange={(value) => handleApprovalChange(section.id, product.id, value)}
                                     onFieldUpdate={(pid, field, value) => handleProductFieldUpdate(section.id, pid, field, value)}
                                     approval={approvals[product.id] ?? null}
-                                    commentCount={commentCounts[product.id] ?? 0}
+                                    commentCount={unreadProducts.has(product.id) ? Math.max(0, (commentCounts[product.id] ?? 0) - (seenCounts[product.id] ?? 0)) : 0}
                                     unread={unreadProducts.has(product.id)}
                                     deleting={deletingId === product.id}
                                     dragHandle={dragHandle}

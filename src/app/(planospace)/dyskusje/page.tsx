@@ -43,6 +43,7 @@ export default async function DyskusjePage() {
               createdAt: d.messages[0].createdAt.toISOString(),
             }
           : null,
+        archived: d.archived,
         updatedAt: d.updatedAt.toISOString(),
       }))}
       projects={projects}

@@ -31,6 +31,7 @@ interface ProductCommentPanelProps {
   lastReadAt: string | null;
   onClose: () => void;
   onCountChange?: (productId: string, count: number) => void;
+  listShareToken?: string;
 }
 
 function formatDate(iso: string) {
@@ -73,6 +74,7 @@ export default function ProductCommentPanel({
   lastReadAt,
   onClose,
   onCountChange,
+  listShareToken,
 }: ProductCommentPanelProps) {
   const t = useT();
   const [comments, setComments] = useState<Comment[]>([]);
@@ -168,10 +170,13 @@ export default function ProductCommentPanel({
       const res = await fetch("/api/list-comments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productId, content, author: authorName }),
+        body: JSON.stringify({ productId, content, author: authorName, listShareToken }),
       });
       if (!res.ok) throw new Error();
       setText("");
+      // Optimistically update count so parent's lc_seen_ stays in sync
+      // even if the user closes the panel before Pusher delivers the new-comment event
+      onCountChange?.(productId, comments.length + 1);
       setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
     } catch {
       toast.error(t.share.sendError);

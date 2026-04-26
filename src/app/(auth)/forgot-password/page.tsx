@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { toast } from "sonner";
 import { useT } from "@/lib/i18n";
 
@@ -29,12 +29,14 @@ export default function ForgotPasswordPage() {
     <main className="flex min-h-screen items-center justify-center px-4 bg-background">
       <Card className="w-full max-w-sm">
         <CardHeader className="pb-4">
-          <CardTitle
-            className="text-2xl text-center"
-            style={{ fontFamily: "var(--font-story-script)" }}
-          >
-            veedeck
-          </CardTitle>
+          <div className="flex items-center justify-center gap-2 mb-1">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo_vee.png" alt="veedeck" className="h-7 w-7 shrink-0 object-contain" />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/vee_black.png" alt="veedeck" className="dark:hidden shrink-0" style={{ height: "17px", width: "auto" }} />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/veedeckicon.png" alt="" className="hidden dark:block shrink-0" style={{ height: "17px", width: "auto" }} />
+          </div>
           <p className="text-center text-sm text-muted-foreground">
             {t.auth.resetTitle}
           </p>

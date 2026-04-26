@@ -78,11 +78,15 @@ export default function NavSidebar({ hiddenModules, isAdmin }: NavSidebarProps) 
             if (msg.userId) return;
             // When on /dyskusje the DyskusjeView manages the count itself
             if (pathnameRef.current.startsWith("/dyskusje")) return;
-            setDiscussionUnread((prev) => {
-              const next = prev + 1;
+            // Track per-discussion (not per-message) to avoid double-counting
+            const storedIds: string[] = JSON.parse(localStorage.getItem("discussions-unread-ids") || "[]");
+            if (!storedIds.includes(d.id)) {
+              storedIds.push(d.id);
+              localStorage.setItem("discussions-unread-ids", JSON.stringify(storedIds));
+              const next = storedIds.length;
               localStorage.setItem("discussions-unread-count", String(next));
-              return next;
-            });
+              setDiscussionUnread(next);
+            }
           });
         });
       })

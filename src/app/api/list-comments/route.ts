@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const session = await auth();
-  const { productId, content, author } = await req.json();
+  const { productId, content, author, listShareToken } = await req.json();
 
   if (!productId || !content || !author) {
     return NextResponse.json({ error: "Brakujące pola" }, { status: 400 });
@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
     include: {
       section: {
         include: {
-          list: { select: { id: true, slug: true, name: true, userId: true, projectId: true, project: { select: { title: true } } } },
+          list: { select: { id: true, slug: true, name: true, userId: true, shareToken: true, projectId: true, project: { select: { title: true } } } },
         },
       },
     },
@@ -46,7 +46,10 @@ export async function POST(req: NextRequest) {
 
   if (product) {
     const list = product.section.list;
-    const isDesigner = !!(session?.user?.id && getWorkspaceUserId(session) === list.userId);
+    // If the request includes the list's share token, the commenter is a client
+    // (even if the designer is logged in on the same browser during testing)
+    const isClientViaShareLink = !!(listShareToken && list.shareToken === listShareToken);
+    const isDesigner = !isClientViaShareLink && !!(session?.user?.id && getWorkspaceUserId(session) === list.userId);
     // Trigger list-level event for real-time badge updates
     await pusherServer.trigger(`shopping-list-${list.id}`, "comment-activity", { productId, action: "new" });
     const listPath = list.slug ?? list.id;
@@ -60,43 +63,6 @@ export async function POST(req: NextRequest) {
         },
       });
       await pusherServer.trigger(`user-${list.userId}`, "new-notification", notification);
-    }
-
-    // Aggregate into project discussion if list is linked to a project (non-blocking)
-    if (list.projectId) {
-      try {
-        let discussion = await prisma.discussion.findUnique({
-          where: { projectId: list.projectId },
-        });
-        // Auto-create project discussion if it doesn't exist yet
-        if (!discussion) {
-          discussion = await prisma.discussion.create({
-            data: {
-              title: list.project?.title ?? list.name,
-              type: "project",
-              ownerId: list.userId,
-              projectId: list.projectId,
-            },
-          });
-        }
-        const sourceUrl = `/listy/${listPath}?product=${productId}`;
-        const msg = await prisma.discussionMessage.create({
-          data: {
-            discussionId: discussion.id,
-            content,
-            authorName: author,
-            sourceType: "product_comment",
-            sourceId: comment.id,
-            sourceUrl,
-            sourceName: `${list.name} › ${product.name}`,
-            sourceImageUrl: product.imageUrl ?? null,
-            userId: isDesigner ? session!.user!.id : null,
-          },
-        });
-        await pusherServer.trigger(`discussion-${discussion.id}`, "new-message", msg);
-      } catch (e) {
-        console.error("[list-comments] Discussion aggregation failed:", e);
-      }
     }
   }
 

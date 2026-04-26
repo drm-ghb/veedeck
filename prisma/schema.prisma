@@ -445,6 +445,7 @@ model Discussion {
   type      String   @default("internal") // "project" | "internal"
   ownerId   String
   projectId String?  @unique
+  archived  Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

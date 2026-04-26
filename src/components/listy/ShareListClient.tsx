@@ -106,6 +106,17 @@ export default function ShareListClient({
     return init;
   });
   const [unreadProducts, setUnreadProducts] = useState<Set<string>>(() => new Set(getUnreadSet(listId)));
+  const [seenCounts, setSeenCounts] = useState<Record<string, number>>(() => {
+    if (typeof window === "undefined") return {};
+    const init: Record<string, number> = {};
+    for (const s of sections) {
+      for (const p of s.products) {
+        const stored = localStorage.getItem(`lc_seen_${p.id}`);
+        init[p.id] = stored !== null ? parseInt(stored) : p.commentCount;
+      }
+    }
+    return init;
+  });
   const [authorName, setAuthorName] = useState("Klient");
   const [lightbox, setLightbox] = useState<string | null>(null);
   const commentsPanelProductIdRef = useRef<string | null>(null);
@@ -199,6 +210,7 @@ export default function ShareListClient({
       next.delete(productId);
       return next;
     });
+    setSeenCounts((prev) => ({ ...prev, [productId]: commentCounts[productId] ?? 0 }));
     setPanelLastReadAt(lastReadAt);
     setCommentsPanelProductId(productId);
   }
@@ -207,6 +219,7 @@ export default function ShareListClient({
     if (commentsPanelProductId) {
       const currentCount = commentCounts[commentsPanelProductId] ?? 0;
       localStorage.setItem(`lc_seen_${commentsPanelProductId}`, String(currentCount));
+      setSeenCounts((prev) => ({ ...prev, [commentsPanelProductId]: currentCount }));
     }
     setCommentsPanelProductId(null);
   }
@@ -248,9 +261,8 @@ export default function ShareListClient({
                 const currency = getCurrency(product.price);
                 const totalPrice = unitPrice !== null ? unitPrice * product.quantity : null;
                 const last = i === section.products.length - 1;
-                const count = commentCounts[product.id] ?? product.commentCount;
-
                 const unread = unreadProducts.has(product.id);
+                const count = unread ? Math.max(0, (commentCounts[product.id] ?? product.commentCount) - (seenCounts[product.id] ?? 0)) : 0;
                 const approval = approvals[product.id] ?? null;
                 const approvalButtons = (
                   <>
@@ -374,6 +386,7 @@ export default function ShareListClient({
             lastReadAt={panelLastReadAt}
             onClose={closeCommentsPanel}
             onCountChange={handleCountChange}
+            listShareToken={listShareToken}
           />
         ) : null;
       })()}
