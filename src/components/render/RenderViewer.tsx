@@ -1468,9 +1468,10 @@ export default function RenderViewer({
                     {(isDesigner || selectedComment.author === authorName) && (
                       <button
                         onClick={() => deleteComment(selectedComment.id)}
-                        className="text-xs px-2 py-1 rounded-md border border-red-200 text-red-500 hover:bg-red-50 ml-auto"
+                        className="ml-auto text-red-500 hover:text-red-700 transition-colors p-1"
+                        title="Usuń pin"
                       >
-                        Usuń
+                        <Trash2 size={14} />
                       </button>
                     )}
                   </div>
@@ -2178,9 +2179,10 @@ export default function RenderViewer({
                       ))}
                       <button
                         onClick={() => deleteComment(selectedComment.id)}
-                        className="text-xs px-2 py-1 rounded-md border border-red-200 text-red-500 hover:bg-red-50 ml-auto"
+                        className="ml-auto text-red-500 hover:text-red-700 transition-colors p-1"
+                        title="Usuń pin"
                       >
-                        Usuń
+                        <Trash2 size={14} />
                       </button>
                     </div>
                   )}
