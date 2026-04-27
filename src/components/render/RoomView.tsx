@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArchiveRestore, CheckSquare, Eye, Folder, LayoutGrid, List, Pin, Trash2 } from "lucide-react";
+import { ArchiveRestore, CopyCheck, Eye, Folder, LayoutGrid, List, Pin, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -189,10 +189,15 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
           <div className="flex items-center gap-2 mb-1">
             <button
               onClick={() => { setSelectionMode((v) => !v); setSelectedIds(new Set()); }}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${selectionMode ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
+              title={selectionMode ? "Wyjdź z zaznaczania" : "Zaznacz pliki"}
+              className={`relative p-1.5 rounded-md transition-colors ${selectionMode ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
             >
-              <CheckSquare size={13} />
-              {selectionMode ? `Zaznaczono: ${selectedIds.size}` : "Zaznacz"}
+              <CopyCheck size={15} />
+              {selectionMode && selectedIds.size > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[14px] h-3.5 px-0.5 bg-primary text-primary-foreground text-[9px] font-bold rounded-full flex items-center justify-center leading-none">
+                  {selectedIds.size}
+                </span>
+              )}
             </button>
           <div className="flex items-center gap-0.5 bg-muted rounded-md p-0.5">
             <button

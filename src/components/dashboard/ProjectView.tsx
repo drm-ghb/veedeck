@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArchiveRestore, FolderOpen, LayoutGrid, List, Trash2, Pin, Eye, Search, X } from "lucide-react";
+import { ArchiveRestore, CopyCheck, FolderOpen, LayoutGrid, List, Trash2, Pin, Eye, Search, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import RoomCard from "./RoomCard";
@@ -10,6 +10,8 @@ import RoomMenu from "./RoomMenu";
 import { getRoomIcon } from "@/lib/roomIcons";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
+import BulkActionBar from "@/components/render/BulkActionBar";
+import BulkMoveDialog from "@/components/render/BulkMoveDialog";
 
 interface Room {
   id: string;
@@ -47,7 +49,44 @@ export default function ProjectView({ projectId, rooms, archivedRooms, allRender
   const [filterRoom, setFilterRoom] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<"all" | "REVIEW" | "ACCEPTED">("all");
   const [search, setSearch] = useState("");
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkLoading, setBulkLoading] = useState(false);
+  const [moveOpen, setMoveOpen] = useState(false);
   const router = useRouter();
+
+  function toggleSelect(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
+
+  function exitSelection() {
+    setSelectionMode(false);
+    setSelectedIds(new Set());
+  }
+
+  async function handleBulkAction(action: "archive" | "delete") {
+    if (action === "delete" && !confirm(`Usunąć ${selectedIds.size} ${selectedIds.size === 1 ? "plik" : "pliki/plików"}?`)) return;
+    setBulkLoading(true);
+    try {
+      const res = await fetch("/api/renders/bulk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: Array.from(selectedIds), action }),
+      });
+      if (!res.ok) throw new Error();
+      toast.success(action === "archive" ? "Zarchiwizowano pliki" : "Usunięto pliki");
+      exitSelection();
+      router.refresh();
+    } catch {
+      toast.error("Błąd operacji");
+    } finally {
+      setBulkLoading(false);
+    }
+  }
 
   const uniqueRooms = Array.from(new Map(allRenders.filter(r => r.roomId).map(r => [r.roomId, { id: r.roomId!, name: r.roomName! }])).values());
 
@@ -140,26 +179,42 @@ export default function ProjectView({ projectId, rooms, archivedRooms, allRender
           </button>
         </div>
         {((tab === "active" && rooms.length > 0) || (tab === "all" && allRenders.length > 0)) && (
-          <div className="flex items-center gap-0.5 bg-gray-100 rounded-md p-0.5 mb-1">
-            <button
-              onClick={() => setViewMode("grid")}
-              className={`p-1.5 rounded transition-colors ${viewMode === "grid" ? "bg-white shadow-sm text-gray-900" : "text-gray-400 hover:text-gray-600"}`}
-            >
-              <LayoutGrid size={15} />
-            </button>
-            <button
-              onClick={() => setViewMode("list")}
-              className={`p-1.5 rounded transition-colors ${viewMode === "list" ? "bg-white shadow-sm text-gray-900" : "text-gray-400 hover:text-gray-600"}`}
-            >
-              <List size={15} />
-            </button>
+          <div className="flex items-center gap-2 mb-1">
+            {tab === "all" && (
+              <button
+                onClick={() => { setSelectionMode((v) => !v); setSelectedIds(new Set()); }}
+                title={selectionMode ? "Wyjdź z zaznaczania" : "Zaznacz pliki"}
+                className={`relative p-1.5 rounded-md transition-colors ${selectionMode ? "bg-primary/10 text-primary" : "text-gray-400 hover:bg-gray-100 hover:text-gray-600"}`}
+              >
+                <CopyCheck size={15} />
+                {selectionMode && selectedIds.size > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-[14px] h-3.5 px-0.5 bg-primary text-primary-foreground text-[9px] font-bold rounded-full flex items-center justify-center leading-none">
+                    {selectedIds.size}
+                  </span>
+                )}
+              </button>
+            )}
+            <div className="flex items-center gap-0.5 bg-gray-100 rounded-md p-0.5">
+              <button
+                onClick={() => setViewMode("grid")}
+                className={`p-1.5 rounded transition-colors ${viewMode === "grid" ? "bg-white shadow-sm text-gray-900" : "text-gray-400 hover:text-gray-600"}`}
+              >
+                <LayoutGrid size={15} />
+              </button>
+              <button
+                onClick={() => setViewMode("list")}
+                className={`p-1.5 rounded transition-colors ${viewMode === "list" ? "bg-white shadow-sm text-gray-900" : "text-gray-400 hover:text-gray-600"}`}
+              >
+                <List size={15} />
+              </button>
+            </div>
           </div>
         )}
       </div>
 
       {tab === "all" ? (
         <div className="space-y-4">
-          {/* Filters */}
+          {/* Filters + selection */}
           <div className="flex flex-wrap items-center gap-2">
             <div className="relative flex-1 min-w-[180px] max-w-xs">
               <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -208,10 +263,18 @@ export default function ProjectView({ projectId, rooms, archivedRooms, allRender
             </div>
           ) : viewMode === "grid" ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4">
-              {filteredRenders.map((render) => (
-                <Link key={render.id} href={`/projects/${projectId}/renders/${render.id}`}>
-                  <Card className="overflow-hidden hover:shadow-[0_4px_16px_rgba(25,33,61,0.2)] hover:border-primary/30 transition-all cursor-pointer group relative">
-                    {render.pinned && (
+              {filteredRenders.map((render) => {
+                const isSelected = selectedIds.has(render.id);
+                const card = (
+                  <Card className={`overflow-hidden transition-all cursor-pointer group relative ${isSelected ? "ring-2 ring-primary border-primary" : "hover:shadow-[0_4px_16px_rgba(25,33,61,0.2)] hover:border-primary/30"}`}>
+                    {selectionMode && (
+                      <div className="absolute top-2 left-2 z-10">
+                        <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${isSelected ? "bg-primary border-primary" : "bg-white/80 border-gray-400"}`}>
+                          {isSelected && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L4 7L9 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                        </div>
+                      </div>
+                    )}
+                    {!selectionMode && render.pinned && (
                       <div className="absolute top-2 left-2 z-10">
                         <Pin size={13} className="text-red-500 fill-red-500 drop-shadow" />
                       </div>
@@ -231,52 +294,83 @@ export default function ProjectView({ projectId, rooms, archivedRooms, allRender
                         <span className={`flex-shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${render.status === "ACCEPTED" ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"}`}>
                           {render.status === "ACCEPTED" ? "Zaakceptowany" : "Do weryfikacji"}
                         </span>
-                        {render.commentCount > 0 && (
-                          <span className="text-xs text-muted-foreground flex items-center gap-1"><Pin size={11} />{render.commentCount}</span>
-                        )}
+                        {render.commentCount > 0 && <span className="text-xs text-muted-foreground flex items-center gap-1"><Pin size={11} />{render.commentCount}</span>}
                         <span className="text-xs text-muted-foreground flex items-center gap-1"><Eye size={11} />{render.viewCount}</span>
                       </div>
                     </div>
                   </Card>
-                </Link>
-              ))}
+                );
+                return selectionMode ? (
+                  <div key={render.id} onClick={() => toggleSelect(render.id)}>{card}</div>
+                ) : (
+                  <Link key={render.id} href={`/projects/${projectId}/renders/${render.id}`}>{card}</Link>
+                );
+              })}
             </div>
           ) : (
             <div className="bg-card border border-border rounded-xl overflow-hidden">
-              {filteredRenders.map((render, i) => (
-                <Link
-                  key={render.id}
-                  href={`/projects/${projectId}/renders/${render.id}`}
-                  className={`flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors group ${i !== filteredRenders.length - 1 ? "border-b border-border" : ""}`}
-                >
-                  <div className="w-14 h-10 rounded-md overflow-hidden bg-muted flex-shrink-0">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={render.fileUrl} alt={render.name} className="w-full h-full object-cover" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate flex items-center gap-1.5">
-                      {render.pinned && <Pin size={11} className="text-red-500 fill-red-500 flex-shrink-0" />}
-                      {render.name}
-                    </p>
-                    {(render.roomName || render.folderName) && (
-                      <p className="text-xs text-muted-foreground truncate">
-                        {[render.roomName, render.folderName].filter(Boolean).join(" / ")}
-                      </p>
+              {filteredRenders.map((render, i) => {
+                const isSelected = selectedIds.has(render.id);
+                const row = (
+                  <div className={`flex items-center gap-3 px-4 py-3 transition-colors group ${i !== filteredRenders.length - 1 ? "border-b border-border" : ""} ${isSelected ? "bg-primary/5" : "hover:bg-muted/50"} ${selectionMode ? "cursor-pointer" : ""}`}>
+                    {selectionMode && (
+                      <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${isSelected ? "bg-primary border-primary" : "border-gray-400"}`}>
+                        {isSelected && <svg width="8" height="6" viewBox="0 0 10 8" fill="none"><path d="M1 4L4 7L9 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                      </div>
                     )}
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <div className="w-14 h-10 rounded-md overflow-hidden bg-muted flex-shrink-0">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={render.fileUrl} alt={render.name} className="w-full h-full object-cover" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate flex items-center gap-1.5">
+                          {!selectionMode && render.pinned && <Pin size={11} className="text-red-500 fill-red-500 flex-shrink-0" />}
+                          {render.name}
+                        </p>
+                        {(render.roomName || render.folderName) && (
+                          <p className="text-xs text-muted-foreground truncate">
+                            {[render.roomName, render.folderName].filter(Boolean).join(" / ")}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${render.status === "ACCEPTED" ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"}`}>
+                        {render.status === "ACCEPTED" ? "Zaakceptowany" : "Do weryfikacji"}
+                      </span>
+                      {render.commentCount > 0 && <span className="text-xs text-muted-foreground flex items-center gap-1"><Pin size={11} />{render.commentCount}</span>}
+                      <span className="text-xs text-muted-foreground flex items-center gap-1"><Eye size={11} />{render.viewCount}</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${render.status === "ACCEPTED" ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"}`}>
-                      {render.status === "ACCEPTED" ? "Zaakceptowany" : "Do weryfikacji"}
-                    </span>
-                    {render.commentCount > 0 && (
-                      <span className="text-xs text-muted-foreground flex items-center gap-1"><Pin size={11} />{render.commentCount}</span>
-                    )}
-                    <span className="text-xs text-muted-foreground flex items-center gap-1"><Eye size={11} />{render.viewCount}</span>
-                  </div>
-                </Link>
-              ))}
+                );
+                return selectionMode ? (
+                  <div key={render.id} onClick={() => toggleSelect(render.id)}>{row}</div>
+                ) : (
+                  <Link key={render.id} href={`/projects/${projectId}/renders/${render.id}`}>{row}</Link>
+                );
+              })}
             </div>
           )}
+
+          {selectionMode && selectedIds.size > 0 && (
+            <BulkActionBar
+              count={selectedIds.size}
+              loading={bulkLoading}
+              onArchive={() => handleBulkAction("archive")}
+              onMove={() => setMoveOpen(true)}
+              onDelete={() => handleBulkAction("delete")}
+              onCancel={exitSelection}
+            />
+          )}
+
+          <BulkMoveDialog
+            open={moveOpen}
+            onOpenChange={setMoveOpen}
+            ids={Array.from(selectedIds)}
+            projectId={projectId}
+            onSuccess={exitSelection}
+          />
         </div>
       ) : tab === "active" ? (
         rooms.length === 0 ? (
