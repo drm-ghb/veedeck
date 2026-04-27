@@ -21,7 +21,7 @@ export default async function ProjectPage({ params }: Props) {
 
   if (!project) notFound();
 
-  const [rooms, archivedRooms] = await Promise.all([
+  const [rooms, archivedRooms, allRenders] = await Promise.all([
     prisma.room.findMany({
       where: { projectId: id, archived: false },
       include: { _count: { select: { renders: true } } },
@@ -31,6 +31,15 @@ export default async function ProjectPage({ params }: Props) {
       where: { projectId: id, archived: true },
       include: { _count: { select: { renders: true } } },
       orderBy: { order: "asc" },
+    }),
+    prisma.render.findMany({
+      where: { projectId: id, archived: false },
+      include: {
+        room: { select: { id: true, name: true } },
+        folder: { select: { name: true } },
+        _count: { select: { comments: { where: { archivedVersionId: null } } } },
+      },
+      orderBy: { createdAt: "desc" },
     }),
   ]);
 
@@ -62,6 +71,19 @@ export default async function ProjectPage({ params }: Props) {
         projectId={id}
         rooms={rooms}
         archivedRooms={archivedRooms}
+        allRenders={allRenders.map((r) => ({
+          id: r.id,
+          name: r.name,
+          fileUrl: r.fileUrl,
+          status: r.status,
+          commentCount: r._count.comments,
+          viewCount: r.viewCount,
+          pinned: r.pinned,
+          folderId: r.folderId,
+          roomId: r.room?.id ?? null,
+          roomName: r.room?.name ?? null,
+          folderName: r.folder?.name ?? null,
+        }))}
       />
     </div>
   );

@@ -28,11 +28,10 @@ export default function NavSidebar({ hiddenModules, isAdmin }: NavSidebarProps) 
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
   const t = useT();
-  const [collapsed, setCollapsed] = useState(false);
-
-  useEffect(() => {
-    setCollapsed(localStorage.getItem("nav-sidebar-collapsed") === "true");
-  }, []);
+  const [collapsed, setCollapsed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("nav-sidebar-collapsed") === "true";
+  });
   const [helpOpen, setHelpOpen] = useState(false);
   const [helpSubject, setHelpSubject] = useState("");
   const [helpDesc, setHelpDesc] = useState("");
