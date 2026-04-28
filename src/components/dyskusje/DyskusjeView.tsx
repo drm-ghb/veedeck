@@ -218,7 +218,7 @@ export default function DyskusjeView({ currentUserId, initialDiscussions, projec
 
     const channel = pusherRef.current.subscribe(`discussion-${selectedId}`);
     channel.bind("new-message", (msg: DiscussionMessage) => {
-      if (msg.userId !== currentUserId) playMessageSound();
+      if (msg.userId !== currentUserId) { console.log("[sound] playing for msg from", msg.userId, "current:", currentUserId); playMessageSound(); }
       setMessages((prev) => {
         if (prev.some((m) => m.id === msg.id)) return prev;
         const next = [...prev, msg];
