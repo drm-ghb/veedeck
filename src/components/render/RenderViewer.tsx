@@ -524,10 +524,16 @@ export default function RenderViewer({
     setSelectedId(null);
   }
 
+  function getAudioMimeType(): string {
+    const types = ["audio/webm", "audio/mp4", "audio/ogg", "audio/wav"];
+    return types.find((t) => MediaRecorder.isTypeSupported(t)) ?? "";
+  }
+
   async function startRecording() {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
+      const mimeType = getAudioMimeType();
+      const mediaRecorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
 
@@ -537,8 +543,10 @@ export default function RenderViewer({
 
       mediaRecorder.onstop = () => {
         stream.getTracks().forEach((t) => t.stop());
-        const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
-        const file = new File([blob], `voice-${Date.now()}.webm`, { type: "audio/webm" });
+        const type = mediaRecorder.mimeType || "audio/webm";
+        const ext = type.includes("mp4") ? "mp4" : type.includes("ogg") ? "ogg" : type.includes("wav") ? "wav" : "webm";
+        const blob = new Blob(audioChunksRef.current, { type });
+        const file = new File([blob], `voice-${Date.now()}.${ext}`, { type });
         setUploadingVoice(true);
         startVoiceUpload([file]);
       };
@@ -613,7 +621,8 @@ export default function RenderViewer({
   async function startChatRecording() {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
+      const mimeType = getAudioMimeType();
+      const mediaRecorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
       chatMediaRecorderRef.current = mediaRecorder;
       chatAudioChunksRef.current = [];
 
@@ -623,8 +632,10 @@ export default function RenderViewer({
 
       mediaRecorder.onstop = () => {
         stream.getTracks().forEach((t) => t.stop());
-        const blob = new Blob(chatAudioChunksRef.current, { type: "audio/webm" });
-        const file = new File([blob], `voice-chat-${Date.now()}.webm`, { type: "audio/webm" });
+        const type = mediaRecorder.mimeType || "audio/webm";
+        const ext = type.includes("mp4") ? "mp4" : type.includes("ogg") ? "ogg" : type.includes("wav") ? "wav" : "webm";
+        const blob = new Blob(chatAudioChunksRef.current, { type });
+        const file = new File([blob], `voice-chat-${Date.now()}.${ext}`, { type });
         setChatUploadingVoice(true);
         startChatVoiceUpload([file]);
       };
@@ -651,7 +662,8 @@ export default function RenderViewer({
   async function startReplyRecording() {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
+      const mimeType = getAudioMimeType();
+      const mediaRecorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
       replyMediaRecorderRef.current = mediaRecorder;
       replyAudioChunksRef.current = [];
 
@@ -661,8 +673,10 @@ export default function RenderViewer({
 
       mediaRecorder.onstop = () => {
         stream.getTracks().forEach((t) => t.stop());
-        const blob = new Blob(replyAudioChunksRef.current, { type: "audio/webm" });
-        const file = new File([blob], `voice-reply-${Date.now()}.webm`, { type: "audio/webm" });
+        const type = mediaRecorder.mimeType || "audio/webm";
+        const ext = type.includes("mp4") ? "mp4" : type.includes("ogg") ? "ogg" : type.includes("wav") ? "wav" : "webm";
+        const blob = new Blob(replyAudioChunksRef.current, { type });
+        const file = new File([blob], `voice-reply-${Date.now()}.${ext}`, { type });
         setReplyUploadingVoice(true);
         startReplyVoiceUpload([file]);
       };
@@ -1246,73 +1260,77 @@ export default function RenderViewer({
           </div>
         </div>
 
-        {/* Row 2: Mobile scrollable toolbar */}
-        <div className="sm:hidden border-t overflow-x-auto" style={{ scrollbarWidth: "none" }}>
-          <div className="flex items-center gap-1 px-2 py-1.5 w-max">
-            {/* Zone 1: Primary actions */}
-            {(isDesigner || allowClientComments) && (
-              <button onClick={() => { setMode(mode === "pin" ? "view" : "pin"); setProductPinMode(false); setPendingProductPos(null); }} className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md border transition-colors flex-shrink-0 ${mode === "pin" ? "bg-gray-900 text-white border-gray-900" : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted"}`}>
-                <Pin size={14} /> Dodaj pin
+        {/* Row 2: Mobile toolbar */}
+        <div className="sm:hidden border-t">
+          {/* Sub-row 1: Actions + view controls (scrollable) */}
+          <div className="overflow-x-auto" style={{ scrollbarWidth: "none" }}>
+            <div className="flex items-center gap-1 px-2 py-1.5 w-max">
+              {/* Zone 1: Primary actions */}
+              {(isDesigner || allowClientComments) && (
+                <button onClick={() => { setMode(mode === "pin" ? "view" : "pin"); setProductPinMode(false); setPendingProductPos(null); }} className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md border transition-colors flex-shrink-0 ${mode === "pin" ? "bg-gray-900 text-white border-gray-900" : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted"}`}>
+                  <Pin size={14} /> Dodaj pin
+                </button>
+              )}
+              {isDesigner && (
+                <button onClick={() => { setProductPinMode((v) => !v); setMode("view"); setPending(null); setPendingProductPos(null); }} className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md border transition-colors flex-shrink-0 ${productPinMode ? "bg-gray-900 text-white border-gray-900" : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted"}`}>
+                  <Package size={14} /> Dodaj produkt
+                </button>
+              )}
+
+              <div className="w-px h-5 bg-gray-200 dark:bg-gray-700 mx-0.5 flex-shrink-0" />
+
+              {/* Zone 2: View controls — icon only */}
+              <button onClick={() => setHidePins((v) => !v)} title={hidePins ? "Pokaż piny" : "Ukryj piny"} className={`flex items-center justify-center w-8 h-8 rounded-md border transition-colors flex-shrink-0 ${hidePins ? "bg-gray-900 text-white border-gray-900" : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted"}`}>
+                {hidePins ? <EyeOff size={15} /> : <Eye size={15} />}
               </button>
-            )}
-            {isDesigner && (
-              <button onClick={() => { setProductPinMode((v) => !v); setMode("view"); setPending(null); setPendingProductPos(null); }} className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md border transition-colors flex-shrink-0 ${productPinMode ? "bg-gray-900 text-white border-gray-900" : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted"}`}>
-                <Package size={14} /> Dodaj produkt
+              <button onClick={openLightbox} title="Podgląd pełnoekranowy" className={`flex items-center justify-center w-8 h-8 rounded-md border transition-colors flex-shrink-0 ${lightboxOpen ? "bg-gray-900 text-white border-gray-900" : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted"}`}>
+                <Maximize2 size={15} />
               </button>
-            )}
+              {isDesigner && (
+                <button onClick={() => setShowVersionHistory(true)} title={`Historia wersji${versions.length > 0 ? ` (${versions.length})` : ""}`} className="relative flex items-center justify-center w-8 h-8 rounded-md border border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted transition-colors flex-shrink-0">
+                  <History size={15} />
+                  {versions.length > 0 && (
+                    <span className="absolute -top-1 -right-1 min-w-[14px] h-3.5 px-0.5 bg-gray-400 text-white text-[9px] font-bold rounded-full flex items-center justify-center leading-none">{versions.length}</span>
+                  )}
+                </button>
+              )}
+            </div>
+          </div>
 
-            <div className="w-px h-5 bg-gray-200 dark:bg-gray-700 mx-0.5 flex-shrink-0" />
-
-            {/* Zone 2: View controls — icon only */}
-            <button onClick={() => setHidePins((v) => !v)} title={hidePins ? "Pokaż piny" : "Ukryj piny"} className={`flex items-center justify-center w-8 h-8 rounded-md border transition-colors flex-shrink-0 ${hidePins ? "bg-gray-900 text-white border-gray-900" : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted"}`}>
-              {hidePins ? <EyeOff size={15} /> : <Eye size={15} />}
-            </button>
-            <button onClick={openLightbox} title="Podgląd pełnoekranowy" className={`flex items-center justify-center w-8 h-8 rounded-md border transition-colors flex-shrink-0 ${lightboxOpen ? "bg-gray-900 text-white border-gray-900" : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted"}`}>
-              <Maximize2 size={15} />
-            </button>
-            {isDesigner && (
-              <button onClick={() => setShowVersionHistory(true)} title={`Historia wersji${versions.length > 0 ? ` (${versions.length})` : ""}`} className="relative flex items-center justify-center w-8 h-8 rounded-md border border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted transition-colors flex-shrink-0">
-                <History size={15} />
-                {versions.length > 0 && (
-                  <span className="absolute -top-1 -right-1 min-w-[14px] h-3.5 px-0.5 bg-gray-400 text-white text-[9px] font-bold rounded-full flex items-center justify-center leading-none">{versions.length}</span>
-                )}
-              </button>
-            )}
-
-            <div className="w-px h-5 bg-gray-200 dark:bg-gray-700 mx-0.5 flex-shrink-0" />
-
-            {/* Zone 3: Status */}
-            {isDesigner ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-md border transition-colors flex-shrink-0 ${renderStatus === "ACCEPTED" ? "bg-green-500 text-white border-green-600" : "bg-blue-500 text-white border-blue-600"}`}>
-                  {renderStatus === "ACCEPTED" ? "Zaakceptowany" : "Do weryfikacji"}
-                  <ChevronDown size={11} />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => updateRenderStatus("REVIEW")} className={renderStatus === "REVIEW" ? "font-semibold" : ""}>
-                    Do weryfikacji
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => updateRenderStatus("ACCEPTED")} className={renderStatus === "ACCEPTED" ? "font-semibold" : ""}>
-                    Zaakceptowany
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : renderStatus === "ACCEPTED" ? (
-              <div className="flex items-center gap-1.5 flex-shrink-0">
-                <span className="text-xs font-semibold px-2 py-1.5 rounded-md bg-green-100 text-green-700">Zaakceptowany</span>
-                {allowDirectStatusChange ? (
-                  <button onClick={() => updateRenderStatus("REVIEW")} className="text-xs text-gray-400 underline">Cofnij</button>
-                ) : onStatusRequest ? (
-                  <button onClick={onStatusRequest} className="text-xs text-gray-400 underline">Zmień</button>
-                ) : null}
-              </div>
-            ) : allowClientAcceptance ? (
-              <button onClick={() => updateRenderStatus("ACCEPTED")} className="text-xs font-semibold px-2 py-1.5 rounded-md bg-green-500 text-white flex-shrink-0">Zaakceptuj</button>
-            ) : (
-              <span className="text-xs font-semibold px-2 py-1.5 rounded-md bg-blue-100 text-blue-700 flex-shrink-0">Do weryfikacji</span>
-            )}
-
-            <div className="w-px h-5 bg-gray-200 dark:bg-gray-700 mx-0.5 flex-shrink-0" />
+          {/* Sub-row 2: Status + Discussion (full width) */}
+          <div className="flex items-center justify-between gap-2 px-2 py-1.5 border-t">
+            {/* Zone 3: Status (fits content) */}
+            <div className="flex items-center gap-1.5 min-w-0">
+              {isDesigner ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-md border transition-colors ${renderStatus === "ACCEPTED" ? "bg-green-500 text-white border-green-600" : "bg-blue-500 text-white border-blue-600"}`}>
+                    {renderStatus === "ACCEPTED" ? "Zaakceptowany" : "Do weryfikacji"}
+                    <ChevronDown size={11} />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start">
+                    <DropdownMenuItem onClick={() => updateRenderStatus("REVIEW")} className={renderStatus === "REVIEW" ? "font-semibold" : ""}>
+                      Do weryfikacji
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => updateRenderStatus("ACCEPTED")} className={renderStatus === "ACCEPTED" ? "font-semibold" : ""}>
+                      Zaakceptowany
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : renderStatus === "ACCEPTED" ? (
+                <>
+                  <span className="text-xs font-semibold px-2 py-1.5 rounded-md bg-green-100 text-green-700">Zaakceptowany</span>
+                  {allowDirectStatusChange ? (
+                    <button onClick={() => updateRenderStatus("REVIEW")} className="text-xs text-gray-400 underline">Cofnij</button>
+                  ) : onStatusRequest ? (
+                    <button onClick={onStatusRequest} className="text-xs text-gray-400 underline">Zmień</button>
+                  ) : null}
+                </>
+              ) : allowClientAcceptance ? (
+                <button onClick={() => updateRenderStatus("ACCEPTED")} className="text-xs font-semibold px-2 py-1.5 rounded-md bg-green-500 text-white">Zaakceptuj</button>
+              ) : (
+                <span className="text-xs font-semibold px-2 py-1.5 rounded-md bg-blue-100 text-blue-700">Do weryfikacji</span>
+              )}
+            </div>
 
             {/* Zone 4: Discussion */}
             <button

@@ -45,7 +45,10 @@
     #veepick-panel .vp-header h1 { font-size: 15px; font-weight: 700; letter-spacing: -0.3px; flex: 1; margin: 0; }
     #veepick-panel .vp-icon-btn { background: none; border: none; cursor: pointer; color: #999; padding: 4px; border-radius: 4px; font-size: 16px; line-height: 1; }
     #veepick-panel .vp-icon-btn:hover { color: #333; background: #f4f4f4; }
-    #veepick-panel .vp-screen { padding: 14px; overflow-y: auto; flex: 1; }
+    #veepick-panel .vp-screen { padding: clamp(8px, 1.5vh, 14px); overflow-y: auto; flex: 1; }
+    #vp-screenMain { padding: 0 !important; display: flex !important; flex-direction: column !important; overflow: hidden !important; }
+    #veepick-panel .vp-scroll { flex: 1; overflow-y: auto; padding: clamp(8px, 1.5vh, 14px); }
+    #veepick-panel .vp-footer { flex-shrink: 0; padding: clamp(6px, 1.2vh, 10px) clamp(8px, 1.5vh, 14px); border-top: 1px solid #f0f0f0; background: #fff; }
     #veepick-panel .vp-hidden { display: none !important; }
     #veepick-panel .vp-setup-title { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
     #veepick-panel .vp-setup-desc { color: #666; font-size: 12px; line-height: 1.5; margin-bottom: 12px; }
@@ -55,7 +58,7 @@
       font-size: 13px; outline: none; transition: border-color .15s; background: #fafafa; color: #111;
     }
     #veepick-panel input:focus, #veepick-panel select:focus { border-color: #6366f1; background: #fff; }
-    #veepick-panel .vp-field { margin-bottom: 10px; }
+    #veepick-panel .vp-field { margin-bottom: clamp(6px, 1vh, 10px); }
     #veepick-panel .vp-btn {
       display: flex; align-items: center; justify-content: center; gap: 6px;
       width: 100%; padding: 9px 14px; border-radius: 7px; border: none;
@@ -68,7 +71,7 @@
     #veepick-panel .vp-btn-outline:hover:not(:disabled) { background: #f5f5f5; }
     #veepick-panel .vp-preview { margin-bottom: 8px; }
     #veepick-panel .vp-preview-img-wrap {
-      width: 100%; height: 190px; border-radius: 10px; background: #f4f4f4;
+      width: 100%; height: clamp(80px, 18vh, 160px); border-radius: 10px; background: #f4f4f4;
       border: 1px solid #eee; overflow: hidden; display: flex;
       align-items: center; justify-content: center; margin-bottom: 8px; position: relative;
     }
@@ -123,34 +126,38 @@
     </div>
 
     <div id="vp-screenMain" class="vp-screen vp-hidden">
-      <div class="vp-preview">
-        <div class="vp-preview-img-wrap">
-          <span class="vp-img-placeholder" id="vp-previewImgPlaceholder">🛍</span>
-          <img id="vp-previewImg" class="vp-hidden" alt="" />
+      <div class="vp-scroll">
+        <div class="vp-preview">
+          <div class="vp-preview-img-wrap">
+            <span class="vp-img-placeholder" id="vp-previewImgPlaceholder">🛍</span>
+            <img id="vp-previewImg" class="vp-hidden" alt="" />
+          </div>
+          <div class="vp-pname" id="vp-previewName">Ładowanie...</div>
+          <div class="vp-pprice" id="vp-previewPrice"></div>
         </div>
-        <div class="vp-pname" id="vp-previewName">Ładowanie...</div>
-        <div class="vp-pprice" id="vp-previewPrice"></div>
+        <p class="vp-hint" id="vp-imagePickerHint">Najedź na zdjęcie na stronie aby wybrać inne</p>
+        <div class="vp-field"><label>Lista zakupowa</label><select id="vp-selectList"><option value="">Wybierz listę...</option></select></div>
+        <div class="vp-field"><label>Sekcja</label><select id="vp-selectSection" disabled><option value="">Wybierz sekcję...</option></select></div>
+        <div class="vp-divider"></div>
+        <div class="vp-field"><label>Nazwa *</label><input id="vp-fieldName" type="text" placeholder="Nazwa produktu" /></div>
+        <div class="vp-field"><label>Kategoria</label><select id="vp-fieldCategory"><option value="">Brak kategorii</option></select></div>
+        <div class="vp-field"><label>Notatka</label><input id="vp-fieldNote" type="text" placeholder="Dodatkowe uwagi dla klienta..." /></div>
+        <div class="vp-row2">
+          <div class="vp-field"><label>Cena</label><input id="vp-fieldPrice" type="text" placeholder="np. 299 PLN" /></div>
+          <div class="vp-field"><label>Ilość</label><input id="vp-fieldQty" type="number" min="1" value="1" /></div>
+        </div>
+        <div class="vp-row2">
+          <div class="vp-field"><label>Producent</label><input id="vp-fieldManufacturer" type="text" placeholder="np. Sklum" /></div>
+          <div class="vp-field"><label>Kolor</label><input id="vp-fieldColor" type="text" placeholder="np. Biały" /></div>
+        </div>
+        <div class="vp-field"><label>Wymiar</label><input id="vp-fieldDimensions" type="text" placeholder="np. 60x80 cm" /></div>
       </div>
-      <p class="vp-hint" id="vp-imagePickerHint">Najedź na zdjęcie na stronie aby wybrać inne</p>
-      <div class="vp-field"><label>Lista zakupowa</label><select id="vp-selectList"><option value="">Wybierz listę...</option></select></div>
-      <div class="vp-field"><label>Sekcja</label><select id="vp-selectSection" disabled><option value="">Wybierz sekcję...</option></select></div>
-      <div class="vp-divider"></div>
-      <div class="vp-field"><label>Nazwa *</label><input id="vp-fieldName" type="text" placeholder="Nazwa produktu" /></div>
-      <div class="vp-field"><label>Kategoria</label><select id="vp-fieldCategory"><option value="">Brak kategorii</option></select></div>
-      <div class="vp-field"><label>Notatka</label><input id="vp-fieldNote" type="text" placeholder="Dodatkowe uwagi dla klienta..." /></div>
-      <div class="vp-row2">
-        <div class="vp-field"><label>Cena</label><input id="vp-fieldPrice" type="text" placeholder="np. 299 PLN" /></div>
-        <div class="vp-field"><label>Ilość</label><input id="vp-fieldQty" type="number" min="1" value="1" /></div>
+      <div class="vp-footer">
+        <div id="vp-duplicateWarning" class="vp-status error vp-hidden"></div>
+        <button class="vp-btn vp-btn-primary" id="vp-btnAdd" disabled>Dodaj do listy</button>
+        <div id="vp-mainStatus"></div>
+        <div class="vp-user-info" id="vp-userInfo"></div>
       </div>
-      <div class="vp-row2">
-        <div class="vp-field"><label>Producent</label><input id="vp-fieldManufacturer" type="text" placeholder="np. Sklum" /></div>
-        <div class="vp-field"><label>Kolor</label><input id="vp-fieldColor" type="text" placeholder="np. Biały" /></div>
-      </div>
-      <div class="vp-field"><label>Wymiar</label><input id="vp-fieldDimensions" type="text" placeholder="np. 60x80 cm" /></div>
-      <div id="vp-duplicateWarning" class="vp-status error vp-hidden"></div>
-      <button class="vp-btn vp-btn-primary" id="vp-btnAdd" disabled>Dodaj do listy</button>
-      <div id="vp-mainStatus"></div>
-      <div class="vp-user-info" id="vp-userInfo"></div>
     </div>
   `;
   document.body.appendChild(panel);
@@ -555,7 +562,11 @@
   });
 
   // ── Events ────────────────────────────────────────────────────────────────
-  vp("vp-close").addEventListener("click", () => { panel.style.setProperty("display", "none", "important"); });
+  vp("vp-close").addEventListener("click", () => {
+    document.getElementById("veepick-picker")?.remove();
+    document.getElementById("veepick-picker-styles")?.remove();
+    panel.style.setProperty("display", "none", "important");
+  });
   vp("vp-refreshBtn").addEventListener("click", () => {
     productData = extractProductData();
     renderPreview(productData);

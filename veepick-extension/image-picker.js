@@ -34,14 +34,27 @@
       transition: opacity 0.12s, transform 0.12s;
     }
     #veepick-picker-btn:hover {
-      opacity: 0.95;
+      opacity: 1;
       transform: scale(1.08);
     }
+    #veepick-picker-btn:hover svg path,
+    #veepick-picker-btn:hover svg line,
+    #veepick-picker-btn:hover svg circle {
+      stroke: #4F46E5 !important;
+    }
     #veepick-picker-btn svg {
-      width: 52px;
-      height: 52px;
+      width: 52px !important;
+      height: 52px !important;
+      overflow: visible !important;
       filter: drop-shadow(0 2px 8px rgba(0,0,0,0.6));
       transition: filter 0.2s;
+    }
+    #veepick-picker-btn svg path,
+    #veepick-picker-btn svg line,
+    #veepick-picker-btn svg circle {
+      fill: none !important;
+      stroke: #ffffff !important;
+      stroke-width: 2px !important;
     }
     #veepick-picker-btn.vp-picked {
       opacity: 1;
@@ -49,23 +62,15 @@
     #veepick-picker-btn.vp-picked svg {
       filter: drop-shadow(0 2px 10px rgba(79,70,229,0.7));
     }
-    #veepick-picker-btn.vp-picked svg rect {
-      fill: rgba(79,70,229,0.85) !important;
-    }
-    #veepick-picker-btn.vp-picked svg circle,
-    #veepick-picker-btn.vp-picked svg polyline,
-    #veepick-picker-btn.vp-picked svg line {
-      stroke: #ffffff !important;
-    }
   `;
   document.head.appendChild(style);
 
-  const iconSvg = `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" fill="rgba(0,0,0,0.55)" stroke="#ffffff" stroke-width="1.5"/>
-    <circle cx="8.5" cy="8.5" r="1.5" fill="none" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-    <polyline points="21 15 16 10 5 21" fill="none" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-    <line x1="16" y1="5" x2="16" y2="11" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"/>
-    <line x1="13" y1="8" x2="19" y2="8" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"/>
+  const iconSvg = `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="52" height="52" fill="none" stroke-linecap="round" stroke-linejoin="round" style="width:52px;height:52px;min-width:52px;min-height:52px;max-width:52px;max-height:52px;overflow:visible;display:block;flex-shrink:0;">
+<path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7" fill="none" stroke="#ffffff" stroke-width="2"/>
+    <line x1="16" y1="5" x2="22" y2="5" stroke="#ffffff" stroke-width="2"/>
+    <line x1="19" y1="2" x2="19" y2="8" stroke="#ffffff" stroke-width="2"/>
+    <circle cx="9" cy="9" r="2" fill="none" stroke="#ffffff" stroke-width="2"/>
+    <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" fill="none" stroke="#ffffff" stroke-width="2"/>
   </svg>`;
 
   const picker = document.createElement("div");
