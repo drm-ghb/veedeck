@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import Pusher from "pusher-js";
 import { useUploadThing } from "@/lib/uploadthing-client";
 import ImageAnnotationModal from "./ImageAnnotationModal";
+import { playMessageSound } from "@/lib/notification-sound";
 
 interface DiscussionMessage {
   id: string;
@@ -220,10 +221,11 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
     }
     const channel = pusherRef.current.subscribe(`discussion-${discussionId}`);
     channel.bind("new-message", (msg: DiscussionMessage) => {
+      const savedName = localStorage.getItem(`veedeck-author-${token}`);
+      if (msg.userId !== null || msg.authorName !== savedName) playMessageSound();
       setMessages((prev) => {
         if (prev.some((m) => m.id === msg.id)) return prev;
         const next = [...prev, msg];
-        const savedName = localStorage.getItem(`veedeck-author-${token}`);
         if (savedName) {
           fetch(`/api/share/${token}/discussions/${discussionId}/read`, {
             method: "POST",
