@@ -682,7 +682,24 @@ export default function DyskusjeView({ currentUserId, initialDiscussions, projec
 
         {/* Main area */}
         {selected ? (
-          <div className="flex-1 flex flex-col min-w-0 bg-background">
+          <div
+            className="flex-1 flex flex-col min-w-0 bg-background relative"
+            onDragEnter={handleDragEnter}
+            onDragLeave={handleDragLeave}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={handleDrop}
+          >
+            {isDragOver && (
+              <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-primary/10 backdrop-blur-[1px] pointer-events-none transition-opacity duration-150">
+                <div className="flex flex-col items-center gap-3 px-10 py-8 rounded-2xl border-2 border-dashed border-primary bg-background/80 shadow-lg">
+                  <div className="w-14 h-14 rounded-full bg-primary/15 flex items-center justify-center">
+                    <Paperclip size={28} className="text-primary" />
+                  </div>
+                  <p className="text-base font-semibold text-primary">Upuść pliki, aby dodać do dyskusji</p>
+                  <p className="text-xs text-muted-foreground">Obrazy, PDF, dokumenty</p>
+                </div>
+              </div>
+            )}
             {/* Header */}
             <div className="px-5 py-3 border-b border-border">
               {headerEditing ? (
@@ -859,21 +876,7 @@ export default function DyskusjeView({ currentUserId, initialDiscussions, projec
                 )}
               </div>
             ) : (
-              <div
-                className="flex-1 overflow-y-auto px-5 py-4 space-y-3 relative"
-                onDragEnter={handleDragEnter}
-                onDragLeave={handleDragLeave}
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={handleDrop}
-              >
-                {isDragOver && (
-                  <div className="absolute inset-0 z-10 flex items-center justify-center bg-primary/10 border-2 border-dashed border-primary rounded-lg pointer-events-none">
-                    <div className="flex flex-col items-center gap-2 text-primary">
-                      <Paperclip size={32} />
-                      <p className="text-sm font-medium">Upuść pliki tutaj</p>
-                    </div>
-                  </div>
-                )}
+              <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3 relative">
                 {loadingMessages ? (
                   <div className="flex items-center justify-center h-full text-muted-foreground text-sm">Ładowanie...</div>
                 ) : messages.length === 0 ? (
