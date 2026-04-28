@@ -8,6 +8,13 @@ import Pusher from "pusher-js";
 import { useUploadThing } from "@/lib/uploadthing-client";
 import ImageAnnotationModal from "./ImageAnnotationModal";
 
+interface ReadReceipt {
+  readerId: string;
+  readerName: string;
+  readerType: string;
+  lastMessageId: string | null;
+}
+
 interface DiscussionSummary {
   id: string;
   title: string;
@@ -71,6 +78,7 @@ export default function DyskusjeView({ currentUserId, initialDiscussions, projec
   const [discussions, setDiscussions] = useState<DiscussionSummary[]>(initialDiscussions);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [messages, setMessages] = useState<DiscussionMessage[]>([]);
+  const [receipts, setReceipts] = useState<ReadReceipt[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
@@ -177,9 +185,19 @@ export default function DyskusjeView({ currentUserId, initialDiscussions, projec
     fetch(`/api/discussions/${selectedId}/messages`)
       .then((r) => r.json())
       .then((data) => {
-        setMessages(Array.isArray(data) ? data : []);
+        const msgs: DiscussionMessage[] = Array.isArray(data) ? data : (data.messages ?? []);
+        const recs: ReadReceipt[] = data.receipts ?? [];
+        setMessages(msgs);
+        setReceipts(recs);
         setLoadingMessages(false);
         markAsRead(selectedId);
+        if (msgs.length > 0) {
+          fetch(`/api/discussions/${selectedId}/read`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ lastMessageId: msgs[msgs.length - 1].id }),
+          }).catch(() => {});
+        }
       })
       .catch(() => setLoadingMessages(false));
   }, [selectedId]);
@@ -201,7 +219,14 @@ export default function DyskusjeView({ currentUserId, initialDiscussions, projec
     channel.bind("new-message", (msg: DiscussionMessage) => {
       setMessages((prev) => {
         if (prev.some((m) => m.id === msg.id)) return prev;
-        return [...prev, msg];
+        const next = [...prev, msg];
+        // mark as read when new message arrives (designer is actively viewing)
+        fetch(`/api/discussions/${selectedId}/read`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ lastMessageId: msg.id }),
+        }).catch(() => {});
+        return next;
       });
       setDiscussions((prev) =>
         prev.map((d) =>
@@ -211,6 +236,18 @@ export default function DyskusjeView({ currentUserId, initialDiscussions, projec
         )
       );
       markAsRead(selectedId);
+    });
+
+    channel.bind("read-receipt", (receipt: ReadReceipt) => {
+      setReceipts((prev) => {
+        const idx = prev.findIndex((r) => r.readerId === receipt.readerId);
+        if (idx >= 0) {
+          const next = [...prev];
+          next[idx] = receipt;
+          return next;
+        }
+        return [...prev, receipt];
+      });
     });
 
     return () => {
@@ -892,6 +929,7 @@ export default function DyskusjeView({ currentUserId, initialDiscussions, projec
                       msg={msg}
                       isOwn={msg.userId === currentUserId}
                       onImageClick={setAnnotatingImage}
+                      receipts={receipts.filter((r) => r.lastMessageId === msg.id && r.readerId !== currentUserId)}
                     />
                   ))
                 )}
@@ -1126,10 +1164,11 @@ function ChatSearchResults({ messages, query, onImageClick }: {
   );
 }
 
-function MessageBubble({ msg, isOwn, onImageClick }: {
+function MessageBubble({ msg, isOwn, onImageClick, receipts }: {
   msg: DiscussionMessage;
   isOwn: boolean;
   onImageClick: (url: string) => void;
+  receipts?: ReadReceipt[];
 }) {
   return (
     <div className={`flex ${isOwn ? "justify-end" : "justify-start"}`}>
@@ -1186,6 +1225,19 @@ function MessageBubble({ msg, isOwn, onImageClick }: {
         )}
         {msg.attachmentType === "audio" && msg.attachmentUrl && (
           <audio src={msg.attachmentUrl} controls className="max-w-[260px] rounded-xl" />
+        )}
+        {receipts && receipts.length > 0 && (
+          <div className="flex items-center gap-1 px-1 mt-0.5">
+            {receipts.map((r) => (
+              <span
+                key={r.readerId}
+                title={`${r.readerName} przeczytał(a)`}
+                className="w-4 h-4 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[9px] font-bold leading-none flex-shrink-0 cursor-default select-none"
+              >
+                {r.readerName.charAt(0).toUpperCase()}
+              </span>
+            ))}
+          </div>
         )}
         <span className="text-xs text-muted-foreground px-1">{formatTime(msg.createdAt)}</span>
       </div>

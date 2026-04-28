@@ -21,12 +21,15 @@ export async function GET(
     return NextResponse.json({ error: "Nie znaleziono dyskusji" }, { status: 404 });
   }
 
-  const messages = await prisma.discussionMessage.findMany({
-    where: { discussionId: id },
-    orderBy: { createdAt: "asc" },
-  });
+  const [messages, receipts] = await Promise.all([
+    prisma.discussionMessage.findMany({
+      where: { discussionId: id },
+      orderBy: { createdAt: "asc" },
+    }),
+    prisma.discussionReadReceipt.findMany({ where: { discussionId: id } }),
+  ]);
 
-  return NextResponse.json(messages);
+  return NextResponse.json({ messages, receipts });
 }
 
 export async function POST(

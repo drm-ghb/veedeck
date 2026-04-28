@@ -23,6 +23,13 @@ interface DiscussionMessage {
   createdAt: string;
 }
 
+interface ReadReceipt {
+  readerId: string;
+  readerName: string;
+  readerType: string;
+  lastMessageId: string | null;
+}
+
 type AttachmentType = "image" | "document" | "audio" | "pdf";
 
 interface PendingAttachment {
@@ -146,6 +153,7 @@ function formatTime(iso: string) {
 
 export default function ClientDiscussionView({ token, discussionId, discussionTitle }: Props) {
   const [messages, setMessages] = useState<DiscussionMessage[]>([]);
+  const [receipts, setReceipts] = useState<ReadReceipt[]>([]);
   const [loading, setLoading] = useState(true);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
@@ -181,10 +189,21 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
     fetch(`/api/share/${token}/discussions/${discussionId}/messages`)
       .then((r) => r.json())
       .then((data) => {
-        setMessages(Array.isArray(data) ? data : []);
+        const msgs: DiscussionMessage[] = Array.isArray(data) ? data : (data.messages ?? []);
+        const recs: ReadReceipt[] = data.receipts ?? [];
+        setMessages(msgs);
+        setReceipts(recs);
         setLoading(false);
         localStorage.setItem(`share-discussion-unread-${token}`, "0");
         window.dispatchEvent(new CustomEvent("share-discussion-read", { detail: { token } }));
+        const savedName = localStorage.getItem(`veedeck-author-${token}`);
+        if (msgs.length > 0 && savedName) {
+          fetch(`/api/share/${token}/discussions/${discussionId}/read`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ lastMessageId: msgs[msgs.length - 1].id, authorName: savedName }),
+          }).catch(() => {});
+        }
       })
       .catch(() => setLoading(false));
   }, [token, discussionId]);
@@ -203,13 +222,35 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
     channel.bind("new-message", (msg: DiscussionMessage) => {
       setMessages((prev) => {
         if (prev.some((m) => m.id === msg.id)) return prev;
-        return [...prev, msg];
+        const next = [...prev, msg];
+        const savedName = localStorage.getItem(`veedeck-author-${token}`);
+        if (savedName) {
+          fetch(`/api/share/${token}/discussions/${discussionId}/read`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ lastMessageId: msg.id, authorName: savedName }),
+          }).catch(() => {});
+        }
+        return next;
       });
     });
+
+    channel.bind("read-receipt", (receipt: ReadReceipt) => {
+      setReceipts((prev) => {
+        const idx = prev.findIndex((r) => r.readerId === receipt.readerId);
+        if (idx >= 0) {
+          const next = [...prev];
+          next[idx] = receipt;
+          return next;
+        }
+        return [...prev, receipt];
+      });
+    });
+
     return () => {
       pusherRef.current?.unsubscribe(`discussion-${discussionId}`);
     };
-  }, [discussionId]);
+  }, [discussionId, token]);
 
   const uploadFiles = useCallback(async (files: File[]) => {
     if (files.length === 0) return;
@@ -579,6 +620,24 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
                         {msg.attachmentType === "audio" && msg.attachmentUrl && (
                           <audio src={msg.attachmentUrl} controls className="max-w-[260px] rounded-xl" />
                         )}
+                        {(() => {
+                          const msgReceipts = receipts.filter(
+                            (r) => r.lastMessageId === msg.id && r.readerName !== authorName
+                          );
+                          return msgReceipts.length > 0 ? (
+                            <div className="flex items-center gap-1 px-1 mt-0.5">
+                              {msgReceipts.map((r) => (
+                                <span
+                                  key={r.readerId}
+                                  title={`${r.readerName} przeczytał(a)`}
+                                  className="w-4 h-4 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[9px] font-bold leading-none flex-shrink-0 cursor-default select-none"
+                                >
+                                  {r.readerName.charAt(0).toUpperCase()}
+                                </span>
+                              ))}
+                            </div>
+                          ) : null;
+                        })()}
                         <span className="text-xs text-muted-foreground px-1">{formatTime(msg.createdAt)}</span>
                       </div>
                     </div>

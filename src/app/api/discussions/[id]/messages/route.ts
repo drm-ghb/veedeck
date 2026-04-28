@@ -18,14 +18,17 @@ export async function GET(
   if (discussion.ownerId !== userId) return NextResponse.json({ error: "Brak dostępu" }, { status: 403 });
 
   const cursor = req.nextUrl.searchParams.get("cursor");
-  const messages = await prisma.discussionMessage.findMany({
-    where: { discussionId: id },
-    orderBy: { createdAt: "asc" },
-    take: 50,
-    ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
-  });
+  const [messages, receipts] = await Promise.all([
+    prisma.discussionMessage.findMany({
+      where: { discussionId: id },
+      orderBy: { createdAt: "asc" },
+      take: 50,
+      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+    }),
+    prisma.discussionReadReceipt.findMany({ where: { discussionId: id } }),
+  ]);
 
-  return NextResponse.json(messages);
+  return NextResponse.json({ messages, receipts });
 }
 
 export async function POST(
