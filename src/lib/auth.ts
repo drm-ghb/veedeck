@@ -26,29 +26,30 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
 
-        const email = credentials.email as string;
+        const identifier = credentials.email as string;
 
-        const user = await prisma.user.findUnique({
-          where: { email },
-        });
+        // Support both email (designers) and login (clients)
+        const user = identifier.includes("@")
+          ? await prisma.user.findUnique({ where: { email: identifier } })
+          : await prisma.user.findUnique({ where: { login: identifier } });
 
         if (!user || !user.password) {
-          await prisma.loginLog.create({ data: { email, success: false } });
-          await logActivity({ level: "warn", action: "LOGIN_FAILED", message: `Nieudane logowanie: ${email} (użytkownik nie istnieje)` });
+          await prisma.loginLog.create({ data: { email: identifier, success: false } });
+          await logActivity({ level: "warn", action: "LOGIN_FAILED", message: `Nieudane logowanie: ${identifier} (użytkownik nie istnieje)` });
           return null;
         }
 
         const isValid = await bcrypt.compare(credentials.password as string, user.password);
 
         if (!isValid) {
-          await prisma.loginLog.create({ data: { email, userId: user.id, success: false } });
-          await logActivity({ level: "warn", action: "LOGIN_FAILED", message: `Nieudane logowanie: ${email} (złe hasło)`, userId: user.id });
+          await prisma.loginLog.create({ data: { email: identifier, userId: user.id, success: false } });
+          await logActivity({ level: "warn", action: "LOGIN_FAILED", message: `Nieudane logowanie: ${identifier} (złe hasło)`, userId: user.id });
           return null;
         }
 
-        await prisma.loginLog.create({ data: { email, userId: user.id, success: true } });
+        await prisma.loginLog.create({ data: { email: identifier, userId: user.id, success: true } });
 
-        return { id: user.id, email: user.email, name: user.name, isAdmin: user.isAdmin };
+        return { id: user.id, email: user.email, name: user.name, isAdmin: user.isAdmin, role: user.role };
       },
     }),
   ],
@@ -68,28 +69,49 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user) {
         token.id = user.id;
         token.isAdmin = (user as any).isAdmin;
-        const dbUser = await prisma.user.findUnique({
-          where: { id: user.id as string },
-          select: { needsNameSetup: true, ownerId: true },
-        });
-        token.needsNameSetup = dbUser?.needsNameSetup ?? false;
-        token.ownerId = dbUser?.ownerId ?? null;
+        token.role = (user as any).role ?? "designer";
+        try {
+          const dbUser = await prisma.user.findUnique({
+            where: { id: user.id as string },
+            select: { needsNameSetup: true, ownerId: true, role: true },
+          });
+          token.needsNameSetup = dbUser?.needsNameSetup ?? false;
+          token.ownerId = dbUser?.ownerId ?? null;
+          token.role = dbUser?.role ?? "designer";
+        } catch (e) {
+          console.error("[auth] JWT callback prisma error:", e);
+          token.needsNameSetup = false;
+          token.ownerId = null;
+        }
       } else if (token.ownerId === undefined) {
         // Stary token bez ownerId — jednorazowe doładowanie z bazy
-        const dbUser = await prisma.user.findUnique({
-          where: { id: token.id as string },
-          select: { ownerId: true },
-        });
-        token.ownerId = dbUser?.ownerId ?? null;
+        const userId = (token.id ?? token.sub) as string;
+        try {
+          const dbUser = await prisma.user.findUnique({
+            where: { id: userId },
+            select: { ownerId: true, role: true },
+          });
+          token.ownerId = dbUser?.ownerId ?? null;
+          token.role = dbUser?.role ?? "designer";
+        } catch (e) {
+          console.error("[auth] JWT callback prisma error (refresh):", e);
+          token.ownerId = null;
+        }
       }
       if (trigger === "update") {
-        const dbUser = await prisma.user.findUnique({
-          where: { id: token.id as string },
-          select: { needsNameSetup: true, name: true, ownerId: true },
-        });
-        token.needsNameSetup = dbUser?.needsNameSetup ?? false;
-        token.name = dbUser?.name ?? token.name;
-        token.ownerId = dbUser?.ownerId ?? null;
+        const userId = (token.id ?? token.sub) as string;
+        try {
+          const dbUser = await prisma.user.findUnique({
+            where: { id: userId },
+            select: { needsNameSetup: true, name: true, ownerId: true, role: true },
+          });
+          token.needsNameSetup = dbUser?.needsNameSetup ?? false;
+          token.name = dbUser?.name ?? token.name;
+          token.ownerId = dbUser?.ownerId ?? null;
+          token.role = dbUser?.role ?? "designer";
+        } catch (e) {
+          console.error("[auth] JWT callback prisma error (update):", e);
+        }
       }
       return token;
     },
@@ -99,6 +121,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         (session.user as any).isAdmin = token.isAdmin as boolean;
         (session.user as any).needsNameSetup = token.needsNameSetup as boolean;
         (session.user as any).ownerId = token.ownerId ?? null;
+        (session.user as any).role = token.role ?? "designer";
       }
       return session;
     },

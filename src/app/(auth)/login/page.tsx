@@ -50,7 +50,11 @@ export default function LoginPage() {
         setLoading(false);
         return;
       }
-      router.push("/dashboard");
+      if ((session?.user as any)?.role === "client") {
+        router.push("/client");
+      } else {
+        router.push("/dashboard");
+      }
       router.refresh();
     }
     setLoading(false);
@@ -166,14 +170,15 @@ export default function LoginPage() {
             {mode === "login" ? (
               <form onSubmit={handleLogin} className="space-y-4">
                 <div className="space-y-1.5">
-                  <Label htmlFor="email">{t.auth.email}</Label>
+                  <Label htmlFor="email">Email lub login</Label>
                   <Input
                     id="email"
-                    type="email"
+                    type="text"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     autoFocus
+                    autoComplete="username"
                   />
                 </div>
                 <div className="space-y-1.5">

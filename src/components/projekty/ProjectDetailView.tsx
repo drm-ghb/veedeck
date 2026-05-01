@@ -15,6 +15,7 @@ import {
   AlertTriangle,
   Check,
   Pencil,
+  KeyRound,
 } from "lucide-react";
 import { generateClientLogin } from "@/lib/client-login";
 import { Button } from "@/components/ui/button";
@@ -116,6 +117,7 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
         .map((c) => [c.id, { login: c.user!.login, password: "", showPassword: false }])
     )
   );
+  const [credentialsOpen, setCredentialsOpen] = useState<Record<string, boolean>>({});
 
   // Inline contact editing state (email/phone only)
   const [editingClientId, setEditingClientId] = useState<string | null>(null);
@@ -229,6 +231,7 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
           ...prev,
           [created.id]: { login: created.user.login, password: newClientPassword.trim(), showPassword: true },
         }));
+        setCredentialsOpen((prev) => ({ ...prev, [created.id]: true }));
       }
       setNewClientName("");
       setNewClientEmail("");
@@ -658,9 +661,9 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
                     client.isMainContact ? "border-primary/30 bg-primary/5" : "border-border"
                   }`}
                 >
-                  <div className="flex items-center gap-2 px-4 py-2.5 flex-wrap">
+                  <div className="flex items-center gap-2 px-4 py-2.5">
                     {/* Name + main badge */}
-                    <div className="flex items-center gap-1.5 min-w-0 mr-1">
+                    <div className="flex items-center gap-1.5 min-w-0 flex-1">
                       <p className="text-sm font-medium truncate">{client.name}</p>
                       {client.isMainContact && (
                         <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-primary text-white flex-shrink-0">
@@ -668,40 +671,8 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
                         </span>
                       )}
                     </div>
-                    {/* Inline credentials */}
-                    {client.user && clientCreds[client.id] !== undefined && (
-                      <>
-                        <Input
-                          value={clientCreds[client.id].login}
-                          onChange={(e) => setClientCreds((prev) => ({ ...prev, [client.id]: { ...prev[client.id], login: e.target.value } }))}
-                          placeholder="Login"
-                          className="h-7 text-xs font-mono w-28 flex-shrink-0 px-2"
-                        />
-                        <div className="relative flex-shrink-0 w-32">
-                          <Input
-                            type={clientCreds[client.id].showPassword ? "text" : "password"}
-                            value={clientCreds[client.id].password}
-                            onChange={(e) => setClientCreds((prev) => ({ ...prev, [client.id]: { ...prev[client.id], password: e.target.value } }))}
-                            placeholder="Nowe hasło"
-                            className="h-7 text-xs pr-7 w-full px-2"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setClientCreds((prev) => ({ ...prev, [client.id]: { ...prev[client.id], showPassword: !prev[client.id].showPassword } }))}
-                            className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                          >
-                            {clientCreds[client.id].showPassword ? <EyeOff size={11} /> : <Eye size={11} />}
-                          </button>
-                        </div>
-                        {(clientCreds[client.id].login !== (client.user?.login ?? "") || clientCreds[client.id].password.trim() !== "") && (
-                          <Button size="sm" className="h-7 text-xs flex-shrink-0" onClick={() => saveClientCreds(client.id)}>
-                            {t.common.save}
-                          </Button>
-                        )}
-                      </>
-                    )}
                     {/* Actions */}
-                    <div className="flex items-center gap-1 ml-auto flex-shrink-0">
+                    <div className="flex items-center gap-1 flex-shrink-0">
                       {(client.email || client.phone) && editingClientId !== client.id && (
                         <span className="text-xs text-muted-foreground mr-1 hidden sm:inline">
                           {[client.email, client.phone].filter(Boolean).join(" · ")}
@@ -714,6 +685,15 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
                           title={t.projekty.setAsMain}
                         >
                           {t.projekty.setAsMain}
+                        </button>
+                      )}
+                      {client.user && clientCreds[client.id] !== undefined && (
+                        <button
+                          onClick={() => setCredentialsOpen((prev) => ({ ...prev, [client.id]: !prev[client.id] }))}
+                          className={`transition-colors p-1 rounded ${credentialsOpen[client.id] ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}
+                          title="Dane logowania"
+                        >
+                          <KeyRound size={14} />
                         </button>
                       )}
                       <button
@@ -732,6 +712,39 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
                       </button>
                     </div>
                   </div>
+                  {client.user && credentialsOpen[client.id] && clientCreds[client.id] !== undefined && (
+                    <div className="px-4 pb-3 space-y-2 border-t border-border/50 pt-3">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Input
+                          value={clientCreds[client.id].login}
+                          onChange={(e) => setClientCreds((prev) => ({ ...prev, [client.id]: { ...prev[client.id], login: e.target.value } }))}
+                          placeholder="Login"
+                          className="h-7 text-xs font-mono w-32 px-2"
+                        />
+                        <div className="relative w-36">
+                          <Input
+                            type={clientCreds[client.id].showPassword ? "text" : "password"}
+                            value={clientCreds[client.id].password}
+                            onChange={(e) => setClientCreds((prev) => ({ ...prev, [client.id]: { ...prev[client.id], password: e.target.value } }))}
+                            placeholder="Nowe hasło"
+                            className="h-7 text-xs pr-7 w-full px-2"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setClientCreds((prev) => ({ ...prev, [client.id]: { ...prev[client.id], showPassword: !prev[client.id].showPassword } }))}
+                            className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                          >
+                            {clientCreds[client.id].showPassword ? <EyeOff size={11} /> : <Eye size={11} />}
+                          </button>
+                        </div>
+                        {(clientCreds[client.id].login !== (client.user?.login ?? "") || clientCreds[client.id].password.trim() !== "") && (
+                          <Button size="sm" className="h-7 text-xs" onClick={() => saveClientCreds(client.id)}>
+                            {t.common.save}
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  )}
                   {editingClientId === client.id && (
                     <div className="px-4 pb-3 space-y-2 border-t border-border/50 pt-3">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">

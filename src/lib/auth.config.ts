@@ -16,6 +16,7 @@ export const authConfig: NextAuthConfig = {
         session.user.id = token.id as string;
         (session.user as any).isAdmin = token.isAdmin as boolean;
         (session.user as any).needsNameSetup = token.needsNameSetup as boolean;
+        (session.user as any).role = token.role ?? "designer";
       }
       return session;
     },

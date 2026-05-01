@@ -140,6 +140,12 @@ interface Props {
   token: string;
   discussionId: string;
   discussionTitle: string;
+  /** If set, use this API path instead of /api/share/[token]/discussions/[id] */
+  apiBasePath?: string;
+  /** If set, use as author name (skip localStorage lookup) */
+  initialAuthorName?: string;
+  /** If set, use for sound notification logic (don't play for own messages) */
+  currentUserId?: string;
 }
 
 function formatTime(iso: string) {
@@ -152,7 +158,8 @@ function formatTime(iso: string) {
   return d.toLocaleDateString("pl-PL", { day: "numeric", month: "short" });
 }
 
-export default function ClientDiscussionView({ token, discussionId, discussionTitle }: Props) {
+export default function ClientDiscussionView({ token, discussionId, discussionTitle, apiBasePath, initialAuthorName, currentUserId }: Props) {
+  const msgApiBase = apiBasePath ?? `/api/share/${token}/discussions/${discussionId}`;
   const [messages, setMessages] = useState<DiscussionMessage[]>([]);
   const [receipts, setReceipts] = useState<ReadReceipt[]>([]);
   const [loading, setLoading] = useState(true);
@@ -177,17 +184,20 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
   const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const dragCounterRef = useRef(0);
 
-  const { startUpload } = useUploadThing("discussionClientAttachmentUploader", {
+  const { startUpload: startShareUpload } = useUploadThing("discussionClientAttachmentUploader", {
     headers: { "x-share-token": token },
   });
+  const { startUpload: startAuthUpload } = useUploadThing("discussionAttachmentUploader");
+  const startUpload = apiBasePath ? startAuthUpload : startShareUpload;
 
   useEffect(() => {
+    if (initialAuthorName) { setAuthorName(initialAuthorName); return; }
     const saved = localStorage.getItem(`veedeck-author-${token}`);
     if (saved) setAuthorName(saved);
-  }, [token]);
+  }, [token, initialAuthorName]);
 
   useEffect(() => {
-    fetch(`/api/share/${token}/discussions/${discussionId}/messages`)
+    fetch(`${msgApiBase}/messages`)
       .then((r) => r.json())
       .then((data) => {
         const msgs: DiscussionMessage[] = Array.isArray(data) ? data : (data.messages ?? []);
@@ -197,9 +207,9 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
         setLoading(false);
         localStorage.setItem(`share-discussion-unread-${token}`, "0");
         window.dispatchEvent(new CustomEvent("share-discussion-read", { detail: { token } }));
-        const savedName = localStorage.getItem(`veedeck-author-${token}`);
+        const savedName = initialAuthorName ?? localStorage.getItem(`veedeck-author-${token}`);
         if (msgs.length > 0 && savedName) {
-          fetch(`/api/share/${token}/discussions/${discussionId}/read`, {
+          fetch(`${msgApiBase}/read`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ lastMessageId: msgs[msgs.length - 1].id, authorName: savedName }),
@@ -207,7 +217,7 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
         }
       })
       .catch(() => setLoading(false));
-  }, [token, discussionId]);
+  }, [token, discussionId, msgApiBase, initialAuthorName]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -221,13 +231,16 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
     }
     const channel = pusherRef.current.subscribe(`discussion-${discussionId}`);
     channel.bind("new-message", (msg: DiscussionMessage) => {
-      const savedName = localStorage.getItem(`veedeck-author-${token}`);
-      if (msg.userId !== null || msg.authorName !== savedName) playMessageSound();
+      const savedName = initialAuthorName ?? localStorage.getItem(`veedeck-author-${token}`);
+      // Play sound if not own message
+      if (currentUserId ? msg.userId !== currentUserId : (msg.userId !== null || msg.authorName !== savedName)) {
+        playMessageSound();
+      }
       setMessages((prev) => {
         if (prev.some((m) => m.id === msg.id)) return prev;
         const next = [...prev, msg];
         if (savedName) {
-          fetch(`/api/share/${token}/discussions/${discussionId}/read`, {
+          fetch(`${msgApiBase}/read`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ lastMessageId: msg.id, authorName: savedName }),
@@ -252,7 +265,7 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
     return () => {
       pusherRef.current?.unsubscribe(`discussion-${discussionId}`);
     };
-  }, [discussionId, token]);
+  }, [discussionId, token, msgApiBase, initialAuthorName, currentUserId]);
 
   const uploadFiles = useCallback(async (files: File[]) => {
     if (files.length === 0) return;
@@ -354,14 +367,15 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
     const attachmentsToSend = [...pendingAttachments];
     const textToSend = input.trim();
     try {
+      const clientEmail = apiBasePath ? undefined : (localStorage.getItem(`veedeck-author-email-${token}`) ?? undefined);
       const firstAtt = attachmentsToSend[0] ?? null;
-      const res = await fetch(`/api/share/${token}/discussions/${discussionId}/messages`, {
+      const res = await fetch(`${msgApiBase}/messages`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           content: textToSend,
           authorName,
-          clientEmail: localStorage.getItem(`veedeck-author-email-${token}`) ?? undefined,
+          clientEmail,
           attachmentUrl: firstAtt?.url ?? null,
           attachmentName: firstAtt?.name ?? null,
           attachmentType: firstAtt?.type ?? null,
@@ -371,13 +385,13 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
 
       for (let i = 1; i < attachmentsToSend.length; i++) {
         const att = attachmentsToSend[i];
-        await fetch(`/api/share/${token}/discussions/${discussionId}/messages`, {
+        await fetch(`${msgApiBase}/messages`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             content: "",
             authorName,
-            clientEmail: localStorage.getItem(`veedeck-author-email-${token}`) ?? undefined,
+            clientEmail,
             attachmentUrl: att.url,
             attachmentName: att.name,
             attachmentType: att.type,
@@ -392,7 +406,7 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
     } finally {
       setSending(false);
     }
-  }, [token, discussionId, input, pendingAttachments, sending, authorName]);
+  }, [token, discussionId, input, pendingAttachments, sending, authorName, msgApiBase, apiBasePath]);
 
   const handleAnnotationSend = useCallback(async (blob: Blob) => {
     if (!authorName) return;
@@ -401,13 +415,14 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
       const file = new File([blob], `annotated-${Date.now()}.png`, { type: "image/png" });
       const result = await startUpload([file]);
       if (!result?.[0]) throw new Error();
-      const res = await fetch(`/api/share/${token}/discussions/${discussionId}/messages`, {
+      const clientEmail = apiBasePath ? undefined : (localStorage.getItem(`veedeck-author-email-${token}`) ?? undefined);
+      const res = await fetch(`${msgApiBase}/messages`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           content: "",
           authorName,
-          clientEmail: localStorage.getItem(`veedeck-author-email-${token}`) ?? undefined,
+          clientEmail,
           attachmentUrl: result[0].url,
           attachmentName: file.name,
           attachmentType: "image",
@@ -420,7 +435,7 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
     } finally {
       setSendingAnnotation(false);
     }
-  }, [token, discussionId, authorName, startUpload]);
+  }, [token, discussionId, authorName, startUpload, msgApiBase, apiBasePath]);
 
 
   return (

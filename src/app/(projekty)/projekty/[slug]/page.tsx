@@ -16,7 +16,10 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
       OR: [{ slug }, { id: slug }],
     },
     include: {
-      clients: { orderBy: { createdAt: "asc" } },
+      clients: {
+        orderBy: { createdAt: "asc" },
+        include: { user: { select: { id: true, login: true } } },
+      },
       renders: { where: { archived: false }, select: { id: true }, take: 1 },
       shoppingLists: { where: { archived: false }, select: { id: true }, take: 1 },
     },
@@ -52,6 +55,8 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
       createdAt: c.createdAt.toISOString(),
       startDate: c.startDate ? c.startDate.toISOString().slice(0, 10) : null,
       endDate: c.endDate ? c.endDate.toISOString().slice(0, 10) : null,
+      userId: c.userId ?? null,
+      user: c.user ? { id: c.user.id, login: c.user.login ?? "" } : null,
     })),
   };
 

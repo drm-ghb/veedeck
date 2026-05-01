@@ -1,5 +1,6 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { auth } from "@/lib/auth";
 import Link from "next/link";
 import Image from "next/image";
 import { ScrollText, MessageSquare } from "lucide-react";
@@ -23,6 +24,15 @@ export default async function ProjectHomePage({ params }: { params: Promise<{ to
   });
 
   if (!project || project.archived) notFound();
+
+  // If project has client accounts → non-logged-in visitors must log in
+  const session = await auth();
+  if (!session?.user) {
+    const hasClientAccounts = await prisma.projectClient.findFirst({
+      where: { projectId: project.id, userId: { not: null } },
+    });
+    if (hasClientAccounts) redirect("/login");
+  }
 
   const hasRenders = project.renders.length > 0;
   const showRenderFlow = !project.hiddenModules.includes("renderflow");
