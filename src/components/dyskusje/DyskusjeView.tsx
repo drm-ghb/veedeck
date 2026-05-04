@@ -43,6 +43,7 @@ interface DiscussionMessage {
   attachmentName: string | null;
   attachmentType: string | null;
   createdAt: string;
+  editedAt?: string | null;
 }
 
 interface ProjectOption {
@@ -93,6 +94,7 @@ export default function DyskusjeView({ currentUserId, initialDiscussions, projec
   const [savingHeader, setSavingHeader] = useState(false);
   const [showProjectDropdown, setShowProjectDropdown] = useState(false);
   const [showResources, setShowResources] = useState(false);
+  const [resourceTab, setResourceTab] = useState<"all" | "images" | "docs" | "sheets">("all");
   const [pendingAttachments, setPendingAttachments] = useState<PendingAttachment[]>([]);
   const [uploading, setUploading] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
@@ -250,6 +252,14 @@ export default function DyskusjeView({ currentUserId, initialDiscussions, projec
         }
         return [...prev, receipt];
       });
+    });
+
+    channel.bind("message-edited", ({ id, content, editedAt }: { id: string; content: string; editedAt: string }) => {
+      setMessages((prev) => prev.map((m) => m.id === id ? { ...m, content, editedAt } : m));
+    });
+
+    channel.bind("message-deleted", ({ id }: { id: string }) => {
+      setMessages((prev) => prev.filter((m) => m.id !== id));
     });
 
     return () => {
@@ -531,6 +541,29 @@ export default function DyskusjeView({ currentUserId, initialDiscussions, projec
       if (selectedId === id) { setSelectedId(null); setMessages([]); setHeaderEditing(false); }
     } catch {
       toast.error("Nie udało się " + (currentArchived ? "przywrócić" : "zarchiwizować") + " dyskusji");
+    }
+  }
+
+  async function handleEditMsg(msgId: string, content: string) {
+    const res = await fetch(`/api/discussions/${selectedId}/messages/${msgId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content }),
+    });
+    if (res.ok) {
+      setMessages((prev) => prev.map((m) => m.id === msgId ? { ...m, content, editedAt: new Date().toISOString() } : m));
+    } else {
+      toast.error("Nie udało się edytować wiadomości");
+    }
+  }
+
+  async function handleDeleteMsg(msgId: string) {
+    if (!confirm("Usunąć tę wiadomość?")) return;
+    const res = await fetch(`/api/discussions/${selectedId}/messages/${msgId}`, { method: "DELETE" });
+    if (res.ok) {
+      setMessages((prev) => prev.filter((m) => m.id !== msgId));
+    } else {
+      toast.error("Nie udało się usunąć wiadomości");
     }
   }
 
@@ -832,15 +865,15 @@ export default function DyskusjeView({ currentUserId, initialDiscussions, projec
                       <Search size={14} />
                     </button>
                     {(() => {
-                      const docCount = messages.filter((m) => m.attachmentType === "document" || m.attachmentType === "pdf").length;
+                      const fileCount = messages.filter((m) => m.attachmentType === "document" || m.attachmentType === "pdf" || m.attachmentType === "image").length;
                       return (
                         <button
-                          onClick={() => setShowResources((v) => !v)}
+                          onClick={() => { setShowResources((v) => !v); setResourceTab("all"); }}
                           className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs transition-colors ${showResources ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
                           title="Pliki dyskusji"
                         >
                           <FolderOpen size={13} />
-                          Pliki{docCount > 0 && <span className="font-semibold">{docCount}</span>}
+                          Pliki{fileCount > 0 && <span className="font-semibold">{fileCount}</span>}
                         </button>
                       );
                     })()}
@@ -893,33 +926,77 @@ export default function DyskusjeView({ currentUserId, initialDiscussions, projec
                 onImageClick={setAnnotatingImage}
               />
             ) : showResources ? (
-              <div className="flex-1 overflow-y-auto px-5 py-4">
-                <p className="text-xs text-muted-foreground mb-3 font-medium uppercase tracking-wide">Pliki w dyskusji</p>
-                {messages.filter((m) => m.attachmentType === "document" || m.attachmentType === "pdf").length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-40 gap-2 text-muted-foreground">
-                    <FolderOpen size={32} className="opacity-30" />
-                    <p className="text-sm">Brak plików</p>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {messages.filter((m) => m.attachmentType === "document" || m.attachmentType === "pdf").map((m) => (
-                      <a
-                        key={m.id}
-                        href={m.attachmentUrl!}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-border bg-background hover:bg-muted transition-colors group"
-                      >
-                        <DocumentIcon name={m.attachmentName || ""} />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">{m.attachmentName}</p>
-                          <p className="text-xs text-muted-foreground">{m.authorName} · {formatTime(m.createdAt)}</p>
-                        </div>
-                        <ExternalLink size={14} className="text-muted-foreground opacity-0 group-hover:opacity-100 flex-shrink-0" />
-                      </a>
-                    ))}
-                  </div>
-                )}
+              <div className="flex-1 overflow-y-auto flex flex-col">
+                {/* Tabs */}
+                <div className="flex gap-0 border-b border-border px-5 flex-shrink-0">
+                  {([
+                    { key: "all", label: "Wszystkie" },
+                    { key: "images", label: "Zdjęcia" },
+                    { key: "docs", label: "Dokumenty" },
+                    { key: "sheets", label: "Arkusze" },
+                  ] as const).map((tab) => (
+                    <button
+                      key={tab.key}
+                      onClick={() => setResourceTab(tab.key)}
+                      className={`px-3 py-2.5 text-xs font-medium border-b-2 -mb-px transition-colors ${
+                        resourceTab === tab.key
+                          ? "border-primary text-primary"
+                          : "border-transparent text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex-1 overflow-y-auto px-5 py-4">
+                  {(() => {
+                    const isSheet = (name: string) => /\.(xlsx?|csv)$/i.test(name);
+                    const filtered = messages.filter((m) => {
+                      if (!m.attachmentUrl) return false;
+                      if (resourceTab === "images") return m.attachmentType === "image";
+                      if (resourceTab === "docs") return m.attachmentType === "pdf" || (m.attachmentType === "document" && !isSheet(m.attachmentName || ""));
+                      if (resourceTab === "sheets") return m.attachmentType === "document" && isSheet(m.attachmentName || "");
+                      return m.attachmentType === "image" || m.attachmentType === "pdf" || m.attachmentType === "document";
+                    });
+                    if (filtered.length === 0) return (
+                      <div className="flex flex-col items-center justify-center h-40 gap-2 text-muted-foreground">
+                        <FolderOpen size={32} className="opacity-30" />
+                        <p className="text-sm">Brak plików</p>
+                      </div>
+                    );
+                    return (
+                      <div className={resourceTab === "images" ? "grid grid-cols-3 gap-2" : "space-y-2"}>
+                        {filtered.map((m) =>
+                          m.attachmentType === "image" ? (
+                            <button
+                              key={m.id}
+                              onClick={() => setAnnotatingImage(m.attachmentUrl!)}
+                              className="relative aspect-square rounded-xl overflow-hidden border border-border hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-primary/40"
+                              title={m.attachmentName || ""}
+                            >
+                              <img src={m.attachmentUrl!} alt={m.attachmentName || ""} className="w-full h-full object-cover" />
+                            </button>
+                          ) : (
+                            <a
+                              key={m.id}
+                              href={m.attachmentUrl!}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-border bg-background hover:bg-muted transition-colors group"
+                            >
+                              <DocumentIcon name={m.attachmentName || ""} />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium truncate">{m.attachmentName}</p>
+                                <p className="text-xs text-muted-foreground">{m.authorName} · {formatTime(m.createdAt)}</p>
+                              </div>
+                              <ExternalLink size={14} className="text-muted-foreground opacity-0 group-hover:opacity-100 flex-shrink-0" />
+                            </a>
+                          )
+                        )}
+                      </div>
+                    );
+                  })()}
+                </div>
               </div>
             ) : (
               <div className="flex-1 min-h-0 overflow-y-auto px-5 py-4 space-y-3 relative">
@@ -943,6 +1020,8 @@ export default function DyskusjeView({ currentUserId, initialDiscussions, projec
                         receipts={isOwn
                           ? receipts.filter((r) => r.lastMessageId === msg.id && r.readerId !== currentUserId)
                           : undefined}
+                        onEdit={isOwn ? (content) => handleEditMsg(msg.id, content) : undefined}
+                        onDelete={isOwn ? () => handleDeleteMsg(msg.id) : undefined}
                       />
                     );
                   })
@@ -989,7 +1068,7 @@ export default function DyskusjeView({ currentUserId, initialDiscussions, projec
                   ref={fileInputRef}
                   type="file"
                   multiple
-                  accept="image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                  accept="image/*,.heic,.heif,application/pdf,text/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                   className="hidden"
                   onChange={handleFilesSelect}
                 />
@@ -1085,7 +1164,7 @@ function PillDropdown({ value, onChange, options }: {
 function DocumentIcon({ name }: { name: string }) {
   const ext = name.split(".").pop()?.toLowerCase() ?? "";
   if (ext === "pdf") return <FileText size={20} className="text-red-500 flex-shrink-0" />;
-  if (["xls", "xlsx"].includes(ext)) return <FileSpreadsheet size={20} className="text-green-600 flex-shrink-0" />;
+  if (["xls", "xlsx", "csv"].includes(ext)) return <FileSpreadsheet size={20} className="text-green-600 flex-shrink-0" />;
   if (["doc", "docx"].includes(ext)) return <FileText size={20} className="text-blue-500 flex-shrink-0" />;
   return <FileIcon size={20} className="text-muted-foreground flex-shrink-0" />;
 }
@@ -1178,14 +1257,44 @@ function ChatSearchResults({ messages, query, onImageClick }: {
   );
 }
 
-function MessageBubble({ msg, isOwn, onImageClick, receipts }: {
+function MessageBubble({ msg, isOwn, onImageClick, receipts, onEdit, onDelete }: {
   msg: DiscussionMessage;
   isOwn: boolean;
   onImageClick: (url: string) => void;
   receipts?: ReadReceipt[];
+  onEdit?: (content: string) => void;
+  onDelete?: () => void;
 }) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editContent, setEditContent] = useState(msg.content);
+
+  function saveEdit() {
+    const trimmed = editContent.trim();
+    if (!trimmed || trimmed === msg.content) { setIsEditing(false); return; }
+    onEdit?.(trimmed);
+    setIsEditing(false);
+  }
+
   return (
-    <div className={`flex ${isOwn ? "justify-end" : "justify-start"}`}>
+    <div className={`flex items-end gap-1 ${isOwn ? "justify-end" : "justify-start"} group`}>
+      {isOwn && !isEditing && (
+        <div className="opacity-0 group-hover:opacity-100 flex items-center gap-0.5 mb-5 transition-opacity flex-shrink-0">
+          <button
+            onClick={() => { setEditContent(msg.content); setIsEditing(true); }}
+            className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            title="Edytuj wiadomość"
+          >
+            <Edit2 size={12} />
+          </button>
+          <button
+            onClick={onDelete}
+            className="p-1 rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+            title="Usuń wiadomość"
+          >
+            <Trash2 size={12} />
+          </button>
+        </div>
+      )}
       <div className={`max-w-[75%] flex flex-col gap-0.5 ${isOwn ? "items-end" : "items-start"}`}>
         {!isOwn && (
           <div className="flex items-center gap-2 px-1">
@@ -1193,10 +1302,30 @@ function MessageBubble({ msg, isOwn, onImageClick, receipts }: {
             <span className="text-xs text-muted-foreground">{formatTime(msg.createdAt)}</span>
           </div>
         )}
-        {msg.content && (
-          <div className={`rounded-2xl px-3 py-2 text-sm ${isOwn ? "bg-primary text-primary-foreground" : "bg-background border border-border"}`}>
-            {msg.content}
+        {isEditing ? (
+          <div className="flex flex-col gap-1 min-w-[220px]">
+            <textarea
+              autoFocus
+              value={editContent}
+              onChange={(e) => setEditContent(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); saveEdit(); } if (e.key === "Escape") setIsEditing(false); }}
+              className="w-full px-3 py-2 text-sm rounded-2xl border border-primary bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
+              rows={2}
+            />
+            <div className="flex gap-1 justify-end">
+              <button onClick={() => setIsEditing(false)} className="px-2 py-1 text-xs text-muted-foreground hover:text-foreground transition-colors">Anuluj</button>
+              <button onClick={saveEdit} className="px-2 py-1 text-xs bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity">Zapisz</button>
+            </div>
           </div>
+        ) : (
+          <>
+            {msg.content && (
+              <div className={`rounded-2xl px-3 py-2 text-sm ${isOwn ? "bg-primary text-primary-foreground" : "bg-background border border-border"}`}>
+                {msg.content}
+                {msg.editedAt && <span className="text-[10px] opacity-50 ml-1.5">(edytowano)</span>}
+              </div>
+            )}
+          </>
         )}
         {msg.attachmentType === "image" && msg.attachmentUrl && (
           <button
@@ -1204,25 +1333,27 @@ function MessageBubble({ msg, isOwn, onImageClick, receipts }: {
             className="block rounded-2xl overflow-hidden border border-border hover:opacity-90 transition-opacity focus:outline-none focus:ring-2 focus:ring-primary/40"
             title="Kliknij aby zaznaczyć"
           >
-            <img
-              src={msg.attachmentUrl}
-              alt={msg.attachmentName || ""}
-              className="max-w-[260px] max-h-[200px] object-cover"
-            />
+            <img src={msg.attachmentUrl} alt={msg.attachmentName || ""} className="max-w-[260px] max-h-[200px] object-cover" />
           </button>
         )}
         {msg.attachmentType === "pdf" && msg.attachmentUrl && (
-          <div className="flex flex-col gap-1 max-w-[280px]">
+          <div className="max-w-[280px] w-[280px] rounded-xl overflow-hidden border border-border">
+            <a
+              href={msg.attachmentUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 px-3 py-2 bg-muted/60 hover:bg-muted transition-colors border-b border-border"
+            >
+              <FileText size={15} className="text-red-500 flex-shrink-0" />
+              <span className="text-xs font-medium truncate flex-1">{msg.attachmentName || "Dokument PDF"}</span>
+              <ExternalLink size={11} className="text-muted-foreground flex-shrink-0" />
+            </a>
             <iframe
               src={msg.attachmentUrl}
-              className="w-full rounded-xl border border-border"
+              className="w-full block"
               style={{ height: "200px", border: "none" }}
               title={msg.attachmentName || "PDF"}
             />
-            <a href={msg.attachmentUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground px-1 transition-colors">
-              <ExternalLink size={11} />
-              Otwórz pełny PDF
-            </a>
           </div>
         )}
         {msg.attachmentType === "document" && msg.attachmentUrl && (

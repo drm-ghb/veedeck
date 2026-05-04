@@ -16,7 +16,23 @@ import {
   Check,
   Pencil,
   KeyRound,
+  GripVertical,
 } from "lucide-react";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  arrayMove,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { generateClientLogin } from "@/lib/client-login";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -100,6 +116,21 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
 
   // Clients state
   const [clients, setClients] = useState<ProjectClient[]>(project.clients);
+  const clientSensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+
+  function handleClientDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = clients.findIndex((c) => c.id === active.id);
+    const newIndex = clients.findIndex((c) => c.id === over.id);
+    const reordered = arrayMove(clients, oldIndex, newIndex);
+    setClients(reordered);
+    fetch(`/api/projects/${project.id}/clients/reorder`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids: reordered.map((c) => c.id) }),
+    }).catch(() => {});
+  }
   const [newClientName, setNewClientName] = useState("");
   const [newClientEmail, setNewClientEmail] = useState("");
   const [newClientPhone, setNewClientPhone] = useState("");
@@ -655,15 +686,19 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
               {t.projekty.noClients}
             </p>
           ) : (
+            <DndContext sensors={clientSensors} collisionDetection={closestCenter} onDragEnd={handleClientDragEnd}>
+            <SortableContext items={clients.map((c) => c.id)} strategy={verticalListSortingStrategy}>
             <div className="space-y-2">
               {clients.map((client) => (
+                <SortableClientItem key={client.id} id={client.id}>
                 <div
-                  key={client.id}
                   className={`rounded-lg border bg-background transition-colors ${
                     client.isMainContact ? "border-primary/30 bg-primary/5" : "border-border"
                   }`}
                 >
                   <div className="flex items-center gap-2 px-4 py-2.5">
+                    {/* drag handle */}
+                    <SortableClientItemHandle id={client.id} />
                     {/* Name + main badge */}
                     <div className="flex items-center gap-1.5 min-w-0 flex-1">
                       <p className="text-sm font-medium truncate">{client.name}</p>
@@ -776,8 +811,11 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
                     </div>
                   )}
                 </div>
+                </SortableClientItem>
               ))}
             </div>
+            </SortableContext>
+            </DndContext>
           )}
         </section>
 
@@ -914,6 +952,26 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+function SortableClientItem({ id, children }: { id: string; children: React.ReactNode }) {
+  const { setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
+  return <div ref={setNodeRef} style={style}>{children}</div>;
+}
+
+function SortableClientItemHandle({ id }: { id: string }) {
+  const { attributes, listeners } = useSortable({ id });
+  return (
+    <div
+      {...attributes}
+      {...listeners}
+      className="text-muted-foreground hover:text-foreground cursor-grab active:cursor-grabbing flex-shrink-0"
+      title="Przeciągnij, aby zmienić kolejność"
+    >
+      <GripVertical size={14} />
     </div>
   );
 }

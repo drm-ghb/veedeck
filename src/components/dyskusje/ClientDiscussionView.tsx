@@ -131,7 +131,7 @@ function ClientChatSearchResults({ messages, query, onImageClick }: {
 function DocumentIcon({ name }: { name: string }) {
   const ext = name.split(".").pop()?.toLowerCase() ?? "";
   if (ext === "pdf") return <FileText size={20} className="text-red-500 flex-shrink-0" />;
-  if (["xls", "xlsx"].includes(ext)) return <FileSpreadsheet size={20} className="text-green-600 flex-shrink-0" />;
+  if (["xls", "xlsx", "csv"].includes(ext)) return <FileSpreadsheet size={20} className="text-green-600 flex-shrink-0" />;
   if (["doc", "docx"].includes(ext)) return <FileText size={20} className="text-blue-500 flex-shrink-0" />;
   return <FileIcon size={20} className="text-muted-foreground flex-shrink-0" />;
 }
@@ -171,6 +171,7 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
   const [isRecording, setIsRecording] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
   const [showResources, setShowResources] = useState(false);
+  const [resourceTab, setResourceTab] = useState<"all" | "images" | "docs" | "sheets">("all");
   const [chatSearch, setChatSearch] = useState("");
   const [chatSearchOpen, setChatSearchOpen] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -496,14 +497,14 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
                 <Search size={14} />
               </button>
               {(() => {
-                const docCount = messages.filter((m) => m.attachmentType === "document" || m.attachmentType === "pdf").length;
+                const fileCount = messages.filter((m) => m.attachmentType === "document" || m.attachmentType === "pdf" || m.attachmentType === "image").length;
                 return (
                   <button
-                    onClick={() => setShowResources((v) => !v)}
+                    onClick={() => { setShowResources((v) => !v); setResourceTab("all"); }}
                     className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs transition-colors ${showResources ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
                   >
                     <FolderOpen size={13} />
-                    Pliki{docCount > 0 && <span className="font-semibold">{docCount}</span>}
+                    Pliki{fileCount > 0 && <span className="font-semibold">{fileCount}</span>}
                   </button>
                 );
               })()}
@@ -540,33 +541,77 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
               onImageClick={setAnnotatingImage}
             />
           ) : showResources ? (
-            <div className="flex-1 overflow-y-auto px-5 py-4">
-              <p className="text-xs text-muted-foreground mb-3 font-medium uppercase tracking-wide">Pliki w dyskusji</p>
-              {messages.filter((m) => m.attachmentType === "document" || m.attachmentType === "pdf").length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-40 gap-2 text-muted-foreground">
-                  <FolderOpen size={32} className="opacity-30" />
-                  <p className="text-sm">Brak plików</p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {messages.filter((m) => m.attachmentType === "document" || m.attachmentType === "pdf").map((m) => (
-                    <a
-                      key={m.id}
-                      href={m.attachmentUrl!}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-border bg-background hover:bg-muted transition-colors group"
-                    >
-                      <DocumentIcon name={m.attachmentName || ""} />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{m.attachmentName}</p>
-                        <p className="text-xs text-muted-foreground">{m.authorName} · {formatTime(m.createdAt)}</p>
-                      </div>
-                      <ExternalLink size={14} className="text-muted-foreground opacity-0 group-hover:opacity-100 flex-shrink-0" />
-                    </a>
-                  ))}
-                </div>
-              )}
+            <div className="flex-1 overflow-y-auto flex flex-col">
+              {/* Tabs */}
+              <div className="flex gap-0 border-b border-border px-5 flex-shrink-0">
+                {([
+                  { key: "all", label: "Wszystkie" },
+                  { key: "images", label: "Zdjęcia" },
+                  { key: "docs", label: "Dokumenty" },
+                  { key: "sheets", label: "Arkusze" },
+                ] as const).map((tab) => (
+                  <button
+                    key={tab.key}
+                    onClick={() => setResourceTab(tab.key)}
+                    className={`px-3 py-2.5 text-xs font-medium border-b-2 -mb-px transition-colors ${
+                      resourceTab === tab.key
+                        ? "border-primary text-primary"
+                        : "border-transparent text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+              <div className="flex-1 overflow-y-auto px-5 py-4">
+                {(() => {
+                  const isSheet = (name: string) => /\.(xlsx?|csv)$/i.test(name);
+                  const filtered = messages.filter((m) => {
+                    if (!m.attachmentUrl) return false;
+                    if (resourceTab === "images") return m.attachmentType === "image";
+                    if (resourceTab === "docs") return m.attachmentType === "pdf" || (m.attachmentType === "document" && !isSheet(m.attachmentName || ""));
+                    if (resourceTab === "sheets") return m.attachmentType === "document" && isSheet(m.attachmentName || "");
+                    return m.attachmentType === "image" || m.attachmentType === "pdf" || m.attachmentType === "document";
+                  });
+                  if (filtered.length === 0) return (
+                    <div className="flex flex-col items-center justify-center h-40 gap-2 text-muted-foreground">
+                      <FolderOpen size={32} className="opacity-30" />
+                      <p className="text-sm">Brak plików</p>
+                    </div>
+                  );
+                  return (
+                    <div className={resourceTab === "images" ? "grid grid-cols-3 gap-2" : "space-y-2"}>
+                      {filtered.map((m) =>
+                        m.attachmentType === "image" ? (
+                          <button
+                            key={m.id}
+                            onClick={() => setAnnotatingImage(m.attachmentUrl!)}
+                            className="relative aspect-square rounded-xl overflow-hidden border border-border hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-primary/40"
+                            title={m.attachmentName || ""}
+                          >
+                            <img src={m.attachmentUrl!} alt={m.attachmentName || ""} className="w-full h-full object-cover" />
+                          </button>
+                        ) : (
+                          <a
+                            key={m.id}
+                            href={m.attachmentUrl!}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-border bg-background hover:bg-muted transition-colors group"
+                          >
+                            <DocumentIcon name={m.attachmentName || ""} />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate">{m.attachmentName}</p>
+                              <p className="text-xs text-muted-foreground">{m.authorName} · {formatTime(m.createdAt)}</p>
+                            </div>
+                            <ExternalLink size={14} className="text-muted-foreground opacity-0 group-hover:opacity-100 flex-shrink-0" />
+                          </a>
+                        )
+                      )}
+                    </div>
+                  );
+                })()}
+              </div>
             </div>
           ) : (
             <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3 relative">
@@ -703,7 +748,7 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
                 ref={fileInputRef}
                 type="file"
                 multiple
-                accept="image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                accept="image/*,.heic,.heif,application/pdf,text/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                 className="hidden"
                 onChange={handleFilesSelect}
               />

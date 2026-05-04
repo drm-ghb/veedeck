@@ -1,10 +1,26 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useViewPreference } from "@/hooks/useViewPreference";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  rectSortingStrategy,
+  arrayMove,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useT } from "@/lib/i18n";
-import { ScrollText, Search, LayoutGrid, List, ArrowDownUp, Link2, MoreHorizontal, Pencil, Archive, ArchiveRestore, Trash2, Pin, PinOff, AlertTriangle, Check, MessageSquare } from "lucide-react";
+import { ScrollText, Search, LayoutGrid, List, ArrowDownUp, Link2, MoreHorizontal, Pencil, Archive, ArchiveRestore, Trash2, Pin, PinOff, AlertTriangle, Check, MessageSquare, GripVertical } from "lucide-react";
 import { pusherClient } from "@/lib/pusher";
 import { getUnreadSet, syncListUnread } from "@/lib/list-unread-store";
 import NewListDialog from "./NewListDialog";
@@ -33,6 +49,7 @@ interface ShoppingList {
   shareToken: string;
   archived: boolean;
   pinned: boolean;
+  order: number;
   createdAt: string;
   project: { id: string; title: string; hiddenModules: string[] } | null;
 }
@@ -41,7 +58,7 @@ interface ListyViewProps {
   lists: ShoppingList[];
 }
 
-type SortOption = "newest" | "oldest" | "az" | "za";
+type SortOption = "newest" | "oldest" | "az" | "za" | "manual";
 type Tab = "active" | "archived";
 
 export default function ListyView({ lists: initialLists }: ListyViewProps) {
@@ -49,9 +66,10 @@ export default function ListyView({ lists: initialLists }: ListyViewProps) {
   const t = useT();
   const [lists, setLists] = useState<ShoppingList[]>(initialLists);
   const [tab, setTab] = useState<Tab>("active");
-  const [view, setView] = useState<"grid" | "list">("list");
+  const [view, setView] = useViewPreference("lists", "list");
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<SortOption>("newest");
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
   const [editingList, setEditingList] = useState<ShoppingList | null>(null);
   const [warningLink, setWarningLink] = useState<string | null>(null);
   const [unreadListCounts, setUnreadListCounts] = useState<Record<string, number>>({});
@@ -61,8 +79,6 @@ export default function ListyView({ lists: initialLists }: ListyViewProps) {
   }, [initialLists]);
 
   useEffect(() => {
-    const saved = localStorage.getItem("listy-view");
-    if (saved === "grid" || saved === "list") setView(saved);
     // Init unread counts from localStorage
     const counts: Record<string, number> = {};
     for (const list of initialLists) {
@@ -100,7 +116,23 @@ export default function ListyView({ lists: initialLists }: ListyViewProps) {
 
   function toggleView(v: "grid" | "list") {
     setView(v);
-    localStorage.setItem("listy-view", v);
+  }
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const activeLists = lists.filter((l) => !l.archived);
+    const oldIndex = activeLists.findIndex((l) => l.id === active.id);
+    const newIndex = activeLists.findIndex((l) => l.id === over.id);
+    const reorderedActive = arrayMove(activeLists, oldIndex, newIndex).map((l, i) => ({ ...l, order: i }));
+    const archived = lists.filter((l) => l.archived);
+    setLists([...reorderedActive, ...archived]);
+    setSort("manual");
+    fetch("/api/lists/reorder", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids: reorderedActive.map((l) => l.id) }),
+    }).catch(() => {});
   }
 
   async function toggleArchive(list: ShoppingList) {
@@ -169,10 +201,11 @@ export default function ListyView({ lists: initialLists }: ListyViewProps) {
     .sort((a, b) => {
       if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
       switch (sort) {
-        case "oldest": return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-        case "az":     return a.name.localeCompare(b.name, "pl");
-        case "za":     return b.name.localeCompare(a.name, "pl");
-        default:       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        case "manual":  return a.order - b.order;
+        case "oldest":  return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+        case "az":      return a.name.localeCompare(b.name, "pl");
+        case "za":      return b.name.localeCompare(a.name, "pl");
+        default:        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
       }
     });
 
@@ -279,6 +312,7 @@ export default function ListyView({ lists: initialLists }: ListyViewProps) {
           <div className={`relative sm:hidden w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-md border ${sort !== "newest" ? "border-gray-900 bg-gray-900" : "border-gray-200 bg-white dark:border-gray-700 dark:bg-card"}`}>
             <ArrowDownUp size={14} className={`pointer-events-none ${sort !== "newest" ? "text-white" : "text-gray-500"}`} />
             <select value={sort} onChange={(e) => setSort(e.target.value as SortOption)} className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" aria-label={t.common.sort}>
+              <option value="manual">Własne</option>
               <option value="newest">{t.common.newest}</option>
               <option value="oldest">{t.common.oldest}</option>
               <option value="az">{t.common.az}</option>
@@ -287,6 +321,7 @@ export default function ListyView({ lists: initialLists }: ListyViewProps) {
           </div>
 
           <select value={sort} onChange={(e) => setSort(e.target.value as SortOption)} className="hidden sm:block flex-shrink-0 text-xs border border-gray-200 dark:border-gray-700 rounded-md px-2 py-2 bg-white dark:bg-card text-gray-600 dark:text-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-300">
+            <option value="manual">Własne</option>
             <option value="newest">{t.common.newest}</option>
             <option value="oldest">{t.common.oldest}</option>
             <option value="az">{t.common.az}</option>
@@ -332,91 +367,35 @@ export default function ListyView({ lists: initialLists }: ListyViewProps) {
 
       {/* Grid view */}
       {filtered.length > 0 && view === "grid" && (
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={tab === "active" ? handleDragEnd : undefined}>
+        <SortableContext items={filtered.map((l) => l.id)} strategy={rectSortingStrategy}>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4">
           {filtered.map((list) => (
-            <div key={list.id} className="rounded-xl border border-border bg-card hover:shadow-sm hover:border-primary/20 transition-all group relative">
-              {list.pinned && (
-                <div className="absolute top-3 left-3 z-10">
-                  <Pin size={12} className="text-red-500 fill-red-500" />
-                </div>
-              )}
-              <Link href={`/listy/${list.slug ?? list.id}`} className={`flex items-start gap-3 p-4 pr-16 block ${list.pinned ? "pl-8" : ""}`}>
-                <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                  <ScrollText size={16} className="text-primary" />
-                </div>
-                <div className="min-w-0">
-                  <p className="font-semibold text-sm text-foreground truncate">{list.name}</p>
-                  {list.project ? (
-                    <p className="text-xs text-muted-foreground truncate mt-0.5">{list.project.title}</p>
-                  ) : (
-                    <p className="text-xs text-muted-foreground/50 mt-0.5">{t.listy.noProject}</p>
-                  )}
-                </div>
-              </Link>
-              <div className="absolute top-3 right-3 flex items-center gap-0.5">
-                {(unreadListCounts[list.id] ?? 0) > 0 && (
-                  <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-primary text-white text-[10px] font-bold leading-none mr-1">
-                    <MessageSquare size={10} />
-                    {unreadListCounts[list.id]}
-                  </div>
-                )}
-                <button
-                  onClick={(e) => { e.preventDefault(); handleCopyLink(list); }}
-                  className="w-7 h-7 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                  title={t.common.copyLink}
-                >
-                  <Link2 size={14} />
-                </button>
-                <ListMenu list={list} />
-              </div>
-            </div>
+            <SortableListGridCard key={list.id} list={list} unreadCount={unreadListCounts[list.id] ?? 0} onCopyLink={handleCopyLink} menu={<ListMenu list={list} />} />
           ))}
         </div>
+        </SortableContext>
+        </DndContext>
       )}
-
       {/* List view */}
       {filtered.length > 0 && view === "list" && (
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={tab === "active" ? handleDragEnd : undefined}>
+        <SortableContext items={filtered.map((l) => l.id)} strategy={rectSortingStrategy}>
         <div className="bg-card border border-border rounded-xl overflow-hidden">
           {filtered.map((list, i) => (
-            <div
+            <SortableListRowItem
               key={list.id}
-              onClick={() => router.push(`/listy/${list.slug ?? list.id}`)}
-              className={`flex items-center gap-3 px-4 py-3 hover:bg-muted/30 transition-colors cursor-pointer ${i !== filtered.length - 1 ? "border-b border-border" : ""}`}
-            >
-              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                <ScrollText size={14} className="text-primary" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5">
-                  {list.pinned && <Pin size={11} className="text-red-500 fill-red-500 flex-shrink-0" />}
-                  <span className="font-semibold text-sm text-foreground truncate">{list.name}</span>
-                </div>
-                <div className="flex items-center gap-2 mt-0.5">
-                  {list.project && <span className="text-xs text-muted-foreground truncate">{list.project.title}</span>}
-                  <span className="text-xs text-muted-foreground whitespace-nowrap">
-                    {new Date(list.createdAt).toLocaleDateString("pl-PL", { day: "2-digit", month: "short", year: "numeric" })}
-                  </span>
-                </div>
-              </div>
-              <div className="flex items-center gap-0.5 shrink-0" onClick={(e) => e.stopPropagation()}>
-                {(unreadListCounts[list.id] ?? 0) > 0 && (
-                  <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-primary text-white text-[10px] font-bold leading-none mr-1">
-                    <MessageSquare size={10} />
-                    {unreadListCounts[list.id]}
-                  </div>
-                )}
-                <button
-                  onClick={() => handleCopyLink(list)}
-                  className="w-7 h-7 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                  title={t.common.copyLink}
-                >
-                  <Link2 size={14} />
-                </button>
-                <ListMenu list={list} />
-              </div>
-            </div>
+              list={list}
+              isLast={i === filtered.length - 1}
+              unreadCount={unreadListCounts[list.id] ?? 0}
+              onNavigate={() => router.push(`/listy/${list.slug ?? list.id}`)}
+              onCopyLink={handleCopyLink}
+              menu={<ListMenu list={list} />}
+            />
           ))}
         </div>
+        </SortableContext>
+        </DndContext>
       )}
     </div>
 
@@ -453,5 +432,120 @@ export default function ListyView({ lists: initialLists }: ListyViewProps) {
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+function SortableListGridCard({ list, unreadCount, onCopyLink, menu }: {
+  list: ShoppingList;
+  unreadCount: number;
+  onCopyLink: (l: ShoppingList) => void;
+  menu: React.ReactNode;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: list.id });
+  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
+  return (
+    <div ref={setNodeRef} style={style} className="rounded-xl border border-border bg-card hover:shadow-sm hover:border-primary/20 transition-all group relative">
+      {list.pinned && (
+        <div className="absolute top-3 left-3 z-10">
+          <Pin size={12} className="text-red-500 fill-red-500" />
+        </div>
+      )}
+      <div
+        {...attributes}
+        {...listeners}
+        className="absolute top-3 left-3 z-10 p-0.5 rounded text-muted-foreground opacity-0 group-hover:opacity-100 cursor-grab active:cursor-grabbing"
+        style={{ left: list.pinned ? "20px" : undefined }}
+      >
+        <GripVertical size={13} />
+      </div>
+      <Link href={`/listy/${list.slug ?? list.id}`} className={`flex items-start gap-3 p-4 pr-16 block ${list.pinned ? "pl-8" : ""}`}>
+        <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+          <ScrollText size={16} className="text-primary" />
+        </div>
+        <div className="min-w-0">
+          <p className="font-semibold text-sm text-foreground truncate">{list.name}</p>
+          {list.project ? (
+            <p className="text-xs text-muted-foreground truncate mt-0.5">{list.project.title}</p>
+          ) : (
+            <p className="text-xs text-muted-foreground/50 mt-0.5">Brak projektu</p>
+          )}
+        </div>
+      </Link>
+      <div className="absolute top-3 right-3 flex items-center gap-0.5">
+        {unreadCount > 0 && (
+          <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-primary text-white text-[10px] font-bold leading-none mr-1">
+            <MessageSquare size={10} />
+            {unreadCount}
+          </div>
+        )}
+        <button
+          onClick={(e) => { e.preventDefault(); onCopyLink(list); }}
+          className="w-7 h-7 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+        >
+          <Link2 size={14} />
+        </button>
+        {menu}
+      </div>
+    </div>
+  );
+}
+
+function SortableListRowItem({ list, isLast, unreadCount, onNavigate, onCopyLink, menu }: {
+  list: ShoppingList;
+  isLast: boolean;
+  unreadCount: number;
+  onNavigate: () => void;
+  onCopyLink: (l: ShoppingList) => void;
+  menu: React.ReactNode;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: list.id });
+  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      onClick={onNavigate}
+      className={`flex items-center gap-3 px-4 py-3 hover:bg-muted/30 transition-colors cursor-pointer ${!isLast ? "border-b border-border" : ""}`}
+    >
+      <div
+        {...attributes}
+        {...listeners}
+        onClick={(e) => e.stopPropagation()}
+        className="text-muted-foreground hover:text-foreground cursor-grab active:cursor-grabbing flex-shrink-0"
+        title="Przeciągnij, aby zmienić kolejność"
+      >
+        <GripVertical size={15} />
+      </div>
+      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+        <ScrollText size={14} className="text-primary" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-1.5">
+          {list.pinned && <Pin size={11} className="text-red-500 fill-red-500 flex-shrink-0" />}
+          <span className="font-semibold text-sm text-foreground truncate">{list.name}</span>
+        </div>
+        <div className="flex items-center gap-2 mt-0.5">
+          {list.project && <span className="text-xs text-muted-foreground truncate">{list.project.title}</span>}
+          <span className="text-xs text-muted-foreground whitespace-nowrap">
+            {new Date(list.createdAt).toLocaleDateString("pl-PL", { day: "2-digit", month: "short", year: "numeric" })}
+          </span>
+        </div>
+      </div>
+      <div className="flex items-center gap-0.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+        {unreadCount > 0 && (
+          <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-primary text-white text-[10px] font-bold leading-none mr-1">
+            <MessageSquare size={10} />
+            {unreadCount}
+          </div>
+        )}
+        <button
+          onClick={() => onCopyLink(list)}
+          className="w-7 h-7 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+        >
+          <Link2 size={14} />
+        </button>
+        {menu}
+      </div>
+    </div>
   );
 }

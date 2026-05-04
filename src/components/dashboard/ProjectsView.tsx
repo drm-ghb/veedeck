@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useViewPreference } from "@/hooks/useViewPreference";
 import { LayoutGrid, List, Search, ArchiveRestore, Trash2, SlidersHorizontal, Pin, AlertTriangle, Check } from "lucide-react";
 import ProjectCard from "./ProjectCard";
 import ProjectMenu from "./ProjectMenu";
@@ -35,19 +36,13 @@ interface ProjectsViewProps {
 export default function ProjectsView({ projects, archivedProjects }: ProjectsViewProps) {
   const t = useT();
   const [tab, setTab] = useState<"active" | "archived">("active");
-  const [view, setView] = useState<"grid" | "list">("grid");
+  const [view, setView] = useViewPreference("projects", "grid");
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<"newest" | "oldest" | "az" | "za" | "renders">("newest");
   const router = useRouter();
 
-  useEffect(() => {
-    const saved = localStorage.getItem("dashboard-view");
-    if (saved === "grid" || saved === "list") setView(saved);
-  }, []);
-
   function toggleView(v: "grid" | "list") {
     setView(v);
-    localStorage.setItem("dashboard-view", v);
   }
 
   const filtered = (tab === "active" ? projects : archivedProjects)

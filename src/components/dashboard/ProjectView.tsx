@@ -2,7 +2,24 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArchiveRestore, CopyCheck, FolderOpen, LayoutGrid, List, Trash2, Pin, Eye, Search, X } from "lucide-react";
+import { useViewPreference } from "@/hooks/useViewPreference";
+import { ArchiveRestore, CopyCheck, FolderOpen, GripVertical, LayoutGrid, List, Trash2, Pin, Eye, Search, X } from "lucide-react";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  rectSortingStrategy,
+  verticalListSortingStrategy,
+  arrayMove,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import RoomCard from "./RoomCard";
@@ -45,15 +62,32 @@ interface ProjectViewProps {
 
 export default function ProjectView({ projectId, rooms, archivedRooms, allRenders }: ProjectViewProps) {
   const [tab, setTab] = useState<"active" | "archived" | "all">("active");
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [viewMode, setViewMode] = useViewPreference("project-rooms", "grid");
   const [filterRoom, setFilterRoom] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<"all" | "REVIEW" | "ACCEPTED">("all");
   const [search, setSearch] = useState("");
+  const [localRooms, setLocalRooms] = useState(rooms);
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkLoading, setBulkLoading] = useState(false);
   const [moveOpen, setMoveOpen] = useState(false);
   const router = useRouter();
+
+  const roomSensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+
+  function handleRoomDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = localRooms.findIndex((r) => r.id === active.id);
+    const newIndex = localRooms.findIndex((r) => r.id === over.id);
+    const reordered = arrayMove(localRooms, oldIndex, newIndex);
+    setLocalRooms(reordered);
+    fetch("/api/rooms/reorder", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ projectId, ids: reordered.map((r) => r.id) }),
+    }).catch(() => {});
+  }
 
   function toggleSelect(id: string) {
     setSelectedIds((prev) => {
@@ -97,10 +131,6 @@ export default function ProjectView({ projectId, rooms, archivedRooms, allRender
     return true;
   });
 
-  const sortedRooms = [...rooms].sort((a, b) => {
-    if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
-    return 0;
-  });
 
   async function handleRestore(roomId: string) {
     const res = await fetch(`/api/rooms/${roomId}`, {
@@ -382,42 +412,25 @@ export default function ProjectView({ projectId, rooms, archivedRooms, allRender
             </p>
           </div>
         ) : viewMode === "grid" ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {sortedRooms.map((room) => (
-              <RoomCard key={room.id} room={room} projectId={projectId} />
-            ))}
-          </div>
+          <DndContext sensors={roomSensors} collisionDetection={closestCenter} onDragEnd={handleRoomDragEnd}>
+            <SortableContext items={localRooms.map((r) => r.id)} strategy={rectSortingStrategy}>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {localRooms.map((room) => (
+                  <SortableRoomCard key={room.id} room={room} projectId={projectId} />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
         ) : (
-          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-            {sortedRooms.map((room, i) => {
-              const Icon = getRoomIcon(room.type, room.icon);
-              const count = room._count.renders;
-              return (
-                <div
-                  key={room.id}
-                  className={`flex items-center gap-4 px-4 py-3 hover:bg-gray-50 transition-colors group ${
-                    i !== sortedRooms.length - 1 ? "border-b border-gray-100" : ""
-                  }`}
-                >
-                  <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <Icon size={16} className="text-primary" />
-                  </div>
-                  <a href={`/projects/${projectId}/rooms/${room.id}`} className="flex-1 min-w-0 flex items-center gap-1.5">
-                    {room.pinned && <Pin size={11} className="text-red-500 fill-red-500 flex-shrink-0" />}
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-gray-800 truncate">{room.name}</p>
-                      <p className="text-xs text-gray-400">
-                        {count} render{count === 1 ? "" : count < 5 ? "y" : "ów"}
-                      </p>
-                    </div>
-                  </a>
-                  <div className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" onClick={(e) => e.preventDefault()}>
-                    <RoomMenu room={{ id: room.id, name: room.name, type: room.type, icon: room.icon, pinned: room.pinned }} />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          <DndContext sensors={roomSensors} collisionDetection={closestCenter} onDragEnd={handleRoomDragEnd}>
+            <SortableContext items={localRooms.map((r) => r.id)} strategy={verticalListSortingStrategy}>
+              <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+                {localRooms.map((room, i) => (
+                  <SortableRoomRow key={room.id} room={room} projectId={projectId} isLast={i === localRooms.length - 1} />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
         )
       ) : (
         archivedRooms.length === 0 ? (
@@ -460,5 +473,70 @@ export default function ProjectView({ projectId, rooms, archivedRooms, allRender
         )
       )}
     </>
+  );
+}
+
+function SortableRoomCard({ room, projectId }: { room: Room; projectId: string }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: room.id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 10 : undefined,
+  };
+  return (
+    <div ref={setNodeRef} style={style} className="relative">
+      <div
+        {...attributes}
+        {...listeners}
+        className="absolute top-1/2 -translate-y-1/2 right-2 z-20 p-1 rounded text-muted-foreground/40 hover:text-foreground cursor-grab active:cursor-grabbing transition-colors"
+        title="Przeciągnij, aby zmienić kolejność"
+      >
+        <GripVertical size={14} />
+      </div>
+      <RoomCard room={room} projectId={projectId} />
+    </div>
+  );
+}
+
+function SortableRoomRow({ room, projectId, isLast }: { room: Room; projectId: string; isLast: boolean }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: room.id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+  const Icon = getRoomIcon(room.type, room.icon);
+  const count = room._count.renders;
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors group ${!isLast ? "border-b border-gray-100" : ""}`}
+    >
+      <div
+        {...attributes}
+        {...listeners}
+        className="text-muted-foreground/40 hover:text-foreground cursor-grab active:cursor-grabbing flex-shrink-0"
+        title="Przeciągnij, aby zmienić kolejność"
+      >
+        <GripVertical size={14} />
+      </div>
+      <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+        <Icon size={16} className="text-primary" />
+      </div>
+      <a href={`/projects/${projectId}/rooms/${room.id}`} className="flex-1 min-w-0 flex items-center gap-1.5">
+        {room.pinned && <Pin size={11} className="text-red-500 fill-red-500 flex-shrink-0" />}
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-gray-800 truncate">{room.name}</p>
+          <p className="text-xs text-gray-400">
+            {count} render{count === 1 ? "" : count < 5 ? "y" : "ów"}
+          </p>
+        </div>
+      </a>
+      <div className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" onClick={(e) => e.preventDefault()}>
+        <RoomMenu room={{ id: room.id, name: room.name, type: room.type, icon: room.icon, pinned: room.pinned }} />
+      </div>
+    </div>
   );
 }

@@ -13,7 +13,7 @@ export default async function ListyPage() {
   const lists = await prisma.shoppingList.findMany({
     where: { userId },
     include: { project: { select: { id: true, title: true, hiddenModules: true, slug: true } } },
-    orderBy: { createdAt: "desc" },
+    orderBy: [{ order: "asc" }, { createdAt: "desc" }],
   });
 
   return (
@@ -25,6 +25,7 @@ export default async function ListyPage() {
         shareToken: l.shareToken ?? "",
         archived: l.archived,
         pinned: l.pinned,
+        order: l.order,
         createdAt: l.createdAt.toISOString(),
         project: l.project ? { id: l.project.id, title: l.project.title, hiddenModules: l.project.hiddenModules } : null,
       }))}

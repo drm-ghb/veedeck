@@ -46,6 +46,7 @@ model User {
   colorTheme                 String         @default("champagne")
   extensionKey               String?        @unique
   customCategories           String[]       @default([])
+  viewPreferences            Json?
   ownerId                    String?
   owner                      User?          @relation("TeamMembers", fields: [ownerId], references: [id])
   teamMembers                User[]         @relation("TeamMembers")
@@ -195,6 +196,7 @@ model ProjectClient {
   projectId     String
   createdAt     DateTime  @default(now())
   isMainContact Boolean   @default(false)
+  order         Int       @default(0)
   startDate     DateTime?
   endDate       DateTime?
   userId        String?                          // linked User account (role: "client")
@@ -212,6 +214,7 @@ model ShoppingList {
   shareToken String        @unique @default(cuid())
   archived   Boolean       @default(false)
   pinned     Boolean       @default(false)
+  order      Int           @default(0)
   slug       String?       @unique
   budget     Float?
   hidePrices Boolean       @default(false)
@@ -500,6 +503,7 @@ model DiscussionMessage {
   attachmentName String?
   attachmentType String? // "image" | "document"
   createdAt      DateTime @default(now())
+  editedAt       DateTime?
 
   discussion   Discussion              @relation(fields: [discussionId], references: [id], onDelete: Cascade)
   user         User?                   @relation("DiscussionMessageUser", fields: [userId], references: [id], onDelete: SetNull)

@@ -99,14 +99,14 @@ export default function NavSidebar({ hiddenModules, isAdmin }: NavSidebarProps) 
   }, []);
 
   const items = [
-    { label: t.nav.dashboard, href: "/dashboard", icon: <LayoutDashboard size={18} />, slug: null, badge: 0 },
-    { label: t.nav.projects, href: "/projekty", icon: <Users size={18} />, slug: null, badge: 0 },
-    { label: t.nav.renderflow, href: "/renderflow", icon: <PictureInPicture size={18} />, slug: "renderflow", badge: 0 },
-    { label: t.nav.lists, href: "/listy", icon: <ScrollText size={18} />, slug: "listy", badge: 0 },
-    { label: t.nav.products, href: "/produkty", icon: <Package size={18} />, slug: "produkty", badge: 0 },
-    { label: t.nav.calendar, href: "/kalendarz", icon: <CalendarDays size={18} />, slug: null, badge: 0 },
-    { label: t.nav.notes, href: "/notatnik", icon: <NotebookText size={18} />, slug: null, badge: 0 },
-    { label: t.nav.discussions, href: "/dyskusje", icon: <MessageSquare size={18} />, slug: null, badge: discussionUnread },
+    { label: t.nav.dashboard, href: "/dashboard", icon: <LayoutDashboard size={18} />, slug: null, badge: 0, matchPrefixes: [] as string[] },
+    { label: t.nav.projects, href: "/projekty", icon: <Users size={18} />, slug: null, badge: 0, matchPrefixes: [] as string[] },
+    { label: t.nav.renderflow, href: "/renderflow", icon: <PictureInPicture size={18} />, slug: "renderflow", badge: 0, matchPrefixes: ["/projects/"] },
+    { label: t.nav.lists, href: "/listy", icon: <ScrollText size={18} />, slug: "listy", badge: 0, matchPrefixes: [] as string[] },
+    { label: t.nav.products, href: "/produkty", icon: <Package size={18} />, slug: "produkty", badge: 0, matchPrefixes: [] as string[] },
+    { label: t.nav.calendar, href: "/kalendarz", icon: <CalendarDays size={18} />, slug: null, badge: 0, matchPrefixes: [] as string[] },
+    { label: t.nav.notes, href: "/notatnik", icon: <NotebookText size={18} />, slug: null, badge: 0, matchPrefixes: [] as string[] },
+    { label: t.nav.discussions, href: "/dyskusje", icon: <MessageSquare size={18} />, slug: null, badge: discussionUnread, matchPrefixes: [] as string[] },
   ];
 
   function toggle() {
@@ -126,7 +126,7 @@ export default function NavSidebar({ hiddenModules, isAdmin }: NavSidebarProps) 
     <aside className={`hidden md:flex flex-col flex-shrink-0 h-full transition-all duration-200 ${isCollapsed ? "w-14" : "w-52"}`}>
       <nav className="flex-1 p-2 space-y-0.5 overflow-y-auto">
         {visible.map((item) => {
-          const active = pathname === item.href || pathname.startsWith(item.href + "/");
+          const active = pathname === item.href || pathname.startsWith(item.href + "/") || item.matchPrefixes.some((p) => pathname.startsWith(p));
           const badge = item.badge > 0 ? item.badge : null;
           return (
             <Link
