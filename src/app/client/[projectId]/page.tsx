@@ -8,8 +8,9 @@ import ClientThemeApplier from "@/components/share/ClientThemeApplier";
 import ShareNavbar from "@/components/share/ShareNavbar";
 import ShareSidebar from "@/components/share/ShareSidebar";
 import ClientDiscussionView from "@/components/dyskusje/ClientDiscussionView";
+import ShareListClient from "@/components/listy/ShareListClient";
 import { getRoomIcon } from "@/lib/roomIcons";
-import { ChevronLeft, ChevronRight, MessageSquare, FileText, Folder, User, Mail, Lock, Info } from "lucide-react";
+import { ChevronLeft, ChevronRight, MessageSquare, FileText, Folder, User, Mail, Lock, Info, ScrollText } from "lucide-react";
 import Image from "next/image";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,18 @@ import { useTheme } from "@/lib/theme";
 import { SectionHeader } from "@/components/settings/SettingsShared";
 
 type RenderStatus = "REVIEW" | "ACCEPTED";
+
+interface ListProduct {
+  id: string; name: string; url: string | null; imageUrl: string | null;
+  price: string | null; manufacturer: string | null; color: string | null;
+  dimensions: string | null; description: string | null; deliveryTime: string | null;
+  quantity: number; order: number; commentCount: number; approval: string | null; note: string | null;
+}
+interface ListSection { id: string; name: string; order: number; unsorted: boolean; products: ListProduct[]; }
+interface ListData {
+  id: string; name: string; shareToken: string; hidePrices: boolean;
+  sections: ListSection[];
+}
 
 interface Reply { id: string; content: string; author: string; createdAt: string; }
 interface Comment { id: string; title?: string | null; content: string; posX: number; posY: number; status: "NEW" | "IN_PROGRESS" | "DONE"; author: string; createdAt: string; replies: Reply[]; }
@@ -42,11 +55,31 @@ export default function ClientProjectPage() {
   const { data: session, status } = useSession();
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState<"home" | "rooms" | "room" | "render" | "discussion" | "settings">("home");
+  const [view, setView] = useState<"home" | "rooms" | "room" | "render" | "discussion" | "settings" | "lists" | "list">("home");
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [selectedFolder, setSelectedFolder] = useState<{ id: string; name: string } | null>(null);
   const [selectedRender, setSelectedRender] = useState<Render | null>(null);
+  const [selectedListId, setSelectedListId] = useState<string | null>(null);
+  const [selectedListData, setSelectedListData] = useState<ListData | null>(null);
+  const [listLoading, setListLoading] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+
+  const openList = useCallback(async (listId: string) => {
+    setListLoading(true);
+    setSelectedListId(listId);
+    setView("list");
+    try {
+      const res = await fetch(`/api/client/${projectId}/lists/${listId}`);
+      if (!res.ok) throw new Error();
+      const data: ListData = await res.json();
+      setSelectedListData(data);
+    } catch {
+      toast.error("Nie udało się załadować listy");
+      setView("lists");
+    } finally {
+      setListLoading(false);
+    }
+  }, [projectId]);
 
   const authorName = (session?.user as any)?.name || session?.user?.name || "Klient";
   const currentUserId = session?.user?.id;
@@ -181,10 +214,10 @@ export default function ClientProjectPage() {
             showDyskusje={!project.hiddenModules.includes("dyskusje")}
             shoppingLists={project.shoppingLists}
             onHomeClick={() => { setView("home"); setSelectedRoom(null); setSelectedFolder(null); }}
-            onRenderFlowClick={() => setView("rooms")}
+            onRenderFlowClick={() => { if (project.rooms.length === 1) { setSelectedRoom(project.rooms[0]); setSelectedFolder(null); setView("room"); } else { setView("rooms"); } }}
             onDiscussionClick={() => setView("discussion")}
             onSettingsClick={() => setView("settings")}
-            onListClick={project.shoppingLists.length === 1 ? () => router.push(`/share/list/${project.shoppingLists[0].shareToken}`) : () => { setView("home"); setSelectedRoom(null); setSelectedFolder(null); }}
+            onListClick={() => { if (project.shoppingLists.length === 1) { openList(project.shoppingLists[0].id); } else { setView("lists"); } }}
             clientProjectId={projectId}
             activeView={view}
             currentUserId={currentUserId}
@@ -246,10 +279,10 @@ export default function ClientProjectPage() {
             showDyskusje={!project.hiddenModules.includes("dyskusje")}
             shoppingLists={project.shoppingLists}
             onHomeClick={() => { setView("home"); setSelectedRoom(null); setSelectedFolder(null); }}
-            onRenderFlowClick={() => setView("rooms")}
+            onRenderFlowClick={() => { if (project.rooms.length === 1) { setSelectedRoom(project.rooms[0]); setSelectedFolder(null); setView("room"); } else { setView("rooms"); } }}
             onDiscussionClick={() => setView("discussion")}
             onSettingsClick={() => setView("settings")}
-            onListClick={project.shoppingLists.length === 1 ? () => router.push(`/share/list/${project.shoppingLists[0].shareToken}`) : () => { setView("home"); setSelectedRoom(null); setSelectedFolder(null); }}
+            onListClick={() => { if (project.shoppingLists.length === 1) { openList(project.shoppingLists[0].id); } else { setView("lists"); } }}
             clientProjectId={projectId}
             activeView={view}
             currentUserId={currentUserId}
@@ -376,6 +409,83 @@ export default function ClientProjectPage() {
           </>
         );
       })()}
+
+      {view === "lists" && (
+        <>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-6">Listy zakupowe</h2>
+          {project.shoppingLists.length === 0 ? (
+            <p className="text-gray-400 text-center py-16">Brak list zakupowych w tym projekcie.</p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-4">
+              {project.shoppingLists.map((list) => (
+                <button
+                  key={list.id}
+                  onClick={() => openList(list.id)}
+                  className="group text-left bg-card border border-border rounded-2xl p-5 shadow-sm hover:shadow-[0_4px_16px_rgba(25,33,61,0.2)] hover:border-primary/30 transition-all"
+                >
+                  <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+                    <ScrollText size={28} className="text-primary" />
+                  </div>
+                  <p className="font-semibold text-gray-800 dark:text-gray-100 truncate">{list.name}</p>
+                </button>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
+      {view === "list" && (
+        <div className="flex-1 min-h-0">
+          {listLoading || !selectedListData ? (
+            <div className="flex items-center justify-center py-24 text-muted-foreground text-sm animate-pulse">
+              Ładowanie listy...
+            </div>
+          ) : (() => {
+            const parsePrice = (price: string | null) => {
+              if (!price) return null;
+              const n = parseFloat(price.replace(/[^\d.,]/g, "").replace(",", "."));
+              return isNaN(n) ? null : n;
+            };
+            const getCurrency = (price: string | null) => {
+              if (!price) return "";
+              const c = price.replace(/[\d.,\s]/g, "").trim().toUpperCase();
+              if (!c || c === "PLN" || c === "ZŁ" || c === "ZL") return "zł";
+              if (c === "USD" || c === "$") return "DOL";
+              return price.replace(/[\d.,\s]/g, "").trim();
+            };
+            const allProducts = selectedListData.sections.flatMap((s) => s.products);
+            const grandTotal = allProducts.reduce((sum, p) => { const n = parsePrice(p.price); return n !== null ? sum + n * p.quantity : sum; }, 0);
+            const grandCurrency = getCurrency(allProducts.find((p) => p.price)?.price ?? null);
+            const hasTotal = allProducts.some((p) => parsePrice(p.price) !== null);
+            const unsortedProducts = selectedListData.sections.filter((s) => s.unsorted).flatMap((s) => s.products);
+            const regularSections = selectedListData.sections.filter((s) => !s.unsorted).map((s) => ({ id: s.id, name: s.name, order: s.order, products: s.products }));
+            const sections = [...regularSections, ...(unsortedProducts.length > 0 ? [{ id: "__unsorted__", name: "Pozostałe", order: 9999, products: unsortedProducts }] : [])];
+            return (
+              <div>
+                <div className="flex items-center gap-3 mb-6">
+                  {project.shoppingLists.length > 1 && (
+                    <button onClick={() => setView("lists")} className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
+                      <ChevronLeft size={20} />
+                    </button>
+                  )}
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">{selectedListData.name}</h2>
+                </div>
+                <ShareListClient
+                  listId={selectedListData.id}
+                  listShareToken={selectedListData.shareToken}
+                  listName={selectedListData.name}
+                  projectTitle={project.title}
+                  sections={sections}
+                  grandTotal={grandTotal}
+                  grandCurrency={grandCurrency}
+                  hasTotal={hasTotal}
+                  hidePrices={selectedListData.hidePrices}
+                />
+              </div>
+            );
+          })()}
+        </div>
+      )}
 
       {view === "settings" && (
         <div className="max-w-3xl space-y-10">

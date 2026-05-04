@@ -239,7 +239,9 @@ export default function ShareSidebar({
   const isRenderActive = clientProjectId
     ? (activeView === "rooms" || activeView === "room" || activeView === "render")
     : pathname === renderHref;
-  const isListyActive = clientProjectId ? false : pathname.startsWith("/share/list/");
+  const isListyActive = clientProjectId
+    ? (activeView === "lists" || activeView === "list")
+    : pathname.startsWith("/share/list/");
   const isDyskusjeActive = clientProjectId
     ? activeView === "discussion"
     : pathname === dyskusjeHref;
