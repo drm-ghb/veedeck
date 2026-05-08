@@ -300,10 +300,10 @@ export default function DocumentsTab({ clientId }: DocumentsTabProps) {
   const [addingFolder, setAddingFolder] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
-  const [pendingFolderId, setPendingFolderId] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
   const dragCounterRef = useRef(0);
 
-  const { startUpload, isUploading } = useUploadThing("clientDocUploader");
+  const { startUpload } = useUploadThing("noteAttachmentUploader");
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
@@ -331,22 +331,23 @@ export default function DocumentsTab({ clientId }: DocumentsTabProps) {
   useEffect(() => { load(); }, [load]);
 
   // ---- Upload handler (centralized) ----
+  // Uses noteAttachmentUploader (maxFileCount:1) — uploads files one by one
   const handleUploadFiles = useCallback(async (files: File[], folderId: string | null) => {
     if (!files.length) return;
+    setUploading(true);
+    const created: ClientDoc[] = [];
     try {
-      const uploaded = await startUpload(files);
-      if (!uploaded) throw new Error("Brak odpowiedzi z serwera");
-      const created: ClientDoc[] = [];
-      for (let i = 0; i < uploaded.length; i++) {
-        const u = uploaded[i];
-        const originalFile = files[i];
+      for (const file of files) {
+        const uploaded = await startUpload([file]);
+        if (!uploaded?.[0]) throw new Error("Brak odpowiedzi z serwera");
+        const u = uploaded[0];
         const res = await fetch("/api/client-docs/files", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             clientId,
             folderId,
-            name: originalFile?.name ?? u.name ?? "plik",
+            name: file.name,
             fileUrl: u.url,
             fileKey: u.key,
           }),
@@ -363,7 +364,19 @@ export default function DocumentsTab({ clientId }: DocumentsTabProps) {
       }
       toast.success(`Dodano ${created.length} plik${created.length === 1 ? "" : created.length < 5 ? "i" : "ów"}`);
     } catch (err) {
+      if (created.length > 0) {
+        // Some files succeeded — update state with what we have
+        if (folderId) {
+          setFolders((prev) =>
+            prev.map((f) => (f.id === folderId ? { ...f, docs: [...f.docs, ...created] } : f))
+          );
+        } else {
+          setLooseDocs((prev) => [...prev, ...created]);
+        }
+      }
       toast.error(err instanceof Error ? err.message : "Błąd przesyłania pliku");
+    } finally {
+      setUploading(false);
     }
   }, [clientId, startUpload]);
 
@@ -631,14 +644,14 @@ export default function DocumentsTab({ clientId }: DocumentsTabProps) {
       onDrop={handleDrop}
     >
       {/* Desktop drag & drop overlay */}
-      {(isDragOver || isUploading) && (
+      {(isDragOver || uploading) && (
         <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-primary/10 backdrop-blur-[1px] pointer-events-none rounded-xl">
           <div className="flex flex-col items-center gap-3 px-10 py-8 rounded-2xl border-2 border-dashed border-primary bg-background/80 shadow-lg">
             <UploadIcon className="w-8 h-8 text-primary" />
             <p className="text-sm font-semibold text-primary">
-              {isUploading ? "Wgrywanie plików..." : "Upuść pliki tutaj"}
+              {uploading ? "Wgrywanie plików..." : "Upuść pliki tutaj"}
             </p>
-            {!isUploading && (
+            {!uploading && (
               <p className="text-xs text-muted-foreground">Pliki zostaną dodane bez folderu</p>
             )}
           </div>
@@ -670,8 +683,8 @@ export default function DocumentsTab({ clientId }: DocumentsTabProps) {
           Nowy folder
         </button>
         <FilePickerButton
-          label={isUploading ? "Wgrywanie..." : "Dodaj plik"}
-          disabled={isUploading}
+          label={uploading ? "Wgrywanie..." : "Dodaj plik"}
+          disabled={uploading}
           onFiles={(files) => handleUploadFiles(files, null)}
         />
       </div>
@@ -720,7 +733,7 @@ export default function DocumentsTab({ clientId }: DocumentsTabProps) {
               onPickFiles={handleUploadFiles}
               onDocRename={handleRenameDoc}
               onDocDelete={handleDeleteDoc}
-              uploading={isUploading}
+              uploading={uploading}
             />
           ))}
         </SortableContext>
@@ -764,7 +777,7 @@ export default function DocumentsTab({ clientId }: DocumentsTabProps) {
       )}
 
       {/* Drop hint at bottom when not empty */}
-      {(folders.length > 0 || looseDocs.length > 0) && !isDragOver && !isUploading && (
+      {(folders.length > 0 || looseDocs.length > 0) && !isDragOver && !uploading && (
         <p className="text-xs text-gray-300 text-center pt-2">
           Przeciągnij pliki z komputera, aby je dodać
         </p>
