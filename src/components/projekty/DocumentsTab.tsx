@@ -35,8 +35,6 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useUploadThing } from "@/lib/uploadthing-client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 
 interface ClientDoc {
   id: string;
@@ -62,37 +60,40 @@ interface DocumentsTabProps {
   clientId: string;
 }
 
-// ---- Upload button isolated to prevent slow init ----
-function DocUploadButton({
-  onUpload,
-  folderId,
+// ---- File trigger button (no upload logic — parent handles it) ----
+function FilePickerButton({
+  label,
+  onFiles,
+  disabled,
 }: {
-  onUpload: (files: { url: string; key: string; name: string }[], folderId: string | null) => void;
-  folderId: string | null;
+  label: string;
+  onFiles: (files: File[]) => void;
+  disabled?: boolean;
 }) {
-  const { startUpload, isUploading } = useUploadThing("clientDocUploader");
-
-  const handleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files ?? []);
-    if (!files.length) return;
-    const res = await startUpload(files);
-    if (res) {
-      onUpload(
-        res.map((f: { url: string; key: string; name: string }) => ({ url: f.url, key: f.key, name: f.name ?? files[0]?.name ?? "plik" })),
-        folderId
-      );
-    }
-    e.target.value = "";
-  };
-
+  const inputRef = useRef<HTMLInputElement>(null);
   return (
-    <label
-      className={`flex items-center gap-1 text-xs px-2 py-1 rounded border border-dashed border-gray-300 cursor-pointer hover:bg-gray-50 transition-colors ${isUploading ? "opacity-50 pointer-events-none" : ""}`}
-    >
-      <UploadIcon className="w-3 h-3" />
-      {isUploading ? "Wgrywanie..." : "Dodaj plik"}
-      <input type="file" multiple className="hidden" onChange={handleChange} />
-    </label>
+    <>
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => inputRef.current?.click()}
+        className={`flex items-center gap-1 text-xs px-2 py-1 rounded border border-dashed border-gray-300 hover:bg-gray-50 transition-colors ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+      >
+        <UploadIcon className="w-3 h-3" />
+        {label}
+      </button>
+      <input
+        ref={inputRef}
+        type="file"
+        multiple
+        className="hidden"
+        onChange={(e) => {
+          const files = Array.from(e.target.files ?? []);
+          if (files.length) onFiles(files);
+          e.target.value = "";
+        }}
+      />
+    </>
   );
 }
 
@@ -109,7 +110,6 @@ function DocRow({
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: doc.id });
   const [editing, setEditing] = useState(false);
   const [editName, setEditName] = useState(doc.name);
-  const inputRef = useRef<HTMLInputElement>(null);
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -125,7 +125,6 @@ function DocRow({
 
   const ext = doc.name.split(".").pop()?.toLowerCase() ?? "";
   const isImage = ["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(ext);
-  const isPdf = ext === "pdf";
 
   return (
     <div
@@ -143,7 +142,6 @@ function DocRow({
       )}
       {editing ? (
         <input
-          ref={inputRef}
           value={editName}
           onChange={(e) => setEditName(e.target.value)}
           onBlur={commitRename}
@@ -158,16 +156,9 @@ function DocRow({
         <span className="flex-1 text-sm truncate">{doc.name}</span>
       )}
       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-        {(isImage || isPdf) && (
-          <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer" className="p-1 rounded hover:bg-gray-200">
-            <ExternalLinkIcon className="w-3.5 h-3.5 text-gray-500" />
-          </a>
-        )}
-        {!isImage && !isPdf && (
-          <a href={doc.fileUrl} download={doc.name} className="p-1 rounded hover:bg-gray-200">
-            <ExternalLinkIcon className="w-3.5 h-3.5 text-gray-500" />
-          </a>
-        )}
+        <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer" className="p-1 rounded hover:bg-gray-200">
+          <ExternalLinkIcon className="w-3.5 h-3.5 text-gray-500" />
+        </a>
         <button
           onClick={() => { setEditing(true); setEditName(doc.name); }}
           className="p-1 rounded hover:bg-gray-200"
@@ -189,18 +180,20 @@ function FolderRow({
   onToggle,
   onRename,
   onDelete,
-  onUpload,
+  onPickFiles,
   onDocRename,
   onDocDelete,
+  uploading,
 }: {
   folder: ClientDocFolder;
   isOpen: boolean;
   onToggle: () => void;
   onRename: (id: string, name: string) => void;
   onDelete: (id: string) => void;
-  onUpload: (files: { url: string; key: string; name: string }[], folderId: string | null) => void;
+  onPickFiles: (files: File[], folderId: string | null) => void;
   onDocRename: (id: string, name: string) => void;
   onDocDelete: (id: string) => void;
+  uploading: boolean;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: folder.id });
   const [editing, setEditing] = useState(false);
@@ -222,7 +215,10 @@ function FolderRow({
 
   return (
     <div ref={setNodeRef} style={style} className="mb-1">
-      <div className="flex items-center gap-2 px-2 py-2 rounded hover:bg-gray-50 group cursor-pointer" onClick={onToggle}>
+      <div
+        className="flex items-center gap-2 px-2 py-2 rounded hover:bg-gray-50 group cursor-pointer"
+        onClick={onToggle}
+      >
         <button
           className="cursor-grab text-gray-300 hover:text-gray-500 touch-none"
           onClick={(e) => e.stopPropagation()}
@@ -261,7 +257,11 @@ function FolderRow({
           className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
           onClick={(e) => e.stopPropagation()}
         >
-          <DocUploadButton onUpload={onUpload} folderId={folder.id} />
+          <FilePickerButton
+            label="Dodaj plik"
+            disabled={uploading}
+            onFiles={(files) => onPickFiles(files, folder.id)}
+          />
           <button
             onClick={(e) => { e.stopPropagation(); setEditing(true); setEditName(folder.name); }}
             className="p-1 rounded hover:bg-gray-200"
@@ -299,20 +299,27 @@ export default function DocumentsTab({ clientId }: DocumentsTabProps) {
   const [newFolderName, setNewFolderName] = useState("");
   const [addingFolder, setAddingFolder] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [pendingFolderId, setPendingFolderId] = useState<string | null>(null);
+  const dragCounterRef = useRef(0);
+
+  const { startUpload, isUploading } = useUploadThing("clientDocUploader");
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   const load = useCallback(async () => {
     if (!clientId) { setLoading(false); return; }
     try {
-      const res = await fetch(`/api/client-docs/folders?clientId=${clientId}`);
-      if (!res.ok) throw new Error();
-      const data: ClientDocFolder[] = await res.json();
-      setFolders(data);
-
-      const docsRes = await fetch(`/api/client-docs/files?clientId=${clientId}`);
-      if (!docsRes.ok) throw new Error();
-      const allDocs: ClientDoc[] = await docsRes.json();
+      const [foldersRes, docsRes] = await Promise.all([
+        fetch(`/api/client-docs/folders?clientId=${clientId}`),
+        fetch(`/api/client-docs/files?clientId=${clientId}`),
+      ]);
+      if (!foldersRes.ok || !docsRes.ok) throw new Error();
+      const [foldersData, allDocs]: [ClientDocFolder[], ClientDoc[]] = await Promise.all([
+        foldersRes.json(),
+        docsRes.json(),
+      ]);
+      setFolders(foldersData);
       setLooseDocs(allDocs.filter((d) => d.folderId === null));
     } catch {
       toast.error("Błąd ładowania dokumentów");
@@ -323,6 +330,73 @@ export default function DocumentsTab({ clientId }: DocumentsTabProps) {
 
   useEffect(() => { load(); }, [load]);
 
+  // ---- Upload handler (centralized) ----
+  const handleUploadFiles = useCallback(async (files: File[], folderId: string | null) => {
+    if (!files.length) return;
+    try {
+      const uploaded = await startUpload(files);
+      if (!uploaded) throw new Error("Brak odpowiedzi z serwera");
+      const created: ClientDoc[] = [];
+      for (let i = 0; i < uploaded.length; i++) {
+        const u = uploaded[i];
+        const originalFile = files[i];
+        const res = await fetch("/api/client-docs/files", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            clientId,
+            folderId,
+            name: originalFile?.name ?? u.name ?? "plik",
+            fileUrl: u.url,
+            fileKey: u.key,
+          }),
+        });
+        if (!res.ok) throw new Error("Błąd zapisu pliku");
+        created.push(await res.json());
+      }
+      if (folderId) {
+        setFolders((prev) =>
+          prev.map((f) => (f.id === folderId ? { ...f, docs: [...f.docs, ...created] } : f))
+        );
+      } else {
+        setLooseDocs((prev) => [...prev, ...created]);
+      }
+      toast.success(`Dodano ${created.length} plik${created.length === 1 ? "" : created.length < 5 ? "i" : "ów"}`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Błąd przesyłania pliku");
+    }
+  }, [clientId, startUpload]);
+
+  // ---- Native drag & drop from desktop ----
+  const handleDragEnter = useCallback((e: React.DragEvent) => {
+    if (!e.dataTransfer.types.includes("Files")) return;
+    e.preventDefault();
+    dragCounterRef.current += 1;
+    if (dragCounterRef.current === 1) setIsDragOver(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    if (!e.dataTransfer.types.includes("Files")) return;
+    e.preventDefault();
+    dragCounterRef.current -= 1;
+    if (dragCounterRef.current === 0) setIsDragOver(false);
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    if (e.dataTransfer.types.includes("Files")) e.preventDefault();
+  }, []);
+
+  const handleDrop = useCallback(async (e: React.DragEvent) => {
+    if (!e.dataTransfer.types.includes("Files")) return;
+    e.preventDefault();
+    dragCounterRef.current = 0;
+    setIsDragOver(false);
+    const files = Array.from(e.dataTransfer.files);
+    if (!files.length) return;
+    await handleUploadFiles(files, null);
+  }, [handleUploadFiles]);
+
+  // ---- Folder / doc CRUD ----
   const handleAddFolder = async () => {
     const name = newFolderName.trim();
     if (!name) return;
@@ -362,7 +436,6 @@ export default function DocumentsTab({ clientId }: DocumentsTabProps) {
     try {
       const res = await fetch(`/api/client-docs/folders/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error();
-      // Move folder docs to loose docs
       const folder = folders.find((f) => f.id === id);
       if (folder) {
         setLooseDocs((prev) => [...prev, ...folder.docs.map((d) => ({ ...d, folderId: null }))]);
@@ -370,41 +443,6 @@ export default function DocumentsTab({ clientId }: DocumentsTabProps) {
       setFolders((prev) => prev.filter((f) => f.id !== id));
     } catch {
       toast.error("Błąd usuwania folderu");
-    }
-  };
-
-  const handleUpload = async (
-    files: { url: string; key: string; name: string }[],
-    folderId: string | null
-  ) => {
-    const created: ClientDoc[] = [];
-    for (const file of files) {
-      try {
-        const res = await fetch("/api/client-docs/files", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            clientId,
-            folderId,
-            name: file.name,
-            fileUrl: file.url,
-            fileKey: file.key,
-          }),
-        });
-        if (!res.ok) throw new Error();
-        created.push(await res.json());
-      } catch {
-        toast.error(`Błąd zapisu pliku ${file.name}`);
-      }
-    }
-    if (folderId) {
-      setFolders((prev) =>
-        prev.map((f) =>
-          f.id === folderId ? { ...f, docs: [...f.docs, ...created] } : f
-        )
-      );
-    } else {
-      setLooseDocs((prev) => [...prev, ...created]);
     }
   };
 
@@ -442,6 +480,7 @@ export default function DocumentsTab({ clientId }: DocumentsTabProps) {
     }
   };
 
+  // ---- Drag & drop helpers ----
   const findDoc = (id: string): ClientDoc | undefined => {
     for (const f of folders) {
       const d = f.docs.find((d) => d.id === id);
@@ -465,7 +504,6 @@ export default function DocumentsTab({ clientId }: DocumentsTabProps) {
     const overIsFolder = !!findFolder(over.id as string);
 
     if (activeIsFolder && overIsFolder) {
-      // Reorder folders
       const oldIdx = folders.findIndex((f) => f.id === active.id);
       const newIdx = folders.findIndex((f) => f.id === over.id);
       const reordered = arrayMove(folders, oldIdx, newIdx);
@@ -478,76 +516,8 @@ export default function DocumentsTab({ clientId }: DocumentsTabProps) {
       return;
     }
 
-    if (!activeIsFolder && !overIsFolder) {
-      const activeDoc = findDoc(active.id as string);
-      const overDoc = findDoc(over.id as string);
-      if (!activeDoc || !overDoc) return;
-
-      if (activeDoc.folderId === overDoc.folderId) {
-        // Reorder within same context
-        if (activeDoc.folderId === null) {
-          const oldIdx = looseDocs.findIndex((d) => d.id === active.id);
-          const newIdx = looseDocs.findIndex((d) => d.id === over.id);
-          const reordered = arrayMove(looseDocs, oldIdx, newIdx);
-          setLooseDocs(reordered);
-          await fetch("/api/client-docs/files/reorder", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ orderedIds: reordered.map((d) => d.id) }),
-          });
-        } else {
-          setFolders((prev) =>
-            prev.map((f) => {
-              if (f.id !== activeDoc.folderId) return f;
-              const oldIdx = f.docs.findIndex((d) => d.id === active.id);
-              const newIdx = f.docs.findIndex((d) => d.id === over.id);
-              return { ...f, docs: arrayMove(f.docs, oldIdx, newIdx) };
-            })
-          );
-          // Persist reorder
-          const folder = folders.find((f) => f.id === activeDoc.folderId);
-          if (folder) {
-            const oldIdx = folder.docs.findIndex((d) => d.id === active.id);
-            const newIdx = folder.docs.findIndex((d) => d.id === over.id);
-            const reordered = arrayMove(folder.docs, oldIdx, newIdx);
-            await fetch("/api/client-docs/files/reorder", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ orderedIds: reordered.map((d) => d.id) }),
-            });
-          }
-        }
-      } else {
-        // Move doc to different folder context
-        const newFolderId = overDoc.folderId;
-        await fetch(`/api/client-docs/files/${activeDoc.id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ folderId: newFolderId }),
-        });
-        const movedDoc = { ...activeDoc, folderId: newFolderId };
-        setFolders((prev) =>
-          prev.map((f) => ({
-            ...f,
-            docs:
-              f.id === activeDoc.folderId
-                ? f.docs.filter((d) => d.id !== activeDoc.id)
-                : f.id === newFolderId
-                  ? [...f.docs, movedDoc]
-                  : f.docs,
-          }))
-        );
-        if (activeDoc.folderId === null) {
-          setLooseDocs((prev) => prev.filter((d) => d.id !== activeDoc.id));
-        }
-        if (newFolderId === null) {
-          setLooseDocs((prev) => [...prev, movedDoc]);
-        }
-      }
-    }
-
-    // Drop doc onto folder header → move into folder
     if (!activeIsFolder && overIsFolder) {
+      // Drop doc onto folder header → move into folder
       const activeDoc = findDoc(active.id as string);
       if (!activeDoc || activeDoc.folderId === (over.id as string)) return;
       const newFolderId = over.id as string;
@@ -568,49 +538,113 @@ export default function DocumentsTab({ clientId }: DocumentsTabProps) {
                 : f.docs,
         }))
       );
-      if (activeDoc.folderId === null) {
-        setLooseDocs((prev) => prev.filter((d) => d.id !== activeDoc.id));
-      }
+      if (activeDoc.folderId === null) setLooseDocs((prev) => prev.filter((d) => d.id !== activeDoc.id));
       setOpenFolders((prev) => new Set([...prev, newFolderId]));
+      return;
+    }
+
+    if (!activeIsFolder && !overIsFolder) {
+      const activeDoc = findDoc(active.id as string);
+      const overDoc = findDoc(over.id as string);
+      if (!activeDoc || !overDoc) return;
+
+      if (activeDoc.folderId === overDoc.folderId) {
+        if (activeDoc.folderId === null) {
+          const oldIdx = looseDocs.findIndex((d) => d.id === active.id);
+          const newIdx = looseDocs.findIndex((d) => d.id === over.id);
+          const reordered = arrayMove(looseDocs, oldIdx, newIdx);
+          setLooseDocs(reordered);
+          await fetch("/api/client-docs/files/reorder", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ orderedIds: reordered.map((d) => d.id) }),
+          });
+        } else {
+          const folder = folders.find((f) => f.id === activeDoc.folderId);
+          if (!folder) return;
+          const oldIdx = folder.docs.findIndex((d) => d.id === active.id);
+          const newIdx = folder.docs.findIndex((d) => d.id === over.id);
+          const reordered = arrayMove(folder.docs, oldIdx, newIdx);
+          setFolders((prev) =>
+            prev.map((f) => (f.id === activeDoc.folderId ? { ...f, docs: reordered } : f))
+          );
+          await fetch("/api/client-docs/files/reorder", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ orderedIds: reordered.map((d) => d.id) }),
+          });
+        }
+      } else {
+        const newFolderId = overDoc.folderId;
+        await fetch(`/api/client-docs/files/${activeDoc.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ folderId: newFolderId }),
+        });
+        const movedDoc = { ...activeDoc, folderId: newFolderId };
+        setFolders((prev) =>
+          prev.map((f) => ({
+            ...f,
+            docs:
+              f.id === activeDoc.folderId
+                ? f.docs.filter((d) => d.id !== activeDoc.id)
+                : f.id === newFolderId
+                  ? [...f.docs, movedDoc]
+                  : f.docs,
+          }))
+        );
+        if (activeDoc.folderId === null) setLooseDocs((prev) => prev.filter((d) => d.id !== activeDoc.id));
+        if (newFolderId === null) setLooseDocs((prev) => [...prev, movedDoc]);
+      }
     }
   };
 
   const toggleFolder = (id: string) => {
     setOpenFolders((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      if (next.has(id)) next.delete(id); else next.add(id);
       return next;
     });
   };
 
-  // Search filter
-  const filterDoc = (doc: ClientDoc) =>
-    !search || doc.name.toLowerCase().includes(search.toLowerCase());
+  const filterDoc = (doc: ClientDoc) => !search || doc.name.toLowerCase().includes(search.toLowerCase());
   const filterFolder = (folder: ClientDocFolder) =>
-    !search ||
-    folder.name.toLowerCase().includes(search.toLowerCase()) ||
-    folder.docs.some((d) => filterDoc(d));
+    !search || folder.name.toLowerCase().includes(search.toLowerCase()) || folder.docs.some(filterDoc);
 
   const visibleFolders = folders.filter(filterFolder);
   const visibleLoose = looseDocs.filter(filterDoc);
-
   const folderIds = folders.map((f) => f.id);
   const looseDocIds = looseDocs.map((d) => d.id);
-
   const activeDoc = activeId ? findDoc(activeId) : null;
   const activeFolder = activeId ? findFolder(activeId) : null;
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-16 text-sm text-gray-400">
-        Ładowanie...
-      </div>
-    );
+    return <div className="flex items-center justify-center py-16 text-sm text-gray-400">Ładowanie...</div>;
   }
 
   return (
-    <div className="space-y-4">
+    <div
+      className="relative space-y-4"
+      onDragEnter={handleDragEnter}
+      onDragLeave={handleDragLeave}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
+    >
+      {/* Desktop drag & drop overlay */}
+      {(isDragOver || isUploading) && (
+        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-primary/10 backdrop-blur-[1px] pointer-events-none rounded-xl">
+          <div className="flex flex-col items-center gap-3 px-10 py-8 rounded-2xl border-2 border-dashed border-primary bg-background/80 shadow-lg">
+            <UploadIcon className="w-8 h-8 text-primary" />
+            <p className="text-sm font-semibold text-primary">
+              {isUploading ? "Wgrywanie plików..." : "Upuść pliki tutaj"}
+            </p>
+            {!isUploading && (
+              <p className="text-xs text-muted-foreground">Pliki zostaną dodane bez folderu</p>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center gap-2 flex-wrap">
         <div className="relative flex-1 min-w-[160px]">
@@ -622,22 +656,24 @@ export default function DocumentsTab({ clientId }: DocumentsTabProps) {
             className="w-full pl-8 pr-7 py-1.5 text-sm border rounded-md outline-none focus:ring-1 focus:ring-blue-400"
           />
           {search && (
-            <button
-              onClick={() => setSearch("")}
-              className="absolute right-2 top-1/2 -translate-y-1/2"
-            >
+            <button onClick={() => setSearch("")} className="absolute right-2 top-1/2 -translate-y-1/2">
               <XIcon className="w-3.5 h-3.5 text-gray-400" />
             </button>
           )}
         </div>
         <button
+          type="button"
           onClick={() => setAddingFolder(true)}
           className="flex items-center gap-1 text-sm px-3 py-1.5 rounded-md border hover:bg-gray-50 transition-colors"
         >
           <PlusIcon className="w-3.5 h-3.5" />
           Nowy folder
         </button>
-        <DocUploadButton onUpload={handleUpload} folderId={null} />
+        <FilePickerButton
+          label={isUploading ? "Wgrywanie..." : "Dodaj plik"}
+          disabled={isUploading}
+          onFiles={(files) => handleUploadFiles(files, null)}
+        />
       </div>
 
       {/* Add folder input */}
@@ -655,9 +691,7 @@ export default function DocumentsTab({ clientId }: DocumentsTabProps) {
             className="flex-1 text-sm border-b border-blue-400 outline-none py-0.5"
             autoFocus
           />
-          <button onClick={handleAddFolder} className="text-sm text-blue-600 hover:underline">
-            Zapisz
-          </button>
+          <button onClick={handleAddFolder} className="text-sm text-blue-600 hover:underline">Zapisz</button>
           <button
             onClick={() => { setAddingFolder(false); setNewFolderName(""); }}
             className="text-sm text-gray-400 hover:text-gray-600"
@@ -674,28 +708,23 @@ export default function DocumentsTab({ clientId }: DocumentsTabProps) {
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        {/* Folders */}
         <SortableContext items={folderIds} strategy={verticalListSortingStrategy}>
           {visibleFolders.map((folder) => (
             <FolderRow
               key={folder.id}
-              folder={
-                search
-                  ? { ...folder, docs: folder.docs.filter(filterDoc) }
-                  : folder
-              }
+              folder={search ? { ...folder, docs: folder.docs.filter(filterDoc) } : folder}
               isOpen={openFolders.has(folder.id) || !!search}
               onToggle={() => toggleFolder(folder.id)}
               onRename={handleRenameFolder}
               onDelete={handleDeleteFolder}
-              onUpload={handleUpload}
+              onPickFiles={handleUploadFiles}
               onDocRename={handleRenameDoc}
               onDocDelete={handleDeleteDoc}
+              uploading={isUploading}
             />
           ))}
         </SortableContext>
 
-        {/* Loose docs */}
         {visibleLoose.length > 0 && (
           <div className={folders.length > 0 ? "mt-3 border-t pt-3" : ""}>
             {folders.length > 0 && (
@@ -728,10 +757,17 @@ export default function DocumentsTab({ clientId }: DocumentsTabProps) {
       {/* Empty state */}
       {folders.length === 0 && looseDocs.length === 0 && !addingFolder && (
         <div className="text-center py-12 text-gray-400">
-          <FolderIcon className="w-10 h-10 mx-auto mb-3 text-gray-200" />
+          <UploadIcon className="w-10 h-10 mx-auto mb-3 text-gray-200" />
           <p className="text-sm">Brak dokumentów</p>
-          <p className="text-xs mt-1">Dodaj folder lub wgraj pliki bezpośrednio</p>
+          <p className="text-xs mt-1">Dodaj folder, wgraj pliki lub przeciągnij je tutaj z komputera</p>
         </div>
+      )}
+
+      {/* Drop hint at bottom when not empty */}
+      {(folders.length > 0 || looseDocs.length > 0) && !isDragOver && !isUploading && (
+        <p className="text-xs text-gray-300 text-center pt-2">
+          Przeciągnij pliki z komputera, aby je dodać
+        </p>
       )}
     </div>
   );
