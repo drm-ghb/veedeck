@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { X, Search, UserPlus, XCircle } from "@/components/ui/icons";
 import { toast } from "sonner";
+import DatePicker from "@/components/ui/DatePicker";
+import TimePicker from "@/components/ui/TimePicker";
 import type { CalendarEvent, EventType } from "./CalendarView";
 
 interface Guest {
@@ -27,10 +29,30 @@ interface Props {
   onUpdated?: (ev: CalendarEvent) => void;
 }
 
-function toLocalDatetimeValue(iso: string | null | Date): string {
+function splitDatetime(iso: string | null | Date): { date: string; time: string } {
   const d = iso ? new Date(iso) : new Date();
   const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  return {
+    date: `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`,
+    time: `${pad(d.getHours())}:${pad(d.getMinutes())}`,
+  };
+}
+
+function combineDatetime(date: string, time: string): string | null {
+  if (!date) return null;
+  return new Date(`${date}T${time || "00:00"}`).toISOString();
+}
+
+function addHour(time: string): string {
+  const [h, m] = time.split(":").map(Number);
+  const total = h * 60 + m + 60;
+  return `${String(Math.floor(total / 60) % 24).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
+}
+
+function roundToHalfHour(time: string): string {
+  const [h, m] = time.split(":").map(Number);
+  const rounded = m < 30 ? 0 : 30;
+  return `${String(h).padStart(2, "0")}:${String(rounded).padStart(2, "0")}`;
 }
 
 export default function AddEventDialog({
@@ -45,8 +67,9 @@ export default function AddEventDialog({
 
   const [title, setTitle] = useState("");
   const [type, setType] = useState<EventType>("WYDARZENIE");
-  const [startAt, setStartAt] = useState("");
-  const [endAt, setEndAt] = useState("");
+  const [eventDate, setEventDate] = useState("");
+  const [startTime, setStartTime] = useState("09:00");
+  const [endTime, setEndTime] = useState("10:00");
   const [location, setLocation] = useState("");
   const [description, setDescription] = useState("");
   const [guests, setGuests] = useState<Guest[]>([]);
@@ -65,16 +88,21 @@ export default function AddEventDialog({
     if (isEdit && editEvent) {
       setTitle(editEvent.title);
       setType(editEvent.type);
-      setStartAt(toLocalDatetimeValue(editEvent.startAt));
-      setEndAt(editEvent.endAt ? toLocalDatetimeValue(editEvent.endAt) : "");
+      const s = splitDatetime(editEvent.startAt);
+      setEventDate(s.date);
+      setStartTime(s.time);
+      setEndTime(editEvent.endAt ? splitDatetime(editEvent.endAt).time : addHour(s.time));
       setLocation(editEvent.location ?? "");
       setDescription(editEvent.description ?? "");
       setGuests(editEvent.guests.map((g) => ({ name: g.name ?? "", email: g.email ?? "", userId: g.userId ?? undefined })));
     } else {
       setTitle("");
       setType("WYDARZENIE");
-      setStartAt(toLocalDatetimeValue(defaultDate));
-      setEndAt("");
+      const s = splitDatetime(defaultDate);
+      const rounded = roundToHalfHour(s.time);
+      setEventDate(s.date);
+      setStartTime(rounded);
+      setEndTime(addHour(rounded));
       setLocation("");
       setDescription("");
       setGuests([]);
@@ -84,6 +112,11 @@ export default function AddEventDialog({
     setSugOpen(false);
     setTimeout(() => titleRef.current?.focus(), 50);
   }, [open]);
+
+  function handleStartTimeChange(t: string) {
+    setStartTime(t);
+    setEndTime(addHour(t));
+  }
 
   // Update dropdown position when it opens
   useEffect(() => {
@@ -139,15 +172,15 @@ export default function AddEventDialog({
 
   async function handleSave() {
     if (!title.trim()) { toast.error("Tytuł jest wymagany"); titleRef.current?.focus(); return; }
-    if (!startAt) { toast.error("Data jest wymagana"); return; }
+    if (!eventDate) { toast.error("Data jest wymagana"); return; }
 
     setSaving(true);
     try {
       const payload = {
         title,
         type,
-        startAt: new Date(startAt).toISOString(),
-        endAt: endAt ? new Date(endAt).toISOString() : null,
+        startAt: combineDatetime(eventDate, startTime)!,
+        endAt: combineDatetime(eventDate, endTime),
         location: type === "WYDARZENIE" ? location : null,
         description: type !== "WYDARZENIE" ? description : null,
         guests: type === "WYDARZENIE" ? guests : [],
@@ -254,28 +287,28 @@ export default function AddEventDialog({
           </div>
 
           {/* Date & time */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className={labelClass}>Data i godzina *</label>
-              <input
-                type="datetime-local"
-                value={startAt}
-                onChange={(e) => setStartAt(e.target.value)}
-                className={fieldClass}
-              />
-            </div>
-            {type !== "PRZYPOMNIENIE" && (
-              <div>
-                <label className={labelClass}>Do (opcjonalnie)</label>
-                <input
-                  type="datetime-local"
-                  value={endAt}
-                  onChange={(e) => setEndAt(e.target.value)}
-                  className={fieldClass}
-                />
-              </div>
-            )}
+          <div>
+            <label className={labelClass}>Data *</label>
+            <DatePicker value={eventDate} onChange={setEventDate} placeholder="Wybierz dzień" />
           </div>
+
+          {type !== "PRZYPOMNIENIE" && (
+            <div>
+              <label className={labelClass}>Godziny</label>
+              <div className="flex items-center gap-2">
+                <TimePicker value={startTime} onChange={handleStartTimeChange} className="flex-1" />
+                <span className="text-sm text-muted-foreground shrink-0">–</span>
+                <TimePicker value={endTime} onChange={setEndTime} className="flex-1" />
+              </div>
+            </div>
+          )}
+
+          {type === "PRZYPOMNIENIE" && (
+            <div>
+              <label className={labelClass}>Godzina</label>
+              <TimePicker value={startTime} onChange={setStartTime} className="w-[120px]" />
+            </div>
+          )}
 
           {/* Wydarzenie: location + guests */}
           {type === "WYDARZENIE" && (

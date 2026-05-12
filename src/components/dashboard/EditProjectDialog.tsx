@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import DatePicker from "@/components/ui/DatePicker";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
@@ -152,12 +153,7 @@ export default function EditProjectDialog({
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="edit-shareExpiresAt">{t.projekty.expiresLabel}</Label>
-              <Input
-                id="edit-shareExpiresAt"
-                type="date"
-                value={shareExpiresAt}
-                onChange={(e) => setShareExpiresAt(e.target.value)}
-              />
+              <DatePicker value={shareExpiresAt} onChange={setShareExpiresAt} />
             </div>
           </div>
 

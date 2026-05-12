@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import DatePicker from "@/components/ui/DatePicker";
 import { PaymentsTab } from "@/components/projekty/PaymentsTab";
 import DocumentsTab from "@/components/projekty/DocumentsTab";
 import { useRouter } from "next/navigation";
@@ -792,21 +793,11 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Label htmlFor="proj-start">Data rozpoczęcia współpracy</Label>
-                <Input
-                  id="proj-start"
-                  type="date"
-                  value={projectStartDate}
-                  onChange={(e) => setProjectStartDate(e.target.value)}
-                />
+                <DatePicker value={projectStartDate} onChange={setProjectStartDate} />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="proj-end">Data zakończenia współpracy</Label>
-                <Input
-                  id="proj-end"
-                  type="date"
-                  value={projectEndDate}
-                  onChange={(e) => setProjectEndDate(e.target.value)}
-                />
+                <DatePicker value={projectEndDate} onChange={setProjectEndDate} />
               </div>
             </div>
             <div className="flex items-center justify-between pt-1">

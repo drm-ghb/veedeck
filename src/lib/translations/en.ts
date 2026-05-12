@@ -53,6 +53,7 @@ export const en: TranslationKeys = {
     calendar: "Calendar",
     notes: "Notebook",
     discussions: "Discussions",
+    tasks: "Tasks",
     help: "Help",
     settings: "Settings",
     logout: "Log out",

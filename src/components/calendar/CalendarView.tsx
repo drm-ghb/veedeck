@@ -213,7 +213,7 @@ function TimeGrid({
 // ============================================================
 
 export default function CalendarView() {
-  const [view, setView] = useState<View>("month");
+  const [view, setView] = useState<View>("week");
   const [anchor, setAnchor] = useState(() => {
     const d = new Date();
     d.setHours(0, 0, 0, 0);

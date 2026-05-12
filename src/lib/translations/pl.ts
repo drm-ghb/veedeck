@@ -51,6 +51,7 @@ export const pl = {
     calendar: "Kalendarz",
     notes: "Notatnik",
     discussions: "Dyskusje",
+    tasks: "Zadania",
     help: "Pomoc",
     settings: "Ustawienia",
     logout: "Wyloguj",

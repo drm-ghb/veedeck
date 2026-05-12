@@ -74,6 +74,8 @@ export const NotebookText     = icon("note_stack");
 export const NotebookPen      = icon("note_stack_add");
 export const MessageSquare    = icon("forum");
 export const ChatBubble       = icon("chat");
+export const CheckSquare      = icon("check_box");
+export const Columns3         = icon("view_column");
 
 // ── Pins ───────────────────────────────────────────────────────────────────
 export const Pin              = icon("keep");
@@ -121,6 +123,8 @@ export const ChevronDown      = icon("expand_more");
 export const ChevronUp        = icon("expand_less");
 export const ChevronsLeftRight= icon("swap_horiz");
 export const ArrowLeft        = icon("arrow_back");
+export const ArrowUp          = icon("arrow_upward");
+export const ArrowDown        = icon("arrow_downward");
 export const ArrowUpDown      = icon("swap_vert");
 export const ArrowDownUp      = icon("swap_vert");
 export const CornerDownLeft   = icon("subdirectory_arrow_left");
@@ -151,7 +155,7 @@ export const Image            = icon("image");
 export const ImagePlus        = icon("add_photo_alternate");
 export const Mic              = icon("mic");
 export const StopCircle       = icon("stop_circle");
-export const Square           = icon("stop");
+export const Square           = icon("check_box_outline_blank");
 export const Sparkles         = icon("auto_awesome");
 
 // ── User / Auth ───────────────────────────────────────────────────────────
