@@ -2,7 +2,15 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-/* ── Material Symbols Rounded ─────────────────────────────────── */
+/* ── Material Symbols Rounded (self-hosted) ───────────────────── */
+@font-face {
+  font-family: 'Material Symbols Rounded';
+  font-style: normal;
+  font-weight: 100 700;
+  font-display: block;
+  src: url('/fonts/material-symbols-rounded.woff2') format('woff2');
+}
+
 .material-symbols-rounded {
   font-family: "Material Symbols Rounded", sans-serif;
   font-optical-sizing: auto;
