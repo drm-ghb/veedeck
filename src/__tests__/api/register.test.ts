@@ -31,9 +31,9 @@ describe("POST /api/auth/register", () => {
     vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: "u1" } as any);
 
     const res = await POST(makeRequest("POST", {
-      name: "Jan",
+      fullName: "Jan",
       email: "jan@test.pl",
-      password: "haslo123",
+      password: "Haslo123",
     }));
 
     expect(res.status).toBe(400);
@@ -49,9 +49,9 @@ describe("POST /api/auth/register", () => {
     } as any);
 
     const res = await POST(makeRequest("POST", {
-      name: "Jan",
+      fullName: "Jan",
       email: "jan@test.pl",
-      password: "haslo123",
+      password: "Haslo123",
     }));
 
     expect(res.status).toBe(201);

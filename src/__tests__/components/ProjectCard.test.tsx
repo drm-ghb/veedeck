@@ -74,9 +74,9 @@ describe("ProjectCard", () => {
     const title = screen.getByText("Projekt testowy");
     const titleContainer = title.closest("span") ?? title.parentElement;
     // Brak elementu svg z klasą fill-red-500 w tytule
-    const allSvgs = document.querySelectorAll("svg");
-    const redPins = Array.from(allSvgs).filter(
-      (svg) => svg.classList.contains("fill-red-500") && svg.closest("[class*='CardTitle'], span")
+    const allSpans = document.querySelectorAll("span");
+    const redPins = Array.from(allSpans).filter(
+      (span) => span.classList.contains("fill-red-500")
     );
     expect(redPins.length).toBe(0);
   });
@@ -87,7 +87,7 @@ describe("ProjectCard", () => {
     const titleText = screen.getByText("Projekt testowy");
     // Idziemy w górę do elementu który zawiera zarówno pin jak i tytuł
     const container = titleText.parentElement;
-    const pin = container?.querySelector("svg");
+    const pin = container?.querySelector("span");
     expect(pin).not.toBeNull();
     expect(pin?.getAttribute("class")).toContain("fill-red-500");
   });

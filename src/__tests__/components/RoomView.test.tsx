@@ -147,9 +147,9 @@ describe("RoomView — zakładka Pliki", () => {
     // Render B jest pinned=true — szukamy elementu z klasą absolute top-2 left-2
     const pinContainer = document.querySelector(".absolute.top-2.left-2");
     expect(pinContainer).not.toBeNull();
-    const pinSvg = pinContainer?.querySelector("svg");
-    expect(pinSvg).not.toBeNull();
-    expect(pinSvg?.getAttribute("class")).toContain("fill-red-500");
+    const pinSpan = pinContainer?.querySelector("span");
+    expect(pinSpan).not.toBeNull();
+    expect(pinSpan?.getAttribute("class")).toContain("fill-red-500");
   });
 
   it("badge zakładki Pliki pokazuje łączną liczbę folderów i renderów", () => {

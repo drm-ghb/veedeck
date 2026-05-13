@@ -27,6 +27,10 @@ vi.mock("@/lib/prisma", () => ({
       delete: vi.fn(),
     },
     notification: { create: vi.fn() },
+    product: {
+      findFirst: vi.fn(),
+      create: vi.fn(),
+    },
   },
 }));
 
@@ -172,6 +176,8 @@ describe("POST /api/lists/[id]/sections/[sectionId]/products", () => {
     vi.mocked(prisma.listSection.findFirst).mockResolvedValue(mockSection as any);
     vi.mocked(prisma.listProduct.count).mockResolvedValue(0);
     vi.mocked(prisma.listProduct.create).mockResolvedValue(mockProduct as any);
+    vi.mocked(prisma.product.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.product.create).mockResolvedValue({} as any);
 
     const res = await PostProduct(
       makeRequest("POST", { name: "Szafa" }),
@@ -190,6 +196,8 @@ describe("POST /api/lists/[id]/sections/[sectionId]/products", () => {
     vi.mocked(prisma.listSection.findFirst).mockResolvedValue(mockSection as any);
     vi.mocked(prisma.listProduct.count).mockResolvedValue(0);
     vi.mocked(prisma.listProduct.create).mockResolvedValue({ ...mockProduct, quantity: 3 } as any);
+    vi.mocked(prisma.product.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.product.create).mockResolvedValue({} as any);
 
     await PostProduct(
       makeRequest("POST", { name: "Krzesło", quantity: 3 }),

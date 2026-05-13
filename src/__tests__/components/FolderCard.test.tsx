@@ -51,18 +51,18 @@ describe("FolderCard", () => {
 
   it("NIE wyświetla ikony pinezki gdy folder nie jest przypięty", () => {
     render(<FolderCard folder={{ ...folder, pinned: false }} projectId="p" roomId="r" />);
-    // Pinezka jest renderowana tylko gdy pinned=true, jako svg.fill-red-500 obok nazwy
+    // Pinezka jest renderowana tylko gdy pinned=true, jako span.fill-red-500 obok nazwy
     const nameEl = screen.getByText("Sypialnia");
     const nameParagraph = nameEl.closest("p");
-    expect(nameParagraph?.querySelector("svg.fill-red-500")).toBeNull();
+    expect(nameParagraph?.querySelector("span.fill-red-500")).toBeNull();
   });
 
   it("wyświetla ikonę pinezki obok nazwy gdy folder jest przypięty", () => {
     render(<FolderCard folder={{ ...folder, pinned: true }} projectId="p" roomId="r" />);
     const nameEl = screen.getByText("Sypialnia");
     const nameParagraph = nameEl.closest("p");
-    // Lucide Pin ma klasę fill-red-500 ustawioną przez className prop
-    const pin = nameParagraph?.querySelector("svg");
+    // Pin (material-symbols) renderuje się jako span z klasą fill-red-500
+    const pin = nameParagraph?.querySelector("span");
     expect(pin).not.toBeNull();
     expect(pin?.getAttribute("class")).toContain("fill-red-500");
   });
