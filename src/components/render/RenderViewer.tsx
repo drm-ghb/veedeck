@@ -2071,14 +2071,14 @@ export default function RenderViewer({
                           ? "Dodaj pin"
                           : "Nagraj wiadomość głosową"
                       }
-                      className="absolute right-2 bottom-2 z-10 flex items-center justify-center w-6 h-6 rounded-md transition-colors text-muted-foreground hover:text-foreground disabled:opacity-40"
+                      className="absolute right-2 bottom-2 z-10 flex items-center justify-center w-8 h-8 rounded-md transition-colors text-muted-foreground hover:text-foreground disabled:opacity-40"
                     >
                       {uploadingVoice || adding ? (
-                        <Loader2 size={15} className="animate-spin" />
+                        <Loader2 size={30} className="animate-spin" />
                       ) : newContent.trim() || pendingVoiceUrl ? (
-                        <Send size={15} />
+                        <Send size={30} />
                       ) : (
-                        <Mic size={15} />
+                        <Mic size={30} />
                       )}
                     </button>
                   </div>
@@ -3232,14 +3232,14 @@ export default function RenderViewer({
                             ? "Dodaj pin"
                             : "Nagraj wiadomość głosową"
                         }
-                        className="absolute right-2 bottom-2 z-10 flex items-center justify-center w-6 h-6 rounded-md transition-colors text-muted-foreground hover:text-foreground disabled:opacity-40"
+                        className="absolute right-2 bottom-2 z-10 flex items-center justify-center w-8 h-8 rounded-md transition-colors text-muted-foreground hover:text-foreground disabled:opacity-40"
                       >
                         {uploadingVoice || adding ? (
-                          <Loader2 size={15} className="animate-spin" />
+                          <Loader2 size={30} className="animate-spin" />
                         ) : newContent.trim() || pendingVoiceUrl ? (
-                          <Send size={15} />
+                          <Send size={30} />
                         ) : (
-                          <Mic size={15} />
+                          <Mic size={30} />
                         )}
                       </button>
                     </div>
