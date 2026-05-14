@@ -259,6 +259,8 @@ export default function RenderViewer({
   const [lightboxComments, setLightboxComments] = useState<Comment[]>([]);
   const [hidePins, setHidePins] = useState(false);
   const [showVersionHistory, setShowVersionHistory] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [restoringVersionId, setRestoringVersionId] = useState<string | null>(null);
   const [compareVersion, setCompareVersion] = useState<RenderVersion | null>(null);
   const [sliderPos, setSliderPos] = useState(50);
@@ -629,6 +631,31 @@ export default function RenderViewer({
     setZoom(1);
     setLightboxIndex(currentRenderIndex >= 0 ? currentRenderIndex : 0);
     setLightboxOpen(true);
+  }
+
+  async function deleteRender() {
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/renders/${renderId}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        toast.error(data.error || "Błąd usuwania pliku");
+        return;
+      }
+      toast.success("Plik został usunięty");
+      if (roomId && projectId) {
+        router.push(`/projects/${projectId}/rooms/${roomId}`);
+      } else if (projectId) {
+        router.push(`/projects/${projectId}`);
+      } else {
+        router.back();
+      }
+    } catch {
+      toast.error("Błąd usuwania pliku");
+    } finally {
+      setDeleting(false);
+      setShowDeleteConfirm(false);
+    }
   }
 
   async function downloadFile() {
@@ -1560,15 +1587,20 @@ export default function RenderViewer({
             <button onClick={openLightbox} title="Podgląd pełnoekranowy" className={`flex items-center justify-center w-8 h-8 rounded-md border transition-colors ${lightboxOpen ? "bg-gray-900 text-white border-gray-900" : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted"}`}>
               <Maximize2 size={15} />
             </button>
-            <button onClick={downloadFile} title="Pobierz plik" className="flex items-center justify-center w-8 h-8 rounded-md border border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted transition-colors">
-              <Download size={15} />
-            </button>
             {isDesigner && (
               <button onClick={() => setShowVersionHistory(true)} title={`Historia wersji${versions.length > 0 ? ` (${versions.length})` : ""}`} className="relative flex items-center justify-center w-8 h-8 rounded-md border border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted transition-colors">
                 <History size={15} />
                 {versions.length > 0 && (
                   <span className="absolute -top-1 -right-1 min-w-[14px] h-3.5 px-0.5 bg-gray-400 text-white text-[9px] font-bold rounded-full flex items-center justify-center leading-none">{versions.length}</span>
                 )}
+              </button>
+            )}
+            <button onClick={downloadFile} title="Pobierz plik" className="flex items-center justify-center w-8 h-8 rounded-md border border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted transition-colors">
+              <Download size={15} />
+            </button>
+            {isDesigner && (
+              <button onClick={() => setShowDeleteConfirm(true)} title="Usuń plik" className="flex items-center justify-center w-8 h-8 rounded-md border border-transparent text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors">
+                <Trash2 size={15} />
               </button>
             )}
 
@@ -1650,15 +1682,20 @@ export default function RenderViewer({
               <button onClick={openLightbox} title="Podgląd pełnoekranowy" className={`flex items-center justify-center w-8 h-8 rounded-md border transition-colors flex-shrink-0 ${lightboxOpen ? "bg-gray-900 text-white border-gray-900" : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted"}`}>
                 <Maximize2 size={15} />
               </button>
-              <button onClick={downloadFile} title="Pobierz plik" className="flex items-center justify-center w-8 h-8 rounded-md border border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted transition-colors flex-shrink-0">
-                <Download size={15} />
-              </button>
               {isDesigner && (
                 <button onClick={() => setShowVersionHistory(true)} title={`Historia wersji${versions.length > 0 ? ` (${versions.length})` : ""}`} className="relative flex items-center justify-center w-8 h-8 rounded-md border border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted transition-colors flex-shrink-0">
                   <History size={15} />
                   {versions.length > 0 && (
                     <span className="absolute -top-1 -right-1 min-w-[14px] h-3.5 px-0.5 bg-gray-400 text-white text-[9px] font-bold rounded-full flex items-center justify-center leading-none">{versions.length}</span>
                   )}
+                </button>
+              )}
+              <button onClick={downloadFile} title="Pobierz plik" className="flex items-center justify-center w-8 h-8 rounded-md border border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted transition-colors flex-shrink-0">
+                <Download size={15} />
+              </button>
+              {isDesigner && (
+                <button onClick={() => setShowDeleteConfirm(true)} title="Usuń plik" className="flex items-center justify-center w-8 h-8 rounded-md border border-transparent text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors flex-shrink-0">
+                  <Trash2 size={15} />
                 </button>
               )}
             </div>
@@ -3596,6 +3633,26 @@ export default function RenderViewer({
             </div>
             <div className="absolute top-4 right-4 bg-black/60 text-white text-xs px-2.5 py-1 rounded-full pointer-events-none">
               Aktualna
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" onClick={() => setShowDeleteConfirm(false)}>
+          <div className="bg-card rounded-xl shadow-xl border border-border w-full max-w-sm p-6" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-1">Usuń plik</h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+              Czy na pewno chcesz usunąć <span className="font-medium text-gray-700 dark:text-gray-200">{renderName}</span>? Tej operacji nie można cofnąć.
+            </p>
+            <div className="flex gap-2 justify-end">
+              <button onClick={() => setShowDeleteConfirm(false)} disabled={deleting} className="px-4 py-2 text-sm rounded-lg border border-border hover:bg-muted transition-colors">
+                Anuluj
+              </button>
+              <button onClick={deleteRender} disabled={deleting} className="px-4 py-2 text-sm rounded-lg bg-red-500 hover:bg-red-600 text-white font-medium transition-colors disabled:opacity-60 flex items-center gap-2">
+                {deleting && <Loader2 size={14} className="animate-spin" />}
+                Usuń
+              </button>
             </div>
           </div>
         </div>
