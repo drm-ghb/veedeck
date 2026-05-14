@@ -54,7 +54,7 @@ export async function PATCH(
       ...(isOwner && status !== undefined ? { status } : {}),
       ...(isOwner && title !== undefined ? { title: title ? title.trim() : null } : {}),
       ...(isAuthor && content !== undefined ? { content: content.trim() } : {}),
-      ...(isAuthor && isMovingPin ? { posX, posY } : {}),
+      ...((isAuthor || isOwner) && isMovingPin ? { posX, posY } : {}),
     },
     include: { replies: true },
   });

@@ -632,6 +632,7 @@ export default function RenderViewer({
   }
 
   function handleImageClick(e: React.MouseEvent<HTMLDivElement>) {
+    if (didDragRef.current) return; // pin was just dragged — don't open lightbox / place pin
     if (productPinMode) {
       if (pending || pendingProductPos) return;
       const rect = imgRef.current!.getBoundingClientRect();
@@ -797,11 +798,29 @@ export default function RenderViewer({
       draggingPinRef.current = null;
       dragPosRef.current = null;
       dragStartPxRef.current = null;
-      setDragPos(null);
       document.body.style.cursor = "";
       document.body.style.userSelect = "";
 
-      if (!didDragRef.current || !pos) return;
+      if (!didDragRef.current || !pos) {
+        didDragRef.current = false;
+        setDragPos(null);
+        return;
+      }
+
+      // Update local state optimistically BEFORE clearing dragPos so both changes
+      // land in the same React render — prevents the pin from flashing back to its old position.
+      if (type === "comment") {
+        setComments((prev) => prev.map((c) => c.id === pinId ? { ...c, posX: pos.x, posY: pos.y } : c));
+        setLightboxComments((prev) => prev.map((c) => c.id === pinId ? { ...c, posX: pos.x, posY: pos.y } : c));
+      } else {
+        setProductPins((prev) => prev.map((p) => p.id === pinId ? { ...p, posX: pos.x, posY: pos.y } : p));
+        setLightboxProductPins((prev) => prev.map((p) => p.id === pinId ? { ...p, posX: pos.x, posY: pos.y } : p));
+      }
+      setDragPos(null);
+
+      // Reset after a tick — gives onClick time to check it first (prevents popup after drag),
+      // but also resets if mouse was released off the pin button (no onClick fires).
+      setTimeout(() => { didDragRef.current = false; }, 50);
 
       if (type === "comment") {
         const res = await fetch(`/api/comments/${pinId}`, {
@@ -809,20 +828,14 @@ export default function RenderViewer({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ posX: pos.x, posY: pos.y }),
         });
-        if (res.ok) {
-          setComments((prev) => prev.map((c) => c.id === pinId ? { ...c, posX: pos.x, posY: pos.y } : c));
-          setLightboxComments((prev) => prev.map((c) => c.id === pinId ? { ...c, posX: pos.x, posY: pos.y } : c));
-        }
+        if (!res.ok) toast.error("Nie udało się zapisać pozycji pinu");
       } else {
         const res = await fetch(`/api/renders/${renderId}/product-pins/${pinId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ posX: pos.x, posY: pos.y }),
         });
-        if (res.ok) {
-          setProductPins((prev) => prev.map((p) => p.id === pinId ? { ...p, posX: pos.x, posY: pos.y } : p));
-          setLightboxProductPins((prev) => prev.map((p) => p.id === pinId ? { ...p, posX: pos.x, posY: pos.y } : p));
-        }
+        if (!res.ok) toast.error("Nie udało się zapisać pozycji pinu");
       }
     }
 
@@ -1814,7 +1827,7 @@ export default function RenderViewer({
 
             {/* Comment pins */}
             {!hidePins && pinComments.map((c, i) => {
-              const canDrag = c.author === authorName && selectedId !== c.id;
+              const canDrag = selectedId !== c.id && (isDesigner || c.author === authorName);
               const pinX = dragPos?.id === c.id ? dragPos.x : c.posX!;
               const pinY = dragPos?.id === c.id ? dragPos.y : c.posY!;
               return (
@@ -2962,7 +2975,7 @@ export default function RenderViewer({
             <div
               ref={lightboxImgRef}
               className={`relative flex-shrink-0 select-none ${(mode === "pin" || productPinMode) ? "cursor-crosshair" : "cursor-default"}`}
-              style={{ width: `${Math.max(60, 75 * zoom)}vw` }}
+              style={{ height: `calc((100vh - 120px) * ${zoom})`, width: "fit-content" }}
               onClick={(e) => {
                 if (productPinMode) {
                   if (pending || pendingProductPos) return;
@@ -2987,7 +3000,7 @@ export default function RenderViewer({
               <img
                 src={lightboxRender.fileUrl}
                 alt="Render"
-                className="w-full h-auto block rounded-lg"
+                className="h-full w-auto block rounded-lg"
                 draggable={false}
               />
 
@@ -3052,7 +3065,7 @@ export default function RenderViewer({
 
               {/* Pins overlay — interactive */}
               {!hidePins && (lightboxRender.id === renderId ? pinComments : lightboxComments.filter(c => c.posX !== null)).map((c, i) => {
-                const canDrag = c.author === authorName && selectedId !== c.id;
+                const canDrag = selectedId !== c.id && (isDesigner || c.author === authorName);
                 const pinX = dragPos?.id === c.id ? dragPos.x : c.posX!;
                 const pinY = dragPos?.id === c.id ? dragPos.y : c.posY!;
                 return (
