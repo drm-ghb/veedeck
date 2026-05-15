@@ -5,7 +5,6 @@ import { useState, useEffect } from "react";
 import { pusherClient } from "@/lib/pusher";
 import {
   Users,
-  Pin,
   LocalMall,
   Package,
   MapPin,
