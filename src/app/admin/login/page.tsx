@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { signIn, signOut, getSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { ShieldCheck, Eye, EyeOff } from "@/components/ui/icons";
+import { ShieldCheck, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 
 export default function AdminLoginPage() {
@@ -65,7 +65,7 @@ export default function AdminLoginPage() {
               onChange={(e) => setEmail(e.target.value)}
               required
               autoFocus
-              placeholder="admin@renderflow.local"
+              placeholder="admin@veedeck.com"
               className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/8 text-white placeholder-white/20 text-sm focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all"
             />
           </div>

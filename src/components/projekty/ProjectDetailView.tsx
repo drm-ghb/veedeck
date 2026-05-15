@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import DatePicker from "@/components/ui/DatePicker";
 import { PaymentsTab } from "@/components/projekty/PaymentsTab";
 import DocumentsTab from "@/components/projekty/DocumentsTab";
@@ -188,6 +188,53 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
     navigator.clipboard.writeText(link);
     setCopiedPanel(true);
     setTimeout(() => setCopiedPanel(false), 2000);
+  }
+
+  // Invite client dialog state
+  const [showInviteDialog, setShowInviteDialog] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteEmailExists, setInviteEmailExists] = useState(false);
+  const [checkingEmail, setCheckingEmail] = useState(false);
+  const [sendingInvite, setSendingInvite] = useState(false);
+  const emailCheckTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function handleInviteEmailChange(value: string) {
+    setInviteEmail(value);
+    setInviteEmailExists(false);
+    if (emailCheckTimer.current) clearTimeout(emailCheckTimer.current);
+    if (!value.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())) {
+      setCheckingEmail(false);
+      return;
+    }
+    setCheckingEmail(true);
+    emailCheckTimer.current = setTimeout(() => {
+      fetch(`/api/client-invite/check-email?email=${encodeURIComponent(value.trim())}`)
+        .then((r) => r.json())
+        .then((data) => {
+          setInviteEmailExists(!!data.exists);
+          setCheckingEmail(false);
+        })
+        .catch(() => setCheckingEmail(false));
+    }, 400);
+  }
+
+  async function sendClientInvite() {
+    if (!inviteEmail.trim()) return;
+    setSendingInvite(true);
+    const res = await fetch("/api/client-invite", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: inviteEmail.trim(), projectId: project.id }),
+    });
+    const data = await res.json().catch(() => ({}));
+    setSendingInvite(false);
+    if (!res.ok) {
+      toast.error((data as { error?: string }).error || "Nie udało się wysłać zaproszenia");
+      return;
+    }
+    toast.success("Zaproszenie zostało wysłane");
+    setShowInviteDialog(false);
+    setInviteEmail("");
   }
 
   // Warning dialog state
@@ -505,15 +552,25 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
             <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
               {t.projekty.clients}
             </h2>
-            <Button
-              size="sm"
-              variant="outline"
-              className="gap-1.5"
-              onClick={() => setShowAddClient((v) => !v)}
-            >
-              <Plus size={13} />
-              {t.projekty.addClient}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1.5"
+                onClick={() => setShowInviteDialog(true)}
+              >
+                Wyślij zaproszenie
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1.5"
+                onClick={() => setShowAddClient((v) => !v)}
+              >
+                <Plus size={13} />
+                {t.projekty.addClient}
+              </Button>
+            </div>
           </div>
 
           {showAddClient && (
@@ -971,6 +1028,46 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
         </section>
       </div>
       }
+
+      {/* Invite client dialog */}
+      <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Wyślij zaproszenie</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <p className="text-sm text-muted-foreground">
+              Klient otrzyma e-mail z linkiem do założenia konta.
+            </p>
+            <div className="space-y-1.5">
+              <Label htmlFor="invite-email">Adres e-mail</Label>
+              <Input
+                id="invite-email"
+                type="email"
+                value={inviteEmail}
+                onChange={(e) => handleInviteEmailChange(e.target.value)}
+                placeholder="klient@example.com"
+                onKeyDown={(e) => e.key === "Enter" && !inviteEmailExists && sendClientInvite()}
+                autoFocus
+              />
+              {checkingEmail && (
+                <p className="text-xs text-muted-foreground">Sprawdzanie...</p>
+              )}
+              {!checkingEmail && inviteEmailExists && (
+                <p className="text-xs text-destructive">Konto z tym adresem e-mail już istnieje.</p>
+              )}
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => { setShowInviteDialog(false); setInviteEmail(""); setInviteEmailExists(false); setCheckingEmail(false); }}>
+              Anuluj
+            </Button>
+            <Button onClick={sendClientInvite} disabled={sendingInvite || !inviteEmail.trim() || inviteEmailExists || checkingEmail}>
+              {sendingInvite ? "Wysyłanie..." : "Wyślij"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Warning dialog */}
       <Dialog

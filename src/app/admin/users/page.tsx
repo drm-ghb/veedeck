@@ -13,6 +13,7 @@ export default async function AdminUsersPage() {
       name: true,
       email: true,
       isAdmin: true,
+      role: true,
       createdAt: true,
       _count: { select: { projects: true } },
     },

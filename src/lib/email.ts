@@ -14,6 +14,43 @@ const transporter = nodemailer.createTransport({
 const FROM = `"${process.env.SMTP_FROM_NAME ?? "Widek"}" <${process.env.SMTP_USER}>`;
 const APP_URL = process.env.NEXTAUTH_URL ?? process.env.AUTH_URL ?? "http://localhost:3000";
 
+export async function sendClientInvitationEmail({
+  to,
+  designerName,
+  token,
+}: {
+  to: string;
+  designerName: string;
+  token: string;
+}) {
+  const link = `${APP_URL}/client-invite/${token}`;
+  const safeDesignerName = escapeHtml(designerName);
+
+  await transporter.sendMail({
+    from: FROM,
+    to,
+    subject: `Zaproszenie od projektanta — ${safeDesignerName}`,
+    html: `
+      <div style="font-family: sans-serif; max-width: 520px; margin: 0 auto; padding: 32px 24px; color: #111;">
+        <h2 style="margin-bottom: 8px;">Zaproszenie do projektu</h2>
+        <p style="color: #555; margin-bottom: 24px;">
+          <strong>${safeDesignerName}</strong> zaprasza Cię do swojego panelu klienta.
+          Kliknij poniższy przycisk, aby założyć konto i zobaczyć swój projekt.
+        </p>
+        <a href="${link}"
+          style="display: inline-block; background: #6366f1; color: #fff; padding: 12px 24px;
+                 border-radius: 8px; text-decoration: none; font-weight: 600;">
+          Załóż konto klienta
+        </a>
+        <p style="margin-top: 24px; font-size: 13px; color: #888;">
+          Link wygaśnie za 7 dni. Jeśli nie spodziewałeś się tego zaproszenia, zignoruj tę wiadomość.
+        </p>
+        <p style="margin-top: 4px; font-size: 12px; color: #bbb;">${link}</p>
+      </div>
+    `,
+  });
+}
+
 export async function sendInvitationEmail({
   to,
   designerName,

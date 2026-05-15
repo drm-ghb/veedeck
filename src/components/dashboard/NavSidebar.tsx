@@ -149,10 +149,14 @@ export default function NavSidebar({ hiddenModules, isAdmin }: NavSidebarProps) 
                   </span>
                 )}
               </span>
-              {!isCollapsed && <span className="flex-1">{item.label}</span>}
-              {!isCollapsed && "soon" in item && item.soon && (
-                <span className="ml-auto text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 leading-none">
-                  Wkrótce
+              {!isCollapsed && (
+                <span className="flex-1 relative">
+                  {item.label}
+                  {"soon" in item && item.soon && (
+                    <span className="absolute -top-2.5 -right-1 text-[8px] font-bold uppercase tracking-wide px-1 py-px rounded-full bg-primary/15 text-primary leading-none whitespace-nowrap">
+                      Wkrótce
+                    </span>
+                  )}
                 </span>
               )}
               {!isCollapsed && badge !== null && (

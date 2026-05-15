@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Trash2, ShieldCheck, FolderOpen, KeyRound, X } from "@/components/ui/icons";
+import { Trash2, ShieldCheck, FolderOpen, KeyRound, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface User {
@@ -11,6 +11,7 @@ interface User {
   name: string | null;
   email: string;
   isAdmin: boolean;
+  role: string;
   createdAt: Date | string;
   _count: { projects: number };
 }
@@ -104,6 +105,13 @@ export default function AdminUsersClient({
                 <p className="text-sm font-semibold text-white truncate">
                   {user.name ?? "—"}
                 </p>
+                <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0 ${
+                  user.role === "client"
+                    ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/20"
+                    : "bg-violet-500/15 text-violet-400 border border-violet-500/20"
+                }`}>
+                  {user.role === "client" ? "Klient" : "Projektant"}
+                </span>
                 {user.isAdmin && (
                   <span className="flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-blue-500/15 text-blue-400 border border-blue-500/20 flex-shrink-0">
                     <ShieldCheck size={9} />

@@ -82,6 +82,8 @@ model Invitation {
   status     String   @default("PENDING")
   expiresAt  DateTime
   createdAt  DateTime @default(now())
+  type       String   @default("team") // "team" | "client"
+  projectId  String?
 }
 
 model Note {

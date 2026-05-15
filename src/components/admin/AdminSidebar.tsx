@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { Users, Activity, ShieldCheck, LogOut } from "@/components/ui/icons";
+import { Users, Activity, ShieldCheck, LogOut } from "lucide-react";
 
 const items = [
   { href: "/admin/users", label: "Użytkownicy", icon: <Users size={15} /> },

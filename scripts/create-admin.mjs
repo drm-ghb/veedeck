@@ -14,7 +14,7 @@ const hash = await bcrypt.hash('admin', 10);
 const user = await prisma.user.create({
   data: {
     name: 'admin',
-    email: 'admin@renderflow.local',
+    email: 'admin@veedeck.com',
     password: hash,
     isAdmin: true,
   }
