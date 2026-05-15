@@ -69,37 +69,45 @@ export async function GET(req: NextRequest) {
   // Get available filters
   if (action === "filters") {
     try {
-      const categories = await prisma.product.findMany({
-        where: { userId },
-        select: { category: true },
-        distinct: ["category"],
-      });
+      const BUILT_IN_CATEGORIES = [
+        "OSWIETLENIE", "AKCESORIA", "MEBLE", "ARMATURA", "OKLADZINY_SCIENNE", "PODLOGA",
+      ];
 
-      const manufacturers = await prisma.product.findMany({
-        where: { userId },
-        select: { manufacturer: true },
-        distinct: ["manufacturer"],
-      });
+      const [userData, allUserProducts, manufacturerGroups, colorGroups] = await Promise.all([
+        prisma.user.findUnique({
+          where: { id: userId },
+          select: { customCategories: true, listsCategoryOrder: true },
+        }),
+        prisma.product.findMany({
+          where: { userId },
+          select: { category: true },
+        }),
+        prisma.product.groupBy({ by: ["manufacturer"], where: { userId, manufacturer: { not: null } } }),
+        prisma.product.groupBy({ by: ["color"], where: { userId, color: { not: null } } }),
+      ]);
 
-      const colors = await prisma.product.findMany({
-        where: { userId },
-        select: { color: true },
-        distinct: ["color"],
-      });
+      const categoryCounts: Record<string, number> = {};
+      for (const p of allUserProducts) {
+        if (p.category) {
+          categoryCounts[p.category] = (categoryCounts[p.category] ?? 0) + 1;
+        }
+      }
+
+      const customCats = (userData?.customCategories ?? []).filter((c) => c && c !== "");
+      const allCategories = [...BUILT_IN_CATEGORIES, ...customCats.filter((c) => !BUILT_IN_CATEGORIES.includes(c))];
+      const order = userData?.listsCategoryOrder ?? [];
+      const categories = order.length
+        ? [
+            ...order.filter((v) => allCategories.includes(v)),
+            ...allCategories.filter((c) => !order.includes(c)),
+          ]
+        : allCategories;
 
       return NextResponse.json({
-        categories: categories
-          .map((p) => p.category)
-          .filter((v) => v !== null && v !== "")
-          .sort(),
-        manufacturers: manufacturers
-          .map((p) => p.manufacturer)
-          .filter((v) => v !== null && v !== "")
-          .sort(),
-        colors: colors
-          .map((p) => p.color)
-          .filter((v) => v !== null && v !== "")
-          .sort(),
+        categories,
+        categoryCounts,
+        manufacturers: manufacturerGroups.map((g) => g.manufacturer).filter((v) => v !== null && v !== "").sort(),
+        colors: colorGroups.map((g) => g.color).filter((v) => v !== null && v !== "").sort(),
       });
     } catch (err) {
       console.error("[GET /api/products?action=filters]", err);

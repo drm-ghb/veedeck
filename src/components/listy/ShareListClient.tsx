@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
-import { ExternalLink, MessageSquare, Check, X, RotateCcw } from "@/components/ui/icons";
+import { ExternalLink, Comment, Check, X, RotateCcw } from "@/components/ui/icons";
 import ProductCommentPanel from "./ProductCommentPanel";
 import { pusherClient } from "@/lib/pusher";
 
@@ -280,7 +280,7 @@ export default function ShareListClient({
                 );
                 const commentBtn = (size: number) => (
                   <button onClick={() => openCommentsPanel(product.id)} className="relative flex items-center justify-center w-7 h-7 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors" title="Komentarze">
-                    <MessageSquare size={size} className={unread ? "text-blue-500" : ""} />
+                    <Comment size={size} className={unread ? "text-blue-500" : ""} />
                     {count > 0 && <span className={`absolute -top-1 -right-1 min-w-[14px] h-[14px] rounded-full text-white text-[9px] font-bold flex items-center justify-center px-0.5 leading-none ${unread ? "bg-primary" : "bg-muted-foreground/40"}`}>{count > 99 ? "99+" : count}</span>}
                   </button>
                 );

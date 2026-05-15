@@ -1,5 +1,5 @@
 import {
-  PictureInPicture, ScrollText, MessageSquare, ChatBubble,
+  PushPin, LocalMall, Comment, ChatBubble,
   Pin, Check, ExternalLink, History,
   Paperclip, Mic, CornerDownLeft, X,
 } from "@/components/ui/icons";
@@ -26,7 +26,7 @@ const MODULES: ModuleSection[] = [
   {
     id: "renderflow",
     name: "RenderFlow",
-    icon: <PictureInPicture size={22} />,
+    icon: <PushPin size={22} />,
     general:
       "Moduł Rendery to miejsce, gdzie projektant umieszcza wizualizacje, zdjęcia i pliki PDF projektu. Klient może je przeglądać w dowolnym momencie, dodawać komentarze i zatwierdzać gotowe elementy.",
     designerTitle: "Co robi projektant",
@@ -53,7 +53,7 @@ const MODULES: ModuleSection[] = [
   {
     id: "listy",
     name: "Listy zakupowe",
-    icon: <ScrollText size={22} />,
+    icon: <LocalMall size={22} />,
     general:
       "Listy zakupowe to zestawienie produktów, mebli i materiałów wybranych przez projektanta. Klient może przeglądać szczegóły każdego produktu, sprawdzać ceny i linki do sklepów, a także zatwierdzać swoje wybory.",
     designerTitle: "Co robi projektant",
@@ -73,14 +73,14 @@ const MODULES: ModuleSection[] = [
     features: [
       { icon: <Check size={16} />, label: "Zatwierdź", desc: "Klient akceptuje produkt" },
       { icon: <X size={16} />, label: "Odrzuć", desc: "Klient oznacza produkt do zmiany" },
-      { icon: <MessageSquare size={16} />, label: "Komentarz", desc: "Pytanie lub uwaga do produktu" },
+      { icon: <Comment size={16} />, label: "Komentarz", desc: "Pytanie lub uwaga do produktu" },
       { icon: <ExternalLink size={16} />, label: "Link", desc: "Otwiera produkt w sklepie internetowym" },
     ],
   },
   {
     id: "dyskusje",
     name: "Dyskusje",
-    icon: <MessageSquare size={22} />,
+    icon: <ChatBubble size={22} />,
     general:
       "Dyskusja to wbudowany komunikator między projektantem a klientem. Idealne miejsce na pytania, szybkie ustalenia i przesyłanie materiałów inspiracyjnych.",
     designerTitle: "Co robi projektant",

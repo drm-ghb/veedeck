@@ -8,8 +8,9 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowLeft,
-  ScrollText,
-  PictureInPicture,
+  LocalMall,
+  Pin,
+  PushPin,
   Copy,
   Eye,
   EyeOff,
@@ -894,12 +895,12 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
                       }`}
                     >
                       {mod.icon === "renderflow" ? (
-                        <PictureInPicture
+                        <PushPin
                           size={18}
                           className={active ? "text-white" : "text-muted-foreground opacity-40"}
                         />
                       ) : (
-                        <ScrollText
+                        <LocalMall
                           size={18}
                           className={active ? "text-white" : "text-muted-foreground"}
                         />

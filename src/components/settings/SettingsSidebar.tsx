@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Settings, ScrollText, ChevronLeft, Users, Puzzle, PictureInPicture, BookOpen } from "@/components/ui/icons";
+import { Settings, LocalMall, ChevronLeft, Users, Puzzle, PushPin, BookOpen } from "@/components/ui/icons";
 import { useT } from "@/lib/i18n";
 
 export default function SettingsSidebar() {
@@ -20,13 +20,13 @@ export default function SettingsSidebar() {
     {
       href: "/settings/renderflow",
       label: t.settings.renderflow,
-      icon: <PictureInPicture size={16} />,
+      icon: <PushPin size={16} />,
       module: { href: "/klienci", label: "RenderFlow" },
     },
     {
       href: "/settings/listy",
       label: t.settings.lists,
-      icon: <ScrollText size={16} />,
+      icon: <LocalMall size={16} />,
       module: { href: "/listy", label: t.settings.lists },
     },
     {

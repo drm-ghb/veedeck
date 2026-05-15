@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { MessageSquare, Plus, Trash2, Edit2, Check, X, ExternalLink, ChevronDown, ChevronLeft, Paperclip, FileText, FileSpreadsheet, File as FileIcon, Loader2, FolderOpen, Mic, Square, Search, Archive, ArchiveRestore, CornerDownLeft, MoreVertical, Send } from "@/components/ui/icons";
+import { ChatBubble, Plus, Trash2, Edit2, Check, X, ExternalLink, ChevronDown, ChevronLeft, Paperclip, FileText, FileSpreadsheet, File as FileIcon, Loader2, FolderOpen, Mic, Square, Search, Archive, ArchiveRestore, CornerDownLeft, MoreVertical, Send } from "@/components/ui/icons";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import Pusher from "pusher-js";
@@ -706,7 +706,7 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
           <div className="flex-1 overflow-y-auto">
             {discussions.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full gap-2 text-muted-foreground px-4 text-center">
-                <MessageSquare size={32} className="opacity-30" />
+                <ChatBubble size={32} className="opacity-30" />
                 <p className="text-sm">Brak dyskusji</p>
                 <p className="text-xs">Dyskusje projektu tworzone są automatycznie</p>
               </div>
@@ -1043,7 +1043,7 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                   <div className="flex items-center justify-center h-full text-muted-foreground text-sm">Ładowanie...</div>
                 ) : messages.length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-full gap-2 text-muted-foreground">
-                    <MessageSquare size={32} className="opacity-30" />
+                    <ChatBubble size={32} className="opacity-30" />
                     <p className="text-sm">Brak wiadomości</p>
                     <p className="text-xs">Zacznij pisać aby rozpocząć dyskusję</p>
                   </div>
@@ -1177,7 +1177,7 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
           </div>
         ) : (
           <div className="flex-1 hidden md:flex flex-col items-center justify-center text-muted-foreground gap-3 bg-background">
-            <MessageSquare size={48} className="opacity-20" />
+            <ChatBubble size={48} className="opacity-20" />
             <p className="text-sm">Wybierz dyskusję aby zobaczyć wiadomości</p>
           </div>
         )}
@@ -1340,6 +1340,27 @@ function ChatSearchResults({ messages, query, onImageClick }: {
   );
 }
 
+function renderWithLinks(content: string, isOwn: boolean) {
+  const parts = content.split(/(https?:\/\/[^\s]+)/g);
+  return parts.map((part, i) => {
+    if (/^https?:\/\//.test(part)) {
+      return (
+        <a
+          key={i}
+          href={part}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`underline break-all ${isOwn ? "text-primary-foreground/90 hover:text-primary-foreground" : "text-primary hover:opacity-80"}`}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {part}
+        </a>
+      );
+    }
+    return part;
+  });
+}
+
 function MessageBubble({ msg, isOwn, ownAvatarUrl, onImageClick, receipts, onEdit, onDelete, onReply }: {
   msg: DiscussionMessage;
   isOwn: boolean;
@@ -1450,7 +1471,7 @@ function MessageBubble({ msg, isOwn, ownAvatarUrl, onImageClick, receipts, onEdi
               <div className={`flex flex-col gap-0.5 ${isOwn ? "items-end" : "items-start"}`}>
                 {msg.content && (
                   <div className={`rounded-2xl px-3 py-2 text-sm ${isOwn ? "bg-primary text-primary-foreground" : "bg-background border border-border"}`}>
-                    {msg.content}
+                    {renderWithLinks(msg.content, isOwn)}
                     {msg.editedAt && <span className="text-[10px] opacity-50 ml-1.5">(edytowano)</span>}
                   </div>
                 )}

@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { User, Mail, Lock, Info, Sun, Moon, Monitor, Palette, Image as ImageIcon, Layers, ScrollText, Package, Globe, PictureInPicture, Pencil, X, Eye, EyeOff, Phone, UserCircle, Trash2 } from "@/components/ui/icons";
+import { User, Mail, Lock, Info, Sun, Moon, Monitor, Palette, Image as ImageIcon, Layers, LocalMall, Package, Globe, PushPin, Pencil, X, Eye, EyeOff, Phone, UserCircle, Trash2 } from "@/components/ui/icons";
 import { useTheme, type Theme, type ColorTheme } from "@/lib/theme";
 import { useT, useLang } from "@/lib/i18n";
 import Cropper from "react-easy-crop";
@@ -578,7 +578,7 @@ const COLOR_THEMES: {
               description: t.settings.renderflowModuleDesc,
               icon: (
                 <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center flex-shrink-0">
-                  <PictureInPicture size={18} className="text-white" />
+                  <PushPin size={18} className="text-white" />
                 </div>
               ),
             },
@@ -588,7 +588,7 @@ const COLOR_THEMES: {
               description: t.settings.listsModuleDesc,
               icon: (
                 <div className="w-9 h-9 rounded-xl bg-[#0f766e] flex items-center justify-center flex-shrink-0">
-                  <ScrollText size={18} className="text-white" />
+                  <LocalMall size={18} className="text-white" />
                 </div>
               ),
             },

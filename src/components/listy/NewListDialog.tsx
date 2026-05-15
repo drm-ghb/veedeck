@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   Dialog,
@@ -25,7 +25,8 @@ interface Project {
 export default function NewListDialog() {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
-  const [mode, setMode] = useState<"none" | "project">("none");
+  const [clientTab, setClientTab] = useState<"new" | "existing">("new");
+  const [newClientName, setNewClientName] = useState("");
   const [projects, setProjects] = useState<Project[]>([]);
   const [loadingProjects, setLoadingProjects] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
@@ -34,6 +35,12 @@ export default function NewListDialog() {
 
   const router = useRouter();
   const t = useT();
+
+  useEffect(() => {
+    if (open && clientTab === "existing" && projects.length === 0) {
+      fetchProjects();
+    }
+  }, [open, clientTab]);
 
   async function fetchProjects() {
     setLoadingProjects(true);
@@ -53,29 +60,32 @@ export default function NewListDialog() {
     }
   }
 
-  function handleModeChange(newMode: "none" | "project") {
-    setMode(newMode);
-    setSelectedProject(null);
-    setSearch("");
-    if (newMode === "project" && projects.length === 0) {
-      fetchProjects();
-    }
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleSubmit() {
     if (!name.trim()) return;
-    if (mode === "project" && !selectedProject) return;
-
     setLoading(true);
     try {
+      let projectId: string | null = null;
+
+      if (clientTab === "new" && newClientName.trim()) {
+        const projRes = await fetch("/api/projects", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: newClientName.trim(),
+            clientName: newClientName.trim(),
+          }),
+        });
+        if (!projRes.ok) throw new Error();
+        const proj = await projRes.json();
+        projectId = proj.id;
+      } else if (clientTab === "existing" && selectedProject) {
+        projectId = selectedProject.id;
+      }
+
       const res = await fetch("/api/lists", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: name.trim(),
-          projectId: selectedProject?.id ?? null,
-        }),
+        body: JSON.stringify({ name: name.trim(), projectId }),
       });
 
       if (!res.ok) throw new Error();
@@ -94,7 +104,8 @@ export default function NewListDialog() {
     setOpen(val);
     if (!val) {
       setName("");
-      setMode("none");
+      setClientTab("new");
+      setNewClientName("");
       setSelectedProject(null);
       setSearch("");
     }
@@ -108,8 +119,6 @@ export default function NewListDialog() {
     );
   });
 
-  const canSubmit = name.trim() && (mode === "none" || selectedProject !== null);
-
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger render={<Button className="flex items-center gap-2 sm:self-start" />}>
@@ -121,48 +130,69 @@ export default function NewListDialog() {
           <DialogTitle>{t.listy.newList}</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <div className="space-y-5">
+          {/* List name */}
           <div className="space-y-1.5">
             <Label htmlFor="name">{t.listy.listName}</Label>
             <Input
               id="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && !loading && name.trim() && handleSubmit()}
               placeholder={t.listy.listNamePlaceholder}
               required
               autoFocus
             />
           </div>
 
-          <div className="space-y-2">
-            <Label>{t.listy.assignProject}</Label>
-            <div className="flex gap-2">
+          {/* Assign to client */}
+          <div className="space-y-3">
+            <Label>Przypisz do klienta</Label>
+
+            {/* Tabs */}
+            <div className="flex gap-1 bg-muted rounded-lg p-1">
               <button
                 type="button"
-                onClick={() => handleModeChange("none")}
-                className={`flex-1 text-sm py-2 px-3 rounded-lg border font-medium transition-colors ${
-                  mode === "none"
-                    ? "bg-primary text-white border-primary"
-                    : "border-border text-muted-foreground hover:text-foreground hover:border-foreground/30"
+                onClick={() => { setClientTab("new"); setSelectedProject(null); setSearch(""); }}
+                className={`flex-1 text-sm py-1.5 rounded-md font-medium transition-colors ${
+                  clientTab === "new"
+                    ? "bg-background shadow-sm text-foreground"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                {t.listy.noProject}
+                Nowy klient
               </button>
               <button
                 type="button"
-                onClick={() => handleModeChange("project")}
-                className={`flex-1 text-sm py-2 px-3 rounded-lg border font-medium transition-colors ${
-                  mode === "project"
-                    ? "bg-primary text-white border-primary"
-                    : "border-border text-muted-foreground hover:text-foreground hover:border-foreground/30"
+                onClick={() => { setClientTab("existing"); setNewClientName(""); }}
+                className={`flex-1 text-sm py-1.5 rounded-md font-medium transition-colors ${
+                  clientTab === "existing"
+                    ? "bg-background shadow-sm text-foreground"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                {t.listy.selectProject}
+                Istniejący klient
               </button>
             </div>
 
-            {mode === "project" && (
-              <div className="space-y-2 pt-1">
+            {/* Tab: Nowy klient */}
+            {clientTab === "new" && (
+              <div className="space-y-1.5">
+                <Input
+                  value={newClientName}
+                  onChange={(e) => setNewClientName(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && !loading && name.trim() && handleSubmit()}
+                  placeholder="Nazwa klienta (opcjonalnie)"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Pozostaw puste, aby utworzyć listę bez przypisanego klienta.
+                </p>
+              </div>
+            )}
+
+            {/* Tab: Istniejący klient */}
+            {clientTab === "existing" && (
+              <div className="space-y-2">
                 {selectedProject ? (
                   <div className="flex items-center justify-between px-3 py-2.5 rounded-lg bg-muted border border-border">
                     <div className="min-w-0">
@@ -228,11 +258,11 @@ export default function NewListDialog() {
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               {t.common.cancel}
             </Button>
-            <Button type="submit" disabled={loading || !canSubmit}>
+            <Button type="button" onClick={handleSubmit} disabled={loading || !name.trim()}>
               {loading ? t.listy.creating : t.listy.createList}
             </Button>
           </div>
-        </form>
+        </div>
       </DialogContent>
     </Dialog>
   );

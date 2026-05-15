@@ -24,6 +24,7 @@ const securityHeaders = [
       "media-src 'self' blob: https://utfs.io",
       "connect-src 'self' https: wss:",
       "font-src 'self' data:",
+      "frame-src 'self' https://utfs.io",
       "frame-ancestors 'self'",
       "base-uri 'self'",
       "form-action 'self'",

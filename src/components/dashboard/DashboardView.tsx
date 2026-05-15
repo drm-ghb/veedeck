@@ -5,14 +5,16 @@ import { useState, useEffect } from "react";
 import { pusherClient } from "@/lib/pusher";
 import {
   Users,
-  PictureInPicture,
-  ScrollText,
+  Pin,
+  LocalMall,
   Package,
   MapPin,
   Pin,
   Bell,
   RotateCcw,
-  MessageSquare,
+  ChatBubble,
+  Comment,
+  PushPin,
   HelpCircle,
   ChevronRight,
   Layers,
@@ -40,6 +42,8 @@ interface RecentProject {
   renderCount: number;
   lastRenderUrl: string | null;
   updatedAt: string;
+  unreadPins: number;
+  unreadChat: number;
 }
 
 interface Pin {
@@ -375,7 +379,7 @@ export default function DashboardView({
                 className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border hover:border-primary/30 hover:bg-primary/5 transition-colors"
               >
                 <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                  <PictureInPicture size={16} className="text-primary" />
+                  <PushPin size={16} className="text-primary" />
                 </div>
                 <div className="min-w-0">
                   <p className="text-xl font-bold leading-none">{stats.renderflowProjects}</p>
@@ -390,7 +394,7 @@ export default function DashboardView({
                 className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border hover:border-primary/30 hover:bg-primary/5 transition-colors"
               >
                 <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                  <ScrollText size={16} className="text-primary" />
+                  <LocalMall size={16} className="text-primary" />
                 </div>
                 <div className="min-w-0">
                   <p className="text-xl font-bold leading-none">{stats.lists}</p>
@@ -447,7 +451,7 @@ export default function DashboardView({
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={project.lastRenderUrl} alt={project.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                       ) : (
-                        <PictureInPicture size={28} className="text-muted-foreground/30" />
+                        <PushPin size={28} className="text-muted-foreground/30" />
                       )}
                     </div>
                     <div className="p-3">
@@ -460,7 +464,23 @@ export default function DashboardView({
                         <span className="text-xs text-muted-foreground">
                           {project.renderCount > 0 ? `${project.renderCount} render${project.renderCount === 1 ? "" : "y"}` : "Brak renderów"}
                         </span>
-                        <span className="text-xs text-muted-foreground">{timeAgo(project.updatedAt)}</span>
+                        <div className="flex items-center gap-1.5">
+                          {project.unreadPins > 0 && (
+                            <span className="flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300">
+                              <MapPin size={9} />
+                              {project.unreadPins}
+                            </span>
+                          )}
+                          {project.unreadChat > 0 && (
+                            <span className="flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">
+                              <ChatBubble size={9} />
+                              {project.unreadChat}
+                            </span>
+                          )}
+                          {project.unreadPins === 0 && project.unreadChat === 0 && (
+                            <span className="text-xs text-muted-foreground">{timeAgo(project.updatedAt)}</span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </Link>
@@ -479,7 +499,7 @@ export default function DashboardView({
             </div>
             {recentLists.length === 0 ? (
               <div className="rounded-xl border border-dashed border-border bg-card p-6 text-center">
-                <ScrollText size={28} className="mx-auto mb-2 text-muted-foreground/40" />
+                <LocalMall size={28} className="mx-auto mb-2 text-muted-foreground/40" />
                 <p className="text-sm text-muted-foreground">Brak list zakupowych</p>
               </div>
             ) : (
@@ -487,7 +507,7 @@ export default function DashboardView({
                 {recentLists.map((list) => (
                   <Link key={list.id} href={`/listy/${list.slug ?? list.id}`} className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors">
                     <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                      <ScrollText size={18} className="text-primary" />
+                      <LocalMall size={18} className="text-primary" />
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium truncate flex items-center gap-1.5">
@@ -602,7 +622,7 @@ export default function DashboardView({
                         return (
                           <div key={d.id} className="flex items-center hover:bg-muted/50 transition-colors">
                             <Link href={`/projects/${d.projectId}/renders/${d.renderId}`} onClick={() => markDiscussionViewed(d.id)} className="flex items-start gap-3 px-4 py-3 flex-1 min-w-0">
-                              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5"><MessageSquare size={15} className="text-primary" /></div>
+                              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5"><Comment size={15} className="text-primary" /></div>
                               <div className="min-w-0 flex-1">
                                 <p className="text-sm font-medium truncate">{d.content}</p>
                                 <p className="text-xs text-muted-foreground truncate">{d.author} · {d.renderName} · {d.projectTitle}</p>
@@ -618,7 +638,7 @@ export default function DashboardView({
                         return (
                           <div key={r.id} className="flex items-center hover:bg-muted/50 transition-colors">
                             <Link href={`/listy/${r.listSlug ?? r.listId}?product=${r.productId}`} onClick={() => markListReplyViewed(r)} className="flex items-start gap-3 px-4 py-3 flex-1 min-w-0">
-                              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5"><ScrollText size={15} className="text-primary" /></div>
+                              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5"><Comment size={15} className="text-primary" /></div>
                               <div className="min-w-0 flex-1">
                                 <p className="text-sm font-medium truncate">{r.content}</p>
                                 <p className="text-xs text-muted-foreground truncate">{r.author} · {r.productName} · {r.listName}</p>
@@ -634,7 +654,7 @@ export default function DashboardView({
                         return (
                           <div key={r.id} className="flex items-center hover:bg-muted/50 transition-colors">
                             <Link href={`/projects/${r.projectId}/renders/${r.renderId}`} onClick={() => markRenderReplyViewed(r)} className="flex items-start gap-3 px-4 py-3 flex-1 min-w-0">
-                              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5"><MessageSquare size={15} className="text-primary" /></div>
+                              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5"><Comment size={15} className="text-primary" /></div>
                               <div className="min-w-0 flex-1">
                                 <p className="text-sm font-medium truncate">{r.content}</p>
                                 <p className="text-xs text-muted-foreground truncate">{r.author} · {r.renderName} · {r.projectTitle}</p>
@@ -649,7 +669,7 @@ export default function DashboardView({
                       return (
                         <div key={m.id} className="flex items-center hover:bg-muted/50 transition-colors">
                           <Link href={`/listy/${m.listSlug ?? m.listId}?product=${m.productId}`} onClick={() => markListMessageViewed(m.id)} className="flex items-start gap-3 px-4 py-3 flex-1 min-w-0">
-                            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5"><ScrollText size={15} className="text-primary" /></div>
+                            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5"><Comment size={15} className="text-primary" /></div>
                             <div className="min-w-0 flex-1">
                               <p className="text-sm font-medium truncate">{m.content}</p>
                               <p className="text-xs text-muted-foreground truncate">{m.author} · {m.productName} · {m.listName}</p>

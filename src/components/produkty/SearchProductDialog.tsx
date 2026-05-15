@@ -1,6 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
+
+const CATEGORY_LABELS: Record<string, string> = {
+  OSWIETLENIE: "Oświetlenie",
+  AKCESORIA: "Akcesoria",
+  MEBLE: "Meble",
+  ARMATURA: "Armatura",
+  OKLADZINY_SCIENNE: "Okładziny ścienne",
+  PODLOGA: "Podłoga",
+};
 import { useProductSearch } from "./useProductSearch";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -49,6 +58,7 @@ export function SearchProductDialog({ open, onOpenChange, onSelectProduct }: Pro
   useEffect(() => {
     if (open) {
       setMobileFiltersOpen(window.innerWidth < 768);
+      search.refetchFilters();
     }
   }, [open]);
 
@@ -124,7 +134,7 @@ export function SearchProductDialog({ open, onOpenChange, onSelectProduct }: Pro
                       />
                     )}
                     {search.availableFilters.categories
-                      .filter((cat) => cat.toLowerCase().includes(filterSearch.categories.toLowerCase()))
+                      .filter((cat) => (CATEGORY_LABELS[cat] ?? cat).toLowerCase().includes(filterSearch.categories.toLowerCase()))
                       .map((cat) => (
                         <div key={cat} className="flex items-center gap-2">
                           <Checkbox
@@ -138,7 +148,12 @@ export function SearchProductDialog({ open, onOpenChange, onSelectProduct }: Pro
                             htmlFor={`cat-${cat}`}
                             className="text-sm cursor-pointer flex-1"
                           >
-                            {cat}
+                            {CATEGORY_LABELS[cat] ?? cat}
+                            {!!search.availableFilters?.categoryCounts?.[cat] && (
+                              <span className="text-muted-foreground ml-1">
+                                ({search.availableFilters.categoryCounts[cat]})
+                              </span>
+                            )}
                           </label>
                         </div>
                       ))}

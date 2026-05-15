@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X, LayoutDashboard, Users, ScrollText, Package, Settings, LogOut, HelpCircle, Sun, Moon, CheckCircle, CalendarDays, NotebookText, PictureInPicture, MessageSquare } from "@/components/ui/icons";
+import { Menu, X, LayoutDashboard, Users, LocalMall, Package, Settings, LogOut, HelpCircle, Sun, Moon, CheckCircle, CalendarDays, NotebookText, PushPin, ChatBubble } from "@/components/ui/icons";
 import { signOut } from "next-auth/react";
 import { useTheme } from "@/lib/theme";
 import { useT } from "@/lib/i18n";
@@ -27,12 +27,12 @@ export default function MobileMenu({ userName, logoUrl, hiddenModules = [] }: Mo
   const navItems = [
     { label: t.nav.dashboard, href: "/dashboard", icon: <LayoutDashboard size={18} />, slug: null },
     { label: t.nav.projects, href: "/klienci", icon: <Users size={18} />, slug: null },
-    { label: t.nav.renderflow, href: "/renderflow", icon: <PictureInPicture size={18} />, slug: "renderflow" },
-    { label: t.nav.lists, href: "/listy", icon: <ScrollText size={18} />, slug: "listy" },
+    { label: t.nav.renderflow, href: "/renderflow", icon: <PushPin size={18} />, slug: "renderflow" },
+    { label: t.nav.lists, href: "/listy", icon: <LocalMall size={18} />, slug: "listy" },
     { label: t.nav.products, href: "/produkty", icon: <Package size={18} />, slug: "produkty" },
     { label: t.nav.calendar, href: "/kalendarz", icon: <CalendarDays size={18} />, slug: null },
     { label: t.nav.notes, href: "/notatnik", icon: <NotebookText size={18} />, slug: null },
-    { label: t.nav.discussions, href: "/dyskusje", icon: <MessageSquare size={18} />, slug: null },
+    { label: t.nav.discussions, href: "/dyskusje", icon: <ChatBubble size={18} />, slug: null },
   ];
 
   // Close on route change
@@ -113,7 +113,7 @@ export default function MobileMenu({ userName, logoUrl, hiddenModules = [] }: Mo
                 }`}
               >
                 <span className="w-5 flex items-center justify-center flex-shrink-0">
-                  {item.icon ?? <PictureInPicture size={18} />}
+                  {item.icon ?? <PushPin size={18} />}
                 </span>
                 {item.label}
               </Link>

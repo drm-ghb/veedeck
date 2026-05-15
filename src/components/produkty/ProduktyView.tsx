@@ -393,17 +393,10 @@ function ProductCard({
 
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
-            <p className="font-medium text-sm truncate">{product.name}</p>
-            {product.manufacturer && (
-              <p className="text-xs text-muted-foreground truncate">{product.manufacturer}</p>
-            )}
-          </div>
-          {product.category && (
-            <span className="shrink-0 text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
-              {CATEGORY_LABELS[product.category] ?? product.category}
-            </span>
+        <div className="min-w-0">
+          <p className="font-medium text-sm truncate">{product.name}</p>
+          {product.manufacturer && (
+            <p className="text-xs text-muted-foreground truncate">{product.manufacturer}</p>
           )}
         </div>
 
@@ -422,6 +415,13 @@ function ProductCard({
           )}
         </div>
       </div>
+
+      {/* Category badge */}
+      {product.category && (
+        <span className="self-center shrink-0 text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+          {CATEGORY_LABELS[product.category] ?? product.category}
+        </span>
+      )}
 
       {/* Actions */}
       <div className="flex items-center gap-1 shrink-0">

@@ -11,7 +11,7 @@ import ClientDiscussionView from "@/components/dyskusje/ClientDiscussionView";
 import ShareListClient from "@/components/listy/ShareListClient";
 import ModuleGuideSlider from "@/components/share/ModuleGuideSlider";
 import { getRoomIcon } from "@/lib/roomIcons";
-import { ChevronLeft, ChevronRight, MessageSquare, FileText, Folder, User, Mail, Lock, Info, ScrollText, Pencil, X, Eye, EyeOff, UserCircle } from "@/components/ui/icons";
+import { ChevronLeft, ChevronRight, ChatBubble, FileText, Folder, User, Mail, Lock, Info, LocalMall, Pencil, X, Eye, EyeOff, UserCircle } from "@/components/ui/icons";
 import Image from "next/image";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -504,7 +504,7 @@ export default function ClientProjectPage() {
                   className="group text-left bg-card border border-border rounded-2xl p-5 shadow-sm hover:shadow-[0_4px_16px_rgba(25,33,61,0.2)] hover:border-primary/30 transition-all"
                 >
                   <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
-                    <ScrollText size={28} className="text-primary" />
+                    <LocalMall size={28} className="text-primary" />
                   </div>
                   <p className="font-semibold text-gray-800 dark:text-gray-100 truncate">{list.name}</p>
                 </button>
@@ -818,7 +818,7 @@ function RenderCard({ render, hideCommentCount, onClick }: { render: Render; hid
         </div>
         {!hideCommentCount && (
           <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 flex items-center gap-1">
-            <MessageSquare size={11} />{render.comments.length > 0 ? `${render.comments.length} uwag` : "Brak uwag"}
+            <ChatBubble size={11} />{render.comments.length > 0 ? `${render.comments.length} uwag` : "Brak uwag"}
           </p>
         )}
       </div>

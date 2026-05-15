@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
@@ -12,7 +12,7 @@ import ShareNavbar from "@/components/share/ShareNavbar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { getRoomIcon } from "@/lib/roomIcons";
-import { ChevronLeft, ChevronRight, FileText, MessageSquare, UserRound, Sun, Moon, Monitor, Lock, Folder, FolderPlus } from "@/components/ui/icons";
+import { Check, ChevronLeft, ChevronRight, FileText, LayoutGrid, ChatBubble, UserRound, Sun, Moon, Monitor, Lock, Folder, FolderPlus } from "@/components/ui/icons";
 import { useTheme, type Theme } from "@/lib/theme";
 import { pusherClient } from "@/lib/pusher";
 import { toast } from "sonner";
@@ -100,6 +100,12 @@ interface Project {
   colorTheme: string;
 }
 
+const SHARE_GRID_COLS_CLASS: Record<number, string> = {
+  3: "grid-cols-2 md:grid-cols-3",
+  4: "grid-cols-2 md:grid-cols-4",
+  5: "grid-cols-2 sm:grid-cols-3 md:grid-cols-5",
+};
+
 export default function SharePage() {
   const { token } = useParams<{ token: string }>();
   const router = useRouter();
@@ -131,6 +137,20 @@ export default function SharePage() {
   const [selectedRender, setSelectedRender] = useState<Render | null>(null);
   const [pendingRequests, setPendingRequests] = useState<Set<string>>(new Set());
   const [pendingRestoreRequests, setPendingRestoreRequests] = useState<Set<string>>(new Set());
+
+  // Grid cols for room/folder render view
+  const [gridCols, setClientGridCols] = useState<3 | 4 | 5>(() => {
+    if (typeof window === "undefined") return 3;
+    const n = parseInt(localStorage.getItem("share-grid-cols") ?? "3");
+    return ([3, 4, 5] as (3 | 4 | 5)[]).includes(n as 3 | 4 | 5) ? (n as 3 | 4 | 5) : 3;
+  });
+  const [gridOpen, setGridOpen] = useState(false);
+  const gridRef = useRef<HTMLDivElement>(null);
+
+  function setGridCols(n: 3 | 4 | 5) {
+    setClientGridCols(n);
+    localStorage.setItem("share-grid-cols", String(n));
+  }
 
   // Client upload
   const [newFolderName, setNewFolderName] = useState("");
@@ -254,6 +274,15 @@ export default function SharePage() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [project?.id, token]);
+
+  useEffect(() => {
+    if (!gridOpen) return;
+    function onOutside(e: MouseEvent) {
+      if (gridRef.current && !gridRef.current.contains(e.target as Node)) setGridOpen(false);
+    }
+    document.addEventListener("mousedown", onOutside);
+    return () => document.removeEventListener("mousedown", onOutside);
+  }, [gridOpen]);
 
   function updateRenderInState(renderId: string, status: RenderStatus) {
     setProject((prev) => {
@@ -709,6 +738,34 @@ export default function SharePage() {
             </nav>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">{selectedFolder ? selectedFolder.name : selectedRoom.name}</h2>
+              <div className="flex items-center gap-2">
+                {/* Grid cols dropdown */}
+                <div className="relative" ref={gridRef}>
+                  <button
+                    onClick={() => setGridOpen((v) => !v)}
+                    className="p-1.5 rounded-md bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                    title="Układ siatki"
+                  >
+                    <span className="inline-flex items-baseline gap-0.5">
+                      <LayoutGrid size={15} />
+                      <span className="text-[9px] font-bold leading-none">{gridCols}</span>
+                    </span>
+                  </button>
+                  {gridOpen && (
+                    <div className="absolute right-0 top-full mt-1 z-20 bg-popover border border-border rounded-lg shadow-md py-1 min-w-[148px]">
+                      {([3, 4, 5] as const).map((n) => (
+                        <button
+                          key={n}
+                          onClick={() => { setGridCols(n); setGridOpen(false); }}
+                          className={`flex items-center justify-between w-full px-3 py-1.5 text-sm transition-colors hover:bg-muted ${gridCols === n ? "text-foreground font-medium" : "text-muted-foreground"}`}
+                        >
+                          {n} kolumny
+                          {gridCols === n && <Check size={12} />}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               {project.clientCanUpload && (
                 <div className="flex items-center gap-2">
                   {!selectedFolder && (
@@ -775,6 +832,7 @@ export default function SharePage() {
                   />
                 </div>
               )}
+              </div>{/* end flex gap-2 */}
             </div>
             {!hasContent ? (
               <p className="text-gray-400 text-center py-16">Brak plików w tym pomieszczeniu.</p>
@@ -782,7 +840,7 @@ export default function SharePage() {
               folderRenders.length === 0 ? (
                 <p className="text-gray-400 text-center py-16">Brak plików w tym folderze.</p>
               ) : (
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3">
+                <div className={`grid ${SHARE_GRID_COLS_CLASS[gridCols]} gap-2 sm:gap-3`}>
                   {folderRenders.map((render) => (
                     <button key={render.id} onClick={() => { setSelectedRender(render); setView("render"); fetch(`/api/share/${token}/renders/${render.id}/view`, { method: "POST" }); }} className="text-left bg-card border border-border rounded-xl overflow-hidden shadow-sm hover:shadow-[0_4px_16px_rgba(25,33,61,0.2)] hover:border-primary/30 transition-all group">
                       <div className="aspect-video bg-muted overflow-hidden flex items-center justify-center">
@@ -798,7 +856,7 @@ export default function SharePage() {
                           <p className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">{render.name}</p>
                           <span className={`flex-shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${render.status === "ACCEPTED" ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"}`}>{render.status === "ACCEPTED" ? "Zaakceptowany" : "Do weryfikacji"}</span>
                         </div>
-                        {!project.hideCommentCount && <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 flex items-center gap-1"><MessageSquare size={11} />{render.comments.length > 0 ? `${render.comments.length} uwag` : "Brak uwag"}</p>}
+                        {!project.hideCommentCount && <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 flex items-center gap-1"><ChatBubble size={11} />{render.comments.length > 0 ? `${render.comments.length} uwag` : "Brak uwag"}</p>}
                       </div>
                     </button>
                   ))}
@@ -825,7 +883,7 @@ export default function SharePage() {
                 {ungrouped.length > 0 && (
                   <div>
                     {sortedFolders.length > 0 && <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Pozostałe pliki</p>}
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3">
+                    <div className={`grid ${SHARE_GRID_COLS_CLASS[gridCols]} gap-2 sm:gap-3`}>
                       {ungrouped.map((render) => (
                         <button key={render.id} onClick={() => { setSelectedRender(render); setView("render"); fetch(`/api/share/${token}/renders/${render.id}/view`, { method: "POST" }); }} className="text-left bg-card border border-border rounded-xl overflow-hidden shadow-sm hover:shadow-[0_4px_16px_rgba(25,33,61,0.2)] hover:border-primary/30 transition-all group">
                           <div className="aspect-video bg-muted overflow-hidden flex items-center justify-center">
@@ -841,7 +899,7 @@ export default function SharePage() {
                               <p className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">{render.name}</p>
                               <span className={`flex-shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${render.status === "ACCEPTED" ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"}`}>{render.status === "ACCEPTED" ? "Zaakceptowany" : "Do weryfikacji"}</span>
                             </div>
-                            {!project.hideCommentCount && <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 flex items-center gap-1"><MessageSquare size={11} />{render.comments.length > 0 ? `${render.comments.length} uwag` : "Brak uwag"}</p>}
+                            {!project.hideCommentCount && <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 flex items-center gap-1"><ChatBubble size={11} />{render.comments.length > 0 ? `${render.comments.length} uwag` : "Brak uwag"}</p>}
                           </div>
                         </button>
                       ))}

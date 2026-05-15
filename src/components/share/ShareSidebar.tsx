@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { LayoutDashboard, ScrollText, PanelLeftClose, PanelLeftOpen, PictureInPicture, Sun, Moon, HelpCircle, Settings, UserRound, X, CheckCircle, MessageSquare, LogOut } from "@/components/ui/icons";
+import { LayoutDashboard, LocalMall, PanelLeftClose, PanelLeftOpen, PushPin, Sun, Moon, HelpCircle, Settings, UserRound, X, CheckCircle, ChatBubble, LogOut } from "@/components/ui/icons";
 import { signOut } from "next-auth/react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -325,7 +325,7 @@ export default function ShareSidebar({
               className={`w-full ${linkCls(isRenderActive)}`}
             >
               <span className="flex-shrink-0 w-5 flex items-center justify-center">
-                <PictureInPicture size={18} />
+                <PushPin size={18} />
               </span>
               {showLabels && t.share.renderflow}
             </button>
@@ -337,7 +337,7 @@ export default function ShareSidebar({
               onClick={() => setMobileSidebarOpen(false)}
             >
               <span className="flex-shrink-0 w-5 flex items-center justify-center">
-                <PictureInPicture size={18} />
+                <PushPin size={18} />
               </span>
               {showLabels && t.share.renderflow}
             </Link>
@@ -352,7 +352,7 @@ export default function ShareSidebar({
               className={`w-full ${linkCls(isListyActive)}`}
             >
               <span className="flex-shrink-0 w-5 flex items-center justify-center">
-                <ScrollText size={18} />
+                <LocalMall size={18} />
               </span>
               {showLabels && t.share.lists}
             </button>
@@ -364,7 +364,7 @@ export default function ShareSidebar({
               onClick={() => setMobileSidebarOpen(false)}
             >
               <span className="flex-shrink-0 w-5 flex items-center justify-center">
-                <ScrollText size={18} />
+                <LocalMall size={18} />
               </span>
               {showLabels && t.share.lists}
             </Link>
@@ -379,7 +379,7 @@ export default function ShareSidebar({
             className={`w-full ${linkCls(isDyskusjeActive)}`}
           >
             <span className="flex-shrink-0 w-5 flex items-center justify-center relative">
-              <MessageSquare size={18} />
+              <ChatBubble size={18} />
               {discussionUnread > 0 && isCollapsed && !mobileSidebarOpen && (
                 <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-0.5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center leading-none">
                   {discussionUnread > 99 ? "99+" : discussionUnread}
@@ -401,7 +401,7 @@ export default function ShareSidebar({
             onClick={() => setMobileSidebarOpen(false)}
           >
             <span className="flex-shrink-0 w-5 flex items-center justify-center relative">
-              <MessageSquare size={18} />
+              <ChatBubble size={18} />
               {discussionUnread > 0 && isCollapsed && !mobileSidebarOpen && (
                 <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-0.5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center leading-none">
                   {discussionUnread > 99 ? "99+" : discussionUnread}

@@ -4,7 +4,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, ChevronDown, ChevronUp, Plus, ExternalLink, Minus, MoreHorizontal, Pencil, Trash2, GripVertical, FileDown, Sheet, ArrowDownUp, Eye, EyeOff, Check, X, RotateCcw, FolderInput, Wallet, AlertCircle, DollarSign, Copy } from "@/components/ui/icons";
+import { ChevronLeft, ChevronDown, ChevronUp, Plus, ExternalLink, Minus, MoreHorizontal, Pencil, Trash2, GripVertical, FileDown, Sheet, ArrowDownUp, Eye, EyeOff, Check, X, RotateCcw, FolderInput, Wallet, AlertCircle, DollarSign, Copy, Comment } from "@/components/ui/icons";
 import ProductCommentPanel from "./ProductCommentPanel";
 import { pusherClient } from "@/lib/pusher";
 import { Button } from "@/components/ui/button";
@@ -669,7 +669,7 @@ function ProductRow({
             <a href={product.url} target="_blank" rel="noopener noreferrer" className="w-7 h-7 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors" title="Otwórz produkt"><ExternalLink size={14} /></a>
           ) : <span className="w-7" />}
           <button onClick={onOpenComments} className="relative flex items-center justify-center w-7 h-7 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors" title="Komentarze">
-            <svg viewBox="0 0 24 24" className={`w-[15px] h-[15px] transition-colors ${unread ? "text-blue-500" : ""}`} fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>
+            <Comment size={15} className={`transition-colors ${unread ? "text-blue-500" : ""}`} />
             {commentCount > 0 && <span className={`absolute -top-1 -right-1 min-w-[14px] h-[14px] rounded-full text-white text-[9px] font-bold flex items-center justify-center px-0.5 leading-none transition-colors ${unread ? "bg-primary" : "bg-muted-foreground/40"}`}>{(unread ? unreadCount : commentCount) > 99 ? "99+" : (unread ? unreadCount : commentCount)}</span>}
           </button>
           {dropdown}
@@ -782,7 +782,7 @@ function ProductRow({
               )}
             </div>
             <button onClick={onOpenComments} className="relative flex items-center justify-center w-7 h-7 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
-              <svg viewBox="0 0 24 24" className={`w-[14px] h-[14px] transition-colors ${unread ? "text-blue-500" : ""}`} fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>
+              <Comment size={14} className={`transition-colors ${unread ? "text-blue-500" : ""}`} />
               {commentCount > 0 && <span className={`absolute -top-1 -right-1 min-w-[14px] h-[14px] rounded-full text-white text-[9px] font-bold flex items-center justify-center px-0.5 leading-none ${unread ? "bg-primary" : "bg-muted-foreground/40"}`}>{(unread ? unreadCount : commentCount) > 99 ? "99+" : (unread ? unreadCount : commentCount)}</span>}
             </button>
           </div>

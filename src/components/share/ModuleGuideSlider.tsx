@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import {
   ChevronLeft, ChevronRight, X,
-  PictureInPicture, ScrollText, MessageSquare, ChatBubble,
+  PushPin, LocalMall, Comment, ChatBubble,
   Pin, Check, ExternalLink, History,
   Paperclip, Mic, CornerDownLeft,
 } from "@/components/ui/icons";
@@ -33,7 +33,7 @@ const ALL_MODULES: ModuleInfo[] = [
   {
     id: "renderflow",
     name: "RenderFlow",
-    icon: <PictureInPicture size={28} />,
+    icon: <PushPin size={28} />,
     shortDesc: "Przeglądaj wizualizacje i pliki przygotowane przez projektanta. Komentuj i akceptuj gotowe elementy.",
     fullDesc: {
       general:
@@ -63,7 +63,7 @@ const ALL_MODULES: ModuleInfo[] = [
   {
     id: "listy",
     name: "Listy zakupowe",
-    icon: <ScrollText size={28} />,
+    icon: <LocalMall size={28} />,
     shortDesc: "Sprawdzaj produkty i meble dobrane do Twojego projektu. Zatwierdź lub skomentuj każdy element.",
     fullDesc: {
       general:
@@ -85,7 +85,7 @@ const ALL_MODULES: ModuleInfo[] = [
       features: [
         { icon: <Check size={18} />, label: "Zatwierdź", desc: "Zaakceptuj produkt gdy Ci odpowiada" },
         { icon: <X size={18} />, label: "Odrzuć", desc: "Oznacz produkt do zmiany lub zastąpienia" },
-        { icon: <MessageSquare size={18} />, label: "Komentarz", desc: "Zadaj pytanie lub dodaj uwagę do konkretnego produktu" },
+        { icon: <Comment size={18} />, label: "Komentarz", desc: "Zadaj pytanie lub dodaj uwagę do konkretnego produktu" },
         { icon: <ExternalLink size={18} />, label: "Link", desc: "Otwórz produkt bezpośrednio w sklepie internetowym" },
       ],
     },
@@ -93,7 +93,7 @@ const ALL_MODULES: ModuleInfo[] = [
   {
     id: "dyskusje",
     name: "Dyskusje",
-    icon: <MessageSquare size={28} />,
+    icon: <ChatBubble size={28} />,
     shortDesc: "Bezpośredni czat z projektantem. Zadawaj pytania, przesyłaj zdjęcia i śledź historię ustaleń.",
     fullDesc: {
       general:

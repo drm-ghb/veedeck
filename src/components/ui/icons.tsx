@@ -68,17 +68,36 @@ export function PictureInPicture({ size = 20, className, color, style }: IconPro
   );
 }
 export const ScrollText       = icon("list_alt");
+export const LocalMall        = icon("local_mall");
 export const Package          = icon("package_2");
 export const CalendarDays     = icon("calendar_month");
 export const NotebookText     = icon("note_stack");
 export const NotebookPen      = icon("note_stack_add");
 export const MessageSquare    = icon("forum");
-export const ChatBubble       = icon("chat");
+export const ChatBubble       = icon("chat_bubble");
+export const Comment          = icon("comment");
 export const CheckSquare      = icon("check_box");
 export const Columns3         = icon("view_column");
 
 // ── Pins ───────────────────────────────────────────────────────────────────
 export const Pin              = icon("keep");
+export function PushPin({ size = 20, className, color, style }: IconProps): ReactElement {
+  const px = typeof size === "number" ? size : parseInt(size as string, 10) || 20;
+  return (
+    <svg
+      width={px}
+      height={px}
+      viewBox="-22 -22 228 229"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      aria-hidden="true"
+      style={{ color: color ?? undefined, flexShrink: 0, ...style }}
+    >
+      <path d="M121.728 122.988L162.007 82.6681C166.445 78.2248 163.239 70.6362 156.959 70.7215L146.549 70.8628L119.786 71.2261C119.236 71.2336 118.707 71.014 118.324 70.6191L86.1743 37.4878L58.6215 8.66333C55.9075 5.82403 51.389 5.77308 48.6117 8.55045L8.55019 48.6119C5.84554 51.3166 5.81265 55.6914 8.47633 58.4364L36.4243 87.2378L68.6112 120.408C68.9724 120.78 69.1749 121.278 69.1759 121.796L69.2485 158.623C69.2607 164.855 76.7967 167.965 81.2007 163.557L121.728 122.988ZM121.728 122.988L177.228 178.488" stroke="currentColor" strokeWidth="13" strokeLinecap="round"/>
+    </svg>
+  );
+}
 export const PinOff           = icon("keep_off");
 export const MapPin           = icon("location_on");
 

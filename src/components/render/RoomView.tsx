@@ -2,8 +2,8 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useViewPreference } from "@/hooks/useViewPreference";
-import { ArchiveRestore, CopyCheck, Eye, FileText, Folder, LayoutGrid, List, Pin, Trash2, GripVertical, Upload } from "@/components/ui/icons";
+import { useViewPreference, useGridCols } from "@/hooks/useViewPreference";
+import { ArchiveRestore, Check, CopyCheck, Eye, FileText, Folder, LayoutGrid, List, Pin, Trash2, GripVertical, Upload } from "@/components/ui/icons";
 import { useUploadThing } from "@/lib/uploadthing-client";
 import {
   DndContext,
@@ -65,15 +65,33 @@ interface RoomViewProps {
   archivedFolders: ArchivedFolder[];
 }
 
+const GRID_COLS_CLASS: Record<number, string> = {
+  3: "grid-cols-1 md:grid-cols-2 lg:grid-cols-3",
+  4: "grid-cols-2 md:grid-cols-3 lg:grid-cols-4",
+  5: "grid-cols-2 sm:grid-cols-3 lg:grid-cols-5",
+};
+
 export default function RoomView({ projectId, roomId, renders, archivedRenders, folders, archivedFolders }: RoomViewProps) {
   const [tab, setTab] = useState<"active" | "archived">("active");
   const [viewMode, setViewMode] = useViewPreference("renderflow-room", "grid");
+  const [gridCols, setGridCols] = useGridCols("renderflow-room");
+  const [gridOpen, setGridOpen] = useState(false);
+  const gridRef = useRef<HTMLDivElement>(null);
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkLoading, setBulkLoading] = useState(false);
   const [moveOpen, setMoveOpen] = useState(false);
   const [localFolders, setLocalFolders] = useState(folders);
   useEffect(() => { setLocalFolders(folders); }, [folders]);
+
+  useEffect(() => {
+    if (!gridOpen) return;
+    function onOutside(e: MouseEvent) {
+      if (gridRef.current && !gridRef.current.contains(e.target as Node)) setGridOpen(false);
+    }
+    document.addEventListener("mousedown", onOutside);
+    return () => document.removeEventListener("mousedown", onOutside);
+  }, [gridOpen]);
   const [isDragOver, setIsDragOver] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const dragCounterRef = useRef(0);
@@ -300,12 +318,32 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
               )}
             </button>
           <div className="flex items-center gap-0.5 bg-muted rounded-md p-0.5">
-            <button
-              onClick={() => setViewMode("grid")}
-              className={`p-1.5 rounded transition-colors ${viewMode === "grid" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
-            >
-              <LayoutGrid size={15} />
-            </button>
+            <div className="relative" ref={gridRef}>
+              <button
+                onClick={() => { setViewMode("grid"); setGridOpen((v) => !v); }}
+                className={`p-1.5 rounded transition-colors ${viewMode === "grid" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                title="Układ siatki"
+              >
+                <span className="inline-flex items-baseline gap-0.5">
+                  <LayoutGrid size={15} />
+                  {viewMode === "grid" && <span className="text-[9px] font-bold leading-none">{gridCols}</span>}
+                </span>
+              </button>
+              {gridOpen && (
+                <div className="absolute right-0 top-full mt-1 z-20 bg-popover border border-border rounded-lg shadow-md py-1 min-w-[148px]">
+                  {([3, 4, 5] as const).map((n) => (
+                    <button
+                      key={n}
+                      onClick={() => { setGridCols(n); setViewMode("grid"); setGridOpen(false); }}
+                      className={`flex items-center justify-between w-full px-3 py-1.5 text-sm transition-colors hover:bg-muted ${gridCols === n && viewMode === "grid" ? "text-foreground font-medium" : "text-muted-foreground"}`}
+                    >
+                      {n} kolumny
+                      {gridCols === n && viewMode === "grid" && <Check size={12} />}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
             <button
               onClick={() => setViewMode("list")}
               className={`p-1.5 rounded transition-colors ${viewMode === "list" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
@@ -347,7 +385,7 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
                   </p>
                 )}
                 {viewMode === "grid" ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4">
+                  <div className={`grid ${GRID_COLS_CLASS[gridCols]} gap-2 sm:gap-4`}>
                     {ungrouped.map((render) => {
                       const isSelected = selectedIds.has(render.id);
                       const cardContent = (
@@ -493,7 +531,7 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
               {archivedFolders.length > 0 && (
                 <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Pliki</p>
               )}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4">
+              <div className={`grid ${GRID_COLS_CLASS[gridCols]} gap-2 sm:gap-4`}>
                 {archivedRenders.map((render) => (
                   <Card key={render.id} className="overflow-hidden opacity-60">
                     <div className="aspect-video bg-muted overflow-hidden flex items-center justify-center">

@@ -42,7 +42,7 @@ export default async function DashboardPage() {
   const activeProjectCount = allProjects.length;
   const projectMap = new Map(allProjects.map((p) => [p.id, p]));
 
-  const [recentProjects, recentLists] = await Promise.all([prisma.project.findMany({
+  const [recentProjectsCandidates, recentLists] = await Promise.all([prisma.project.findMany({
     where: { userId, archived: false, modules: { has: "renderflow" } },
     select: {
       id: true,
@@ -59,8 +59,7 @@ export default async function DashboardPage() {
       },
       _count: { select: { renders: { where: { archived: false } } } },
     },
-    orderBy: [{ pinned: "desc" }, { updatedAt: "desc" }],
-    take: 3,
+    orderBy: { updatedAt: "desc" },
   }),
 
   prisma.shoppingList.findMany({
@@ -269,6 +268,32 @@ export default async function DashboardPage() {
       }),
     ]);
 
+  // Compute per-project unread counts from already-fetched data
+  const projectUnreadPins = new Map<string, number>();
+  const projectUnreadChat = new Map<string, number>();
+
+  for (const pin of pins) {
+    const pid = pin.render.project.id;
+    projectUnreadPins.set(pid, (projectUnreadPins.get(pid) ?? 0) + 1);
+  }
+  for (const d of renderDiscussions) {
+    const pid = d.render.project.id;
+    projectUnreadChat.set(pid, (projectUnreadChat.get(pid) ?? 0) + 1);
+  }
+  for (const r of renderReplies) {
+    const pid = r.comment.render.project.id;
+    projectUnreadChat.set(pid, (projectUnreadChat.get(pid) ?? 0) + 1);
+  }
+
+  // Sort by total unread DESC, take top 3
+  const recentProjects = [...recentProjectsCandidates]
+    .sort((a, b) => {
+      const totalA = (projectUnreadPins.get(a.id) ?? 0) + (projectUnreadChat.get(a.id) ?? 0);
+      const totalB = (projectUnreadPins.get(b.id) ?? 0) + (projectUnreadChat.get(b.id) ?? 0);
+      return totalB - totalA;
+    })
+    .slice(0, 3);
+
   const todayEventsFormatted = todayEvents.map((e) => ({
     id: e.id,
     title: e.title,
@@ -297,6 +322,8 @@ export default async function DashboardPage() {
         renderCount: p._count.renders,
         lastRenderUrl: p.renders[0]?.fileUrl ?? null,
         updatedAt: p.updatedAt.toISOString(),
+        unreadPins: projectUnreadPins.get(p.id) ?? 0,
+        unreadChat: projectUnreadChat.get(p.id) ?? 0,
       }))}
       pins={pins.map((c) => ({
         id: c.id,

@@ -63,3 +63,20 @@ export function useViewPreference(
 
   return [view, updateView];
 }
+
+export function useGridCols(key: string): [3 | 4 | 5, (n: 3 | 4 | 5) => void] {
+  const localKey = `grid-cols-${key}`;
+  const [cols, setCols] = useState<3 | 4 | 5>(() => {
+    if (typeof window === "undefined") return 3;
+    const saved = parseInt(localStorage.getItem(localKey) ?? "3");
+    return [3, 4, 5].includes(saved) ? (saved as 3 | 4 | 5) : 3;
+  });
+  const update = useCallback(
+    (n: 3 | 4 | 5) => {
+      setCols(n);
+      localStorage.setItem(localKey, String(n));
+    },
+    [localKey]
+  );
+  return [cols, update];
+}

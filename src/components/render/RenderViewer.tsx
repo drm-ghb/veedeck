@@ -410,6 +410,9 @@ export default function RenderViewer({
   function markChatRead() {
     localStorage.setItem(`rf_chat_readAt_${renderId}`, new Date().toISOString());
     setChatUnreadCount(0);
+    if (isDesigner) {
+      fetch(`/api/renders/${renderId}/mark-chat-read`, { method: "POST" }).catch(() => {});
+    }
   }
 
   // Auto-open pin popup and restore "all" filter when arriving via cross-render navigation
@@ -1567,12 +1570,12 @@ export default function RenderViewer({
           <div className="hidden sm:flex ml-auto items-center gap-1 flex-shrink-0">
             {/* Zone 1: Primary actions */}
             {(isDesigner || allowClientComments) && (
-              <button onClick={() => { setMode(mode === "pin" ? "view" : "pin"); setProductPinMode(false); setPendingProductPos(null); }} className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md border transition-colors ${mode === "pin" ? "bg-gray-900 text-white border-gray-900" : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted"}`}>
+              <button onClick={() => { setMode(mode === "pin" ? "view" : "pin"); setProductPinMode(false); setPendingProductPos(null); }} className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md border transition-colors ${mode === "pin" ? "bg-primary text-primary-foreground border-primary" : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted"}`}>
                 <Pin size={14} /> Dodaj pin
               </button>
             )}
             {isDesigner && (
-              <button onClick={() => { setProductPinMode((v) => !v); setMode("view"); setPending(null); setPendingProductPos(null); }} className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md border transition-colors ${productPinMode ? "bg-gray-900 text-white border-gray-900" : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted"}`}>
+              <button onClick={() => { setProductPinMode((v) => !v); setMode("view"); setPending(null); setPendingProductPos(null); }} className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md border transition-colors ${productPinMode ? "bg-primary text-primary-foreground border-primary" : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted"}`}>
                 <Package size={14} /> Dodaj produkt
               </button>
             )}
@@ -1581,10 +1584,10 @@ export default function RenderViewer({
             <div className="w-px h-4 bg-gray-200 dark:bg-gray-700 mx-1" />
 
             {/* Zone 2: View controls — icon only */}
-            <button onClick={() => setHidePins((v) => !v)} title={hidePins ? "Pokaż piny" : "Ukryj piny"} className={`flex items-center justify-center w-8 h-8 rounded-md border transition-colors ${hidePins ? "bg-gray-900 text-white border-gray-900" : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted"}`}>
+            <button onClick={() => setHidePins((v) => !v)} title={hidePins ? "Pokaż piny" : "Ukryj piny"} className={`flex items-center justify-center w-8 h-8 rounded-md border transition-colors ${hidePins ? "bg-primary text-primary-foreground border-primary" : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted"}`}>
               <svg viewBox="0 0 24 24" className="w-[15px] h-[15px]" fill="currentColor"><path d="M16 9V4h1c.55 0 1-.45 1-1s-.45-1-1-1H7c-.55 0-1 .45-1 1s.45 1 1 1h1v5c0 1.66-1.34 3-3 3h10c-1.66 0-3-1.34-3-3zm-3 12v-6h-2v6c0 .55.45 1 1 1s1-.45 1-1z"/><path d="M3.51 3.51c-.39.39-.39 1.02 0 1.41l15.56 15.57c.39.39 1.02.39 1.41 0s.39-1.02 0-1.41L4.93 3.51c-.39-.39-1.02-.39-1.42 0z"/></svg>
             </button>
-            <button onClick={openLightbox} title="Podgląd pełnoekranowy" className={`flex items-center justify-center w-8 h-8 rounded-md border transition-colors ${lightboxOpen ? "bg-gray-900 text-white border-gray-900" : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted"}`}>
+            <button onClick={openLightbox} title="Podgląd pełnoekranowy" className={`flex items-center justify-center w-8 h-8 rounded-md border transition-colors ${lightboxOpen ? "bg-primary text-primary-foreground border-primary" : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted"}`}>
               <Maximize2 size={15} />
             </button>
             {isDesigner && (
@@ -1644,7 +1647,7 @@ export default function RenderViewer({
             {/* Zone 4: Discussion */}
             <button
               onClick={() => setShowComments((v) => { const next = !v; sessionStorage.setItem("renderflow_showComments", String(next)); if (next && sidebarTabRef.current === "chat") markChatRead(); return next; })}
-              className={`relative flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md border transition-colors ${showComments ? "bg-gray-900 text-white border-gray-900" : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted"}`}
+              className={`relative flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md border transition-colors ${showComments ? "bg-primary text-primary-foreground border-primary" : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted"}`}
             >
               <svg viewBox="0 0 24 24" className="w-[14px] h-[14px]" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg> Dyskusja
               {chatUnreadCount > 0 && (
@@ -1663,12 +1666,12 @@ export default function RenderViewer({
             <div className="flex items-center gap-1 px-2 py-1.5 w-max">
               {/* Zone 1: Primary actions */}
               {(isDesigner || allowClientComments) && (
-                <button onClick={() => { setMode(mode === "pin" ? "view" : "pin"); setProductPinMode(false); setPendingProductPos(null); }} className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md border transition-colors flex-shrink-0 ${mode === "pin" ? "bg-gray-900 text-white border-gray-900" : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted"}`}>
+                <button onClick={() => { setMode(mode === "pin" ? "view" : "pin"); setProductPinMode(false); setPendingProductPos(null); }} className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md border transition-colors flex-shrink-0 ${mode === "pin" ? "bg-primary text-primary-foreground border-primary" : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted"}`}>
                   <Pin size={14} /> Dodaj pin
                 </button>
               )}
               {isDesigner && (
-                <button onClick={() => { setProductPinMode((v) => !v); setMode("view"); setPending(null); setPendingProductPos(null); }} className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md border transition-colors flex-shrink-0 ${productPinMode ? "bg-gray-900 text-white border-gray-900" : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted"}`}>
+                <button onClick={() => { setProductPinMode((v) => !v); setMode("view"); setPending(null); setPendingProductPos(null); }} className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md border transition-colors flex-shrink-0 ${productPinMode ? "bg-primary text-primary-foreground border-primary" : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted"}`}>
                   <Package size={14} /> Dodaj produkt
                 </button>
               )}
@@ -1676,10 +1679,10 @@ export default function RenderViewer({
               <div className="w-px h-5 bg-gray-200 dark:bg-gray-700 mx-0.5 flex-shrink-0" />
 
               {/* Zone 2: View controls — icon only */}
-              <button onClick={() => setHidePins((v) => !v)} title={hidePins ? "Pokaż piny" : "Ukryj piny"} className={`flex items-center justify-center w-8 h-8 rounded-md border transition-colors flex-shrink-0 ${hidePins ? "bg-gray-900 text-white border-gray-900" : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted"}`}>
+              <button onClick={() => setHidePins((v) => !v)} title={hidePins ? "Pokaż piny" : "Ukryj piny"} className={`flex items-center justify-center w-8 h-8 rounded-md border transition-colors flex-shrink-0 ${hidePins ? "bg-primary text-primary-foreground border-primary" : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted"}`}>
                 <svg viewBox="0 0 24 24" className="w-[15px] h-[15px]" fill="currentColor"><path d="M16 9V4h1c.55 0 1-.45 1-1s-.45-1-1-1H7c-.55 0-1 .45-1 1s.45 1 1 1h1v5c0 1.66-1.34 3-3 3h10c-1.66 0-3-1.34-3-3zm-3 12v-6h-2v6c0 .55.45 1 1 1s1-.45 1-1z"/><path d="M3.51 3.51c-.39.39-.39 1.02 0 1.41l15.56 15.57c.39.39 1.02.39 1.41 0s.39-1.02 0-1.41L4.93 3.51c-.39-.39-1.02-.39-1.42 0z"/></svg>
               </button>
-              <button onClick={openLightbox} title="Podgląd pełnoekranowy" className={`flex items-center justify-center w-8 h-8 rounded-md border transition-colors flex-shrink-0 ${lightboxOpen ? "bg-gray-900 text-white border-gray-900" : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted"}`}>
+              <button onClick={openLightbox} title="Podgląd pełnoekranowy" className={`flex items-center justify-center w-8 h-8 rounded-md border transition-colors flex-shrink-0 ${lightboxOpen ? "bg-primary text-primary-foreground border-primary" : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted"}`}>
                 <Maximize2 size={15} />
               </button>
               {isDesigner && (
@@ -1739,7 +1742,7 @@ export default function RenderViewer({
             {/* Zone 4: Discussion */}
             <button
               onClick={() => setShowComments((v) => { const next = !v; sessionStorage.setItem("renderflow_showComments", String(next)); if (next && sidebarTabRef.current === "chat") markChatRead(); return next; })}
-              className={`relative flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md border transition-colors flex-shrink-0 ${showComments ? "bg-gray-900 text-white border-gray-900" : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted"}`}
+              className={`relative flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md border transition-colors flex-shrink-0 ${showComments ? "bg-primary text-primary-foreground border-primary" : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted"}`}
             >
               <svg viewBox="0 0 24 24" className="w-[14px] h-[14px]" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg> Dyskusja
               {chatUnreadCount > 0 && (
@@ -2466,7 +2469,7 @@ export default function RenderViewer({
                       onClick={() => { setPinFilter("current"); sessionStorage.setItem("renderflow_pinFilter", "current"); }}
                       className={`text-xs px-2.5 py-1 rounded-md border transition-colors font-medium ${
                         pinFilter === "current"
-                          ? "bg-gray-900 text-white border-gray-900 dark:bg-gray-100 dark:text-gray-900 dark:border-gray-100"
+                          ? "bg-primary text-primary-foreground border-primary"
                           : "border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-gray-400"
                       }`}
                     >
@@ -2480,7 +2483,7 @@ export default function RenderViewer({
                       }}
                       className={`text-xs px-2.5 py-1 rounded-md border transition-colors font-medium ${
                         pinFilter === "all"
-                          ? "bg-gray-900 text-white border-gray-900 dark:bg-gray-100 dark:text-gray-900 dark:border-gray-100"
+                          ? "bg-primary text-primary-foreground border-primary"
                           : "border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-gray-400"
                       }`}
                     >

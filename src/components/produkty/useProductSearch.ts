@@ -23,6 +23,7 @@ interface SearchFilters {
 
 interface AvailableFilters {
   categories: string[];
+  categoryCounts: Record<string, number>;
   manufacturers: string[];
   colors: string[];
 }
@@ -39,6 +40,7 @@ interface UseProductSearchReturn {
   handleQueryChange: (query: string) => void;
   handleFilterChange: (filterType: keyof SearchFilters, value: string) => void;
   resetFilters: () => void;
+  refetchFilters: () => void;
 }
 
 export function useProductSearch(): UseProductSearchReturn {
@@ -55,21 +57,21 @@ export function useProductSearch(): UseProductSearchReturn {
   const [error, setError] = useState<string | null>(null);
   const [availableFilters, setAvailableFilters] = useState<AvailableFilters | null>(null);
 
+  const fetchFilters = useCallback(async () => {
+    try {
+      const response = await fetch("/api/products?action=filters");
+      if (!response.ok) throw new Error("Failed to fetch filters");
+      const data = await response.json();
+      setAvailableFilters(data);
+    } catch (err) {
+      console.error("Error fetching filters:", err);
+    }
+  }, []);
+
   // Fetch available filters on mount
   useEffect(() => {
-    const fetchFilters = async () => {
-      try {
-        const response = await fetch("/api/products?action=filters");
-        if (!response.ok) throw new Error("Failed to fetch filters");
-        const data = await response.json();
-        setAvailableFilters(data);
-      } catch (err) {
-        console.error("Error fetching filters:", err);
-      }
-    };
-
     fetchFilters();
-  }, []);
+  }, [fetchFilters]);
 
   // Perform search
   const performSearch = useCallback(async (q: string, f: SearchFilters) => {
@@ -147,5 +149,6 @@ export function useProductSearch(): UseProductSearchReturn {
     handleQueryChange,
     handleFilterChange,
     resetFilters,
+    refetchFilters: fetchFilters,
   };
 }

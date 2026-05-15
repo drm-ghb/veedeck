@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
-import { useViewPreference } from "@/hooks/useViewPreference";
-import { CopyCheck, Eye, FileText, LayoutGrid, List, Pin, Upload } from "@/components/ui/icons";
+import { useState, useRef, useCallback, useEffect } from "react";
+import { useViewPreference, useGridCols } from "@/hooks/useViewPreference";
+import { Check, CopyCheck, Eye, FileText, LayoutGrid, List, Pin, Upload } from "@/components/ui/icons";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import RenderMenu from "./RenderMenu";
@@ -32,8 +32,17 @@ interface FolderRenderViewProps {
   renders: Render[];
 }
 
+const GRID_COLS_CLASS: Record<number, string> = {
+  3: "grid-cols-1 md:grid-cols-2 lg:grid-cols-3",
+  4: "grid-cols-2 md:grid-cols-3 lg:grid-cols-4",
+  5: "grid-cols-2 sm:grid-cols-3 lg:grid-cols-5",
+};
+
 export default function FolderRenderView({ projectId, roomId, folderId, renders }: FolderRenderViewProps) {
   const [viewMode, setViewMode] = useViewPreference("renderflow-room", "grid");
+  const [gridCols, setGridCols] = useGridCols("renderflow-room");
+  const [gridOpen, setGridOpen] = useState(false);
+  const gridRef = useRef<HTMLDivElement>(null);
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkLoading, setBulkLoading] = useState(false);
@@ -127,6 +136,15 @@ export default function FolderRenderView({ projectId, roomId, folderId, renders 
     return 0;
   });
 
+  useEffect(() => {
+    if (!gridOpen) return;
+    function onOutside(e: MouseEvent) {
+      if (gridRef.current && !gridRef.current.contains(e.target as Node)) setGridOpen(false);
+    }
+    document.addEventListener("mousedown", onOutside);
+    return () => document.removeEventListener("mousedown", onOutside);
+  }, [gridOpen]);
+
   const dragProps = {
     onDragEnter: handleDragEnter,
     onDragLeave: handleDragLeave,
@@ -175,12 +193,32 @@ export default function FolderRenderView({ projectId, roomId, folderId, renders 
           )}
         </button>
         <div className="flex items-center gap-0.5 bg-muted rounded-md p-0.5">
-          <button
-            onClick={() => setViewMode("grid")}
-            className={`p-1.5 rounded transition-colors ${viewMode === "grid" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
-          >
-            <LayoutGrid size={15} />
-          </button>
+          <div className="relative" ref={gridRef}>
+            <button
+              onClick={() => { setViewMode("grid"); setGridOpen((v) => !v); }}
+              className={`p-1.5 rounded transition-colors ${viewMode === "grid" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+              title="Układ siatki"
+            >
+              <span className="inline-flex items-baseline gap-0.5">
+                <LayoutGrid size={15} />
+                {viewMode === "grid" && <span className="text-[9px] font-bold leading-none">{gridCols}</span>}
+              </span>
+            </button>
+            {gridOpen && (
+              <div className="absolute right-0 top-full mt-1 z-20 bg-popover border border-border rounded-lg shadow-md py-1 min-w-[148px]">
+                {([3, 4, 5] as const).map((n) => (
+                  <button
+                    key={n}
+                    onClick={() => { setGridCols(n); setViewMode("grid"); setGridOpen(false); }}
+                    className={`flex items-center justify-between w-full px-3 py-1.5 text-sm transition-colors hover:bg-muted ${gridCols === n && viewMode === "grid" ? "text-foreground font-medium" : "text-muted-foreground"}`}
+                  >
+                    {n} kolumny
+                    {gridCols === n && viewMode === "grid" && <Check size={12} />}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           <button
             onClick={() => setViewMode("list")}
             className={`p-1.5 rounded transition-colors ${viewMode === "list" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
@@ -191,7 +229,7 @@ export default function FolderRenderView({ projectId, roomId, folderId, renders 
       </div>
 
       {viewMode === "grid" ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4">
+        <div className={`grid ${GRID_COLS_CLASS[gridCols]} gap-2 sm:gap-4`}>
           {sorted.map((render) => {
             const isSelected = selectedIds.has(render.id);
             const card = (
