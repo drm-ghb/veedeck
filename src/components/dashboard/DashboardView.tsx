@@ -224,11 +224,18 @@ export default function DashboardView({
     }
     window.addEventListener("notifications-updated", onUpdated);
 
+    let bc: BroadcastChannel | null = null;
+    try {
+      bc = new BroadcastChannel("notifications");
+      bc.onmessage = (e) => { if (e.data?.type === "mark-read") onUpdated(); };
+    } catch {}
+
     const channel = pusherClient.subscribe(`user-${userId}`);
     channel.bind("new-notification", () => setNotifCount((c) => c + 1));
 
     return () => {
       window.removeEventListener("notifications-updated", onUpdated);
+      bc?.close();
       channel.unbind("new-notification");
       pusherClient.unsubscribe(`user-${userId}`);
     };

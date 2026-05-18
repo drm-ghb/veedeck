@@ -450,7 +450,7 @@ export default function ProjectView({ projectId, rooms, archivedRooms, allRender
                 <div>
                   <p className="font-medium text-gray-700">{room.name}</p>
                   <p className="text-xs text-gray-400 mt-0.5">
-                    {room._count.renders} render{room._count.renders === 1 ? "" : room._count.renders < 5 ? "y" : "ów"}
+                    {room._count.renders} plik{room._count.renders === 1 ? "" : room._count.renders < 5 ? "i" : "ów"}
                   </p>
                 </div>
                 <div className="flex gap-2">
@@ -530,7 +530,7 @@ function SortableRoomRow({ room, projectId, isLast }: { room: Room; projectId: s
         <div className="min-w-0">
           <p className="text-sm font-medium text-gray-800 truncate">{room.name}</p>
           <p className="text-xs text-gray-400">
-            {count} render{count === 1 ? "" : count < 5 ? "y" : "ów"}
+            {count} plik{count === 1 ? "" : count < 5 ? "i" : "ów"}
           </p>
         </div>
       </a>

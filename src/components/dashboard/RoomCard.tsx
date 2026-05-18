@@ -40,7 +40,7 @@ export default function RoomCard({ room, projectId }: RoomCardProps) {
       {/* Count */}
       <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
         <span>☰</span>
-        {count} render{count === 1 ? "" : count < 5 ? "y" : "ów"}
+        {count} plik{count === 1 ? "" : count < 5 ? "i" : "ów"}
       </p>
 
       {/* Menu */}

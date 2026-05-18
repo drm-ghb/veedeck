@@ -20,6 +20,11 @@ interface Notification {
 
 function dispatchUpdate() {
   window.dispatchEvent(new Event("notifications-updated"));
+  try {
+    const bc = new BroadcastChannel("notifications");
+    bc.postMessage({ type: "mark-read" });
+    bc.close();
+  } catch {}
 }
 
 function getProjectTitle(n: Notification): string {

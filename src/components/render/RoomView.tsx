@@ -281,9 +281,9 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
             }`}
           >
             Pliki
-            {(folders.length > 0 || renders.length > 0) && (
-              <span className={`ml-1.5 text-xs px-1.5 py-0.5 rounded-full ${tab === "active" ? "bg-foreground text-background" : "bg-muted text-muted-foreground"}`}>
-                {folders.length + renders.length}
+            {renders.length > 0 && (
+              <span className={`ml-1.5 text-xs px-1.5 py-0.5 rounded-full ${tab === "active" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
+                {renders.length}
               </span>
             )}
           </button>
@@ -297,7 +297,7 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
           >
             Zarchiwizowane
             {(archivedRenders.length + archivedFolders.length) > 0 && (
-              <span className={`ml-1.5 text-xs px-1.5 py-0.5 rounded-full ${tab === "archived" ? "bg-foreground text-background" : "bg-muted text-muted-foreground"}`}>
+              <span className={`ml-1.5 text-xs px-1.5 py-0.5 rounded-full ${tab === "archived" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
                 {archivedRenders.length + archivedFolders.length}
               </span>
             )}
@@ -450,9 +450,13 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
                             </div>
                           )}
                           <div className="flex items-center gap-3 flex-1 min-w-0">
-                            <div className="w-14 h-10 rounded-md overflow-hidden bg-muted flex-shrink-0">
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img src={render.fileUrl} alt={render.name} className="w-full h-full object-cover" />
+                            <div className="w-14 h-10 rounded-md overflow-hidden bg-muted flex-shrink-0 flex items-center justify-center">
+                              {render.fileType === "pdf" ? (
+                                <FileText size={20} className="text-red-400" />
+                              ) : (
+                                /* eslint-disable-next-line @next/next/no-img-element */
+                                <img src={render.fileUrl} alt={render.name} className="w-full h-full object-cover" />
+                              )}
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium text-foreground truncate flex items-center gap-1.5">
