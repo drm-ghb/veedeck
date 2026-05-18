@@ -397,6 +397,7 @@ export default function RenderViewer({
 
   const imgRef = useRef<HTMLDivElement>(null);
   const lightboxImgRef = useRef<HTMLDivElement>(null);
+  const lastPinchDistRef = useRef(0);
   const versionFileInputRef = useRef<HTMLInputElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const chatMessageRefs = useRef<Map<string, HTMLDivElement>>(new Map());
@@ -3027,17 +3028,36 @@ export default function RenderViewer({
             </button>
           )}
           <div
-            className="absolute inset-0 overflow-auto flex items-start justify-center p-8"
+            className="absolute inset-0 overflow-auto flex items-start justify-center p-4 sm:p-8"
             onWheel={(e) => {
               e.preventDefault();
               const delta = e.deltaY > 0 ? -0.12 : 0.12;
               setZoom((z) => Math.max(0.25, Math.min(5, z + delta)));
             }}
+            onTouchStart={(e) => {
+              if (e.touches.length === 2) {
+                const dx = e.touches[0].clientX - e.touches[1].clientX;
+                const dy = e.touches[0].clientY - e.touches[1].clientY;
+                lastPinchDistRef.current = Math.hypot(dx, dy);
+              }
+            }}
+            onTouchMove={(e) => {
+              if (e.touches.length === 2) {
+                const dx = e.touches[0].clientX - e.touches[1].clientX;
+                const dy = e.touches[0].clientY - e.touches[1].clientY;
+                const dist = Math.hypot(dx, dy);
+                if (lastPinchDistRef.current > 0) {
+                  const ratio = dist / lastPinchDistRef.current;
+                  setZoom((z) => Math.max(0.25, Math.min(5, z * ratio)));
+                }
+                lastPinchDistRef.current = dist;
+              }
+            }}
           >
             <div
               ref={lightboxImgRef}
               className={`relative flex-shrink-0 select-none ${(mode === "pin" || productPinMode) ? "cursor-crosshair" : "cursor-default"}`}
-              style={{ height: `calc((100vh - 120px) * ${zoom})`, width: "fit-content" }}
+              style={{ width: "fit-content", height: "fit-content" }}
               onClick={(e) => {
                 if (productPinMode) {
                   if (pending || pendingProductPos) return;
@@ -3062,7 +3082,13 @@ export default function RenderViewer({
               <img
                 src={lightboxRender.fileUrl}
                 alt="Render"
-                className="h-full w-auto block rounded-lg"
+                style={{
+                  maxWidth: `calc((100vw - 2rem) * ${zoom})`,
+                  maxHeight: `calc((100vh - 120px - 2rem) * ${zoom})`,
+                  width: "auto",
+                  height: "auto",
+                }}
+                className="block rounded-lg"
                 draggable={false}
               />
 
