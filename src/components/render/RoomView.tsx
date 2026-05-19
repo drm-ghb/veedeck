@@ -82,7 +82,67 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
   const [bulkLoading, setBulkLoading] = useState(false);
   const [moveOpen, setMoveOpen] = useState(false);
   const [localFolders, setLocalFolders] = useState(folders);
-  useEffect(() => { setLocalFolders(folders); }, [folders]);
+  const [localRenders, setLocalRenders] = useState(renders);
+  const pendingFolderIds = useRef<Set<string>>(new Set());
+  const pendingRenderIds = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    setLocalFolders(prev => {
+      for (const f of folders) pendingFolderIds.current.delete(f.id);
+      const optimistic = prev.filter(f => pendingFolderIds.current.has(f.id));
+      return [...folders, ...optimistic];
+    });
+  }, [folders]);
+  useEffect(() => {
+    setLocalRenders(prev => {
+      for (const r of renders) pendingRenderIds.current.delete(r.id);
+      const optimistic = prev.filter(r => pendingRenderIds.current.has(r.id));
+      return [...renders, ...optimistic];
+    });
+  }, [renders]);
+
+  useEffect(() => {
+    function onFolderCreated(e: Event) {
+      const f = (e as CustomEvent).detail;
+      pendingFolderIds.current.add(f.id);
+      setLocalFolders((prev) => [...prev, { id: f.id, name: f.name, renderCount: 0, pinned: false }]);
+    }
+    function onRendersCreated(e: Event) {
+      const newRenders = (e as CustomEvent).detail as Array<{ id: string; name: string; fileUrl: string; fileType: string | null; status: string; folderId: string | null; viewCount: number }>;
+      for (const r of newRenders) pendingRenderIds.current.add(r.id);
+      setLocalRenders((prev) => [
+        ...prev,
+        ...newRenders.map((r) => ({
+          id: r.id,
+          name: r.name,
+          fileUrl: r.fileUrl,
+          fileType: r.fileType ?? null,
+          commentCount: 0,
+          viewCount: r.viewCount ?? 0,
+          status: (r.status ?? "REVIEW") as "REVIEW" | "ACCEPTED",
+          folderId: r.folderId ?? null,
+          pinned: false,
+        })),
+      ]);
+    }
+    function onFolderRemoved(e: Event) {
+      const { id } = (e as CustomEvent).detail;
+      setLocalFolders((prev) => prev.filter((f) => f.id !== id));
+    }
+    function onRenderRemoved(e: Event) {
+      const { id } = (e as CustomEvent).detail;
+      setLocalRenders((prev) => prev.filter((r) => r.id !== id));
+    }
+    window.addEventListener("renderflow:folder-created", onFolderCreated);
+    window.addEventListener("renderflow:renders-created", onRendersCreated);
+    window.addEventListener("renderflow:folder-removed", onFolderRemoved);
+    window.addEventListener("renderflow:render-removed", onRenderRemoved);
+    return () => {
+      window.removeEventListener("renderflow:folder-created", onFolderCreated);
+      window.removeEventListener("renderflow:renders-created", onRendersCreated);
+      window.removeEventListener("renderflow:folder-removed", onFolderRemoved);
+      window.removeEventListener("renderflow:render-removed", onRenderRemoved);
+    };
+  }, []);
 
   useEffect(() => {
     if (!gridOpen) return;
@@ -123,17 +183,23 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
     try {
       const results = await startUpload(files);
       if (!results) throw new Error();
+      const created: Render[] = [];
       for (let i = 0; i < results.length; i++) {
         const file = files[i];
         const r = results[i];
         const name = file.name.replace(/\.[^.]+$/, "");
         const fileType = file.type === "application/pdf" ? "pdf" : "image";
-        await fetch("/api/renders", {
+        const res = await fetch("/api/renders", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ projectId, name, fileUrl: r.url, fileKey: r.key, roomId, folderId: null, fileType }),
         });
+        if (res.ok) {
+          const render = await res.json();
+          created.push({ id: render.id, name: render.name, fileUrl: render.fileUrl, fileType: render.fileType ?? null, commentCount: 0, viewCount: 0, status: (render.status ?? "REVIEW") as "REVIEW" | "ACCEPTED", folderId: render.folderId ?? null, pinned: false });
+        }
       }
+      if (created.length > 0) setLocalRenders((prev) => [...prev, ...created]);
       toast.success(`Dodano ${results.length} plik${results.length === 1 ? "" : results.length < 5 ? "i" : "ów"}`);
       router.refresh();
     } catch {
@@ -174,29 +240,32 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
 
   async function handleBulkAction(action: "archive" | "delete") {
     if (action === "delete" && !confirm(`Usunąć ${selectedIds.size} ${selectedIds.size === 1 ? "plik" : "pliki/plików"}?`)) return;
+    const ids = Array.from(selectedIds);
     setBulkLoading(true);
+    setLocalRenders((prev) => prev.filter((r) => !ids.includes(r.id)));
+    exitSelection();
     try {
       const res = await fetch("/api/renders/bulk", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids: Array.from(selectedIds), action }),
+        body: JSON.stringify({ ids, action }),
       });
       if (!res.ok) throw new Error();
       toast.success(action === "archive" ? "Zarchiwizowano pliki" : "Usunięto pliki");
-      exitSelection();
       router.refresh();
     } catch {
       toast.error("Błąd operacji");
+      router.refresh();
     } finally {
       setBulkLoading(false);
     }
   }
 
-  const ungrouped = [...renders.filter((r) => !r.folderId)].sort((a, b) => {
+  const ungrouped = [...localRenders.filter((r) => !r.folderId)].sort((a, b) => {
     if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
     return 0;
   });
-  const hasContent = localFolders.length > 0 || renders.length > 0;
+  const hasContent = localFolders.length > 0 || localRenders.length > 0;
 
   async function handleRestore(renderId: string) {
     const res = await fetch(`/api/renders/${renderId}`, {
@@ -228,23 +297,27 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
 
   async function handleDeleteFolder(folderId: string, name: string) {
     if (!confirm(`Usunąć folder "${name}"? Pliki w folderze nie zostaną usunięte.`)) return;
+    setLocalFolders((prev) => prev.filter((f) => f.id !== folderId));
     const res = await fetch(`/api/folders/${folderId}`, { method: "DELETE" });
     if (res.ok) {
       toast.success("Folder usunięty");
       router.refresh();
     } else {
       toast.error("Błąd usuwania folderu");
+      router.refresh();
     }
   }
 
   async function handleDelete(renderId: string, name: string) {
     if (!confirm(`Usunąć render "${name}"?`)) return;
+    setLocalRenders((prev) => prev.filter((r) => r.id !== renderId));
     const res = await fetch(`/api/renders/${renderId}`, { method: "DELETE" });
     if (res.ok) {
       toast.success("Render usunięty");
       router.refresh();
     } else {
       toast.error("Błąd usuwania");
+      router.refresh();
     }
   }
 
@@ -281,9 +354,9 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
             }`}
           >
             Pliki
-            {renders.length > 0 && (
+            {localRenders.length > 0 && (
               <span className={`ml-1.5 text-xs px-1.5 py-0.5 rounded-full ${tab === "active" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
-                {renders.length}
+                {localRenders.length}
               </span>
             )}
           </button>
@@ -303,7 +376,7 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
             )}
           </button>
         </div>
-        {tab === "active" && renders.length > 0 && (
+        {tab === "active" && localRenders.length > 0 && (
           <div className="flex items-center gap-2 mb-1">
             <button
               onClick={() => { setSelectionMode((v) => !v); setSelectedIds(new Set()); }}
@@ -605,6 +678,7 @@ function SortableFolderCard({ folder, projectId, roomId }: { folder: Folder; pro
       <div
         {...attributes}
         {...listeners}
+        suppressHydrationWarning
         className="absolute top-1/2 -translate-y-1/2 right-2 z-20 p-1 rounded text-muted-foreground/40 hover:text-foreground cursor-grab active:cursor-grabbing transition-colors"
         title="Przeciągnij, aby zmienić kolejność"
       >

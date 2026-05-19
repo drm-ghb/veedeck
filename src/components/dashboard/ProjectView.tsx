@@ -489,6 +489,7 @@ function SortableRoomCard({ room, projectId }: { room: Room; projectId: string }
       <div
         {...attributes}
         {...listeners}
+        suppressHydrationWarning
         className="absolute top-1/2 -translate-y-1/2 right-2 z-20 p-1 rounded text-muted-foreground/40 hover:text-foreground cursor-grab active:cursor-grabbing transition-colors"
         title="Przeciągnij, aby zmienić kolejność"
       >
@@ -517,6 +518,7 @@ function SortableRoomRow({ room, projectId, isLast }: { room: Room; projectId: s
       <div
         {...attributes}
         {...listeners}
+        suppressHydrationWarning
         className="text-muted-foreground/40 hover:text-foreground cursor-grab active:cursor-grabbing flex-shrink-0"
         title="Przeciągnij, aby zmienić kolejność"
       >

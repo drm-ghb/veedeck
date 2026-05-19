@@ -529,7 +529,7 @@ function ProductRow({
             )}
             {/* Inline category badge */}
             <button
-              onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); setCategoryMenuPos({ top: r.bottom + 4, left: r.left }); setCategoryMenuOpen((v) => !v); }}
+              onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); const estH = (allCategories.length + 1) * 28 + 8; const top = (window.innerHeight - r.bottom) >= estH + 8 ? r.bottom + 4 : Math.max(4, r.top - estH - 4); setCategoryMenuPos({ top, left: r.left }); setCategoryMenuOpen((v) => !v); }}
               className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors shrink-0 ${product.category ? "bg-primary/8 text-primary dark:bg-primary/20 hover:bg-primary/15" : "border border-dashed border-border text-muted-foreground hover:border-primary/40 hover:text-primary"}`}
               title="Zmień kategorię"
             >
@@ -759,7 +759,7 @@ function ProductRow({
               </button>
             )}
             <button
-              onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); setCategoryMenuPos({ top: r.bottom + 4, left: r.left }); setCategoryMenuOpen((v) => !v); }}
+              onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); const estH = (allCategories.length + 1) * 28 + 8; const top = (window.innerHeight - r.bottom) >= estH + 8 ? r.bottom + 4 : Math.max(4, r.top - estH - 4); setCategoryMenuPos({ top, left: r.left }); setCategoryMenuOpen((v) => !v); }}
               className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors shrink-0 ${product.category ? "bg-primary/8 text-primary dark:bg-primary/20" : "border border-dashed border-border text-muted-foreground"}`}
             >
               {product.category ? getCategoryLabel(product.category, allCategories) : "+ kat."}

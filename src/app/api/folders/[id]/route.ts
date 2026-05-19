@@ -52,6 +52,15 @@ export async function PATCH(
   if (body.archived !== undefined) data.archived = body.archived;
   if (body.roomId !== undefined) data.roomId = body.roomId;
 
+  // When moving folder to another room, also move all its renders
+  if (body.roomId !== undefined && body.roomId !== folder.roomId) {
+    const [updated] = await prisma.$transaction([
+      prisma.folder.update({ where: { id }, data }),
+      prisma.render.updateMany({ where: { folderId: id }, data: { roomId: body.roomId } }),
+    ]);
+    return NextResponse.json(updated);
+  }
+
   const updated = await prisma.folder.update({ where: { id }, data });
   return NextResponse.json(updated);
 }

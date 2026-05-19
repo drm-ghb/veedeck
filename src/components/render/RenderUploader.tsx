@@ -78,10 +78,11 @@ export default function RenderUploader({ projectId, roomId, folderId: fixedFolde
               }}
               onUploadBegin={() => setUploading(true)}
               onClientUploadComplete={async (res) => {
+                const created: unknown[] = [];
                 for (const file of res) {
                   const name = file.name.replace(/\.[^.]+$/, "");
                   const fileType = file.type?.includes("pdf") ? "pdf" : "image";
-                  await fetch("/api/renders", {
+                  const r = await fetch("/api/renders", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
@@ -94,6 +95,10 @@ export default function RenderUploader({ projectId, roomId, folderId: fixedFolde
                       fileType,
                     }),
                   });
+                  if (r.ok) created.push(await r.json());
+                }
+                if (created.length > 0) {
+                  window.dispatchEvent(new CustomEvent("renderflow:renders-created", { detail: created }));
                 }
                 setUploading(false);
                 setOpen(false);

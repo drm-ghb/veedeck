@@ -63,6 +63,7 @@ export default function RenderMenu({ render, projectId, currentRoomId, currentFo
     });
     if (res.ok) {
       toast.success("Render zarchiwizowany");
+      window.dispatchEvent(new CustomEvent("renderflow:render-removed", { detail: { id: render.id } }));
       router.refresh();
     } else {
       toast.error("Błąd archiwizacji");
@@ -74,6 +75,7 @@ export default function RenderMenu({ render, projectId, currentRoomId, currentFo
     const res = await fetch(`/api/renders/${render.id}`, { method: "DELETE" });
     if (res.ok) {
       toast.success("Render usunięty");
+      window.dispatchEvent(new CustomEvent("renderflow:render-removed", { detail: { id: render.id } }));
       router.refresh();
     } else {
       toast.error("Błąd usuwania");

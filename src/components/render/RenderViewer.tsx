@@ -1945,7 +1945,7 @@ export default function RenderViewer({
                   >
                     {pin.product.imageUrl && (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={pin.product.imageUrl} alt={pin.product.name} className="w-full h-28 object-cover rounded-lg mb-2 border border-border" />
+                      <img src={pin.product.imageUrl} alt={pin.product.name} className="w-full h-28 object-contain rounded-lg mb-2 border border-border bg-muted" />
                     )}
                     {!pin.product.imageUrl && (
                       <div className="w-full h-16 rounded-lg bg-muted flex items-center justify-center mb-2">
@@ -3121,7 +3121,7 @@ export default function RenderViewer({
                     >
                       {pin.product.imageUrl && (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={pin.product.imageUrl} alt={pin.product.name} className="w-full h-28 object-cover rounded-lg mb-2 border border-border" />
+                        <img src={pin.product.imageUrl} alt={pin.product.name} className="w-full h-28 object-contain rounded-lg mb-2 border border-border bg-muted" />
                       )}
                       {!pin.product.imageUrl && (
                         <div className="w-full h-16 rounded-lg bg-muted flex items-center justify-center mb-2">

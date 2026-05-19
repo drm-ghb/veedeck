@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, X, Package, SlidersHorizontal, ChevronDown, ChevronRight, Loader2 } from "@/components/ui/icons";
+import { createPortal } from "react-dom";
+import { Search, X, Package, SlidersHorizontal, ChevronDown, ChevronRight, Loader2, LocalMall } from "@/components/ui/icons";
 import { useProductSearch } from "@/components/produkty/useProductSearch";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -16,6 +17,19 @@ interface Product {
   url: string | null;
   price: string | null;
   manufacturer: string | null;
+  sectionIds?: string[];
+}
+
+interface Section {
+  id: string;
+  name: string;
+}
+
+interface ShoppingList {
+  id: string;
+  name: string;
+  projectTitle: string | null;
+  projectId: string | null;
 }
 
 interface Props {
@@ -76,33 +90,67 @@ export default function SearchProductDialog({ open, onClose, onSelect, projectId
   const [activeTab, setActiveTab] = useState<Tab>("all");
   const [localQuery, setLocalQuery] = useState("");
   const [listProducts, setListProducts] = useState<Product[]>([]);
+  const [listSections, setListSections] = useState<Section[]>([]);
+  const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
   const [listLoading, setListLoading] = useState(false);
   const [recentProducts, setRecentProducts] = useState<Product[]>([]);
   const [recentLoading, setRecentLoading] = useState(false);
+  const [selectedListId, setSelectedListId] = useState<string | null>(null);
+  const [allLists, setAllLists] = useState<ShoppingList[]>([]);
+  const [projectDropdownOpen, setProjectDropdownOpen] = useState(false);
+  const [projectDropdownPos, setProjectDropdownPos] = useState({ top: 0, left: 0 });
+  const [projectSearch, setProjectSearch] = useState("");
 
-  // Reset tab and local query when dialog opens
+  // Reset state when dialog opens
   useEffect(() => {
     if (open) {
       setActiveTab("all");
       setLocalQuery("");
+      setSelectedListId(null);
+      setAllLists([]);
+      setProjectDropdownOpen(false);
+      setProjectSearch("");
     }
-  }, [open]);
+  }, [open, projectId]);
 
   // Reset local query on tab change
   useEffect(() => {
     setLocalQuery("");
   }, [activeTab]);
 
-  // Fetch list products
+  // Fetch all shopping lists when list tab is opened
   useEffect(() => {
-    if (!open || !projectId || activeTab !== "list") return;
-    setListLoading(true);
-    fetch(`/api/projects/${projectId}/list-products`)
+    if (!open || activeTab !== "list") return;
+    fetch("/api/lists")
       .then((r) => r.json())
-      .then((data) => setListProducts(data.products ?? []))
-      .catch(() => setListProducts([]))
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .then((data) => {
+        const lists: ShoppingList[] = Array.isArray(data)
+          ? data
+              .filter((l: any) => !l.archived)
+              .map((l: any) => ({ id: l.id, name: l.name, projectTitle: l.project?.title ?? null, projectId: l.project?.id ?? null }))
+          : [];
+        setAllLists(lists);
+        // Auto-select the first list linked to the current project
+        if (projectId && lists.length > 0) {
+          const match = (data as any[]).find((l: any) => !l.archived && l.project?.id === projectId);
+          setSelectedListId(match ? match.id : null);
+        }
+      })
+      .catch(() => setAllLists([]));
+  }, [open, activeTab, projectId]);
+
+  // Fetch products whenever selected list changes
+  useEffect(() => {
+    if (!open || !selectedListId || activeTab !== "list") return;
+    setListLoading(true);
+    setSelectedSectionId(null);
+    fetch(`/api/list-products?listId=${selectedListId}`)
+      .then((r) => r.json())
+      .then((data) => { setListProducts(data.products ?? []); setListSections(data.sections ?? []); })
+      .catch(() => { setListProducts([]); setListSections([]); })
       .finally(() => setListLoading(false));
-  }, [open, projectId, activeTab]);
+  }, [open, selectedListId, activeTab]);
 
   // Fetch recent pin products for this project
   useEffect(() => {
@@ -200,6 +248,120 @@ export default function SearchProductDialog({ open, onClose, onSelect, projectId
                   </button>
                 )}
               </div>
+              {/* Project selector + section filters — always visible in list tab */}
+              <div className="flex items-center gap-2 px-3 py-2 border-b border-border flex-shrink-0 min-w-0">
+                {/* Project selector pill */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    const r = e.currentTarget.getBoundingClientRect();
+                    setProjectDropdownPos({ top: r.bottom + 4, left: r.left });
+                    setProjectSearch("");
+                    setProjectDropdownOpen((v) => !v);
+                  }}
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-muted hover:bg-muted/70 transition-colors whitespace-nowrap flex-shrink-0 max-w-[160px]"
+                >
+                  <LocalMall size={11} className="text-muted-foreground shrink-0" />
+                  <span className="truncate">
+                    {allLists.find((l) => l.id === selectedListId)?.name ?? "Wybierz listę"}
+                  </span>
+                  <ChevronDown size={11} className="text-muted-foreground shrink-0" />
+                </button>
+
+                {/* Separator + section filters */}
+                {!listLoading && listSections.length > 1 && (
+                  <>
+                    <div className="w-px h-4 bg-border flex-shrink-0" />
+                    <div className="flex gap-1.5 overflow-x-auto no-scrollbar flex-1 min-w-0">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedSectionId(null)}
+                        className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-colors whitespace-nowrap ${
+                          selectedSectionId === null
+                            ? "bg-foreground text-background"
+                            : "bg-muted text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        Wszystkie
+                      </button>
+                      {listSections.map((s) => (
+                        <button
+                          key={s.id}
+                          type="button"
+                          onClick={() => setSelectedSectionId(s.id === selectedSectionId ? null : s.id)}
+                          className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-colors whitespace-nowrap ${
+                            selectedSectionId === s.id
+                              ? "bg-foreground text-background"
+                              : "bg-muted text-muted-foreground hover:text-foreground"
+                          }`}
+                        >
+                          {s.name}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Project dropdown portal */}
+              {projectDropdownOpen && createPortal(
+                <>
+                  <div className="fixed inset-0 z-[250]" onClick={() => setProjectDropdownOpen(false)} />
+                  <div
+                    className="fixed z-[251] bg-popover border border-border rounded-lg shadow-lg w-64 overflow-hidden"
+                    style={{ top: projectDropdownPos.top, left: projectDropdownPos.left }}
+                  >
+                    <div className="p-2 border-b border-border">
+                      <div className="flex items-center gap-2 px-2 py-1 rounded-md bg-muted">
+                        <Search size={13} className="text-muted-foreground shrink-0" />
+                        <input
+                          autoFocus
+                          value={projectSearch}
+                          onChange={(e) => setProjectSearch(e.target.value)}
+                          placeholder="Szukaj projektu..."
+                          className="flex-1 bg-transparent text-xs outline-none placeholder:text-muted-foreground"
+                        />
+                      </div>
+                    </div>
+                    <div className="max-h-52 overflow-y-auto py-1">
+                      {allLists
+                        .filter((l) => {
+                          const q = projectSearch.toLowerCase();
+                          return l.name.toLowerCase().includes(q) || (l.projectTitle ?? "").toLowerCase().includes(q);
+                        })
+                        .sort((a, b) => {
+                          const aMatch = a.projectId === projectId ? -1 : 0;
+                          const bMatch = b.projectId === projectId ? -1 : 0;
+                          return aMatch - bMatch;
+                        })
+                        .map((l) => (
+                          <button
+                            key={l.id}
+                            type="button"
+                            onClick={() => { setSelectedListId(l.id); setProjectDropdownOpen(false); }}
+                            className={`w-full flex flex-col items-start px-3 py-2 text-left transition-colors hover:bg-muted ${
+                              l.id === selectedListId ? "bg-muted/60" : ""
+                            }`}
+                          >
+                            <span className={`text-xs font-medium truncate w-full ${l.id === selectedListId ? "text-primary" : "text-foreground"}`}>
+                              {l.name}
+                            </span>
+                            {l.projectTitle && (
+                              <span className="text-[10px] text-muted-foreground truncate w-full">{l.projectTitle}</span>
+                            )}
+                          </button>
+                        ))}
+                      {allLists.filter((l) => {
+                        const q = projectSearch.toLowerCase();
+                        return l.name.toLowerCase().includes(q) || (l.projectTitle ?? "").toLowerCase().includes(q);
+                      }).length === 0 && (
+                        <p className="text-xs text-muted-foreground text-center py-4">Brak wyników</p>
+                      )}
+                    </div>
+                  </div>
+                </>,
+                document.body
+              )}
               <div className="flex-1 overflow-y-auto">
                 {listLoading && (
                   <div className="flex items-center justify-center h-32">
@@ -209,17 +371,24 @@ export default function SearchProductDialog({ open, onClose, onSelect, projectId
                 {!listLoading && listProducts.length === 0 && (
                   <div className="flex flex-col items-center justify-center gap-3 py-12 text-muted-foreground px-6 text-center">
                     <Package size={28} className="opacity-30" />
-                    <p className="text-sm">Brak produktów z katalogu na liście zakupowej tego projektu</p>
+                    <p className="text-sm">
+                      {selectedListId
+                        ? `Lista „${allLists.find((l) => l.id === selectedListId)?.name ?? ""}" nie ma produktów`
+                        : "Wybierz listę zakupową z menu powyżej"}
+                    </p>
                     <Link href="/listy" onClick={handleClose} className="text-xs text-primary hover:underline">
                       Przejdź do modułu Listy →
                     </Link>
                   </div>
                 )}
                 {!listLoading && listProducts.length > 0 && (() => {
-                  const filtered = listProducts.filter((p) =>
-                    p.name.toLowerCase().includes(localQuery.toLowerCase()) ||
-                    (p.manufacturer ?? "").toLowerCase().includes(localQuery.toLowerCase())
-                  );
+                  const filtered = listProducts.filter((p) => {
+                    const matchesSection = selectedSectionId === null || (p.sectionIds ?? []).includes(selectedSectionId);
+                    const matchesQuery =
+                      p.name.toLowerCase().includes(localQuery.toLowerCase()) ||
+                      (p.manufacturer ?? "").toLowerCase().includes(localQuery.toLowerCase());
+                    return matchesSection && matchesQuery;
+                  });
                   return filtered.length > 0 ? (
                     <ProductList products={filtered} onSelect={handleSelect} />
                   ) : (

@@ -74,6 +74,7 @@ export default function FolderMenu({ folder, projectId, currentRoomId }: FolderM
     });
     if (res.ok) {
       toast.success("Folder zarchiwizowany");
+      window.dispatchEvent(new CustomEvent("renderflow:folder-removed", { detail: { id: folder.id } }));
       router.refresh();
     } else {
       toast.error("Błąd archiwizacji folderu");
@@ -85,6 +86,7 @@ export default function FolderMenu({ folder, projectId, currentRoomId }: FolderM
     const res = await fetch(`/api/folders/${folder.id}`, { method: "DELETE" });
     if (res.ok) {
       toast.success("Folder usunięty");
+      window.dispatchEvent(new CustomEvent("renderflow:folder-removed", { detail: { id: folder.id } }));
       router.refresh();
     } else {
       toast.error("Błąd usuwania folderu");

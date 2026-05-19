@@ -47,9 +47,33 @@ export async function POST(
   const render = await getAuthorizedRender(id, userId);
   if (!render) return NextResponse.json({ error: "Brak dostępu" }, { status: 403 });
 
-  const { productId, posX, posY } = await req.json();
-  if (!productId || posX == null || posY == null) {
+  const { productId: rawProductId, posX, posY } = await req.json();
+  if (!rawProductId || posX == null || posY == null) {
     return NextResponse.json({ error: "Brakujące pola" }, { status: 400 });
+  }
+
+  let productId = rawProductId as string;
+
+  // Handle manually-added list products (no catalog link) identified by "lp:" prefix
+  if (productId.startsWith("lp:")) {
+    const listProductId = productId.slice(3);
+    const lp = await prisma.listProduct.findUnique({
+      where: { id: listProductId },
+      include: { section: { include: { list: { select: { userId: true, projectId: true } } } } },
+    });
+    if (!lp || lp.section.list.userId !== userId) return NextResponse.json({ error: "Produkt nie istnieje" }, { status: 404 });
+
+    if (lp.productId) {
+      // Already linked to catalog product — use it directly
+      productId = lp.productId;
+    } else {
+      // Create a catalog Product from the list product and link back to avoid duplicates
+      const created = await prisma.product.create({
+        data: { name: lp.name, imageUrl: lp.imageUrl, url: lp.url, price: lp.price, manufacturer: lp.manufacturer, userId },
+      });
+      await prisma.listProduct.update({ where: { id: listProductId }, data: { productId: created.id } });
+      productId = created.id;
+    }
   }
 
   // Verify product belongs to this designer

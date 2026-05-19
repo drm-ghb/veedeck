@@ -31,6 +31,8 @@ export default function AddFolderDialog({ roomId }: { roomId: string }) {
     });
     setLoading(false);
     if (res.ok) {
+      const folder = await res.json();
+      window.dispatchEvent(new CustomEvent("renderflow:folder-created", { detail: folder }));
       toast.success("Folder utworzony");
       setName("");
       setOpen(false);
