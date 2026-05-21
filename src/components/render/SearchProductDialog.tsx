@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { Search, X, Package, SlidersHorizontal, ChevronDown, ChevronRight, ChevronLeft, Loader2, LocalMall } from "@/components/ui/icons";
 import { useProductSearch } from "@/components/produkty/useProductSearch";
@@ -123,9 +123,8 @@ export default function SearchProductDialog({ open, onClose, onSelect, projectId
     setSectionCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 2);
   }
 
-  useEffect(() => {
-    // double rAF — ensures layout is fully calculated before measuring
-    requestAnimationFrame(() => requestAnimationFrame(checkSectionScroll));
+  useLayoutEffect(() => {
+    checkSectionScroll();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [listSections]);
 
