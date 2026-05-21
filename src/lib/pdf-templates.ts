@@ -997,8 +997,9 @@ async function renderAtelier(
     doc.setFont(FONT, "bold");
     doc.setFontSize(12);
     doc.setTextColor(...DARK);
-    doc.text(opts.list.project.clientName, rx, ry + 6, { maxWidth: COL_W });
-    ry += 8.5;
+    const clientNameLines = doc.splitTextToSize(opts.list.project.clientName, COL_W) as string[];
+    doc.text(clientNameLines, rx, ry + 6);
+    ry += 6 + clientNameLines.length * 5.5 + 2;
   }
 
   if (addressLines.length > 0) {
