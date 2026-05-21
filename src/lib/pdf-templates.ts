@@ -677,8 +677,9 @@ async function renderEditorial(
     doc.setFont(FONT, "bold");
     doc.setFontSize(11.5);
     doc.setTextColor(...BLACK);
-    doc.text(opts.list.project.clientName, rx, ry + 5.5, { maxWidth: COL_W });
-    ry += 7.5;
+    const clientNameLines = doc.splitTextToSize(opts.list.project.clientName, COL_W) as string[];
+    doc.text(clientNameLines, rx, ry + 5.5);
+    ry += 5.5 + clientNameLines.length * 5.5 + 2;
   }
 
   if (addressLines.length > 0) {
