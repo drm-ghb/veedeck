@@ -110,6 +110,7 @@ interface RenderViewerProps {
   onStatusRequest?: () => Promise<void>;
   onBack?: () => void;
   onRenderSelect?: (render: RoomRender) => void;
+  onViewCounted?: (renderId: string) => void;
   shareToken?: string;
   initialProductPins?: ProductPin[];
   authorAvatarUrl?: string | null;
@@ -226,6 +227,7 @@ export default function RenderViewer({
   onStatusRequest,
   onBack,
   onRenderSelect,
+  onViewCounted,
   shareToken,
   initialProductPins,
   authorAvatarUrl,
@@ -1459,8 +1461,8 @@ export default function RenderViewer({
     function onKey(e: KeyboardEvent) {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
       if (lightboxOpen) {
-        if (e.key === "ArrowLeft" && lightboxIndex > 0) { setLightboxIndex((i) => i - 1); setZoom(1); }
-        if (e.key === "ArrowRight" && lightboxIndex < roomRenders.length - 1) { setLightboxIndex((i) => i + 1); setZoom(1); }
+        if (e.key === "ArrowLeft" && lightboxIndex > 0) { setLightboxIndex((i) => i - 1); setZoom(1); onViewCounted?.(roomRenders[lightboxIndex - 1].id); }
+        if (e.key === "ArrowRight" && lightboxIndex < roomRenders.length - 1) { setLightboxIndex((i) => i + 1); setZoom(1); onViewCounted?.(roomRenders[lightboxIndex + 1].id); }
       } else if (projectId) {
         if (e.key === "ArrowLeft" && prevRender) router.push(`/projects/${projectId}/renders/${prevRender.id}`);
         if (e.key === "ArrowRight" && nextRender) router.push(`/projects/${projectId}/renders/${nextRender.id}`);
@@ -3051,7 +3053,7 @@ export default function RenderViewer({
           {/* Left navigation arrow */}
           {lightboxPrevRender && (
             <button
-              onClick={() => { setLightboxIndex((i) => i - 1); setZoom(1); cancelPending(); }}
+              onClick={() => { setLightboxIndex((i) => i - 1); setZoom(1); cancelPending(); onViewCounted?.(lightboxPrevRender.id); }}
               className="absolute left-3 top-1/2 -translate-y-1/2 z-10 bg-white/10 hover:bg-white/20 border border-white/20 rounded-full p-2 text-white/70 hover:text-white transition-all sm:opacity-60 sm:hover:opacity-100"
               title={lightboxPrevRender.name}
             >
@@ -3061,7 +3063,7 @@ export default function RenderViewer({
           {/* Right navigation arrow */}
           {lightboxNextRender && (
             <button
-              onClick={() => { setLightboxIndex((i) => i + 1); setZoom(1); cancelPending(); }}
+              onClick={() => { setLightboxIndex((i) => i + 1); setZoom(1); cancelPending(); onViewCounted?.(lightboxNextRender.id); }}
               className="absolute right-3 top-1/2 -translate-y-1/2 z-10 bg-white/10 hover:bg-white/20 border border-white/20 rounded-full p-2 text-white/70 hover:text-white transition-all sm:opacity-60 sm:hover:opacity-100"
               title={lightboxNextRender.name}
             >

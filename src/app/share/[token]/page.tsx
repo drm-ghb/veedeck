@@ -629,7 +629,9 @@ export default function SharePage() {
         onRenderSelect={(r) => {
           const full = selectedRoom.renders.find((render) => render.id === r.id);
           if (full) setSelectedRender(full);
+          fetch(`/api/share/${token}/renders/${r.id}/view`, { method: "POST" });
         }}
+        onViewCounted={(renderId) => fetch(`/api/share/${token}/renders/${renderId}/view`, { method: "POST" })}
         shareToken={token}
       />
     );

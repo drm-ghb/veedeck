@@ -337,7 +337,9 @@ export default function ClientProjectPage() {
         onRenderSelect={(r) => {
           const full = selectedRoom.renders.find((render) => render.id === r.id);
           if (full) setSelectedRender(full);
+          fetch(`/api/client/${projectId}/renders/${r.id}/view`, { method: "POST" });
         }}
+        onViewCounted={(renderId) => fetch(`/api/client/${projectId}/renders/${renderId}/view`, { method: "POST" })}
         shareToken=""
       />
     );
