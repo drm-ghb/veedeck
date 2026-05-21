@@ -78,25 +78,27 @@ export default function RenderUploader({ projectId, roomId, folderId: fixedFolde
               }}
               onUploadBegin={() => setUploading(true)}
               onClientUploadComplete={async (res) => {
-                const created: unknown[] = [];
-                for (const file of res) {
-                  const name = file.name.replace(/\.[^.]+$/, "");
-                  const fileType = file.type?.includes("pdf") ? "pdf" : "image";
-                  const r = await fetch("/api/renders", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                      projectId,
-                      name,
-                      fileUrl: file.url,
-                      fileKey: file.key,
-                      roomId: roomId ?? null,
-                      folderId: fixedFolderId ?? (folderId || null),
-                      fileType,
-                    }),
-                  });
-                  if (r.ok) created.push(await r.json());
-                }
+                const results = await Promise.all(
+                  res.map(async (file) => {
+                    const name = file.name.replace(/\.[^.]+$/, "");
+                    const fileType = file.type?.includes("pdf") ? "pdf" : "image";
+                    const r = await fetch("/api/renders", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        projectId,
+                        name,
+                        fileUrl: file.url,
+                        fileKey: file.key,
+                        roomId: roomId ?? null,
+                        folderId: fixedFolderId ?? (folderId || null),
+                        fileType,
+                      }),
+                    });
+                    return r.ok ? r.json() : null;
+                  })
+                );
+                const created = results.filter(Boolean);
                 if (created.length > 0) {
                   window.dispatchEvent(new CustomEvent("renderflow:renders-created", { detail: created }));
                 }
