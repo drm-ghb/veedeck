@@ -166,7 +166,7 @@ export default function SearchProductDialog({ open, onClose, onSelect, projectId
       document.removeEventListener("mousemove", onMouseMove);
       document.removeEventListener("mouseup", onMouseUp);
     };
-  }, [listSections]);
+  }, [listSections, listLoading]);
 
   const [projectDropdownOpen, setProjectDropdownOpen] = useState(false);
   const [projectDropdownPos, setProjectDropdownPos] = useState({ top: 0, left: 0 });
