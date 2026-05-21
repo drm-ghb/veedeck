@@ -376,9 +376,9 @@ export default function SearchProductDialog({ open, onClose, onSelect, projectId
                         <ChevronLeft size={14} />
                       </button>
                     )}
-                    <div className="flex items-center flex-1 min-w-0">
-                    <div ref={sectionScrollRef} onScroll={handleSectionScroll} className="overflow-x-auto no-scrollbar flex-1 min-w-0 cursor-grab">
-                      <div className="flex gap-1.5">
+                    <div className="flex items-center flex-1 min-w-0" style={{ overflow: 'hidden' }}>
+                    <div ref={sectionScrollRef} onScroll={handleSectionScroll} className="no-scrollbar cursor-grab" style={{ overflowX: 'scroll', flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', gap: '6px', width: 'max-content' }}>
                         <button
                           type="button"
                           onClick={() => setSelectedSectionId(null)}
