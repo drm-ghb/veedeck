@@ -331,13 +331,7 @@ export default function SearchProductDialog({ open, onClose, onSelect, projectId
                         <ChevronLeft size={14} />
                       </button>
                     )}
-                    <button
-                      type="button"
-                      onClick={() => { sectionScrollRef.current?.scrollBy({ left: 150, behavior: "smooth" }); }}
-                      className="flex-shrink-0 order-last text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      <ChevronRight size={14} />
-                    </button>
+                    <div className="flex items-center flex-1 min-w-0">
                     <div ref={sectionScrollRef} onScroll={handleSectionScroll} className="overflow-x-auto no-scrollbar flex-1 min-w-0">
                       <div className="flex gap-1.5">
                         <button
@@ -366,6 +360,14 @@ export default function SearchProductDialog({ open, onClose, onSelect, projectId
                           </button>
                         ))}
                       </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => { sectionScrollRef.current?.scrollBy({ left: 150, behavior: "smooth" }); }}
+                      className="flex-shrink-0 text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <ChevronRight size={14} />
+                    </button>
                     </div>
                   </>
                 )}
