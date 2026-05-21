@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { GripVertical, RotateCcw, Plus, X, Check, Maximize2 } from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,7 @@ type Category = { value: string; label: string; custom?: boolean };
 
 export default function SettingsListyPage() {
   const t = useT();
+  const router = useRouter();
 
   const BUILT_IN: Category[] = [
     { value: "OSWIETLENIE", label: t.listSettings.lampy },
@@ -93,6 +95,7 @@ export default function SettingsListyPage() {
       });
       if (!res.ok) throw new Error();
       toast.success(t.listSettings.saved);
+      router.refresh();
     } catch {
       toast.error(t.listSettings.saveError);
     } finally {

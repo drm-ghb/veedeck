@@ -76,6 +76,7 @@ export default async function RoomPage({ params }: Props) {
           status: r.status,
           folderId: r.folderId ?? null,
           pinned: r.pinned,
+          createdAt: r.createdAt.toISOString(),
         }))}
         archivedRenders={archivedRenders.map((r) => ({
           id: r.id,
@@ -87,17 +88,20 @@ export default async function RoomPage({ params }: Props) {
           status: r.status,
           folderId: r.folderId ?? null,
           pinned: r.pinned,
+          createdAt: r.createdAt.toISOString(),
         }))}
         folders={folders.map((f) => ({
           id: f.id,
           name: f.name,
           renderCount: f._count.renders,
           pinned: f.pinned,
+          createdAt: f.createdAt.toISOString(),
         }))}
         archivedFolders={archivedFolders.map((f) => ({
           id: f.id,
           name: f.name,
           renderCount: f._count.renders,
+          createdAt: f.createdAt.toISOString(),
         }))}
       />
     </div>

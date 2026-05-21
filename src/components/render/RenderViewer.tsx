@@ -3668,6 +3668,7 @@ export default function RenderViewer({
           setPendingProductPos(null);
         }}
         projectId={projectId}
+        renderId={pendingProductPos?.renderId}
       />
 
       {/* Version History Modal */}

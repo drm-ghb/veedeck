@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { Search, X, Package, SlidersHorizontal, ChevronDown, ChevronRight, Loader2, LocalMall } from "@/components/ui/icons";
 import { useProductSearch } from "@/components/produkty/useProductSearch";
@@ -37,6 +37,13 @@ interface Props {
   onClose: () => void;
   onSelect: (product: Product) => void;
   projectId?: string;
+  renderId?: string;
+}
+
+interface SavedPickerState {
+  tab: Tab;
+  listId: string | null;
+  sectionId: string | null;
 }
 
 type Tab = "list" | "recent" | "all";
@@ -74,8 +81,15 @@ function ProductList({ products, onSelect }: { products: Product[]; onSelect: (p
   );
 }
 
-export default function SearchProductDialog({ open, onClose, onSelect, projectId }: Props) {
+export default function SearchProductDialog({ open, onClose, onSelect, projectId, renderId }: Props) {
   const search = useProductSearch();
+
+  // Per-render state memory: remembers tab/list/section as long as same render is active
+  const activeRenderIdRef = useRef<string | null>(null);
+  const savedStateRef = useRef<SavedPickerState | null>(null);
+  const pendingSectionRestore = useRef<string | null>(null);
+  const selectedListIdRef = useRef<string | null>(null);
+
   const [showFilters, setShowFilters] = useState(false);
   const [expandedFilters, setExpandedFilters] = useState<Record<string, boolean>>({
     categories: true,
@@ -96,22 +110,38 @@ export default function SearchProductDialog({ open, onClose, onSelect, projectId
   const [recentProducts, setRecentProducts] = useState<Product[]>([]);
   const [recentLoading, setRecentLoading] = useState(false);
   const [selectedListId, setSelectedListId] = useState<string | null>(null);
+  useEffect(() => { selectedListIdRef.current = selectedListId; }, [selectedListId]);
   const [allLists, setAllLists] = useState<ShoppingList[]>([]);
   const [projectDropdownOpen, setProjectDropdownOpen] = useState(false);
   const [projectDropdownPos, setProjectDropdownPos] = useState({ top: 0, left: 0 });
   const [projectSearch, setProjectSearch] = useState("");
 
-  // Reset state when dialog opens
+  // On open: restore state if same render, otherwise full reset
   useEffect(() => {
-    if (open) {
+    if (!open) return;
+
+    const sameRender = renderId != null && renderId === activeRenderIdRef.current;
+
+    if (sameRender && savedStateRef.current) {
+      const saved = savedStateRef.current;
+      setActiveTab(saved.tab);
+      setSelectedListId(saved.listId);
+      pendingSectionRestore.current = saved.sectionId;
+      setProjectDropdownOpen(false);
+      setProjectSearch("");
+    } else {
       setActiveTab("all");
       setLocalQuery("");
       setSelectedListId(null);
       setAllLists([]);
       setProjectDropdownOpen(false);
       setProjectSearch("");
+      savedStateRef.current = null;
+      pendingSectionRestore.current = null;
+      if (renderId != null) activeRenderIdRef.current = renderId;
     }
-  }, [open, projectId]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   // Reset local query on tab change
   useEffect(() => {
@@ -131,8 +161,8 @@ export default function SearchProductDialog({ open, onClose, onSelect, projectId
               .map((l: any) => ({ id: l.id, name: l.name, projectTitle: l.project?.title ?? null, projectId: l.project?.id ?? null }))
           : [];
         setAllLists(lists);
-        // Auto-select the first list linked to the current project
-        if (projectId && lists.length > 0) {
+        // Auto-select the first list linked to the current project — only when no list is already selected (fresh open, not restore)
+        if (projectId && lists.length > 0 && selectedListIdRef.current === null) {
           const match = (data as any[]).find((l: any) => !l.archived && l.project?.id === projectId);
           setSelectedListId(match ? match.id : null);
         }
@@ -149,7 +179,13 @@ export default function SearchProductDialog({ open, onClose, onSelect, projectId
       .then((r) => r.json())
       .then((data) => { setListProducts(data.products ?? []); setListSections(data.sections ?? []); })
       .catch(() => { setListProducts([]); setListSections([]); })
-      .finally(() => setListLoading(false));
+      .finally(() => {
+        setListLoading(false);
+        if (pendingSectionRestore.current) {
+          setSelectedSectionId(pendingSectionRestore.current);
+          pendingSectionRestore.current = null;
+        }
+      });
   }, [open, selectedListId, activeTab]);
 
   // Fetch recent pin products for this project
@@ -173,6 +209,9 @@ export default function SearchProductDialog({ open, onClose, onSelect, projectId
     getActiveCount("categories") + getActiveCount("manufacturers") + getActiveCount("colors");
 
   function handleClose() {
+    if (renderId != null && renderId === activeRenderIdRef.current) {
+      savedStateRef.current = { tab: activeTab, listId: selectedListId, sectionId: selectedSectionId };
+    }
     search.resetFilters();
     setFilterSearch({ categories: "", manufacturers: "", colors: "" });
     setLocalQuery("");

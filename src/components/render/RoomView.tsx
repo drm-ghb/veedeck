@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useViewPreference, useGridCols } from "@/hooks/useViewPreference";
-import { ArchiveRestore, Check, CopyCheck, Eye, FileText, Folder, LayoutGrid, List, Pin, Trash2, GripVertical, Upload } from "@/components/ui/icons";
+import { ArchiveRestore, ArrowUpDown, Check, CopyCheck, Eye, FileText, Folder, LayoutGrid, List, Pin, Trash2, GripVertical, Upload } from "@/components/ui/icons";
 import { useUploadThing } from "@/lib/uploadthing-client";
 import {
   DndContext,
@@ -30,6 +30,7 @@ import BulkActionBar from "./BulkActionBar";
 import BulkMoveDialog from "./BulkMoveDialog";
 
 type RenderStatus = "REVIEW" | "ACCEPTED";
+type SortBy = "manual" | "name" | "createdAt";
 
 interface Render {
   id: string;
@@ -41,6 +42,7 @@ interface Render {
   status: RenderStatus;
   folderId: string | null;
   pinned: boolean;
+  createdAt: string;
 }
 
 interface Folder {
@@ -48,12 +50,32 @@ interface Folder {
   name: string;
   renderCount: number;
   pinned: boolean;
+  createdAt: string;
 }
 
 interface ArchivedFolder {
   id: string;
   name: string;
   renderCount: number;
+  createdAt: string;
+}
+
+function sortItems<T extends { name: string; pinned?: boolean; createdAt: string }>(
+  items: T[],
+  sortBy: SortBy
+): T[] {
+  const arr = [...items];
+  if (sortBy === "name") {
+    arr.sort((a, b) => a.name.localeCompare(b.name, "pl"));
+  } else if (sortBy === "createdAt") {
+    arr.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+  // pinned always float to top (stable — preserves sort within each group)
+  arr.sort((a, b) => {
+    if ((a.pinned ?? false) !== (b.pinned ?? false)) return (a.pinned ?? false) ? -1 : 1;
+    return 0;
+  });
+  return arr;
 }
 
 interface RoomViewProps {
@@ -76,6 +98,13 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
   const [viewMode, setViewMode] = useViewPreference("renderflow-room", "grid");
   const [gridCols, setGridCols] = useGridCols("renderflow-room");
   const [gridOpen, setGridOpen] = useState(false);
+  const [sortBy, setSortBy] = useState<SortBy>(() => {
+    if (typeof window === "undefined") return "manual";
+    const saved = localStorage.getItem("renderflow-room-sort");
+    return (saved === "manual" || saved === "name" || saved === "createdAt") ? saved : "manual";
+  });
+  const [sortOpen, setSortOpen] = useState(false);
+  const sortRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -104,7 +133,7 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
     function onFolderCreated(e: Event) {
       const f = (e as CustomEvent).detail;
       pendingFolderIds.current.add(f.id);
-      setLocalFolders((prev) => [...prev, { id: f.id, name: f.name, renderCount: 0, pinned: false }]);
+      setLocalFolders((prev) => [...prev, { id: f.id, name: f.name, renderCount: 0, pinned: false, createdAt: new Date().toISOString() }]);
     }
     function onRendersCreated(e: Event) {
       const newRenders = (e as CustomEvent).detail as Array<{ id: string; name: string; fileUrl: string; fileType: string | undefined; status: string; folderId: string | null; viewCount: number }>;
@@ -121,6 +150,7 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
           status: (r.status ?? "REVIEW") as "REVIEW" | "ACCEPTED",
           folderId: r.folderId ?? null,
           pinned: false,
+          createdAt: new Date().toISOString(),
         })),
       ]);
     }
@@ -152,6 +182,15 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
     document.addEventListener("mousedown", onOutside);
     return () => document.removeEventListener("mousedown", onOutside);
   }, [gridOpen]);
+
+  useEffect(() => {
+    if (!sortOpen) return;
+    function onOutside(e: MouseEvent) {
+      if (sortRef.current && !sortRef.current.contains(e.target as Node)) setSortOpen(false);
+    }
+    document.addEventListener("mousedown", onOutside);
+    return () => document.removeEventListener("mousedown", onOutside);
+  }, [sortOpen]);
   const [isDragOver, setIsDragOver] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const dragCounterRef = useRef(0);
@@ -196,7 +235,7 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
         });
         if (res.ok) {
           const render = await res.json();
-          created.push({ id: render.id, name: render.name, fileUrl: render.fileUrl, fileType: render.fileType ?? null, commentCount: 0, viewCount: 0, status: (render.status ?? "REVIEW") as "REVIEW" | "ACCEPTED", folderId: render.folderId ?? null, pinned: false });
+          created.push({ id: render.id, name: render.name, fileUrl: render.fileUrl, fileType: render.fileType ?? null, commentCount: 0, viewCount: 0, status: (render.status ?? "REVIEW") as "REVIEW" | "ACCEPTED", folderId: render.folderId ?? null, pinned: false, createdAt: new Date().toISOString() });
         }
       }
       if (created.length > 0) setLocalRenders((prev) => [...prev, ...created]);
@@ -261,11 +300,21 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
     }
   }
 
-  const ungrouped = [...localRenders.filter((r) => !r.folderId)].sort((a, b) => {
-    if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
-    return 0;
-  });
+  const displayFolders = sortBy === "manual" ? localFolders : sortItems(localFolders, sortBy);
+  const ungrouped = sortItems(localRenders.filter((r) => !r.folderId), sortBy === "manual" ? "manual" : sortBy);
   const hasContent = localFolders.length > 0 || localRenders.length > 0;
+
+  function handleSetSort(s: SortBy) {
+    setSortBy(s);
+    setSortOpen(false);
+    localStorage.setItem("renderflow-room-sort", s);
+  }
+
+  const SORT_LABELS: Record<SortBy, string> = {
+    manual: "Ręcznie",
+    name: "Nazwa",
+    createdAt: "Data utworzenia",
+  };
 
   async function handleRestore(renderId: string) {
     const res = await fetch(`/api/renders/${renderId}`, {
@@ -390,6 +439,31 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
                 </span>
               )}
             </button>
+            {/* Sort dropdown */}
+            <div className="relative" ref={sortRef}>
+              <button
+                onClick={() => setSortOpen((v) => !v)}
+                title="Sortowanie"
+                className={`flex items-center gap-1 px-2 py-1.5 rounded-md text-xs transition-colors ${sortBy !== "manual" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
+              >
+                <ArrowUpDown size={13} />
+                <span className="hidden sm:inline">{SORT_LABELS[sortBy]}</span>
+              </button>
+              {sortOpen && (
+                <div className="absolute right-0 top-full mt-1 z-20 bg-popover border border-border rounded-lg shadow-md py-1 min-w-[160px]">
+                  {(["manual", "name", "createdAt"] as SortBy[]).map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => handleSetSort(s)}
+                      className={`flex items-center justify-between w-full px-3 py-1.5 text-sm transition-colors hover:bg-muted ${sortBy === s ? "text-foreground font-medium" : "text-muted-foreground"}`}
+                    >
+                      {SORT_LABELS[s]}
+                      {sortBy === s && <Check size={12} />}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           <div className="flex items-center gap-0.5 bg-muted rounded-md p-0.5">
             <div className="relative" ref={gridRef}>
               <button
@@ -438,15 +512,23 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
           <div className="space-y-8">
             {/* Folder tiles */}
             {localFolders.length > 0 && (
-              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleFolderDragEnd}>
-                <SortableContext items={localFolders.map((f) => f.id)} strategy={rectSortingStrategy}>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4">
-                    {localFolders.map((folder) => (
-                      <SortableFolderCard key={folder.id} folder={folder} projectId={projectId} roomId={roomId} />
-                    ))}
-                  </div>
-                </SortableContext>
-              </DndContext>
+              sortBy === "manual" ? (
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleFolderDragEnd}>
+                  <SortableContext items={localFolders.map((f) => f.id)} strategy={rectSortingStrategy}>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4">
+                      {localFolders.map((folder) => (
+                        <SortableFolderCard key={folder.id} folder={folder} projectId={projectId} roomId={roomId} />
+                      ))}
+                    </div>
+                  </SortableContext>
+                </DndContext>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4">
+                  {displayFolders.map((folder) => (
+                    <FolderCard key={folder.id} folder={folder} projectId={projectId} roomId={roomId} />
+                  ))}
+                </div>
+              )
             )}
 
             {/* Ungrouped renders */}

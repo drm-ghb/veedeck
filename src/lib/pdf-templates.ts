@@ -196,6 +196,17 @@ async function loadFont(
   }
 }
 
+// ─── Helper: Roman numerals ───────────────────────────────────────────────────
+function toRoman(n: number): string {
+  const vals = [1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1];
+  const syms = ["M","CM","D","CD","C","XC","L","XL","X","IX","V","IV","I"];
+  let r = "";
+  for (let i = 0; i < vals.length; i++) {
+    while (n >= vals[i]) { r += syms[i]; n -= vals[i]; }
+  }
+  return r + ".";
+}
+
 // ─── Public entry point ───────────────────────────────────────────────────────
 export async function generateListPDF(opts: GeneratePdfOptions) {
   const { jsPDF } = await import("jspdf");
@@ -218,11 +229,16 @@ export async function generateListPDF(opts: GeneratePdfOptions) {
 
   switch (opts.template) {
     case "editorial":
+      await renderEditorial(doc, opts, exportSections, allVisible, imgCache, logoDataUrl);
+      break;
     case "atelier":
+      await renderAtelier(doc, opts, exportSections, allVisible, imgCache, logoDataUrl);
+      break;
     case "architect":
+      await renderArchitect(doc, opts, exportSections, allVisible, imgCache, logoDataUrl);
+      break;
     case "linen":
-      // Stubs — render as Violet until implemented
-      await renderViolet(doc, opts, exportSections, allVisible, imgCache, logoDataUrl);
+      await renderLinen(doc, opts, exportSections, allVisible, imgCache, logoDataUrl);
       break;
     case "violet":
     default:
@@ -418,7 +434,19 @@ async function renderViolet(
 
     for (let i = 0; i < products.length; i++) {
       const p = products[i];
-      ensureSpace(IMG + 4);
+
+      // Pre-calculate row height based on content
+      const nameLines = (doc.splitTextToSize(p.name, TEXT_W) as string[]).slice(0, 2);
+      const detailRows: [string, string][] = [];
+      if (p.supplier) detailRows.push([s.supplier, p.supplier]);
+      if (p.manufacturer) detailRows.push([s.manufacturer, p.manufacturer]);
+      if (p.dimensions) detailRows.push([s.dimension, p.dimensions]);
+      if (p.color) detailRows.push([s.color, p.color]);
+      detailRows.push([s.qty, `${p.quantity} ${s.unit}`]);
+      const textH = 4 + nameLines.length * 5.2 + detailRows.length * 4.2 + 4;
+      const rowH = Math.max(IMG, textH);
+
+      ensureSpace(rowH + 4);
 
       const rowY = y;
 
@@ -445,16 +473,8 @@ async function renderViolet(
       doc.setFont(FONT, "bold");
       doc.setFontSize(9.5);
       doc.setTextColor(...DARK);
-      const nameLines = (doc.splitTextToSize(p.name, TEXT_W) as string[]).slice(0, 2);
       doc.text(nameLines, TEXT_X, cy);
       cy += nameLines.length * 5.2;
-
-      const detailRows: [string, string][] = [];
-      if (p.supplier) detailRows.push([s.supplier, p.supplier]);
-      if (p.manufacturer) detailRows.push([s.manufacturer, p.manufacturer]);
-      if (p.dimensions) detailRows.push([s.dimension, p.dimensions]);
-      if (p.color) detailRows.push([s.color, p.color]);
-      detailRows.push([s.qty, `${p.quantity} ${s.unit}`]);
 
       doc.setFont(FONT, "normal");
       doc.setFontSize(7.5);
@@ -515,7 +535,7 @@ async function renderViolet(
         doc.link(ix, iy, ICO, ICO, { url: p.url });
       }
 
-      y = rowY + IMG + 5;
+      y = rowY + rowH + 5;
 
       if (i < products.length - 1) {
         doc.setDrawColor(...BORDER);
@@ -552,6 +572,1326 @@ async function renderViolet(
     doc.setFont(FONT, "normal");
     doc.setFontSize(7.5);
     doc.setTextColor(...MUTED);
+    doc.text(`${pg} / ${totalPages}`, PAGE_W / 2, PAGE_H - 5, { align: "center" });
+  }
+}
+
+// ─── Editorial renderer ───────────────────────────────────────────────────────
+async function renderEditorial(
+  doc: import("jspdf").jsPDF,
+  opts: GeneratePdfOptions,
+  exportSections: Section[],
+  _allVisible: Product[],
+  imgCache: Record<string, string>,
+  logoDataUrl: string | null
+) {
+  const s = STR[opts.lang];
+  const FONT = "Geist";
+  const BLACK: RGB = [17, 17, 17];
+  const MUTED: RGB = [120, 120, 120];
+  const BORDER: RGB = [225, 225, 225];
+
+  const PAGE_W = 210;
+  const PAGE_H = 297;
+  const ML = 14;
+  const MR = 14;
+  const CW = PAGE_W - ML - MR;
+  const MID = PAGE_W / 2;
+  const IMG = 28;
+  const PRICE_COL = 40;
+
+  let y = 0;
+
+  function ensureSpace(needed: number) {
+    if (y + needed > PAGE_H - 16) {
+      doc.addPage();
+      y = 14;
+    }
+  }
+
+  function fmt(n: number) { return fmtNum(n, opts.lang); }
+
+  const today = fmtDate(opts.lang);
+  const addressLines = buildAddressLines(opts.list.project);
+  const COL_W = MID - ML - 8;
+
+  // ── Top rule ──────────────────────────────────────────────────────────────
+  doc.setFillColor(...BLACK);
+  doc.rect(0, 0, PAGE_W, 2, "F");
+
+  // ── Date (top-right) ──────────────────────────────────────────────────────
+  doc.setFont(FONT, "normal");
+  doc.setFontSize(8);
+  doc.setTextColor(...MUTED);
+  doc.text(today.toUpperCase(), PAGE_W - MR, 8, { align: "right" });
+
+  // ── Left column: designer ─────────────────────────────────────────────────
+  let ly = 9;
+  doc.setFont(FONT, "bold");
+  doc.setFontSize(7);
+  doc.setTextColor(...MUTED);
+  doc.text(s.preparedBy.toUpperCase(), ML, ly);
+  ly += 5.5;
+
+  if (logoDataUrl) {
+    try {
+      doc.addImage(logoDataUrl, "JPEG", ML, ly, 8, 8);
+      doc.setFont(FONT, "bold");
+      doc.setFontSize(11.5);
+      doc.setTextColor(...BLACK);
+      doc.text(opts.designerName ?? "Projektant", ML + 10, ly + 5.5);
+      ly += 11;
+    } catch {
+      doc.setFont(FONT, "bold");
+      doc.setFontSize(11.5);
+      doc.setTextColor(...BLACK);
+      doc.text(opts.designerName ?? "Projektant", ML, ly + 5.5);
+      ly += 7.5;
+    }
+  } else {
+    doc.setFont(FONT, "bold");
+    doc.setFontSize(11.5);
+    doc.setTextColor(...BLACK);
+    doc.text(opts.designerName ?? "Projektant", ML, ly + 5.5);
+    ly += 7.5;
+  }
+
+  if (opts.designerEmail) {
+    doc.setFont(FONT, "normal");
+    doc.setFontSize(8.5);
+    doc.setTextColor(...MUTED);
+    doc.text(opts.designerEmail, ML, ly);
+    ly += 5;
+  }
+
+  // ── Right column: client ──────────────────────────────────────────────────
+  let ry = 9;
+  const rx = MID + 4;
+  doc.setFont(FONT, "bold");
+  doc.setFontSize(7);
+  doc.setTextColor(...MUTED);
+  doc.text(s.preparedFor.toUpperCase(), rx, ry);
+  ry += 5.5;
+
+  if (opts.list.project?.clientName) {
+    doc.setFont(FONT, "bold");
+    doc.setFontSize(11.5);
+    doc.setTextColor(...BLACK);
+    doc.text(opts.list.project.clientName, rx, ry + 5.5, { maxWidth: COL_W });
+    ry += 7.5;
+  }
+
+  if (addressLines.length > 0) {
+    doc.setFont(FONT, "normal");
+    doc.setFontSize(8.5);
+    doc.setTextColor(...MUTED);
+    for (const line of addressLines) {
+      doc.text(line, rx, ry, { maxWidth: COL_W });
+      ry += 4.5;
+    }
+  }
+
+  // ── Hairline below header ─────────────────────────────────────────────────
+  y = Math.max(ly, ry) + 8;
+  doc.setDrawColor(...BLACK);
+  doc.setLineWidth(0.4);
+  doc.line(ML, y, PAGE_W - MR, y);
+  y += 10;
+
+  // ── Title block ───────────────────────────────────────────────────────────
+  if (opts.list.project?.title) {
+    doc.setFont(FONT, "bold");
+    doc.setFontSize(7.5);
+    doc.setTextColor(...MUTED);
+    doc.text(`${s.project.toUpperCase()} · ${opts.list.project.title.toUpperCase()}`, ML, y);
+    y += 7;
+  }
+
+  doc.setFont(FONT, "bold");
+  doc.setFontSize(20);
+  doc.setTextColor(...BLACK);
+  const titleLines = doc.splitTextToSize(opts.list.name, CW * 0.72) as string[];
+  doc.text(titleLines, ML, y);
+  y += titleLines.length * 9 + 9;
+
+  // ── Sections ──────────────────────────────────────────────────────────────
+  let sectionIndex = 0;
+  const PRICE_X = PAGE_W - MR;
+  const TEXT_X = ML + IMG + 4;
+  const TEXT_W = CW - IMG - 4 - PRICE_COL - 4;
+
+  for (const section of exportSections) {
+    const products = section.products.filter((p) => !p.hidden);
+    if (products.length === 0) continue;
+    sectionIndex++;
+
+    ensureSpace(18);
+
+    const secTotal = products.reduce((sum, p) => {
+      const n = parsePrice(p.price);
+      return n !== null ? sum + n * p.quantity : sum;
+    }, 0);
+    const secCur = getCurrency(products.find((p) => getCurrency(p.price))?.price ?? null);
+
+    // Section header: Roman num | name | total
+    const roman = toRoman(sectionIndex);
+    doc.setFont(FONT, "normal");
+    doc.setFontSize(17);
+    doc.setTextColor(...BLACK);
+    doc.text(roman, ML, y);
+    const numW = doc.getTextWidth(roman);
+
+    doc.setFont(FONT, "bold");
+    doc.setFontSize(8);
+    doc.setTextColor(...BLACK);
+    doc.text(section.name.toUpperCase(), ML + numW + 3, y - 0.5, { maxWidth: CW - numW - 3 - 36 });
+
+    if (secTotal > 0) {
+      doc.setFont(FONT, "normal");
+      doc.setFontSize(12);
+      doc.setTextColor(...BLACK);
+      doc.text(`${fmt(secTotal)} ${secCur}`, PRICE_X, y, { align: "right" });
+    }
+
+    y += 2;
+    doc.setDrawColor(...BLACK);
+    doc.setLineWidth(0.3);
+    doc.line(ML, y, PAGE_W - MR, y);
+    y += 5;
+
+    // Products
+    for (let i = 0; i < products.length; i++) {
+      const p = products[i];
+
+      // Pre-calculate row height based on content
+      const nameLines = (doc.splitTextToSize(p.name, TEXT_W) as string[]).slice(0, 2);
+      const detailRows: [string, string][] = [];
+      if (p.supplier) detailRows.push([s.supplier, p.supplier]);
+      if (p.manufacturer) detailRows.push([s.manufacturer, p.manufacturer]);
+      if (p.dimensions) detailRows.push([s.dimension, p.dimensions]);
+      if (p.color) detailRows.push([s.color, p.color]);
+      detailRows.push([s.qty, `${p.quantity} ${s.unit}`]);
+      const textH = 5 + nameLines.length * 5.5 + detailRows.length * 4.2 + 4;
+      const rowH = Math.max(IMG, textH);
+
+      ensureSpace(rowH + 6);
+
+      const rowY = y;
+      doc.setFillColor(240, 240, 238);
+      doc.rect(ML, rowY, IMG, IMG, "F");
+      if (imgCache[p.id]) {
+        try { doc.addImage(imgCache[p.id], "JPEG", ML, rowY, IMG, IMG); } catch { /* skip */ }
+      } else {
+        doc.setFont(FONT, "normal");
+        doc.setFontSize(7);
+        doc.setTextColor(...MUTED);
+        doc.text(s.noImage, ML + IMG / 2, rowY + IMG / 2 + 1, { align: "center" });
+      }
+      if (p.url) doc.link(ML, rowY, IMG, IMG, { url: p.url });
+
+      let cy = rowY + 5;
+      doc.setFont(FONT, "bold");
+      doc.setFontSize(10.5);
+      doc.setTextColor(...BLACK);
+      doc.text(nameLines, TEXT_X, cy);
+      cy += nameLines.length * 5.5;
+
+      doc.setFont(FONT, "normal");
+      doc.setFontSize(7.5);
+      for (const [label, value] of detailRows) {
+        doc.setTextColor(...MUTED);
+        doc.text(`${label}: `, TEXT_X, cy);
+        const labelW = doc.getTextWidth(`${label}: `);
+        doc.setTextColor(...BLACK);
+        doc.text(value, TEXT_X + labelW, cy, { maxWidth: TEXT_W - labelW });
+        cy += 4.2;
+      }
+
+      const unit = parsePrice(p.price);
+      const cur = getCurrency(p.price);
+      if (unit !== null) {
+        const total = unit * p.quantity;
+        doc.setFont(FONT, "bold");
+        doc.setFontSize(11);
+        doc.setTextColor(...BLACK);
+        doc.text(`${fmt(total)} ${cur}`, PRICE_X, rowY + 6, { align: "right" });
+        if (p.quantity > 1) {
+          doc.setFont(FONT, "normal");
+          doc.setFontSize(7.5);
+          doc.setTextColor(...MUTED);
+          doc.text(`${p.quantity} × ${fmt(unit)} ${cur}`, PRICE_X, rowY + 11.5, { align: "right" });
+        }
+      } else if (p.quantity > 1) {
+        doc.setFont(FONT, "normal");
+        doc.setFontSize(8);
+        doc.setTextColor(...MUTED);
+        doc.text(`${p.quantity} ${s.unit}`, PRICE_X, rowY + 6, { align: "right" });
+      }
+
+      y = rowY + rowH + 4;
+
+      if (i < products.length - 1) {
+        doc.setDrawColor(...BORDER);
+        doc.setLineWidth(0.2);
+        doc.line(TEXT_X, y, PAGE_W - MR, y);
+        y += 2;
+      }
+    }
+
+    y += 10;
+  }
+
+  // ── Grand total ────────────────────────────────────────────────────────────
+  if (opts.hasTotal) {
+    ensureSpace(18);
+    doc.setDrawColor(...BLACK);
+    doc.setLineWidth(0.6);
+    doc.line(ML, y, PAGE_W - MR, y);
+    y += 8;
+    doc.setFont(FONT, "bold");
+    doc.setFontSize(8);
+    doc.setTextColor(...MUTED);
+    doc.text(s.grandTotal.toUpperCase(), ML, y);
+    doc.setFont(FONT, "bold");
+    doc.setFontSize(22);
+    doc.setTextColor(...BLACK);
+    doc.text(`${fmtNum(opts.grandTotal, opts.lang)} ${opts.grandCurrency}`, PRICE_X, y, { align: "right" });
+  }
+
+  // ── Page numbers ──────────────────────────────────────────────────────────
+  const totalPages = doc.getNumberOfPages();
+  for (let pg = 1; pg <= totalPages; pg++) {
+    doc.setPage(pg);
+    doc.setFont(FONT, "normal");
+    doc.setFontSize(7.5);
+    doc.setTextColor(...MUTED);
+    doc.text(`${pg} / ${totalPages}`, PAGE_W / 2, PAGE_H - 5, { align: "center" });
+  }
+}
+
+// ─── Atelier renderer ─────────────────────────────────────────────────────────
+async function renderAtelier(
+  doc: import("jspdf").jsPDF,
+  opts: GeneratePdfOptions,
+  exportSections: Section[],
+  _allVisible: Product[],
+  imgCache: Record<string, string>,
+  logoDataUrl: string | null
+) {
+  const s = STR[opts.lang];
+  const FONT = "Geist";
+  const BG: RGB = [250, 247, 242];
+  const BANNER_BG: RGB = [242, 235, 221];
+  const DARK: RGB = [42, 37, 32];
+  const BRONZE: RGB = [139, 97, 60];
+  const MUTED: RGB = [107, 93, 77];
+  const BORDER: RGB = [214, 201, 172];
+  const PROD_BG: RGB = [237, 227, 205];
+
+  const PAGE_W = 210;
+  const PAGE_H = 297;
+  const ML = 14;
+  const MR = 14;
+  const CW = PAGE_W - ML - MR;
+  const MID = PAGE_W / 2;
+  const IMG = 30;
+  const PRICE_COL = 42;
+
+  let y = 0;
+
+  function fillBg() {
+    doc.setFillColor(...BG);
+    doc.rect(0, 0, PAGE_W, PAGE_H, "F");
+  }
+
+  function ensureSpace(needed: number) {
+    if (y + needed > PAGE_H - 16) {
+      doc.addPage();
+      fillBg();
+      y = 14;
+    }
+  }
+
+  function fmt(n: number) { return fmtNum(n, opts.lang); }
+
+  fillBg();
+
+  const today = fmtDate(opts.lang);
+  const addressLines = buildAddressLines(opts.list.project);
+  const COL_W = MID - ML - 8;
+
+  // ── Banner ────────────────────────────────────────────────────────────────
+  const leftLineCount = 1 + (opts.designerEmail ? 1 : 0);
+  const rightLineCount = (opts.list.project?.clientName ? 1 : 0) + addressLines.length;
+  const BANNER_H = Math.max(leftLineCount, rightLineCount) * 5.5 + 34;
+
+  doc.setFillColor(...BANNER_BG);
+  doc.rect(0, 0, PAGE_W, BANNER_H, "F");
+
+  // Bronze bottom hairline (faded in center via two lines)
+  doc.setDrawColor(...BRONZE);
+  doc.setLineWidth(0.3);
+  doc.line(ML + 10, BANNER_H, PAGE_W - MR - 10, BANNER_H);
+
+  // Vertical divider
+  doc.setDrawColor(...BORDER);
+  doc.setLineWidth(0.3);
+  doc.line(MID, 8, MID, BANNER_H - 8);
+
+  // Left: designer
+  let ly = 9;
+  doc.setFont(FONT, "normal");
+  doc.setFontSize(7.5);
+  doc.setTextColor(...BRONZE);
+  doc.text(s.preparedBy, ML, ly);
+  ly += 5.5;
+
+  if (logoDataUrl) {
+    try {
+      doc.addImage(logoDataUrl, "JPEG", ML, ly, 9, 9);
+      doc.setFont(FONT, "bold");
+      doc.setFontSize(12);
+      doc.setTextColor(...DARK);
+      doc.text(opts.designerName ?? "Projektant", ML + 11.5, ly + 6);
+      ly += 11;
+    } catch {
+      doc.setFont(FONT, "bold");
+      doc.setFontSize(12);
+      doc.setTextColor(...DARK);
+      doc.text(opts.designerName ?? "Projektant", ML, ly + 6);
+      ly += 8.5;
+    }
+  } else {
+    doc.setFont(FONT, "bold");
+    doc.setFontSize(12);
+    doc.setTextColor(...DARK);
+    doc.text(opts.designerName ?? "Projektant", ML, ly + 6);
+    ly += 8.5;
+  }
+
+  if (opts.designerEmail) {
+    doc.setFont(FONT, "normal");
+    doc.setFontSize(8.5);
+    doc.setTextColor(...MUTED);
+    doc.text(opts.designerEmail, ML, ly);
+  }
+
+  // Right: date + client
+  let ry = 9;
+  const rx = MID + 5;
+
+  doc.setFont(FONT, "normal");
+  doc.setFontSize(7.5);
+  doc.setTextColor(...BRONZE);
+  doc.text(today.toUpperCase(), rx, ry);
+  ry += 6.5;
+
+  doc.setFont(FONT, "normal");
+  doc.setFontSize(7.5);
+  doc.setTextColor(...BRONZE);
+  doc.text(s.preparedFor, rx, ry);
+  ry += 5.5;
+
+  if (opts.list.project?.clientName) {
+    doc.setFont(FONT, "bold");
+    doc.setFontSize(12);
+    doc.setTextColor(...DARK);
+    doc.text(opts.list.project.clientName, rx, ry + 6, { maxWidth: COL_W });
+    ry += 8.5;
+  }
+
+  if (addressLines.length > 0) {
+    doc.setFont(FONT, "normal");
+    doc.setFontSize(8.5);
+    doc.setTextColor(...MUTED);
+    for (const line of addressLines) {
+      doc.text(line, rx, ry, { maxWidth: COL_W });
+      ry += 4.5;
+    }
+  }
+
+  // ── Title zone ────────────────────────────────────────────────────────────
+  y = BANNER_H + 12;
+
+  if (opts.list.project?.title) {
+    doc.setFont(FONT, "bold");
+    doc.setFontSize(7.5);
+    doc.setTextColor(...BRONZE);
+    doc.text(opts.list.project.title.toUpperCase(), ML, y);
+    y += 6;
+  }
+
+  doc.setFont(FONT, "bold");
+  doc.setFontSize(20);
+  doc.setTextColor(...DARK);
+  const titleLines = doc.splitTextToSize(opts.list.name, CW * 0.8) as string[];
+  doc.text(titleLines, ML, y);
+  y += titleLines.length * 9 + 8;
+
+  // ── Sections ──────────────────────────────────────────────────────────────
+  let sectionIndex = 0;
+  const PRICE_X = PAGE_W - MR;
+  const TEXT_X = ML + IMG + 4;
+  const TEXT_W = CW - IMG - 4 - PRICE_COL - 4;
+
+  for (const section of exportSections) {
+    const products = section.products.filter((p) => !p.hidden);
+    if (products.length === 0) continue;
+    sectionIndex++;
+
+    ensureSpace(18);
+
+    const secTotal = products.reduce((sum, p) => {
+      const n = parsePrice(p.price);
+      return n !== null ? sum + n * p.quantity : sum;
+    }, 0);
+    const secCur = getCurrency(products.find((p) => getCurrency(p.price))?.price ?? null);
+
+    // Section header: filled circle + name + line + bronze total
+    const CIRC_R = 4;
+    const CIRC_X = ML + CIRC_R;
+    const CIRC_Y = y + CIRC_R;
+    doc.setFillColor(...DARK);
+    doc.circle(CIRC_X, CIRC_Y, CIRC_R, "F");
+    doc.setFont(FONT, "bold");
+    doc.setFontSize(8);
+    doc.setTextColor(250, 247, 242);
+    doc.text(String(sectionIndex), CIRC_X, CIRC_Y + 2.5, { align: "center" });
+
+    const nameX = ML + CIRC_R * 2 + 4;
+    doc.setFont(FONT, "bold");
+    doc.setFontSize(10);
+    doc.setTextColor(...DARK);
+    doc.text(section.name, nameX, CIRC_Y + 3.5);
+    const nameW = doc.getTextWidth(section.name);
+
+    if (secTotal > 0) {
+      doc.setFont(FONT, "bold");
+      doc.setFontSize(10);
+      doc.setTextColor(...BRONZE);
+      const totalStr = `${fmt(secTotal)} ${secCur}`;
+      doc.text(totalStr, PRICE_X, CIRC_Y + 3.5, { align: "right" });
+      const totalW = doc.getTextWidth(totalStr);
+      const lineX1 = nameX + nameW + 4;
+      const lineX2 = PRICE_X - totalW - 4;
+      if (lineX2 > lineX1 + 4) {
+        doc.setDrawColor(...BORDER);
+        doc.setLineWidth(0.3);
+        doc.line(lineX1, CIRC_Y + 2, lineX2, CIRC_Y + 2);
+      }
+    } else {
+      const lineX1 = nameX + nameW + 4;
+      doc.setDrawColor(...BORDER);
+      doc.setLineWidth(0.3);
+      doc.line(lineX1, CIRC_Y + 2, PRICE_X, CIRC_Y + 2);
+    }
+
+    y = CIRC_Y + CIRC_R + 5;
+
+    // Products
+    for (let i = 0; i < products.length; i++) {
+      const p = products[i];
+
+      // Pre-calculate row height
+      const nameLines = (doc.splitTextToSize(p.name, TEXT_W) as string[]).slice(0, 2);
+      const detailRows: [string, string][] = [];
+      if (p.supplier) detailRows.push([s.supplier, p.supplier]);
+      if (p.manufacturer) detailRows.push([s.manufacturer, p.manufacturer]);
+      if (p.dimensions) detailRows.push([s.dimension, p.dimensions]);
+      if (p.color) detailRows.push([s.color, p.color]);
+      detailRows.push([s.qty, `${p.quantity} ${s.unit}`]);
+      const textH = 5 + nameLines.length * 5.2 + detailRows.length * 4.2 + 4;
+      const rowH = Math.max(IMG, textH);
+
+      ensureSpace(rowH + 6);
+
+      const rowY = y;
+      doc.setFillColor(...PROD_BG);
+      doc.roundedRect(ML, rowY, IMG, IMG, 2, 2, "F");
+      if (imgCache[p.id]) {
+        try { doc.addImage(imgCache[p.id], "JPEG", ML, rowY, IMG, IMG); } catch { /* skip */ }
+      } else {
+        doc.setFont(FONT, "normal");
+        doc.setFontSize(7);
+        doc.setTextColor(...MUTED);
+        doc.text(s.noImage, ML + IMG / 2, rowY + IMG / 2 + 1, { align: "center" });
+      }
+      if (p.url) doc.link(ML, rowY, IMG, IMG, { url: p.url });
+
+      let cy = rowY + 5;
+      doc.setFont(FONT, "bold");
+      doc.setFontSize(10);
+      doc.setTextColor(...DARK);
+      doc.text(nameLines, TEXT_X, cy);
+      cy += nameLines.length * 5.2;
+
+      doc.setFont(FONT, "normal");
+      doc.setFontSize(7.5);
+      for (const [label, value] of detailRows) {
+        doc.setTextColor(...MUTED);
+        doc.text(`${label}: `, TEXT_X, cy);
+        const labelW = doc.getTextWidth(`${label}: `);
+        doc.setTextColor(...DARK);
+        doc.text(value, TEXT_X + labelW, cy, { maxWidth: TEXT_W - labelW });
+        cy += 4.2;
+      }
+
+      const unit = parsePrice(p.price);
+      const cur = getCurrency(p.price);
+      if (unit !== null) {
+        const total = unit * p.quantity;
+        doc.setFont(FONT, "bold");
+        doc.setFontSize(12);
+        doc.setTextColor(...DARK);
+        doc.text(`${fmt(total)} ${cur}`, PRICE_X, rowY + 6, { align: "right" });
+        if (p.quantity > 1) {
+          doc.setFont(FONT, "normal");
+          doc.setFontSize(7.5);
+          doc.setTextColor(...BRONZE);
+          doc.text(`${p.quantity} × ${fmt(unit)} ${cur}`, PRICE_X, rowY + 11.5, { align: "right" });
+        }
+      } else if (p.quantity > 1) {
+        doc.setFont(FONT, "normal");
+        doc.setFontSize(8);
+        doc.setTextColor(...MUTED);
+        doc.text(`${p.quantity} ${s.unit}`, PRICE_X, rowY + 6, { align: "right" });
+      }
+
+      y = rowY + rowH + 4;
+
+      if (i < products.length - 1) {
+        doc.setDrawColor(...BORDER);
+        doc.setLineWidth(0.2);
+        doc.line(TEXT_X, y, PAGE_W - MR, y);
+        y += 2;
+      }
+    }
+
+    y += 10;
+  }
+
+  // ── Grand total ────────────────────────────────────────────────────────────
+  if (opts.hasTotal) {
+    ensureSpace(16);
+    doc.setFillColor(...DARK);
+    doc.roundedRect(ML, y, CW, 12, 4, 4, "F");
+    doc.setFont(FONT, "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(250, 247, 242);
+    doc.text(s.grandTotal, ML + 7, y + 8);
+    doc.setFont(FONT, "bold");
+    doc.setFontSize(12);
+    doc.text(`${fmtNum(opts.grandTotal, opts.lang)} ${opts.grandCurrency}`, PAGE_W - MR - 7, y + 8, { align: "right" });
+    y += 12;
+  }
+
+  // ── Page numbers ──────────────────────────────────────────────────────────
+  const totalPages = doc.getNumberOfPages();
+  for (let pg = 1; pg <= totalPages; pg++) {
+    doc.setPage(pg);
+    doc.setFont(FONT, "normal");
+    doc.setFontSize(7.5);
+    doc.setTextColor(...BRONZE);
+    doc.text(`${pg} / ${totalPages}`, PAGE_W / 2, PAGE_H - 6, { align: "center" });
+  }
+}
+
+// ─── Architect renderer ───────────────────────────────────────────────────────
+async function renderArchitect(
+  doc: import("jspdf").jsPDF,
+  opts: GeneratePdfOptions,
+  exportSections: Section[],
+  allVisible: Product[],
+  imgCache: Record<string, string>,
+  logoDataUrl: string | null
+) {
+  const s = STR[opts.lang];
+  const FONT = "Geist";
+  const BLACK: RGB = [17, 17, 17];
+  const MUTED: RGB = [153, 153, 153];
+  const BORDER: RGB = [229, 229, 229];
+  const DARK_MUTED: RGB = [85, 85, 85];
+  const IMG_BG: RGB = [244, 244, 242];
+
+  const PAGE_W = 210;
+  const PAGE_H = 297;
+  const ML = 14;
+  const MR = 14;
+  const CW = PAGE_W - ML - MR;
+  const MID = PAGE_W / 2;
+  const IMG = 26;
+  const IDX_W = 14;
+  const PRICE_COL = 40;
+
+  let y = 0;
+
+  function ensureSpace(needed: number) {
+    if (y + needed > PAGE_H - 16) {
+      doc.addPage();
+      y = 14;
+    }
+  }
+
+  function fmt(n: number) { return fmtNum(n, opts.lang); }
+
+  const today = fmtDate(opts.lang);
+  const addressLines = buildAddressLines(opts.list.project);
+  const COL_W = MID - ML - 4;
+  const docTypeLabel = opts.lang === "pl" ? "Lista zakupowa" : "Shopping list";
+
+  // ── Topbar ────────────────────────────────────────────────────────────────
+  const TOPBAR_H = 16;
+  const CELL_W = CW / 3;
+
+  doc.setFont(FONT, "bold");
+  doc.setFontSize(6.5);
+  doc.setTextColor(...MUTED);
+  doc.text("DOC / TYPE", ML, 7);
+  doc.setFont(FONT, "normal");
+  doc.setFontSize(8.5);
+  doc.setTextColor(...BLACK);
+  doc.text(docTypeLabel, ML, 12);
+
+  const CELL2_X = ML + CELL_W;
+  doc.setFont(FONT, "bold");
+  doc.setFontSize(6.5);
+  doc.setTextColor(...MUTED);
+  doc.text("REF. \u2116", CELL2_X, 7);
+  doc.setFont(FONT, "normal");
+  doc.setFontSize(8.5);
+  doc.setTextColor(...BLACK);
+  doc.text(opts.list.name.slice(0, 28), CELL2_X, 12);
+
+  doc.setFont(FONT, "bold");
+  doc.setFontSize(6.5);
+  doc.setTextColor(...MUTED);
+  doc.text("DATE", PAGE_W - MR, 7, { align: "right" });
+  doc.setFont(FONT, "normal");
+  doc.setFontSize(8.5);
+  doc.setTextColor(...BLACK);
+  doc.text(today, PAGE_W - MR, 12, { align: "right" });
+
+  doc.setDrawColor(...BLACK);
+  doc.setLineWidth(0.4);
+  doc.line(ML, TOPBAR_H, PAGE_W - MR, TOPBAR_H);
+  y = TOPBAR_H;
+
+  // ── Meta grid ─────────────────────────────────────────────────────────────
+  const leftLines = 1 + (opts.designerEmail ? 1 : 0);
+  const rightLines = (opts.list.project?.clientName ? 1 : 0) + addressLines.length;
+  const META_H = Math.max(leftLines, rightLines) * 5.5 + 22;
+
+  doc.setDrawColor(...BLACK);
+  doc.setLineWidth(0.4);
+  doc.line(MID, y, MID, y + META_H);
+
+  let ly = y + 8;
+  doc.setFont(FONT, "bold");
+  doc.setFontSize(6.5);
+  doc.setTextColor(...MUTED);
+  doc.text("FROM / STUDIO", ML, ly);
+  ly += 5.5;
+
+  if (logoDataUrl) {
+    try {
+      doc.addImage(logoDataUrl, "JPEG", ML, ly, 8, 8);
+      doc.setFont(FONT, "bold");
+      doc.setFontSize(11);
+      doc.setTextColor(...BLACK);
+      doc.text(opts.designerName ?? "Projektant", ML + 10, ly + 5.5);
+      ly += 9.5;
+    } catch {
+      doc.setFont(FONT, "bold");
+      doc.setFontSize(11);
+      doc.setTextColor(...BLACK);
+      doc.text(opts.designerName ?? "Projektant", ML, ly + 5.5);
+      ly += 7.5;
+    }
+  } else {
+    doc.setFont(FONT, "bold");
+    doc.setFontSize(11);
+    doc.setTextColor(...BLACK);
+    doc.text(opts.designerName ?? "Projektant", ML, ly + 5.5);
+    ly += 7.5;
+  }
+
+  if (opts.designerEmail) {
+    doc.setFont(FONT, "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(...DARK_MUTED);
+    doc.text(opts.designerEmail, ML, ly);
+  }
+
+  let ry = y + 8;
+  const rx = MID + 5;
+  doc.setFont(FONT, "bold");
+  doc.setFontSize(6.5);
+  doc.setTextColor(...MUTED);
+  doc.text("FOR / CLIENT", rx, ry);
+  ry += 5.5;
+
+  if (opts.list.project?.clientName) {
+    doc.setFont(FONT, "bold");
+    doc.setFontSize(11);
+    doc.setTextColor(...BLACK);
+    doc.text(opts.list.project.clientName, rx, ry + 5.5, { maxWidth: COL_W });
+    ry += 7.5;
+  }
+
+  if (addressLines.length > 0) {
+    doc.setFont(FONT, "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(...DARK_MUTED);
+    for (const line of addressLines) {
+      doc.text(line, rx, ry, { maxWidth: COL_W });
+      ry += 4.5;
+    }
+  }
+
+  y += META_H;
+  doc.setDrawColor(...BLACK);
+  doc.setLineWidth(0.4);
+  doc.line(ML, y, PAGE_W - MR, y);
+
+  // ── Title block ───────────────────────────────────────────────────────────
+  y += 12;
+
+  if (opts.list.project?.title) {
+    doc.setFont(FONT, "normal");
+    doc.setFontSize(7.5);
+    doc.setTextColor(...MUTED);
+    doc.text(`PROJECT · ${opts.list.project.title.toUpperCase()}`, ML, y);
+    y += 7;
+  }
+
+  doc.setFont(FONT, "bold");
+  doc.setFontSize(22);
+  doc.setTextColor(...BLACK);
+  const titleLines = doc.splitTextToSize(opts.list.name, CW * 0.72) as string[];
+  doc.text(titleLines, ML, y);
+
+  // Item count (right)
+  const countLabel = opts.lang === "pl" ? "POZYCJI" : "ITEMS";
+  doc.setFont(FONT, "bold");
+  doc.setFontSize(7.5);
+  doc.setTextColor(...MUTED);
+  doc.text(countLabel, PAGE_W - MR, y, { align: "right" });
+  doc.setFont(FONT, "bold");
+  doc.setFontSize(20);
+  doc.setTextColor(...BLACK);
+  doc.text(String(allVisible.length).padStart(2, "0"), PAGE_W - MR, y + 9, { align: "right" });
+
+  y += titleLines.length * 10 + 10;
+  doc.setDrawColor(...BLACK);
+  doc.setLineWidth(0.4);
+  doc.line(ML, y, PAGE_W - MR, y);
+  y += 8;
+
+  // ── Sections ──────────────────────────────────────────────────────────────
+  let sectionIndex = 0;
+  let productIndex = 0;
+  const PRICE_X = PAGE_W - MR;
+  const TEXT_X = ML + IDX_W + IMG + 4;
+  const TEXT_W = CW - IDX_W - IMG - 4 - PRICE_COL - 4;
+
+  for (const section of exportSections) {
+    const products = section.products.filter((p) => !p.hidden);
+    if (products.length === 0) continue;
+    sectionIndex++;
+
+    ensureSpace(16);
+
+    const secTotal = products.reduce((sum, p) => {
+      const n = parsePrice(p.price);
+      return n !== null ? sum + n * p.quantity : sum;
+    }, 0);
+    const secCur = getCurrency(products.find((p) => getCurrency(p.price))?.price ?? null);
+
+    // Section header: § 01 | NAME | TOTAL
+    doc.setFont(FONT, "normal");
+    doc.setFontSize(8.5);
+    doc.setTextColor(...MUTED);
+    const secNum = `\u00a7 ${String(sectionIndex).padStart(2, "0")}`;
+    doc.text(secNum, ML, y);
+    const numW = doc.getTextWidth(secNum);
+
+    doc.setFont(FONT, "bold");
+    doc.setFontSize(8.5);
+    doc.setTextColor(...BLACK);
+    doc.text(section.name.toUpperCase(), ML + numW + 5, y, { maxWidth: CW - numW - 5 - 36 });
+
+    if (secTotal > 0) {
+      doc.setFont(FONT, "normal");
+      doc.setFontSize(9);
+      doc.setTextColor(...BLACK);
+      doc.text(`${fmt(secTotal)} ${secCur}`, PRICE_X, y, { align: "right" });
+    }
+
+    y += 2;
+    doc.setDrawColor(...BLACK);
+    doc.setLineWidth(0.3);
+    doc.line(ML, y, PAGE_W - MR, y);
+    y += 5;
+
+    // Products
+    for (let i = 0; i < products.length; i++) {
+      const p = products[i];
+      productIndex++;
+
+      // Pre-calculate row height
+      const nameLines = (doc.splitTextToSize(p.name, TEXT_W) as string[]).slice(0, 2);
+      const LABEL_COL = 18;
+      const metaRows: [string, string][] = [];
+      if (p.supplier) metaRows.push(["supplier", p.supplier]);
+      else if (p.manufacturer) metaRows.push(["producer", p.manufacturer]);
+      if (p.dimensions) metaRows.push(["dim", p.dimensions]);
+      if (p.color) metaRows.push(["finish", p.color]);
+      metaRows.push(["qty", `${p.quantity} ${s.unit}`]);
+      const textH = 5 + nameLines.length * 5.2 + metaRows.length * 4 + 4;
+      const rowH = Math.max(IMG, textH);
+
+      ensureSpace(rowH + 6);
+
+      const rowY = y;
+
+      // Index
+      doc.setFont(FONT, "normal");
+      doc.setFontSize(8);
+      doc.setTextColor(...MUTED);
+      doc.text(String(productIndex).padStart(3, "0"), ML, rowY + 5);
+
+      // Image
+      doc.setFillColor(...IMG_BG);
+      doc.rect(ML + IDX_W, rowY, IMG, IMG, "F");
+      doc.setDrawColor(...BORDER);
+      doc.setLineWidth(0.2);
+      doc.rect(ML + IDX_W, rowY, IMG, IMG, "S");
+      if (imgCache[p.id]) {
+        try { doc.addImage(imgCache[p.id], "JPEG", ML + IDX_W, rowY, IMG, IMG); } catch { /* skip */ }
+      } else {
+        doc.setFont(FONT, "normal");
+        doc.setFontSize(7);
+        doc.setTextColor(...MUTED);
+        doc.text(s.noImage, ML + IDX_W + IMG / 2, rowY + IMG / 2 + 1, { align: "center" });
+      }
+      if (p.url) doc.link(ML + IDX_W, rowY, IMG, IMG, { url: p.url });
+
+      let cy = rowY + 5;
+      doc.setFont(FONT, "bold");
+      doc.setFontSize(9.5);
+      doc.setTextColor(...BLACK);
+      doc.text(nameLines, TEXT_X, cy);
+      cy += nameLines.length * 5.2;
+
+      doc.setFontSize(7.5);
+      for (const [label, value] of metaRows) {
+        doc.setFont(FONT, "bold");
+        doc.setTextColor(...MUTED);
+        doc.text(label.toUpperCase(), TEXT_X, cy);
+        doc.setFont(FONT, "normal");
+        doc.setTextColor(...BLACK);
+        doc.text(value, TEXT_X + LABEL_COL, cy, { maxWidth: TEXT_W - LABEL_COL });
+        cy += 4;
+      }
+
+      const unit = parsePrice(p.price);
+      const cur = getCurrency(p.price);
+      if (unit !== null) {
+        const total = unit * p.quantity;
+        doc.setFont(FONT, "bold");
+        doc.setFontSize(11);
+        doc.setTextColor(...BLACK);
+        doc.text(`${fmt(total)} ${cur}`, PRICE_X, rowY + 6, { align: "right" });
+        if (p.quantity > 1) {
+          doc.setFont(FONT, "normal");
+          doc.setFontSize(7.5);
+          doc.setTextColor(...MUTED);
+          doc.text(`${p.quantity} \u00d7 ${fmt(unit)}`, PRICE_X, rowY + 11.5, { align: "right" });
+        }
+      } else if (p.quantity > 1) {
+        doc.setFont(FONT, "normal");
+        doc.setFontSize(8);
+        doc.setTextColor(...MUTED);
+        doc.text(`${p.quantity} ${s.unit}`, PRICE_X, rowY + 6, { align: "right" });
+      }
+
+      y = rowY + rowH + 4;
+
+      if (i < products.length - 1) {
+        doc.setDrawColor(...BORDER);
+        doc.setLineWidth(0.2);
+        doc.line(ML + IDX_W, y, PAGE_W - MR, y);
+        y += 2;
+      }
+    }
+
+    y += 9;
+  }
+
+  // ── Grand total (double border) ────────────────────────────────────────────
+  if (opts.hasTotal) {
+    ensureSpace(18);
+    doc.setDrawColor(...BLACK);
+    doc.setLineWidth(0.6);
+    doc.line(ML, y, PAGE_W - MR, y);
+    y += 8;
+    doc.setFont(FONT, "bold");
+    doc.setFontSize(8);
+    doc.setTextColor(...DARK_MUTED);
+    doc.text(s.grandTotal.toUpperCase(), ML, y);
+    doc.setFont(FONT, "bold");
+    doc.setFontSize(22);
+    doc.setTextColor(...BLACK);
+    doc.text(`${fmtNum(opts.grandTotal, opts.lang)} ${opts.grandCurrency}`, PRICE_X, y, { align: "right" });
+    y += 8;
+    doc.setDrawColor(...BLACK);
+    doc.setLineWidth(0.6);
+    doc.line(ML, y, PAGE_W - MR, y);
+  }
+
+  // ── Page numbers ──────────────────────────────────────────────────────────
+  const totalPages = doc.getNumberOfPages();
+  for (let pg = 1; pg <= totalPages; pg++) {
+    doc.setPage(pg);
+    doc.setFont(FONT, "normal");
+    doc.setFontSize(7.5);
+    doc.setTextColor(...MUTED);
+    doc.text(`${pg} / ${totalPages}`, PAGE_W / 2, PAGE_H - 5, { align: "center" });
+  }
+}
+
+// ─── Linen renderer ───────────────────────────────────────────────────────────
+async function renderLinen(
+  doc: import("jspdf").jsPDF,
+  opts: GeneratePdfOptions,
+  exportSections: Section[],
+  _allVisible: Product[],
+  imgCache: Record<string, string>,
+  logoDataUrl: string | null
+) {
+  const s = STR[opts.lang];
+  const FONT = "Geist";
+  const BG: RGB = [245, 242, 236];
+  const DARK: RGB = [43, 39, 34];
+  const BRONZE: RGB = [139, 97, 60];
+  const MUTED: RGB = [107, 93, 77];
+  const STONE: RGB = [150, 139, 122];
+  const BORDER: RGB = [232, 224, 208];
+  const SEC_BORDER: RGB = [241, 234, 220];
+  const WHITE: RGB = [255, 255, 255];
+  const PROD_BG: RGB = [245, 240, 228];
+
+  const PAGE_W = 210;
+  const PAGE_H = 297;
+  const ML = 14;
+  const MR = 14;
+  const CW = PAGE_W - ML - MR;
+  const MID = PAGE_W / 2;
+  const IMG = 27;
+  const PRICE_COL = 40;
+  const CARD_PAD = 6;
+
+  let y = 0;
+
+  function fillBg() {
+    doc.setFillColor(...BG);
+    doc.rect(0, 0, PAGE_W, PAGE_H, "F");
+  }
+
+  function ensureSpace(needed: number) {
+    if (y + needed > PAGE_H - 16) {
+      doc.addPage();
+      fillBg();
+      y = 14;
+    }
+  }
+
+  function fmt(n: number) { return fmtNum(n, opts.lang); }
+
+  fillBg();
+
+  const today = fmtDate(opts.lang);
+  const addressLines = buildAddressLines(opts.list.project);
+  const COL_W = MID - ML - 10;
+
+  // ── Head ──────────────────────────────────────────────────────────────────
+  y = 10;
+
+  // Date pill (right side)
+  doc.setFont(FONT, "normal");
+  doc.setFontSize(8);
+  const pillW = doc.getTextWidth(today) + 10;
+  const pillH = 6;
+  const pillX = PAGE_W - MR - pillW;
+  doc.setFillColor(...WHITE);
+  doc.roundedRect(pillX, y, pillW, pillH, pillH / 2, pillH / 2, "F");
+  doc.setDrawColor(...BORDER);
+  doc.setLineWidth(0.2);
+  doc.roundedRect(pillX, y, pillW, pillH, pillH / 2, pillH / 2, "S");
+  doc.setTextColor(...MUTED);
+  doc.text(today, pillX + 5, y + 4.2);
+
+  // Designer name / logo (left)
+  if (logoDataUrl) {
+    try {
+      doc.addImage(logoDataUrl, "JPEG", ML, y, 7, 7);
+    } catch { /* skip */ }
+  }
+  doc.setFont(FONT, "bold");
+  doc.setFontSize(11);
+  doc.setTextColor(...DARK);
+  doc.text(opts.designerName ?? "Studio", ML, y + 5);
+
+  y += 12;
+
+  // White rounded head-grid card
+  const leftContentLines = 1 + (opts.designerEmail ? 1 : 0);
+  const rightContentLines = (opts.list.project?.clientName ? 1 : 0) + addressLines.length;
+  const HEAD_CARD_H = Math.max(leftContentLines, rightContentLines) * 5.5 + 20;
+
+  doc.setFillColor(...WHITE);
+  doc.roundedRect(ML, y, CW, HEAD_CARD_H, 5, 5, "F");
+  doc.setDrawColor(...BORDER);
+  doc.setLineWidth(0.2);
+  doc.roundedRect(ML, y, CW, HEAD_CARD_H, 5, 5, "S");
+
+  const cardML = ML + 8;
+  let cardY = y + 7;
+  doc.setFont(FONT, "bold");
+  doc.setFontSize(7);
+  doc.setTextColor(...STONE);
+  doc.text(s.preparedBy.toUpperCase(), cardML, cardY);
+  cardY += 5;
+  doc.setFont(FONT, "bold");
+  doc.setFontSize(11);
+  doc.setTextColor(...DARK);
+  doc.text(opts.designerName ?? "Projektant", cardML, cardY + 4, { maxWidth: COL_W });
+  cardY += 6.5;
+  if (opts.designerEmail) {
+    doc.setFont(FONT, "normal");
+    doc.setFontSize(8.5);
+    doc.setTextColor(...MUTED);
+    doc.text(opts.designerEmail, cardML, cardY, { maxWidth: COL_W });
+  }
+
+  const cardRX = MID + 4;
+  let cardRY = y + 7;
+  doc.setFont(FONT, "bold");
+  doc.setFontSize(7);
+  doc.setTextColor(...STONE);
+  doc.text(s.preparedFor.toUpperCase(), cardRX, cardRY);
+  cardRY += 5;
+  if (opts.list.project?.clientName) {
+    doc.setFont(FONT, "bold");
+    doc.setFontSize(11);
+    doc.setTextColor(...DARK);
+    doc.text(opts.list.project.clientName, cardRX, cardRY + 4, { maxWidth: COL_W });
+    cardRY += 6.5;
+  }
+  if (addressLines.length > 0) {
+    doc.setFont(FONT, "normal");
+    doc.setFontSize(8.5);
+    doc.setTextColor(...MUTED);
+    for (const line of addressLines) {
+      doc.text(line, cardRX, cardRY, { maxWidth: COL_W });
+      cardRY += 4.5;
+    }
+  }
+
+  y += HEAD_CARD_H + 10;
+
+  // ── Title zone ────────────────────────────────────────────────────────────
+  if (opts.list.project?.title) {
+    doc.setFont(FONT, "bold");
+    doc.setFontSize(7.5);
+    doc.setTextColor(...STONE);
+    doc.text(opts.list.project.title.toUpperCase(), ML, y);
+    y += 6;
+  }
+
+  doc.setFont(FONT, "bold");
+  doc.setFontSize(19);
+  doc.setTextColor(...DARK);
+  const titleLines = doc.splitTextToSize(opts.list.name, CW * 0.75) as string[];
+  doc.text(titleLines, ML, y);
+  y += titleLines.length * 8.5 + 9;
+
+  // ── Sections (white rounded cards) ────────────────────────────────────────
+  const PRICE_X = PAGE_W - MR - CARD_PAD;
+
+  for (const section of exportSections) {
+    const products = section.products.filter((p) => !p.hidden);
+    if (products.length === 0) continue;
+
+    const secTotal = products.reduce((sum, p) => {
+      const n = parsePrice(p.price);
+      return n !== null ? sum + n * p.quantity : sum;
+    }, 0);
+    const secCur = getCurrency(products.find((p) => getCurrency(p.price))?.price ?? null);
+
+    const cardInnerML = ML + CARD_PAD;
+    const cardCW = CW - CARD_PAD * 2;
+    const TEXT_X = cardInnerML + IMG + 4;
+    const TEXT_W = cardCW - IMG - 4 - PRICE_COL;
+
+    // Pre-calculate per-product row heights for accurate card size
+    const rowHeights = products.map((p) => {
+      const nl = (doc.splitTextToSize(p.name, TEXT_W) as string[]).slice(0, 2);
+      const dr: unknown[] = [];
+      if (p.supplier) dr.push(null);
+      if (p.manufacturer) dr.push(null);
+      if (p.dimensions) dr.push(null);
+      if (p.color) dr.push(null);
+      dr.push(null); // qty
+      const textH = 5 + nl.length * 5.2 + dr.length * 4 + 4;
+      return Math.max(IMG, textH);
+    });
+    const totalRowH = rowHeights.reduce((s, h) => s + h + 4, 0) + (products.length - 1) * 2;
+    const estCardH = 14 + totalRowH + CARD_PAD * 2 + 4;
+    const maxCardH = PAGE_H - 28;
+    const drawCard = estCardH <= maxCardH;
+
+    if (drawCard) {
+      ensureSpace(estCardH + 4);
+    } else {
+      ensureSpace(22);
+    }
+
+    const cardStartY = y;
+
+    if (drawCard) {
+      doc.setFillColor(...WHITE);
+      doc.roundedRect(ML, cardStartY, CW, estCardH, 5, 5, "F");
+      doc.setDrawColor(...BORDER);
+      doc.setLineWidth(0.2);
+      doc.roundedRect(ML, cardStartY, CW, estCardH, 5, 5, "S");
+    }
+
+    y = cardStartY + CARD_PAD;
+
+    // Section header: dot + name + total
+    const DOT_R = 2;
+    doc.setFillColor(...BRONZE);
+    doc.circle(cardInnerML + DOT_R, y + 4, DOT_R, "F");
+
+    doc.setFont(FONT, "bold");
+    doc.setFontSize(8.5);
+    doc.setTextColor(...DARK);
+    doc.text(section.name.toUpperCase(), cardInnerML + DOT_R * 2 + 3, y + 5.5);
+
+    if (secTotal > 0) {
+      doc.setFont(FONT, "bold");
+      doc.setFontSize(10);
+      doc.setTextColor(...DARK);
+      doc.text(`${fmt(secTotal)} ${secCur}`, PRICE_X, y + 5.5, { align: "right" });
+    }
+
+    y += DOT_R * 2 + 6;
+    doc.setDrawColor(...SEC_BORDER);
+    doc.setLineWidth(0.2);
+    doc.line(cardInnerML, y, ML + CW - CARD_PAD, y);
+    y += 4;
+
+    // Products
+    for (let i = 0; i < products.length; i++) {
+      const p = products[i];
+      const rowH = rowHeights[i];
+
+      const rowY = y;
+      doc.setFillColor(...PROD_BG);
+      doc.roundedRect(cardInnerML, rowY, IMG, IMG, 3, 3, "F");
+      if (imgCache[p.id]) {
+        try { doc.addImage(imgCache[p.id], "JPEG", cardInnerML, rowY, IMG, IMG); } catch { /* skip */ }
+      } else {
+        doc.setFont(FONT, "normal");
+        doc.setFontSize(7);
+        doc.setTextColor(...MUTED);
+        doc.text(s.noImage, cardInnerML + IMG / 2, rowY + IMG / 2 + 1, { align: "center" });
+      }
+      if (p.url) doc.link(cardInnerML, rowY, IMG, IMG, { url: p.url });
+
+      let cy = rowY + 5;
+      doc.setFont(FONT, "bold");
+      doc.setFontSize(10);
+      doc.setTextColor(...DARK);
+      const nameLines = (doc.splitTextToSize(p.name, TEXT_W) as string[]).slice(0, 2);
+      doc.text(nameLines, TEXT_X, cy);
+      cy += nameLines.length * 5.2;
+
+      const detailRows: [string, string][] = [];
+      if (p.supplier) detailRows.push([s.supplier, p.supplier]);
+      if (p.manufacturer) detailRows.push([s.manufacturer, p.manufacturer]);
+      if (p.dimensions) detailRows.push([s.dimension, p.dimensions]);
+      if (p.color) detailRows.push([s.color, p.color]);
+      detailRows.push([s.qty, `${p.quantity} ${s.unit}`]);
+
+      doc.setFont(FONT, "normal");
+      doc.setFontSize(7.5);
+      for (const [label, value] of detailRows) {
+        doc.setTextColor(...MUTED);
+        doc.text(`${label}: `, TEXT_X, cy);
+        const labelW = doc.getTextWidth(`${label}: `);
+        doc.setTextColor(...DARK);
+        doc.text(value, TEXT_X + labelW, cy, { maxWidth: TEXT_W - labelW });
+        cy += 4;
+      }
+
+      const unit = parsePrice(p.price);
+      const cur = getCurrency(p.price);
+      if (unit !== null) {
+        const total = unit * p.quantity;
+        doc.setFont(FONT, "bold");
+        doc.setFontSize(11);
+        doc.setTextColor(...DARK);
+        doc.text(`${fmt(total)} ${cur}`, PRICE_X, rowY + 6, { align: "right" });
+        if (p.quantity > 1) {
+          doc.setFont(FONT, "normal");
+          doc.setFontSize(7.5);
+          doc.setTextColor(...STONE);
+          doc.text(`${p.quantity} \u00d7 ${fmt(unit)} ${cur}`, PRICE_X, rowY + 11.5, { align: "right" });
+        }
+      } else if (p.quantity > 1) {
+        doc.setFont(FONT, "normal");
+        doc.setFontSize(8);
+        doc.setTextColor(...STONE);
+        doc.text(`${p.quantity} ${s.unit}`, PRICE_X, rowY + 6, { align: "right" });
+      }
+
+      y = rowY + rowH + 4;
+
+      if (i < products.length - 1) {
+        doc.setDrawColor(...SEC_BORDER);
+        doc.setLineWidth(0.2);
+        doc.line(TEXT_X, y, ML + CW - CARD_PAD, y);
+        y += 2;
+      }
+    }
+
+    y += CARD_PAD + 6;
+  }
+
+  // ── Grand total ────────────────────────────────────────────────────────────
+  if (opts.hasTotal) {
+    ensureSpace(14);
+    doc.setFillColor(...DARK);
+    doc.roundedRect(ML, y, CW, 12, 5, 5, "F");
+    doc.setFont(FONT, "bold");
+    doc.setFontSize(8);
+    doc.setTextColor(245, 242, 236);
+    doc.text(s.grandTotal.toUpperCase(), ML + 8, y + 8);
+    doc.setFont(FONT, "bold");
+    doc.setFontSize(13);
+    doc.text(`${fmtNum(opts.grandTotal, opts.lang)} ${opts.grandCurrency}`, PAGE_W - MR - 8, y + 8, { align: "right" });
+    y += 12;
+  }
+
+  // ── Page numbers ──────────────────────────────────────────────────────────
+  const totalPages = doc.getNumberOfPages();
+  for (let pg = 1; pg <= totalPages; pg++) {
+    doc.setPage(pg);
+    doc.setFont(FONT, "normal");
+    doc.setFontSize(7.5);
+    doc.setTextColor(...STONE);
     doc.text(`${pg} / ${totalPages}`, PAGE_W / 2, PAGE_H - 5, { align: "center" });
   }
 }

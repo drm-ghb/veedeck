@@ -867,6 +867,13 @@ function sortProducts(products: Product[], sortBy: string, categoryOrder: string
 
 export default function ListDetail({ list, designerName, designerEmail, designerLogoUrl, initialOpenProductId, categoryOrder, customCategories, pdfTemplate }: ListDetailProps & { designerName?: string; designerEmail?: string; designerLogoUrl?: string; initialOpenProductId?: string }) {
   const { lang } = useLang();
+  const [currentPdfTemplate, setCurrentPdfTemplate] = useState<import("@/lib/pdf-templates").PdfTemplate>(pdfTemplate ?? "violet");
+  useEffect(() => {
+    fetch("/api/settings/lists")
+      .then((r) => r.json())
+      .then((data) => { if (data.pdfListTemplate) setCurrentPdfTemplate(data.pdfListTemplate); })
+      .catch(() => {});
+  }, []);
   const [sections, setSections] = useState<Section[]>(list.sections);
 
   // Sync sections from server props after router.refresh() (e.g. product added via extension)
@@ -1595,7 +1602,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
     }
 
     const pdf = await generateListPDF({
-      template: pdfTemplate ?? "violet",
+      template: currentPdfTemplate,
       lang,
       list,
       sections,
