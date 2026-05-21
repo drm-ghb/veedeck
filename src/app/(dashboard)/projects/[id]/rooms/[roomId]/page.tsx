@@ -36,10 +36,12 @@ export default async function RoomPage({ params }: Props) {
     prisma.folder.findMany({
       where: { roomId, archived: false },
       orderBy: { order: "asc" },
+      include: { _count: { select: { renders: { where: { archived: false } } } } },
     }),
     prisma.folder.findMany({
       where: { roomId, archived: true },
       orderBy: { order: "asc" },
+      include: { _count: { select: { renders: { where: { archived: false } } } } },
     }),
   ]);
 
@@ -89,13 +91,13 @@ export default async function RoomPage({ params }: Props) {
         folders={folders.map((f) => ({
           id: f.id,
           name: f.name,
-          renderCount: renders.filter((r) => r.folderId === f.id).length,
+          renderCount: f._count.renders,
           pinned: f.pinned,
         }))}
         archivedFolders={archivedFolders.map((f) => ({
           id: f.id,
           name: f.name,
-          renderCount: renders.filter((r) => r.folderId === f.id).length,
+          renderCount: f._count.renders,
         }))}
       />
     </div>

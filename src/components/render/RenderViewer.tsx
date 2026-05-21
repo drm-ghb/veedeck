@@ -1857,7 +1857,7 @@ export default function RenderViewer({
           {prevRender && (projectId || onRenderSelect) && (
             <button
               onClick={() => projectId ? router.push(`/projects/${projectId}/renders/${prevRender.id}`) : onRenderSelect?.(prevRender)}
-              className="absolute left-3 top-1/2 -translate-y-1/2 z-10 bg-white/80 hover:bg-white dark:bg-gray-800/80 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full p-2 shadow-md text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 transition-all opacity-60 hover:opacity-100"
+              className="absolute left-3 top-1/2 -translate-y-1/2 z-10 bg-white/80 hover:bg-white dark:bg-gray-800/80 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full p-2 shadow-md text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 transition-all sm:opacity-60 sm:hover:opacity-100"
               title={prevRender.name}
             >
               <ChevronLeft size={20} />
@@ -1867,7 +1867,7 @@ export default function RenderViewer({
           {nextRender && (projectId || onRenderSelect) && (
             <button
               onClick={() => projectId ? router.push(`/projects/${projectId}/renders/${nextRender.id}`) : onRenderSelect?.(nextRender)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 z-10 bg-white/80 hover:bg-white dark:bg-gray-800/80 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full p-2 shadow-md text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 transition-all opacity-60 hover:opacity-100"
+              className="absolute right-3 top-1/2 -translate-y-1/2 z-10 bg-white/80 hover:bg-white dark:bg-gray-800/80 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full p-2 shadow-md text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 transition-all sm:opacity-60 sm:hover:opacity-100"
               title={nextRender.name}
             >
               <ChevronRight size={20} />
@@ -3052,7 +3052,7 @@ export default function RenderViewer({
           {lightboxPrevRender && (
             <button
               onClick={() => { setLightboxIndex((i) => i - 1); setZoom(1); cancelPending(); }}
-              className="absolute left-3 top-1/2 -translate-y-1/2 z-10 bg-white/10 hover:bg-white/20 border border-white/20 rounded-full p-2 text-white/70 hover:text-white transition-all opacity-60 hover:opacity-100"
+              className="absolute left-3 top-1/2 -translate-y-1/2 z-10 bg-white/10 hover:bg-white/20 border border-white/20 rounded-full p-2 text-white/70 hover:text-white transition-all sm:opacity-60 sm:hover:opacity-100"
               title={lightboxPrevRender.name}
             >
               <ChevronLeft size={20} />
@@ -3062,7 +3062,7 @@ export default function RenderViewer({
           {lightboxNextRender && (
             <button
               onClick={() => { setLightboxIndex((i) => i + 1); setZoom(1); cancelPending(); }}
-              className="absolute right-3 top-1/2 -translate-y-1/2 z-10 bg-white/10 hover:bg-white/20 border border-white/20 rounded-full p-2 text-white/70 hover:text-white transition-all opacity-60 hover:opacity-100"
+              className="absolute right-3 top-1/2 -translate-y-1/2 z-10 bg-white/10 hover:bg-white/20 border border-white/20 rounded-full p-2 text-white/70 hover:text-white transition-all sm:opacity-60 sm:hover:opacity-100"
               title={lightboxNextRender.name}
             >
               <ChevronRight size={20} />
