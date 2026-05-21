@@ -1532,7 +1532,7 @@ export default function RenderViewer({
             </>
           )}
           {/* Breadcrumb */}
-          <nav className="hidden lg:flex items-center gap-1 min-w-0 flex-1 text-sm">
+          <nav className="flex items-center gap-1 min-w-0 flex-1 text-sm">
             {onBack ? (
               <>
                 {projectTitle && <span className="hidden sm:block flex-shrink-0 text-gray-500 dark:text-gray-400 font-medium truncate max-w-[120px]">{projectTitle}</span>}
@@ -1540,7 +1540,7 @@ export default function RenderViewer({
                 {roomName && <span className="hidden sm:block flex-shrink-0 text-gray-500 dark:text-gray-400 font-medium truncate max-w-[120px]">{roomName}</span>}
                 {roomName && folderName && <ChevronLeft size={13} className="hidden sm:block flex-shrink-0 text-gray-300 rotate-180" />}
                 {folderName && <span className="hidden sm:block flex-shrink-0 text-gray-500 dark:text-gray-400 font-medium truncate max-w-[120px]">{folderName}</span>}
-                {(projectTitle || roomName || folderName) && renderName && <ChevronLeft size={13} className="flex-shrink-0 text-gray-300 rotate-180" />}
+                {(projectTitle || roomName || folderName) && renderName && <ChevronLeft size={13} className="hidden sm:block flex-shrink-0 text-gray-300 rotate-180" />}
                 {renderName && <span className="text-gray-900 dark:text-gray-100 font-semibold truncate min-w-0">{renderName}</span>}
               </>
             ) : projectId ? (
