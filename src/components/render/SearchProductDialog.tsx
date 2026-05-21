@@ -114,18 +114,18 @@ export default function SearchProductDialog({ open, onClose, onSelect, projectId
   const [allLists, setAllLists] = useState<ShoppingList[]>([]);
   const sectionScrollRef = useRef<HTMLDivElement>(null);
   const [sectionCanScrollLeft, setSectionCanScrollLeft] = useState(false);
-  const [sectionCanScrollRight, setSectionCanScrollRight] = useState(false);
+  const [sectionAtEnd, setSectionAtEnd] = useState(false);
 
   function checkSectionScroll() {
     const el = sectionScrollRef.current;
     if (!el) return;
     setSectionCanScrollLeft(el.scrollLeft > 2);
-    setSectionCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 2);
+    setSectionAtEnd(el.scrollLeft + el.clientWidth >= el.scrollWidth - 2);
   }
 
-  useLayoutEffect(() => {
-    checkSectionScroll();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    setSectionCanScrollLeft(false);
+    setSectionAtEnd(false);
   }, [listSections]);
 
   const [projectDropdownOpen, setProjectDropdownOpen] = useState(false);
@@ -330,7 +330,7 @@ export default function SearchProductDialog({ open, onClose, onSelect, projectId
                     {sectionCanScrollLeft && (
                       <button
                         type="button"
-                        onClick={() => sectionScrollRef.current?.scrollBy({ left: -150, behavior: "smooth" })}
+                        onClick={() => { sectionScrollRef.current?.scrollBy({ left: -150, behavior: "smooth" }); }}
                         className="flex-shrink-0 p-0.5 text-muted-foreground hover:text-foreground transition-colors"
                       >
                         <ChevronLeft size={14} />
@@ -365,10 +365,10 @@ export default function SearchProductDialog({ open, onClose, onSelect, projectId
                         ))}
                       </div>
                     </div>
-                    {sectionCanScrollRight && (
+                    {!sectionAtEnd && (
                       <button
                         type="button"
-                        onClick={() => sectionScrollRef.current?.scrollBy({ left: 150, behavior: "smooth" })}
+                        onClick={() => { sectionScrollRef.current?.scrollBy({ left: 150, behavior: "smooth" }); }}
                         className="flex-shrink-0 p-0.5 text-muted-foreground hover:text-foreground transition-colors"
                       >
                         <ChevronRight size={14} />
