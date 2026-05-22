@@ -123,6 +123,23 @@ export default function SearchProductDialog({ open, onClose, onSelect, projectId
 
   useEffect(() => { setSectionScrolled(false); }, [listSections]);
 
+  // Scroll section bar to show selected section when it's restored or changed
+  useEffect(() => {
+    if (!selectedSectionId || !sectionScrollRef.current) return;
+    const container = sectionScrollRef.current;
+    const btn = container.querySelector(`[data-section-id="${selectedSectionId}"]`) as HTMLElement | null;
+    if (!btn) return;
+    const btnLeft = btn.offsetLeft;
+    const btnRight = btnLeft + btn.offsetWidth;
+    const scrollLeft = container.scrollLeft;
+    const containerWidth = container.clientWidth;
+    if (btnLeft < scrollLeft) {
+      container.scrollTo({ left: btnLeft - 8, behavior: "smooth" });
+    } else if (btnRight > scrollLeft + containerWidth) {
+      container.scrollTo({ left: btnRight - containerWidth + 8, behavior: "smooth" });
+    }
+  }, [selectedSectionId, listSections]);
+
   useEffect(() => {
     const el = sectionScrollRef.current;
     if (!el) return;
@@ -367,6 +384,7 @@ export default function SearchProductDialog({ open, onClose, onSelect, projectId
                           <button
                             key={s.id}
                             type="button"
+                            data-section-id={s.id}
                             onClick={() => setSelectedSectionId(s.id === selectedSectionId ? null : s.id)}
                             className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-colors whitespace-nowrap ${
                               selectedSectionId === s.id

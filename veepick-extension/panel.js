@@ -1,7 +1,7 @@
 // Veepick Panel — injected into the page on extension icon click
 (function () {
   const PANEL_ID = "veepick-panel";
-  const PANEL_VERSION = "2.4";
+  const PANEL_VERSION = "3.0";
 
   // Toggle if already exists and version matches; replace if outdated
   const existing = document.getElementById(PANEL_ID);
@@ -46,7 +46,7 @@
     #veepick-panel * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
     #veepick-panel .vp-header { display: flex; align-items: center; gap: 8px; padding: 12px 14px; border-bottom: 1px solid #f0f0f0; flex-shrink: 0; }
     #veepick-panel .vp-header img { width: 24px; height: 24px; border-radius: 4px; object-fit: contain; }
-    #veepick-panel .vp-header h1 { font-size: 15px; font-weight: 700; letter-spacing: -0.3px; flex: 1; margin: 0; }
+    #veepick-panel .vp-header h1 { font-size: 15px; font-weight: 700; letter-spacing: -0.3px; flex: 1; margin: 0; text-transform: none !important; }
     #veepick-panel .vp-icon-btn { background: none; border: none; cursor: pointer; color: #999; padding: 4px; border-radius: 4px; font-size: 16px; line-height: 1; display: flex; align-items: center; justify-content: center; }
     #veepick-panel .vp-icon-btn:hover { color: #333; background: #f4f4f4; }
     #veepick-panel.vp-collapsed { width: 44px !important; }
@@ -68,18 +68,59 @@
     #veepick-panel .vp-setup-title { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
     #veepick-panel .vp-setup-desc { color: #666; font-size: 12px; line-height: 1.5; margin-bottom: 12px; }
     #veepick-panel label { display: block; font-size: 12px; font-weight: 500; color: #555; margin-bottom: 4px; }
-    #veepick-panel input, #veepick-panel select {
-      width: 100%; border: 1px solid #e0e0e0; border-radius: 6px; padding: 7px 10px;
-      font-size: 13px; outline: none; transition: border-color .15s; background: #fafafa; color: #111;
+    #veepick-panel input {
+      width: 100%; border: 1px solid #e4e4e7; border-radius: 8px; padding: 7px 10px;
+      font-size: 13px; outline: none; transition: border-color .15s, box-shadow .15s;
+      background: #fff; color: #111 !important; box-sizing: border-box;
     }
-    #veepick-panel input:focus, #veepick-panel select:focus { border-color: #6366f1; background: #fff; }
+    #veepick-panel input:focus {
+      border-color: rgba(79, 70, 229, 0.5);
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+    }
+    /* ── Custom dropdown ── */
+    #veepick-panel .vp-dd { position: relative; width: 100%; }
+    #veepick-panel .vp-dd-trigger {
+      width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 6px;
+      border: 1px solid #e4e4e7; border-radius: 8px; padding: 7px 10px;
+      font-size: 13px; outline: none; background: #fff; color: #111 !important;
+      cursor: pointer !important; text-align: left; transition: border-color .15s, box-shadow .15s;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    #veepick-panel .vp-dd-trigger:focus,
+    #veepick-panel .vp-dd.vp-dd-open .vp-dd-trigger {
+      border-color: rgba(79, 70, 229, 0.5);
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+    }
+    #veepick-panel .vp-dd.vp-dd-disabled .vp-dd-trigger {
+      opacity: 0.5; cursor: not-allowed !important; background: #f9fafb;
+    }
+    #veepick-panel .vp-dd-label { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: left; }
+    #veepick-panel .vp-dd-ph { color: #9ca3af !important; }
+    #veepick-panel .vp-dd-chevron { flex-shrink: 0; color: #888; transition: transform .2s; }
+    #veepick-panel .vp-dd.vp-dd-open .vp-dd-chevron { transform: rotate(180deg); }
+    #veepick-panel .vp-dd-list {
+      display: none; position: fixed;
+      background: #fff; border: 1px solid #e4e4e7; border-radius: 8px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1); overflow: hidden;
+      max-height: 200px; overflow-y: auto; z-index: 2147483647;
+    }
+    #veepick-panel .vp-dd.vp-dd-open .vp-dd-list { display: block; }
+    #veepick-panel .vp-dd-item {
+      padding: 8px 12px; font-size: 13px; cursor: pointer !important; transition: background .1s;
+      color: #111; display: flex; align-items: center; justify-content: space-between;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    #veepick-panel .vp-dd-item:hover { background: #f4f4f8; }
+    #veepick-panel .vp-dd-item.vp-dd-selected { color: #4f46e5 !important; font-weight: 600; }
+    #veepick-panel .vp-dd-item.vp-dd-selected::after { content: "✓"; font-size: 11px; color: #4f46e5; }
     #veepick-panel .vp-field { margin-bottom: clamp(6px, 1vh, 10px); }
     #veepick-panel .vp-btn {
       display: flex; align-items: center; justify-content: center; gap: 6px;
       width: 100%; padding: 9px 14px; border-radius: 7px; border: none;
-      font-size: 13px; font-weight: 600; cursor: pointer; transition: background .15s;
+      font-size: 13px; font-weight: 600; cursor: pointer !important; transition: background .15s;
     }
-    #veepick-panel .vp-btn:disabled { opacity: 0.5; cursor: default; }
+    #veepick-panel .vp-btn:disabled { opacity: 0.5; cursor: default !important; }
+    #veepick-panel .vp-btn.vp-btn-inactive { opacity: 0.5; cursor: default !important; }
     #veepick-panel .vp-btn-primary { background: #6366f1; color: #fff; }
     #veepick-panel .vp-btn-primary:hover:not(:disabled) { background: #4f46e5; }
     #veepick-panel .vp-btn-outline { background: #fff; color: #333; border: 1px solid #e0e0e0; margin-top: 8px; }
@@ -197,7 +238,7 @@
   panel.innerHTML = `
     <div class="vp-header">
       <img src="${chrome.runtime.getURL("icons/icon48.png")}" alt="Veepick" />
-      <h1>Veepick</h1>
+      <h1>veepick</h1>
       <button class="vp-icon-btn vp-hidden" id="vp-settingsBtn" title="Ustawienia">⚙</button>
       <button class="vp-icon-btn vp-hidden" id="vp-refreshBtn" title="Odśwież dane strony">↺</button>
       <button class="vp-icon-btn vp-hidden" id="vp-collapseBtn" title="Zwiń panel"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
@@ -253,15 +294,28 @@
           <div class="vp-pprice vp-hidden" id="vp-previewPrice"></div>
         </div>
         <p class="vp-hint" id="vp-imagePickerHint">Najedź na zdjęcie na stronie aby wybrać inne</p>
-        <div class="vp-field"><label>Lista zakupowa</label><select id="vp-selectList"><option value="">Wybierz listę...</option></select></div>
+        <div class="vp-field"><label>Lista zakupowa</label>
+          <div class="vp-dd" id="vp-selectList" data-value="">
+            <button type="button" class="vp-dd-trigger"><span class="vp-dd-label vp-dd-ph">Wybierz listę...</span><svg class="vp-dd-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>
+            <div class="vp-dd-list"></div>
+          </div>
+        </div>
         <div class="vp-field">
           <label>Sekcja</label>
-          <select id="vp-selectSection" disabled><option value="">Wybierz sekcję...</option></select>
+          <div class="vp-dd vp-dd-disabled" id="vp-selectSection" data-value="">
+            <button type="button" class="vp-dd-trigger" disabled><span class="vp-dd-label vp-dd-ph">Wybierz sekcję...</span><svg class="vp-dd-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>
+            <div class="vp-dd-list"></div>
+          </div>
           <button class="vp-preview-btn" id="vp-sidebarToggle" disabled>Podgląd sekcji</button>
         </div>
         <div class="vp-divider"></div>
         <div class="vp-field"><label>Nazwa *</label><input id="vp-fieldName" type="text" placeholder="Nazwa produktu" /></div>
-        <div class="vp-field"><label>Kategoria</label><select id="vp-fieldCategory"><option value="">Brak kategorii</option></select></div>
+        <div class="vp-field"><label>Kategoria</label>
+          <div class="vp-dd" id="vp-fieldCategory" data-value="">
+            <button type="button" class="vp-dd-trigger"><span class="vp-dd-label vp-dd-ph">Brak kategorii</span><svg class="vp-dd-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>
+            <div class="vp-dd-list"></div>
+          </div>
+        </div>
         <div class="vp-field"><label>Notatka</label><input id="vp-fieldNote" type="text" placeholder="Dodatkowe uwagi dla klienta..." /></div>
         <div class="vp-row3">
           <div class="vp-field"><label>Cena</label><input id="vp-fieldPrice" type="text" placeholder="np. 299 PLN" /></div>
@@ -275,7 +329,7 @@
       </div>
       <div id="vp-footerAdd" class="vp-footer">
         <div id="vp-duplicateWarning" class="vp-status error vp-hidden"></div>
-        <button class="vp-btn vp-btn-primary" id="vp-btnAdd" disabled>Dodaj do listy</button>
+        <button class="vp-btn vp-btn-primary vp-btn-inactive" id="vp-btnAdd">Dodaj do listy</button>
         <div id="vp-mainStatus"></div>
         <div class="vp-user-info" id="vp-userInfo"></div>
       </div>
@@ -311,6 +365,7 @@
   let sidebarOpen = false;
   let collapsed = false;
   let rememberListSection = false;
+  let nameEditedByUser = false;
 
   // ── Helpers ───────────────────────────────────────────────────────────────
   const vp = (id) => document.getElementById(id);
@@ -467,8 +522,8 @@
   }
 
   function populateSidebar() {
-    const sectionId = vp("vp-selectSection").value;
-    const listId = vp("vp-selectList").value;
+    const sectionId = getDropdownValue("vp-selectSection");
+    const listId = getDropdownValue("vp-selectList");
     if (!sectionId || !listId) {
       vp("vp-sb-title").textContent = "Produkty w sekcji";
       vp("vp-sb-list").innerHTML = `<div class="vp-sb-empty">Wybierz sekcję aby zobaczyć produkty.</div>`;
@@ -506,7 +561,7 @@
 
   function updateSidebarIfOpen() {
     if (sidebarOpen) populateSidebar();
-    const sectionId = vp("vp-selectSection").value;
+    const sectionId = getDropdownValue("vp-selectSection");
     vp("vp-sidebarToggle").disabled = !sectionId;
   }
 
@@ -697,26 +752,91 @@
     vp("vp-fieldManufacturer").value = p.manufacturer || "";
     vp("vp-fieldColor").value = p.color || "";
     vp("vp-fieldDimensions").value = p.dimensions || "";
+    nameEditedByUser = false;
     updateAddBtn();
+  }
+
+  // ── Custom dropdown helpers ────────────────────────────────────────────────
+  function getDropdownValue(id) { return vp(id)?.dataset.value || ""; }
+
+  function setDropdownValue(id, value, label, isPlaceholder) {
+    const el = vp(id);
+    if (!el) return;
+    el.dataset.value = value;
+    const lbl = el.querySelector(".vp-dd-label");
+    if (lbl) { lbl.textContent = label; lbl.classList.toggle("vp-dd-ph", !!isPlaceholder); }
+    el.querySelectorAll(".vp-dd-item").forEach(item =>
+      item.classList.toggle("vp-dd-selected", item.dataset.value === value)
+    );
+  }
+
+  function setDropdownEnabled(id, enabled) {
+    const el = vp(id);
+    if (!el) return;
+    el.classList.toggle("vp-dd-disabled", !enabled);
+    const btn = el.querySelector(".vp-dd-trigger");
+    if (btn) btn.disabled = !enabled;
+    if (!enabled) closeDropdownMenu(id);
+  }
+
+  function openDropdownMenu(id) {
+    const el = vp(id);
+    if (!el || el.classList.contains("vp-dd-disabled")) return;
+    ["vp-selectList","vp-selectSection","vp-fieldCategory"].forEach(oid => {
+      if (oid !== id) closeDropdownMenu(oid);
+    });
+    const trigger = el.querySelector(".vp-dd-trigger");
+    const list = el.querySelector(".vp-dd-list");
+    const rect = trigger.getBoundingClientRect();
+    list.style.top = (rect.bottom + 4) + "px";
+    list.style.left = rect.left + "px";
+    list.style.width = rect.width + "px";
+    el.classList.add("vp-dd-open");
+  }
+
+  function closeDropdownMenu(id) {
+    vp(id)?.classList.remove("vp-dd-open");
+  }
+
+  function buildDropdownItems(id, items, onSelect) {
+    const el = vp(id);
+    if (!el) return;
+    const list = el.querySelector(".vp-dd-list");
+    if (!list) return;
+    list.innerHTML = "";
+    for (const item of items) {
+      const div = document.createElement("div");
+      div.className = "vp-dd-item" + (item.value === el.dataset.value ? " vp-dd-selected" : "");
+      div.dataset.value = item.value;
+      div.textContent = item.label;
+      div.addEventListener("click", (e) => {
+        e.stopPropagation();
+        setDropdownValue(id, item.value, item.label, !item.value);
+        closeDropdownMenu(id);
+        onSelect(item.value);
+      });
+      list.appendChild(div);
+    }
   }
 
   // ── Lists / sections ───────────────────────────────────────────────────────
   async function populateLists() {
-    const sel = vp("vp-selectList");
-    sel.innerHTML = '<option value="">Wybierz listę...</option>';
-    for (const list of lists) {
-      const opt = document.createElement("option");
-      opt.value = list.id;
-      opt.textContent = list.name + (list.project?.title ? ` (${list.project.title})` : "");
-      sel.appendChild(opt);
-    }
-    // Restore last selection only if user enabled it
+    const items = [
+      { value: "", label: "Wybierz listę..." },
+      ...lists.map(l => ({ value: l.id, label: l.name + (l.project?.title ? ` (${l.project.title})` : "") }))
+    ];
+    buildDropdownItems("vp-selectList", items, (value) => {
+      populateSections(value);
+      if (rememberListSection) chrome.storage.local.set({ lastListId: value, lastSectionId: "" });
+    });
     if (rememberListSection) {
       const stored = await chrome.storage.local.get(["lastListId", "lastSectionId"]);
       if (stored.lastListId) {
-        sel.value = stored.lastListId;
-        if (sel.value) {
-          populateSections(sel.value, stored.lastSectionId || null);
+        const list = lists.find(l => l.id === stored.lastListId);
+        if (list) {
+          const label = list.name + (list.project?.title ? ` (${list.project.title})` : "");
+          setDropdownValue("vp-selectList", stored.lastListId, label, false);
+          populateSections(stored.lastListId, stored.lastSectionId || null);
           return;
         }
       }
@@ -725,53 +845,59 @@
   }
 
   function populateCategories(categories) {
-    const sel = vp("vp-fieldCategory");
-    sel.innerHTML = '<option value="">Brak kategorii</option>';
-    for (const cat of categories) {
-      const opt = document.createElement("option");
-      opt.value = cat.value;
-      opt.textContent = cat.label;
-      sel.appendChild(opt);
-    }
+    const items = [
+      { value: "", label: "Brak kategorii" },
+      ...categories.map(c => ({ value: c.value, label: c.label }))
+    ];
+    buildDropdownItems("vp-fieldCategory", items, () => {});
   }
 
   function populateSections(listId, restoreSectionId = null) {
-    const sel = vp("vp-selectSection");
-    sel.innerHTML = '<option value="">Wybierz sekcję...</option>';
-    sel.disabled = !listId;
+    setDropdownValue("vp-selectSection", "", "Wybierz sekcję...", true);
+    setDropdownEnabled("vp-selectSection", !!listId);
     if (!listId) {
+      buildDropdownItems("vp-selectSection", [{ value: "", label: "Wybierz sekcję..." }], () => {});
       vp("vp-sidebarToggle").disabled = true;
       updateAddBtn();
       return;
     }
     const list = lists.find((l) => l.id === listId);
     if (!list) { updateAddBtn(); return; }
-    for (const section of list.sections) {
-      const opt = document.createElement("option");
-      opt.value = section.id;
-      opt.textContent = section.name;
-      sel.appendChild(opt);
-    }
-    sel.disabled = false;
+    const items = [
+      { value: "", label: "Wybierz sekcję..." },
+      ...list.sections.map(s => ({ value: s.id, label: s.name }))
+    ];
+    buildDropdownItems("vp-selectSection", items, (value) => {
+      if (rememberListSection) chrome.storage.local.set({ lastSectionId: value });
+      updateAddBtn();
+      updateSidebarIfOpen();
+      vp("vp-sidebarToggle").disabled = !value;
+    });
     if (restoreSectionId) {
-      sel.value = restoreSectionId;
+      const sec = list.sections.find(s => s.id === restoreSectionId);
+      if (sec) setDropdownValue("vp-selectSection", restoreSectionId, sec.name, false);
     }
-    vp("vp-sidebarToggle").disabled = !sel.value;
+    vp("vp-sidebarToggle").disabled = !getDropdownValue("vp-selectSection");
     updateAddBtn();
     updateSidebarIfOpen();
   }
 
   function updateAddBtn() {
-    const sectionId = vp("vp-selectSection").value;
-    const name = vp("vp-fieldName").value.trim();
+    const sectionId = getDropdownValue("vp-selectSection");
+    const nameField = vp("vp-fieldName");
+    // Protect against page JS clearing the name field externally
+    if (!nameField.value.trim() && !nameEditedByUser && productData.name) {
+      nameField.value = productData.name;
+    }
+    const name = nameField.value.trim();
 
     if (!sectionId || !name) {
-      vp("vp-btnAdd").disabled = true;
+      vp("vp-btnAdd").classList.add("vp-btn-inactive");
       vp("vp-btnAdd").textContent = "Dodaj do listy";
       return;
     }
 
-    const listId = vp("vp-selectList").value;
+    const listId = getDropdownValue("vp-selectList");
     const list = lists.find((l) => l.id === listId);
     const section = list?.sections.find((s) => s.id === sectionId);
     const url = productData.url?.trim();
@@ -793,7 +919,7 @@
       warning.classList.add("vp-hidden");
     }
 
-    vp("vp-btnAdd").disabled = false;
+    vp("vp-btnAdd").classList.remove("vp-btn-inactive");
     vp("vp-btnAdd").textContent = "Dodaj do listy";
   }
 
@@ -881,8 +1007,8 @@
 
   // ── Add product ────────────────────────────────────────────────────────────
   async function addProduct() {
-    const listId = vp("vp-selectList").value;
-    const sectionId = vp("vp-selectSection").value;
+    const listId = getDropdownValue("vp-selectList");
+    const sectionId = getDropdownValue("vp-selectSection");
     const name = vp("vp-fieldName").value.trim();
     const price = vp("vp-fieldPrice").value.trim();
     const quantity = parseInt(vp("vp-fieldQty").value) || 1;
@@ -890,8 +1016,11 @@
     const color = vp("vp-fieldColor").value.trim();
     const dimensions = vp("vp-fieldDimensions").value.trim();
     const note = vp("vp-fieldNote").value.trim();
-    const category = vp("vp-fieldCategory").value || null;
-    if (!name || !sectionId) return;
+    const category = getDropdownValue("vp-fieldCategory") || null;
+    if (!name || !sectionId) {
+      setStatus("vp-mainStatus", "Uzupełnij nazwę produktu i wybierz sekcję.", "error");
+      return;
+    }
 
     vp("vp-btnAdd").disabled = true;
     vp("vp-btnAdd").innerHTML = '<span class="vp-spinner"></span> Dodawanie...';
@@ -934,6 +1063,7 @@
     } catch (e) {
       setStatus("vp-mainStatus", e.message || "Błąd dodawania.", "error");
     } finally {
+      vp("vp-btnAdd").disabled = false;
       vp("vp-btnAdd").innerHTML = "Dodaj do listy";
     }
   }
@@ -986,19 +1116,20 @@
   vp("vp-btnConnect").addEventListener("click", connect);
   vp("vp-btnAdd").addEventListener("click", addProduct);
 
-  vp("vp-selectList").addEventListener("change", () => {
-    const id = vp("vp-selectList").value;
-    populateSections(id);
-    if (rememberListSection) chrome.storage.local.set({ lastListId: id, lastSectionId: "" });
+  // Custom dropdown triggers
+  ["vp-selectList", "vp-selectSection", "vp-fieldCategory"].forEach(id => {
+    const el = vp(id);
+    if (!el) return;
+    el.querySelector(".vp-dd-trigger").addEventListener("click", (e) => {
+      e.stopPropagation();
+      el.classList.contains("vp-dd-open") ? closeDropdownMenu(id) : openDropdownMenu(id);
+    });
   });
-  vp("vp-selectSection").addEventListener("change", () => {
-    const id = vp("vp-selectSection").value;
-    if (rememberListSection) chrome.storage.local.set({ lastSectionId: id });
-    updateAddBtn();
-    updateSidebarIfOpen();
-    vp("vp-sidebarToggle").disabled = !id;
-  });
-  vp("vp-fieldName").addEventListener("input", updateAddBtn);
+  // Close dropdown on outside click
+  document.addEventListener("click", () => {
+    ["vp-selectList", "vp-selectSection", "vp-fieldCategory"].forEach(closeDropdownMenu);
+  }, true);
+  vp("vp-fieldName").addEventListener("input", () => { nameEditedByUser = true; updateAddBtn(); });
 
   // ── Boot ───────────────────────────────────────────────────────────────────
   chrome.storage.local.get(["apiKey", "baseUrl", "rememberListSection"], (stored) => {
