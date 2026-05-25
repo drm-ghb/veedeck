@@ -89,7 +89,7 @@ export default async function VeedeckLayout({
       </nav>
 
       <div className="flex flex-1 min-h-0">
-        <NavSidebar hiddenModules={hiddenModules} sidebarOrder={sidebarOrder} userId={session.user.id!} />
+        <NavSidebar hiddenModules={hiddenModules} sidebarOrder={sidebarOrder} userId={session.user.id!} isTrial={!!(dbUser?.trialEndsAt && !dbUser.isFree && dbUser.subscription?.status !== "active")} />
         <main className="flex-1 flex flex-col min-h-0 px-6 py-6 overflow-y-auto overflow-x-hidden bg-background rounded-tl-2xl">
           {children}
         </main>

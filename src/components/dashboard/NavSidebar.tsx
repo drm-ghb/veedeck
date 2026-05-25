@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import Pusher from "pusher-js";
-import { LayoutDashboard, Users, LocalMall, Package, PanelLeftClose, PanelLeftOpen, Settings, Sun, Moon, HelpCircle, X, CheckCircle, PushPin, ShieldCheck, CalendarDays, NotebookText, ChatBubble, CheckSquare, ViewInAr } from "@/components/ui/icons";
+import { LayoutDashboard, Users, LocalMall, Package, PanelLeftClose, PanelLeftOpen, Settings, Sun, Moon, HelpCircle, X, CheckCircle, PushPin, ShieldCheck, CalendarDays, NotebookText, ChatBubble, CheckSquare, ViewInAr, BookOpen } from "@/components/ui/icons";
 import { useTheme } from "@/lib/theme";
 import { useT } from "@/lib/i18n";
 
@@ -15,6 +15,7 @@ interface NavSidebarProps {
   isAdmin?: boolean;
   sidebarOrder?: string[];
   userId?: string;
+  isTrial?: boolean;
 }
 
 function getSettingsHref(pathname: string): string {
@@ -28,7 +29,7 @@ const HIDDEN_ON: RegExp[] = [
   /^\/listy\/.+/,
 ];
 
-export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userId }: NavSidebarProps) {
+export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userId, isTrial }: NavSidebarProps) {
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
   const t = useT();
@@ -246,11 +247,27 @@ export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userI
           {!isCollapsed && t.nav.help}
         </button>
 
+        {isTrial && (
+          <Link
+            href="/settings/instrukcja"
+            title={isCollapsed ? "Instrukcja" : undefined}
+            className={`flex items-center gap-3 px-2.5 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              pathname.startsWith("/settings/instrukcja")
+                ? "bg-primary/10 text-primary"
+                : "text-gray-400 hover:bg-muted hover:text-foreground"
+            }`}
+          >
+            <span className="flex-shrink-0 w-5 flex items-center justify-center">
+              <BookOpen size={18} />
+            </span>
+            {!isCollapsed && "Instrukcja"}
+          </Link>
+        )}
         <Link
           href={getSettingsHref(pathname)}
           title={isCollapsed ? t.nav.settings : undefined}
           className={`flex items-center gap-3 px-2.5 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-            pathname.startsWith("/settings")
+            pathname.startsWith("/settings") && pathname !== "/settings/instrukcja"
               ? "bg-primary/10 text-primary"
               : "text-gray-400 hover:bg-muted hover:text-foreground"
           }`}
