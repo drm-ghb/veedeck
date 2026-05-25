@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+
 import {
   Users, PushPin, LocalMall, ChatBubble, Package,
   CalendarDays, NotebookText, ListChecks,
@@ -109,14 +110,24 @@ export default function OnboardingModal({ show }: { show: boolean }) {
   const [step, setStep] = useState(0);
   const [visible, setVisible] = useState(false);
 
+  // Auto-show: only on /dashboard, only if not dismissed before
   useEffect(() => {
     if (!show) return;
+    if (pathname !== "/dashboard") return;
     if (typeof window !== "undefined" && localStorage.getItem(STORAGE_KEY) === "true") return;
     setVisible(true);
-  }, [show]);
+  }, [show, pathname]);
 
-  // Only show on dashboard
-  if (!visible || pathname !== "/dashboard") return null;
+  useEffect(() => {
+    function handleOpen() {
+      setStep(0);
+      setVisible(true);
+    }
+    window.addEventListener("open-onboarding", handleOpen);
+    return () => window.removeEventListener("open-onboarding", handleOpen);
+  }, []);
+
+  if (!visible) return null;
 
   const current = STEPS[step];
   const Icon = current.icon;

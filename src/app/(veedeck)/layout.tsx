@@ -14,6 +14,7 @@ import type { ColorTheme } from "@/lib/theme";
 import TrialBadge from "@/components/dashboard/TrialBadge";
 import TrialCheck from "@/components/dashboard/TrialCheck";
 import OnboardingModal from "@/components/dashboard/OnboardingModal";
+import OnboardingTrigger from "@/components/dashboard/OnboardingTrigger";
 
 export default async function VeedeckLayout({
   children,
@@ -67,8 +68,11 @@ export default async function VeedeckLayout({
 
           {/* Right: bell + avatar + logout */}
           <div className="ml-auto sm:ml-0 shrink-0 sm:flex-1 flex items-center gap-2 justify-end">
-            {dbUser?.trialEndsAt && !dbUser.isFree && dbUser.subscription?.status !== "active" && (
-              <TrialBadge trialEndsAt={dbUser.trialEndsAt.toISOString()} />
+            {isTrial && (
+              <>
+                <TrialBadge trialEndsAt={dbUser!.trialEndsAt!.toISOString()} />
+                <OnboardingTrigger />
+              </>
             )}
             <div className="md:hidden"><MobileSearch /></div>
             <QuickNoteButton />
