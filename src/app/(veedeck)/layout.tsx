@@ -13,6 +13,7 @@ import { ColorThemeSync } from "@/components/dashboard/ColorThemeSync";
 import type { ColorTheme } from "@/lib/theme";
 import TrialBadge from "@/components/dashboard/TrialBadge";
 import TrialCheck from "@/components/dashboard/TrialCheck";
+import OnboardingModal from "@/components/dashboard/OnboardingModal";
 
 export default async function VeedeckLayout({
   children,
@@ -42,7 +43,10 @@ export default async function VeedeckLayout({
   const hiddenModules = (ownerSettings ?? dbUser)?.globalHiddenModules ?? [];
   const logoUrl = (ownerSettings ?? dbUser)?.clientLogoUrl ?? null;
   const colorTheme = (dbUser?.colorTheme ?? "champagne") as ColorTheme;
-  const sidebarOrder = ((dbUser?.viewPreferences as Record<string, unknown>)?.sidebarOrder as string[]) ?? [];
+  const viewPrefs = (dbUser?.viewPreferences ?? {}) as Record<string, unknown>;
+  const sidebarOrder = (viewPrefs.sidebarOrder as string[]) ?? [];
+  const isTrial = !!(dbUser?.trialEndsAt && !dbUser.isFree && dbUser.subscription?.status !== "active");
+  const showOnboarding = isTrial && !viewPrefs.onboardingSeen;
 
   return (
     <div className="h-dvh flex flex-col bg-muted/60">
@@ -89,12 +93,13 @@ export default async function VeedeckLayout({
       </nav>
 
       <div className="flex flex-1 min-h-0">
-        <NavSidebar hiddenModules={hiddenModules} sidebarOrder={sidebarOrder} userId={session.user.id!} isTrial={!!(dbUser?.trialEndsAt && !dbUser.isFree && dbUser.subscription?.status !== "active")} />
+        <NavSidebar hiddenModules={hiddenModules} sidebarOrder={sidebarOrder} userId={session.user.id!} isTrial={isTrial} />
         <main className="flex-1 flex flex-col min-h-0 px-6 py-6 overflow-y-auto overflow-x-hidden bg-background rounded-tl-2xl">
           {children}
         </main>
       </div>
       <TrialCheck />
+      <OnboardingModal show={showOnboarding} />
     </div>
   );
 }

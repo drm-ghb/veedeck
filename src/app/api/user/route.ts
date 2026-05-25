@@ -79,6 +79,10 @@ export async function PATCH(req: NextRequest) {
   if (body.emailNotifModules !== undefined) data.emailNotifModules = body.emailNotifModules;
   if (body.colorTheme !== undefined) data.colorTheme = body.colorTheme;
   if (body.pdfListTemplate !== undefined) data.pdfListTemplate = body.pdfListTemplate;
+  if (body.mergeViewPreferences !== undefined) {
+    const current = await prisma.user.findUnique({ where: { id: session.user.id }, select: { viewPreferences: true } });
+    data.viewPreferences = { ...(current?.viewPreferences as Record<string, unknown> ?? {}), ...(body.mergeViewPreferences as Record<string, unknown>) };
+  }
 
   const user = await prisma.user.update({
     where: { id: session.user.id },
