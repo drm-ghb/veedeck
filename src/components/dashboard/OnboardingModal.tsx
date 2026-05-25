@@ -146,10 +146,10 @@ export default function OnboardingModal({ show }: { show: boolean }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="w-full max-w-md bg-card border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+      <div className="w-full max-w-lg h-[600px] bg-card border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden">
 
         {/* Header */}
-        <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-border">
+        <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-border">
           <div>
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Jak zacząć</p>
             <p className="text-sm text-muted-foreground mt-0.5">Krok {step + 1} z {STEPS.length}</p>
@@ -180,7 +180,7 @@ export default function OnboardingModal({ show }: { show: boolean }) {
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto px-5 py-5 space-y-4">
+        <div className="flex-1 overflow-y-auto px-6 py-6 space-y-5">
           {/* Icon + title */}
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
@@ -217,7 +217,7 @@ export default function OnboardingModal({ show }: { show: boolean }) {
         </div>
 
         {/* Footer */}
-        <div className="px-5 pb-5 pt-4 border-t border-border space-y-3">
+        <div className="px-6 pb-6 pt-4 border-t border-border space-y-3">
           <div className="flex items-center justify-between gap-2">
             <button
               onClick={dismiss}
