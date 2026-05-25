@@ -130,7 +130,7 @@ export async function GET(req: NextRequest) {
         id: c.id,
         title: c.name,
         subtitle: c.email ?? c.project.title,
-        href: `/klienci/${c.project.slug ?? c.projectId}`,
+        href: `/klienci/${c.project.slug ?? c.projectId}?tab=contacts`,
       })),
       products: products.map((p) => ({
         id: p.id,
