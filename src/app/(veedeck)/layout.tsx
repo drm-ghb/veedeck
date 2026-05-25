@@ -90,7 +90,7 @@ export default async function VeedeckLayout({
             )}
             <div className="hidden md:block"><SignOutButton /></div>
             <div className="md:hidden">
-              <MobileMenu userName={firstName} logoUrl={avatarUrl} hiddenModules={hiddenModules} />
+              <MobileMenu userName={firstName} logoUrl={avatarUrl} hiddenModules={hiddenModules} isTrial={isTrial} />
             </div>
           </div>
         </div>

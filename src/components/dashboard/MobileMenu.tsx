@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X, LayoutDashboard, Users, LocalMall, Package, Settings, LogOut, HelpCircle, Sun, Moon, CheckCircle, CalendarDays, NotebookText, PushPin, ChatBubble, ViewInAr } from "@/components/ui/icons";
+import { Menu, X, LayoutDashboard, Users, LocalMall, Package, Settings, LogOut, HelpCircle, Sun, Moon, CheckCircle, CalendarDays, NotebookText, PushPin, ChatBubble, ViewInAr, BookOpen } from "@/components/ui/icons";
 import { signOut } from "next-auth/react";
 import { useTheme } from "@/lib/theme";
 import { useT } from "@/lib/i18n";
@@ -12,9 +12,10 @@ interface MobileMenuProps {
   userName: string | null;
   logoUrl?: string | null;
   hiddenModules?: string[];
+  isTrial?: boolean;
 }
 
-export default function MobileMenu({ userName, logoUrl, hiddenModules = [] }: MobileMenuProps) {
+export default function MobileMenu({ userName, logoUrl, hiddenModules = [], isTrial }: MobileMenuProps) {
   const [open, setOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [helpSubject, setHelpSubject] = useState("");
@@ -149,6 +150,29 @@ export default function MobileMenu({ userName, logoUrl, hiddenModules = [] }: Mo
             <span className="w-5 flex items-center justify-center"><HelpCircle size={18} /></span>
             {t.nav.help}
           </button>
+
+          {isTrial && (
+            <>
+              <Link
+                href="/settings/instrukcja"
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                  pathname === "/settings/instrukcja"
+                    ? "bg-primary/10 text-primary"
+                    : "text-gray-400 hover:bg-muted hover:text-foreground"
+                }`}
+              >
+                <span className="w-5 flex items-center justify-center"><BookOpen size={18} /></span>
+                Instrukcja
+              </Link>
+              <button
+                onClick={() => { window.dispatchEvent(new CustomEvent("open-onboarding")); setOpen(false); }}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-primary hover:bg-primary/10 transition-colors"
+              >
+                <span className="w-5 flex items-center justify-center"><BookOpen size={18} /></span>
+                Jak zacząć?
+              </button>
+            </>
+          )}
 
           <Link
             href="/settings/ogolne"
