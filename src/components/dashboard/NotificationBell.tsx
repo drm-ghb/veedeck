@@ -37,11 +37,13 @@ export default function NotificationBell({ userId }: NotificationBellProps) {
 
   useEffect(() => {
     refetch();
+    function handleVisibility() {
+      if (document.visibilityState === "visible") refetch();
+    }
+
     window.addEventListener("notifications-updated", refetch);
     window.addEventListener("focus", refetch);
-    document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "visible") refetch();
-    });
+    document.addEventListener("visibilitychange", handleVisibility);
 
     let bc: BroadcastChannel | null = null;
     try {
@@ -64,6 +66,7 @@ export default function NotificationBell({ userId }: NotificationBellProps) {
       channel.unbind_all();
       window.removeEventListener("notifications-updated", refetch);
       window.removeEventListener("focus", refetch);
+      document.removeEventListener("visibilitychange", handleVisibility);
       pusherClient.unsubscribe(`user-${userId}`);
       bc?.close();
     };

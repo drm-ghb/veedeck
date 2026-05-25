@@ -278,10 +278,12 @@ export default function ShareListClient({
                     ><X size={14} /></button>
                   </>
                 );
+                const totalCommentCount = commentCounts[product.id] ?? product.commentCount;
+                const displayCount = unread ? count : totalCommentCount;
                 const commentBtn = (size: number) => (
                   <button onClick={() => openCommentsPanel(product.id)} className="relative flex items-center justify-center w-7 h-7 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors" title="Komentarze">
-                    <Comment size={size} className={unread ? "text-blue-500" : ""} />
-                    {count > 0 && <span className={`absolute -top-1 -right-1 min-w-[14px] h-[14px] rounded-full text-white text-[9px] font-bold flex items-center justify-center px-0.5 leading-none ${unread ? "bg-primary" : "bg-muted-foreground/40"}`}>{count > 99 ? "99+" : count}</span>}
+                    <Comment size={size} className={`transition-colors ${unread ? "text-blue-500" : ""}`} />
+                    {displayCount > 0 && <span className={`absolute -top-1 -right-1 min-w-[14px] h-[14px] rounded-full text-white text-[9px] font-bold flex items-center justify-center px-0.5 leading-none transition-colors ${unread ? "bg-primary" : "bg-muted-foreground/40"}`}>{displayCount > 99 ? "99+" : displayCount}</span>}
                   </button>
                 );
                 return (
@@ -303,7 +305,7 @@ export default function ShareListClient({
                           {approval === "rejected" && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 shrink-0">Odrzucone</span>}
                         </div>
                         {product.manufacturer && <p className="text-xs text-muted-foreground mt-0.5">{product.manufacturer}</p>}
-                        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1">
+                        <div className="flex flex-col gap-y-0.5 mt-1">
                           {product.color && <span className="text-xs text-muted-foreground">Kolor: {product.color}</span>}
                           {product.dimensions && <span className="text-xs text-muted-foreground">Wymiar: {product.dimensions}</span>}
                           {product.deliveryTime && <span className="text-xs text-muted-foreground">Dostawa: {product.deliveryTime}</span>}

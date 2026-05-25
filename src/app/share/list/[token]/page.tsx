@@ -125,7 +125,7 @@ export default async function PublicListPage({ params }: { params: Promise<{ tok
   const mainContent = (
     <main className="flex-1 overflow-y-auto px-6 py-6 bg-background rounded-tl-2xl">
       {/* Header */}
-      <div className="flex items-center justify-between gap-3 mb-6">
+      <div className="flex items-center justify-between gap-3 mb-6 w-full md:max-w-[75%] md:mx-auto">
         <div className="flex items-center gap-2 min-w-0">
           {list.project && (
             <>

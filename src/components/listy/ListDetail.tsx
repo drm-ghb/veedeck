@@ -295,6 +295,8 @@ function ProductRow({
   const [moveMenuPos, setMoveMenuPos] = useState({ top: 0, left: 0 });
   const [editingField, setEditingField] = useState<string | null>(null);
   const [editingValue, setEditingValue] = useState("");
+  const [collapsed, setCollapsed] = useState(false);
+  const isCollapsed = collapsed && product.hidden;
 
   async function updateQty(next: number) {
     if (next < 1 || saving) return;
@@ -506,18 +508,46 @@ function ProductRow({
 
       {/* ── DESKTOP layout (md+) — original ── */}
       <div className="hidden md:flex items-center gap-2 px-4 py-4">
-        {dragHandle ?? <span className="w-4 shrink-0" />}
-        <div className="flex flex-col justify-between shrink-0 h-32">
+        <div className="opacity-100 flex flex-col items-center gap-1 self-stretch justify-center shrink-0">
+          {product.hidden && (
+            <button onClick={() => setCollapsed((c) => !c)} className="w-4 h-5 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors" title={isCollapsed ? "Rozwiń" : "Zwiń"}>
+              {isCollapsed ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
+            </button>
+          )}
+          {dragHandle ?? <span className="w-4 shrink-0" />}
+        </div>
+        <div className={`flex flex-col justify-between shrink-0 opacity-100 ${isCollapsed ? "self-center" : "h-32"}`}>
           <button onClick={onToggleHidden} className="w-5 h-5 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors" title={product.hidden ? "Pokaż klientowi" : "Ukryj przed klientem"}>
             {product.hidden ? <EyeOff size={14} /> : <Eye size={14} />}
           </button>
-          <button onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); setCopyMenuPos({ top: r.top, left: r.right + 6 }); setCopyMenuOpen(true); }} className="w-5 h-5 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors" title="Skopiuj do sekcji">
-            <Copy size={14} />
-          </button>
-          <button onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); setMoveMenuPos({ top: r.top, left: r.right + 6 }); setMoveMenuOpen(true); }} className="w-5 h-5 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors" title="Przenieś do innej sekcji">
-            <FolderInput size={14} />
-          </button>
+          {!isCollapsed && (
+            <>
+              <button onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); setCopyMenuPos({ top: r.top, left: r.right + 6 }); setCopyMenuOpen(true); }} className="w-5 h-5 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors" title="Skopiuj do sekcji">
+                <Copy size={14} />
+              </button>
+              <button onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); setMoveMenuPos({ top: r.top, left: r.right + 6 }); setMoveMenuOpen(true); }} className="w-5 h-5 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors" title="Przenieś do innej sekcji">
+                <FolderInput size={14} />
+              </button>
+            </>
+          )}
         </div>
+        {isCollapsed ? (
+          <div className="flex-1 min-w-0 flex items-center gap-2">
+            {product.url ? (
+              <a href={product.url} target="_blank" rel="noopener noreferrer" className="font-medium text-sm text-foreground hover:text-primary hover:underline truncate transition-colors">
+                {product.name}
+              </a>
+            ) : (
+              <p className="font-medium text-sm text-foreground truncate">{product.name}</p>
+            )}
+            {product.category && (
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-primary/8 text-primary dark:bg-primary/20 shrink-0">
+                {getCategoryLabel(product.category, allCategories)}
+              </span>
+            )}
+          </div>
+        ) : (
+          <>
         <div className="w-32 h-32">{image}</div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
@@ -675,6 +705,8 @@ function ProductRow({
           </button>
           {dropdown}
         </div>
+          </>
+        )}
       </div>
 
       {/* ── MOBILE layout (< md) — compact ── */}

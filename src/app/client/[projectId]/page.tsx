@@ -669,7 +669,7 @@ export default function ClientProjectPage() {
             const sections = [...regularSections, ...(unsortedProducts.length > 0 ? [{ id: "__unsorted__", name: "Pozostałe", order: 9999, products: unsortedProducts }] : [])];
             return (
               <div>
-                <div className="flex items-center gap-3 mb-6">
+                <div className="flex items-center gap-3 mb-6 w-full md:max-w-[75%] md:mx-auto">
                   {project.shoppingLists.length > 1 && (
                     <button onClick={() => { setView("lists"); navigate({ view: "lists" }); }} className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
                       <ChevronLeft size={20} />
