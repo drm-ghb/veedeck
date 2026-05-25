@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
 
   const userId = getWorkspaceUserId(session);
 
-  const [projects, rooms, renders, lists, clients, products] = await Promise.all([
+  const [projects, rooms, renders, lists, clients, products, folders] = await Promise.all([
     prisma.project.findMany({
       where: {
         userId,
@@ -83,6 +83,21 @@ export async function GET(req: NextRequest) {
       select: { id: true, name: true, manufacturer: true, category: true, imageUrl: true },
       take: 5,
     }),
+
+    prisma.folder.findMany({
+      where: {
+        archived: false,
+        name: { contains: q, mode: "insensitive" },
+        room: { project: { userId, archived: false } },
+      },
+      select: {
+        id: true,
+        name: true,
+        roomId: true,
+        room: { select: { projectId: true, project: { select: { title: true } } } },
+      },
+      take: 5,
+    }),
   ]);
 
   return NextResponse.json({
@@ -123,6 +138,12 @@ export async function GET(req: NextRequest) {
         subtitle: p.manufacturer ?? p.category ?? undefined,
         href: `/produkty`,
         imageUrl: p.imageUrl ?? undefined,
+      })),
+      folders: folders.map((f) => ({
+        id: f.id,
+        title: f.name,
+        subtitle: f.room.project.title,
+        href: `/projects/${f.room.projectId}/rooms/${f.roomId}`,
       })),
     },
   });

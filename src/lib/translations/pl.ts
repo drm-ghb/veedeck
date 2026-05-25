@@ -578,6 +578,7 @@ export const pl = {
     searchLists: "Listy",
     searchClients: "Klienci",
     searchProducts: "Produkty",
+    searchFolders: "Foldery",
     settingsTitle: "Ustawienia",
     settingsDesc: "Zarządzaj swoim kontem i preferencjami",
   },

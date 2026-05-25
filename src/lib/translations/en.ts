@@ -577,6 +577,7 @@ export const en: TranslationKeys = {
     searchLists: "Lists",
     searchClients: "Clients",
     searchProducts: "Products",
+    searchFolders: "Folders",
     settingsTitle: "Settings",
     settingsDesc: "Manage your account and preferences",
   },

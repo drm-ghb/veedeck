@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Users, DoorOpen, Image, LocalMall, User, Package } from "@/components/ui/icons";
+import { Search, Users, DoorOpen, Image, LocalMall, User, Package, Folder } from "@/components/ui/icons";
 import { useT } from "@/lib/i18n";
 
 interface SearchResult {
@@ -20,6 +20,7 @@ interface SearchResults {
   lists: SearchResult[];
   clients: SearchResult[];
   products: SearchResult[];
+  folders: SearchResult[];
 }
 
 export default function GlobalSearch() {
@@ -33,6 +34,7 @@ export default function GlobalSearch() {
     { key: "lists", label: t.dashboard.searchLists, icon: <LocalMall size={13} /> },
     { key: "clients", label: t.dashboard.searchClients, icon: <User size={13} /> },
     { key: "products", label: t.dashboard.searchProducts, icon: <Package size={13} /> },
+    { key: "folders", label: t.dashboard.searchFolders, icon: <Folder size={13} /> },
   ];
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResults | null>(null);
