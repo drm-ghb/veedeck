@@ -7,11 +7,6 @@ import TaskSelectField, { TaskSelectOption } from "./TaskSelectField";
 import { TaskDescriptionEditor } from "./TaskDescriptionEditor";
 import DatePicker from "@/components/ui/DatePicker";
 
-const STATUS_OPTIONS: TaskSelectOption[] = [
-  { value: "TODO",        label: "Do zrobienia", dot: "bg-gray-400" },
-  { value: "IN_PROGRESS", label: "W trakcie",    dot: "bg-blue-500" },
-  { value: "DONE",        label: "Gotowe",        dot: "bg-green-500" },
-];
 
 const PRIORITY_OPTIONS: TaskSelectOption[] = [
   { value: "LOW",    label: "Niski",  dot: "bg-gray-400" },
@@ -66,9 +61,9 @@ interface TaskDetailPanelProps {
   parentTaskTitle?: string;
   onBack?: () => void;
   onOpenTask?: (task: Task) => void;
+  statusOptions?: TaskSelectOption[];
 }
 
-const STATUS_LABELS: Record<string, string> = { TODO: "Do zrobienia", IN_PROGRESS: "W trakcie", DONE: "Gotowe" };
 const PRIORITY_LABELS: Record<string, string> = { LOW: "Niski", MEDIUM: "Średni", HIGH: "Wysoki" };
 
 function userDisplayName(u: User | null) {
@@ -82,7 +77,14 @@ function userInitials(u: User | null) {
   return n.slice(0, 2).toUpperCase();
 }
 
-export default function TaskDetailPanel({ task, onClose, onUpdated, isSubTask = false, parentTaskTitle, onBack, onOpenTask }: TaskDetailPanelProps) {
+const DEFAULT_STATUS_OPTIONS: TaskSelectOption[] = [
+  { value: "TODO",        label: "Do zrobienia", dot: "#6b7280" },
+  { value: "IN_PROGRESS", label: "W trakcie",    dot: "#3b82f6" },
+  { value: "DONE",        label: "Zrobione",      dot: "#22c55e" },
+];
+
+export default function TaskDetailPanel({ task, onClose, onUpdated, isSubTask = false, parentTaskTitle, onBack, onOpenTask, statusOptions }: TaskDetailPanelProps) {
+  const resolvedStatusOptions = statusOptions ?? DEFAULT_STATUS_OPTIONS;
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description || "");
   const [status, setStatus] = useState(task.status);
@@ -330,7 +332,7 @@ export default function TaskDetailPanel({ task, onClose, onUpdated, isSubTask = 
               <TaskSelectField
                 value={status}
                 onChange={(v) => { setStatus(v); patch({ status: v }); }}
-                options={STATUS_OPTIONS}
+                options={resolvedStatusOptions}
               />
             </div>
             <div className="space-y-1">

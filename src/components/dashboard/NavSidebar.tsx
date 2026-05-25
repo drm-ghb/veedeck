@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -19,9 +19,10 @@ interface NavSidebarProps {
 }
 
 function getSettingsHref(pathname: string): string {
-  if (pathname.startsWith("/renderflow")) return "/settings/renderflow";
-  if (pathname.startsWith("/listy")) return "/settings/listy";
-  return "/settings/ogolne";
+  if (pathname.startsWith("/renderflow")) return "/ustawienia/renderflow";
+  if (pathname.startsWith("/listy")) return "/ustawienia/listy";
+  if (pathname.startsWith("/zadania")) return "/ustawienia/zadania";
+  return "/ustawienia/ogolne";
 }
 
 const HIDDEN_ON: RegExp[] = [
@@ -249,10 +250,10 @@ export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userI
 
         {isTrial && (
           <Link
-            href="/settings/instrukcja"
+            href="/ustawienia/instrukcja"
             title={isCollapsed ? "Instrukcja" : undefined}
             className={`flex items-center gap-3 px-2.5 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-              pathname.startsWith("/settings/instrukcja")
+              pathname.startsWith("/ustawienia/instrukcja")
                 ? "bg-primary/10 text-primary"
                 : "text-gray-400 hover:bg-muted hover:text-foreground"
             }`}
@@ -267,7 +268,7 @@ export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userI
           href={getSettingsHref(pathname)}
           title={isCollapsed ? t.nav.settings : undefined}
           className={`flex items-center gap-3 px-2.5 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-            pathname.startsWith("/settings") && pathname !== "/settings/instrukcja"
+            pathname.startsWith("/ustawienia") && pathname !== "/ustawienia/instrukcja"
               ? "bg-primary/10 text-primary"
               : "text-gray-400 hover:bg-muted hover:text-foreground"
           }`}

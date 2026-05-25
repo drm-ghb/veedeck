@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
 
   const userId = getWorkspaceUserId(session);
 
-  const [projects, rooms, renders, lists, clients, products, folders] = await Promise.all([
+  const [projects, rooms, renders, lists, clients, products, folders, tasks, calendarEvents, notes] = await Promise.all([
     prisma.project.findMany({
       where: {
         userId,
@@ -98,6 +98,40 @@ export async function GET(req: NextRequest) {
       },
       take: 5,
     }),
+
+    prisma.task.findMany({
+      where: {
+        ownerId: userId,
+        title: { contains: q, mode: "insensitive" },
+      },
+      select: { id: true, title: true, status: true, parentId: true, parent: { select: { title: true } } },
+      take: 5,
+    }),
+
+    prisma.calendarEvent.findMany({
+      where: {
+        userId,
+        OR: [
+          { title: { contains: q, mode: "insensitive" } },
+          { description: { contains: q, mode: "insensitive" } },
+        ],
+      },
+      select: { id: true, title: true, type: true, startAt: true },
+      take: 5,
+    }),
+
+    prisma.note.findMany({
+      where: {
+        userId,
+        archived: false,
+        OR: [
+          { title: { contains: q, mode: "insensitive" } },
+          { content: { contains: q, mode: "insensitive" } },
+        ],
+      },
+      select: { id: true, title: true, content: true },
+      take: 5,
+    }),
   ]);
 
   return NextResponse.json({
@@ -144,6 +178,24 @@ export async function GET(req: NextRequest) {
         title: f.name,
         subtitle: f.room.project.title,
         href: `/projects/${f.room.projectId}/rooms/${f.roomId}`,
+      })),
+      tasks: tasks.map((t) => ({
+        id: t.id,
+        title: t.title,
+        subtitle: t.parent ? `↳ ${t.parent.title}` : undefined,
+        href: `/zadania`,
+      })),
+      calendarEvents: calendarEvents.map((e) => ({
+        id: e.id,
+        title: e.title,
+        subtitle: new Date(e.startAt).toLocaleDateString("pl-PL", { day: "2-digit", month: "2-digit", year: "numeric" }),
+        href: `/kalendarz`,
+      })),
+      notes: notes.map((n) => ({
+        id: n.id,
+        title: n.title || "Bez tytułu",
+        subtitle: n.content.replace(/<[^>]+>/g, "").slice(0, 60) || undefined,
+        href: `/notatnik`,
       })),
     },
   });

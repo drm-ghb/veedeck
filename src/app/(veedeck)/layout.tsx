@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+﻿import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import GlobalSearch from "@/components/dashboard/GlobalSearch";
 import { SignOutButton } from "@/components/dashboard/SignOutButton";
@@ -78,7 +78,7 @@ export default async function VeedeckLayout({
             <QuickNoteButton />
             <NotificationBell userId={session.user.id!} iconOnly />
             {firstName && (
-              <a href="/settings/ogolne" className="hidden md:flex items-center gap-2 rounded-lg px-1 py-1 hover:bg-muted transition-colors">
+              <a href="/ustawienia/ogolne" className="hidden md:flex items-center gap-2 rounded-lg px-1 py-1 hover:bg-muted transition-colors">
                 <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-semibold leading-none shrink-0 overflow-hidden">
                   {avatarUrl
                     ? <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />

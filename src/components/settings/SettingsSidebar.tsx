@@ -1,8 +1,8 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Settings, LocalMall, ChevronLeft, Users, Puzzle, PushPin, BookOpen, Wallet } from "@/components/ui/icons";
+import { Settings, LocalMall, ChevronLeft, Users, Puzzle, PushPin, BookOpen, Wallet, CheckSquare } from "@/components/ui/icons";
 import { useT } from "@/lib/i18n";
 
 export default function SettingsSidebar() {
@@ -12,43 +12,49 @@ export default function SettingsSidebar() {
 
   const items = [
     {
-      href: "/settings/ogolne",
+      href: "/ustawienia/ogolne",
       label: t.settings.generalNav,
       icon: <Settings size={16} />,
       module: null,
     },
     {
-      href: "/settings/renderflow",
+      href: "/ustawienia/renderflow",
       label: t.settings.renderflow,
       icon: <PushPin size={16} />,
       module: { href: "/klienci", label: "RenderFlow" },
     },
     {
-      href: "/settings/listy",
+      href: "/ustawienia/listy",
       label: t.settings.lists,
       icon: <LocalMall size={16} />,
       module: { href: "/listy", label: t.settings.lists },
     },
     {
-      href: "/settings/uzytkownicy",
+      href: "/ustawienia/zadania",
+      label: "Zadania",
+      icon: <CheckSquare size={16} />,
+      module: { href: "/zadania", label: "Zadania" },
+    },
+    {
+      href: "/ustawienia/uzytkownicy",
       label: "Użytkownicy",
       icon: <Users size={16} />,
       module: null,
     },
     {
-      href: "/settings/wtyczka",
+      href: "/ustawienia/wtyczka",
       label: "Wtyczka",
       icon: <Puzzle size={16} />,
       module: null,
     },
     {
-      href: "/settings/instrukcja",
+      href: "/ustawienia/instrukcja",
       label: "Instrukcja",
       icon: <BookOpen size={16} />,
       module: null,
     },
     {
-      href: "/settings/subskrypcja",
+      href: "/ustawienia/subskrypcja",
       label: "Subskrypcja",
       icon: <Wallet size={16} />,
       module: null,

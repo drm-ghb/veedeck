@@ -28,9 +28,10 @@ interface ExistingProject {
 interface NewProjectDialogProps {
   module?: string;
   label?: string;
+  clientMode?: boolean;
 }
 
-export default function NewProjectDialog({ module, label }: NewProjectDialogProps = {}) {
+export default function NewProjectDialog({ module, label, clientMode }: NewProjectDialogProps = {}) {
   const t = useT();
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<"new" | "existing">("new");
@@ -182,7 +183,7 @@ export default function NewProjectDialog({ module, label }: NewProjectDialogProp
         </DialogHeader>
 
         <div className="space-y-1.5">
-          <Label htmlFor="title">{t.projekty.projectNameLabel} <span className="text-destructive">*</span></Label>
+          <Label htmlFor="title">{clientMode ? "Nazwa klienta" : t.projekty.projectNameLabel} <span className="text-destructive">*</span></Label>
           <Input
             id="title"
             value={title}

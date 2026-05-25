@@ -93,7 +93,7 @@ export async function POST(
     data: {
       userId: invitation.designerId,
       message: `${displayName || invitation.email} dołączył/a do Twojego zespołu.`,
-      link: "/settings/uzytkownicy",
+      link: "/ustawienia/uzytkownicy",
       type: "info",
     },
   });

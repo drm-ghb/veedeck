@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
@@ -154,9 +154,9 @@ export default function MobileMenu({ userName, logoUrl, hiddenModules = [], isTr
           {isTrial && (
             <>
               <Link
-                href="/settings/instrukcja"
+                href="/ustawienia/instrukcja"
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                  pathname === "/settings/instrukcja"
+                  pathname === "/ustawienia/instrukcja"
                     ? "bg-primary/10 text-primary"
                     : "text-gray-400 hover:bg-muted hover:text-foreground"
                 }`}
@@ -175,9 +175,9 @@ export default function MobileMenu({ userName, logoUrl, hiddenModules = [], isTr
           )}
 
           <Link
-            href="/settings/ogolne"
+            href="/ustawienia/ogolne"
             className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-              pathname.startsWith("/settings")
+              pathname.startsWith("/ustawienia")
                 ? "bg-primary/10 text-primary"
                 : "text-gray-400 hover:bg-muted hover:text-foreground"
             }`}

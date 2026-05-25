@@ -373,7 +373,7 @@ export default function DashboardView({
               : t.home.welcomeDefault}
           </h1>
         </div>
-        <NewProjectDialog label={t.projekty.newClient} />
+        <NewProjectDialog label={t.projekty.newClient} clientMode />
       </div>
 
 

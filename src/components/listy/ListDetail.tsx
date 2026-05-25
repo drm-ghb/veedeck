@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import { createPortal } from "react-dom";
@@ -913,7 +913,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
   const { lang } = useLang();
   const [currentPdfTemplate, setCurrentPdfTemplate] = useState<import("@/lib/pdf-templates").PdfTemplate>(pdfTemplate ?? "violet");
   useEffect(() => {
-    fetch("/api/settings/lists")
+    fetch("/api/ustawienia/lists")
       .then((r) => r.json())
       .then((data) => { if (data.pdfListTemplate) setCurrentPdfTemplate(data.pdfListTemplate); })
       .catch(() => {});

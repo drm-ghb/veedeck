@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -48,7 +48,7 @@ export default function SettingsListyPage() {
   const [newCatName, setNewCatName] = useState("");
 
   useEffect(() => {
-    fetch("/api/settings/lists")
+    fetch("/api/ustawienia/lists")
       .then((r) => r.json())
       .then((data) => {
         const custom: string[] = Array.isArray(data.customCategories) ? data.customCategories : [];
@@ -65,7 +65,7 @@ export default function SettingsListyPage() {
     try {
       const customCategories = categories.filter((c) => c.custom).map((c) => c.value);
       const listsCategoryOrder = categories.map((c) => c.value);
-      const res = await fetch("/api/settings/lists", {
+      const res = await fetch("/api/ustawienia/lists", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ listsCategoryOrder, customCategories }),

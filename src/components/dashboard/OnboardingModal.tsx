@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
@@ -255,7 +255,7 @@ export default function OnboardingModal({ show }: { show: boolean }) {
           </div>
           <div className="flex justify-center">
             <Link
-              href="/settings/instrukcja"
+              href="/ustawienia/instrukcja"
               onClick={dismiss}
               className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors"
             >

@@ -1,14 +1,14 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Settings } from "@/components/ui/icons";
 
 function getSettingsHref(pathname: string): string {
-  if (pathname.startsWith("/renderflow")) return "/settings/renderflow";
-  if (pathname.startsWith("/listy")) return "/settings/listy";
-  if (pathname.startsWith("/klienci")) return "/settings/ogolne";
-  return "/settings/ogolne";
+  if (pathname.startsWith("/renderflow")) return "/ustawienia/renderflow";
+  if (pathname.startsWith("/listy")) return "/ustawienia/listy";
+  if (pathname.startsWith("/klienci")) return "/ustawienia/ogolne";
+  return "/ustawienia/ogolne";
 }
 
 export function SettingsLink() {

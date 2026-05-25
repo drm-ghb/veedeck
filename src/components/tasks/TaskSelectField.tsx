@@ -177,7 +177,9 @@ function OptionDisplay({ option, placeholder, compact }: { option: TaskSelectOpt
         </span>
       )}
       {option.dot && !option.avatarUrl && option.initials === undefined && (
-        <span className={`rounded-full shrink-0 ${option.dot} ${compact ? "w-1.5 h-1.5" : "w-2 h-2"}`} />
+        option.dot.startsWith("#") || option.dot.startsWith("rgb")
+          ? <span className={`rounded-full shrink-0 ${compact ? "w-1.5 h-1.5" : "w-2 h-2"}`} style={{ backgroundColor: option.dot }} />
+          : <span className={`rounded-full shrink-0 ${option.dot} ${compact ? "w-1.5 h-1.5" : "w-2 h-2"}`} />
       )}
       <span className="truncate">{option.label}</span>
     </>

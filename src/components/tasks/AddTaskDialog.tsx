@@ -21,17 +21,18 @@ interface Member {
   isSelf?: boolean;
 }
 
+const DEFAULT_STATUS_OPTIONS: TaskSelectOption[] = [
+  { value: "TODO",        label: "Do zrobienia", dot: "#6b7280" },
+  { value: "IN_PROGRESS", label: "W trakcie",    dot: "#3b82f6" },
+  { value: "DONE",        label: "Zrobione",      dot: "#22c55e" },
+];
+
 interface AddTaskDialogProps {
   trigger: React.ReactNode;
   parentId?: string;
   onCreated?: () => void;
+  statusOptions?: TaskSelectOption[];
 }
-
-const STATUS_OPTIONS: TaskSelectOption[] = [
-  { value: "TODO",        label: "Do zrobienia", dot: "bg-gray-400" },
-  { value: "IN_PROGRESS", label: "W trakcie",    dot: "bg-blue-500" },
-  { value: "DONE",        label: "Gotowe",        dot: "bg-green-500" },
-];
 
 const PRIORITY_OPTIONS: TaskSelectOption[] = [
   { value: "LOW",    label: "Niski",  dot: "bg-gray-400" },
@@ -44,7 +45,8 @@ function memberInitials(m: Member) {
   return n.slice(0, 2).toUpperCase();
 }
 
-export default function AddTaskDialog({ trigger, parentId, onCreated }: AddTaskDialogProps) {
+export default function AddTaskDialog({ trigger, parentId, onCreated, statusOptions }: AddTaskDialogProps) {
+  const resolvedStatusOptions = statusOptions ?? DEFAULT_STATUS_OPTIONS;
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -184,7 +186,7 @@ export default function AddTaskDialog({ trigger, parentId, onCreated }: AddTaskD
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Status</label>
-                  <TaskSelectField value={status} onChange={setStatus} options={STATUS_OPTIONS} />
+                  <TaskSelectField value={status} onChange={setStatus} options={resolvedStatusOptions} />
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Priorytet</label>

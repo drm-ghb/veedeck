@@ -88,7 +88,7 @@ export default function ProjektyView({ projects, archivedProjects }: ProjektyVie
               : `${projects.length} projekt${projects.length === 1 ? "" : projects.length < 5 ? "y" : "ów"}`}
           </p>
         </div>
-        <NewProjectDialog label={t.projekty.newClient} />
+        <NewProjectDialog label={t.projekty.newClient} clientMode />
       </div>
 
       {/* Tabs */}

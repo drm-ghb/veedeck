@@ -4,6 +4,18 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
+  DndContext,
+  DragOverlay,
+  useDraggable,
+  useDroppable,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+  type DragStartEvent,
+} from "@dnd-kit/core";
+import { CSS } from "@dnd-kit/utilities";
+import {
   Search,
   List,
   Columns3,
@@ -14,9 +26,6 @@ import {
   ArrowDown,
   Plus,
   Trash2,
-  Clock,
-  CheckCircle2,
-  Circle,
 } from "@/components/ui/icons";
 import AddTaskDialog from "./AddTaskDialog";
 import TaskDetailPanel from "./TaskDetailPanel";
@@ -55,18 +64,18 @@ interface Task extends SubTask {
   description: string | null;
 }
 
+interface TaskStatusConfig {
+  id: string;
+  value: string;
+  label: string;
+  color: string;
+  order: number;
+}
+
 type ViewMode = "list" | "kanban";
 type GroupBy = "none" | "project" | "status" | "priority";
 type SortField = "createdAt" | "dueDate" | "priority" | "status" | "title";
 type SortDir = "asc" | "desc";
-
-const STATUS_LABELS: Record<string, string> = { TODO: "Do zrobienia", IN_PROGRESS: "W trakcie", DONE: "Gotowe" };
-
-const STATUS_OPTIONS: TaskSelectOption[] = [
-  { value: "TODO", label: "Do zrobienia", dot: "bg-gray-400" },
-  { value: "IN_PROGRESS", label: "W trakcie", dot: "bg-blue-500" },
-  { value: "DONE", label: "Gotowe", dot: "bg-green-500" },
-];
 
 const PRIORITY_OPTIONS: TaskSelectOption[] = [
   { value: "LOW", label: "Niski", dot: "bg-gray-400" },
@@ -75,7 +84,6 @@ const PRIORITY_OPTIONS: TaskSelectOption[] = [
 ];
 const PRIORITY_LABELS: Record<string, string> = { LOW: "Niski", MEDIUM: "Średni", HIGH: "Wysoki" };
 const PRIORITY_ORDER: Record<string, number> = { HIGH: 0, MEDIUM: 1, LOW: 2 };
-const STATUS_ORDER: Record<string, number> = { TODO: 0, IN_PROGRESS: 1, DONE: 2 };
 
 function userDisplayName(u: User | null) {
   if (!u) return "—";
@@ -103,16 +111,13 @@ function PriorityBadge({ priority }: { priority: string }) {
   );
 }
 
-function StatusPill({ status }: { status: string }) {
-  const cls =
-    status === "DONE"
-      ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-      : status === "IN_PROGRESS"
-      ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
-      : "bg-muted text-muted-foreground";
+function StatusPill({ label, color }: { label: string; color: string }) {
   return (
-    <span className={`px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap ${cls}`}>
-      {STATUS_LABELS[status] ?? status}
+    <span
+      className="px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap"
+      style={{ backgroundColor: color + "25", color }}
+    >
+      {label}
     </span>
   );
 }
@@ -141,6 +146,80 @@ function isOverdue(task: Task | SubTask) {
   return task.dueDate && task.status !== "DONE" && new Date(task.dueDate) < new Date();
 }
 
+function DraggableKanbanCard({
+  task,
+  parentTitle,
+  onClick,
+  overlay = false,
+}: {
+  task: Task;
+  parentTitle?: string;
+  onClick?: () => void;
+  overlay?: boolean;
+}) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: task.id,
+  });
+  const style = transform ? { transform: CSS.Translate.toString(transform) } : undefined;
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...listeners}
+      {...attributes}
+      onClick={onClick}
+      className={`w-full text-left bg-card border border-border rounded-lg p-3 space-y-2 cursor-grab active:cursor-grabbing select-none transition-all ${
+        isDragging && !overlay ? "opacity-30" : "hover:shadow-sm hover:border-primary/30"
+      }${overlay ? " shadow-lg rotate-1 opacity-95" : ""}${task.status === "DONE" && !overlay ? " opacity-50" : ""}`}
+    >
+      {parentTitle && (
+        <p className="text-[11px] text-muted-foreground/60 -mb-1 truncate">↳ {parentTitle}</p>
+      )}
+      <p className="text-sm font-medium line-clamp-2">{task.title}</p>
+      {task.project && (
+        <p className="text-xs text-muted-foreground">{task.project.title}</p>
+      )}
+      <div className="flex items-center justify-between">
+        <PriorityBadge priority={task.priority} />
+        {task.dueDate && (
+          <span className={`text-xs ${isOverdue(task) ? "text-red-500 font-medium" : "text-muted-foreground"}`}>
+            {formatDate(task.dueDate)}
+          </span>
+        )}
+      </div>
+      {task.assignee && (
+        <div className="flex items-center gap-1.5">
+          <div className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[9px] font-semibold shrink-0 overflow-hidden">
+            {task.assignee.avatarUrl
+              ? <img src={task.assignee.avatarUrl} alt="" className="w-full h-full object-cover" />
+              : userInitials(task.assignee)
+            }
+          </div>
+          <span className="text-xs text-muted-foreground truncate">{userDisplayName(task.assignee)}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DroppableKanbanColumn({
+  status,
+  children,
+}: {
+  status: string;
+  children: React.ReactNode;
+}) {
+  const { setNodeRef, isOver } = useDroppable({ id: status });
+  return (
+    <div
+      ref={setNodeRef}
+      className={`p-3 space-y-2 min-h-[120px] rounded-b-xl transition-colors ${isOver ? "bg-primary/5 ring-2 ring-inset ring-primary/20" : ""}`}
+    >
+      {children}
+    </div>
+  );
+}
+
 export default function TasksView() {
   const router = useRouter();
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -158,9 +237,14 @@ export default function TasksView() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [subTaskPrevStatus, setSubTaskPrevStatus] = useState<Record<string, string>>({});
   const [kanbanProjectFilter, setKanbanProjectFilter] = useState<string>("");
-  const [editingCell, setEditingCell] = useState<{ taskId: string; field: "title" | "assignee" | "dueDate" | "status" | "priority" | "project" } | null>(null);
+  const [editingCell, setEditingCell] = useState<{ taskId: string; field: "assignee" | "dueDate" | "status" | "priority" | "project" } | null>(null);
   const [members, setMembers] = useState<User[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [dragActiveId, setDragActiveId] = useState<string | null>(null);
+  const dndSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+  );
+  const [statuses, setStatuses] = useState<TaskStatusConfig[]>([]);
 
   const fetchTasks = useCallback(async () => {
     try {
@@ -178,6 +262,22 @@ export default function TasksView() {
   }, []);
 
   useEffect(() => { fetchTasks(); }, [fetchTasks]);
+
+  useEffect(() => {
+    fetch("/api/task-statuses").then((r) => r.json()).then(setStatuses).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (!search) return;
+    const q = search.toLowerCase();
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      tasks.forEach((t) => {
+        if (t.subTasks.some((s) => s.title.toLowerCase().includes(q))) next.add(t.id);
+      });
+      return next;
+    });
+  }, [search, tasks]);
 
   useEffect(() => {
     Promise.all([
@@ -224,11 +324,24 @@ export default function TasksView() {
     return sortDir === "asc" ? <ArrowUp size={13} className="text-primary" /> : <ArrowDown size={13} className="text-primary" />;
   }
 
+  const statusLabels = useMemo(
+    () => Object.fromEntries(statuses.map((s) => [s.value, s.label])),
+    [statuses]
+  );
+  const statusOptions = useMemo<TaskSelectOption[]>(
+    () => statuses.map((s) => ({ value: s.value, label: s.label, dot: s.color })),
+    [statuses]
+  );
+  const statusOrder = useMemo(
+    () => Object.fromEntries(statuses.map((s, i) => [s.value, i])),
+    [statuses]
+  );
+
   const sortTasks = useCallback((list: Task[]) => {
     return [...list].sort((a, b) => {
       let cmp = 0;
       if (sortField === "title") cmp = a.title.localeCompare(b.title);
-      else if (sortField === "status") cmp = STATUS_ORDER[a.status] - STATUS_ORDER[b.status];
+      else if (sortField === "status") cmp = (statusOrder[a.status] ?? 99) - (statusOrder[b.status] ?? 99);
       else if (sortField === "priority") cmp = PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority];
       else if (sortField === "dueDate") {
         if (!a.dueDate && !b.dueDate) cmp = 0;
@@ -240,14 +353,36 @@ export default function TasksView() {
       }
       return sortDir === "asc" ? cmp : -cmp;
     });
-  }, [sortField, sortDir]);
+  }, [sortField, sortDir, statusOrder]);
 
   const filtered = useMemo(() => {
+    if (!search) return tasks;
     const q = search.toLowerCase();
-    return tasks.filter((t) => t.title.toLowerCase().includes(q));
+    return tasks
+      .filter((t) =>
+        t.title.toLowerCase().includes(q) ||
+        t.subTasks.some((s) => s.title.toLowerCase().includes(q))
+      )
+      .map((t) =>
+        t.title.toLowerCase().includes(q)
+          ? t
+          : { ...t, subTasks: t.subTasks.filter((s) => s.title.toLowerCase().includes(q)) }
+      );
   }, [tasks, search]);
 
   const sorted = useMemo(() => sortTasks(filtered), [filtered, sortTasks]);
+
+  type KanbanItem = Task & { parentTitle?: string; parentTask?: Task };
+  const kanbanFlat = useMemo<KanbanItem[]>(() => {
+    const items: KanbanItem[] = [];
+    for (const task of sorted) {
+      items.push(task);
+      for (const sub of task.subTasks) {
+        items.push({ ...(sub as Task), parentTitle: task.title, parentTask: task });
+      }
+    }
+    return items;
+  }, [sorted]);
 
   async function deleteTask(id: string) {
     setDeletingId(id);
@@ -288,13 +423,30 @@ export default function TasksView() {
     }
   }
 
+  function handleKanbanDragStart(event: DragStartEvent) {
+    setDragActiveId(event.active.id as string);
+  }
+
+  function handleKanbanDragEnd(event: DragEndEvent) {
+    setDragActiveId(null);
+    const { active, over } = event;
+    if (!over) return;
+    const taskId = active.id as string;
+    const newStatus = over.id as string;
+    const found =
+      tasks.find((t) => t.id === taskId) ??
+      tasks.flatMap((t) => t.subTasks).find((s) => s.id === taskId);
+    if (!found || found.status === newStatus) return;
+    patchTask(taskId, { status: newStatus });
+  }
+
   function getGroups(): { key: string; label: string; tasks: Task[] }[] {
     if (groupBy === "none") return [{ key: "all", label: "", tasks: sorted }];
     if (groupBy === "status") {
-      return ["TODO", "IN_PROGRESS", "DONE"].map((s) => ({
-        key: s,
-        label: STATUS_LABELS[s],
-        tasks: sorted.filter((t) => t.status === s),
+      return statuses.map((s) => ({
+        key: s.value,
+        label: s.label,
+        tasks: sorted.filter((t) => t.status === s.value),
       }));
     }
     if (groupBy === "priority") {
@@ -324,7 +476,6 @@ export default function TasksView() {
     const hasSubTasks = subTasks.length > 0;
     const isExpanded = expanded.has(task.id);
     const overdue = isOverdue(task);
-    const isEditingTitle = editingCell?.taskId === task.id && editingCell.field === "title";
     const isEditingAssignee = editingCell?.taskId === task.id && editingCell.field === "assignee";
     const isEditingDueDate = editingCell?.taskId === task.id && editingCell.field === "dueDate";
     const isEditingStatus = editingCell?.taskId === task.id && editingCell.field === "status";
@@ -385,31 +536,9 @@ export default function TasksView() {
               </button>
             )}
             {!isSubTask && !hasSubTasks && <span className="w-3.5 shrink-0" />}
-            {isEditingTitle ? (
-              <input
-                autoFocus
-                defaultValue={task.title}
-                onBlur={(e) => {
-                  const v = e.target.value.trim();
-                  if (v && v !== task.title) patchTask(task.id, { title: v });
-                  setEditingCell(null);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") e.currentTarget.blur();
-                  if (e.key === "Escape") setEditingCell(null);
-                }}
-                onClick={(e) => e.stopPropagation()}
-                className="text-sm font-medium border-b border-primary outline-none bg-transparent w-full min-w-0"
-              />
-            ) : (
-              <span
-                onClick={(e) => { e.stopPropagation(); setEditingCell({ taskId: task.id, field: "title" }); }}
-                className="text-sm font-medium truncate max-w-[260px] hover:underline"
-                title="Kliknij aby edytować"
-              >
-                {task.title}
-              </span>
-            )}
+            <span className="text-sm font-medium truncate max-w-[260px]">
+              {task.title}
+            </span>
           </div>
         </td>
         {/* Klient */}
@@ -473,14 +602,17 @@ export default function TasksView() {
               style={{ visibility: isEditingStatus ? "hidden" : "visible" }}
               className="cursor-pointer"
             >
-              <StatusPill status={task.status} />
+              <StatusPill
+                label={statusLabels[task.status] ?? task.status}
+                color={statuses.find((s) => s.value === task.status)?.color ?? "#6b7280"}
+              />
             </div>
             {isEditingStatus && (
               <div className="absolute inset-0 flex items-center">
                 <TaskSelectField
                   value={task.status}
                   onChange={(v) => { patchTask(task.id, { status: v }); setEditingCell(null); }}
-                  options={STATUS_OPTIONS}
+                  options={statusOptions}
                   useFixed initialOpen compact
                   onClose={() => setEditingCell(null)}
                 />
@@ -581,6 +713,7 @@ export default function TasksView() {
               Dodaj zadanie
             </button>
           }
+          statusOptions={statusOptions}
           onCreated={() => { fetchTasks(); router.refresh(); }}
         />
       </div>
@@ -730,65 +863,62 @@ export default function TasksView() {
 
       {/* Kanban */}
       {viewMode === "kanban" && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {(["TODO", "IN_PROGRESS", "DONE"] as const).map((col) => {
-            const colTasks = sorted
-              .filter((t) => t.status === col)
-              .filter((t) => !kanbanProjectFilter || t.project?.id === kanbanProjectFilter);
-            return (
-              <div key={col} className="bg-muted/30 rounded-xl border border-border overflow-hidden">
-                <div className="px-4 py-3 border-b border-border flex items-center gap-2">
-                  {col === "DONE" ? <CheckCircle2 size={15} className="text-green-500" /> : col === "IN_PROGRESS" ? <Clock size={15} className="text-blue-500" /> : <Circle size={15} className="text-muted-foreground" />}
-                  <span className="text-sm font-semibold">{STATUS_LABELS[col]}</span>
-                  <span className="ml-auto text-xs text-muted-foreground font-medium">{colTasks.length}</span>
+        <DndContext
+          sensors={dndSensors}
+          onDragStart={handleKanbanDragStart}
+          onDragEnd={handleKanbanDragEnd}
+        >
+        <div className="overflow-x-auto pb-2">
+          <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${Math.max(statuses.length, 1)}, minmax(0, 1fr))` }}>
+            {statuses.map((statusCfg) => {
+              const col = statusCfg.value;
+              const colTasks = kanbanFlat
+                .filter((t) => t.status === col)
+                .filter((t) => !kanbanProjectFilter || t.project?.id === kanbanProjectFilter);
+              return (
+                <div key={col} className="bg-muted/30 rounded-xl border border-border overflow-hidden min-w-[220px]">
+                  <div className="px-4 py-3 border-b border-border flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: statusCfg.color }} />
+                    <span className="text-sm font-semibold">{statusCfg.label}</span>
+                    <span className="ml-auto text-xs text-muted-foreground font-medium">{colTasks.length}</span>
+                  </div>
+                  <DroppableKanbanColumn status={col}>
+                    {colTasks.map((item) => (
+                      <DraggableKanbanCard
+                        key={item.id}
+                        task={item}
+                        parentTitle={item.parentTitle}
+                        onClick={() => {
+                          setSelectedTask(item);
+                          setSelectedTaskIsSubTask(!!item.parentTask);
+                          setSelectedTaskParent(item.parentTask ?? null);
+                        }}
+                      />
+                    ))}
+                    {colTasks.length === 0 && (
+                      <p className="text-xs text-muted-foreground text-center py-6">Brak zadań</p>
+                    )}
+                  </DroppableKanbanColumn>
                 </div>
-                <div className="p-3 space-y-2">
-                  {colTasks.map((task) => (
-                    <button
-                      key={task.id}
-                      onClick={() => setSelectedTask(task)}
-                      className="w-full text-left bg-card border border-border rounded-lg p-3 hover:shadow-sm hover:border-primary/30 transition-all space-y-2"
-                    >
-                      <p className="text-sm font-medium line-clamp-2">{task.title}</p>
-                      {task.project && (
-                        <p className="text-xs text-muted-foreground">{task.project.title}</p>
-                      )}
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1">
-                          <PriorityBadge priority={task.priority} />
-                        </div>
-                        {task.dueDate && (
-                          <span className={`text-xs ${isOverdue(task) ? "text-red-500 font-medium" : "text-muted-foreground"}`}>
-                            {formatDate(task.dueDate)}
-                          </span>
-                        )}
-                      </div>
-                      {task.assignee && (
-                        <div className="flex items-center gap-1.5">
-                          <div className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[9px] font-semibold shrink-0 overflow-hidden">
-                            {task.assignee.avatarUrl
-                              ? <img src={task.assignee.avatarUrl} alt="" className="w-full h-full object-cover" />
-                              : userInitials(task.assignee)
-                            }
-                          </div>
-                          <span className="text-xs text-muted-foreground truncate">{userDisplayName(task.assignee)}</span>
-                        </div>
-                      )}
-                    </button>
-                  ))}
-                  {colTasks.length === 0 && (
-                    <p className="text-xs text-muted-foreground text-center py-6">Brak zadań</p>
-                  )}
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
+          <DragOverlay dropAnimation={null}>
+            {dragActiveId ? (() => {
+              const item = kanbanFlat.find((i) => i.id === dragActiveId);
+              return item ? (
+                <DraggableKanbanCard task={item} parentTitle={item.parentTitle} overlay />
+              ) : null;
+            })() : null}
+          </DragOverlay>
         </div>
+        </DndContext>
       )}
 
       {/* Panel szczegółów */}
       {selectedTask && (
         <TaskDetailPanel
+          key={selectedTask.id}
           task={selectedTask}
           isSubTask={selectedTaskIsSubTask}
           parentTaskTitle={selectedTaskParent?.title}
@@ -802,6 +932,7 @@ export default function TasksView() {
             setSelectedTask(sub);
             setSelectedTaskIsSubTask(true);
           }}
+          statusOptions={statusOptions}
           onClose={() => { setSelectedTask(null); setSelectedTaskParent(null); setSelectedTaskIsSubTask(false); }}
           onUpdated={() => { fetchTasks(); router.refresh(); }}
         />

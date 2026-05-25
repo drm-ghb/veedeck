@@ -1,4 +1,4 @@
-import TeamSettings from "@/components/settings/TeamSettings";
+﻿import TeamSettings from "@/components/settings/TeamSettings";
 
 export default function UzytkownicyPage() {
   return (
