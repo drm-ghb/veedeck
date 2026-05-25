@@ -12,11 +12,11 @@ export default async function DashboardPage() {
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { globalHiddenModules: true, name: true, email: true },
+    select: { globalHiddenModules: true, name: true, fullName: true, email: true },
   });
 
   const hiddenModules = user?.globalHiddenModules ?? [];
-  const displayName = user?.name || user?.email || null;
+  const displayName = (user?.fullName || user?.name || user?.email)?.split(" ")[0] ?? null;
 
   // Fetch all active projects (for stats + recent + requests)
   const allProjects = await prisma.project.findMany({
