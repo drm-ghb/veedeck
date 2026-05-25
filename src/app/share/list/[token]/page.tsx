@@ -41,7 +41,7 @@ export default async function PublicListPage({ params }: { params: Promise<{ tok
           clientName: true,
           renders: { select: { id: true }, take: 1 },
           shoppingLists: { where: { archived: false }, select: { id: true, name: true, shareToken: true } },
-          user: { select: { clientLogoUrl: true, name: true, navMode: true, showProfileName: true, showClientLogo: true, colorTheme: true, requireClientEmail: true } },
+          user: { select: { clientLogoUrl: true, name: true, navMode: true, showProfileName: true, showClientLogo: true, colorTheme: true, requireClientEmail: true, listsCategoryOrder: true } },
           discussion: { select: { id: true } },
         },
       },
@@ -82,6 +82,46 @@ export default async function PublicListPage({ params }: { params: Promise<{ tok
   const showListy = !list.project?.hiddenModules.includes("listy");
   const hasRenders = (list.project?.renders.length ?? 0) > 0;
 
+  const BUILT_IN_CATEGORY_ORDER = [
+    "oswietlenie","sofy","fotele","stoliki","dywany","szafy","kuchnia","lozka","lampy","dekoracje","inne",
+  ];
+  const categoryOrder: string[] = (list.project?.user?.listsCategoryOrder as string[] | null) ?? [];
+
+  function sortProductsForShare(
+    products: typeof list.sections[0]["products"],
+    sortBy: string | null,
+  ) {
+    if (!sortBy || sortBy === "manual") return products;
+    const sorted = [...products];
+    const byDate = (a: typeof products[0], b: typeof products[0]) =>
+      new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+    if (sortBy === "name") {
+      sorted.sort((a, b) => {
+        const cmp = a.name.localeCompare(b.name, "pl");
+        return cmp !== 0 ? cmp : byDate(a, b);
+      });
+    } else if (sortBy === "price") {
+      const parseP = (p: typeof products[0]) => {
+        const n = parseFloat((p.price ?? "").replace(/[^\d.,]/g, "").replace(",", "."));
+        return isNaN(n) ? Infinity : n;
+      };
+      sorted.sort((a, b) => {
+        const diff = parseP(a) - parseP(b);
+        return diff !== 0 ? diff : byDate(a, b);
+      });
+    } else if (sortBy === "category") {
+      const order = categoryOrder.length > 0 ? categoryOrder : BUILT_IN_CATEGORY_ORDER;
+      sorted.sort((a, b) => {
+        const ia = a.category ? order.indexOf(a.category) : order.length;
+        const ib = b.category ? order.indexOf(b.category) : order.length;
+        const ai = ia === -1 ? order.length : ia;
+        const bi = ib === -1 ? order.length : ib;
+        return ai !== bi ? ai - bi : byDate(a, b);
+      });
+    }
+    return sorted;
+  }
+
   const mapProduct = (p: typeof list.sections[0]["products"][0]) => ({
     id: p.id,
     name: p.name,
@@ -95,6 +135,7 @@ export default async function PublicListPage({ params }: { params: Promise<{ tok
     deliveryTime: p.deliveryTime,
     quantity: p.quantity,
     order: p.order,
+    createdAt: p.createdAt.toISOString(),
     commentCount: p._count.comments,
     approval: p.approval,
     note: p.note,
@@ -112,7 +153,7 @@ export default async function PublicListPage({ params }: { params: Promise<{ tok
       id: s.id,
       name: s.name,
       order: s.order,
-      products: s.products.map(mapProduct),
+      products: sortProductsForShare(s.products, s.sortBy).map(mapProduct),
     }));
 
   const sections = [

@@ -90,6 +90,7 @@ interface Product {
   supplier: string | null;
   catalogNumber: string | null;
   note: string | null;
+  createdAt?: string;
   commentCount?: number;
 }
 
@@ -875,16 +876,25 @@ function SortableSection({ id, children }: { id: string; children: (dragHandle: 
   );
 }
 
+function byCreatedAt(a: Product, b: Product): number {
+  const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+  const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+  return ta - tb;
+}
+
 function sortProducts(products: Product[], sortBy: string, categoryOrder: string[]): Product[] {
   if (sortBy === "manual") return products;
   const sorted = [...products];
   if (sortBy === "name") {
-    sorted.sort((a, b) => a.name.localeCompare(b.name, "pl"));
+    sorted.sort((a, b) => {
+      const cmp = a.name.localeCompare(b.name, "pl");
+      return cmp !== 0 ? cmp : byCreatedAt(a, b);
+    });
   } else if (sortBy === "price") {
     sorted.sort((a, b) => {
       const pa = parsePrice(a.price) ?? Infinity;
       const pb = parsePrice(b.price) ?? Infinity;
-      return pa - pb;
+      return pa !== pb ? pa - pb : byCreatedAt(a, b);
     });
   } else if (sortBy === "category") {
     const order = categoryOrder.length > 0 ? categoryOrder : BUILT_IN_CATEGORIES.map((c) => c.value);
@@ -893,7 +903,7 @@ function sortProducts(products: Product[], sortBy: string, categoryOrder: string
       const ib = b.category ? order.indexOf(b.category) : order.length;
       const ai = ia === -1 ? order.length : ia;
       const bi = ib === -1 ? order.length : ib;
-      return ai - bi;
+      return ai !== bi ? ai - bi : byCreatedAt(a, b);
     });
   }
   return sorted;

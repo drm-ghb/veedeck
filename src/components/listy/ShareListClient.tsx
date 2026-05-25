@@ -45,6 +45,7 @@ interface Product {
   deliveryTime: string | null;
   quantity: number;
   order: number;
+  createdAt?: string;
   commentCount: number;
   approval: string | null;
   note: string | null;
