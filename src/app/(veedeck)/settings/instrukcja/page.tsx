@@ -12,7 +12,7 @@ import {
 interface DesignerStep {
   title: string;
   desc: string;
-  tip?: string;
+  tips?: string[];
   steps: string[];
 }
 
@@ -30,7 +30,7 @@ const DESIGNER_MODULES: DesignerStep[] = [
   {
     title: "2. RenderFlow",
     desc: "Moduł do udostępniania wizualizacji i plików projektu. Po dodaniu klienta tworzysz projekt, przypisujesz go do istniejącego klienta, a następnie dodajesz pomieszczenia (np. Salon, Sypialnia) i wrzucasz do nich wizualizacje, pliki PDF lub kolejne foldery dla większego porządku.",
-    tip: "Możesz też dodać projekt z nowym klientem od razu — wystarczy wpisać jego dane przy tworzeniu projektu, a klient automatycznie trafi do modułu Klienci.",
+    tips: ["Możesz też dodać projekt z nowym klientem od razu — wystarczy wpisać jego dane przy tworzeniu projektu, a klient automatycznie trafi do modułu Klienci."],
     steps: [
       'Kliknij "Nowy projekt" i nadaj mu nazwę',
       "Przypisz istniejącego klienta lub dodaj nowego na miejscu",
@@ -42,7 +42,10 @@ const DESIGNER_MODULES: DesignerStep[] = [
   {
     title: "3. Listy zakupowe",
     desc: "Moduł do tworzenia zestawień produktów, mebli i materiałów. Tak samo jak przy projektach — tworzysz listę i przypisujesz ją do istniejącego klienta. Produkty możesz organizować w sekcje odpowiadające pomieszczeniom.",
-    tip: "Możesz też dodać listę z nowym klientem od razu — wystarczy wpisać jego dane przy tworzeniu listy, a klient automatycznie trafi do modułu Klienci.",
+    tips: [
+      "Możesz też dodać listę z nowym klientem od razu — wystarczy wpisać jego dane przy tworzeniu listy, a klient automatycznie trafi do modułu Klienci.",
+      "Zainstaluj rozszerzenie veepick do przeglądarki — pozwala dodawać produkty do listy bezpośrednio ze sklepów internetowych jednym kliknięciem, bez ręcznego wklejania danych.",
+    ],
     steps: [
       'Kliknij "Nowa lista" i nadaj jej nazwę',
       "Przypisz istniejącego klienta lub dodaj nowego na miejscu",
@@ -197,12 +200,12 @@ export default function InstrukcjaPage() {
               </div>
               <div className="px-6 py-5 space-y-4">
                 <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{mod.desc}</p>
-                {mod.tip && (
-                  <div className="flex items-start gap-2.5 bg-primary/5 border border-primary/15 rounded-xl px-4 py-3">
+                {mod.tips && mod.tips.map((tip, i) => (
+                  <div key={i} className="flex items-start gap-2.5 bg-primary/5 border border-primary/15 rounded-xl px-4 py-3">
                     <span className="text-primary text-base leading-none mt-0.5">💡</span>
-                    <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{mod.tip}</p>
+                    <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{tip}</p>
                   </div>
-                )}
+                ))}
                 <div>
                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Jak to zrobić</p>
                   <ul className="space-y-1.5">
