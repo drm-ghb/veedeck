@@ -78,7 +78,7 @@ export default async function ListyLayout({
         </div>
       </nav>
       <div className="flex flex-1 min-h-0">
-        <NavSidebar hiddenModules={hiddenModules} sidebarOrder={sidebarOrder} />
+        <NavSidebar hiddenModules={hiddenModules} sidebarOrder={sidebarOrder} userId={session.user.id!} />
         <main className="flex-1 px-6 py-6 overflow-y-auto overflow-x-hidden bg-background rounded-tl-2xl">
           {children}
         </main>

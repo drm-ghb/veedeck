@@ -14,6 +14,7 @@ interface NavSidebarProps {
   hiddenModules: string[];
   isAdmin?: boolean;
   sidebarOrder?: string[];
+  userId?: string;
 }
 
 function getSettingsHref(pathname: string): string {
@@ -27,7 +28,7 @@ const HIDDEN_ON: RegExp[] = [
   /^\/listy\/.+/,
 ];
 
-export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder }: NavSidebarProps) {
+export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userId }: NavSidebarProps) {
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
   const t = useT();
@@ -77,8 +78,8 @@ export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder }: Nav
         data.forEach((d) => {
           const channel = pusherRef.current!.subscribe(`discussion-${d.id}`);
           channel.bind("new-message", (msg: { userId?: string | null }) => {
-            // Only count client messages (userId null), ignore own messages
-            if (msg.userId) return;
+            // Skip own messages (designer), count all others (clients)
+            if (msg.userId && msg.userId === userId) return;
             // When on /dyskusje the DyskusjeView manages the count itself
             if (pathnameRef.current.startsWith("/dyskusje")) return;
             // Track per-discussion (not per-message) to avoid double-counting
