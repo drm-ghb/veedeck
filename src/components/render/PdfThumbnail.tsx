@@ -18,9 +18,10 @@ export default function PdfThumbnail({ fileUrl, className }: PdfThumbnailProps) 
     async function render() {
       try {
         const pdfjsLib = await import("pdfjs-dist");
-        pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
+        // Use CDN worker matching installed version — avoids ES module worker issues in production
+        pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
 
-        const loadingTask = pdfjsLib.getDocument({ url: fileUrl, disableStream: true, disableAutoFetch: true });
+        const loadingTask = pdfjsLib.getDocument(fileUrl);
         const pdf = await loadingTask.promise;
         if (cancelled) return;
 
