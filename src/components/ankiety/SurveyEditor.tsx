@@ -695,9 +695,10 @@ function SortableSectionBlock({
   };
 
   return (
-    <div ref={setNodeRef} style={style} className="space-y-3">
-      {/* Section header with drag handle */}
+    <div style={style} className="space-y-3">
+      {/* Section header — ref only here so it doesn't cover question droppables */}
       <div
+        ref={setNodeRef}
         className={`bg-card border border-border rounded-xl px-5 py-4 flex items-center gap-3 group transition-opacity cursor-pointer ${isCollapsed ? "opacity-40" : ""}`}
         onClick={onSectionActivate}
       >
