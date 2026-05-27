@@ -1043,6 +1043,16 @@ export function PaymentsTab({ clientId, projectId, paymentsSharedWithClient: ini
         </div>
       )}
 
+      {/* Footer */}
+      {payments.length > 0 && (
+        <div className="flex items-center justify-between pt-3 border-t border-border">
+          <span className="text-sm text-muted-foreground">Łącznie do opłacenia:</span>
+          <span className={`text-sm font-bold tabular-nums ${remaining <= 0 ? "text-green-600 dark:text-green-400" : "text-foreground"}`}>
+            {formatPLN(Math.max(0, remaining))}
+          </span>
+        </div>
+      )}
+
       {/* Dialog */}
       {showNewPaymentDialog && (
         <NewPaymentProjectDialog
