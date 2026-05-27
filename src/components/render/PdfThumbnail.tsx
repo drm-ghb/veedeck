@@ -7,6 +7,18 @@ import { FileText } from "@/components/ui/icons";
 // with correct MIME type. Must be at module level for webpack static analysis.
 const workerSrc = new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url);
 
+// Singleton init — prevents race conditions when multiple thumbnails load simultaneously
+let pdfjsInitPromise: Promise<typeof import("pdfjs-dist")> | null = null;
+function getPdfJs() {
+  if (!pdfjsInitPromise) {
+    pdfjsInitPromise = import("pdfjs-dist").then((lib) => {
+      lib.GlobalWorkerOptions.workerSrc = workerSrc.href;
+      return lib;
+    });
+  }
+  return pdfjsInitPromise;
+}
+
 interface PdfThumbnailProps {
   fileUrl: string;
   className?: string;
@@ -16,14 +28,15 @@ interface PdfThumbnailProps {
 export default function PdfThumbnail({ fileUrl, className, iconSize = 36 }: PdfThumbnailProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [status, setStatus] = useState<"loading" | "done" | "error">("loading");
+  const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
+    setStatus("loading");
 
     async function render() {
       try {
-        const pdfjsLib = await import("pdfjs-dist");
-        pdfjsLib.GlobalWorkerOptions.workerSrc = workerSrc.href;
+        const pdfjsLib = await getPdfJs();
 
         const pdf = await pdfjsLib.getDocument(fileUrl).promise;
         if (cancelled) return;
@@ -57,12 +70,17 @@ export default function PdfThumbnail({ fileUrl, className, iconSize = 36 }: PdfT
 
     render();
     return () => { cancelled = true; };
-  }, [fileUrl]);
+  }, [fileUrl, retryKey]);
 
   if (status === "error") {
     return (
-      <div className={`flex items-center justify-center bg-muted ${className ?? ""}`}>
+      <div
+        className={`flex flex-col items-center justify-center gap-1 bg-muted cursor-pointer ${className ?? ""}`}
+        onClick={() => setRetryKey((k) => k + 1)}
+        title="Kliknij aby spróbować ponownie"
+      >
         <FileText size={iconSize} className="text-red-400" />
+        <span className="text-[10px] text-muted-foreground">Odśwież</span>
       </div>
     );
   }
