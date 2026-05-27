@@ -55,7 +55,7 @@ const EXPORT_FORMATS = [
 
 // ── Main component ───────────────────────────────────────────────────────────
 
-export default function Generator3DView({ initialModels }: { initialModels: Model3D[] }) {
+export default function Generator3DView({ initialModels, hideHeader }: { initialModels: Model3D[]; hideHeader?: boolean }) {
   const [activeTab, setActiveTab] = useState<"generator" | "library">("generator");
   const [models, setModels] = useState<Model3D[]>(initialModels);
 
@@ -99,7 +99,7 @@ export default function Generator3DView({ initialModels }: { initialModels: Mode
 
     pollRef.current = setInterval(async () => {
       try {
-        const res = await fetch(`/api/generator3d/status/${taskId}`);
+        const res = await fetch(`/api/veezard/status/${taskId}`);
         const data = await res.json();
 
         setProgress(data.progress ?? 0);
@@ -153,7 +153,7 @@ export default function Generator3DView({ initialModels }: { initialModels: Mode
 
     setPhase("generating");
 
-    const genRes = await fetch("/api/generator3d/generate", {
+    const genRes = await fetch("/api/veezard/generate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ imageUrl: uploaded[0].url }),
@@ -203,7 +203,7 @@ export default function Generator3DView({ initialModels }: { initialModels: Mode
     if (!saveName.trim() || !saveCategory || saving || saved) return;
     setSaving(true);
 
-    const res = await fetch("/api/generator3d/library", {
+    const res = await fetch("/api/veezard/library", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -234,7 +234,7 @@ export default function Generator3DView({ initialModels }: { initialModels: Mode
   // ── Delete from library ────────────────────────────────────────────────────
 
   async function handleDelete(id: string) {
-    const res = await fetch(`/api/generator3d/library/${id}`, { method: "DELETE" });
+    const res = await fetch(`/api/veezard/library/${id}`, { method: "DELETE" });
     if (!res.ok) { toast.error("Nie udało się usunąć modelu."); return; }
     setModels((prev) => prev.filter((m) => m.id !== id));
     setDeleteId(null);
@@ -260,15 +260,17 @@ export default function Generator3DView({ initialModels }: { initialModels: Mode
 
       <div className="flex flex-col h-full">
         {/* Header */}
-        <div className="flex items-center gap-3 px-6 py-4 border-b border-border flex-shrink-0">
-          <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-            <ViewInAr size={20} />
+        {!hideHeader && (
+          <div className="flex items-center gap-3 px-6 py-4 border-b border-border flex-shrink-0">
+            <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+              <ViewInAr size={20} />
+            </div>
+            <div>
+              <h1 className="text-lg font-semibold text-foreground">Generator 3D</h1>
+              <p className="text-xs text-muted-foreground">Generuj modele 3D na podstawie zdjęć</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-lg font-semibold text-foreground">Generator 3D</h1>
-            <p className="text-xs text-muted-foreground">Generuj modele 3D na podstawie zdjęć</p>
-          </div>
-        </div>
+        )}
 
         {/* Tabs */}
         <div className="flex gap-1 px-6 pt-4 flex-shrink-0">

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X, LayoutDashboard, Users, LocalMall, Package, Settings, LogOut, HelpCircle, Sun, Moon, CheckCircle, CalendarDays, NotebookText, PushPin, ChatBubble, ViewInAr, BookOpen, ClipboardList } from "@/components/ui/icons";
+import { Menu, X, LayoutDashboard, Users, LocalMall, Package, Settings, LogOut, HelpCircle, Sun, Moon, CheckCircle, CalendarDays, NotebookText, PushPin, ChatBubble, WandStars, BookOpen, ClipboardList } from "@/components/ui/icons";
 import { signOut } from "next-auth/react";
 import { useTheme } from "@/lib/theme";
 import { useT } from "@/lib/i18n";
@@ -35,7 +35,7 @@ export default function MobileMenu({ userName, logoUrl, hiddenModules = [], isTr
     { label: t.nav.notes, href: "/notatnik", icon: <NotebookText size={18} />, slug: null },
     { label: t.nav.discussions, href: "/dyskusje", icon: <ChatBubble size={18} />, slug: null },
     { label: t.nav.surveys, href: "/ankiety", icon: <ClipboardList size={18} />, slug: null },
-    { label: t.nav.generator3d, href: "/generator3d", icon: <ViewInAr size={18} />, slug: null },
+    { label: t.nav.veezard, href: "/veezard", icon: <WandStars size={18} />, slug: null },
   ];
 
   // Close on route change

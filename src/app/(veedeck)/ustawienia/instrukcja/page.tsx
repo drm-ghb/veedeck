@@ -5,7 +5,7 @@ import {
   PushPin, LocalMall, Comment, ChatBubble,
   Pin, Check, ExternalLink, History,
   Paperclip, Mic, CornerDownLeft, X, Users,
-  Package, CalendarDays, NotebookText, ViewInAr, CheckSquare,
+  Package, CalendarDays, NotebookText, WandStars, CheckSquare,
 } from "@/components/ui/icons";
 
 /* ─── DESIGNER PANEL ────────────────────────────────────────────────────── */
@@ -110,7 +110,7 @@ const DESIGNER_MODULES: DesignerStep[] = [
     ],
   },
   {
-    title: "9. Generator 3D",
+    title: "9. Veezard",
     desc: "Wkrótce dostępny w veedeck.",
     steps: [],
   },
@@ -249,7 +249,7 @@ export default function InstrukcjaPage() {
                   {idx === 5 && <CalendarDays size={22} />}
                   {idx === 6 && <NotebookText size={22} />}
                   {idx === 7 && <CheckSquare size={22} />}
-                  {idx === 8 && <ViewInAr size={22} />}
+                  {idx === 8 && <WandStars size={22} />}
                 </div>
                 <h2 className="font-semibold text-gray-900 dark:text-gray-100">{mod.title}</h2>
               </div>

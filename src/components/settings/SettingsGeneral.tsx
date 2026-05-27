@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { User, Mail, Lock, Info, Sun, Moon, Monitor, Palette, Image as ImageIcon, Layers, LocalMall, Package, Globe, PushPin, Pencil, X, Eye, EyeOff, Phone, UserCircle, Trash2, GripVertical, LayoutDashboard, Users, CheckSquare, CalendarDays, NotebookText, ChatBubble, ViewInAr } from "@/components/ui/icons";
+import { User, Mail, Lock, Info, Sun, Moon, Monitor, Palette, Image as ImageIcon, Layers, LocalMall, Package, Globe, PushPin, Pencil, X, Eye, EyeOff, Phone, UserCircle, Trash2, GripVertical, LayoutDashboard, Users, CheckSquare, CalendarDays, NotebookText, ChatBubble, WandStars } from "@/components/ui/icons";
 import { useTheme, type Theme, type ColorTheme } from "@/lib/theme";
 import { useT, useLang } from "@/lib/i18n";
 import Cropper from "react-easy-crop";
@@ -142,7 +142,7 @@ export function SettingsGeneral({
   const [emailNotifModules, setEmailNotifModules] = useState<string[]>(initialEmailNotifModules);
   const [emailNotifLoading, setEmailNotifLoading] = useState(false);
 
-  const DEFAULT_SIDEBAR_ORDER = ["klienci", "renderflow", "listy", "zadania", "produkty", "kalendarz", "notatnik", "dyskusje", "generator3d"];
+  const DEFAULT_SIDEBAR_ORDER = ["klienci", "renderflow", "listy", "zadania", "produkty", "kalendarz", "notatnik", "dyskusje", "veezard"];
   const SIDEBAR_ITEM_META: Record<string, { label: string; icon: React.ElementType }> = {
     klienci:     { label: "Klienci",       icon: Users },
     renderflow:  { label: "RenderFlow",    icon: PushPin },
@@ -152,7 +152,7 @@ export function SettingsGeneral({
     kalendarz:   { label: "Kalendarz",     icon: CalendarDays },
     notatnik:    { label: "Notatnik",      icon: NotebookText },
     dyskusje:    { label: "Dyskusje",      icon: ChatBubble },
-    generator3d: { label: "Generator 3D", icon: ViewInAr },
+    veezard:     { label: "Veezard",       icon: WandStars },
   };
   const initialOrder = initialSidebarOrder.length > 0 ? initialSidebarOrder : DEFAULT_SIDEBAR_ORDER;
   const [sidebarOrder, setSidebarOrder] = useState<string[]>(initialOrder);

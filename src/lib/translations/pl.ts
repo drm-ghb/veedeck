@@ -53,7 +53,7 @@ export const pl = {
     discussions: "Dyskusje",
     tasks: "Zadania",
     surveys: "Ankiety",
-    generator3d: "Generator 3D",
+    veezard: "Veezard",
     help: "Pomoc",
     settings: "Ustawienia",
     logout: "Wyloguj",

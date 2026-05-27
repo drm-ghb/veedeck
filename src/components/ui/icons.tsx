@@ -202,6 +202,7 @@ export const Activity         = icon("monitoring");
 export const SlidersHorizontal= icon("tune");
 export const Layers           = icon("layers");
 export const ViewInAr         = icon("view_in_ar");
+export const WandStars        = icon("auto_fix_high");
 
 // ── Layout / Grid ─────────────────────────────────────────────────────────
 export const GripVertical     = icon("drag_indicator");
