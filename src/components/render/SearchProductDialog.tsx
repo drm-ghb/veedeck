@@ -248,7 +248,7 @@ export default function SearchProductDialog({ open, onClose, onSelect, projectId
   const toggleSection = (key: string) =>
     setExpandedFilters((prev) => ({ ...prev, [key]: !prev[key] }));
 
-  const getActiveCount = (key: keyof typeof search.filters) =>
+  const getActiveCount = (key: "categories" | "manufacturers" | "colors") =>
     search.filters[key].length;
 
   const totalActiveFilters =
