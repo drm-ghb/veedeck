@@ -203,6 +203,8 @@ export const SlidersHorizontal= icon("tune");
 export const Layers           = icon("layers");
 export const ViewInAr         = icon("view_in_ar");
 export const WandStars        = icon("auto_fix_high");
+export const StarOutline      = icon("star_border");
+export const StarFilled       = icon("grade");
 
 // ── Layout / Grid ─────────────────────────────────────────────────────────
 export const GripVertical     = icon("drag_indicator");

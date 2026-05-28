@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Package, ChevronLeft, ArrowUpDown, Pencil, Trash2, ExternalLink, Plus, Check, X, SlidersHorizontal, Layers, Star } from "@/components/ui/icons";
+import { Search, Package, ChevronLeft, ArrowUpDown, Pencil, Trash2, ExternalLink, Plus, Check, X, SlidersHorizontal, Layers, StarOutline, StarFilled } from "@/components/ui/icons";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -449,7 +449,7 @@ function ProductCard({
           title={product.favorite ? "Usuń z ulubionych" : "Dodaj do ulubionych"}
           className={`p-1.5 rounded-md transition-colors ${product.favorite ? "text-yellow-400 hover:text-yellow-500" : "text-muted-foreground hover:text-yellow-400 hover:bg-muted"}`}
         >
-          <Star size={14} fill={product.favorite ? "currentColor" : "none"} />
+          {product.favorite ? <StarFilled size={14} /> : <StarOutline size={14} />}
         </button>
         {product.url && (
           <a
