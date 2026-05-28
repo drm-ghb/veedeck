@@ -37,6 +37,7 @@ export default function SurveyForm({ token, survey, responseId, existingAnswers 
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showIncompleteConfirm, setShowIncompleteConfirm] = useState(false);
   const autoSaveTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const pendingRef = useRef(answers);
 
@@ -84,12 +85,21 @@ export default function SurveyForm({ token, survey, responseId, existingAnswers 
     return Object.keys(errs).length === 0;
   }
 
-  async function handleSubmit() {
+  function hasUnansweredQuestions(): boolean {
+    return survey.questions.some((q) => {
+      const v = answers[q.id];
+      return v === null || v === undefined || v === "" || (Array.isArray(v) && v.length === 0);
+    });
+  }
+
+  async function doSubmit() {
     if (!validate()) {
-      // Scroll to first error
-      const firstErrorId = Object.keys(errors)[0] ?? Object.keys(survey.questions.find((q) => q.required && !answers[q.id] ? true : false) ?? {})[0];
-      if (firstErrorId) {
-        document.getElementById(`q-${firstErrorId}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+      const firstErrId = survey.questions.find((q) => q.required && (() => {
+        const v = answers[q.id];
+        return v === null || v === undefined || v === "" || (Array.isArray(v) && v.length === 0);
+      })())?.id;
+      if (firstErrId) {
+        document.getElementById(`q-${firstErrId}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
       }
       return;
     }
@@ -110,6 +120,14 @@ export default function SurveyForm({ token, survey, responseId, existingAnswers 
     } finally {
       setSubmitting(false);
     }
+  }
+
+  function handleSubmit() {
+    if (hasUnansweredQuestions()) {
+      setShowIncompleteConfirm(true);
+      return;
+    }
+    doSubmit();
   }
 
   if (submitted) {
@@ -140,6 +158,32 @@ export default function SurveyForm({ token, survey, responseId, existingAnswers 
   const unsectioned = survey.questions.filter((q) => !q.sectionId);
 
   return (
+    <>
+    {showIncompleteConfirm && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" onClick={() => setShowIncompleteConfirm(false)}>
+        <div className="bg-card border border-border rounded-2xl shadow-xl w-full max-w-sm p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+          <h3 className="font-semibold text-base">Nie wszystkie pytania wypełnione</h3>
+          <p className="text-sm text-muted-foreground">
+            Nie wszystkie pytania zostały uzupełnione. Czy na pewno chcesz wysłać ankietę?
+          </p>
+          <div className="flex justify-end gap-2 pt-1">
+            <button
+              onClick={() => setShowIncompleteConfirm(false)}
+              className="px-4 py-2 text-sm rounded-xl border border-border hover:bg-muted transition-colors"
+            >
+              Anuluj
+            </button>
+            <button
+              onClick={() => { setShowIncompleteConfirm(false); doSubmit(); }}
+              disabled={submitting}
+              className="px-4 py-2 text-sm font-semibold rounded-xl bg-primary text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-50"
+            >
+              Wyślij i tak
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
     <div className="space-y-6">
       {/* Progress */}
       {survey.questions.length > 0 && (
@@ -204,6 +248,7 @@ export default function SurveyForm({ token, survey, responseId, existingAnswers 
         {submitting ? "Wysyłanie..." : "Wyślij ankietę"}
       </button>
     </div>
+    </>
   );
 }
 
