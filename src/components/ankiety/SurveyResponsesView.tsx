@@ -420,21 +420,60 @@ function IndividualView({
   );
 }
 
+type Attachment = { url: string; name: string };
+
+function unwrapValue(value: unknown): { answer: unknown; attachments: Attachment[] } {
+  if (value !== null && typeof value === "object" && !Array.isArray(value) && "attachments" in (value as object)) {
+    const v = value as { answer?: unknown; attachments: Attachment[] };
+    return { answer: v.answer ?? null, attachments: v.attachments ?? [] };
+  }
+  return { answer: value, attachments: [] };
+}
+
 function AnswerDisplay({ value, type }: { value: unknown; type: string }) {
-  if (value === null || value === undefined || value === "") {
-    return <p className="text-sm text-muted-foreground italic">Brak odpowiedzi</p>;
-  }
-  if (type === "multiple_choice" && Array.isArray(value)) {
-    return (
-      <div className="flex flex-wrap gap-1.5">
-        {(value as string[]).map((v) => (
-          <span key={v} className="px-2 py-0.5 bg-primary/10 text-primary text-xs rounded-full">{v}</span>
-        ))}
-      </div>
-    );
-  }
-  if (type === "budget_range" && typeof value === "number") {
-    return <p className="text-sm">{value.toLocaleString("pl-PL")} zł</p>;
-  }
-  return <p className="text-sm">{String(value)}</p>;
+  const { answer, attachments } = unwrapValue(value);
+
+  const isEmpty = answer === null || answer === undefined || answer === "" ||
+    (Array.isArray(answer) && answer.length === 0);
+
+  return (
+    <div className="space-y-2">
+      {isEmpty && attachments.length === 0 ? (
+        <p className="text-sm text-muted-foreground italic">Brak odpowiedzi</p>
+      ) : (
+        <>
+          {!isEmpty && (() => {
+            if (type === "multiple_choice" && Array.isArray(answer)) {
+              return (
+                <div className="flex flex-wrap gap-1.5">
+                  {(answer as string[]).map((v) => (
+                    <span key={v} className="px-2 py-0.5 bg-primary/10 text-primary text-xs rounded-full">{v}</span>
+                  ))}
+                </div>
+              );
+            }
+            if (type === "budget_range" && typeof answer === "number") {
+              return <p className="text-sm">{answer.toLocaleString("pl-PL")} zł</p>;
+            }
+            return <p className="text-sm">{String(answer)}</p>;
+          })()}
+          {attachments.length > 0 && (
+            <div className="flex flex-wrap gap-2 pt-1">
+              {attachments.map((f, i) => (
+                <a
+                  key={i}
+                  href={f.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 bg-muted rounded-lg text-xs text-primary hover:underline max-w-[200px] truncate"
+                >
+                  📎 {f.name}
+                </a>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
 }

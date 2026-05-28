@@ -43,7 +43,7 @@ export interface SurveyQuestion {
   required: boolean;
   order: number;
   options: string[] | null;
-  config: Record<string, number> | null;
+  config: Record<string, number | boolean> | null;
   sectionId: string | null;
   surveyId: string;
 }
@@ -1001,8 +1001,8 @@ function PreviewFormControl({ question, onUpdate }: { question: SurveyQuestion; 
   const [opts, setOpts] = useState<string[]>(question.options ?? ["Opcja 1", "Opcja 2"]);
   const [newOpt, setNewOpt] = useState("");
   const cfg = question.config ?? {};
-  const min = cfg.min ?? 1;
-  const max = cfg.max ?? 5;
+  const min = Number(cfg.min ?? 1);
+  const max = Number(cfg.max ?? 5);
 
   function saveOptions(next: string[]) { setOpts(next); onUpdate({ options: next }); }
   function addOption() {
@@ -1079,8 +1079,8 @@ function PreviewFormControl({ question, onUpdate }: { question: SurveyQuestion; 
         </div>
       );
     case "budget_range": {
-      const bMin = cfg.min ?? 0;
-      const bMax = cfg.max ?? 200000;
+      const bMin = Number(cfg.min ?? 0);
+      const bMax = Number(cfg.max ?? 200000);
       return (
         <div className="space-y-1.5">
           <input type="range" disabled min={bMin} max={bMax} defaultValue={Math.round((bMin + bMax) / 2)} className="w-full accent-primary cursor-default" />
@@ -1158,9 +1158,12 @@ function QuestionConfigPanel({
   const [label, setLabel] = useState(question.label);
   const [description, setDescription] = useState(question.description ?? "");
   const [required, setRequired] = useState(question.required);
+  const [allowAttachments, setAllowAttachments] = useState(!!(question.config?.allowAttachments));
   const [options, setOptions] = useState<string[]>(question.options ?? ["Opcja 1", "Opcja 2"]);
   const [newOption, setNewOption] = useState("");
-  const [config, setConfig] = useState<Record<string, number>>(question.config ?? {});
+  const [config, setConfig] = useState<Record<string, number>>(
+    Object.fromEntries(Object.entries(question.config ?? {}).filter(([, v]) => typeof v === "number")) as Record<string, number>
+  );
 
   const showOptions = question.type === "single_choice" || question.type === "multiple_choice";
   const showRatingConfig = question.type === "rating";
@@ -1228,6 +1231,20 @@ function QuestionConfigPanel({
         <span className="text-sm font-medium">Wymagane</span>
       </label>
 
+      <label className="flex items-center gap-3 cursor-pointer">
+        <div
+          onClick={() => {
+            const next = !allowAttachments;
+            setAllowAttachments(next);
+            onUpdate({ config: { ...config, allowAttachments: next } });
+          }}
+          className={`relative w-9 h-5 rounded-full transition-colors flex-shrink-0 ${allowAttachments ? "bg-primary" : "bg-muted-foreground/30"}`}
+        >
+          <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${allowAttachments ? "left-4" : "left-0.5"}`} />
+        </div>
+        <span className="text-sm font-medium">Zezwól na załączniki</span>
+      </label>
+
       {showOptions && (
         <div className="space-y-2">
           <label className="text-xs font-medium text-muted-foreground">Opcje odpowiedzi</label>
@@ -1283,7 +1300,7 @@ function QuestionConfigPanel({
                   type="number"
                   value={config[key] ?? (key === "min" ? 1 : 5)}
                   onChange={(e) => setConfig((c) => ({ ...c, [key]: Number(e.target.value) }))}
-                  onBlur={() => onUpdate({ config })}
+                  onBlur={() => onUpdate({ config: { ...config, allowAttachments } })}
                   min={min} max={max}
                   className="w-full px-2 py-1.5 text-sm border border-border rounded-lg bg-background focus:outline-none text-center"
                 />

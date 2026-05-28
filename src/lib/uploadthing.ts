@@ -157,6 +157,20 @@ export const ourFileRouter = {
     .onUploadComplete(async ({ file }) => {
       return { url: file.url, key: file.key };
     }),
+  surveyAnswerUploader: f({ image: { maxFileSize: "16MB", maxFileCount: 5 }, pdf: { maxFileSize: "16MB", maxFileCount: 5 } })
+    .middleware(async ({ req }) => {
+      const token = req.headers.get("x-survey-token");
+      if (!token) throw new Error("Unauthorized");
+      const survey = await prisma.survey.findFirst({
+        where: { shareToken: token, status: "ACTIVE" },
+        select: { id: true },
+      });
+      if (!survey) throw new Error("Unauthorized");
+      return { surveyId: survey.id };
+    })
+    .onUploadComplete(async ({ file }) => {
+      return { url: file.url, key: file.key, name: file.name };
+    }),
   clientChatImageUploader: f({ image: { maxFileSize: "8MB", maxFileCount: 1 } })
     .middleware(async ({ req }) => {
       const token = req.headers.get("x-share-token");

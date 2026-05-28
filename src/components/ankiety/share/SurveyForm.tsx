@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { UploadButton } from "@uploadthing/react";
+import type { OurFileRouter } from "@/lib/uploadthing";
 import type { SurveyQuestion, SurveySection } from "../SurveyEditor";
 
 interface Answer {
@@ -21,11 +23,30 @@ interface Props {
   existingAnswers: Answer[];
 }
 
+type Attachment = { url: string; name: string };
+
+function unwrapAnswer(value: unknown): { answer: unknown; attachments: Attachment[] } {
+  if (value !== null && typeof value === "object" && !Array.isArray(value) && "attachments" in (value as object)) {
+    const v = value as { answer?: unknown; attachments: Attachment[] };
+    return { answer: v.answer ?? null, attachments: v.attachments ?? [] };
+  }
+  return { answer: value, attachments: [] };
+}
+
 function initAnswers(questions: SurveyQuestion[], existing: Answer[]): Record<string, unknown> {
   const map: Record<string, unknown> = {};
   for (const q of questions) {
     const found = existing.find((a) => a.questionId === q.id);
-    map[q.id] = found ? found.value : null;
+    map[q.id] = found ? unwrapAnswer(found.value).answer : null;
+  }
+  return map;
+}
+
+function initAttachments(questions: SurveyQuestion[], existing: Answer[]): Record<string, Attachment[]> {
+  const map: Record<string, Attachment[]> = {};
+  for (const q of questions) {
+    const found = existing.find((a) => a.questionId === q.id);
+    map[q.id] = found ? unwrapAnswer(found.value).attachments : [];
   }
   return map;
 }
@@ -33,6 +54,9 @@ function initAnswers(questions: SurveyQuestion[], existing: Answer[]): Record<st
 export default function SurveyForm({ token, survey, responseId, existingAnswers }: Props) {
   const [answers, setAnswers] = useState<Record<string, unknown>>(
     () => initAnswers(survey.questions, existingAnswers)
+  );
+  const [attachments, setAttachments] = useState<Record<string, Attachment[]>>(
+    () => initAttachments(survey.questions, existingAnswers)
   );
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -61,8 +85,18 @@ export default function SurveyForm({ token, survey, responseId, existingAnswers 
 
   function buildPayload(ans: Record<string, unknown>) {
     return Object.entries(ans)
-      .filter(([, v]) => v !== null && v !== undefined && v !== "")
-      .map(([questionId, value]) => ({ questionId, value }));
+      .filter(([questionId, v]) => {
+        const hasAnswer = v !== null && v !== undefined && v !== "" && !(Array.isArray(v) && v.length === 0);
+        const hasFiles = (attachments[questionId]?.length ?? 0) > 0;
+        return hasAnswer || hasFiles;
+      })
+      .map(([questionId, value]) => {
+        const files = attachments[questionId] ?? [];
+        if (files.length > 0) {
+          return { questionId, value: { answer: value, attachments: files } };
+        }
+        return { questionId, value };
+      });
   }
 
   function setAnswer(questionId: string, value: unknown) {
@@ -215,6 +249,9 @@ export default function SurveyForm({ token, survey, responseId, existingAnswers 
                 value={answers[q.id]}
                 onChange={(v) => setAnswer(q.id, v)}
                 error={errors[q.id]}
+                token={token}
+                attachments={attachments[q.id] ?? []}
+                onAttachmentsChange={(files) => setAttachments((prev) => ({ ...prev, [q.id]: files }))}
               />
             ))}
           </div>
@@ -231,6 +268,9 @@ export default function SurveyForm({ token, survey, responseId, existingAnswers 
               value={answers[q.id]}
               onChange={(v) => setAnswer(q.id, v)}
               error={errors[q.id]}
+              token={token}
+              attachments={attachments[q.id] ?? []}
+              onAttachmentsChange={(files) => setAttachments((prev) => ({ ...prev, [q.id]: files }))}
             />
           ))}
         </div>
@@ -259,13 +299,26 @@ function QuestionInput({
   value,
   onChange,
   error,
+  token,
+  attachments,
+  onAttachmentsChange,
 }: {
   question: SurveyQuestion;
   value: unknown;
   onChange: (v: unknown) => void;
   error?: string;
+  token: string;
+  attachments: Attachment[];
+  onAttachmentsChange: (files: Attachment[]) => void;
 }) {
-  const config = (question.config ?? {}) as Record<string, number>;
+  const rawConfig = (question.config ?? {}) as Record<string, number | boolean>;
+  const config = {
+    ...rawConfig,
+    min: Number(rawConfig.min ?? 0),
+    max: Number(rawConfig.max ?? 200000),
+    step: Number(rawConfig.step ?? 1000),
+    allowAttachments: !!rawConfig.allowAttachments,
+  };
 
   return (
     <div id={`q-${question.id}`} className="bg-card border border-border rounded-xl p-5 space-y-3">
@@ -408,6 +461,41 @@ function QuestionInput({
             />
             <span className="text-sm text-muted-foreground">zł</span>
           </div>
+        </div>
+      )}
+
+      {config.allowAttachments && (
+        <div className="space-y-2 pt-1">
+          <p className="text-xs font-medium text-muted-foreground">Załączniki (maks. 5 plików)</p>
+          {attachments.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {attachments.map((f, i) => (
+                <div key={i} className="flex items-center gap-1.5 px-2.5 py-1.5 bg-muted rounded-lg text-xs">
+                  <a href={f.url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline max-w-[140px] truncate">{f.name}</a>
+                  <button
+                    type="button"
+                    onClick={() => onAttachmentsChange(attachments.filter((_, j) => j !== i))}
+                    className="text-muted-foreground hover:text-foreground ml-1"
+                  >×</button>
+                </div>
+              ))}
+            </div>
+          )}
+          {attachments.length < 5 && (
+            <UploadButton<OurFileRouter, "surveyAnswerUploader">
+              endpoint="surveyAnswerUploader"
+              headers={{ "x-survey-token": token }}
+              content={{ button: "Dodaj załączniki", allowedContent: "" }}
+              onClientUploadComplete={(res) => {
+                onAttachmentsChange([...attachments, ...res.map((f) => ({ url: f.url, name: f.name }))]);
+              }}
+              appearance={{
+                button: "bg-muted text-foreground border border-border hover:bg-muted/80 rounded-lg text-xs font-medium px-3 py-2 h-auto ut-uploading:opacity-70",
+                allowedContent: "hidden",
+                container: "flex-row",
+              }}
+            />
+          )}
         </div>
       )}
 
