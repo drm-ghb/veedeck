@@ -39,7 +39,7 @@ interface ListData {
 }
 
 interface Reply { id: string; content: string; author: string; createdAt: string; }
-interface Comment { id: string; title?: string | null; content: string; posX: number; posY: number; status: "NEW" | "IN_PROGRESS" | "DONE"; author: string; createdAt: string; replies: Reply[]; }
+interface Comment { id: string; title?: string | null; content: string; posX: number; posY: number; posPage: number | null; status: "NEW" | "IN_PROGRESS" | "DONE"; author: string; createdAt: string; replies: Reply[]; }
 interface RenderVersion { id: string; fileUrl: string; versionNumber: number; archivedAt: string; }
 interface Render { id: string; name: string; fileUrl: string; fileType?: string; status: RenderStatus; comments: Comment[]; versions: RenderVersion[]; folder?: { id: string; name: string } | null; }
 interface ShareFolder { id: string; name: string; pinned: boolean; }
