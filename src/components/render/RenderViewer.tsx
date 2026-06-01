@@ -1071,6 +1071,7 @@ export default function RenderViewer({
           content: summary,
           posX: null,
           posY: null,
+          posPage: null,
           status: "NEW",
           author: authorName,
           createdAt: new Date().toISOString(),
