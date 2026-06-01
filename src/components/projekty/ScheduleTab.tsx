@@ -870,6 +870,8 @@ export function ScheduleTab({ clientId, projectId, scheduleSharedWithClient: ini
       )}
 
       {/* Phases */}
+      <div className="overflow-x-auto">
+      <div className="min-w-[520px]">
       {phases.length === 0 ? (
         <div className="bg-card border border-border border-dashed rounded-xl py-12 text-center">
           <p className="text-sm text-muted-foreground">Brak harmonogramów — kliknij „Dodaj harmonogram" aby rozpocząć</p>
@@ -905,6 +907,8 @@ export function ScheduleTab({ clientId, projectId, scheduleSharedWithClient: ini
           </DragOverlay>
         </DndContext>
       )}
+      </div>
+      </div>
     </div>
   );
 }

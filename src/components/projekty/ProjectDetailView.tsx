@@ -22,6 +22,7 @@ import {
   Pencil,
   KeyRound,
   GripVertical,
+  Mail,
 } from "@/components/ui/icons";
 import {
   DndContext,
@@ -605,57 +606,24 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
       )}
 
       {/* Tabs */}
-      <div className="flex gap-1 border-b border-border mb-6">
-        <button
-          onClick={() => setActiveTab("info")}
-          className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
-            activeTab === "info"
-              ? "border-primary text-foreground"
-              : "border-transparent text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          Informacje ogólne
-        </button>
-        <button
-          onClick={() => setActiveTab("contacts")}
-          className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
-            activeTab === "contacts"
-              ? "border-primary text-foreground"
-              : "border-transparent text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          Kontakty
-        </button>
-        <button
-          onClick={() => setActiveTab("payments")}
-          className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
-            activeTab === "payments"
-              ? "border-primary text-foreground"
-              : "border-transparent text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          Płatności
-        </button>
-        <button
-          onClick={() => setActiveTab("schedule")}
-          className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
-            activeTab === "schedule"
-              ? "border-primary text-foreground"
-              : "border-transparent text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          Harmonogram
-        </button>
-        <button
-          onClick={() => setActiveTab("documents")}
-          className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
-            activeTab === "documents"
-              ? "border-primary text-foreground"
-              : "border-transparent text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          Dokumenty
-        </button>
+      <div className="flex gap-1 border-b border-border mb-6 overflow-x-auto scrollbar-none">
+        {(["info", "contacts", "payments", "schedule", "documents"] as const).map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px whitespace-nowrap flex-shrink-0 ${
+              activeTab === tab
+                ? "border-primary text-foreground"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {tab === "info" && "Informacje ogólne"}
+            {tab === "contacts" && "Kontakty"}
+            {tab === "payments" && "Płatności"}
+            {tab === "schedule" && "Harmonogram"}
+            {tab === "documents" && "Dokumenty"}
+          </button>
+        ))}
       </div>
 
       {activeTab === "contacts" && (
@@ -669,18 +637,21 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
                 size="sm"
                 variant="outline"
                 className="gap-1.5"
+                title="Wyślij zaproszenie"
                 onClick={() => setShowInviteDialog(true)}
               >
-                Wyślij zaproszenie
+                <Mail size={13} />
+                <span className="hidden sm:inline">Wyślij zaproszenie</span>
               </Button>
               <Button
                 size="sm"
                 variant="outline"
                 className="gap-1.5"
+                title={t.projekty.addClient}
                 onClick={() => setShowAddClient((v) => !v)}
               >
                 <Plus size={13} />
-                {t.projekty.addClient}
+                <span className="hidden sm:inline">{t.projekty.addClient}</span>
               </Button>
             </div>
           </div>
