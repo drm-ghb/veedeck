@@ -645,7 +645,6 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
               </Button>
               <Button
                 size="sm"
-                variant="outline"
                 className="gap-1.5"
                 title={t.projekty.addClient}
                 onClick={() => setShowAddClient((v) => !v)}
