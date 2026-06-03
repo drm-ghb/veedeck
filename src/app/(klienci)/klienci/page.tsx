@@ -25,7 +25,7 @@ export default async function KlienciPage() {
     orderBy: { name: "asc" },
   });
 
-  // Auto-migrate: if no clients yet, create Client records from projects with clientName
+  // Auto-migrate step 1: if no clients yet, create Client records from projects with clientName
   if (allClients.length === 0) {
     const projectsWithName = await prisma.project.findMany({
       where: { userId: designerId, clientId: null, NOT: { clientName: null } },
@@ -45,21 +45,38 @@ export default async function KlienciPage() {
         }
         await prisma.project.updateMany({ where: { id: { in: projectIds } }, data: { clientId: client.id } });
       }
-      allClients = await prisma.client.findMany({
-        where: { designerId },
-        include: {
-          _count: { select: { projects: { where: { archived: false } } } },
-          projects: {
-            where: { archived: false },
-            select: { id: true, title: true, slug: true, createdAt: true },
-            orderBy: { createdAt: "desc" },
-          },
-          contacts: { select: { userId: true } },
-        },
-        orderBy: { name: "asc" },
-      });
     }
   }
+
+  // Auto-migrate step 2: link ProjectClient contacts to Client entity (clientId)
+  const orphanContacts = await prisma.projectClient.findMany({
+    where: { clientId: null, project: { userId: designerId, NOT: { clientId: null } } },
+    select: { id: true, project: { select: { clientId: true } } },
+  });
+  if (orphanContacts.length > 0) {
+    for (const contact of orphanContacts) {
+      if (contact.project?.clientId) {
+        await prisma.projectClient.update({
+          where: { id: contact.id },
+          data: { clientId: contact.project.clientId },
+        });
+      }
+    }
+  }
+
+  allClients = await prisma.client.findMany({
+    where: { designerId },
+    include: {
+      _count: { select: { projects: { where: { archived: false } } } },
+      projects: {
+        where: { archived: false },
+        select: { id: true, title: true, slug: true, createdAt: true },
+        orderBy: { createdAt: "desc" },
+      },
+      contacts: { select: { userId: true } },
+    },
+    orderBy: { name: "asc" },
+  });
 
   const serialize = (c: typeof allClients[0]) => ({
     id: c.id,
