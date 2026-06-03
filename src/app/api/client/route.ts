@@ -22,7 +22,7 @@ export async function GET() {
   });
 
   const projects = links
-    .filter((l) => !l.project.archived)
+    .filter((l) => l.project && !l.project.archived)
     .map((l) => ({
       id: l.project.id,
       title: l.project.title,
