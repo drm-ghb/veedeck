@@ -9,7 +9,7 @@ export default async function KlienciPage() {
   if (!session?.user?.id) redirect("/login");
   const designerId = getWorkspaceUserId(session!);
 
-  const allClients = await prisma.client.findMany({
+  let allClients = await prisma.client.findMany({
     where: { designerId },
     include: {
       _count: { select: { projects: { where: { archived: false } } } },
@@ -24,6 +24,42 @@ export default async function KlienciPage() {
     },
     orderBy: { name: "asc" },
   });
+
+  // Auto-migrate: if no clients yet, create Client records from projects with clientName
+  if (allClients.length === 0) {
+    const projectsWithName = await prisma.project.findMany({
+      where: { userId: designerId, clientId: null, NOT: { clientName: null } },
+      select: { id: true, clientName: true },
+    });
+    if (projectsWithName.length > 0) {
+      const grouped = new Map<string, string[]>();
+      for (const p of projectsWithName) {
+        const name = p.clientName!;
+        if (!grouped.has(name)) grouped.set(name, []);
+        grouped.get(name)!.push(p.id);
+      }
+      for (const [name, projectIds] of grouped) {
+        let client = await prisma.client.findFirst({ where: { designerId, name } });
+        if (!client) {
+          client = await prisma.client.create({ data: { designerId, name } });
+        }
+        await prisma.project.updateMany({ where: { id: { in: projectIds } }, data: { clientId: client.id } });
+      }
+      allClients = await prisma.client.findMany({
+        where: { designerId },
+        include: {
+          _count: { select: { projects: { where: { archived: false } } } },
+          projects: {
+            where: { archived: false },
+            select: { id: true, title: true, slug: true, createdAt: true },
+            orderBy: { createdAt: "desc" },
+          },
+          contacts: { select: { userId: true } },
+        },
+        orderBy: { name: "asc" },
+      });
+    }
+  }
 
   const serialize = (c: typeof allClients[0]) => ({
     id: c.id,
