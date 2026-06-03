@@ -18,6 +18,8 @@ import PdfThumbnail from "@/components/render/PdfThumbnail";
 import Image from "next/image";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useTheme } from "@/lib/theme";
 import { SectionHeader } from "@/components/settings/SettingsShared";
@@ -77,7 +79,9 @@ export default function ClientProjectPage() {
     const folderId = sp.get("folderId");
     const renderId = sp.get("renderId");
     const listId = sp.get("listId");
-    if (v === "rooms") {
+    if (v === "projects") {
+      setView("projects"); setSelectedRoom(null); setSelectedFolder(null); setSelectedRender(null);
+    } else if (v === "rooms") {
       setView("rooms"); setSelectedRoom(null); setSelectedFolder(null); setSelectedRender(null);
     } else if ((v === "room" || v === "render") && roomId) {
       const room = data.rooms.find((r) => r.id === roomId);
@@ -111,7 +115,10 @@ export default function ClientProjectPage() {
   }
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState<"home" | "rooms" | "room" | "render" | "discussion" | "settings" | "lists" | "list" | "payments" | "schedule">("home");
+  const [clientProjects, setClientProjects] = useState<{ id: string; title: string; description: string | null; createdAt: string; renderCount: number }[]>([]);
+  const [activeProjectId, setActiveProjectId] = useState(projectId);
+  const [activeRooms, setActiveRooms] = useState<Room[] | null>(null);
+  const [view, setView] = useState<"home" | "projects" | "rooms" | "room" | "render" | "discussion" | "settings" | "lists" | "list" | "payments" | "schedule">("home");
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [selectedFolder, setSelectedFolder] = useState<{ id: string; name: string } | null>(null);
   const [selectedRender, setSelectedRender] = useState<Render | null>(null);
@@ -208,6 +215,11 @@ export default function ClientProjectPage() {
         setEmailNotifEnabled(u.emailNotifEnabled ?? false);
         setEmailNotifModules(u.emailNotifModules ?? []);
       })
+      .catch(() => {});
+
+    fetch("/api/client")
+      .then((r) => r.ok ? r.json() : [])
+      .then((list: { id: string; title: string; description: string | null; createdAt: string; renderCount: number }[]) => setClientProjects(list))
       .catch(() => {});
 
     fetch(`/api/client/${projectId}`)
@@ -326,17 +338,22 @@ export default function ClientProjectPage() {
         renders: room.renders.map((r) => r.id === renderId ? { ...r, status } : r),
       })),
     } : prev);
+    setActiveRooms((prev) => prev ? prev.map((room) => ({
+      ...room,
+      renders: room.renders.map((r) => r.id === renderId ? { ...r, status } : r),
+    })) : prev);
     setSelectedRender((prev) => prev?.id === renderId ? { ...prev, status } : prev);
   }
 
   const handleRenderStatusChange = useCallback(async (renderId: string, status: RenderStatus) => {
-    await fetch(`/api/client/${projectId}/renders/${renderId}`, {
+    await fetch(`/api/client/${activeProjectId}/renders/${renderId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status }),
     });
     updateRenderInState(renderId, status);
-  }, [projectId]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeProjectId]);
 
   const [batchApproving, setBatchApproving] = useState(false);
   const [selectionMode, setSelectionMode] = useState(false);
@@ -423,15 +440,19 @@ export default function ClientProjectPage() {
     try {
       await Promise.all(
         toApprove.map((r) =>
-          fetch(`/api/client/${projectId}/renders/${r.id}`, {
+          fetch(`/api/client/${activeProjectId}/renders/${r.id}`, {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ status: "ACCEPTED" }),
           })
         )
       );
-      const updated = await fetch(`/api/client/${projectId}`).then((r) => r.json()) as Project;
-      setProject(updated);
+      const updated = await fetch(`/api/client/${activeProjectId}`).then((r) => r.json()) as Project;
+      if (activeProjectId === projectId) {
+        setProject(updated);
+      } else {
+        setActiveRooms(updated.rooms);
+      }
       setSelectedRoom((prev) => prev ? (updated.rooms.find((r) => r.id === prev.id) ?? prev) : prev);
       toast.success(`Zatwierdzono ${toApprove.length} plik${toApprove.length === 1 ? "" : toApprove.length < 5 ? "i" : "ów"}`);
     } catch {
@@ -469,7 +490,7 @@ export default function ClientProjectPage() {
     showHarmonogram: project.scheduleSharedWithClient,
     shoppingLists: project.shoppingLists,
     onHomeClick: () => { setView("home"); setSelectedRoom(null); setSelectedFolder(null); navigate({}); },
-    onProjectFlowClick: () => { if (project.rooms.length === 1) { setSelectedRoom(project.rooms[0]); setSelectedFolder(null); setView("room"); navigate({ view: "room", roomId: project.rooms[0].id }); } else { setView("rooms"); navigate({ view: "rooms" }); } },
+    onProjectFlowClick: () => { if (clientProjects.length > 1) { setView("projects"); setSelectedRoom(null); setSelectedFolder(null); navigate({ view: "projects" }); } else if (project.rooms.length === 1) { setActiveRooms(null); setActiveProjectId(projectId); setSelectedRoom(project.rooms[0]); setSelectedFolder(null); setView("room"); navigate({ view: "room", roomId: project.rooms[0].id }); } else { setActiveRooms(null); setActiveProjectId(projectId); setView("rooms"); navigate({ view: "rooms" }); }},
     onDiscussionClick: () => { setView("discussion"); navigate({ view: "discussion" }); },
     onSettingsClick: () => { setView("settings"); navigate({ view: "settings" }); },
     onListClick: () => { if (project.shoppingLists.length === 1) { openList(project.shoppingLists[0].id); } else { setView("lists"); navigate({ view: "lists" }); } },
@@ -541,7 +562,7 @@ export default function ClientProjectPage() {
             showDyskusje={!project.hiddenModules.includes("dyskusje")}
             shoppingLists={project.shoppingLists}
             onHomeClick={() => { setView("home"); setSelectedRoom(null); setSelectedFolder(null); navigate({}); }}
-            onProjectFlowClick={() => { if (project.rooms.length === 1) { setSelectedRoom(project.rooms[0]); setSelectedFolder(null); setView("room"); navigate({ view: "room", roomId: project.rooms[0].id }); } else { setView("rooms"); navigate({ view: "rooms" }); } }}
+            onProjectFlowClick={() => { if (clientProjects.length > 1) { setView("projects"); setSelectedRoom(null); setSelectedFolder(null); navigate({ view: "projects" }); } else if (project.rooms.length === 1) { setActiveRooms(null); setActiveProjectId(projectId); setSelectedRoom(project.rooms[0]); setSelectedFolder(null); setView("room"); navigate({ view: "room", roomId: project.rooms[0].id }); } else { setActiveRooms(null); setActiveProjectId(projectId); setView("rooms"); navigate({ view: "rooms" }); }}}
             onDiscussionClick={() => { setView("discussion"); navigate({ view: "discussion" }); }}
             onSettingsClick={() => { setView("settings"); navigate({ view: "settings" }); }}
             onListClick={() => { if (project.shoppingLists.length === 1) { openList(project.shoppingLists[0].id); } else { setView("lists"); navigate({ view: "lists" }); } }}
@@ -602,9 +623,9 @@ export default function ClientProjectPage() {
         onRenderSelect={(r) => {
           const full = selectedRoom.renders.find((render) => render.id === r.id);
           if (full) { setSelectedRender(full); navigate({ view: "render", roomId: selectedRoom.id, folderId: selectedFolder?.id ?? null, renderId: r.id }); }
-          fetch(`/api/client/${projectId}/renders/${r.id}/view`, { method: "POST" });
+          fetch(`/api/client/${activeProjectId}/renders/${r.id}/view`, { method: "POST" });
         }}
-        onViewCounted={(renderId) => fetch(`/api/client/${projectId}/renders/${renderId}/view`, { method: "POST" })}
+        onViewCounted={(renderId) => fetch(`/api/client/${activeProjectId}/renders/${renderId}/view`, { method: "POST" })}
         shareToken=""
       />
     );
@@ -622,7 +643,7 @@ export default function ClientProjectPage() {
             showDyskusje={!project.hiddenModules.includes("dyskusje")}
             shoppingLists={project.shoppingLists}
             onHomeClick={() => { setView("home"); setSelectedRoom(null); setSelectedFolder(null); navigate({}); }}
-            onProjectFlowClick={() => { if (project.rooms.length === 1) { setSelectedRoom(project.rooms[0]); setSelectedFolder(null); setView("room"); navigate({ view: "room", roomId: project.rooms[0].id }); } else { setView("rooms"); navigate({ view: "rooms" }); } }}
+            onProjectFlowClick={() => { if (clientProjects.length > 1) { setView("projects"); setSelectedRoom(null); setSelectedFolder(null); navigate({ view: "projects" }); } else if (project.rooms.length === 1) { setActiveRooms(null); setActiveProjectId(projectId); setSelectedRoom(project.rooms[0]); setSelectedFolder(null); setView("room"); navigate({ view: "room", roomId: project.rooms[0].id }); } else { setActiveRooms(null); setActiveProjectId(projectId); setView("rooms"); navigate({ view: "rooms" }); }}}
             onDiscussionClick={() => { setView("discussion"); navigate({ view: "discussion" }); }}
             onSettingsClick={() => { setView("settings"); navigate({ view: "settings" }); }}
             onListClick={() => { if (project.shoppingLists.length === 1) { openList(project.shoppingLists[0].id); } else { setView("lists"); navigate({ view: "lists" }); } }}
@@ -658,14 +679,66 @@ export default function ClientProjectPage() {
         </div>
       )}
 
+      {view === "projects" && (
+        <>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-6">ProjectFlow</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4">
+            {clientProjects.map((p) => (
+              <button key={p.id} className="block text-left w-full" onClick={async () => {
+                try {
+                  const res = await fetch(`/api/client/${p.id}`);
+                  if (!res.ok) throw new Error();
+                  const data = await res.json() as Project;
+                  setActiveProjectId(p.id);
+                  setActiveRooms(data.rooms);
+                  setSelectedRoom(null);
+                  setSelectedFolder(null);
+                  setView("rooms");
+                  navigate({ view: "rooms" });
+                } catch {
+                  toast.error("Nie udało się załadować projektu");
+                }
+              }}>
+                <Card className={`hover:shadow-[0_4px_16px_rgba(25,33,61,0.2)] transition-all cursor-pointer h-full relative ${p.id === activeProjectId ? "border-primary/50 ring-1 ring-primary/20 hover:border-primary/50" : "hover:border-primary/30"}`}>
+                  <CardHeader className="flex-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <CardTitle className="text-lg leading-tight line-clamp-2">
+                        {p.title}
+                      </CardTitle>
+                      <Badge variant="secondary" className="shrink-0">{p.renderCount} renderów</Badge>
+                    </div>
+                    <CardDescription className="line-clamp-1 mt-1 min-h-[1.25rem]">
+                      {p.description ?? "\u00A0"}
+                    </CardDescription>
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                      {new Date(p.createdAt).toLocaleDateString("pl-PL")}
+                    </p>
+                  </CardHeader>
+                </Card>
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+
       {view === "rooms" && (
         <>
+          {clientProjects.length > 1 && (
+            <div className="flex items-center gap-1.5 mb-4 text-sm text-muted-foreground">
+              <button onClick={() => { setView("projects"); navigate({ view: "projects" }); }} className="hover:text-foreground transition-colors flex items-center gap-1">
+                <ChevronLeft size={15} />
+                ProjectFlow
+              </button>
+              <ChevronRight size={13} className="opacity-40" />
+              <span className="text-foreground font-medium truncate">{clientProjects.find((p) => p.id === activeProjectId)?.title ?? "Projekt"}</span>
+            </div>
+          )}
           <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-6">Foldery</h2>
-          {project.rooms.length === 0 ? (
+          {(activeRooms ?? project.rooms).length === 0 ? (
             <p className="text-gray-400 text-center py-16">Brak pomieszczeń w tym projekcie.</p>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4">
-              {project.rooms.map((room) => {
+              {(activeRooms ?? project.rooms).map((room) => {
                 const Icon = getRoomIcon(room.type, room.icon);
                 return (
                   <button
@@ -780,7 +853,7 @@ export default function ClientProjectPage() {
                       key={render.id}
                       render={render}
                       hideCommentCount={project.hideCommentCount}
-                      onClick={() => { setSelectedRender(render); setView("render"); navigate({ view: "render", roomId: selectedRoom.id, folderId: selectedFolder?.id ?? null, renderId: render.id }); fetch(`/api/client/${projectId}/renders/${render.id}/view`, { method: "POST" }); }}
+                      onClick={() => { setSelectedRender(render); setView("render"); navigate({ view: "render", roomId: selectedRoom.id, folderId: selectedFolder?.id ?? null, renderId: render.id }); fetch(`/api/client/${activeProjectId}/renders/${render.id}/view`, { method: "POST" }); }}
                       onDownload={() => downloadFile(render.fileUrl, render.name)}
                       isSelected={selectedRenderIds.has(render.id)}
                       selectionMode={selectionMode}
@@ -816,7 +889,7 @@ export default function ClientProjectPage() {
                           key={render.id}
                           render={render}
                           hideCommentCount={project.hideCommentCount}
-                          onClick={() => { setSelectedRender(render); setView("render"); navigate({ view: "render", roomId: selectedRoom.id, folderId: null, renderId: render.id }); fetch(`/api/client/${projectId}/renders/${render.id}/view`, { method: "POST" }); }}
+                          onClick={() => { setSelectedRender(render); setView("render"); navigate({ view: "render", roomId: selectedRoom.id, folderId: null, renderId: render.id }); fetch(`/api/client/${activeProjectId}/renders/${render.id}/view`, { method: "POST" }); }}
                           onDownload={() => downloadFile(render.fileUrl, render.name)}
                           isSelected={selectedRenderIds.has(render.id)}
                           selectionMode={selectionMode}
@@ -1161,7 +1234,7 @@ export default function ClientProjectPage() {
           showDyskusje={!project.hiddenModules.includes("dyskusje")}
           shoppingLists={project.shoppingLists}
           onHomeClick={() => { setView("home"); setSelectedRoom(null); setSelectedFolder(null); navigate({}); }}
-          onProjectFlowClick={() => { if (project.rooms.length === 1) { setSelectedRoom(project.rooms[0]); setSelectedFolder(null); setView("room"); navigate({ view: "room", roomId: project.rooms[0].id }); } else { setView("rooms"); navigate({ view: "rooms" }); } }}
+          onProjectFlowClick={() => { if (clientProjects.length > 1) { setView("projects"); setSelectedRoom(null); setSelectedFolder(null); navigate({ view: "projects" }); } else if (project.rooms.length === 1) { setActiveRooms(null); setActiveProjectId(projectId); setSelectedRoom(project.rooms[0]); setSelectedFolder(null); setView("room"); navigate({ view: "room", roomId: project.rooms[0].id }); } else { setActiveRooms(null); setActiveProjectId(projectId); setView("rooms"); navigate({ view: "rooms" }); }}}
           onDiscussionClick={() => { setView("discussion"); navigate({ view: "discussion" }); }}
           onSettingsClick={() => { setView("settings"); navigate({ view: "settings" }); }}
           onListClick={() => { if (project.shoppingLists.length === 1) { openList(project.shoppingLists[0].id); } else { setView("lists"); navigate({ view: "lists" }); } }}

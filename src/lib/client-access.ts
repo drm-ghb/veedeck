@@ -9,11 +9,24 @@ export async function getClientProject(session: Session, projectId: string) {
   if (!session?.user?.id) return null;
   if ((session.user as any).role !== "client") return null;
 
-  // Check that this client user is linked to the project via ProjectClient
-  const link = await prisma.projectClient.findFirst({
+  // Check direct ProjectClient link to this project
+  const directLink = await prisma.projectClient.findFirst({
     where: { projectId, userId: session.user.id },
   });
-  if (!link) return null;
+
+  if (!directLink) {
+    // Also allow access via Client entity: if the project has clientId that matches
+    // one of this user's ProjectClient records' clientId
+    const proj = await prisma.project.findUnique({
+      where: { id: projectId },
+      select: { clientId: true },
+    });
+    if (!proj?.clientId) return null;
+    const clientLink = await prisma.projectClient.findFirst({
+      where: { userId: session.user.id, clientId: proj.clientId },
+    });
+    if (!clientLink) return null;
+  }
 
   const project = await prisma.project.findUnique({
     where: { id: projectId },

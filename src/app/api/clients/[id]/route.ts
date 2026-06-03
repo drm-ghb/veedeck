@@ -55,6 +55,15 @@ export async function PATCH(
   const data: Record<string, unknown> = {};
   if (body.name !== undefined) data.name = body.name.trim() || existing.name;
   if (body.archived !== undefined) data.archived = body.archived;
+  if (body.description !== undefined) data.description = body.description?.trim() || null;
+  if (body.startDate !== undefined) data.startDate = body.startDate ? new Date(body.startDate) : null;
+  if (body.endDate !== undefined) data.endDate = body.endDate ? new Date(body.endDate) : null;
+  if (body.addressStreet !== undefined) data.addressStreet = body.addressStreet?.trim() || null;
+  if (body.addressCity !== undefined) data.addressCity = body.addressCity?.trim() || null;
+  if (body.addressPostalCode !== undefined) data.addressPostalCode = body.addressPostalCode?.trim() || null;
+  if (body.addressCountry !== undefined) data.addressCountry = body.addressCountry?.trim() || null;
+  if (body.hiddenModules !== undefined) data.hiddenModules = body.hiddenModules;
+  if (body.clientCanUpload !== undefined) data.clientCanUpload = body.clientCanUpload;
 
   const updated = await prisma.client.update({ where: { id }, data });
   return NextResponse.json(updated);

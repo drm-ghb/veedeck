@@ -4,7 +4,6 @@ import { useState, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
-  ArrowLeft,
   Plus,
   Pencil,
   Trash2,
@@ -16,6 +15,8 @@ import {
   GripVertical,
   Check,
   Mail,
+  Image,
+  LocalMall,
 } from "@/components/ui/icons";
 import {
   DndContext,
@@ -35,8 +36,11 @@ import { CSS } from "@dnd-kit/utilities";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { PaymentsTab } from "@/components/projekty/PaymentsTab";
 import { ScheduleTab } from "@/components/projekty/ScheduleTab";
+import DocumentsTab from "@/components/projekty/DocumentsTab";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -63,6 +67,15 @@ interface Contact {
 interface ClientData {
   id: string;
   name: string;
+  description: string | null;
+  startDate: string | null;
+  endDate: string | null;
+  addressStreet: string | null;
+  addressCity: string | null;
+  addressPostalCode: string | null;
+  addressCountry: string | null;
+  hiddenModules: string[];
+  clientCanUpload: boolean;
   createdAt: string;
   contacts: Contact[];
 }
@@ -96,10 +109,26 @@ export default function ClientDetailView({ client: initialClient }: Props) {
   const searchParams = useSearchParams();
 
   const [clientName, setClientName] = useState(initialClient.name);
-  const [savingName, setSavingName] = useState(false);
+  const [clientDescription, setClientDescription] = useState(initialClient.description ?? "");
+  const [clientStartDate, setClientStartDate] = useState(
+    initialClient.startDate ? initialClient.startDate.slice(0, 10) : ""
+  );
+  const [clientEndDate, setClientEndDate] = useState(
+    initialClient.endDate ? initialClient.endDate.slice(0, 10) : ""
+  );
+  const [savingInfo, setSavingInfo] = useState(false);
+
+  const [addrStreet, setAddrStreet] = useState(initialClient.addressStreet ?? "");
+  const [addrCity, setAddrCity] = useState(initialClient.addressCity ?? "");
+  const [addrPostal, setAddrPostal] = useState(initialClient.addressPostalCode ?? "");
+  const [addrCountry, setAddrCountry] = useState(initialClient.addressCountry ?? "");
+  const [savingAddr, setSavingAddr] = useState(false);
+
+  const [hiddenModules, setHiddenModules] = useState<string[]>(initialClient.hiddenModules);
+  const [clientCanUpload, setClientCanUpload] = useState(initialClient.clientCanUpload);
 
   const [contacts, setContacts] = useState<Contact[]>(initialClient.contacts);
-  const [activeTab, setActiveTab] = useState<"info" | "contacts" | "payments" | "schedule">(
+  const [activeTab, setActiveTab] = useState<"info" | "contacts" | "payments" | "schedule" | "documents">(
     searchParams.get("tab") === "contacts" ? "contacts" : "info"
   );
 
@@ -157,14 +186,19 @@ export default function ClientDetailView({ client: initialClient }: Props) {
 
   // ── Handlers ─────────────────────────────────────────────────────────────
 
-  async function saveName() {
+  async function saveInfo() {
     if (!clientName.trim()) return;
-    setSavingName(true);
+    setSavingInfo(true);
     try {
       const res = await fetch(`/api/clients/${initialClient.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: clientName.trim() }),
+        body: JSON.stringify({
+          name: clientName.trim(),
+          description: clientDescription.trim() || null,
+          startDate: clientStartDate || null,
+          endDate: clientEndDate || null,
+        }),
       });
       if (!res.ok) throw new Error();
       toast.success("Zapisano");
@@ -172,7 +206,61 @@ export default function ClientDetailView({ client: initialClient }: Props) {
     } catch {
       toast.error("Błąd zapisu");
     } finally {
-      setSavingName(false);
+      setSavingInfo(false);
+    }
+  }
+
+  async function saveAddress() {
+    setSavingAddr(true);
+    try {
+      const res = await fetch(`/api/clients/${initialClient.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          addressStreet: addrStreet.trim() || null,
+          addressCity: addrCity.trim() || null,
+          addressPostalCode: addrPostal.trim() || null,
+          addressCountry: addrCountry.trim() || null,
+        }),
+      });
+      if (!res.ok) throw new Error();
+      toast.success("Zapisano");
+    } catch {
+      toast.error("Błąd zapisu");
+    } finally {
+      setSavingAddr(false);
+    }
+  }
+
+  async function toggleModule(moduleKey: string) {
+    const newHidden = hiddenModules.includes(moduleKey)
+      ? hiddenModules.filter((m) => m !== moduleKey)
+      : [...hiddenModules, moduleKey];
+    setHiddenModules(newHidden);
+    try {
+      await fetch(`/api/clients/${initialClient.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ hiddenModules: newHidden }),
+      });
+    } catch {
+      toast.error("Błąd zapisu");
+      setHiddenModules(hiddenModules);
+    }
+  }
+
+  async function toggleClientUpload() {
+    const newValue = !clientCanUpload;
+    setClientCanUpload(newValue);
+    try {
+      await fetch(`/api/clients/${initialClient.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ clientCanUpload: newValue }),
+      });
+    } catch {
+      toast.error("Błąd zapisu");
+      setClientCanUpload(clientCanUpload);
     }
   }
 
@@ -450,7 +538,7 @@ export default function ClientDetailView({ client: initialClient }: Props) {
 
       {/* Tabs */}
       <div className="flex gap-1 border-b border-border mb-6 overflow-x-auto scrollbar-none">
-        {(["info", "contacts", "payments", "schedule"] as const).map((tab) => (
+        {(["info", "contacts", "payments", "schedule", "documents"] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -464,33 +552,213 @@ export default function ClientDetailView({ client: initialClient }: Props) {
             {tab === "contacts" && "Kontakty"}
             {tab === "payments" && "Płatności"}
             {tab === "schedule" && "Harmonogram"}
+            {tab === "documents" && "Dokumenty"}
           </button>
         ))}
       </div>
 
       {/* ── Tab: Informacje ogólne ─────────────────────────────────────────── */}
       {activeTab === "info" && (
-        <section className="bg-card border border-border rounded-xl p-5 space-y-4">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Dane klienta</h2>
-          <div className="space-y-1.5">
-            <Label htmlFor="client-name">Nazwa klienta</Label>
-            <Input
-              id="client-name"
-              value={clientName}
-              onChange={(e) => setClientName(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && saveName()}
-              placeholder="Nazwa klienta"
-            />
-          </div>
-          <div className="flex justify-end">
-            <Button onClick={saveName} disabled={savingName || !clientName.trim() || clientName.trim() === initialClient.name} size="sm">
-              {savingName ? "Zapisywanie…" : "Zapisz"}
-            </Button>
-          </div>
-          <div className="pt-2 border-t border-border text-sm text-muted-foreground">
-            Klient dodany: {new Date(initialClient.createdAt).toLocaleDateString("pl-PL", { day: "numeric", month: "long", year: "numeric" })}
-          </div>
-        </section>
+        <div className="space-y-4">
+          {/* Section 1: Informacje o kliencie */}
+          <section className="bg-card border border-border rounded-xl p-5 space-y-4">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Informacje o kliencie</h2>
+            <div className="space-y-1.5">
+              <Label htmlFor="client-name">Nazwa klienta</Label>
+              <Input
+                id="client-name"
+                value={clientName}
+                onChange={(e) => setClientName(e.target.value)}
+                placeholder="Nazwa klienta"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="client-desc">Opis <span className="text-muted-foreground font-normal">(opcjonalnie)</span></Label>
+              <Textarea
+                id="client-desc"
+                value={clientDescription}
+                onChange={(e) => setClientDescription(e.target.value)}
+                placeholder="Opis projektu..."
+                rows={3}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="start-date">Data rozpoczęcia współpracy</Label>
+                <div className="relative">
+                  <Input
+                    id="start-date"
+                    type="date"
+                    value={clientStartDate}
+                    onChange={(e) => setClientStartDate(e.target.value)}
+                    className="pr-7"
+                  />
+                  {clientStartDate && (
+                    <button
+                      type="button"
+                      onClick={() => setClientStartDate("")}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="end-date">Data zakończenia współpracy</Label>
+                <div className="relative">
+                  <Input
+                    id="end-date"
+                    type="date"
+                    value={clientEndDate}
+                    onChange={(e) => setClientEndDate(e.target.value)}
+                    className="pr-7"
+                  />
+                  {clientEndDate && (
+                    <button
+                      type="button"
+                      onClick={() => setClientEndDate("")}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center justify-between pt-1">
+              <span className="text-sm text-muted-foreground">
+                Utworzono: {new Date(initialClient.createdAt).toLocaleDateString("pl-PL", { day: "numeric", month: "long", year: "numeric" })}
+              </span>
+              <Button onClick={saveInfo} disabled={savingInfo || !clientName.trim()} size="sm">
+                {savingInfo ? "Zapisywanie…" : "Zapisz"}
+              </Button>
+            </div>
+          </section>
+
+          {/* Section 2: Adres inwestycji */}
+          <section className="bg-card border border-border rounded-xl p-5 space-y-4">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Adres inwestycji</h2>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="addr-street">Ulica</Label>
+                <Input
+                  id="addr-street"
+                  value={addrStreet}
+                  onChange={(e) => setAddrStreet(e.target.value)}
+                  placeholder="ul. Przykładowa 12/3"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="addr-city">Miasto</Label>
+                <Input
+                  id="addr-city"
+                  value={addrCity}
+                  onChange={(e) => setAddrCity(e.target.value)}
+                  placeholder="Warszawa"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="addr-postal">Kod pocztowy</Label>
+                <Input
+                  id="addr-postal"
+                  value={addrPostal}
+                  onChange={(e) => setAddrPostal(e.target.value)}
+                  placeholder="00-000"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="addr-country">Kraj</Label>
+                <Input
+                  id="addr-country"
+                  value={addrCountry}
+                  onChange={(e) => setAddrCountry(e.target.value)}
+                  placeholder="Polska"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end">
+              <Button onClick={saveAddress} disabled={savingAddr} size="sm">
+                {savingAddr ? "Zapisywanie…" : "Zapisz"}
+              </Button>
+            </div>
+          </section>
+
+          {/* Section 3: Moduły */}
+          <section className="bg-card border border-border rounded-xl p-5 space-y-4">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Moduły</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* RenderFlow tile */}
+              <div className="border border-border rounded-xl p-4 space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center flex-shrink-0">
+                    <Image size={20} className="text-primary-foreground" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-medium text-sm">Wizualizacje projektu</span>
+                      <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
+                        !hiddenModules.includes("renderflow")
+                          ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
+                          : "bg-muted text-muted-foreground"
+                      }`}>
+                        {!hiddenModules.includes("renderflow") ? "Aktywny" : "Ukryty"}
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">Wizualizacje projektu</p>
+                  </div>
+                </div>
+                <div className="space-y-2 border-t border-border pt-3">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <Switch
+                      checked={!hiddenModules.includes("renderflow")}
+                      onCheckedChange={() => toggleModule("renderflow")}
+                    />
+                    <span className="text-sm">Widoczny dla klienta</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <Switch
+                      checked={clientCanUpload}
+                      onCheckedChange={toggleClientUpload}
+                    />
+                    <span className="text-sm">Klient może dodawać pliki w ProjectFlow</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Listy tile */}
+              <div className="border border-border rounded-xl p-4 space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center flex-shrink-0">
+                    <LocalMall size={20} className="text-primary-foreground" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-medium text-sm">Listy produktów dla klienta</span>
+                      <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
+                        !hiddenModules.includes("listy")
+                          ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
+                          : "bg-muted text-muted-foreground"
+                      }`}>
+                        {!hiddenModules.includes("listy") ? "Aktywny" : "Ukryty"}
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">Listy produktów dla klienta</p>
+                  </div>
+                </div>
+                <div className="space-y-2 border-t border-border pt-3">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <Switch
+                      checked={!hiddenModules.includes("listy")}
+                      onCheckedChange={() => toggleModule("listy")}
+                    />
+                    <span className="text-sm">Widoczny dla klienta</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
       )}
 
       {/* ── Tab: Kontakty ──────────────────────────────────────────────────── */}
@@ -537,9 +805,7 @@ export default function ClientDetailView({ client: initialClient }: Props) {
                               {contact.isMainContact && (
                                 <span className="text-xs px-1.5 py-0.5 rounded bg-primary/10 text-primary font-medium">główny</span>
                               )}
-                              {contact.userId ? (
-                                <span className="text-xs px-1.5 py-0.5 rounded bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 font-medium">ma konto</span>
-                              ) : (
+                              {!contact.userId && (
                                 <span className="text-xs px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 font-medium">brak konta</span>
                               )}
                             </div>
@@ -833,6 +1099,19 @@ export default function ClientDetailView({ client: initialClient }: Props) {
         ) : (
           <div className="bg-card border border-border rounded-xl p-10 text-center text-muted-foreground">
             <p className="text-sm">Dodaj kontakt w zakładce <button onClick={() => setActiveTab("contacts")} className="underline hover:no-underline">Kontakty</button>, aby skonfigurować harmonogram.</p>
+          </div>
+        )
+      )}
+
+      {/* ── Tab: Dokumenty ─────────────────────────────────────────────────── */}
+      {activeTab === "documents" && (
+        mainContact ? (
+          <section className="bg-card border border-border rounded-xl p-5">
+            <DocumentsTab clientId={mainContact.id} />
+          </section>
+        ) : (
+          <div className="bg-card border border-border rounded-xl p-10 text-center text-muted-foreground">
+            <p className="text-sm">Dodaj kontakt w zakładce <button onClick={() => setActiveTab("contacts")} className="underline hover:no-underline">Kontakty</button>, aby zarządzać dokumentami.</p>
           </div>
         )
       )}

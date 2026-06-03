@@ -205,14 +205,23 @@ model Session {
 }
 
 model Client {
-  id         String          @id @default(cuid())
-  designerId String
-  designer   User            @relation("DesignerClients", fields: [designerId], references: [id], onDelete: Cascade)
-  name       String
-  createdAt  DateTime        @default(now())
-  archived   Boolean         @default(false)
-  projects   Project[]
-  contacts   ProjectClient[] @relation("ClientContacts")
+  id                String          @id @default(cuid())
+  designerId        String
+  designer          User            @relation("DesignerClients", fields: [designerId], references: [id], onDelete: Cascade)
+  name              String
+  description       String?
+  startDate         DateTime?
+  endDate           DateTime?
+  addressStreet     String?
+  addressCity       String?
+  addressPostalCode String?
+  addressCountry    String?
+  hiddenModules     String[]        @default([])
+  clientCanUpload   Boolean         @default(false)
+  createdAt         DateTime        @default(now())
+  archived          Boolean         @default(false)
+  projects          Project[]
+  contacts          ProjectClient[] @relation("ClientContacts")
 }
 
 model Project {

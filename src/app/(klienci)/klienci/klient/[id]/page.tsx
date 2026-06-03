@@ -15,6 +15,15 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
     select: {
       id: true,
       name: true,
+      description: true,
+      startDate: true,
+      endDate: true,
+      addressStreet: true,
+      addressCity: true,
+      addressPostalCode: true,
+      addressCountry: true,
+      hiddenModules: true,
+      clientCanUpload: true,
       createdAt: true,
       contacts: {
         orderBy: [{ isMainContact: "desc" }, { order: "asc" }, { createdAt: "asc" }],
@@ -28,6 +37,15 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
   const serialized = {
     id: client.id,
     name: client.name,
+    description: client.description ?? null,
+    startDate: client.startDate ? client.startDate.toISOString() : null,
+    endDate: client.endDate ? client.endDate.toISOString() : null,
+    addressStreet: client.addressStreet ?? null,
+    addressCity: client.addressCity ?? null,
+    addressPostalCode: client.addressPostalCode ?? null,
+    addressCountry: client.addressCountry ?? null,
+    hiddenModules: client.hiddenModules,
+    clientCanUpload: client.clientCanUpload,
     createdAt: client.createdAt.toISOString(),
     contacts: client.contacts.map((c) => ({
       id: c.id,

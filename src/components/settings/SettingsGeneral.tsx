@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { User, Mail, Lock, Info, Sun, Moon, Monitor, Palette, Image as ImageIcon, Layers, LocalMall, Package, Globe, PushPin, Pencil, X, Eye, EyeOff, Phone, UserCircle, Trash2, GripVertical, LayoutDashboard, Users, CheckSquare, CalendarDays, NotebookText, ChatBubble, VeezardIcon } from "@/components/ui/icons";
+import { User, Mail, Lock, Info, Sun, Moon, Monitor, Palette, Image as ImageIcon, Layers, LocalMall, Package, Globe, PushPin, Pencil, X, Eye, EyeOff, Phone, UserCircle, Trash2, GripVertical, LayoutDashboard, Users, CheckSquare, CalendarDays, NotebookText, ChatBubble, VeezardIcon, Engineering, ClipboardList } from "@/components/ui/icons";
 import { useTheme, type Theme, type ColorTheme } from "@/lib/theme";
 import { useT, useLang } from "@/lib/i18n";
 import Cropper from "react-easy-crop";
@@ -142,19 +142,23 @@ export function SettingsGeneral({
   const [emailNotifModules, setEmailNotifModules] = useState<string[]>(initialEmailNotifModules);
   const [emailNotifLoading, setEmailNotifLoading] = useState(false);
 
-  const DEFAULT_SIDEBAR_ORDER = ["klienci", "renderflow", "listy", "zadania", "produkty", "kalendarz", "notatnik", "dyskusje", "veezard"];
+  const DEFAULT_SIDEBAR_ORDER = ["klienci", "wykonawcy", "renderflow", "listy", "zadania", "produkty", "kalendarz", "notatnik", "dyskusje", "ankiety", "veezard"];
   const SIDEBAR_ITEM_META: Record<string, { label: string; icon: React.ElementType }> = {
-    klienci:     { label: "Klienci",       icon: Users },
+    klienci:     { label: "Klienci",        icon: Users },
+    wykonawcy:   { label: "Wykonawcy",      icon: Engineering },
     renderflow:  { label: "ProjectFlow",    icon: PushPin },
-    listy:       { label: "Listy zakupowe",icon: LocalMall },
-    zadania:     { label: "Zadania",       icon: CheckSquare },
-    produkty:    { label: "Produkty",      icon: Package },
-    kalendarz:   { label: "Kalendarz",     icon: CalendarDays },
-    notatnik:    { label: "Notatnik",      icon: NotebookText },
-    dyskusje:    { label: "Dyskusje",      icon: ChatBubble },
-    veezard:     { label: "Veezard",       icon: VeezardIcon },
+    listy:       { label: "Listy zakupowe", icon: LocalMall },
+    zadania:     { label: "Zadania",        icon: CheckSquare },
+    produkty:    { label: "Produkty",       icon: Package },
+    kalendarz:   { label: "Kalendarz",      icon: CalendarDays },
+    notatnik:    { label: "Notatnik",       icon: NotebookText },
+    dyskusje:    { label: "Dyskusje",       icon: ChatBubble },
+    ankiety:     { label: "Ankiety",        icon: ClipboardList },
+    veezard:     { label: "Veezard",        icon: VeezardIcon },
   };
-  const initialOrder = initialSidebarOrder.length > 0 ? initialSidebarOrder : DEFAULT_SIDEBAR_ORDER;
+  const initialOrder = initialSidebarOrder.length > 0
+    ? [...initialSidebarOrder, ...DEFAULT_SIDEBAR_ORDER.filter((k) => !initialSidebarOrder.includes(k))]
+    : DEFAULT_SIDEBAR_ORDER;
   const [sidebarOrder, setSidebarOrder] = useState<string[]>(initialOrder);
   const [sidebarOrderSaving, setSidebarOrderSaving] = useState(false);
   const sidebarSensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));

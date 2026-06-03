@@ -60,6 +60,7 @@ function AttachmentUploadButton({ onUploaded }: { onUploaded: (url: string, name
 interface RfProject {
   id: string;
   title: string;
+  paymentsSharedWithClient: boolean;
 }
 
 interface PaymentGroup {
@@ -467,18 +468,24 @@ function ProjectSection({
   rfProjectId,
   isCollapsed,
   isHidden,
+  shared,
+  sharingLoading,
   onToggle,
   onDelete,
   onToggleHidden,
+  onToggleShare,
   children,
 }: {
   label: string;
   rfProjectId: string | null;
   isCollapsed: boolean;
   isHidden?: boolean;
+  shared?: boolean;
+  sharingLoading?: boolean;
   onToggle: () => void;
   onDelete?: () => void;
   onToggleHidden?: () => void;
+  onToggleShare?: () => void;
   children: React.ReactNode;
 }) {
   return (
@@ -490,6 +497,21 @@ function ProjectSection({
         </button>
         {rfProjectId && (
           <span className="text-[11px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full flex-shrink-0">ProjectFlow</span>
+        )}
+        {onToggleShare && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onToggleShare(); }}
+            disabled={sharingLoading}
+            title={shared ? "Ukryj płatności przed klientem" : "Udostępnij płatności klientowi"}
+            className={`flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium rounded-md border transition-colors flex-shrink-0 ${
+              shared
+                ? "bg-primary/10 border-primary/30 text-primary hover:bg-primary/20"
+                : "border-border text-muted-foreground hover:bg-muted"
+            }`}
+          >
+            <Users size={11} />
+            {shared ? "Udostępniono" : "Udostępnij"}
+          </button>
         )}
         {onToggleHidden && (
           <button
@@ -528,8 +550,10 @@ export function PaymentsTab({ clientId, projectId, paymentsSharedWithClient: ini
   const [loading, setLoading] = useState(true);
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const [sectionCollapsed, setSectionCollapsed] = useState<Record<string, boolean>>({});
-  const [shared, setShared] = useState(initialShared);
-  const [sharingLoading, setSharingLoading] = useState(false);
+  const [sharedByProject, setSharedByProject] = useState<Record<string, boolean>>(() =>
+    initialShared && projectId ? { [projectId]: initialShared } : {}
+  );
+  const [sharingAll, setSharingAll] = useState(false);
   const [showExportDialog, setShowExportDialog] = useState(false);
 
 
@@ -567,7 +591,13 @@ export function PaymentsTab({ clientId, projectId, paymentsSharedWithClient: ini
         setPayments(data.payments);
       }
       if (projectsRes.ok) {
-        setRfProjects(await projectsRes.json());
+        const projects: RfProject[] = await projectsRes.json();
+        setRfProjects(projects);
+        setSharedByProject((prev) => {
+          const map = { ...prev };
+          for (const p of projects) map[p.id] = p.paymentsSharedWithClient;
+          return map;
+        });
       }
     } finally {
       setLoading(false);
@@ -752,18 +782,25 @@ export function PaymentsTab({ clientId, projectId, paymentsSharedWithClient: ini
     setPayments((prev) => prev.map((p) => p.id === paymentId ? { ...p, attachmentUrl: url, attachmentName: name } : p));
   }
 
-  async function handleToggleShare() {
-    if (!projectId) return;
-    setSharingLoading(true);
-    const res = await fetch(`/api/projects/${projectId}/payments-share`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ shared: !shared }),
+  async function handleToggleShareAll() {
+    const rfProjectIds = sections.map((s) => s.rfProjectId).filter(Boolean) as string[];
+    if (rfProjectIds.length === 0) return;
+    const newShared = !allShared;
+    setSharingAll(true);
+    for (const rfProjectId of rfProjectIds) {
+      await fetch(`/api/projects/${rfProjectId}/payments-share`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ shared: newShared }),
+      });
+    }
+    setSharingAll(false);
+    setSharedByProject((prev) => {
+      const map = { ...prev };
+      for (const id of rfProjectIds) map[id] = newShared;
+      return map;
     });
-    setSharingLoading(false);
-    if (!res.ok) { toast.error("Błąd zmiany udostępnienia"); return; }
-    setShared(!shared);
-    toast.success(shared ? "Płatności ukryte dla klienta" : "Płatności udostępnione klientowi");
+    toast.success(newShared ? "Płatności udostępnione klientowi" : "Płatności ukryte dla klienta");
   }
 
   function handleExportCSV(sectionKey: string, sectionLabel: string, sectionRfProjectId: string | null) {
@@ -991,39 +1028,30 @@ export function PaymentsTab({ clientId, projectId, paymentsSharedWithClient: ini
   }
 
   const hasAnyContent = sections.length > 0 || hasUnassigned;
+  const allShared = sections.length > 0 && sections.every((s) => s.rfProjectId ? (sharedByProject[s.rfProjectId] ?? false) : false);
 
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex flex-col items-end sm:flex-row sm:items-center sm:justify-end gap-2">
-        <div className="flex items-center gap-2">
-          {/* Share toggle */}
-          {projectId && (
-          <div className="relative group/share">
-            <button
-              onClick={handleToggleShare}
-              disabled={sharingLoading}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
-                shared
-                  ? "bg-primary/10 border-primary/30 text-primary hover:bg-primary/20"
-                  : "border-border hover:bg-muted"
-              }`}
-            >
-              <Users size={13} />
-              {shared ? "Udostępniono klientowi" : "Udostępnij klientowi"}
-            </button>
-            <div className="absolute right-0 top-full mt-1.5 z-20 w-64 bg-popover border border-border rounded-lg px-3 py-2 text-xs text-muted-foreground shadow-md opacity-0 pointer-events-none group-hover/share:opacity-100 group-hover/share:pointer-events-auto transition-opacity">
-              {shared
-                ? "Klient widzi zakładkę \"Płatności\" w swoim panelu z listą wszystkich płatności i ich statusów. Kliknij aby ukryć."
-                : "Po kliknięciu klient zobaczy zakładkę \"Płatności\" w swoim panelu z listą wszystkich płatności i ich statusów."}
-            </div>
-          </div>
-          )}
-          <Button variant="outline" size="sm" onClick={() => setShowExportDialog(true)} className="gap-1.5">
-            <Download size={13} />
-            Eksport CSV
-          </Button>
-        </div>
+      <div className="flex items-center justify-end gap-2 flex-wrap">
+        {sections.length > 0 && (
+          <button
+            onClick={handleToggleShareAll}
+            disabled={sharingAll}
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg border transition-colors ${
+              allShared
+                ? "bg-primary/10 border-primary/30 text-primary hover:bg-primary/20"
+                : "border-border text-muted-foreground hover:bg-muted"
+            }`}
+          >
+            <Users size={14} />
+            {allShared ? "Udostępniono klientowi" : "Udostępnij klientowi"}
+          </button>
+        )}
+        <Button variant="outline" size="sm" onClick={() => setShowExportDialog(true)} className="gap-1.5">
+          <Download size={13} />
+          Eksport CSV
+        </Button>
         <Button onClick={() => setShowNewPaymentDialog(true)} size="sm" className="gap-1.5">
           <Plus size={13} />
           Nowa płatność

@@ -32,6 +32,7 @@ import { CSS } from "@dnd-kit/utilities";
 interface RfProject {
   id: string;
   title: string;
+  scheduleSharedWithClient: boolean;
 }
 
 interface ScheduleItem {
@@ -603,8 +604,10 @@ export function ScheduleTab({ clientId, projectId, scheduleSharedWithClient: ini
   const [phases, setPhases] = useState<SchedulePhase[]>([]);
   const [rfProjects, setRfProjects] = useState<RfProject[]>([]);
   const [loading, setLoading] = useState(true);
-  const [shared, setShared] = useState(initialShared);
-  const [sharingLoading, setSharingLoading] = useState(false);
+  const [sharedByProject, setSharedByProject] = useState<Record<string, boolean>>(() =>
+    initialShared && projectId ? { [projectId]: initialShared } : {}
+  );
+  const [sharingAll, setSharingAll] = useState(false);
   const [dndActiveId, setDndActiveId] = useState<string | null>(null);
   const [showNewScheduleDialog, setShowNewScheduleDialog] = useState(false);
   const [showExportDialog, setShowExportDialog] = useState(false);
@@ -619,7 +622,15 @@ export function ScheduleTab({ clientId, projectId, scheduleSharedWithClient: ini
         fetch(`/api/payments/associated-projects?clientId=${clientId}`),
       ]);
       if (phasesRes.ok) setPhases(await phasesRes.json());
-      if (projectsRes.ok) setRfProjects(await projectsRes.json());
+      if (projectsRes.ok) {
+        const projects: RfProject[] = await projectsRes.json();
+        setRfProjects(projects);
+        setSharedByProject((prev) => {
+          const map = { ...prev };
+          for (const p of projects) map[p.id] = p.scheduleSharedWithClient;
+          return map;
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -660,18 +671,28 @@ export function ScheduleTab({ clientId, projectId, scheduleSharedWithClient: ini
 
   // ── Share toggle ───────────────────────────────────────────────────────
 
-  async function handleToggleShare() {
-    if (!projectId) return;
-    setSharingLoading(true);
-    const res = await fetch(`/api/projects/${projectId}/schedule-share`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ shared: !shared }),
+  async function handleToggleShareAll() {
+    const rfProjectIds = phases
+      .map((p) => p.rfProjectId)
+      .filter(Boolean)
+      .filter((v, i, arr) => arr.indexOf(v) === i) as string[];
+    if (rfProjectIds.length === 0) return;
+    const newShared = !allShared;
+    setSharingAll(true);
+    for (const rfProjectId of rfProjectIds) {
+      await fetch(`/api/projects/${rfProjectId}/schedule-share`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ shared: newShared }),
+      });
+    }
+    setSharingAll(false);
+    setSharedByProject((prev) => {
+      const map = { ...prev };
+      for (const id of rfProjectIds) map[id] = newShared;
+      return map;
     });
-    setSharingLoading(false);
-    if (!res.ok) { toast.error("Błąd zmiany udostępnienia"); return; }
-    setShared(!shared);
-    toast.success(shared ? "Harmonogram ukryty dla klientów" : "Harmonogram udostępniony klientom");
+    toast.success(newShared ? "Harmonogram udostępniony klientowi" : "Harmonogram ukryty dla klienta");
   }
 
   // ── Phase CRUD ─────────────────────────────────────────────────────────
@@ -818,38 +839,31 @@ export function ScheduleTab({ clientId, projectId, scheduleSharedWithClient: ini
 
   const phaseIds = phases.map((p) => p.id);
   const activePhase = dndActiveId ? phases.find((p) => p.id === dndActiveId) : null;
+  const rfProjectIds = phases.map((p) => p.rfProjectId).filter(Boolean).filter((v, i, arr) => arr.indexOf(v) === i) as string[];
+  const allShared = rfProjectIds.length > 0 && rfProjectIds.every((id) => sharedByProject[id] ?? false);
 
   return (
     <div className="space-y-4">
       {/* Top bar */}
-      <div className="flex flex-col items-end sm:flex-row sm:items-center sm:justify-end gap-2">
-        <div className="flex items-center gap-2">
-        {projectId && (
-        <div className="relative group/share">
+      <div className="flex items-center justify-end gap-2 flex-wrap">
+        {rfProjectIds.length > 0 && (
           <button
-            onClick={handleToggleShare}
-            disabled={sharingLoading}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
-              shared
+            onClick={handleToggleShareAll}
+            disabled={sharingAll}
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg border transition-colors ${
+              allShared
                 ? "bg-primary/10 border-primary/30 text-primary hover:bg-primary/20"
-                : "border-border hover:bg-muted"
+                : "border-border text-muted-foreground hover:bg-muted"
             }`}
           >
-            <Users size={13} />
-            {shared ? "Udostępniono klientowi" : "Udostępnij klientowi"}
+            <Users size={14} />
+            {allShared ? "Udostępniono klientowi" : "Udostępnij klientowi"}
           </button>
-          <div className="absolute right-0 top-full mt-1.5 z-20 w-64 bg-popover border border-border rounded-lg px-3 py-2 text-xs text-muted-foreground shadow-md opacity-0 pointer-events-none group-hover/share:opacity-100 group-hover/share:pointer-events-auto transition-opacity">
-            {shared
-              ? "Klient widzi zakładkę \"Harmonogram\" w swoim panelu. Kliknij aby ukryć."
-              : "Po kliknięciu klient zobaczy zakładkę \"Harmonogram\" w swoim panelu."}
-          </div>
-        </div>
         )}
         <Button variant="outline" size="sm" onClick={() => setShowExportDialog(true)} className="gap-1.5">
           <Download size={13} />
           Eksport CSV
         </Button>
-        </div>
         <Button onClick={() => setShowNewScheduleDialog(true)} size="sm" className="gap-1.5">
           <Plus size={13} />
           Dodaj harmonogram

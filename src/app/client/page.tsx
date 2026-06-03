@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import { auth, signOut } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import Link from "next/link";
 import { LogOut } from "@/components/ui/icons";
 
 export default async function ClientIndexPage() {
@@ -11,7 +10,8 @@ export default async function ClientIndexPage() {
 
   const links = await prisma.projectClient.findMany({
     where: { userId: session.user.id },
-    include: {
+    select: {
+      clientId: true,
       project: {
         select: {
           id: true,
@@ -23,30 +23,42 @@ export default async function ClientIndexPage() {
     },
   });
 
-  const active = links.filter((l): l is typeof l & { project: NonNullable<typeof l["project"]> } =>
-    l.project != null && !l.project.archived
-  );
+  // Projects directly linked via ProjectClient
+  const directProjects = links
+    .filter((l): l is typeof l & { project: NonNullable<typeof l["project"]> } =>
+      l.project != null && !l.project.archived
+    )
+    .map((l) => l.project);
 
-  if (active.length === 1) {
-    redirect(`/client/${active[0].project.id}`);
-  }
+  // Projects linked via Client entity
+  const clientIds = [...new Set(links.map((l) => l.clientId).filter((id): id is string => !!id))];
+  const clientEntityProjects = clientIds.length > 0
+    ? await prisma.project.findMany({
+        where: { clientId: { in: clientIds }, archived: false },
+        select: { id: true, title: true, user: { select: { name: true, showProfileName: true } } },
+      })
+    : [];
 
-  const logoutForm = (
-    <form action={async () => {
-      "use server";
-      await signOut({ redirectTo: "/login" });
-    }}>
-      <button
-        type="submit"
-        className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-      >
-        <LogOut size={16} />
-        Wyloguj
-      </button>
-    </form>
-  );
+  // Deduplicate
+  const seen = new Map<string, { id: string; title: string; user: { name: string | null; showProfileName: boolean } }>();
+  for (const p of [...directProjects, ...clientEntityProjects]) seen.set(p.id, p);
+  const active = [...seen.values()];
 
   if (active.length === 0) {
+    const logoutForm = (
+      <form action={async () => {
+        "use server";
+        await signOut({ redirectTo: "/login" });
+      }}>
+        <button
+          type="submit"
+          className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <LogOut size={16} />
+          Wyloguj
+        </button>
+      </form>
+    );
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-background gap-4">
         <p className="text-muted-foreground text-sm">Nie masz jeszcze przypisanych projektów.</p>
@@ -55,27 +67,5 @@ export default async function ClientIndexPage() {
     );
   }
 
-  // Multiple projects — show list
-  return (
-    <div className="flex items-center justify-center min-h-screen bg-background px-4">
-      <div className="w-full max-w-md space-y-4">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-xl font-bold">Twoje projekty</h1>
-          {logoutForm}
-        </div>
-        {active.map((l) => (
-          <Link
-            key={l.project.id}
-            href={`/client/${l.project.id}`}
-            className="block bg-card border border-border rounded-xl px-5 py-4 hover:border-primary/40 hover:shadow-md transition-all"
-          >
-            <p className="font-semibold text-foreground">{l.project.title}</p>
-            {l.project.user.showProfileName && l.project.user.name && (
-              <p className="text-sm text-muted-foreground mt-0.5">{l.project.user.name}</p>
-            )}
-          </Link>
-        ))}
-      </div>
-    </div>
-  );
+  redirect(`/client/${active[0].id}`);
 }

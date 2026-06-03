@@ -242,22 +242,6 @@ export default function ClientsView({ clients, archivedClients }: Props) {
                 </p>
               </Link>
 
-              {/* Project pills */}
-              <div className="hidden sm:flex items-center gap-1.5 flex-nowrap">
-                {client.projects.slice(0, 2).map((p) => (
-                  <Link
-                    key={p.id}
-                    href={`/klienci/${p.slug ?? p.id}`}
-                    onClick={(e) => e.stopPropagation()}
-                    className="text-xs px-2.5 py-1 rounded-full bg-muted text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors truncate max-w-[140px]"
-                  >
-                    {p.title}
-                  </Link>
-                ))}
-                {client.projects.length > 2 && (
-                  <span className="text-xs px-2.5 py-1 rounded-full bg-muted text-muted-foreground whitespace-nowrap">+{client.projects.length - 2} więcej</span>
-                )}
-              </div>
 
               {/* Menu */}
               <div className="relative">

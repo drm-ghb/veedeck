@@ -21,14 +21,15 @@ export async function GET(req: NextRequest) {
         { project: { userId } },
       ],
     },
-    select: { id: true, userId: true, email: true, name: true, projectId: true },
+    select: { id: true, userId: true, email: true, name: true, projectId: true, clientId: true },
   });
   if (!client) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  // Find projects where this client appears as ProjectClient (by userId or email)
+  // Find projects where this client appears as ProjectClient (by userId, email, or Client entity)
   const orConditions: object[] = [];
   if (client.userId) orConditions.push({ clients: { some: { userId: client.userId } } });
   if (client.email) orConditions.push({ clients: { some: { email: client.email } } });
+  if (client.clientId) orConditions.push({ clientId: client.clientId });
 
   if (orConditions.length === 0) {
     return NextResponse.json([]);
@@ -37,9 +38,10 @@ export async function GET(req: NextRequest) {
   const projects = await prisma.project.findMany({
     where: {
       userId,
+      archived: false,
       OR: orConditions,
     },
-    select: { id: true, title: true, slug: true },
+    select: { id: true, title: true, slug: true, paymentsSharedWithClient: true, scheduleSharedWithClient: true },
     orderBy: { createdAt: "desc" },
   });
 
