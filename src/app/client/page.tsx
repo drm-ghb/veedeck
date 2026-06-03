@@ -23,7 +23,9 @@ export default async function ClientIndexPage() {
     },
   });
 
-  const active = links.filter((l) => !l.project.archived);
+  const active = links.filter((l): l is typeof l & { project: NonNullable<typeof l["project"]> } =>
+    l.project != null && !l.project.archived
+  );
 
   if (active.length === 1) {
     redirect(`/client/${active[0].project.id}`);
