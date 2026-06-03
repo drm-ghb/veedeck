@@ -158,7 +158,7 @@ export default function NewListDialog() {
             <div className="flex gap-1 bg-muted rounded-lg p-1">
               <button
                 type="button"
-                onClick={() => { setClientTab("new"); setSelectedProject(null); setSearch(""); }}
+                onClick={() => { setClientTab("new"); setSelectedClient(null); setSearch(""); }}
                 className={`flex-1 text-sm py-1.5 rounded-md font-medium transition-colors ${
                   clientTab === "new"
                     ? "bg-background shadow-sm text-foreground"
