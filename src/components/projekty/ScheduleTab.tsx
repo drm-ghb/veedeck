@@ -63,7 +63,7 @@ interface SchedulePhase {
 
 interface Props {
   clientId: string;
-  projectId: string;
+  projectId?: string;
   scheduleSharedWithClient: boolean;
 }
 
@@ -661,6 +661,7 @@ export function ScheduleTab({ clientId, projectId, scheduleSharedWithClient: ini
   // ── Share toggle ───────────────────────────────────────────────────────
 
   async function handleToggleShare() {
+    if (!projectId) return;
     setSharingLoading(true);
     const res = await fetch(`/api/projects/${projectId}/schedule-share`, {
       method: "PATCH",
@@ -823,6 +824,7 @@ export function ScheduleTab({ clientId, projectId, scheduleSharedWithClient: ini
       {/* Top bar */}
       <div className="flex flex-col items-end sm:flex-row sm:items-center sm:justify-end gap-2">
         <div className="flex items-center gap-2">
+        {projectId && (
         <div className="relative group/share">
           <button
             onClick={handleToggleShare}
@@ -842,6 +844,7 @@ export function ScheduleTab({ clientId, projectId, scheduleSharedWithClient: ini
               : "Po kliknięciu klient zobaczy zakładkę \"Harmonogram\" w swoim panelu."}
           </div>
         </div>
+        )}
         <Button variant="outline" size="sm" onClick={() => setShowExportDialog(true)} className="gap-1.5">
           <Download size={13} />
           Eksport CSV

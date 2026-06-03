@@ -87,7 +87,7 @@ interface Payment {
 
 interface Props {
   clientId: string;
-  projectId: string;
+  projectId?: string;
   paymentsSharedWithClient: boolean;
 }
 
@@ -753,6 +753,7 @@ export function PaymentsTab({ clientId, projectId, paymentsSharedWithClient: ini
   }
 
   async function handleToggleShare() {
+    if (!projectId) return;
     setSharingLoading(true);
     const res = await fetch(`/api/projects/${projectId}/payments-share`, {
       method: "PATCH",
@@ -997,6 +998,7 @@ export function PaymentsTab({ clientId, projectId, paymentsSharedWithClient: ini
       <div className="flex flex-col items-end sm:flex-row sm:items-center sm:justify-end gap-2">
         <div className="flex items-center gap-2">
           {/* Share toggle */}
+          {projectId && (
           <div className="relative group/share">
             <button
               onClick={handleToggleShare}
@@ -1016,6 +1018,7 @@ export function PaymentsTab({ clientId, projectId, paymentsSharedWithClient: ini
                 : "Po kliknięciu klient zobaczy zakładkę \"Płatności\" w swoim panelu z listą wszystkich płatności i ich statusów."}
             </div>
           </div>
+          )}
           <Button variant="outline" size="sm" onClick={() => setShowExportDialog(true)} className="gap-1.5">
             <Download size={13} />
             Eksport CSV
