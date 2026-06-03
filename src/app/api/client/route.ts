@@ -22,13 +22,15 @@ export async function GET() {
   });
 
   const projects = links
-    .filter((l) => l.project && !l.project.archived)
-    .map((l) => ({
-      id: l.project.id,
-      title: l.project.title,
-      designerName: l.project.user.showProfileName ? l.project.user.name : null,
-      clientLogoUrl: l.project.user.showClientLogo ? l.project.user.clientLogoUrl : null,
-    }));
+    .flatMap((l) => {
+      if (!l.project || l.project.archived) return [];
+      return [{
+        id: l.project.id,
+        title: l.project.title,
+        designerName: l.project.user.showProfileName ? l.project.user.name : null,
+        clientLogoUrl: l.project.user.showClientLogo ? l.project.user.clientLogoUrl : null,
+      }];
+    });
 
   return NextResponse.json(projects);
 }
