@@ -18,7 +18,13 @@ export async function PATCH(
   if (!project) return NextResponse.json({ error: "Nie znaleziono" }, { status: 404 });
 
   const client = await prisma.projectClient.findFirst({
-    where: { id: clientId, projectId: id },
+    where: {
+      id: clientId,
+      OR: [
+        { clientId: project.clientId ?? undefined },
+        { projectId: id },
+      ],
+    },
     include: { user: true },
   });
   if (!client) return NextResponse.json({ error: "Nie znaleziono klienta" }, { status: 404 });
@@ -26,10 +32,8 @@ export async function PATCH(
   const body = await req.json();
   const { isMainContact, email, phone, startDate, endDate, login: newLogin, password: newPassword } = body;
 
-  // Handle login/password change for client account
   if (newLogin !== undefined || newPassword !== undefined) {
     if (!client.userId || !client.user) {
-      // No account yet — create one if password is provided
       if (!newPassword?.trim()) {
         return NextResponse.json({ error: "Podaj hasło aby utworzyć konto" }, { status: 400 });
       }
@@ -40,7 +44,6 @@ export async function PATCH(
       let newUserId: string;
 
       if (email?.trim()) {
-        // New mechanism: email as login
         const emailLogin = email.trim().toLowerCase();
         const existingUser = await prisma.user.findFirst({
           where: { OR: [{ email: emailLogin }, { login: emailLogin }] },
@@ -68,7 +71,6 @@ export async function PATCH(
           }
         }
       } else {
-        // Old mechanism (backward compat): generated login + @client.internal
         const baseLogin = newLogin?.trim() || generateClientLogin(client.name);
         if (!baseLogin) {
           return NextResponse.json({ error: "Nie można wygenerować loginu z imienia klienta" }, { status: 400 });
@@ -145,11 +147,10 @@ export async function PATCH(
     }
 
     if (Object.keys(userUpdateData).length > 0) {
-      await prisma.user.update({ where: { id: client.userId }, data: userUpdateData });
+      await prisma.user.update({ where: { id: client.userId! }, data: userUpdateData });
     }
   }
 
-  // Always update contact fields and dates if provided
   const clientUpdateData: Record<string, unknown> = {};
   if (email !== undefined) clientUpdateData.email = email?.trim() || null;
   if (phone !== undefined) clientUpdateData.phone = phone?.trim() || null;
@@ -158,7 +159,7 @@ export async function PATCH(
 
   if (isMainContact) {
     await prisma.projectClient.updateMany({
-      where: { projectId: id },
+      where: project.clientId ? { clientId: project.clientId } : { projectId: id },
       data: { isMainContact: false },
     });
     clientUpdateData.isMainContact = true;
@@ -197,14 +198,19 @@ export async function DELETE(
   if (!project) return NextResponse.json({ error: "Nie znaleziono" }, { status: 404 });
 
   const client = await prisma.projectClient.findFirst({
-    where: { id: clientId, projectId: id },
+    where: {
+      id: clientId,
+      OR: [
+        { clientId: project.clientId ?? undefined },
+        { projectId: id },
+      ],
+    },
     include: { user: true },
   });
   if (!client) return NextResponse.json({ error: "Nie znaleziono klienta" }, { status: 404 });
 
-  await prisma.projectClient.deleteMany({ where: { id: clientId, projectId: id } });
+  await prisma.projectClient.delete({ where: { id: clientId } });
 
-  // Also delete the client User account if it's not linked to any other projects
   if (client.userId) {
     const otherLinks = await prisma.projectClient.count({ where: { userId: client.userId } });
     if (otherLinks === 0) {

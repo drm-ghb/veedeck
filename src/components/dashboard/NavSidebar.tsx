@@ -4,11 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import Pusher from "pusher-js";
-import { LayoutDashboard, Users, LocalMall, Package, PanelLeftClose, PanelLeftOpen, Settings, Sun, Moon, HelpCircle, X, CheckCircle, PushPin, ShieldCheck, CalendarDays, NotebookText, ChatBubble, CheckSquare, VeezardIcon, BookOpen, ClipboardList } from "@/components/ui/icons";
+import { LayoutDashboard, Users, LocalMall, Package, PanelLeftClose, PanelLeftOpen, Settings, Sun, Moon, HelpCircle, X, CheckCircle, PushPin, ShieldCheck, CalendarDays, NotebookText, ChatBubble, CheckSquare, VeezardIcon, BookOpen, ClipboardList, Engineering } from "@/components/ui/icons";
 import { useTheme } from "@/lib/theme";
 import { useT } from "@/lib/i18n";
 
-const DEFAULT_SIDEBAR_ORDER = ["klienci", "renderflow", "listy", "zadania", "ankiety", "produkty", "kalendarz", "notatnik", "dyskusje", "veezard"];
+const DEFAULT_SIDEBAR_ORDER = ["klienci", "renderflow", "listy", "wykonawcy", "zadania", "ankiety", "produkty", "kalendarz", "notatnik", "dyskusje", "veezard"];
 
 interface NavSidebarProps {
   hiddenModules: string[];
@@ -122,6 +122,7 @@ export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userI
     { label: t.nav.projects, href: "/klienci", icon: <Users size={18} />, slug: null, badge: 0, matchPrefixes: [] as string[] },
     { label: t.nav.renderflow, href: "/renderflow", icon: <PushPin size={18} />, slug: "renderflow", badge: 0, matchPrefixes: ["/projects/"] },
     { label: t.nav.lists, href: "/listy", icon: <LocalMall size={18} />, slug: "listy", badge: 0, matchPrefixes: [] as string[] },
+    { label: "Wykonawcy", href: "/wykonawcy", icon: <Engineering size={18} />, slug: null, badge: 0, matchPrefixes: [] as string[] },
     { label: t.nav.tasks, href: "/zadania", icon: <CheckSquare size={18} />, slug: null, badge: 0, matchPrefixes: [] as string[] },
     { label: t.nav.surveys, href: "/ankiety", icon: <ClipboardList size={18} />, slug: null, badge: 0, matchPrefixes: [] as string[] },
     { label: t.nav.products, href: "/produkty", icon: <Package size={18} />, slug: "produkty", badge: 0, matchPrefixes: [] as string[] },

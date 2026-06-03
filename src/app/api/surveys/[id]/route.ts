@@ -72,11 +72,12 @@ export async function PATCH(
       select: { userId: true, projectId: true },
     });
     if (pc?.userId) {
+      const linkProjectId = pc.projectId ?? updated.projectId;
       const notif = await prisma.notification.create({
         data: {
           userId: pc.userId,
           message: `Masz nową ankietę do wypełnienia: „${updated.name}"`,
-          link: `/client/${pc.projectId}/ankiety`,
+          link: `/client/${linkProjectId}/ankiety`,
           type: "info",
         },
       });

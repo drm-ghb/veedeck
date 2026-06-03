@@ -12,6 +12,7 @@ import { ChevronLeft, ChevronRight, ChevronDown, Pin, X, Send, ZoomIn, ZoomOut, 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import RenderUploader from "./RenderUploader";
 import PdfViewer from "./PdfViewer";
+import PdfThumbnail from "./PdfThumbnail";
 import { SwipeableMessage } from "@/components/ui/swipeable-message";
 import SearchProductDialog from "./SearchProductDialog";
 import { useUploadThing } from "@/lib/uploadthing-client";
@@ -366,6 +367,7 @@ export default function RenderViewer({
   const [isDragOverSidebar, setIsDragOverSidebar] = useState(false);
   const [sidebarUploading, setSidebarUploading] = useState(false);
   const sidebarDragCounterRef = useRef(0);
+  const sidebarScrollRef = useRef<HTMLDivElement>(null);
 
   const draggingPinRef = useRef<{
     pinId: string;
@@ -433,6 +435,11 @@ export default function RenderViewer({
   const sidebarTabRef = useRef(sidebarTab);
   useEffect(() => { showCommentsRef.current = showComments; }, [showComments]);
   useEffect(() => { sidebarTabRef.current = sidebarTab; }, [sidebarTab]);
+  useEffect(() => {
+    if (!sidebarScrollRef.current) return;
+    const active = sidebarScrollRef.current.querySelector('[data-sidebar-active="true"]');
+    active?.scrollIntoView({ block: "nearest" });
+  }, [renderId]);
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -697,7 +704,7 @@ export default function RenderViewer({
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      const ext = imageUrl.split("?")[0].split(".").pop() ?? "";
+      const ext = fileType === "pdf" ? "pdf" : (imageUrl.split("?")[0].split(".").pop() ?? "");
       a.download = renderName ? `${renderName}${ext ? `.${ext}` : ""}` : "render";
       a.click();
       URL.revokeObjectURL(url);
@@ -1574,10 +1581,15 @@ export default function RenderViewer({
                   ? (onBackToRoom
                     ? <button onClick={onBackToRoom} className="min-w-0 shrink text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors font-medium truncate max-w-[120px]">{roomName}</button>
                     : <span className="min-w-0 shrink text-gray-500 dark:text-gray-400 font-medium truncate max-w-[120px]">{roomName}</span>)
-                  : <span className="min-w-0 shrink text-gray-500 dark:text-gray-400 font-medium truncate max-w-[120px]">{roomName}</span>
+                  : (onBack
+                    ? <button onClick={onBack} className="min-w-0 shrink text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors font-medium truncate max-w-[120px]">{roomName}</button>
+                    : <span className="min-w-0 shrink text-gray-500 dark:text-gray-400 font-medium truncate max-w-[120px]">{roomName}</span>)
                 )}
                 {roomName && folderName && <ChevronLeft size={13} className="flex-shrink-0 text-gray-300 rotate-180" />}
-                {folderName && <span className="min-w-0 shrink text-gray-500 dark:text-gray-400 font-medium truncate max-w-[120px]">{folderName}</span>}
+                {folderName && (onBack
+                  ? <button onClick={onBack} className="min-w-0 shrink text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors font-medium truncate max-w-[120px]">{folderName}</button>
+                  : <span className="min-w-0 shrink text-gray-500 dark:text-gray-400 font-medium truncate max-w-[120px]">{folderName}</span>
+                )}
                 {(projectTitle || roomName || folderName) && renderName && <ChevronLeft size={13} className="flex-shrink-0 text-gray-300 rotate-180" />}
                 {renderName && <span className="text-gray-900 dark:text-gray-100 font-semibold truncate min-w-0 shrink">{renderName}</span>}
               </>
@@ -1839,12 +1851,13 @@ export default function RenderViewer({
                 <RenderUploader projectId={projectId} roomId={roomId} folderId={folderId} compact />
               )}
             </div>
-            <div className="flex-1 overflow-y-auto p-2 space-y-1.5">
+            <div ref={sidebarScrollRef} className="flex-1 overflow-y-auto p-2 space-y-1.5">
               {roomRenders.map((r) => (
                 isDesigner ? (
                   <Link
                     key={r.id}
                     href={`/projects/${projectId}/renders/${r.id}`}
+                    data-sidebar-active={r.id === renderId ? "true" : undefined}
                     className={`block rounded-lg overflow-hidden border-2 transition-colors ${
                       r.id === renderId
                         ? "border-blue-500"
@@ -1853,7 +1866,7 @@ export default function RenderViewer({
                   >
                     <div className="aspect-video bg-muted overflow-hidden flex items-center justify-center">
                       {r.fileType === "pdf" ? (
-                        <FileText size={24} className="text-red-400" />
+                        <PdfThumbnail fileUrl={r.fileUrl} className="w-full h-full" iconSize={20} />
                       ) : (
                         /* eslint-disable-next-line @next/next/no-img-element */
                         <img src={r.fileUrl} alt={r.name} className="w-full h-full object-cover" />
@@ -1867,6 +1880,7 @@ export default function RenderViewer({
                   <button
                     key={r.id}
                     onClick={() => onRenderSelect?.(r)}
+                    data-sidebar-active={r.id === renderId ? "true" : undefined}
                     className={`w-full text-left rounded-lg overflow-hidden border-2 transition-colors ${
                       r.id === renderId
                         ? "border-blue-500"
@@ -1875,7 +1889,7 @@ export default function RenderViewer({
                   >
                     <div className="aspect-video bg-muted overflow-hidden flex items-center justify-center">
                       {r.fileType === "pdf" ? (
-                        <FileText size={24} className="text-red-400" />
+                        <PdfThumbnail fileUrl={r.fileUrl} className="w-full h-full" iconSize={20} />
                       ) : (
                         /* eslint-disable-next-line @next/next/no-img-element */
                         <img src={r.fileUrl} alt={r.name} className="w-full h-full object-cover" />

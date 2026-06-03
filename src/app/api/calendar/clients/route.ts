@@ -28,10 +28,17 @@ export async function GET(req: NextRequest) {
     // Project clients
     prisma.projectClient.findMany({
       where: {
-        project: { userId: workspaceUserId },
         OR: [
           { name: { contains: q, mode: "insensitive" } },
           { email: { contains: q, mode: "insensitive" } },
+        ],
+        AND: [
+          {
+            OR: [
+              { client: { designerId: workspaceUserId } },
+              { project: { userId: workspaceUserId } },
+            ],
+          },
         ],
       },
       select: { id: true, name: true, email: true },

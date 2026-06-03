@@ -20,10 +20,10 @@ export async function GET(
     return NextResponse.json({ error: "Not shared" }, { status: 403 });
   }
 
-  // Fetch all ProjectClient IDs for this project
+  // Fetch all ProjectClient IDs for this client (or project as fallback)
   const allClientIds = (
     await prisma.projectClient.findMany({
-      where: { projectId },
+      where: project.clientId ? { clientId: project.clientId } : { projectId },
       select: { id: true },
     })
   ).map((c) => c.id);

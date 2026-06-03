@@ -14,7 +14,13 @@ export async function GET(req: NextRequest) {
   if (!clientId) return NextResponse.json({ error: "clientId required" }, { status: 400 });
 
   const client = await prisma.projectClient.findFirst({
-    where: { id: clientId, project: { userId } },
+    where: {
+      id: clientId,
+      OR: [
+        { client: { designerId: userId } },
+        { project: { userId } },
+      ],
+    },
     select: { id: true, userId: true, email: true, name: true, projectId: true },
   });
   if (!client) return NextResponse.json({ error: "Not found" }, { status: 404 });

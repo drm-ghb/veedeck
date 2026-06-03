@@ -16,7 +16,7 @@ model User {
   password                   String?
   createdAt                  DateTime       @default(now())
   updatedAt                  DateTime       @updatedAt
-  role                       String         @default("designer") // "designer" | "client"
+  role                       String         @default("designer") // "designer" | "client" | "contractor"
   fullName                   String?                             // imię i nazwisko
   avatarUrl                  String?                             // custom avatar
   phonePrefix                String?        @default("+48")      // country code prefix
@@ -80,6 +80,9 @@ model User {
   taskStatuses               TaskStatusConfig[]
   models3d                   Model3D[]
   surveys                    Survey[]
+  contractors                Contractor[]   @relation("DesignerContractors")
+  contractorAccount          Contractor?    @relation("ContractorUser")
+  clients                    Client[]       @relation("DesignerClients")
 }
 
 model Invitation {
@@ -201,6 +204,17 @@ model Session {
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+model Client {
+  id         String          @id @default(cuid())
+  designerId String
+  designer   User            @relation("DesignerClients", fields: [designerId], references: [id], onDelete: Cascade)
+  name       String
+  createdAt  DateTime        @default(now())
+  archived   Boolean         @default(false)
+  projects   Project[]
+  contacts   ProjectClient[] @relation("ClientContacts")
+}
+
 model Project {
   id             String          @id @default(cuid())
   title          String
@@ -212,6 +226,7 @@ model Project {
   clientEmail    String?
   clientName     String?
   clientPhone    String?
+  clientId       String?
   archived       Boolean         @default(false)
   shareExpiresAt DateTime?
   sharePassword  String?
@@ -229,6 +244,7 @@ model Project {
   paymentsSharedWithClient     Boolean         @default(false)
   scheduleSharedWithClient     Boolean         @default(false)
   user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  client         Client?         @relation(fields: [clientId], references: [id], onDelete: SetNull)
   clients        ProjectClient[]
   renders        Render[]
   rooms          Room[]
@@ -239,6 +255,7 @@ model Project {
   paymentGroupsAsRfProject PaymentGroup[]  @relation("PaymentGroupRfProject")
   paymentsAsRfProject      Payment[]       @relation("PaymentRfProject")
   schedulePhases           SchedulePhase[] @relation("SchedulePhaseRfProject")
+  contractorAssignments    ContractorAssignment[]
 }
 
 model ProjectClient {
@@ -246,7 +263,8 @@ model ProjectClient {
   name          String
   email         String?
   phone         String?
-  projectId     String
+  projectId     String?        // kept during migration; will be removed after data is migrated
+  clientId      String?        // new: references Client entity; will become required after migration
   createdAt     DateTime       @default(now())
   isMainContact Boolean        @default(false)
   order         Int            @default(0)
@@ -254,7 +272,8 @@ model ProjectClient {
   endDate       DateTime?
   userId        String?
   totalAmount   Float?
-  project       Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project       Project?       @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  client        Client?        @relation("ClientContacts", fields: [clientId], references: [id], onDelete: Cascade)
   user          User?          @relation("ProjectClientUser", fields: [userId], references: [id], onDelete: SetNull)
   paymentGroups PaymentGroup[]
   payments      Payment[]
@@ -427,6 +446,7 @@ model Render {
   room                   Room?                   @relation(fields: [roomId], references: [id])
   versions               RenderVersion[]
   versionRestoreRequests VersionRestoreRequest[]
+  contractorFiles        ContractorFile[]
 }
 
 model RenderProductPin {
@@ -851,4 +871,59 @@ model ScheduleItem {
   order       Int           @default(0)
   createdAt   DateTime      @default(now())
   phase       SchedulePhase @relation(fields: [phaseId], references: [id], onDelete: Cascade)
+}
+
+model Contractor {
+  id          String   @id @default(cuid())
+  designerId  String
+  designer    User     @relation("DesignerContractors", fields: [designerId], references: [id], onDelete: Cascade)
+  userId      String?  @unique
+  user        User?    @relation("ContractorUser", fields: [userId], references: [id], onDelete: SetNull)
+  name        String
+  company     String?
+  trade       String?
+  email       String?
+  phone       String?
+  createdAt   DateTime @default(now())
+  assignments ContractorAssignment[]
+}
+
+model ContractorAssignment {
+  id           String     @id @default(cuid())
+  contractorId String
+  contractor   Contractor @relation(fields: [contractorId], references: [id], onDelete: Cascade)
+  projectId    String
+  project      Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  designerId   String
+  archived     Boolean    @default(false)
+  createdAt    DateTime   @default(now())
+  folders      ContractorFolder[]
+
+  @@unique([contractorId, projectId])
+}
+
+model ContractorFolder {
+  id           String               @id @default(cuid())
+  assignmentId String
+  assignment   ContractorAssignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  name         String
+  type         String
+  visible      Boolean              @default(true)
+  order        Int                  @default(0)
+  createdAt    DateTime             @default(now())
+  files        ContractorFile[]
+}
+
+model ContractorFile {
+  id           String           @id @default(cuid())
+  folderId     String
+  folder       ContractorFolder @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  name         String
+  renderId     String?
+  render       Render?          @relation(fields: [renderId], references: [id], onDelete: SetNull)
+  fileUrl      String?
+  fileKey      String?
+  fileType     String           @default("image")
+  uploadedById String
+  createdAt    DateTime         @default(now())
 }

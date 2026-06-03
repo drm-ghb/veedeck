@@ -11,6 +11,7 @@ export default auth((req) => {
   const isLoggedIn = !!session?.user;
   const role = (session?.user as any)?.role ?? "designer";
   const isClient = isLoggedIn && role === "client";
+  const isContractor = isLoggedIn && role === "contractor";
 
   // --- Admin routes ---
 
@@ -34,6 +35,29 @@ export default auth((req) => {
     !pathname.startsWith("/api/")
   ) {
     return NextResponse.redirect(new URL("/admin/users", req.url));
+  }
+
+  // --- Contractor routes ---
+
+  // Block contractors from non-contractor areas
+  if (
+    isContractor &&
+    !pathname.startsWith("/wykonawca") &&
+    !pathname.startsWith("/api/") &&
+    !pathname.startsWith("/login") &&
+    !pathname.startsWith("/_next")
+  ) {
+    return NextResponse.redirect(new URL("/wykonawca", req.url));
+  }
+
+  // Protect /wykonawca/* — require authenticated contractor only
+  if (pathname.startsWith("/wykonawca") && !pathname.startsWith("/api/")) {
+    if (!isLoggedIn) {
+      return NextResponse.redirect(new URL("/login", req.url));
+    }
+    if (!isContractor) {
+      return NextResponse.redirect(new URL("/dashboard", req.url));
+    }
   }
 
   // --- Client routes ---
@@ -64,6 +88,7 @@ export default auth((req) => {
     session?.user &&
     !isAdmin &&
     !isClient &&
+    !isContractor &&
     (session.user as any).needsNameSetup &&
     !pathname.startsWith("/complete-profile") &&
     !pathname.startsWith("/api/")

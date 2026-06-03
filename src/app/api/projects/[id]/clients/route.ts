@@ -17,9 +17,14 @@ export async function GET(
   const project = await prisma.project.findFirst({ where: { id, userId } });
   if (!project) return NextResponse.json({ error: "Nie znaleziono" }, { status: 404 });
 
+  // Fetch contacts at Client entity level if linked; otherwise fall back to project-level
+  const where = project.clientId
+    ? { clientId: project.clientId }
+    : { projectId: id };
+
   const clients = await prisma.projectClient.findMany({
-    where: { projectId: id },
-    orderBy: { createdAt: "asc" },
+    where,
+    orderBy: [{ order: "asc" }, { createdAt: "asc" }],
     include: { user: { select: { id: true, login: true, email: true, role: true } } },
   });
 
@@ -41,24 +46,35 @@ export async function POST(
   const { name, email, phone, isMainContact, startDate, endDate, password, login: customLogin } = await req.json();
   if (!name?.trim()) return NextResponse.json({ error: "Imię jest wymagane" }, { status: 400 });
 
+  // Determine the Client entity to link to
+  let clientEntityId = project.clientId;
+  if (!clientEntityId) {
+    // Auto-create Client entity if project has a clientName
+    const clientName = project.clientName?.trim() || name.trim();
+    let client = await prisma.client.findFirst({ where: { designerId: userId, name: clientName } });
+    if (!client) {
+      client = await prisma.client.create({ data: { designerId: userId, name: clientName } });
+    }
+    clientEntityId = client.id;
+    await prisma.project.update({ where: { id }, data: { clientId: clientEntityId } });
+  }
+
   // If this is the main contact, unset all others first
   if (isMainContact) {
     await prisma.projectClient.updateMany({
-      where: { projectId: id },
+      where: project.clientId ? { clientId: project.clientId } : { projectId: id },
       data: { isMainContact: false },
     });
   }
 
   let clientUserId: string | null = null;
 
-  // Create client account if password provided
   if (password?.trim()) {
     if (password.trim().length < 4) {
       return NextResponse.json({ error: "Hasło musi mieć co najmniej 4 znaki" }, { status: 400 });
     }
 
     if (email?.trim()) {
-      // New mechanism: email as login
       const emailLogin = email.trim().toLowerCase();
       const existingUser = await prisma.user.findFirst({
         where: { OR: [{ email: emailLogin }, { login: emailLogin }] },
@@ -81,7 +97,6 @@ export async function POST(
         clientUserId = clientUser.id;
       }
     } else {
-      // Old mechanism (backward compat): generated login + @client.internal
       const baseLogin = customLogin?.trim() || generateClientLogin(name.trim());
       if (!baseLogin) return NextResponse.json({ error: "Nie można wygenerować loginu z podanego imienia" }, { status: 400 });
 
@@ -116,7 +131,8 @@ export async function POST(
       email: email?.trim() || null,
       phone: phone?.trim() || null,
       isMainContact: !!isMainContact,
-      projectId: id,
+      clientId: clientEntityId,
+      projectId: id, // keep for backward compat during transition
       startDate: startDate ? new Date(startDate) : null,
       endDate: endDate ? new Date(endDate) : null,
       userId: clientUserId,
@@ -124,7 +140,6 @@ export async function POST(
     include: { user: { select: { id: true, login: true, email: true } } },
   });
 
-  // Sync project clientName/clientEmail/clientPhone if main contact
   if (isMainContact) {
     await prisma.project.update({
       where: { id },

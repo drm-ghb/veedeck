@@ -23,6 +23,7 @@ import {
   KeyRound,
   GripVertical,
   Mail,
+  ChevronRight,
 } from "@/components/ui/icons";
 import {
   DndContext,
@@ -88,7 +89,11 @@ interface ProjectData {
   endDate: string | null;
   paymentsSharedWithClient: boolean;
   scheduleSharedWithClient: boolean;
+  clientId?: string | null;
+  clientName?: string | null;
+  clientEntityId?: string | null;
   clients: ProjectClient[];
+  clientProjects?: { id: string; title: string; slug: string | null }[];
 }
 
 const MODULES_CONFIG = [
@@ -107,10 +112,15 @@ const MODULES_CONFIG = [
 ];
 
 export default function ProjectDetailView({ project }: { project: ProjectData }) {
+  const clientProjects = project.clientProjects ?? [];
+  const clientHref = project.clientEntityId
+    ? `/klienci/klient/${project.clientEntityId}`
+    : "/klienci";
   const router = useRouter();
   const t = useT();
 
   // Info form state
+  const [clientEntityName, setClientEntityName] = useState(project.clientName ?? "");
   const [title, setTitle] = useState(project.title);
   const [description, setDescription] = useState(project.description ?? "");
   const [sharePassword, setSharePassword] = useState(project.sharePassword ?? "");
@@ -271,10 +281,21 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
   }>({ open: false, slug: "", label: "", link: "" });
 
   async function saveInfo() {
-    if (!title.trim()) return;
+    if (project.clientEntityId && !clientEntityName.trim()) return;
+    if (!project.clientEntityId && !title.trim()) return;
     setSavingInfo(true);
     try {
-      const res = await fetch(`/api/projects/${project.id}`, {
+      const calls: Promise<Response>[] = [];
+
+      if (project.clientEntityId && clientEntityName.trim() !== (project.clientName ?? "")) {
+        calls.push(fetch(`/api/clients/${project.clientEntityId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: clientEntityName.trim() }),
+        }));
+      }
+
+      calls.push(fetch(`/api/projects/${project.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -285,8 +306,10 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
           startDate: projectStartDate || null,
           endDate: projectEndDate || null,
         }),
-      });
-      if (!res.ok) throw new Error();
+      }));
+
+      const results = await Promise.all(calls);
+      if (results.some((r) => !r.ok)) throw new Error();
       toast.success(t.common.saved);
       router.refresh();
     } catch {
@@ -559,15 +582,13 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
     <div className="max-w-3xl mx-auto">
       {/* Back nav */}
       <div className="mb-6">
-        <Link
-          href="/klienci"
-          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <ArrowLeft size={15} />
-          {t.projekty.title}
-        </Link>
+        <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+          <Link href={clientHref} className="hover:text-foreground transition-colors">{t.projekty.title}</Link>
+          <span>/</span>
+          <span className="text-foreground font-medium truncate max-w-[200px]">{project.clientName ?? project.title}</span>
+        </div>
         <div className="flex items-center justify-between gap-3 mt-2">
-          <h1 className="text-2xl font-bold">{project.title}</h1>
+          <h1 className="text-2xl font-bold">{project.clientName ?? project.title}</h1>
           <Button variant="outline" size="sm" onClick={copyPanelLink} className="gap-2 flex-shrink-0">
             {copiedPanel ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
             {copiedPanel ? "Skopiowano!" : "Kopiuj link do panelu"}
@@ -984,15 +1005,38 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
             {t.projekty.projectInfo}
           </h2>
           <div className="space-y-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="proj-title">{t.projekty.projectNameLabel}</Label>
-              <Input
-                id="proj-title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Nazwa projektu"
-              />
-            </div>
+            {project.clientEntityId ? (
+              <>
+                <div className="space-y-1.5">
+                  <Label htmlFor="client-name">Nazwa klienta</Label>
+                  <Input
+                    id="client-name"
+                    value={clientEntityName}
+                    onChange={(e) => setClientEntityName(e.target.value)}
+                    placeholder="Nazwa klienta"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="proj-title">Nazwa projektu</Label>
+                  <Input
+                    id="proj-title"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="Nazwa projektu"
+                  />
+                </div>
+              </>
+            ) : (
+              <div className="space-y-1.5">
+                <Label htmlFor="proj-title">{t.projekty.projectNameLabel}</Label>
+                <Input
+                  id="proj-title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Nazwa projektu"
+                />
+              </div>
+            )}
             <div className="space-y-1.5">
               <Label htmlFor="proj-desc">{t.projekty.descriptionLabel}</Label>
               <Textarea
@@ -1082,6 +1126,27 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
             </div>
           </div>
         </section>
+
+        {/* === Other client projects === */}
+        {clientProjects.length > 0 && (
+          <section className="bg-card border border-border rounded-xl p-5">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground mb-3">
+              Inne projekty klienta
+            </h2>
+            <div className="space-y-1">
+              {clientProjects.map((p) => (
+                <Link
+                  key={p.id}
+                  href={`/klienci/${p.slug ?? p.id}`}
+                  className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg hover:bg-muted/50 transition-colors text-sm"
+                >
+                  <span className="truncate">{p.title}</span>
+                  <ChevronRight size={14} className="text-muted-foreground flex-shrink-0" />
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* === Modules section === */}
         <section className="bg-card border border-border rounded-xl p-5">

@@ -13,7 +13,8 @@ import ClientScheduleView from "@/components/share/ClientScheduleView";
 import ShareListClient from "@/components/listy/ShareListClient";
 import ModuleGuideSlider from "@/components/share/ModuleGuideSlider";
 import { getRoomIcon } from "@/lib/roomIcons";
-import { ChevronLeft, ChevronRight, ChatBubble, FileText, Folder, User, Mail, Lock, Info, LocalMall, Pencil, X, Eye, EyeOff, UserCircle, Check } from "@/components/ui/icons";
+import { ChevronLeft, ChevronRight, ChatBubble, FileText, Folder, User, Mail, Lock, Info, LocalMall, Pencil, X, Eye, EyeOff, UserCircle, Check, CopyCheck, Download } from "@/components/ui/icons";
+import PdfThumbnail from "@/components/render/PdfThumbnail";
 import Image from "next/image";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,7 @@ import { SectionHeader } from "@/components/settings/SettingsShared";
 import Cropper from "react-easy-crop";
 import type { Area } from "react-easy-crop";
 import { useUploadThing } from "@/lib/uploadthing-client";
+import { zip } from "fflate";
 
 type RenderStatus = "REVIEW" | "ACCEPTED";
 
@@ -337,6 +339,82 @@ export default function ClientProjectPage() {
   }, [projectId]);
 
   const [batchApproving, setBatchApproving] = useState(false);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedRenderIds, setSelectedRenderIds] = useState<Set<string>>(new Set());
+  const [downloadingAll, setDownloadingAll] = useState(false);
+
+  useEffect(() => {
+    setSelectionMode(false);
+    setSelectedRenderIds(new Set());
+  }, [selectedFolder]);
+
+  async function downloadFile(url: string, filename: string) {
+    try {
+      const res = await fetch(url);
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(blobUrl);
+    } catch {
+      window.open(url, "_blank");
+    }
+  }
+
+  async function handleDownloadAll(renders: Render[], zipName = "pliki") {
+    if (!renders.length) return;
+    if (renders.length === 1) {
+      await downloadFile(renders[0].fileUrl, renders[0].name);
+      return;
+    }
+    setDownloadingAll(true);
+    try {
+      const fetched = await Promise.all(
+        renders.map(async (render) => {
+          const res = await fetch(render.fileUrl);
+          const buf = await res.arrayBuffer();
+          const mimeExt = res.headers.get("content-type")?.split("/")[1]?.split(";")[0];
+          const urlExt = render.fileUrl.split("?")[0].split(".").pop();
+          const ext = render.fileType === "pdf" ? "pdf" : (mimeExt ?? urlExt ?? "jpg");
+          return { name: render.name, ext, data: new Uint8Array(buf) };
+        })
+      );
+      const fileMap: Record<string, Uint8Array> = {};
+      const usedNames = new Set<string>();
+      for (const { name, ext, data } of fetched) {
+        let filename = `${name}.${ext}`;
+        let counter = 1;
+        while (usedNames.has(filename)) {
+          filename = `${name}_${counter}.${ext}`;
+          counter++;
+        }
+        usedNames.add(filename);
+        fileMap[filename] = data;
+      }
+      zip(fileMap, (err, data) => {
+        setDownloadingAll(false);
+        if (err) { toast.error("Błąd tworzenia archiwum"); return; }
+        const blob = new Blob([data], { type: "application/zip" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${zipName}.zip`;
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+    } catch {
+      toast.error("Błąd pobierania plików");
+      setDownloadingAll(false);
+    }
+  }
+
+  async function handleDownloadSelected(renders: Render[]) {
+    await handleDownloadAll(renders, "wybrane");
+    setSelectionMode(false);
+    setSelectedRenderIds(new Set());
+  }
 
   async function handleBatchApprove(renders: Render[]) {
     const toApprove = renders.filter((r) => r.status !== "ACCEPTED");
@@ -483,8 +561,15 @@ export default function ClientProjectPage() {
 
   // Render view — full screen
   if (view === "render" && selectedRender && selectedRoom) {
-    const scopedRenders = selectedFolder
-      ? selectedRoom.renders.filter((r) => r.folder?.id === selectedFolder.id)
+    // selectedFolder may be null when navigating directly via URL without folderId param.
+    // Fall back to the render's own folder reference so breadcrumbs and back navigation work correctly.
+    const effectiveFolder = selectedFolder
+      ?? (selectedRender.folder
+        ? (selectedRoom.folders.find((f) => f.id === selectedRender.folder!.id) ?? selectedRender.folder)
+        : null);
+
+    const scopedRenders = effectiveFolder
+      ? selectedRoom.renders.filter((r) => r.folder?.id === effectiveFolder.id)
       : selectedRoom.renders.filter((r) => !r.folder);
     const roomRenders = scopedRenders.map((r) => ({ id: r.id, name: r.name, fileUrl: r.fileUrl, fileType: r.fileType }));
 
@@ -511,9 +596,9 @@ export default function ClientProjectPage() {
         versions={selectedRender.versions.map((v) => ({ ...v, archivedAt: typeof v.archivedAt === "string" ? v.archivedAt : new Date(v.archivedAt).toISOString() }))}
         allowClientVersionRestore={project.allowClientVersionRestore}
         onRenderStatusChange={(status) => handleRenderStatusChange(selectedRender.id, status)}
-        onBack={() => { setView("room"); navigate({ view: "room", roomId: selectedRoom.id, folderId: selectedFolder?.id ?? null }); }}
+        onBack={() => { if (effectiveFolder && !selectedFolder) setSelectedFolder(effectiveFolder); setView("room"); navigate({ view: "room", roomId: selectedRoom.id, folderId: effectiveFolder?.id ?? null }); }}
         onBackToRooms={() => { setView("rooms"); setSelectedRoom(null); setSelectedFolder(null); navigate({ view: "rooms" }); }}
-        onBackToRoom={selectedFolder ? () => { setSelectedFolder(null); setView("room"); navigate({ view: "room", roomId: selectedRoom.id }); } : undefined}
+        onBackToRoom={effectiveFolder ? () => { setSelectedFolder(null); setView("room"); navigate({ view: "room", roomId: selectedRoom.id }); } : undefined}
         onRenderSelect={(r) => {
           const full = selectedRoom.renders.find((render) => render.id === r.id);
           if (full) { setSelectedRender(full); navigate({ view: "render", roomId: selectedRoom.id, folderId: selectedFolder?.id ?? null, renderId: r.id }); }
@@ -632,26 +717,75 @@ export default function ClientProjectPage() {
                 )}
               </ol>
             </nav>
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">{selectedFolder ? selectedFolder.name : selectedRoom.name}</h2>
-              {selectedFolder && (project.allowDirectStatusChange || project.allowClientAcceptance) && folderRenders.some((r) => r.status !== "ACCEPTED") && (
-                <button
-                  onClick={() => handleBatchApprove(folderRenders)}
-                  disabled={batchApproving}
-                  className="flex items-center gap-1.5 px-3 h-8 rounded-md text-sm font-medium bg-green-600 hover:bg-green-700 text-white disabled:opacity-60 transition-colors"
-                >
-                  <Check size={14} />
-                  {batchApproving ? "Zatwierdzanie…" : "Zatwierdź wszystkie"}
-                </button>
-              )}
-            </div>
+            {(() => {
+              const activeRenders = selectedFolder ? folderRenders : ungrouped;
+              return (
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">{selectedFolder ? selectedFolder.name : selectedRoom.name}</h2>
+                  {activeRenders.length > 0 && (
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => { setSelectionMode((v) => !v); setSelectedRenderIds(new Set()); }}
+                        className={`relative p-1.5 rounded-md transition-colors ${selectionMode ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
+                        title="Zaznacz pliki"
+                      >
+                        <CopyCheck size={15} />
+                        {selectionMode && selectedRenderIds.size > 0 && (
+                          <span className="absolute -top-1 -right-1 min-w-[14px] h-3.5 px-0.5 bg-primary text-primary-foreground text-[9px] font-bold rounded-full flex items-center justify-center leading-none">
+                            {selectedRenderIds.size}
+                          </span>
+                        )}
+                      </button>
+                      {selectionMode && selectedRenderIds.size > 0 ? (
+                        <button
+                          onClick={() => handleDownloadSelected(activeRenders.filter((r) => selectedRenderIds.has(r.id)))}
+                          disabled={downloadingAll}
+                          className="flex items-center gap-1.5 px-3 h-8 rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-60 transition-colors whitespace-nowrap"
+                        >
+                          <Download size={14} />
+                          {downloadingAll ? "Pobieranie…" : `Pobierz (${selectedRenderIds.size})`}
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleDownloadAll(activeRenders, selectedFolder?.name ?? selectedRoom?.name ?? "pliki")}
+                          disabled={downloadingAll}
+                          className="flex items-center gap-1.5 px-3 h-8 rounded-md text-sm font-medium border border-border text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-40 transition-colors whitespace-nowrap"
+                        >
+                          <Download size={14} />
+                          {downloadingAll ? "Pobieranie…" : "Pobierz wszystko"}
+                        </button>
+                      )}
+                      {(project.allowDirectStatusChange || project.allowClientAcceptance) && activeRenders.some((r) => r.status !== "ACCEPTED") && (
+                        <button
+                          onClick={() => handleBatchApprove(activeRenders)}
+                          disabled={batchApproving}
+                          className="flex items-center gap-1.5 px-3 h-8 rounded-md text-sm font-medium bg-green-600 hover:bg-green-700 text-white disabled:opacity-60 transition-colors whitespace-nowrap"
+                        >
+                          <Check size={14} />
+                          {batchApproving ? "Zatwierdzanie…" : "Zatwierdź wszystkie"}
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
             {selectedFolder ? (
               folderRenders.length === 0 ? (
                 <p className="text-gray-400 text-center py-16">Brak plików w tym folderze.</p>
               ) : (
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3">
                   {folderRenders.map((render) => (
-                    <RenderCard key={render.id} render={render} hideCommentCount={project.hideCommentCount} onClick={() => { setSelectedRender(render); setView("render"); navigate({ view: "render", roomId: selectedRoom.id, folderId: selectedFolder?.id ?? null, renderId: render.id }); fetch(`/api/client/${projectId}/renders/${render.id}/view`, { method: "POST" }); }} />
+                    <RenderCard
+                      key={render.id}
+                      render={render}
+                      hideCommentCount={project.hideCommentCount}
+                      onClick={() => { setSelectedRender(render); setView("render"); navigate({ view: "render", roomId: selectedRoom.id, folderId: selectedFolder?.id ?? null, renderId: render.id }); fetch(`/api/client/${projectId}/renders/${render.id}/view`, { method: "POST" }); }}
+                      onDownload={() => downloadFile(render.fileUrl, render.name)}
+                      isSelected={selectedRenderIds.has(render.id)}
+                      selectionMode={selectionMode}
+                      onToggleSelect={() => setSelectedRenderIds((prev) => { const next = new Set(prev); if (next.has(render.id)) next.delete(render.id); else next.add(render.id); return next; })}
+                    />
                   ))}
                 </div>
               )
@@ -678,7 +812,16 @@ export default function ClientProjectPage() {
                     {sortedFolders.length > 0 && <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Pozostałe pliki</p>}
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3">
                       {ungrouped.map((render) => (
-                        <RenderCard key={render.id} render={render} hideCommentCount={project.hideCommentCount} onClick={() => { setSelectedRender(render); setView("render"); navigate({ view: "render", roomId: selectedRoom.id, folderId: null, renderId: render.id }); fetch(`/api/client/${projectId}/renders/${render.id}/view`, { method: "POST" }); }} />
+                        <RenderCard
+                          key={render.id}
+                          render={render}
+                          hideCommentCount={project.hideCommentCount}
+                          onClick={() => { setSelectedRender(render); setView("render"); navigate({ view: "render", roomId: selectedRoom.id, folderId: null, renderId: render.id }); fetch(`/api/client/${projectId}/renders/${render.id}/view`, { method: "POST" }); }}
+                          onDownload={() => downloadFile(render.fileUrl, render.name)}
+                          isSelected={selectedRenderIds.has(render.id)}
+                          selectionMode={selectionMode}
+                          onToggleSelect={() => setSelectedRenderIds((prev) => { const next = new Set(prev); if (next.has(render.id)) next.delete(render.id); else next.add(render.id); return next; })}
+                        />
                       ))}
                     </div>
                   </div>
@@ -1066,23 +1209,44 @@ async function getCroppedImgClient(imageSrc: string, pixelCrop: Area): Promise<F
   });
 }
 
-function RenderCard({ render, hideCommentCount, onClick }: { render: Render; hideCommentCount: boolean; onClick: () => void }) {
+function RenderCard({ render, hideCommentCount, onClick, onDownload, isSelected, selectionMode, onToggleSelect }: {
+  render: Render;
+  hideCommentCount: boolean;
+  onClick: () => void;
+  onDownload?: () => void;
+  isSelected?: boolean;
+  selectionMode?: boolean;
+  onToggleSelect?: () => void;
+}) {
   return (
-    <button onClick={onClick} className="text-left bg-card border border-border rounded-xl overflow-hidden shadow-sm hover:shadow-[0_4px_16px_rgba(25,33,61,0.2)] hover:border-primary/30 transition-all group">
-      <div className="aspect-video bg-muted overflow-hidden flex items-center justify-center">
+    <div
+      onClick={selectionMode ? onToggleSelect : onClick}
+      className={`text-left bg-card border border-border rounded-xl overflow-hidden shadow-sm hover:shadow-[0_4px_16px_rgba(25,33,61,0.2)] transition-all group cursor-pointer ${isSelected ? "ring-2 ring-primary border-primary" : "hover:border-primary/30"}`}
+    >
+      <div className="aspect-video bg-muted overflow-hidden flex items-center justify-center relative">
         {render.fileType === "pdf" ? (
-          <FileText size={36} className="text-red-400" />
+          <PdfThumbnail fileUrl={render.fileUrl} className="w-full h-full group-hover:scale-105 transition-transform duration-200" />
         ) : (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={render.fileUrl} alt={render.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" />
+        )}
+        {render.fileType === "pdf" && (
+          <span className="absolute bottom-2 left-2 z-10 bg-black/50 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">PDF</span>
+        )}
+        {selectionMode && (
+          <div className={`absolute top-2 right-2 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${isSelected ? "bg-primary border-primary" : "border-white/80 bg-black/20"}`}>
+            {isSelected && <Check size={11} className="text-white" />}
+          </div>
         )}
       </div>
       <div className="p-3">
         <div className="flex items-start justify-between gap-2">
           <p className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">{render.name}</p>
-          <span className={`flex-shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${render.status === "ACCEPTED" ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"}`}>
-            {render.status === "ACCEPTED" ? "Zaakceptowany" : "Do weryfikacji"}
-          </span>
+          <div className="flex items-center gap-1 flex-shrink-0">
+            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${render.status === "ACCEPTED" ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"}`}>
+              {render.status === "ACCEPTED" ? "Zaakceptowany" : "Do weryfikacji"}
+            </span>
+          </div>
         </div>
         {!hideCommentCount && (
           <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 flex items-center gap-1">
@@ -1090,6 +1254,6 @@ function RenderCard({ render, hideCommentCount, onClick }: { render: Render; hid
           </p>
         )}
       </div>
-    </button>
+    </div>
   );
 }

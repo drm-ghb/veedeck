@@ -17,7 +17,10 @@ export async function POST(req: NextRequest) {
   }
 
   const client = await prisma.projectClient.findFirst({
-    where: { id: clientId, project: { userId } },
+    where: {
+      id: clientId,
+      OR: [{ client: { designerId: userId } }, { project: { userId } }],
+    },
   });
   if (!client) return NextResponse.json({ error: "Not found" }, { status: 404 });
 

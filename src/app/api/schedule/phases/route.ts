@@ -13,7 +13,10 @@ export async function GET(req: NextRequest) {
   if (!clientId) return NextResponse.json({ error: "clientId required" }, { status: 400 });
 
   const client = await prisma.projectClient.findFirst({
-    where: { id: clientId, project: { userId } },
+    where: {
+      id: clientId,
+      OR: [{ client: { designerId: userId } }, { project: { userId } }],
+    },
     select: { id: true },
   });
   if (!client) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -40,7 +43,10 @@ export async function POST(req: NextRequest) {
   if (!clientId || !name?.trim()) return NextResponse.json({ error: "clientId and name required" }, { status: 400 });
 
   const client = await prisma.projectClient.findFirst({
-    where: { id: clientId, project: { userId } },
+    where: {
+      id: clientId,
+      OR: [{ client: { designerId: userId } }, { project: { userId } }],
+    },
     select: { id: true },
   });
   if (!client) return NextResponse.json({ error: "Not found" }, { status: 404 });

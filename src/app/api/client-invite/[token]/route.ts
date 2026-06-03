@@ -95,6 +95,7 @@ export async function POST(
           email: finalEmail,
           phone: phone?.trim() || null,
           projectId: invitation.projectId,
+          clientId: project.clientId ?? null,
           userId: newUser.id,
           order: 0,
         },

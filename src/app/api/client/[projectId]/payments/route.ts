@@ -20,17 +20,20 @@ export async function GET(
     return NextResponse.json({ error: "Not shared" }, { status: 403 });
   }
 
-  // Verify this user has at least one ProjectClient record in this project
+  // Verify this user has at least one ProjectClient record linked to this project
+  const contactWhere = project.clientId
+    ? { clientId: project.clientId, userId: session.user.id }
+    : { projectId, userId: session.user.id };
   const userRecord = await prisma.projectClient.findFirst({
-    where: { projectId, userId: session.user.id },
+    where: contactWhere,
     select: { id: true },
   });
   if (!userRecord) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  // Fetch payments for ALL contacts in this project — all contacts share the same payment data
+  // Fetch all contacts for this client (or project as fallback)
   const allClientIds = (
     await prisma.projectClient.findMany({
-      where: { projectId },
+      where: project.clientId ? { clientId: project.clientId } : { projectId },
       select: { id: true },
     })
   ).map((c) => c.id);

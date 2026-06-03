@@ -16,25 +16,26 @@ import { toast } from "sonner";
 import { Plus, Search, ChevronRight, Eye, EyeOff } from "@/components/ui/icons";
 import { useT } from "@/lib/i18n";
 
-interface Project {
+interface ClientItem {
   id: string;
-  title: string;
-  clientName: string | null;
+  name: string;
+  projects: { id: string; title: string; slug: string | null }[];
 }
 
 export default function NewListDialog() {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [clientTab, setClientTab] = useState<"new" | "existing">("new");
+  const [clientEntityName, setClientEntityName] = useState("");
   const [newClientName, setNewClientName] = useState("");
   const [newClientEmail, setNewClientEmail] = useState("");
   const [newClientEmailError, setNewClientEmailError] = useState("");
   const [newClientPhone, setNewClientPhone] = useState("");
   const [newClientPassword, setNewClientPassword] = useState("");
   const [showNewClientPassword, setShowNewClientPassword] = useState(false);
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loadingProjects, setLoadingProjects] = useState(false);
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [clients, setClients] = useState<ClientItem[]>([]);
+  const [loadingClients, setLoadingClients] = useState(false);
+  const [selectedClient, setSelectedClient] = useState<ClientItem | null>(null);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -42,44 +43,42 @@ export default function NewListDialog() {
   const t = useT();
 
   useEffect(() => {
-    if (open && projects.length === 0) {
-      setLoadingProjects(true);
-      fetch("/api/projects")
+    if (open && clients.length === 0) {
+      setLoadingClients(true);
+      fetch("/api/clients")
         .then((r) => r.ok ? r.json() : [])
-        .then((data) => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          setProjects(data.filter((p: any) => !p.archived).map((p: any) => ({
-            id: p.id,
-            title: p.title,
-            clientName: p.clientName ?? null,
-          })));
-        })
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .then((data: any[]) => setClients(data.map((c) => ({
+          id: c.id,
+          name: c.name,
+          projects: c.projects ?? [],
+        }))))
         .catch(() => {})
-        .finally(() => setLoadingProjects(false));
+        .finally(() => setLoadingClients(false));
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   async function handleSubmit() {
     if (!name.trim()) return;
-    if (clientTab === "new" && (!newClientName.trim() || !newClientEmail.trim())) return;
-    if (clientTab === "new" && !newClientEmail.includes("@")) {
+    if (clientTab === "new" && !clientEntityName.trim()) return;
+    if (clientTab === "new" && newClientEmail.trim() && !newClientEmail.includes("@")) {
       setNewClientEmailError("Podaj poprawny adres e-mail (brak znaku @)");
       return;
     }
-    if (clientTab === "existing" && !selectedProject) return;
+    if (clientTab === "existing" && !selectedClient) return;
     setNewClientEmailError("");
     setLoading(true);
     try {
       let projectId: string | null = null;
 
-      if (clientTab === "new" && newClientName.trim()) {
+      if (clientTab === "new") {
         const projRes = await fetch("/api/projects", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            title: newClientName.trim(),
-            clientName: newClientName.trim(),
+            title: clientEntityName.trim(),
+            clientName: clientEntityName.trim(),
             clientEmail: newClientEmail.trim() || undefined,
             clientPhone: newClientPhone.trim() || undefined,
             clientPassword: newClientPassword.trim() || undefined,
@@ -88,8 +87,8 @@ export default function NewListDialog() {
         if (!projRes.ok) throw new Error();
         const proj = await projRes.json();
         projectId = proj.id;
-      } else if (clientTab === "existing" && selectedProject) {
-        projectId = selectedProject.id;
+      } else if (clientTab === "existing" && selectedClient) {
+        projectId = selectedClient.projects[0]?.id ?? null;
       }
 
       const res = await fetch("/api/lists", {
@@ -115,23 +114,18 @@ export default function NewListDialog() {
     if (!val) {
       setName("");
       setClientTab("new");
+      setClientEntityName("");
       setNewClientName("");
       setNewClientEmail("");
       setNewClientPhone("");
       setNewClientPassword("");
       setShowNewClientPassword(false);
-      setSelectedProject(null);
+      setSelectedClient(null);
       setSearch("");
     }
   }
 
-  const filtered = projects.filter((p) => {
-    const q = search.toLowerCase();
-    return (
-      p.title.toLowerCase().includes(q) ||
-      (p.clientName?.toLowerCase().includes(q) ?? false)
-    );
-  });
+  const filtered = clients.filter((c) => c.name.toLowerCase().includes(search.toLowerCase()));
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -189,9 +183,17 @@ export default function NewListDialog() {
             {/* Tab: Nowy klient */}
             {clientTab === "new" && (
               <div className="space-y-3">
+                <div className="space-y-1.5">
+                  <Label>Nazwa klienta <span className="text-destructive">*</span></Label>
+                  <Input
+                    value={clientEntityName}
+                    onChange={(e) => setClientEntityName(e.target.value)}
+                    placeholder="np. Kowalski, Firma ABC"
+                  />
+                </div>
                 <div className="grid grid-cols-3 gap-3">
                   <div className="space-y-1.5">
-                    <Label>Nazwa kontaktu<span className="text-destructive">*</span></Label>
+                    <Label>Nazwa kontaktu</Label>
                     <Input
                       value={newClientName}
                       onChange={(e) => setNewClientName(e.target.value)}
@@ -199,7 +201,7 @@ export default function NewListDialog() {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label>E-mail<span className="text-destructive">*</span></Label>
+                    <Label>E-mail</Label>
                     <Input
                       type="email"
                       value={newClientEmail}
@@ -252,17 +254,17 @@ export default function NewListDialog() {
             {/* Tab: Istniejący klient */}
             {clientTab === "existing" && (
               <div className="space-y-2">
-                {selectedProject ? (
+                {selectedClient ? (
                   <div className="flex items-center justify-between px-3 py-2.5 rounded-lg bg-muted border border-border">
                     <div className="min-w-0">
-                      <p className="text-sm font-medium truncate">{selectedProject.title}</p>
-                      {selectedProject.clientName && (
-                        <p className="text-xs text-muted-foreground truncate">{selectedProject.clientName}</p>
+                      <p className="text-sm font-medium truncate">{selectedClient.name}</p>
+                      {selectedClient.projects[0] && (
+                        <p className="text-xs text-muted-foreground truncate">{selectedClient.projects[0].title}</p>
                       )}
                     </div>
                     <button
                       type="button"
-                      onClick={() => setSelectedProject(null)}
+                      onClick={() => setSelectedClient(null)}
                       className="text-xs text-muted-foreground hover:text-foreground ml-2 shrink-0"
                     >
                       Zmień
@@ -273,33 +275,33 @@ export default function NewListDialog() {
                     <div className="relative">
                       <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
                       <Input
-                        placeholder={t.listy.searchProject}
+                        placeholder="Szukaj klienta…"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         className="pl-9"
                       />
                     </div>
                     <div className="max-h-48 overflow-y-auto rounded-lg border border-border">
-                      {loadingProjects ? (
+                      {loadingClients ? (
                         <p className="text-sm text-muted-foreground text-center py-6">{t.common.loading}</p>
                       ) : filtered.length === 0 ? (
                         <p className="text-sm text-muted-foreground text-center py-6">
-                          {search ? t.common.noResults : t.listy.noProjects}
+                          {search ? t.common.noResults : "Brak klientów"}
                         </p>
                       ) : (
-                        filtered.map((p, i) => (
+                        filtered.map((c, i) => (
                           <button
-                            key={p.id}
+                            key={c.id}
                             type="button"
-                            onClick={() => setSelectedProject(p)}
+                            onClick={() => setSelectedClient(c)}
                             className={`w-full flex items-center justify-between px-4 py-3 text-left hover:bg-muted/50 transition-colors ${
                               i !== filtered.length - 1 ? "border-b border-border" : ""
                             }`}
                           >
                             <div className="min-w-0">
-                              <p className="text-sm font-medium text-foreground truncate">{p.title}</p>
-                              {p.clientName && (
-                                <p className="text-xs text-muted-foreground truncate">{p.clientName}</p>
+                              <p className="text-sm font-medium text-foreground truncate">{c.name}</p>
+                              {c.projects[0] && (
+                                <p className="text-xs text-muted-foreground truncate">{c.projects[0].title}</p>
                               )}
                             </div>
                             <ChevronRight size={14} className="text-muted-foreground ml-3 shrink-0" />
@@ -323,9 +325,8 @@ export default function NewListDialog() {
               disabled={
                 loading ||
                 !name.trim() ||
-                (clientTab === "new" && !newClientName.trim()) ||
-                (clientTab === "new" && !newClientEmail.trim()) ||
-                (clientTab === "existing" && !selectedProject) ||
+                (clientTab === "new" && !clientEntityName.trim()) ||
+                (clientTab === "existing" && !selectedClient) ||
                 (!!newClientPassword.trim() && !newClientEmail.trim())
               }
             >

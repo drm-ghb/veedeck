@@ -17,7 +17,9 @@ export async function GET(
 
   // Find the ProjectClient link to get clientId
   const link = await prisma.projectClient.findFirst({
-    where: { projectId, userId: session.user.id },
+    where: project.clientId
+      ? { clientId: project.clientId, userId: session.user.id }
+      : { projectId, userId: session.user.id },
   });
 
   const surveys = await prisma.survey.findMany({

@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
   }
   const userId = getWorkspaceUserId(session);
 
-  const { title, clientName, clientEmail, clientPhone, clientPassword, description, module: moduleName } = await req.json();
+  const { title, clientName, clientEmail, clientPhone, clientPassword, description, module: moduleName, clientId } = await req.json();
   if (!title) {
     return NextResponse.json({ error: "Tytuł jest wymagany" }, { status: 400 });
   }
@@ -47,6 +47,7 @@ export async function POST(req: NextRequest) {
         clientPhone: clientPhone || null,
         description: description || null,
         userId,
+        clientId: clientId || null,
         modules: moduleName ? [moduleName] : [],
         discussion: {
           create: {
@@ -123,6 +124,22 @@ export async function POST(req: NextRequest) {
           userId: clientUserId,
         },
       });
+
+      // Auto-create/link Client record if not already provided
+      if (!clientId) {
+        let client = await prisma.client.findFirst({
+          where: { designerId: userId, name: clientName.trim() },
+        });
+        if (!client) {
+          client = await prisma.client.create({
+            data: { designerId: userId, name: clientName.trim() },
+          });
+        }
+        await prisma.project.update({
+          where: { id: project.id },
+          data: { clientId: client.id },
+        });
+      }
     }
 
     return NextResponse.json(project, { status: 201 });

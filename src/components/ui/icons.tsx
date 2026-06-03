@@ -256,6 +256,10 @@ export const BookOpen         = icon("menu_book");
 export const Tv               = icon("tv");
 export const ShowerHead       = icon("shower");
 
+// ── Contractors / Construction ─────────────────────────────────────────────
+export const Engineering      = icon("engineering");
+export const Ruler            = icon("straighten");
+
 // ── Custom brand icons ─────────────────────────────────────────────────────
 export const VeezardIcon = icon("wand_stars");
 
