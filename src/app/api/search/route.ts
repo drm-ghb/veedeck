@@ -12,16 +12,7 @@ export async function GET(req: NextRequest) {
 
   const userId = getWorkspaceUserId(session);
 
-  const [topClients, projects, rooms, renders, lists, contacts, products, folders, tasks, calendarEvents, notes] = await Promise.all([
-    prisma.client.findMany({
-      where: {
-        designerId: userId,
-        archived: false,
-        name: { contains: q, mode: "insensitive" },
-      },
-      select: { id: true, name: true },
-      take: 5,
-    }),
+  const [projects, rooms, renders, lists, clients, products, folders, tasks, calendarEvents, notes] = await Promise.all([
     prisma.project.findMany({
       where: {
         userId,
@@ -68,17 +59,10 @@ export async function GET(req: NextRequest) {
 
     prisma.projectClient.findMany({
       where: {
+        project: { userId, archived: false },
         OR: [
           { name: { contains: q, mode: "insensitive" } },
           { email: { contains: q, mode: "insensitive" } },
-        ],
-        AND: [
-          {
-            OR: [
-              { client: { designerId: userId } },
-              { project: { userId, archived: false } },
-            ],
-          },
         ],
       },
       select: { id: true, name: true, email: true, projectId: true, project: { select: { title: true, slug: true } } },
@@ -176,20 +160,10 @@ export async function GET(req: NextRequest) {
         title: l.name,
         href: l.slug ? `/listy/${l.slug}` : `/listy`,
       })),
-      clients: [
-        ...topClients.map((c) => ({
-          id: c.id,
-          title: c.name,
-          subtitle: "Klient",
-          href: `/klienci/klient/${c.id}`,
-        })),
-        ...contacts.map((c) => ({
-          id: c.id,
-          title: c.name,
-          subtitle: c.email ?? c.project.title,
-          href: `/klienci/${c.project.slug ?? c.projectId}?tab=contacts`,
-        })),
-      ],
+      clients: clients.flatMap((c) => {
+        if (!c.project) return [];
+        return [{ id: c.id, title: c.name, subtitle: c.email ?? c.project.title, href: `/klienci/${c.project.slug ?? c.projectId}?tab=contacts` }];
+      }),
       products: products.map((p) => ({
         id: p.id,
         title: p.name,
