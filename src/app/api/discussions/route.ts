@@ -74,7 +74,8 @@ export async function POST(req: NextRequest) {
     data.type = "project";
   }
 
-  const discussion = await prisma.discussion.create({ data });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const discussion = await prisma.discussion.create({ data: data as any });
 
   return NextResponse.json(discussion, { status: 201 });
 }

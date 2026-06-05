@@ -79,6 +79,13 @@ export default async function ContractorProjectPage({ params }: Props) {
       ...file,
       createdAt: file.createdAt.toISOString(),
     })),
+    subfolders: f.subfolders.map((sub) => ({
+      ...sub,
+      files: sub.files.map((file) => ({
+        ...file,
+        createdAt: file.createdAt.toISOString(),
+      })),
+    })),
   }));
 
   return (

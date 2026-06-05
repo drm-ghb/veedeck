@@ -36,7 +36,7 @@ interface Assignment {
 
 interface ContractorUser {
   id: string;
-  login: string;
+  login: string | null;
   email: string | null;
 }
 

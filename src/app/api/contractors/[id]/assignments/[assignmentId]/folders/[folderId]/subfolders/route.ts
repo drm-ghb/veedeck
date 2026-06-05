@@ -44,7 +44,7 @@ export async function POST(
               renderId: r.renderId,
               name: r.name,
               fileType: r.fileType,
-              uploadedById: session.user.id!,
+              uploadedById: session.user!.id!,
             })),
           }
         : undefined,
