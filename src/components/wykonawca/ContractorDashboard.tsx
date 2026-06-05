@@ -1,7 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { FileText, Image, Ruler, ArrowLeft } from "@/components/ui/icons";
+import { FileText, Image, Ruler, ArrowLeft, Info } from "@/components/ui/icons";
+import { Button } from "@/components/ui/button";
+import ContractorProjectInfoSidebar, { type ProjectInfo } from "./ContractorProjectInfoSidebar";
 
 interface Folder {
   id: string;
@@ -9,6 +12,7 @@ interface Folder {
   type: string;
   visible: boolean;
   totalFiles: number;
+  unreadCount: number;
 }
 
 interface Props {
@@ -16,6 +20,7 @@ interface Props {
   projectTitle: string;
   folders: Folder[];
   hasMultipleProjects: boolean;
+  info: ProjectInfo;
 }
 
 function folderIcon(type: string) {
@@ -24,39 +29,62 @@ function folderIcon(type: string) {
   return <FileText size={32} />;
 }
 
-export default function ContractorDashboard({ assignmentId, projectTitle, folders, hasMultipleProjects }: Props) {
+export default function ContractorDashboard({ assignmentId, projectTitle, folders, hasMultipleProjects, info }: Props) {
+  const [infoOpen, setInfoOpen] = useState(false);
+
   return (
-    <div className="space-y-6 max-w-2xl mx-auto">
-      <div className="flex items-center gap-3">
-        {hasMultipleProjects && (
-          <Link href="/wykonawca" className="text-muted-foreground hover:text-foreground transition-colors">
-            <ArrowLeft size={20} />
-          </Link>
+    <>
+      <div className="space-y-6">
+        <div className="flex items-center gap-3">
+          {hasMultipleProjects && (
+            <Link href="/wykonawca" className="text-muted-foreground hover:text-foreground transition-colors">
+              <ArrowLeft size={20} />
+            </Link>
+          )}
+          <h1 className="text-2xl font-semibold flex-1">{projectTitle}</h1>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setInfoOpen(true)}
+            className="gap-2 shrink-0"
+          >
+            <Info size={15} />
+            Informacje o projekcie
+          </Button>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {folders.map((folder) => (
+            <Link key={folder.id} href={`/wykonawca/projekty/${assignmentId}/foldery/${folder.id}`}>
+              <div className="relative flex flex-col items-center justify-center gap-3 h-44 rounded-2xl border border-border bg-card hover:shadow-[0_4px_16px_rgba(25,33,61,0.2)] hover:border-primary/30 transition-all cursor-pointer text-center">
+                <div className="text-primary">
+                  {folderIcon(folder.type)}
+                </div>
+                <div>
+                  <p className="font-semibold">{folder.name}</p>
+                  <p className="text-sm text-muted-foreground mt-0.5">
+                    {folder.totalFiles === 1 ? "1 plik" : `${folder.totalFiles} plików`}
+                  </p>
+                </div>
+                {folder.unreadCount > 0 && (
+                  <span className="absolute top-3 right-3 w-2.5 h-2.5 rounded-full bg-primary" />
+                )}
+              </div>
+            </Link>
+          ))}
+        </div>
+
+        {folders.length === 0 && (
+          <p className="text-center text-muted-foreground py-12">Brak folderów przypisanych do tego projektu</p>
         )}
-        <h1 className="text-2xl font-semibold">{projectTitle}</h1>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {folders.map((folder) => (
-          <Link key={folder.id} href={`/wykonawca/projekty/${assignmentId}/foldery/${folder.id}`}>
-            <div className="flex flex-col items-center justify-center gap-3 h-44 rounded-2xl border border-border bg-card hover:shadow-[0_4px_16px_rgba(25,33,61,0.2)] hover:border-primary/30 transition-all cursor-pointer text-center">
-              <div className="text-primary">
-                {folderIcon(folder.type)}
-              </div>
-              <div>
-                <p className="font-semibold">{folder.name}</p>
-                <p className="text-sm text-muted-foreground mt-0.5">
-                  {folder.totalFiles === 1 ? "1 plik" : `${folder.totalFiles} plików`}
-                </p>
-              </div>
-            </div>
-          </Link>
-        ))}
-      </div>
-
-      {folders.length === 0 && (
-        <p className="text-center text-muted-foreground py-12">Brak folderów przypisanych do tego projektu</p>
-      )}
-    </div>
+      <ContractorProjectInfoSidebar
+        open={infoOpen}
+        onClose={() => setInfoOpen(false)}
+        projectTitle={projectTitle}
+        info={info}
+      />
+    </>
   );
 }

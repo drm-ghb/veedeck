@@ -5,6 +5,7 @@ import Link from "next/link";
 import { SignOutButton } from "@/components/dashboard/SignOutButton";
 import { Engineering } from "@/components/ui/icons";
 import ContractorChatButton from "@/components/wykonawca/ContractorChatButton";
+import Image from "next/image";
 
 export default async function ContractorLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
@@ -15,10 +16,18 @@ export default async function ContractorLayout({ children }: { children: React.R
 
   const contractor = await prisma.contractor.findFirst({
     where: { userId: session.user.id },
-    select: { id: true, name: true, company: true },
+    select: {
+      id: true,
+      name: true,
+      company: true,
+      designer: { select: { fullName: true, name: true, clientLogoUrl: true } },
+    },
   });
 
   const displayName = contractor?.company || contractor?.name || "Wykonawca";
+  const designer = contractor?.designer;
+  const designerName = designer?.name || designer?.fullName || null;
+  const designerLogo = designer?.clientLogoUrl ?? null;
 
   const assignments = contractor
     ? await prisma.contractorAssignment.findMany({
@@ -30,10 +39,17 @@ export default async function ContractorLayout({ children }: { children: React.R
 
   return (
     <div className="h-dvh flex flex-col bg-muted/60">
-      <nav className="relative z-10 px-4 flex items-center gap-3 py-3 border-b border-border bg-background">
+      <nav className="relative z-10 px-4 flex items-center gap-3 py-3 border-b border-border">
         <Link href="/wykonawca" className="flex items-center gap-2 font-semibold text-foreground">
-          <Engineering size={20} className="text-primary" />
-          <span className="hidden sm:inline">Panel wykonawcy</span>
+          {designerLogo ? (
+            <Image src={designerLogo} alt="Logo" width={28} height={28} className="object-contain rounded" />
+          ) : (
+            <Engineering size={20} className="text-primary" />
+          )}
+          <span className="hidden sm:inline">{designerName ?? "Panel wykonawcy"}</span>
+          {designerName && (
+            <span className="hidden sm:inline text-sm font-normal text-muted-foreground">Panel wykonawcy</span>
+          )}
         </Link>
         <div className="ml-auto flex items-center gap-3">
           <span className="text-sm text-muted-foreground hidden sm:inline">{displayName}</span>
@@ -44,8 +60,13 @@ export default async function ContractorLayout({ children }: { children: React.R
           <SignOutButton />
         </div>
       </nav>
-      <main className="flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-6 py-6 bg-background">
-        {children}
+      <main className="flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-6 py-6 bg-background rounded-tl-2xl flex flex-col">
+        <div className="flex-1">{children}</div>
+        <div className="pt-10 pb-2 flex items-center justify-center gap-1.5 opacity-40 select-none">
+          <span className="text-xs text-muted-foreground">Powered by</span>
+          <Image src="/veedeck_ikona.png" alt="veedeck" width={16} height={16} className="object-contain" />
+          <span className="text-xs text-muted-foreground">veedeck</span>
+        </div>
       </main>
     </div>
   );

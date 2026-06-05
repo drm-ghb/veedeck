@@ -1,9 +1,8 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
-import Link from "next/link";
-import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Engineering } from "@/components/ui/icons";
+import ContractorProjectCards from "@/components/wykonawca/ContractorProjectCards";
 
 export default async function ContractorHomePage() {
   const session = await auth();
@@ -25,9 +24,46 @@ export default async function ContractorHomePage() {
 
   const assignments = await prisma.contractorAssignment.findMany({
     where: { contractorId: contractor.id, archived: false },
-    include: {
+    select: {
+      id: true,
+      createdAt: true,
+      investmentStreet: true,
+      investmentCity: true,
+      investmentPostalCode: true,
+      investmentCountry: true,
+      designerContactName: true,
+      designerContactPhone: true,
+      investorContactName: true,
+      investorContactPhone: true,
+      projectNotes: true,
       project: { select: { id: true, title: true } },
-      contractor: { include: { designer: { select: { name: true, fullName: true } } } },
+      contractor: { select: { designer: { select: { name: true, fullName: true } } } },
+      folders: {
+        select: {
+          files: {
+            select: {
+              comments: {
+                select: {
+                  _count: { select: { replies: { where: { viewedByContractor: false } } } },
+                },
+              },
+            },
+          },
+          subfolders: {
+            select: {
+              files: {
+                select: {
+                  comments: {
+                    select: {
+                      _count: { select: { replies: { where: { viewedByContractor: false } } } },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     },
     orderBy: { createdAt: "desc" },
   });
@@ -46,27 +82,46 @@ export default async function ContractorHomePage() {
     redirect(`/wykonawca/projekty/${assignments[0].id}`);
   }
 
+  const cards = assignments.map((a) => {
+    const unreadCount = a.folders.reduce((sum, f) => {
+      const directUnread = f.files.reduce(
+        (s, file) => s + file.comments.reduce((s2, c) => s2 + c._count.replies, 0),
+        0
+      );
+      const subUnread = f.subfolders.reduce(
+        (s, sub) => s + sub.files.reduce(
+          (s2, file) => s2 + file.comments.reduce((s3, c) => s3 + c._count.replies, 0),
+          0
+        ),
+        0
+      );
+      return sum + directUnread + subUnread;
+    }, 0);
+
+    return {
+      assignmentId: a.id,
+      projectTitle: a.project.title,
+      designerName: a.contractor.designer.name ?? a.contractor.designer.fullName ?? "Projektant",
+      createdAt: a.createdAt.toISOString(),
+      unreadCount,
+      info: {
+        investmentStreet: a.investmentStreet,
+        investmentCity: a.investmentCity,
+        investmentPostalCode: a.investmentPostalCode,
+        investmentCountry: a.investmentCountry,
+        designerContactName: a.designerContactName,
+        designerContactPhone: a.designerContactPhone,
+        investorContactName: a.investorContactName,
+        investorContactPhone: a.investorContactPhone,
+        projectNotes: a.projectNotes,
+      },
+    };
+  });
+
   return (
-    <div className="space-y-6 max-w-2xl mx-auto">
+    <div className="space-y-6">
       <h1 className="text-2xl font-semibold">Moje projekty</h1>
-      <div className="grid gap-3">
-        {assignments.map((a) => {
-          const designerName = a.contractor.designer.fullName ?? a.contractor.designer.name ?? "Projektant";
-          return (
-            <Link key={a.id} href={`/wykonawca/projekty/${a.id}`}>
-              <Card className="hover:shadow-[0_4px_16px_rgba(25,33,61,0.2)] hover:border-primary/30 transition-all cursor-pointer">
-                <CardHeader>
-                  <CardTitle className="text-base">{a.project.title}</CardTitle>
-                  <p className="text-sm text-muted-foreground">{designerName}</p>
-                  <p className="text-xs text-muted-foreground">
-                    Przypisano: {new Date(a.createdAt).toLocaleDateString("pl-PL")}
-                  </p>
-                </CardHeader>
-              </Card>
-            </Link>
-          );
-        })}
-      </div>
+      <ContractorProjectCards cards={cards} />
     </div>
   );
 }

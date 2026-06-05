@@ -18,5 +18,36 @@ export default async function WykonawcyPage() {
     orderBy: { createdAt: "desc" },
   });
 
-  return <WykonawcyView contractors={contractors} />;
+  // Compute unread comment counts per contractor
+  const unreadPerContractor: Record<string, number> = {};
+  if (contractors.length > 0) {
+    const contractorIds = contractors.map((c) => c.id);
+    const unreadData = await prisma.contractorFileComment.findMany({
+      where: {
+        viewedByDesigner: false,
+        file: {
+          folder: {
+            assignment: { contractorId: { in: contractorIds } },
+          },
+        },
+      },
+      select: {
+        file: {
+          select: {
+            folder: {
+              select: {
+                assignment: { select: { contractorId: true } },
+              },
+            },
+          },
+        },
+      },
+    });
+    for (const item of unreadData) {
+      const cid = item.file.folder.assignment.contractorId;
+      unreadPerContractor[cid] = (unreadPerContractor[cid] ?? 0) + 1;
+    }
+  }
+
+  return <WykonawcyView contractors={contractors} unreadPerContractor={unreadPerContractor} />;
 }

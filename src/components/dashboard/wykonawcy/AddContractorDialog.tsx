@@ -83,7 +83,7 @@ export default function AddContractorDialog({ open, onOpenChange, onCreated }: P
             <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Jan Kowalski" />
           </div>
           <div className="space-y-1">
-            <Label>Specjalność</Label>
+            <Label>Specjalizacja</Label>
             <select
               value={trade}
               onChange={(e) => setTrade(e.target.value)}

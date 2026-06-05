@@ -908,6 +908,16 @@ model ContractorAssignment {
   designerId   String
   archived     Boolean    @default(false)
   createdAt    DateTime   @default(now())
+  // Project info visible to contractor
+  investmentStreet      String?
+  investmentCity        String?
+  investmentPostalCode  String?
+  investmentCountry     String?
+  designerContactName   String?
+  designerContactPhone  String?
+  investorContactName   String?
+  investorContactPhone  String?
+  projectNotes          String?
   folders      ContractorFolder[]
   discussion   Discussion?
 
@@ -930,15 +940,39 @@ model ContractorFolder {
 }
 
 model ContractorFile {
-  id           String           @id @default(cuid())
+  id           String                  @id @default(cuid())
   folderId     String
-  folder       ContractorFolder @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  folder       ContractorFolder        @relation(fields: [folderId], references: [id], onDelete: Cascade)
   name         String
   renderId     String?
-  render       Render?          @relation(fields: [renderId], references: [id], onDelete: SetNull)
+  render       Render?                 @relation(fields: [renderId], references: [id], onDelete: SetNull)
   fileUrl      String?
   fileKey      String?
-  fileType     String           @default("image")
+  fileType     String                  @default("image")
   uploadedById String
-  createdAt    DateTime         @default(now())
+  createdAt    DateTime                @default(now())
+  comments     ContractorFileComment[]
+}
+
+model ContractorFileComment {
+  id               String                 @id @default(cuid())
+  content          String
+  author           String
+  authorRole       String                 @default("contractor") // "contractor" | "designer"
+  createdAt        DateTime               @default(now())
+  fileId           String
+  viewedByDesigner Boolean                @default(false)
+  file             ContractorFile         @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  replies          ContractorFileReply[]
+}
+
+model ContractorFileReply {
+  id                 String                @id @default(cuid())
+  content            String
+  author             String
+  authorRole         String                @default("designer") // "contractor" | "designer"
+  createdAt          DateTime              @default(now())
+  commentId          String
+  viewedByContractor Boolean               @default(false)
+  comment            ContractorFileComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
 }

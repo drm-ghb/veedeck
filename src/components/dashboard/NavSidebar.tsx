@@ -42,6 +42,7 @@ export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userI
   const [helpSent, setHelpSent] = useState(false);
 
   const [discussionUnread, setDiscussionUnread] = useState(0);
+  const [contractorUnread, setContractorUnread] = useState(0);
   const pusherRef = useRef<Pusher | null>(null);
   const pathnameRef = useRef(pathname);
 
@@ -96,7 +97,7 @@ export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userI
           channel.bind("new-message", handleNewMessage);
         });
 
-        // Subscribe to user-level channel to detect new discussions created while page is open
+        // Subscribe to user-level channel to detect new discussions and contractor comments
         if (userId) {
           const userChannel = pusherRef.current!.subscribe(`user-${userId}`);
           userChannel.bind("new-discussion", (data: { discussionId: string; hasMessage?: boolean }) => {
@@ -112,6 +113,11 @@ export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userI
               });
             }
           });
+          userChannel.bind("contractor-comment-unread", () => {
+            if (!pathnameRef.current.startsWith("/wykonawcy")) {
+              setContractorUnread((prev) => prev + 1);
+            }
+          });
         }
       })
       .catch(() => {});
@@ -122,12 +128,27 @@ export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userI
     };
   }, []);
 
+  // Fetch initial contractor unread count
+  useEffect(() => {
+    fetch("/api/contractor-file-comments/unread-count")
+      .then((r) => r.json())
+      .then((data) => setContractorUnread(data.count ?? 0))
+      .catch(() => {});
+  }, []);
+
+  // Reset contractor badge when on /wykonawcy
+  useEffect(() => {
+    if (pathname.startsWith("/wykonawcy")) {
+      setContractorUnread(0);
+    }
+  }, [pathname]);
+
   const items = [
     { label: t.nav.dashboard, href: "/dashboard", icon: <LayoutDashboard size={18} />, slug: null, badge: 0, matchPrefixes: [] as string[] },
     { label: t.nav.projects, href: "/klienci", icon: <Users size={18} />, slug: null, badge: 0, matchPrefixes: [] as string[] },
     { label: t.nav.renderflow, href: "/renderflow", icon: <PushPin size={18} />, slug: "renderflow", badge: 0, matchPrefixes: ["/projects/"] },
     { label: t.nav.lists, href: "/listy", icon: <LocalMall size={18} />, slug: "listy", badge: 0, matchPrefixes: [] as string[] },
-    { label: "Wykonawcy", href: "/wykonawcy", icon: <Engineering size={18} />, slug: null, badge: 0, matchPrefixes: [] as string[] },
+    { label: "Wykonawcy", href: "/wykonawcy", icon: <Engineering size={18} />, slug: null, badge: contractorUnread, matchPrefixes: [] as string[] },
     { label: t.nav.tasks, href: "/zadania", icon: <CheckSquare size={18} />, slug: null, badge: 0, matchPrefixes: [] as string[] },
     { label: t.nav.surveys, href: "/ankiety", icon: <ClipboardList size={18} />, slug: null, badge: 0, matchPrefixes: [] as string[] },
     { label: t.nav.products, href: "/produkty", icon: <Package size={18} />, slug: "produkty", badge: 0, matchPrefixes: [] as string[] },

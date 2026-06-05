@@ -4,13 +4,24 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Check } from "@/components/ui/icons";
 
 interface ClientOption {
   id: string;
   name: string;
+  addressStreet?: string | null;
+  addressCity?: string | null;
+  addressPostalCode?: string | null;
+  addressCountry?: string | null;
+  mainContact?: { name: string; phone?: string | null } | null;
   projects: { id: string; title: string }[];
+}
+
+interface DesignerInfo {
+  name: string | null;
+  phone: string | null;
 }
 
 interface Props {
@@ -21,25 +32,69 @@ interface Props {
 }
 
 export default function AssignProjectDialog({ open, onOpenChange, contractorId, onAssigned }: Props) {
+  const [designer, setDesigner] = useState<DesignerInfo | null>(null);
   const [clients, setClients] = useState<ClientOption[]>([]);
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const [projectId, setProjectId] = useState("");
   const [loadingClients, setLoadingClients] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // Step 3 fields
+  const [investmentStreet, setInvestmentStreet] = useState("");
+  const [investmentCity, setInvestmentCity] = useState("");
+  const [investmentPostalCode, setInvestmentPostalCode] = useState("");
+  const [investmentCountry, setInvestmentCountry] = useState("");
+  const [designerContactName, setDesignerContactName] = useState("");
+  const [designerContactPhone, setDesignerContactPhone] = useState("");
+  const [investorContactName, setInvestorContactName] = useState("");
+  const [investorContactPhone, setInvestorContactPhone] = useState("");
+  const [projectNotes, setProjectNotes] = useState("");
+
   useEffect(() => {
     if (!open) return;
     setLoadingClients(true);
     fetch("/api/projects/clients")
       .then((r) => r.json())
-      .then((data) => setClients(Array.isArray(data) ? data : []))
+      .then((data) => {
+        setDesigner(data.designer ?? null);
+        setClients(Array.isArray(data.clients) ? data.clients : []);
+      })
       .catch(() => setClients([]))
       .finally(() => setLoadingClients(false));
   }, [open]);
 
+  // Auto-populate designer fields when designer data loads
+  useEffect(() => {
+    if (designer) {
+      setDesignerContactName(designer.name ?? "");
+      setDesignerContactPhone(designer.phone ?? "");
+    }
+  }, [designer]);
+
+  // Auto-populate address + investor when client is selected
+  function selectClient(client: ClientOption) {
+    setSelectedClientId(client.id);
+    setProjectId("");
+    setInvestmentStreet(client.addressStreet ?? "");
+    setInvestmentCity(client.addressCity ?? "");
+    setInvestmentPostalCode(client.addressPostalCode ?? "");
+    setInvestmentCountry(client.addressCountry ?? "");
+    setInvestorContactName(client.mainContact?.name ?? "");
+    setInvestorContactPhone(client.mainContact?.phone ?? "");
+  }
+
   function reset() {
     setProjectId("");
     setSelectedClientId(null);
+    setInvestmentStreet("");
+    setInvestmentCity("");
+    setInvestmentPostalCode("");
+    setInvestmentCountry("");
+    setDesignerContactName("");
+    setDesignerContactPhone("");
+    setInvestorContactName("");
+    setInvestorContactPhone("");
+    setProjectNotes("");
   }
 
   const selectedClient = clients.find((c) => c.id === selectedClientId) ?? null;
@@ -55,7 +110,18 @@ export default function AssignProjectDialog({ open, onOpenChange, contractorId, 
       const res = await fetch(`/api/contractors/${contractorId}/assignments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ projectId }),
+        body: JSON.stringify({
+          projectId,
+          investmentStreet: investmentStreet.trim() || null,
+          investmentCity: investmentCity.trim() || null,
+          investmentPostalCode: investmentPostalCode.trim() || null,
+          investmentCountry: investmentCountry.trim() || null,
+          designerContactName: designerContactName.trim() || null,
+          designerContactPhone: designerContactPhone.trim() || null,
+          investorContactName: investorContactName.trim() || null,
+          investorContactPhone: investorContactPhone.trim() || null,
+          projectNotes: projectNotes.trim() || null,
+        }),
       });
       if (!res.ok) {
         const data = await res.json();
@@ -73,13 +139,13 @@ export default function AssignProjectDialog({ open, onOpenChange, contractorId, 
 
   return (
     <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (!v) reset(); }}>
-      <DialogContent>
+      <DialogContent className="max-h-[90vh] max-w-lg flex flex-col">
         <DialogHeader>
           <DialogTitle>Przypisz projekt do wykonawcy</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
-          {/* Step 1: wybierz klienta */}
+        <div className="space-y-4 overflow-y-auto flex-1 pr-1">
+          {/* Krok 1: klient */}
           <div className="space-y-2">
             <Label>1. Wybierz klienta</Label>
             {loadingClients ? (
@@ -96,7 +162,7 @@ export default function AssignProjectDialog({ open, onOpenChange, contractorId, 
                   <button
                     key={client.id}
                     type="button"
-                    onClick={() => { setSelectedClientId(client.id); setProjectId(""); }}
+                    onClick={() => selectClient(client)}
                     className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${
                       selectedClientId === client.id
                         ? "bg-primary/10 text-foreground"
@@ -113,7 +179,7 @@ export default function AssignProjectDialog({ open, onOpenChange, contractorId, 
             )}
           </div>
 
-          {/* Step 2: wybierz projekt (tylko po wybraniu klienta) */}
+          {/* Krok 2: projekt */}
           {selectedClientId && (
             <div className="space-y-2">
               <Label>2. Wybierz projekt</Label>
@@ -135,6 +201,80 @@ export default function AssignProjectDialog({ open, onOpenChange, contractorId, 
                     )}
                   </button>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* Krok 3: informacje o projekcie */}
+          {projectId && (
+            <div className="space-y-4 border-t border-border pt-4">
+              <Label>3. Informacje o projekcie</Label>
+
+              <div className="space-y-3">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Adres inwestycji</p>
+                <div className="space-y-2">
+                  <Input
+                    value={investmentStreet}
+                    onChange={(e) => setInvestmentStreet(e.target.value)}
+                    placeholder="Ulica i numer"
+                  />
+                  <div className="grid grid-cols-2 gap-2">
+                    <Input
+                      value={investmentPostalCode}
+                      onChange={(e) => setInvestmentPostalCode(e.target.value)}
+                      placeholder="Kod pocztowy"
+                    />
+                    <Input
+                      value={investmentCity}
+                      onChange={(e) => setInvestmentCity(e.target.value)}
+                      placeholder="Miasto"
+                    />
+                  </div>
+                  <Input
+                    value={investmentCountry}
+                    onChange={(e) => setInvestmentCountry(e.target.value)}
+                    placeholder="Kraj"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Kontakt do projektanta</p>
+                <Input
+                  value={designerContactName}
+                  onChange={(e) => setDesignerContactName(e.target.value)}
+                  placeholder="Imię i nazwisko"
+                />
+                <Input
+                  value={designerContactPhone}
+                  onChange={(e) => setDesignerContactPhone(e.target.value)}
+                  placeholder="Nr telefonu"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Kontakt do inwestora</p>
+                <Input
+                  value={investorContactName}
+                  onChange={(e) => setInvestorContactName(e.target.value)}
+                  placeholder="Imię i nazwisko"
+                />
+                <Input
+                  value={investorContactPhone}
+                  onChange={(e) => setInvestorContactPhone(e.target.value)}
+                  placeholder="Nr telefonu"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Opis (opcjonalne)</p>
+                <textarea
+                  value={projectNotes}
+                  onChange={(e) => setProjectNotes(e.target.value)}
+                  placeholder="Dodatkowe informacje dla wykonawcy…"
+                  rows={3}
+                  className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
+                />
               </div>
             </div>
           )}

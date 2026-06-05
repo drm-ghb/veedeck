@@ -23,13 +23,27 @@ export default async function ContractorProjectPage({ params }: Props) {
 
   const assignment = await prisma.contractorAssignment.findFirst({
     where: { id: assignmentId, contractorId: contractor.id, archived: false },
-    include: {
+    select: {
+      id: true,
+      investmentStreet: true,
+      investmentCity: true,
+      investmentPostalCode: true,
+      investmentCountry: true,
+      designerContactName: true,
+      designerContactPhone: true,
+      investorContactName: true,
+      investorContactPhone: true,
+      projectNotes: true,
       project: { select: { id: true, title: true } },
       folders: {
         where: { visible: true, parentId: null, type: { in: ["rysunki", "wizualizacje", "dokumenty"] } },
-        include: {
+        select: {
+          id: true,
+          name: true,
+          type: true,
+          visible: true,
           _count: { select: { files: true } },
-          subfolders: { include: { _count: { select: { files: true } } } },
+          subfolders: { select: { id: true, _count: { select: { files: true } } } },
         },
         orderBy: { order: "asc" },
       },
@@ -41,12 +55,36 @@ export default async function ContractorProjectPage({ params }: Props) {
     where: { contractorId: contractor.id, archived: false },
   });
 
+  // Compute unread reply counts per top-level folder
+  const topFolderIds = assignment.folders.map((f) => f.id);
+  const allSubfolderIds = assignment.folders.flatMap((f) => f.subfolders.map((s) => s.id));
+  const subToParent: Record<string, string> = {};
+  for (const f of assignment.folders) {
+    for (const s of f.subfolders) subToParent[s.id] = f.id;
+  }
+
+  const unreadReplies = await prisma.contractorFileReply.findMany({
+    where: {
+      viewedByContractor: false,
+      comment: { file: { folderId: { in: [...topFolderIds, ...allSubfolderIds] } } },
+    },
+    select: { comment: { select: { file: { select: { folderId: true } } } } },
+  });
+
+  const folderUnreadCounts: Record<string, number> = {};
+  for (const reply of unreadReplies) {
+    const fid = reply.comment.file.folderId;
+    const topId = subToParent[fid] ?? fid;
+    folderUnreadCounts[topId] = (folderUnreadCounts[topId] ?? 0) + 1;
+  }
+
   const folders = assignment.folders.map((f) => ({
     id: f.id,
     name: f.name,
     type: f.type,
     visible: f.visible,
     totalFiles: f._count.files + f.subfolders.reduce((sum, sub) => sum + sub._count.files, 0),
+    unreadCount: folderUnreadCounts[f.id] ?? 0,
   }));
 
   return (
@@ -55,6 +93,17 @@ export default async function ContractorProjectPage({ params }: Props) {
       projectTitle={assignment.project.title}
       folders={folders}
       hasMultipleProjects={totalAssignments > 1}
+      info={{
+        investmentStreet: assignment.investmentStreet,
+        investmentCity: assignment.investmentCity,
+        investmentPostalCode: assignment.investmentPostalCode,
+        investmentCountry: assignment.investmentCountry,
+        designerContactName: assignment.designerContactName,
+        designerContactPhone: assignment.designerContactPhone,
+        investorContactName: assignment.investorContactName,
+        investorContactPhone: assignment.investorContactPhone,
+        projectNotes: assignment.projectNotes,
+      }}
     />
   );
 }

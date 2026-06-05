@@ -81,7 +81,7 @@ export default function EditContractorDialog({ open, onOpenChange, contractor, o
             <Input value={company} onChange={(e) => setCompany(e.target.value)} />
           </div>
           <div className="space-y-1">
-            <Label>Specjalność</Label>
+            <Label>Specjalizacja</Label>
             <select
               value={trade}
               onChange={(e) => setTrade(e.target.value)}

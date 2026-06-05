@@ -21,7 +21,7 @@ interface Contractor {
 
 type SortOption = "newest" | "oldest" | "az" | "za";
 
-export default function WykonawcyView({ contractors }: { contractors: Contractor[] }) {
+export default function WykonawcyView({ contractors, unreadPerContractor = {} }: { contractors: Contractor[]; unreadPerContractor?: Record<string, number> }) {
   const router = useRouter();
   const [addOpen, setAddOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -58,7 +58,7 @@ export default function WykonawcyView({ contractors }: { contractors: Contractor
               : `${contractors.length} wykonawc${contractors.length === 1 ? "a" : contractors.length < 5 ? "ów" : "ów"}`}
           </p>
         </div>
-        <Button onClick={() => setAddOpen(true)} className="gap-2 self-start">
+        <Button onClick={() => setAddOpen(true)} className="gap-2 sm:self-start">
           <Plus size={16} />
           Dodaj wykonawcę
         </Button>
@@ -144,11 +144,12 @@ export default function WykonawcyView({ contractors }: { contractors: Contractor
               company={c.company}
               trade={c.trade}
               activeAssignments={c._count.assignments}
+              unreadCount={unreadPerContractor[c.id] ?? 0}
             />
           ))}
         </div>
       ) : (
-        <ContractorListView contractors={filtered} onDeleted={() => router.refresh()} />
+        <ContractorListView contractors={filtered} unreadPerContractor={unreadPerContractor} onDeleted={() => router.refresh()} />
       )}
 
       <AddContractorDialog
@@ -160,7 +161,7 @@ export default function WykonawcyView({ contractors }: { contractors: Contractor
   );
 }
 
-function ContractorListView({ contractors, onDeleted }: { contractors: Contractor[]; onDeleted: () => void }) {
+function ContractorListView({ contractors, unreadPerContractor = {}, onDeleted }: { contractors: Contractor[]; unreadPerContractor?: Record<string, number>; onDeleted: () => void }) {
   const router = useRouter();
 
   async function handleDelete(id: string, name: string) {
@@ -176,9 +177,10 @@ function ContractorListView({ contractors, onDeleted }: { contractors: Contracto
 
   return (
     <div className="bg-card border border-border rounded-xl overflow-hidden">
-      <div className="hidden sm:grid grid-cols-[1fr_160px_140px_80px] gap-4 px-5 py-3 bg-muted/50 border-b border-border text-xs font-medium text-muted-foreground uppercase tracking-wide">
+      <div className="hidden sm:grid grid-cols-[1fr_180px_160px_140px_80px] gap-4 px-5 py-3 bg-muted/50 border-b border-border text-xs font-medium text-muted-foreground uppercase tracking-wide">
         <span>Firma / Wykonawca</span>
-        <span>Specjalność</span>
+        <span></span>
+        <span>Specjalizacja</span>
         <span>Projekty</span>
         <span className="text-right">Akcje</span>
       </div>
@@ -186,7 +188,7 @@ function ContractorListView({ contractors, onDeleted }: { contractors: Contracto
         <div
           key={c.id}
           onClick={() => router.push(`/wykonawcy/${c.id}`)}
-          className={`grid grid-cols-[1fr_auto] sm:grid-cols-[1fr_160px_140px_80px] gap-4 px-5 py-4 items-center hover:bg-muted/30 transition-colors cursor-pointer ${i !== contractors.length - 1 ? "border-b border-border" : ""}`}
+          className={`grid grid-cols-[1fr_auto] sm:grid-cols-[1fr_180px_160px_140px_80px] gap-4 px-5 py-4 items-center hover:bg-muted/30 transition-colors cursor-pointer ${i !== contractors.length - 1 ? "border-b border-border" : ""}`}
         >
           <div className="min-w-0">
             <p className="font-semibold text-gray-900 dark:text-gray-100 truncate">
@@ -197,17 +199,25 @@ function ContractorListView({ contractors, onDeleted }: { contractors: Contracto
             )}
           </div>
           <div className="hidden sm:block">
+            {(unreadPerContractor[c.id] ?? 0) > 0 && (
+              <Badge variant="default" className="text-xs whitespace-nowrap">
+                Nieprzeczytane: {unreadPerContractor[c.id]}
+              </Badge>
+            )}
+          </div>
+          <div className="hidden sm:block">
             {c.trade
               ? <Badge variant="secondary" className="text-xs">{c.trade}</Badge>
               : <span className="text-xs text-muted-foreground">—</span>
             }
           </div>
           <div className="hidden sm:block">
-            <Badge
-              variant={c._count.assignments > 0 ? "default" : "secondary"}
-              className="text-xs"
-            >
-              {c._count.assignments === 1 ? "1 projekt" : `${c._count.assignments} projektów`}
+            <Badge variant="secondary" className="text-xs">
+              {c._count.assignments === 1
+                ? "1 projekt"
+                : (c._count.assignments % 10 >= 2 && c._count.assignments % 10 <= 4 && !(c._count.assignments % 100 >= 12 && c._count.assignments % 100 <= 14))
+                ? `${c._count.assignments} projekty`
+                : `${c._count.assignments} projektów`}
             </Badge>
           </div>
           <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>

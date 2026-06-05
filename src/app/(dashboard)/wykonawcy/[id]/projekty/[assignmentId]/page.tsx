@@ -50,6 +50,27 @@ export default async function ContractorProjectPage({ params }: Props) {
   });
   if (!assignment) notFound();
 
+  // Comment counts per file (total + unread)
+  const allComments = await prisma.contractorFileComment.findMany({
+    where: { file: { folder: { assignmentId } } },
+    select: { fileId: true, viewedByDesigner: true },
+  });
+  const unreadPerFile: Record<string, number> = {};
+  const totalPerFile: Record<string, number> = {};
+  for (const c of allComments) {
+    totalPerFile[c.fileId] = (totalPerFile[c.fileId] ?? 0) + 1;
+    if (!c.viewedByDesigner) {
+      unreadPerFile[c.fileId] = (unreadPerFile[c.fileId] ?? 0) + 1;
+    }
+  }
+
+  // Designer display name
+  const designerUser = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { fullName: true, name: true },
+  });
+  const designerName = designerUser?.fullName || designerUser?.name || "Projektant";
+
   const rooms = await prisma.room.findMany({
     where: { projectId: assignment.project.id, archived: false },
     include: {
@@ -97,6 +118,20 @@ export default async function ContractorProjectPage({ params }: Props) {
       projectId={assignment.project.id}
       folders={serializedFolders}
       rooms={rooms}
+      unreadPerFile={unreadPerFile}
+      totalPerFile={totalPerFile}
+      designerName={designerName}
+      info={{
+        investmentStreet: assignment.investmentStreet,
+        investmentCity: assignment.investmentCity,
+        investmentPostalCode: assignment.investmentPostalCode,
+        investmentCountry: assignment.investmentCountry,
+        designerContactName: assignment.designerContactName,
+        designerContactPhone: assignment.designerContactPhone,
+        investorContactName: assignment.investorContactName,
+        investorContactPhone: assignment.investorContactPhone,
+        projectNotes: assignment.projectNotes,
+      }}
     />
   );
 }

@@ -4,13 +4,16 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
-import { Eye, EyeOff, Plus, FileText, Image, Ruler, Trash2, ChevronLeft, ChevronDown, ChevronRight, Download, FolderPlus, Pencil, Check, X, CheckSquare, GripVertical } from "@/components/ui/icons";
+import { Eye, EyeOff, Plus, FileText, Image, Ruler, Trash2, ChevronLeft, ChevronDown, ChevronRight, Download, FolderPlus, Pencil, Check, X, CheckSquare, GripVertical, Info, MessageSquare, MoreHorizontal } from "@/components/ui/icons";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import ContractorFileCommentPanel from "@/components/wykonawca/ContractorFileCommentPanel";
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, arrayMove, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import AddContractorFileDialog from "./AddContractorFileDialog";
+import EditProjectInfoDialog, { type ProjectInfoData } from "./EditProjectInfoDialog";
 
 interface ContractorFile {
   id: string;
@@ -66,6 +69,10 @@ interface Props {
   projectId: string;
   folders: ContractorFolder[];
   rooms: Room[];
+  info: ProjectInfoData;
+  unreadPerFile?: Record<string, number>;
+  totalPerFile?: Record<string, number>;
+  designerName?: string;
 }
 
 function SortableSubfolderWrapper({ id, children }: { id: string; children: (dragHandleProps: { ref: (el: HTMLElement | null) => void; style: React.CSSProperties; dragListeners: object | undefined; dragAttributes: object | undefined }) => React.ReactNode }) {
@@ -82,12 +89,15 @@ function SortableSubfolderWrapper({ id, children }: { id: string; children: (dra
   );
 }
 
-function FileRow({ file, onDelete, bulkMode, selected, onSelect }: {
+function FileRow({ file, onDelete, bulkMode, selected, onSelect, unreadCount = 0, totalCount = 0, onCommentClick }: {
   file: ContractorFile;
   onDelete: () => void;
   bulkMode?: boolean;
   selected?: boolean;
   onSelect?: () => void;
+  unreadCount?: number;
+  totalCount?: number;
+  onCommentClick?: () => void;
 }) {
   const displayUrl = file.render?.fileUrl ?? file.fileUrl ?? null;
   const displayName = file.name;
@@ -117,6 +127,18 @@ function FileRow({ file, onDelete, bulkMode, selected, onSelect }: {
         <p className="text-xs text-muted-foreground">{new Date(file.createdAt).toLocaleDateString("pl-PL")}</p>
       </div>
       <div className="flex items-center gap-1 shrink-0">
+        <button
+          onClick={onCommentClick}
+          className={`relative p-1.5 rounded-lg hover:bg-muted transition-colors ${unreadCount > 0 ? "text-primary hover:text-primary/80" : "text-muted-foreground hover:text-foreground"}`}
+          title="Komentarze"
+        >
+          <MessageSquare size={15} />
+          {totalCount > 0 && (
+            <span className={`absolute -top-1 -right-1 min-w-[14px] h-3.5 px-0.5 text-[9px] font-bold rounded-full flex items-center justify-center leading-none transition-colors ${unreadCount > 0 ? "bg-primary text-primary-foreground" : "bg-muted-foreground/40 text-white"}`}>
+              {(unreadCount > 0 ? unreadCount : totalCount) > 99 ? "99+" : (unreadCount > 0 ? unreadCount : totalCount)}
+            </span>
+          )}
+        </button>
         {displayUrl && (
           <a href={displayUrl} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground" title="Pobierz">
             <Download size={15} />
@@ -136,12 +158,58 @@ function folderIcon(type: string) {
   return <FileText size={20} />;
 }
 
+function folderUnreadTotal(folder: ContractorFolder, unreadCounts: Record<string, number>): number {
+  let total = folder.files.reduce((s, f) => s + (unreadCounts[f.id] ?? 0), 0);
+  for (const sub of folder.subfolders) {
+    total += sub.files.reduce((s, f) => s + (unreadCounts[f.id] ?? 0), 0);
+  }
+  return total;
+}
+
+function subfolderUnreadTotal(sub: ContractorSubfolder, unreadCounts: Record<string, number>): number {
+  return sub.files.reduce((s, f) => s + (unreadCounts[f.id] ?? 0), 0);
+}
+
 export default function ContractorProjectView({
-  contractorId, contractorName, assignmentId, projectTitle, projectId, folders, rooms,
+  contractorId, contractorName, assignmentId, projectTitle, projectId, folders, rooms, info,
+  unreadPerFile = {}, totalPerFile = {}, designerName = "Projektant",
 }: Props) {
   const router = useRouter();
-  const [expandedFolder, setExpandedFolder] = useState<string | null>(null);
-  const [expandedSubfolder, setExpandedSubfolder] = useState<string | null>(null);
+  const [infoOpen, setInfoOpen] = useState(false);
+  const [commentFile, setCommentFile] = useState<{ id: string; name: string; thumbnailUrl?: string | null } | null>(null);
+  const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>(unreadPerFile);
+
+  function openComments(fileId: string, fileName: string, thumbnailUrl?: string | null) {
+    setCommentFile({ id: fileId, name: fileName, thumbnailUrl });
+    if ((unreadCounts[fileId] ?? 0) > 0) {
+      setUnreadCounts((prev) => ({ ...prev, [fileId]: 0 }));
+      fetch("/api/contractor-file-comments/mark-read", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fileId, role: "designer" }),
+      }).catch(() => {});
+    }
+  }
+  // Auto-expand folders/subfolders with unread on mount
+  const firstUnreadFolderId = (() => {
+    for (const folder of folders) {
+      const hasDirect = folder.files.some((f) => (unreadPerFile[f.id] ?? 0) > 0);
+      const hasSub = folder.subfolders.some((sub) => sub.files.some((f) => (unreadPerFile[f.id] ?? 0) > 0));
+      if (hasDirect || hasSub) return folder.id;
+    }
+    return null;
+  })();
+  const firstUnreadSubfolderId = (() => {
+    for (const folder of folders) {
+      for (const sub of folder.subfolders) {
+        if (sub.files.some((f) => (unreadPerFile[f.id] ?? 0) > 0)) return sub.id;
+      }
+    }
+    return null;
+  })();
+
+  const [expandedFolder, setExpandedFolder] = useState<string | null>(firstUnreadFolderId);
+  const [expandedSubfolder, setExpandedSubfolder] = useState<string | null>(firstUnreadSubfolderId);
   const [addFileDialog, setAddFileDialog] = useState<string | null>(null);
   const [addFileSubfolder, setAddFileSubfolder] = useState<string | null>(null);
   const [newFolderParentId, setNewFolderParentId] = useState<string | null>(null);
@@ -293,6 +361,7 @@ export default function ContractorProjectView({
   }
 
   return (
+    <>
     <div className="space-y-6">
       <div className="flex items-center gap-2">
         <Link href={`/wykonawcy/${contractorId}`} className="text-muted-foreground hover:text-foreground transition-colors">
@@ -307,11 +376,17 @@ export default function ContractorProjectView({
         </nav>
       </div>
 
-      <h1 className="text-2xl font-semibold">{projectTitle}</h1>
+      <div className="flex items-center gap-3">
+        <h1 className="text-2xl font-semibold flex-1">{projectTitle}</h1>
+        <Button variant="outline" size="sm" onClick={() => setInfoOpen(true)} className="gap-2 shrink-0">
+          <Info size={15} />
+          Informacje o projekcie
+        </Button>
+      </div>
 
       <div className="space-y-3">
         {folders.filter((f) => ["rysunki", "wizualizacje", "dokumenty"].includes(f.type)).map((folder) => (
-          <div key={folder.id} className="border border-border rounded-xl overflow-hidden">
+          <div key={folder.id} className={`border border-border rounded-xl overflow-hidden transition-all ${expandedFolder === folder.id ? "border-l-2 border-l-primary" : ""}`}>
             <div className="flex items-center gap-3 p-4">
               <div className={`text-muted-foreground ${folder.visible ? "" : "opacity-40"}`}>
                 {folderIcon(folder.type)}
@@ -323,11 +398,13 @@ export default function ContractorProjectView({
                 </div>
                 <p className="text-xs text-muted-foreground">{folder._count.files + folder.subfolders.reduce((s, sub) => s + sub._count.files, 0)} plików</p>
               </div>
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center gap-1 shrink-0">
+                {(() => { const u = folderUnreadTotal(folder, unreadCounts); return u > 0 ? <Badge variant="default" className="text-xs">Nieprzeczytane: {u}</Badge> : null; })()}
                 {bulkFolderId === folder.id && selectedFileIds.length > 0 && (
                   <Button size="sm" variant="destructive" onClick={() => deleteSelected(folder.id)} className="gap-1.5">
                     <Trash2 size={14} />
-                    Usuń ({selectedFileIds.length})
+                    <span className="hidden sm:inline">Usuń ({selectedFileIds.length})</span>
+                    <span className="sm:hidden">{selectedFileIds.length}</span>
                   </Button>
                 )}
                 <button
@@ -344,29 +421,32 @@ export default function ContractorProjectView({
                 >
                   {folder.visible ? <Eye size={16} /> : <EyeOff size={16} />}
                 </button>
-                <Button
-                  size="sm"
-                  variant="outline"
+                <button
                   onClick={() => { setNewFolderParentId(folder.id); setNewFolderName(""); setExpandedFolder(folder.id); }}
-                  className="gap-1.5"
+                  title="Nowy folder"
+                  className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground"
                 >
-                  <FolderPlus size={14} />
-                  Nowy folder
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
+                  <FolderPlus size={16} />
+                </button>
+                <button
                   onClick={() => setAddFileDialog(folder.id)}
-                  className="gap-1.5"
+                  title="Dodaj plik"
+                  className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground"
                 >
-                  <Plus size={14} />
-                  Dodaj plik
-                </Button>
+                  <Plus size={16} />
+                </button>
                 <button
                   onClick={() => setExpandedFolder(expandedFolder === folder.id ? null : folder.id)}
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors px-2"
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors px-2 hidden sm:block"
                 >
                   {expandedFolder === folder.id ? "Zwiń" : "Rozwiń"}
+                </button>
+                <button
+                  onClick={() => setExpandedFolder(expandedFolder === folder.id ? null : folder.id)}
+                  title={expandedFolder === folder.id ? "Zwiń" : "Rozwiń"}
+                  className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground sm:hidden"
+                >
+                  {expandedFolder === folder.id ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                 </button>
               </div>
             </div>
@@ -427,12 +507,12 @@ export default function ContractorProjectView({
                           </span>
                           <button
                             onClick={() => setExpandedSubfolder(expandedSubfolder === sub.id ? null : sub.id)}
-                            className="flex-1 flex items-center gap-2 text-sm font-medium text-left"
+                            className="flex-1 flex items-center gap-2 text-sm font-medium text-left min-w-0"
                           >
-                            {expandedSubfolder === sub.id ? <ChevronDown size={15} className="shrink-0 text-muted-foreground" /> : <ChevronRight size={15} className="shrink-0 text-muted-foreground" />}
-                            <span>{sub.name}</span>
-                            <span className="text-xs text-muted-foreground font-normal">{sub._count.files} plików</span>
+                            <span className="truncate">{sub.name}</span>
+                            <span className="text-xs text-muted-foreground font-normal shrink-0">{sub._count.files} plików</span>
                           </button>
+                          {(() => { const u = subfolderUnreadTotal(sub, unreadCounts); return u > 0 ? <span className="shrink-0 min-w-[18px] h-[18px] px-1 bg-primary text-primary-foreground text-[10px] font-bold rounded-full flex items-center justify-center leading-none">{u > 9 ? "9+" : u}</span> : null; })()}
                           <button
                             onClick={() => setAddFileSubfolder(sub.id)}
                             className="p-1 text-muted-foreground hover:text-foreground transition-colors"
@@ -453,19 +533,28 @@ export default function ContractorProjectView({
                           >
                             <CheckSquare size={14} />
                           </button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger render={<button className="p-1 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground" title="Więcej opcji" />}>
+                              <MoreHorizontal size={14} />
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-40">
+                              <DropdownMenuItem onClick={() => { setRenamingId(sub.id); setRenameValue(sub.name); }}>
+                                <Pencil size={13} className="mr-2" />
+                                Zmień nazwę
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => deleteSubfolder(sub.id, sub.name)} className="text-destructive focus:text-destructive">
+                                <Trash2 size={13} className="mr-2" />
+                                Usuń folder
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                           <button
-                            onClick={() => { setRenamingId(sub.id); setRenameValue(sub.name); }}
-                            className="p-1 text-muted-foreground hover:text-foreground transition-colors"
-                            title="Zmień nazwę"
+                            onClick={() => setExpandedSubfolder(expandedSubfolder === sub.id ? null : sub.id)}
+                            className="p-1 rounded hover:bg-muted transition-colors text-muted-foreground"
+                            title={expandedSubfolder === sub.id ? "Zwiń" : "Rozwiń"}
                           >
-                            <Pencil size={13} />
-                          </button>
-                          <button
-                            onClick={() => deleteSubfolder(sub.id, sub.name)}
-                            className="p-1 text-muted-foreground hover:text-red-500 transition-colors"
-                            title="Usuń folder"
-                          >
-                            <Trash2 size={13} />
+                            {expandedSubfolder === sub.id ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
                           </button>
                         </>
                       )}
@@ -475,7 +564,7 @@ export default function ContractorProjectView({
                         {sub.files.length === 0 ? (
                           <p className="px-6 py-3 text-sm text-muted-foreground">Brak plików</p>
                         ) : (
-                          sub.files.map((file) => <FileRow key={file.id} file={file} onDelete={() => deleteFile(sub.id, file.id, file.name)} bulkMode={bulkFolderId === sub.id} selected={selectedFileIds.includes(file.id)} onSelect={() => toggleFileSelect(file.id)} />)
+                          sub.files.map((file) => <FileRow key={file.id} file={file} onDelete={() => deleteFile(sub.id, file.id, file.name)} bulkMode={bulkFolderId === sub.id} selected={selectedFileIds.includes(file.id)} onSelect={() => toggleFileSelect(file.id)} unreadCount={unreadCounts[file.id] ?? 0} totalCount={totalPerFile[file.id] ?? 0} onCommentClick={() => openComments(file.id, file.name, file.render?.fileUrl ?? file.fileUrl)} />)
                         )}
                       </div>
                     )}
@@ -502,7 +591,7 @@ export default function ContractorProjectView({
                   <p className="px-4 py-3 text-sm text-muted-foreground">Brak plików w tym folderze</p>
                 ) : folder.files.length > 0 ? (
                   <div className="divide-y divide-border">
-                    {folder.files.map((file) => <FileRow key={file.id} file={file} onDelete={() => deleteFile(folder.id, file.id, file.name)} bulkMode={bulkFolderId === folder.id} selected={selectedFileIds.includes(file.id)} onSelect={() => toggleFileSelect(file.id)} />)}
+                    {folder.files.map((file) => <FileRow key={file.id} file={file} onDelete={() => deleteFile(folder.id, file.id, file.name)} bulkMode={bulkFolderId === folder.id} selected={selectedFileIds.includes(file.id)} onSelect={() => toggleFileSelect(file.id)} unreadCount={unreadCounts[file.id] ?? 0} totalCount={totalPerFile[file.id] ?? 0} onCommentClick={() => openComments(file.id, file.name, file.render?.fileUrl ?? file.fileUrl)} />)}
                   </div>
                 ) : null}
               </div>
@@ -524,5 +613,26 @@ export default function ContractorProjectView({
         ))}
       </div>
     </div>
+
+    {commentFile && (
+      <ContractorFileCommentPanel
+        fileId={commentFile.id}
+        fileName={commentFile.name}
+        thumbnailUrl={commentFile.thumbnailUrl}
+        authorName={designerName}
+        authorRole="designer"
+        onClose={() => setCommentFile(null)}
+      />
+    )}
+
+    <EditProjectInfoDialog
+      open={infoOpen}
+      onOpenChange={setInfoOpen}
+      contractorId={contractorId}
+      assignmentId={assignmentId}
+      info={info}
+    />
+
+    </>
   );
 }

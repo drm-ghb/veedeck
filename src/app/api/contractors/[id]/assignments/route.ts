@@ -53,10 +53,33 @@ export async function POST(
     return NextResponse.json({ error: "Nie znaleziono wykonawcy" }, { status: 404 });
   }
 
-  const { projectId } = await req.json();
+  const {
+    projectId,
+    investmentStreet,
+    investmentCity,
+    investmentPostalCode,
+    investmentCountry,
+    designerContactName,
+    designerContactPhone,
+    investorContactName,
+    investorContactPhone,
+    projectNotes,
+  } = await req.json();
   if (!projectId) {
     return NextResponse.json({ error: "projectId jest wymagany" }, { status: 400 });
   }
+
+  const infoFields = {
+    investmentStreet: investmentStreet || null,
+    investmentCity: investmentCity || null,
+    investmentPostalCode: investmentPostalCode || null,
+    investmentCountry: investmentCountry || null,
+    designerContactName: designerContactName || null,
+    designerContactPhone: designerContactPhone || null,
+    investorContactName: investorContactName || null,
+    investorContactPhone: investorContactPhone || null,
+    projectNotes: projectNotes || null,
+  };
 
   const project = await prisma.project.findFirst({ where: { id: projectId, userId: designerId } });
   if (!project) {
@@ -73,7 +96,7 @@ export async function POST(
     // Reactivate archived assignment
     const assignment = await prisma.contractorAssignment.update({
       where: { id: existing.id },
-      data: { archived: false },
+      data: { archived: false, ...infoFields },
       include: {
         project: { select: { id: true, title: true, clientName: true } },
         folders: { include: { _count: { select: { files: true } } }, orderBy: { order: "asc" } },
@@ -87,6 +110,7 @@ export async function POST(
       contractorId: id,
       projectId,
       designerId,
+      ...infoFields,
       folders: { create: DEFAULT_FOLDERS },
     },
     include: {

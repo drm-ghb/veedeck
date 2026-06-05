@@ -15,9 +15,10 @@ interface Props {
   company?: string | null;
   trade?: string | null;
   activeAssignments: number;
+  unreadCount?: number;
 }
 
-export default function ContractorCard({ id, name, company, trade, activeAssignments }: Props) {
+export default function ContractorCard({ id, name, company, trade, activeAssignments, unreadCount = 0 }: Props) {
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -36,8 +37,8 @@ export default function ContractorCard({ id, name, company, trade, activeAssignm
   return (
     <>
     <Link href={`/wykonawcy/${id}`} className="block">
-      <Card className="hover:shadow-[0_4px_16px_rgba(25,33,61,0.2)] hover:border-primary/30 transition-all cursor-pointer h-full">
-        <CardHeader>
+      <Card className="relative hover:shadow-[0_4px_16px_rgba(25,33,61,0.2)] hover:border-primary/30 transition-all cursor-pointer h-full">
+          <CardHeader>
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 flex-1">
               <CardTitle className="text-base leading-tight truncate">{name}</CardTitle>
@@ -79,14 +80,20 @@ export default function ContractorCard({ id, name, company, trade, activeAssignm
           </div>
 
           <div className="flex items-center gap-2 mt-2 flex-wrap">
+            {unreadCount > 0 && (
+              <Badge variant="default" className="text-xs">
+                Nieprzeczytane komentarze: {unreadCount}
+              </Badge>
+            )}
             {trade && (
               <Badge variant="secondary" className="text-xs">{trade}</Badge>
             )}
-            <Badge
-              variant={activeAssignments > 0 ? "default" : "secondary"}
-              className="text-xs"
-            >
-              {activeAssignments === 1 ? "1 aktywny projekt" : `${activeAssignments} aktywnych projektów`}
+            <Badge variant="secondary" className="text-xs">
+              {activeAssignments === 1
+                ? "1 aktywny projekt"
+                : (activeAssignments % 10 >= 2 && activeAssignments % 10 <= 4 && !(activeAssignments % 100 >= 12 && activeAssignments % 100 <= 14))
+                ? `${activeAssignments} aktywne projekty`
+                : `${activeAssignments} aktywnych projektów`}
             </Badge>
           </div>
         </CardHeader>
