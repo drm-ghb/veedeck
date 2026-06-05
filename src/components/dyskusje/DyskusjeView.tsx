@@ -37,6 +37,8 @@ interface DiscussionSummary {
   messageCount: number;
   lastMessage: { id?: string; content: string; authorName: string; createdAt: string } | null;
   myReadMessageId?: string | null;
+  unreadCount?: number;
+  contractorAssignmentId?: string | null;
   archived: boolean;
   updatedAt: string;
 }
@@ -65,6 +67,7 @@ interface DiscussionMessage {
 interface ProjectOption {
   id: string;
   title: string;
+  contractorAssignmentId?: string | null;
 }
 
 interface Props {
@@ -120,9 +123,12 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
   const [replyingToMsg, setReplyingToMsg] = useState<{ id: string; content: string; author: string } | null>(null);
   const [showNewForm, setShowNewForm] = useState(false);
   const [newTitle, setNewTitle] = useState("");
+  const [newProjectId, setNewProjectId] = useState<string | null>(null);
+  const [newIsContractorChat, setNewIsContractorChat] = useState(false);
   const [headerEditing, setHeaderEditing] = useState(false);
   const [headerTitle, setHeaderTitle] = useState("");
   const [headerProjectId, setHeaderProjectId] = useState<string | null>(null);
+  const [headerIsContractorChat, setHeaderIsContractorChat] = useState(false);
   const [savingHeader, setSavingHeader] = useState(false);
   const [showProjectDropdown, setShowProjectDropdown] = useState(false);
   const [showResources, setShowResources] = useState(false);
@@ -152,7 +158,7 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
     return times;
   });
   const [search, setSearch] = useState("");
-  const [typeFilter, setTypeFilter] = useState<"all" | "internal" | "project">("all");
+  const [typeFilter, setTypeFilter] = useState<"all" | "internal" | "project" | "contractor">("all");
   const [archivedFilter, setArchivedFilter] = useState<"active" | "archived">("active");
   const [chatSearch, setChatSearch] = useState("");
   const [chatSearchOpen, setChatSearchOpen] = useState(false);
@@ -165,6 +171,8 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
   const dropdownRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const pusherRef = useRef<Pusher | null>(null);
+  const pusherUnreadRef = useRef<Pusher | null>(null);
+  const selectedIdRef = useRef<string | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -181,25 +189,68 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
     setLastReadTimes((prev) => ({ ...prev, [id]: now }));
   }, []);
 
+  // Keep selectedIdRef in sync for use inside Pusher closures
+  useEffect(() => {
+    selectedIdRef.current = selectedId;
+  }, [selectedId]);
+
+  // Subscribe to all discussions on mount for real-time unread counting of non-selected threads
+  useEffect(() => {
+    const pusher = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY!, {
+      cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
+    });
+    pusherUnreadRef.current = pusher;
+
+    initialDiscussions.forEach((d) => {
+      const ch = pusher.subscribe(`discussion-${d.id}`);
+      ch.bind("new-message", (msg: { userId?: string | null; content?: string; authorName?: string; createdAt?: string; id?: string }) => {
+        if (msg.userId === currentUserId) return;
+        if (d.id === selectedIdRef.current) return; // selected thread already auto-reads
+        playMessageSound();
+        setDiscussions((prev) =>
+          prev.map((x) =>
+            x.id === d.id
+              ? {
+                  ...x,
+                  unreadCount: (x.unreadCount ?? 0) + 1,
+                  messageCount: x.messageCount + 1,
+                  lastMessage: {
+                    id: msg.id,
+                    content: msg.content ?? "",
+                    authorName: msg.authorName ?? "",
+                    createdAt: msg.createdAt ?? new Date().toISOString(),
+                  },
+                  updatedAt: msg.createdAt ?? x.updatedAt,
+                }
+              : x
+          )
+        );
+      });
+    });
+
+    return () => {
+      pusher.disconnect();
+      pusherUnreadRef.current = null;
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   function hasUnread(d: DiscussionSummary): boolean {
-    if (!d.lastMessage) return false;
-    const readAt = lastReadTimes[d.id];
-    if (!readAt) return true;
-    return new Date(d.lastMessage.createdAt) > new Date(readAt);
+    return (d.unreadCount ?? 0) > 0;
   }
 
   const sortedDiscussions = useMemo(() => {
     const unread = discussions.filter((d) => hasUnread(d));
     const read = discussions.filter((d) => !hasUnread(d));
     return [...unread, ...read];
-  }, [discussions, lastReadTimes]);
+  }, [discussions]);
 
   const filteredDiscussions = useMemo(() => {
     return sortedDiscussions
       .filter((d) => (archivedFilter === "archived" ? d.archived : !d.archived))
       .filter((d) => {
-        if (typeFilter === "internal") return d.type !== "project";
+        if (typeFilter === "internal") return d.type !== "project" && d.type !== "contractor";
         if (typeFilter === "project") return d.type === "project";
+        if (typeFilter === "contractor") return d.type === "contractor";
         return true;
       })
       .filter((d) => {
@@ -211,11 +262,10 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
 
 
   useEffect(() => {
-    const unreadIds = discussions.filter((d) => hasUnread(d)).map((d) => d.id);
-    localStorage.setItem("discussions-unread-count", String(unreadIds.length));
-    localStorage.setItem("discussions-unread-ids", JSON.stringify(unreadIds));
+    const total = discussions.reduce((sum, d) => sum + (d.unreadCount ?? 0), 0);
+    localStorage.setItem("discussions-unread-count", String(total));
     window.dispatchEvent(new Event("discussions-unread-updated"));
-  }, [discussions, lastReadTimes]);
+  }, [discussions]);
 
   useEffect(() => {
     function handle(e: MouseEvent) {
@@ -314,7 +364,15 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
   function startHeaderEdit() {
     if (!selected) return;
     setHeaderTitle(selected.title);
-    setHeaderProjectId(selected.projectId);
+    if (selected.type === "contractor" && selected.contractorAssignmentId) {
+      // Find the project that owns this contractor assignment
+      const project = projects.find((p) => p.contractorAssignmentId === selected.contractorAssignmentId);
+      setHeaderProjectId(project?.id ?? null);
+      setHeaderIsContractorChat(true);
+    } else {
+      setHeaderProjectId(selected.projectId);
+      setHeaderIsContractorChat(false);
+    }
     setHeaderEditing(true);
     setShowProjectDropdown(false);
   }
@@ -322,6 +380,7 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
   function cancelHeaderEdit() {
     setHeaderEditing(false);
     setShowProjectDropdown(false);
+    setHeaderIsContractorChat(false);
   }
 
   async function saveHeaderEdit() {
@@ -332,9 +391,31 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
       if (headerTitle.trim() && headerTitle.trim() !== selected.title) {
         body.title = headerTitle.trim();
       }
-      if (headerProjectId !== selected.projectId) {
+
+      const selectedProject = projects.find((p) => p.id === headerProjectId);
+      const newContractorAssignmentId = headerIsContractorChat && selectedProject?.contractorAssignmentId
+        ? selectedProject.contractorAssignmentId
+        : null;
+
+      const wasContractor = selected.type === "contractor";
+      const willBeContractor = !!newContractorAssignmentId;
+
+      if (willBeContractor && !wasContractor) {
+        // Enabling contractor chat
+        body.contractorAssignmentId = newContractorAssignmentId;
+        body.projectId = null;
+      } else if (!willBeContractor && wasContractor) {
+        // Disabling contractor chat
+        body.contractorAssignmentId = null;
         body.projectId = headerProjectId;
+      } else if (!willBeContractor) {
+        // Normal project assignment change
+        const effectiveProjectId = headerProjectId;
+        if (effectiveProjectId !== selected.projectId) {
+          body.projectId = effectiveProjectId;
+        }
       }
+
       if (Object.keys(body).length === 0) {
         setHeaderEditing(false);
         return;
@@ -359,11 +440,13 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                 projectId: updated.projectId,
                 project: updated.project ?? null,
                 type: updated.type,
+                contractorAssignmentId: updated.contractorAssignmentId ?? null,
               }
             : d
         )
       );
       setHeaderEditing(false);
+      setHeaderIsContractorChat(false);
       router.refresh();
     } catch {
       toast.error("Nie udało się zapisać zmian");
@@ -543,19 +626,37 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
 
   async function createDiscussion() {
     if (!newTitle.trim()) return;
+    const selectedProject = projects.find((p) => p.id === newProjectId);
+    const contractorAssignmentId =
+      newIsContractorChat && selectedProject?.contractorAssignmentId
+        ? selectedProject.contractorAssignmentId
+        : null;
+
+    const body: Record<string, unknown> = {
+      title: newTitle.trim(),
+      type: contractorAssignmentId ? "contractor" : newProjectId ? "project" : "internal",
+      ...(contractorAssignmentId
+        ? { contractorAssignmentId }
+        : newProjectId
+        ? { projectId: newProjectId }
+        : {}),
+    };
+
     try {
       const res = await fetch("/api/discussions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: newTitle.trim(), type: "internal" }),
+        body: JSON.stringify(body),
       });
       if (!res.ok) throw new Error();
       const d = await res.json();
       setDiscussions((prev) => [
-        { id: d.id, title: d.title, type: d.type, projectId: null, project: null, messageCount: 0, lastMessage: null, archived: false, updatedAt: d.createdAt ?? new Date().toISOString() },
+        { id: d.id, title: d.title, type: d.type, projectId: d.projectId ?? null, project: null, messageCount: 0, lastMessage: null, unreadCount: 0, archived: false, updatedAt: d.createdAt ?? new Date().toISOString() },
         ...prev,
       ]);
       setNewTitle("");
+      setNewProjectId(null);
+      setNewIsContractorChat(false);
       setShowNewForm(false);
       setSelectedId(d.id);
       router.refresh();
@@ -680,17 +781,45 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
             </div>
 
             {showNewForm && (
-              <div className="flex gap-2">
+              <div className="px-1 py-2 space-y-2 border-b border-border bg-muted/20">
                 <input
                   autoFocus
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter") createDiscussion(); if (e.key === "Escape") setShowNewForm(false); }}
-                  placeholder="Nazwa dyskusji..."
-                  className="flex-1 min-w-0 text-sm px-2 py-1 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  onKeyDown={(e) => { if (e.key === "Escape") { setShowNewForm(false); setNewProjectId(null); setNewIsContractorChat(false); } }}
+                  placeholder="Nazwa wątku..."
+                  className="w-full text-sm px-2 py-1.5 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
                 />
-                <button onClick={createDiscussion} className="p-1 text-primary hover:opacity-80"><Check size={15} /></button>
-                <button onClick={() => setShowNewForm(false)} className="p-1 text-muted-foreground hover:opacity-80"><X size={15} /></button>
+                <select
+                  value={newProjectId ?? ""}
+                  onChange={(e) => { setNewProjectId(e.target.value || null); setNewIsContractorChat(false); }}
+                  className="w-full text-sm px-2 py-1.5 rounded-md border border-border bg-background focus:outline-none focus:ring-1 focus:ring-primary/20"
+                >
+                  <option value="">Bez przypisania do projektu</option>
+                  {projects.map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}
+                </select>
+                {newProjectId && projects.find((p) => p.id === newProjectId)?.contractorAssignmentId && (
+                  <label className="flex items-center gap-2 text-sm cursor-pointer select-none px-0.5">
+                    <input
+                      type="checkbox"
+                      checked={newIsContractorChat}
+                      onChange={(e) => setNewIsContractorChat(e.target.checked)}
+                      className="rounded accent-primary"
+                    />
+                    <span>Chat z wykonawcą</span>
+                  </label>
+                )}
+                <div className="flex gap-1 justify-end">
+                  <button
+                    onClick={() => { setShowNewForm(false); setNewProjectId(null); setNewIsContractorChat(false); }}
+                    className="text-xs px-2.5 py-1 text-muted-foreground hover:text-foreground rounded-md transition-colors"
+                  >Anuluj</button>
+                  <button
+                    onClick={createDiscussion}
+                    disabled={!newTitle.trim()}
+                    className="text-xs px-2.5 py-1 bg-primary text-primary-foreground rounded-md disabled:opacity-40 hover:opacity-90 transition-opacity"
+                  >Utwórz</button>
+                </div>
               </div>
             )}
 
@@ -718,6 +847,7 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                   { value: "all", label: "Wszystkie" },
                   { value: "internal", label: "Wewnętrzne" },
                   { value: "project", label: "Projektowe" },
+                  { value: "contractor", label: "Wykonawca" },
                 ]}
               />
               <PillDropdown
@@ -747,6 +877,7 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                     onClick={() => {
                       setSelectedId(d.id);
                       markAsRead(d.id);
+                      setDiscussions((prev) => prev.map((x) => x.id === d.id ? { ...x, unreadCount: 0 } : x));
                       setHeaderEditing(false);
                       setShowResources(false);
                     }}
@@ -756,8 +887,15 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                   >
                     <div className="flex items-start justify-between gap-2 mb-0.5">
                       <div className="flex items-center gap-1.5 min-w-0">
-                        {hasUnread(d) && <span className="w-2 h-2 rounded-full flex-shrink-0 bg-primary mt-0.5" />}
+                        {(d.unreadCount ?? 0) > 0 && (
+                          <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center leading-none flex-shrink-0">
+                            {(d.unreadCount ?? 0) > 99 ? "99+" : d.unreadCount}
+                          </span>
+                        )}
                         <span className={`text-sm font-medium truncate ${selectedId === d.id ? "text-primary" : ""}`}>{d.title}</span>
+                        {d.type === "contractor" && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 font-semibold shrink-0">Wykonawca</span>
+                        )}
                       </div>
                       <div className="flex items-center gap-1 shrink-0">
                         <span className="text-xs text-muted-foreground mt-0.5">
@@ -827,35 +965,48 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                     </button>
                   </div>
                   {/* Project selector */}
-                  <div className="relative" ref={dropdownRef}>
-                    <button
-                      type="button"
-                      onClick={() => setShowProjectDropdown((v) => !v)}
-                      className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground border border-border rounded-md px-2 py-1 bg-background transition-colors"
-                    >
-                      <span className="truncate max-w-[200px]">{selectedProjectLabel}</span>
-                      <ChevronDown size={12} className="flex-shrink-0" />
-                    </button>
-                    {showProjectDropdown && (
-                      <div className="absolute top-full left-0 mt-1 w-64 bg-popover border border-border rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
-                        <button
-                          type="button"
-                          onClick={() => { setHeaderProjectId(null); setShowProjectDropdown(false); }}
-                          className={`w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors ${headerProjectId === null ? "font-medium text-primary" : "text-muted-foreground"}`}
-                        >
-                          Brak przypisania
-                        </button>
-                        {projects.map((p) => (
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <div className="relative" ref={dropdownRef}>
+                      <button
+                        type="button"
+                        onClick={() => setShowProjectDropdown((v) => !v)}
+                        className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground border border-border rounded-md px-2 py-1 bg-background transition-colors"
+                      >
+                        <span className="truncate max-w-[200px]">{selectedProjectLabel}</span>
+                        <ChevronDown size={12} className="flex-shrink-0" />
+                      </button>
+                      {showProjectDropdown && (
+                        <div className="absolute top-full left-0 mt-1 w-64 bg-popover border border-border rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
                           <button
-                            key={p.id}
                             type="button"
-                            onClick={() => { setHeaderProjectId(p.id); setShowProjectDropdown(false); }}
-                            className={`w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors truncate ${headerProjectId === p.id ? "font-medium text-primary" : "text-foreground"}`}
+                            onClick={() => { setHeaderProjectId(null); setHeaderIsContractorChat(false); setShowProjectDropdown(false); }}
+                            className={`w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors ${headerProjectId === null ? "font-medium text-primary" : "text-muted-foreground"}`}
                           >
-                            {p.title}
+                            Brak przypisania
                           </button>
-                        ))}
-                      </div>
+                          {projects.map((p) => (
+                            <button
+                              key={p.id}
+                              type="button"
+                              onClick={() => { setHeaderProjectId(p.id); setHeaderIsContractorChat(false); setShowProjectDropdown(false); }}
+                              className={`w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors truncate ${headerProjectId === p.id ? "font-medium text-primary" : "text-foreground"}`}
+                            >
+                              {p.title}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    {headerProjectId && projects.find((p) => p.id === headerProjectId)?.contractorAssignmentId && (
+                      <label className="flex items-center gap-1.5 text-xs cursor-pointer select-none text-muted-foreground hover:text-foreground">
+                        <input
+                          type="checkbox"
+                          checked={headerIsContractorChat}
+                          onChange={(e) => setHeaderIsContractorChat(e.target.checked)}
+                          className="rounded accent-primary"
+                        />
+                        Chat z wykonawcą
+                      </label>
                     )}
                   </div>
                 </div>
@@ -869,7 +1020,12 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                     <ChevronLeft size={20} />
                   </button>
                   <div className="min-w-0">
-                    <h2 className="font-semibold text-sm">{selected.title}</h2>
+                    <div className="flex items-center gap-1.5">
+                      <h2 className="font-semibold text-sm">{selected.title}</h2>
+                      {selected.type === "contractor" && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 font-semibold shrink-0">Wykonawca</span>
+                      )}
+                    </div>
                     {selected.project ? (
                       <a
                         href={`/projects/${selected.project.id}`}

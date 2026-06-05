@@ -231,6 +231,43 @@ export default function ShareSidebar({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [discussionId, token, clientProjectId, currentUserId]);
 
+  // Pusher fallback — when discussion doesn't exist yet, listen for first message on project channel
+  useEffect(() => {
+    if (discussionId) return; // already handled above
+    if (!clientProjectId) return; // only for logged-in client mode
+    if (!pusherRef.current) {
+      pusherRef.current = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY!, {
+        cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
+      });
+    }
+    const channel = pusherRef.current.subscribe(`project-${clientProjectId}`);
+    channel.bind("new-message", (data: { discussionId: string }) => {
+      if (isDyskusjeActiveRef.current) return;
+      // Subscribe to discussion channel for future messages
+      const ch = pusherRef.current!.subscribe(`discussion-${data.discussionId}`);
+      ch.bind("new-message", (msg: { userId?: string | null }) => {
+        if (currentUserId && msg.userId === currentUserId) return;
+        if (!isDyskusjeActiveRef.current) {
+          setDiscussionUnread((prev) => {
+            const next = prev + 1;
+            localStorage.setItem(storageUnreadKey, String(next));
+            return next;
+          });
+        }
+      });
+      // Increment for the message that triggered this event
+      setDiscussionUnread((prev) => {
+        const next = prev + 1;
+        localStorage.setItem(storageUnreadKey, String(next));
+        return next;
+      });
+    });
+    return () => {
+      pusherRef.current?.unsubscribe(`project-${clientProjectId}`);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [discussionId, clientProjectId, currentUserId]);
+
   function toggle() {
     const next = !collapsed;
     setCollapsed(next);

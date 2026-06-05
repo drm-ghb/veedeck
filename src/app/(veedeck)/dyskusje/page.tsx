@@ -20,7 +20,7 @@ export default async function DyskusjePage() {
         messages: { orderBy: { createdAt: "desc" }, take: 1 },
         readReceipts: {
           where: { readerId: userId },
-          select: { lastMessageId: true },
+          include: { lastMessage: { select: { createdAt: true } } },
           take: 1,
         },
       },
@@ -28,16 +28,35 @@ export default async function DyskusjePage() {
     }),
     prisma.project.findMany({
       where: { userId, archived: false },
-      select: { id: true, title: true },
+      select: {
+        id: true,
+        title: true,
+        contractorAssignments: { where: { archived: false }, select: { id: true }, take: 1 },
+      },
       orderBy: { title: "asc" },
     }),
   ]);
+
+  const discussionsWithUnread = await Promise.all(
+    discussions.map(async (d) => {
+      const receipt = d.readReceipts[0];
+      const lastReadAt = receipt?.lastMessage?.createdAt ?? null;
+      const unreadCount = await prisma.discussionMessage.count({
+        where: {
+          discussionId: d.id,
+          OR: [{ userId: { not: userId } }, { userId: null }],
+          ...(lastReadAt ? { createdAt: { gt: lastReadAt } } : {}),
+        },
+      });
+      return { ...d, myReadMessageId: receipt?.lastMessageId ?? null, unreadCount };
+    })
+  );
 
   return (
     <DyskusjeView
       currentUserId={userId}
       currentUserAvatarUrl={dbUser?.avatarUrl ?? null}
-      initialDiscussions={discussions.map((d) => ({
+      initialDiscussions={discussionsWithUnread.map((d) => ({
         id: d.id,
         title: d.title,
         type: d.type,
@@ -52,11 +71,17 @@ export default async function DyskusjePage() {
               createdAt: d.messages[0].createdAt.toISOString(),
             }
           : null,
-        myReadMessageId: d.readReceipts[0]?.lastMessageId ?? null,
+        myReadMessageId: d.myReadMessageId,
+        unreadCount: d.unreadCount,
+        contractorAssignmentId: d.contractorAssignmentId ?? null,
         archived: d.archived,
         updatedAt: d.updatedAt.toISOString(),
       }))}
-      projects={projects}
+      projects={projects.map((p) => ({
+        id: p.id,
+        title: p.title,
+        contractorAssignmentId: p.contractorAssignments[0]?.id ?? null,
+      }))}
     />
   );
 }

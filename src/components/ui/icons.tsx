@@ -175,6 +175,7 @@ export const Paperclip        = icon("attach_file");
 export const Image            = icon("image");
 export const ImagePlus        = icon("add_photo_alternate");
 export const Mic              = icon("mic");
+export const Camera           = icon("photo_camera");
 export const StopCircle       = icon("stop_circle");
 export const Square           = icon("check_box_outline_blank");
 export const Sparkles         = icon("auto_awesome");

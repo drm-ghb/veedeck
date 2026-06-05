@@ -26,8 +26,11 @@ export default async function ContractorProjectPage({ params }: Props) {
     include: {
       project: { select: { id: true, title: true } },
       folders: {
-        where: { visible: true },
-        include: { _count: { select: { files: true } } },
+        where: { visible: true, parentId: null, type: { in: ["rysunki", "wizualizacje", "dokumenty"] } },
+        include: {
+          _count: { select: { files: true } },
+          subfolders: { include: { _count: { select: { files: true } } } },
+        },
         orderBy: { order: "asc" },
       },
     },
@@ -38,11 +41,19 @@ export default async function ContractorProjectPage({ params }: Props) {
     where: { contractorId: contractor.id, archived: false },
   });
 
+  const folders = assignment.folders.map((f) => ({
+    id: f.id,
+    name: f.name,
+    type: f.type,
+    visible: f.visible,
+    totalFiles: f._count.files + f.subfolders.reduce((sum, sub) => sum + sub._count.files, 0),
+  }));
+
   return (
     <ContractorDashboard
       assignmentId={assignmentId}
       projectTitle={assignment.project.title}
-      folders={assignment.folders}
+      folders={folders}
       hasMultipleProjects={totalAssignments > 1}
     />
   );

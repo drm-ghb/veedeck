@@ -8,7 +8,7 @@ interface Folder {
   name: string;
   type: string;
   visible: boolean;
-  _count: { files: number };
+  totalFiles: number;
 }
 
 interface Props {
@@ -39,14 +39,14 @@ export default function ContractorDashboard({ assignmentId, projectTitle, folder
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {folders.map((folder) => (
           <Link key={folder.id} href={`/wykonawca/projekty/${assignmentId}/foldery/${folder.id}`}>
-            <div className="flex flex-col items-center justify-center gap-3 p-8 rounded-2xl border border-border bg-card hover:shadow-[0_4px_16px_rgba(25,33,61,0.2)] hover:border-primary/30 transition-all cursor-pointer text-center">
+            <div className="flex flex-col items-center justify-center gap-3 h-44 rounded-2xl border border-border bg-card hover:shadow-[0_4px_16px_rgba(25,33,61,0.2)] hover:border-primary/30 transition-all cursor-pointer text-center">
               <div className="text-primary">
                 {folderIcon(folder.type)}
               </div>
               <div>
                 <p className="font-semibold">{folder.name}</p>
                 <p className="text-sm text-muted-foreground mt-0.5">
-                  {folder._count.files === 1 ? "1 plik" : `${folder._count.files} plików`}
+                  {folder.totalFiles === 1 ? "1 plik" : `${folder.totalFiles} plików`}
                 </p>
               </div>
             </div>

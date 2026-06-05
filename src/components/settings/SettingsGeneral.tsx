@@ -142,7 +142,7 @@ export function SettingsGeneral({
   const [emailNotifModules, setEmailNotifModules] = useState<string[]>(initialEmailNotifModules);
   const [emailNotifLoading, setEmailNotifLoading] = useState(false);
 
-  const DEFAULT_SIDEBAR_ORDER = ["klienci", "wykonawcy", "renderflow", "listy", "zadania", "produkty", "kalendarz", "notatnik", "dyskusje", "ankiety", "veezard"];
+  const DEFAULT_SIDEBAR_ORDER = ["klienci", "renderflow", "listy", "zadania", "ankiety", "produkty", "wykonawcy", "kalendarz", "notatnik", "dyskusje", "veezard"];
   const SIDEBAR_ITEM_META: Record<string, { label: string; icon: React.ElementType }> = {
     klienci:     { label: "Klienci",        icon: Users },
     wykonawcy:   { label: "Wykonawcy",      icon: Engineering },

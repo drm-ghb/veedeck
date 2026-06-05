@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { SignOutButton } from "@/components/dashboard/SignOutButton";
 import { Engineering } from "@/components/ui/icons";
+import ContractorChatButton from "@/components/wykonawca/ContractorChatButton";
 
 export default async function ContractorLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
@@ -12,13 +13,20 @@ export default async function ContractorLayout({ children }: { children: React.R
   const role = (session.user as any).role;
   if (role !== "contractor") redirect("/login");
 
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: { name: true, fullName: true, avatarUrl: true },
+  const contractor = await prisma.contractor.findFirst({
+    where: { userId: session.user.id },
+    select: { id: true, name: true, company: true },
   });
 
-  const displayName = user?.fullName ?? user?.name ?? "Wykonawca";
-  const firstName = displayName.split(" ")[0];
+  const displayName = contractor?.company || contractor?.name || "Wykonawca";
+
+  const assignments = contractor
+    ? await prisma.contractorAssignment.findMany({
+        where: { contractorId: contractor.id, archived: false },
+        include: { project: { select: { title: true } } },
+        orderBy: { createdAt: "asc" },
+      })
+    : [];
 
   return (
     <div className="h-dvh flex flex-col bg-muted/60">
@@ -28,7 +36,11 @@ export default async function ContractorLayout({ children }: { children: React.R
           <span className="hidden sm:inline">Panel wykonawcy</span>
         </Link>
         <div className="ml-auto flex items-center gap-3">
-          <span className="text-sm text-muted-foreground hidden sm:inline">{firstName}</span>
+          <span className="text-sm text-muted-foreground hidden sm:inline">{displayName}</span>
+          <ContractorChatButton
+            contractorUserId={session.user.id!}
+            assignments={assignments.map((a) => ({ id: a.id, projectTitle: a.project.title }))}
+          />
           <SignOutButton />
         </div>
       </nav>

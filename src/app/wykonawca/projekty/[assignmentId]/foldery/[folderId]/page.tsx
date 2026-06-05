@@ -29,15 +29,32 @@ export default async function ContractorFolderPage({ params }: Props) {
   if (!assignment) notFound();
 
   const folder = await prisma.contractorFolder.findFirst({
-    where: { id: folderId, assignmentId, visible: true },
+    where: { id: folderId, assignmentId, visible: true, parentId: null, type: { in: ["rysunki", "wizualizacje", "dokumenty"] } },
     include: {
       files: {
         include: { render: { select: { id: true, name: true, fileUrl: true, fileType: true } } },
         orderBy: { createdAt: "desc" },
       },
+      subfolders: {
+        orderBy: { order: "asc" },
+        include: {
+          files: {
+            include: { render: { select: { id: true, name: true, fileUrl: true, fileType: true } } },
+            orderBy: { createdAt: "desc" },
+          },
+        },
+      },
     },
   });
   if (!folder) notFound();
+
+  // Merge all files: direct files + subfolder files (flat, preserving subfolder name as section)
+  type FileEntry = { id: string; name: string; fileUrl: string | null; fileType: string; createdAt: Date; render: { id: string; name: string; fileUrl: string; fileType: string } | null };
+  const sections: { label: string | null; files: FileEntry[] }[] = [];
+  if (folder.files.length > 0) sections.push({ label: null, files: folder.files });
+  for (const sub of folder.subfolders) {
+    if (sub.files.length > 0) sections.push({ label: sub.name, files: sub.files });
+  }
 
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
@@ -56,46 +73,59 @@ export default async function ContractorFolderPage({ params }: Props) {
 
       <h1 className="text-2xl font-semibold">{folder.name}</h1>
 
-      {folder.files.length === 0 ? (
+      {sections.length === 0 ? (
         <div className="py-16 text-center text-muted-foreground">
           <FileText size={40} className="mx-auto mb-3 opacity-40" />
           <p>Brak plików w tym folderze</p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          {folder.files.map((file) => {
-            const displayUrl = file.render?.fileUrl ?? file.fileUrl ?? null;
-            const displayName = file.name;
-            const isImage = (file.render?.fileType ?? file.fileType) === "image";
-            return (
-              <div key={file.id} className="group relative rounded-xl border border-border bg-card overflow-hidden">
-                <div className="aspect-square bg-muted flex items-center justify-center">
-                  {isImage && displayUrl ? (
-                    <img src={displayUrl} alt={displayName} className="w-full h-full object-cover" />
-                  ) : (
-                    <FileText size={32} className="text-muted-foreground/40" />
-                  )}
-                </div>
-                <div className="p-2">
-                  <p className="text-xs font-medium truncate">{displayName}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {new Date(file.createdAt).toLocaleDateString("pl-PL")}
-                  </p>
-                </div>
-                {displayUrl && (
-                  <a
-                    href={displayUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                    title="Pobierz / Otwórz"
-                  >
-                    <Download size={14} />
-                  </a>
-                )}
+        <div className="space-y-6">
+          {sections.map((section, si) => (
+            <div key={si}>
+              {section.label && (
+                <h2 className="text-sm font-semibold text-muted-foreground mb-3">{section.label}</h2>
+              )}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                {section.files.map((file) => {
+                  const displayUrl = file.render?.fileUrl ?? file.fileUrl ?? null;
+                  const displayName = file.name;
+                  const effectiveType = file.render?.fileType ?? file.fileType;
+                  const isImage = effectiveType === "image";
+                  const isPdf = effectiveType === "pdf";
+                  return (
+                    <div key={file.id} className="group relative rounded-xl border border-border bg-card overflow-hidden">
+                      <div className="aspect-square bg-muted flex items-center justify-center overflow-hidden">
+                        {isImage && displayUrl ? (
+                          <img src={displayUrl} alt={displayName} className="w-full h-full object-cover" />
+                        ) : isPdf && displayUrl ? (
+                          <iframe src={`${displayUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`} className="w-full h-full pointer-events-none" title={displayName} />
+                        ) : (
+                          <FileText size={32} className="text-muted-foreground/40" />
+                        )}
+                      </div>
+                      <div className="p-2">
+                        <p className="text-xs font-medium truncate">{displayName}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(file.createdAt).toLocaleDateString("pl-PL")}
+                        </p>
+                      </div>
+                      {displayUrl && (
+                        <a
+                          href={displayUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                          title="Pobierz / Otwórz"
+                        >
+                          <Download size={14} />
+                        </a>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
       )}
     </div>

@@ -67,7 +67,19 @@ export async function POST(
     where: { contractorId: id, projectId },
   });
   if (existing) {
-    return NextResponse.json({ error: "Wykonawca jest już przypisany do tego projektu" }, { status: 409 });
+    if (!existing.archived) {
+      return NextResponse.json({ error: "Wykonawca jest już przypisany do tego projektu" }, { status: 409 });
+    }
+    // Reactivate archived assignment
+    const assignment = await prisma.contractorAssignment.update({
+      where: { id: existing.id },
+      data: { archived: false },
+      include: {
+        project: { select: { id: true, title: true, clientName: true } },
+        folders: { include: { _count: { select: { files: true } } }, orderBy: { order: "asc" } },
+      },
+    });
+    return NextResponse.json(assignment, { status: 201 });
   }
 
   const assignment = await prisma.contractorAssignment.create({

@@ -16,19 +16,35 @@ export async function GET() {
       messages: { orderBy: { createdAt: "desc" }, take: 1 },
       readReceipts: {
         where: { readerId: userId },
-        select: { lastMessageId: true },
+        include: { lastMessage: { select: { createdAt: true } } },
         take: 1,
       },
     },
     orderBy: { updatedAt: "desc" },
   });
 
-  return NextResponse.json(
-    discussions.map((d) => ({
-      ...d,
-      myReadMessageId: d.readReceipts[0]?.lastMessageId ?? null,
-    }))
+  const result = await Promise.all(
+    discussions.map(async (d) => {
+      const receipt = d.readReceipts[0];
+      const lastReadAt = receipt?.lastMessage?.createdAt ?? null;
+
+      const unreadCount = await prisma.discussionMessage.count({
+        where: {
+          discussionId: d.id,
+          OR: [{ userId: { not: userId } }, { userId: null }],
+          ...(lastReadAt ? { createdAt: { gt: lastReadAt } } : {}),
+        },
+      });
+
+      return {
+        ...d,
+        myReadMessageId: receipt?.lastMessageId ?? null,
+        unreadCount,
+      };
+    })
   );
+
+  return NextResponse.json(result);
 }
 
 export async function POST(req: NextRequest) {
@@ -36,16 +52,29 @@ export async function POST(req: NextRequest) {
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const userId = getWorkspaceUserId(session);
 
-  const { title, type } = await req.json();
+  const { title, type, projectId, contractorAssignmentId } = await req.json();
   if (!title) return NextResponse.json({ error: "Tytuł jest wymagany" }, { status: 400 });
 
-  const discussion = await prisma.discussion.create({
-    data: {
-      title,
-      type: type ?? "internal",
-      ownerId: userId,
-    },
-  });
+  const data: Record<string, unknown> = {
+    title,
+    type: contractorAssignmentId ? "contractor" : (type ?? "internal"),
+    ownerId: userId,
+  };
+
+  if (contractorAssignmentId) {
+    const assignment = await prisma.contractorAssignment.findFirst({
+      where: { id: contractorAssignmentId, designerId: userId },
+    });
+    if (!assignment) return NextResponse.json({ error: "Brak dostępu do przypisania" }, { status: 403 });
+    data.contractorAssignmentId = contractorAssignmentId;
+  } else if (projectId) {
+    const project = await prisma.project.findFirst({ where: { id: projectId, userId } });
+    if (!project) return NextResponse.json({ error: "Projekt nie istnieje" }, { status: 404 });
+    data.projectId = projectId;
+    data.type = "project";
+  }
+
+  const discussion = await prisma.discussion.create({ data });
 
   return NextResponse.json(discussion, { status: 201 });
 }

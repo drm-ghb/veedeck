@@ -8,7 +8,7 @@ import { LayoutDashboard, Users, LocalMall, Package, PanelLeftClose, PanelLeftOp
 import { useTheme } from "@/lib/theme";
 import { useT } from "@/lib/i18n";
 
-const DEFAULT_SIDEBAR_ORDER = ["klienci", "renderflow", "listy", "wykonawcy", "zadania", "ankiety", "produkty", "kalendarz", "notatnik", "dyskusje", "veezard"];
+const DEFAULT_SIDEBAR_ORDER = ["klienci", "renderflow", "listy", "zadania", "ankiety", "produkty", "wykonawcy", "kalendarz", "notatnik", "dyskusje", "veezard"];
 
 interface NavSidebarProps {
   hiddenModules: string[];
@@ -67,47 +67,52 @@ export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userI
   useEffect(() => {
     fetch("/api/discussions")
       .then((r) => r.json())
-      .then((data: { id: string; messages?: { id?: string; createdAt: string }[]; myReadMessageId?: string | null }[]) => {
+      .then((data: { id: string; unreadCount?: number }[]) => {
         if (!Array.isArray(data)) return;
 
-        // Compute initial unread count from API data + localStorage read times.
-        // Falls back to DB read receipt (myReadMessageId) when localStorage is empty (e.g. different device).
-        const unreadIds = data.filter((d) => {
-          const lastMsg = d.messages?.[0];
-          if (!lastMsg) return false;
-          const readAt = localStorage.getItem(`discussion-read-${d.id}`);
-          if (readAt) return new Date(lastMsg.createdAt) > new Date(readAt);
-          // No localStorage entry — use DB receipt as source of truth
-          if (d.myReadMessageId && lastMsg.id && d.myReadMessageId === lastMsg.id) return false;
-          return true;
-        }).map((d) => d.id);
-        localStorage.setItem("discussions-unread-count", String(unreadIds.length));
-        localStorage.setItem("discussions-unread-ids", JSON.stringify(unreadIds));
-        setDiscussionUnread(unreadIds.length);
+        const total = data.reduce((sum, d) => sum + (d.unreadCount ?? 0), 0);
+        localStorage.setItem("discussions-unread-count", String(total));
+        setDiscussionUnread(total);
 
         if (!pusherRef.current) {
           pusherRef.current = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY!, {
             cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
           });
         }
+        const handleNewMessage = (msg: { userId?: string | null }) => {
+          if (msg.userId && msg.userId === userId) return;
+          if (pathnameRef.current.startsWith("/dyskusje")) return;
+          setDiscussionUnread((prev) => {
+            const next = prev + 1;
+            localStorage.setItem("discussions-unread-count", String(next));
+            return next;
+          });
+        };
+
         data.forEach((d) => {
           const channel = pusherRef.current!.subscribe(`discussion-${d.id}`);
-          channel.bind("new-message", (msg: { userId?: string | null }) => {
-            // Skip own messages (designer), count all others (clients)
-            if (msg.userId && msg.userId === userId) return;
-            // When on /dyskusje the DyskusjeView manages the count itself
-            if (pathnameRef.current.startsWith("/dyskusje")) return;
-            // Track per-discussion (not per-message) to avoid double-counting
-            const storedIds: string[] = JSON.parse(localStorage.getItem("discussions-unread-ids") || "[]");
-            if (!storedIds.includes(d.id)) {
-              storedIds.push(d.id);
-              localStorage.setItem("discussions-unread-ids", JSON.stringify(storedIds));
-              const next = storedIds.length;
-              localStorage.setItem("discussions-unread-count", String(next));
-              setDiscussionUnread(next);
+          // Skip own messages (designer), count all others (clients/contractors)
+          // When on /dyskusje the DyskusjeView manages the count itself
+          channel.bind("new-message", handleNewMessage);
+        });
+
+        // Subscribe to user-level channel to detect new discussions created while page is open
+        if (userId) {
+          const userChannel = pusherRef.current!.subscribe(`user-${userId}`);
+          userChannel.bind("new-discussion", (data: { discussionId: string; hasMessage?: boolean }) => {
+            // Subscribe to future messages on this new discussion
+            const ch = pusherRef.current!.subscribe(`discussion-${data.discussionId}`);
+            ch.bind("new-message", handleNewMessage);
+            // Increment badge for the message that triggered new-discussion
+            if (data.hasMessage && !pathnameRef.current.startsWith("/dyskusje")) {
+              setDiscussionUnread((prev) => {
+                const next = prev + 1;
+                localStorage.setItem("discussions-unread-count", String(next));
+                return next;
+              });
             }
           });
-        });
+        }
       })
       .catch(() => {});
 
@@ -143,7 +148,9 @@ export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userI
   const forceCollapsed = HIDDEN_ON.some((pattern) => pattern.test(pathname));
   const isCollapsed = forceCollapsed || collapsed;
 
-  const order = sidebarOrder && sidebarOrder.length > 0 ? sidebarOrder : DEFAULT_SIDEBAR_ORDER;
+  const order = sidebarOrder && sidebarOrder.length > 0
+    ? [...sidebarOrder, ...DEFAULT_SIDEBAR_ORDER.filter((k) => !sidebarOrder.includes(k))]
+    : DEFAULT_SIDEBAR_ORDER;
   const [dashboard, ...rest] = items;
   const sortedRest = [...rest].sort((a, b) => {
     const keyA = a.href.replace("/", "");

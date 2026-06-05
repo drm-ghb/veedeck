@@ -16,14 +16,31 @@ export async function PATCH(
   if (!discussion) return NextResponse.json({ error: "Nie znaleziono" }, { status: 404 });
   if (discussion.ownerId !== userId) return NextResponse.json({ error: "Brak dostępu" }, { status: 403 });
 
-  const { title, projectId, archived } = await req.json();
-  if (!title && projectId === undefined && archived === undefined) return NextResponse.json({ error: "Brak danych do aktualizacji" }, { status: 400 });
+  const { title, projectId, contractorAssignmentId, archived } = await req.json();
+  if (!title && projectId === undefined && contractorAssignmentId === undefined && archived === undefined) {
+    return NextResponse.json({ error: "Brak danych do aktualizacji" }, { status: 400 });
+  }
 
   const updateData: Record<string, unknown> = {};
   if (title) updateData.title = title;
   if (typeof archived === "boolean") updateData.archived = archived;
 
-  if (projectId !== undefined) {
+  if (contractorAssignmentId !== undefined) {
+    if (contractorAssignmentId === null) {
+      // Remove contractor chat link
+      updateData.contractorAssignmentId = null;
+      updateData.type = projectId ? "project" : "internal";
+    } else {
+      // Assign to contractor chat
+      const assignment = await prisma.contractorAssignment.findFirst({
+        where: { id: contractorAssignmentId, designerId: userId },
+      });
+      if (!assignment) return NextResponse.json({ error: "Brak dostępu do przypisania" }, { status: 403 });
+      updateData.contractorAssignmentId = contractorAssignmentId;
+      updateData.projectId = null;
+      updateData.type = "contractor";
+    }
+  } else if (projectId !== undefined) {
     if (projectId === null) {
       // Unassign from project
       updateData.projectId = null;

@@ -607,19 +607,21 @@ model Product {
 }
 
 model Discussion {
-  id        String   @id @default(cuid())
-  title     String
-  type      String   @default("internal") // "project" | "internal"
-  ownerId   String
-  projectId String?  @unique
-  archived  Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                     String   @id @default(cuid())
+  title                  String
+  type                   String   @default("internal") // "project" | "internal" | "contractor"
+  ownerId                String
+  projectId              String?  @unique
+  contractorAssignmentId String?  @unique
+  archived               Boolean  @default(false)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
 
-  owner        User                    @relation("DiscussionOwner", fields: [ownerId], references: [id], onDelete: Cascade)
-  project      Project?                @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  messages     DiscussionMessage[]
-  readReceipts DiscussionReadReceipt[]
+  owner                User                    @relation("DiscussionOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  project              Project?                @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  contractorAssignment ContractorAssignment?   @relation(fields: [contractorAssignmentId], references: [id], onDelete: SetNull)
+  messages             DiscussionMessage[]
+  readReceipts         DiscussionReadReceipt[]
 }
 
 model DiscussionMessage {
@@ -907,6 +909,7 @@ model ContractorAssignment {
   archived     Boolean    @default(false)
   createdAt    DateTime   @default(now())
   folders      ContractorFolder[]
+  discussion   Discussion?
 
   @@unique([contractorId, projectId])
 }
@@ -915,6 +918,9 @@ model ContractorFolder {
   id           String               @id @default(cuid())
   assignmentId String
   assignment   ContractorAssignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  parentId     String?
+  parent       ContractorFolder?    @relation("SubFolders", fields: [parentId], references: [id], onDelete: Cascade)
+  subfolders   ContractorFolder[]   @relation("SubFolders")
   name         String
   type         String
   visible      Boolean              @default(true)

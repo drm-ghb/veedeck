@@ -6,15 +6,38 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Plus, Archive, ArchiveRestore, ChevronLeft } from "@/components/ui/icons";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Plus,
+  Archive,
+  ArchiveRestore,
+  ChevronLeft,
+  Eye,
+  EyeOff,
+  KeyRound,
+} from "@/components/ui/icons";
 import AssignProjectDialog from "./AssignProjectDialog";
-import EditContractorDialog from "./EditContractorDialog";
+
+const TRADE_OPTIONS = [
+  { value: "malarz", label: "Malarz" },
+  { value: "hydraulik", label: "Hydraulik" },
+  { value: "elektryk", label: "Elektryk" },
+  { value: "firma wykończeniowa", label: "Firma wykończeniowa" },
+  { value: "inne", label: "Inne" },
+];
 
 interface Assignment {
   id: string;
   archived: boolean;
   createdAt: string;
   project: { id: string; title: string; clientName: string | null };
+}
+
+interface ContractorUser {
+  id: string;
+  login: string;
+  email: string | null;
 }
 
 interface Contractor {
@@ -24,6 +47,7 @@ interface Contractor {
   trade: string | null;
   email: string | null;
   phone: string | null;
+  user: ContractorUser | null;
   assignments: Assignment[];
 }
 
@@ -35,7 +59,27 @@ export default function ContractorProfile({ contractor }: Props) {
   const router = useRouter();
   const [tab, setTab] = useState<"active" | "archived">("active");
   const [assignOpen, setAssignOpen] = useState(false);
-  const [editOpen, setEditOpen] = useState(false);
+
+  // ── Editable info fields ───────────────────────────────────────────────────
+  const [name, setName] = useState(contractor.name);
+  const [company, setCompany] = useState(contractor.company ?? "");
+  const [trade, setTrade] = useState(contractor.trade ?? "");
+  const [email, setEmail] = useState(contractor.email ?? "");
+  const [phone, setPhone] = useState(contractor.phone ?? "");
+  const [savingInfo, setSavingInfo] = useState(false);
+
+  // ── Account ───────────────────────────────────────────────────────────────
+  const [accountUser, setAccountUser] = useState<ContractorUser | null>(contractor.user);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createEmail, setCreateEmail] = useState(contractor.email ?? "");
+  const [createPassword, setCreatePassword] = useState("");
+  const [showCreatePass, setShowCreatePass] = useState(false);
+  const [creatingAccount, setCreatingAccount] = useState(false);
+  const [credsOpen, setCredsOpen] = useState(false);
+  const [credLogin, setCredLogin] = useState(contractor.user?.login ?? "");
+  const [credPassword, setCredPassword] = useState("");
+  const [showCredPass, setShowCredPass] = useState(false);
+  const [savingCreds, setSavingCreds] = useState(false);
 
   const active = contractor.assignments.filter((a) => !a.archived);
   const archived = contractor.assignments.filter((a) => a.archived);
@@ -55,8 +99,112 @@ export default function ContractorProfile({ contractor }: Props) {
     }
   }
 
+  async function saveInfo() {
+    if (!name.trim()) {
+      toast.error("Imię i nazwisko jest wymagane");
+      return;
+    }
+    setSavingInfo(true);
+    try {
+      const res = await fetch(`/api/contractors/${contractor.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: name.trim(),
+          company: company.trim() || null,
+          trade: trade || null,
+          email: email.trim() || null,
+          phone: phone.trim() || null,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        toast.error(data.error ?? "Błąd podczas zapisywania");
+        return;
+      }
+      toast.success("Zapisano");
+      router.refresh();
+    } finally {
+      setSavingInfo(false);
+    }
+  }
+
+  async function createAccount() {
+    if (!createPassword.trim() || createPassword.trim().length < 4) {
+      toast.error("Hasło musi mieć co najmniej 4 znaki");
+      return;
+    }
+    setCreatingAccount(true);
+    try {
+      const res = await fetch(`/api/contractors/${contractor.id}/account`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: createEmail.trim() || undefined,
+          password: createPassword.trim(),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error ?? "Błąd tworzenia konta");
+        return;
+      }
+      setAccountUser(data.user);
+      setCredLogin(data.user.login);
+      setCreateOpen(false);
+      setCreatePassword("");
+      setCredsOpen(true);
+      toast.success("Konto wykonawcy zostało utworzone");
+    } finally {
+      setCreatingAccount(false);
+    }
+  }
+
+  async function saveAccountCreds() {
+    if (!credLogin.trim() && !credPassword.trim()) return;
+    setSavingCreds(true);
+    try {
+      const body: Record<string, string> = {};
+      if (credLogin.trim()) body.login = credLogin.trim();
+      if (credPassword.trim()) body.password = credPassword.trim();
+      const res = await fetch(`/api/contractors/${contractor.id}/account`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error ?? "Błąd zapisu");
+        return;
+      }
+      setAccountUser(data.user);
+      setCredLogin(data.user.login);
+      setCredPassword("");
+      toast.success("Dane logowania zaktualizowane");
+    } finally {
+      setSavingCreds(false);
+    }
+  }
+
+  async function unlinkAccount() {
+    const res = await fetch(`/api/contractors/${contractor.id}/account`, { method: "DELETE" });
+    if (res.ok) {
+      setAccountUser(null);
+      setCredLogin("");
+      setCredPassword("");
+      setCredsOpen(false);
+      setCreateOpen(false);
+      toast.success("Konto odłączone");
+    } else {
+      toast.error("Błąd podczas odłączania konta");
+    }
+  }
+
+  const displayTitle = company.trim() || contractor.company || null;
+
   return (
     <div className="space-y-6">
+      {/* Breadcrumb */}
       <div className="flex items-center gap-2">
         <Link href="/wykonawcy" className="text-muted-foreground hover:text-foreground transition-colors">
           <ChevronLeft size={20} />
@@ -64,77 +212,281 @@ export default function ContractorProfile({ contractor }: Props) {
         <nav className="flex items-center gap-1 text-sm text-muted-foreground">
           <Link href="/wykonawcy" className="hover:text-foreground transition-colors">Wykonawcy</Link>
           <span>/</span>
-          <span className="text-foreground font-medium">{contractor.name}</span>
+          <span className="text-foreground font-medium">{displayTitle || contractor.name}</span>
         </nav>
       </div>
 
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold">{contractor.name}</h1>
-          <div className="flex items-center gap-2 mt-1 flex-wrap">
-            {contractor.company && <span className="text-sm text-muted-foreground">{contractor.company}</span>}
-            {contractor.trade && <Badge variant="secondary">{contractor.trade}</Badge>}
-          </div>
-          <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground flex-wrap">
-            {contractor.email && <span>{contractor.email}</span>}
-            {contractor.phone && <span>{contractor.phone}</span>}
-          </div>
-        </div>
-        <Button variant="outline" onClick={() => setEditOpen(true)} className="shrink-0">Edytuj</Button>
-      </div>
+      {/* 2-column layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
 
-      <div className="space-y-4">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex gap-1 border border-border rounded-lg p-1">
-            <button
-              onClick={() => setTab("active")}
-              className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${tab === "active" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
-            >
-              Aktywne ({active.length})
-            </button>
-            <button
-              onClick={() => setTab("archived")}
-              className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${tab === "archived" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
-            >
-              Zarchiwizowane ({archived.length})
-            </button>
-          </div>
-          <Button onClick={() => setAssignOpen(true)} className="gap-2 shrink-0">
-            <Plus size={16} />
-            Przypisz projekt
-          </Button>
-        </div>
-
-        {displayed.length === 0 ? (
-          <div className="py-12 text-center text-muted-foreground text-sm">
-            {tab === "active" ? "Brak aktywnych projektów" : "Brak zarchiwizowanych projektów"}
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {displayed.map((a) => (
-              <div key={a.id} className="flex items-center justify-between gap-4 p-4 rounded-xl border border-border bg-card hover:border-primary/30 transition-colors">
-                <Link href={`/wykonawcy/${contractor.id}/projekty/${a.id}`} className="flex-1 min-w-0">
-                  <p className="font-medium truncate">{a.project.title}</p>
-                  {a.project.clientName && (
-                    <p className="text-sm text-muted-foreground truncate">{a.project.clientName}</p>
-                  )}
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Przypisano: {new Date(a.createdAt).toLocaleDateString("pl-PL")}
-                  </p>
-                </Link>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => toggleArchive(a)}
-                  className="gap-1.5 shrink-0"
-                >
-                  {a.archived ? <ArchiveRestore size={14} /> : <Archive size={14} />}
-                  {a.archived ? "Przywróć" : "Archiwizuj"}
-                </Button>
+        {/* ── Left column: projects ────────────────────────────────────────── */}
+        <div className="space-y-4">
+          {/* Title */}
+          <div>
+            {displayTitle ? (
+              <>
+                <h1 className="text-2xl font-semibold">{displayTitle}</h1>
+                <p className="text-sm text-muted-foreground mt-0.5">{name || contractor.name}</p>
+              </>
+            ) : (
+              <h1 className="text-2xl font-semibold">{name || contractor.name}</h1>
+            )}
+            {(trade || contractor.trade) && (
+              <div className="mt-1">
+                <Badge variant="secondary">{trade || contractor.trade}</Badge>
               </div>
-            ))}
+            )}
           </div>
-        )}
+
+          {/* Tabs + assign button */}
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex gap-1 border border-border rounded-lg p-1">
+              <button
+                onClick={() => setTab("active")}
+                className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${tab === "active" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                Aktywne ({active.length})
+              </button>
+              <button
+                onClick={() => setTab("archived")}
+                className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${tab === "archived" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                Zarchiwizowane ({archived.length})
+              </button>
+            </div>
+            <Button onClick={() => setAssignOpen(true)} className="gap-2 shrink-0">
+              <Plus size={16} />
+              Przypisz projekt
+            </Button>
+          </div>
+
+          {/* Projects list */}
+          {displayed.length === 0 ? (
+            <div className="py-12 text-center text-muted-foreground text-sm">
+              {tab === "active" ? "Brak aktywnych projektów" : "Brak zarchiwizowanych projektów"}
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {displayed.map((a) => (
+                <div key={a.id} className="flex items-center justify-between gap-4 p-4 rounded-xl border border-border bg-card hover:border-primary/30 transition-colors">
+                  <Link href={`/wykonawcy/${contractor.id}/projekty/${a.id}`} className="flex-1 min-w-0">
+                    <p className="font-medium truncate">{a.project.title}</p>
+                    {a.project.clientName && (
+                      <p className="text-sm text-muted-foreground truncate">{a.project.clientName}</p>
+                    )}
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Przypisano: {new Date(a.createdAt).toLocaleDateString("pl-PL")}
+                    </p>
+                  </Link>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => toggleArchive(a)}
+                    className="gap-1.5 shrink-0"
+                  >
+                    {a.archived ? <ArchiveRestore size={14} /> : <Archive size={14} />}
+                    {a.archived ? "Przywróć" : "Archiwizuj"}
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* ── Right column: info + account ─────────────────────────────────── */}
+        <div className="sticky top-6 self-start bg-muted/40 border border-border rounded-2xl overflow-hidden">
+
+          {/* Informacje o wykonawcy */}
+          <section className="p-4 space-y-3">
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Informacje</h2>
+
+            <div className="space-y-1">
+              <Label className="text-xs">Imię i nazwisko *</Label>
+              <Input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Jan Kowalski"
+                className="h-8 text-sm"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <Label className="text-xs">Firma</Label>
+              <Input
+                value={company}
+                onChange={(e) => setCompany(e.target.value)}
+                placeholder="Nazwa firmy"
+                className="h-8 text-sm"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <Label className="text-xs">Specjalność</Label>
+              <select
+                value={trade}
+                onChange={(e) => setTrade(e.target.value)}
+                className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
+              >
+                <option value="">Wybierz specjalność</option>
+                {TRADE_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-1">
+              <Label className="text-xs">Email</Label>
+              <Input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="jan@firma.pl"
+                className="h-8 text-sm"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <Label className="text-xs">Telefon</Label>
+              <Input
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="+48 123 456 789"
+                className="h-8 text-sm"
+              />
+            </div>
+
+            <div className="flex justify-end pt-1">
+              <Button size="sm" onClick={saveInfo} disabled={savingInfo || !name.trim()}>
+                {savingInfo ? "Zapisywanie…" : "Zapisz"}
+              </Button>
+            </div>
+          </section>
+
+          {/* Konto wykonawcy */}
+          <section className="border-t border-border p-4 space-y-3">
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Konto wykonawcy</h2>
+
+            {accountUser ? (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 text-sm">
+                    <KeyRound size={14} className="text-muted-foreground" />
+                    <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">{accountUser.login}</span>
+                  </div>
+                  <button
+                    onClick={() => setCredsOpen((v) => !v)}
+                    className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {credsOpen ? "Ukryj" : "Edytuj"}
+                  </button>
+                </div>
+
+                {credsOpen && (
+                  <div className="p-3 rounded-lg bg-muted/50 border border-border space-y-2">
+                    <div className="space-y-1">
+                      <p className="text-xs text-muted-foreground font-medium">Login</p>
+                      <Input
+                        value={credLogin}
+                        onChange={(e) => setCredLogin(e.target.value)}
+                        className="text-xs h-7 font-mono"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-xs text-muted-foreground font-medium">Nowe hasło</p>
+                      <div className="relative">
+                        <Input
+                          type={showCredPass ? "text" : "password"}
+                          value={credPassword}
+                          onChange={(e) => setCredPassword(e.target.value)}
+                          placeholder="Zostaw puste aby nie zmieniać"
+                          className="text-xs h-7 pr-7"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowCredPass((v) => !v)}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground"
+                        >
+                          {showCredPass ? <EyeOff size={11} /> : <Eye size={11} />}
+                        </button>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between gap-2 pt-1">
+                      <button
+                        onClick={unlinkAccount}
+                        className="text-xs text-destructive hover:text-destructive/80 transition-colors"
+                      >
+                        Odłącz konto
+                      </button>
+                      <Button
+                        size="sm"
+                        className="h-7 text-xs"
+                        disabled={savingCreds || (!credLogin.trim() && !credPassword.trim())}
+                        onClick={saveAccountCreds}
+                      >
+                        {savingCreds ? "Zapis…" : "Zapisz"}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <p className="text-xs text-muted-foreground">Wykonawca nie ma jeszcze konta w systemie.</p>
+                <button
+                  onClick={() => setCreateOpen((v) => !v)}
+                  className="flex items-center gap-1 text-xs text-amber-600 hover:text-amber-800 dark:hover:text-amber-300 transition-colors"
+                >
+                  <KeyRound size={11} />
+                  {createOpen ? "Anuluj" : "Utwórz konto"}
+                </button>
+
+                {createOpen && (
+                  <div className="p-3 rounded-lg bg-muted/50 border border-border space-y-2">
+                    <div className="space-y-1">
+                      <p className="text-xs text-muted-foreground font-medium">Email / login</p>
+                      <Input
+                        type="email"
+                        value={createEmail}
+                        onChange={(e) => setCreateEmail(e.target.value)}
+                        placeholder="email@domena.pl (będzie loginem)"
+                        className="text-xs h-7"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-xs text-muted-foreground font-medium">Hasło</p>
+                      <div className="relative">
+                        <Input
+                          type={showCreatePass ? "text" : "password"}
+                          value={createPassword}
+                          onChange={(e) => setCreatePassword(e.target.value)}
+                          placeholder="Min. 4 znaki"
+                          className="text-xs h-7 pr-7"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowCreatePass((v) => !v)}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground"
+                        >
+                          {showCreatePass ? <EyeOff size={11} /> : <Eye size={11} />}
+                        </button>
+                      </div>
+                    </div>
+                    <div className="flex justify-end pt-1">
+                      <Button
+                        size="sm"
+                        className="h-7 text-xs"
+                        disabled={creatingAccount || !createPassword.trim() || createPassword.trim().length < 4}
+                        onClick={createAccount}
+                      >
+                        {creatingAccount ? "Tworzenie…" : "Utwórz konto"}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </section>
+        </div>
       </div>
 
       <AssignProjectDialog
@@ -142,12 +494,6 @@ export default function ContractorProfile({ contractor }: Props) {
         onOpenChange={setAssignOpen}
         contractorId={contractor.id}
         onAssigned={() => router.refresh()}
-      />
-      <EditContractorDialog
-        open={editOpen}
-        onOpenChange={setEditOpen}
-        contractor={contractor}
-        onUpdated={() => router.refresh()}
       />
     </div>
   );

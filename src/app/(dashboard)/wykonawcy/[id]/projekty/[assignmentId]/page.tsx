@@ -26,11 +26,22 @@ export default async function ContractorProjectPage({ params }: Props) {
     include: {
       project: { select: { id: true, title: true } },
       folders: {
+        where: { parentId: null, type: { in: ["rysunki", "wizualizacje", "dokumenty"] } },
         include: {
           _count: { select: { files: true } },
           files: {
             include: { render: { select: { id: true, name: true, fileUrl: true, fileType: true } } },
             orderBy: { createdAt: "desc" },
+          },
+          subfolders: {
+            orderBy: { order: "asc" },
+            include: {
+              _count: { select: { files: true } },
+              files: {
+                include: { render: { select: { id: true, name: true, fileUrl: true, fileType: true } } },
+                orderBy: { createdAt: "desc" },
+              },
+            },
           },
         },
         orderBy: { order: "asc" },
@@ -42,8 +53,19 @@ export default async function ContractorProjectPage({ params }: Props) {
   const rooms = await prisma.room.findMany({
     where: { projectId: assignment.project.id, archived: false },
     include: {
-      renders: {
+      folders: {
         where: { archived: false },
+        include: {
+          renders: {
+            where: { archived: false },
+            select: { id: true, name: true, fileUrl: true, fileType: true },
+            orderBy: { order: "asc" },
+          },
+        },
+        orderBy: { order: "asc" },
+      },
+      renders: {
+        where: { archived: false, folderId: null },
         select: { id: true, name: true, fileUrl: true, fileType: true },
         orderBy: { order: "asc" },
       },

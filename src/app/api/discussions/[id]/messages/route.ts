@@ -75,5 +75,21 @@ export async function POST(
   await prisma.discussion.update({ where: { id }, data: { updatedAt: new Date() } });
   await pusherServer.trigger(`discussion-${id}`, "new-message", message);
 
+  // Notify contractor's panel if this is a contractor discussion
+  if (discussion.contractorAssignmentId) {
+    await pusherServer.trigger(
+      `contractor-assignment-${discussion.contractorAssignmentId}`,
+      "new-message",
+      message
+    );
+  }
+
+  // Notify client panel if this is a project discussion
+  if (discussion.projectId) {
+    await pusherServer.trigger(`project-${discussion.projectId}`, "new-message", {
+      discussionId: id,
+    });
+  }
+
   return NextResponse.json(message, { status: 201 });
 }
