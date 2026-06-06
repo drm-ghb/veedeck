@@ -39,9 +39,11 @@ export default async function ContractorHomePage() {
       project: { select: { id: true, title: true } },
       contractor: { select: { designer: { select: { name: true, fullName: true } } } },
       folders: {
+        where: { parentId: null },
         select: {
           files: {
             select: {
+              _count: { select: { comments: { where: { viewedByContractor: false, authorRole: "designer" } } } },
               comments: {
                 select: {
                   _count: { select: { replies: { where: { viewedByContractor: false } } } },
@@ -53,6 +55,7 @@ export default async function ContractorHomePage() {
             select: {
               files: {
                 select: {
+                  _count: { select: { comments: { where: { viewedByContractor: false, authorRole: "designer" } } } },
                   comments: {
                     select: {
                       _count: { select: { replies: { where: { viewedByContractor: false } } } },
@@ -85,12 +88,12 @@ export default async function ContractorHomePage() {
   const cards = assignments.map((a) => {
     const unreadCount = a.folders.reduce((sum, f) => {
       const directUnread = f.files.reduce(
-        (s, file) => s + file.comments.reduce((s2, c) => s2 + c._count.replies, 0),
+        (s, file) => s + file._count.comments + file.comments.reduce((s2, c) => s2 + c._count.replies, 0),
         0
       );
       const subUnread = f.subfolders.reduce(
         (s, sub) => s + sub.files.reduce(
-          (s2, file) => s2 + file.comments.reduce((s3, c) => s3 + c._count.replies, 0),
+          (s2, file) => s2 + file._count.comments + file.comments.reduce((s3, c) => s3 + c._count.replies, 0),
           0
         ),
         0

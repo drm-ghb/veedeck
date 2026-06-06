@@ -19,6 +19,10 @@ export async function GET() {
       discussion: {
         include: {
           messages: { orderBy: { createdAt: "asc" }, take: 100 },
+          readReceipts: {
+            where: { readerId: session.user.id, readerType: "contractor" },
+            select: { readAt: true },
+          },
         },
       },
     },
@@ -31,6 +35,7 @@ export async function GET() {
       projectTitle: a.project.title,
       discussionId: a.discussion?.id ?? null,
       messages: a.discussion?.messages ?? [],
+      readAt: a.discussion?.readReceipts?.[0]?.readAt?.toISOString() ?? null,
     }))
   );
 }

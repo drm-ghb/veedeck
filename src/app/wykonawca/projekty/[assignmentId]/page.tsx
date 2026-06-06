@@ -63,17 +63,32 @@ export default async function ContractorProjectPage({ params }: Props) {
     for (const s of f.subfolders) subToParent[s.id] = f.id;
   }
 
-  const unreadReplies = await prisma.contractorFileReply.findMany({
-    where: {
-      viewedByContractor: false,
-      comment: { file: { folderId: { in: [...topFolderIds, ...allSubfolderIds] } } },
-    },
-    select: { comment: { select: { file: { select: { folderId: true } } } } },
-  });
+  const [unreadReplies, unreadDesignerComments] = await Promise.all([
+    prisma.contractorFileReply.findMany({
+      where: {
+        viewedByContractor: false,
+        comment: { file: { folderId: { in: [...topFolderIds, ...allSubfolderIds] } } },
+      },
+      select: { comment: { select: { file: { select: { folderId: true } } } } },
+    }),
+    prisma.contractorFileComment.findMany({
+      where: {
+        viewedByContractor: false,
+        authorRole: "designer",
+        file: { folderId: { in: [...topFolderIds, ...allSubfolderIds] } },
+      },
+      select: { file: { select: { folderId: true } } },
+    }),
+  ]);
 
   const folderUnreadCounts: Record<string, number> = {};
   for (const reply of unreadReplies) {
     const fid = reply.comment.file.folderId;
+    const topId = subToParent[fid] ?? fid;
+    folderUnreadCounts[topId] = (folderUnreadCounts[topId] ?? 0) + 1;
+  }
+  for (const comment of unreadDesignerComments) {
+    const fid = comment.file.folderId;
     const topId = subToParent[fid] ?? fid;
     folderUnreadCounts[topId] = (folderUnreadCounts[topId] ?? 0) + 1;
   }

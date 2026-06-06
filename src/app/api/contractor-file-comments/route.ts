@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
         folder: {
           include: {
             assignment: {
-              select: { id: true, designerId: true, project: { select: { title: true } } },
+              select: { id: true, designerId: true, contractorId: true, project: { select: { title: true } } },
             },
           },
         },
@@ -56,12 +56,13 @@ export async function POST(req: NextRequest) {
       const designerId = file.folder.assignment.designerId;
       const projectTitle = file.folder.assignment.project.title;
       const assignmentId = file.folder.assignment.id;
+      const contractorId = file.folder.assignment.contractorId;
 
       const notification = await prisma.notification.create({
         data: {
           userId: designerId,
           message: `${author} dodał komentarz do pliku „${file.name}" w projekcie „${projectTitle}"`,
-          link: `/wykonawcy`,
+          link: `/wykonawcy/${contractorId}/projekty/${assignmentId}?fileId=${fileId}&folderId=${file.folder.id}`,
           type: "contractor_comment",
         },
       });

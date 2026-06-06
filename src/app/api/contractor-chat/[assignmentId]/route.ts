@@ -34,6 +34,22 @@ export async function GET(
     orderBy: { createdAt: "asc" },
   });
 
+  // Mark as read server-side
+  const lastMsg = messages[messages.length - 1];
+  if (lastMsg) {
+    await prisma.discussionReadReceipt.upsert({
+      where: { discussionId_readerId: { discussionId: discussion.id, readerId: session.user.id } },
+      create: {
+        discussionId: discussion.id,
+        readerId: session.user.id,
+        readerName: contractor.name,
+        readerType: "contractor",
+        lastMessageId: lastMsg.id,
+      },
+      update: { readAt: new Date(), lastMessageId: lastMsg.id },
+    });
+  }
+
   return NextResponse.json({ discussionId: discussion.id, messages });
 }
 

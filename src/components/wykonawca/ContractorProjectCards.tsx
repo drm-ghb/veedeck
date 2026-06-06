@@ -37,7 +37,9 @@ export default function ContractorProjectCards({ cards }: Props) {
           <Link key={card.assignmentId} href={`/wykonawca/projekty/${card.assignmentId}`}>
             <Card className="relative hover:shadow-[0_4px_16px_rgba(25,33,61,0.2)] hover:border-primary/30 transition-all cursor-pointer h-full">
               {card.unreadCount > 0 && (
-                <span className="absolute top-3 right-3 w-2.5 h-2.5 rounded-full bg-primary z-10" />
+                <span className="absolute top-3 right-3 text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full z-10">
+                  Nieprzeczytane: {card.unreadCount}
+                </span>
               )}
               <CardHeader>
                 <CardTitle className="text-base leading-snug">{card.projectTitle}</CardTitle>

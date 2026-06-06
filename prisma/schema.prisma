@@ -955,15 +955,16 @@ model ContractorFile {
 }
 
 model ContractorFileComment {
-  id               String                 @id @default(cuid())
-  content          String
-  author           String
-  authorRole       String                 @default("contractor") // "contractor" | "designer"
-  createdAt        DateTime               @default(now())
-  fileId           String
-  viewedByDesigner Boolean                @default(false)
-  file             ContractorFile         @relation(fields: [fileId], references: [id], onDelete: Cascade)
-  replies          ContractorFileReply[]
+  id                 String                 @id @default(cuid())
+  content            String
+  author             String
+  authorRole         String                 @default("contractor") // "contractor" | "designer"
+  createdAt          DateTime               @default(now())
+  fileId             String
+  viewedByDesigner   Boolean                @default(false)
+  viewedByContractor Boolean                @default(false)
+  file               ContractorFile         @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  replies            ContractorFileReply[]
 }
 
 model ContractorFileReply {

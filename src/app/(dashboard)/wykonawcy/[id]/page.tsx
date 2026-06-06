@@ -37,6 +37,7 @@ export default async function ContractorDetailPage({ params }: Props) {
     const unreadData = await prisma.contractorFileComment.findMany({
       where: {
         viewedByDesigner: false,
+        authorRole: "contractor",
         file: {
           folder: { assignmentId: { in: assignmentIds } },
         },

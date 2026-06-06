@@ -11,6 +11,7 @@ interface FileItem {
   createdAt: string;
   displayUrl: string | null;
   effectiveType: string;
+  totalComments?: number;
 }
 
 interface Props {
@@ -70,7 +71,11 @@ export default function ContractorFilesGrid({
             <Link
               key={file.id}
               href={`/wykonawca/projekty/${assignmentId}/foldery/${folderId}/pliki/${file.id}`}
-              className="group relative rounded-xl border border-border bg-card overflow-hidden block"
+              className={`group relative rounded-xl border bg-card overflow-hidden block transition-all ${
+                unread > 0
+                  ? "border-violet-400 shadow-[0_0_12px_2px_rgba(139,92,246,0.35)]"
+                  : "border-border"
+              }`}
             >
               <div className="aspect-square bg-muted flex items-center justify-center overflow-hidden">
                 {isImage && file.displayUrl ? (
@@ -94,18 +99,25 @@ export default function ContractorFilesGrid({
                     {new Date(file.createdAt).toLocaleDateString("pl-PL")}
                   </p>
                 </div>
-                <button
-                  onClick={(e) => openComments(e, file.id)}
-                  className="relative p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
-                  title="Komentarze"
-                >
-                  <MessageSquare size={14} />
-                  {unread > 0 && (
-                    <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-primary text-primary-foreground text-[8px] font-bold flex items-center justify-center">
-                      {unread > 9 ? "9+" : unread}
-                    </span>
-                  )}
-                </button>
+                {unread > 0 ? (
+                  <button
+                    onClick={(e) => openComments(e, file.id)}
+                    className="text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full shrink-0 hover:bg-primary/20 transition-colors"
+                  >
+                    Nieprzeczytane: {unread}
+                  </button>
+                ) : (
+                  <button
+                    onClick={(e) => openComments(e, file.id)}
+                    className="flex items-center gap-1 p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
+                    title="Komentarze"
+                  >
+                    <MessageSquare size={14} />
+                    {(file.totalComments ?? 0) > 0 && (
+                      <span className="text-[10px] font-medium">{file.totalComments}</span>
+                    )}
+                  </button>
+                )}
               </div>
 
               {/* Download — hover overlay on image */}

@@ -10,12 +10,13 @@ export async function POST(req: NextRequest) {
   if (!fileId || !role) return NextResponse.json({ error: "Brakujące pola" }, { status: 400 });
 
   if (role === "contractor") {
-    // Mark all replies on comments for this file as viewed by contractor
+    // Mark all replies and designer-authored comments on this file as viewed by contractor
     await prisma.contractorFileReply.updateMany({
-      where: {
-        viewedByContractor: false,
-        comment: { fileId },
-      },
+      where: { viewedByContractor: false, comment: { fileId } },
+      data: { viewedByContractor: true },
+    });
+    await prisma.contractorFileComment.updateMany({
+      where: { fileId, viewedByContractor: false, authorRole: "designer" },
       data: { viewedByContractor: true },
     });
   } else if (role === "designer") {

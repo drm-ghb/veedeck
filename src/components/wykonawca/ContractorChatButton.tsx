@@ -39,6 +39,7 @@ interface ChatSummary {
   projectTitle: string;
   discussionId: string | null;
   messages: ChatMessage[];
+  readAt: string | null;
 }
 
 interface Props {
@@ -90,7 +91,7 @@ export default function ContractorChatButton({ contractorUserId, assignments }: 
     setLastReadTimes(times);
   }, []);
 
-  // Load all chats on mount for unread counting
+  // Load all chats on mount for unread counting; merge server readAt with localStorage
   useEffect(() => {
     fetch("/api/contractor-chat")
       .then((r) => r.json())
@@ -98,6 +99,18 @@ export default function ContractorChatButton({ contractorUserId, assignments }: 
         const map: Record<string, ChatSummary> = {};
         for (const c of data) map[c.assignmentId] = c;
         setChats(map);
+
+        setLastReadTimes((prev) => {
+          const merged = { ...prev };
+          for (const c of data) {
+            if (!c.readAt) continue;
+            const local = prev[c.assignmentId];
+            if (!local || new Date(c.readAt) > new Date(local)) {
+              merged[c.assignmentId] = c.readAt;
+            }
+          }
+          return merged;
+        });
       })
       .catch(() => {});
   }, []);

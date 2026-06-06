@@ -38,6 +38,7 @@ export default async function ContractorFolderPage({ params }: Props) {
       files: {
         include: {
           render: { select: { id: true, name: true, fileUrl: true, fileType: true } },
+          _count: { select: { comments: { where: { viewedByContractor: false, authorRole: "designer" } } } },
           comments: {
             select: {
               _count: { select: { replies: { where: { viewedByContractor: false } } } },
@@ -53,6 +54,7 @@ export default async function ContractorFolderPage({ params }: Props) {
           _count: { select: { files: true } },
           files: {
             select: {
+              _count: { select: { comments: { where: { viewedByContractor: false, authorRole: "designer" } } } },
               comments: {
                 select: {
                   _count: { select: { replies: { where: { viewedByContractor: false } } } },
@@ -100,7 +102,7 @@ export default async function ContractorFolderPage({ params }: Props) {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {folder.subfolders.map((sub) => {
             const subUnread = sub.files.reduce(
-              (sum, f) => sum + f.comments.reduce((s2, c) => s2 + c._count.replies, 0),
+              (sum, f) => sum + f._count.comments + f.comments.reduce((s2, c) => s2 + c._count.replies, 0),
               0
             );
             return (
@@ -112,7 +114,9 @@ export default async function ContractorFolderPage({ params }: Props) {
                     <p className="text-xs text-muted-foreground">{sub._count.files} plików</p>
                   </div>
                   {subUnread > 0 && (
-                    <span className="absolute top-3 right-3 w-2.5 h-2.5 rounded-full bg-primary" />
+                    <span className="absolute top-3 right-3 text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                      Nieprzeczytane: {subUnread}
+                    </span>
                   )}
                 </div>
               </Link>
@@ -127,13 +131,14 @@ export default async function ContractorFolderPage({ params }: Props) {
             createdAt: file.createdAt.toISOString(),
             displayUrl: file.render?.fileUrl ?? file.fileUrl ?? null,
             effectiveType: file.render?.fileType ?? file.fileType,
+            totalComments: file.comments.length,
           }))}
           assignmentId={assignmentId}
           folderId={folderId}
           initialUnreadCounts={Object.fromEntries(
             folder.files.map((file) => [
               file.id,
-              file.comments.reduce((sum, c) => sum + c._count.replies, 0),
+              file._count.comments + file.comments.reduce((sum, c) => sum + c._count.replies, 0),
             ])
           )}
           authorName={contractorName}

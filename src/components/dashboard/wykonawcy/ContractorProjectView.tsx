@@ -73,6 +73,8 @@ interface Props {
   unreadPerFile?: Record<string, number>;
   totalPerFile?: Record<string, number>;
   designerName?: string;
+  autoOpenFileId?: string;
+  autoOpenFolderId?: string;
 }
 
 function SortableSubfolderWrapper({ id, children }: { id: string; children: (dragHandleProps: { ref: (el: HTMLElement | null) => void; style: React.CSSProperties; dragListeners: object | undefined; dragAttributes: object | undefined }) => React.ReactNode }) {
@@ -173,6 +175,7 @@ function subfolderUnreadTotal(sub: ContractorSubfolder, unreadCounts: Record<str
 export default function ContractorProjectView({
   contractorId, contractorName, assignmentId, projectTitle, projectId, folders, rooms, info,
   unreadPerFile = {}, totalPerFile = {}, designerName = "Projektant",
+  autoOpenFileId, autoOpenFolderId,
 }: Props) {
   const router = useRouter();
   const [infoOpen, setInfoOpen] = useState(false);
@@ -208,8 +211,24 @@ export default function ContractorProjectView({
     return null;
   })();
 
-  const [expandedFolder, setExpandedFolder] = useState<string | null>(firstUnreadFolderId);
-  const [expandedSubfolder, setExpandedSubfolder] = useState<string | null>(firstUnreadSubfolderId);
+  const [expandedFolder, setExpandedFolder] = useState<string | null>(() => {
+    if (autoOpenFolderId) {
+      // find top-level folder that contains this folderId (could be top-level or subfolder)
+      for (const f of folders) {
+        if (f.id === autoOpenFolderId) return f.id;
+        if (f.subfolders.some((s) => s.id === autoOpenFolderId)) return f.id;
+      }
+    }
+    return firstUnreadFolderId;
+  });
+  const [expandedSubfolder, setExpandedSubfolder] = useState<string | null>(() => {
+    if (autoOpenFolderId) {
+      for (const f of folders) {
+        if (f.subfolders.some((s) => s.id === autoOpenFolderId)) return autoOpenFolderId;
+      }
+    }
+    return firstUnreadSubfolderId;
+  });
   const [addFileDialog, setAddFileDialog] = useState<string | null>(null);
   const [addFileSubfolder, setAddFileSubfolder] = useState<string | null>(null);
   const [newFolderParentId, setNewFolderParentId] = useState<string | null>(null);
@@ -222,6 +241,19 @@ export default function ContractorProjectView({
   useEffect(() => {
     setSubfolderOrder(Object.fromEntries(folders.map((f) => [f.id, f.subfolders])));
   }, [folders]);
+
+  // Auto-open comment panel when navigating from a notification
+  useEffect(() => {
+    if (!autoOpenFileId) return;
+    for (const folder of folders) {
+      const file = [...folder.files, ...folder.subfolders.flatMap((s) => s.files)].find((f) => f.id === autoOpenFileId);
+      if (file) {
+        openComments(file.id, file.name, file.render?.fileUrl ?? file.fileUrl);
+        return;
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
@@ -387,7 +419,10 @@ export default function ContractorProjectView({
       <div className="space-y-3">
         {folders.filter((f) => ["rysunki", "wizualizacje", "dokumenty"].includes(f.type)).map((folder) => (
           <div key={folder.id} className={`border border-border rounded-xl overflow-hidden transition-all ${expandedFolder === folder.id ? "border-l-2 border-l-primary" : ""}`}>
-            <div className="flex items-center gap-3 p-4">
+            <div
+              className="flex items-center gap-3 p-4 cursor-pointer select-none hover:bg-muted/40 transition-colors"
+              onClick={() => setExpandedFolder(expandedFolder === folder.id ? null : folder.id)}
+            >
               <div className={`text-muted-foreground ${folder.visible ? "" : "opacity-40"}`}>
                 {folderIcon(folder.type)}
               </div>
@@ -398,7 +433,7 @@ export default function ContractorProjectView({
                 </div>
                 <p className="text-xs text-muted-foreground">{folder._count.files + folder.subfolders.reduce((s, sub) => s + sub._count.files, 0)} plików</p>
               </div>
-              <div className="flex items-center gap-1 shrink-0">
+              <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
                 {(() => { const u = folderUnreadTotal(folder, unreadCounts); return u > 0 ? <Badge variant="default" className="text-xs">Nieprzeczytane: {u}</Badge> : null; })()}
                 {bulkFolderId === folder.id && selectedFileIds.length > 0 && (
                   <Button size="sm" variant="destructive" onClick={() => deleteSelected(folder.id)} className="gap-1.5">
@@ -435,20 +470,8 @@ export default function ContractorProjectView({
                 >
                   <Plus size={16} />
                 </button>
-                <button
-                  onClick={() => setExpandedFolder(expandedFolder === folder.id ? null : folder.id)}
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors px-2 hidden sm:block"
-                >
-                  {expandedFolder === folder.id ? "Zwiń" : "Rozwiń"}
-                </button>
-                <button
-                  onClick={() => setExpandedFolder(expandedFolder === folder.id ? null : folder.id)}
-                  title={expandedFolder === folder.id ? "Zwiń" : "Rozwiń"}
-                  className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground sm:hidden"
-                >
-                  {expandedFolder === folder.id ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-                </button>
               </div>
+              {expandedFolder === folder.id ? <ChevronDown size={16} className="text-muted-foreground shrink-0" /> : <ChevronRight size={16} className="text-muted-foreground shrink-0" />}
             </div>
 
             {expandedFolder === folder.id && (

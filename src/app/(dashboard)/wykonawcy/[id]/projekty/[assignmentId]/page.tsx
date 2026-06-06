@@ -6,14 +6,16 @@ import ContractorProjectView from "@/components/dashboard/wykonawcy/ContractorPr
 
 interface Props {
   params: Promise<{ id: string; assignmentId: string }>;
+  searchParams: Promise<{ fileId?: string; folderId?: string }>;
 }
 
-export default async function ContractorProjectPage({ params }: Props) {
+export default async function ContractorProjectPage({ params, searchParams }: Props) {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
   const designerId = getWorkspaceUserId(session as any);
   const { id, assignmentId } = await params;
+  const { fileId: autoOpenFileId, folderId: autoOpenFolderId } = await searchParams;
 
   const contractor = await prisma.contractor.findFirst({
     where: { id, designerId },
@@ -53,13 +55,13 @@ export default async function ContractorProjectPage({ params }: Props) {
   // Comment counts per file (total + unread)
   const allComments = await prisma.contractorFileComment.findMany({
     where: { file: { folder: { assignmentId } } },
-    select: { fileId: true, viewedByDesigner: true },
+    select: { fileId: true, viewedByDesigner: true, authorRole: true },
   });
   const unreadPerFile: Record<string, number> = {};
   const totalPerFile: Record<string, number> = {};
   for (const c of allComments) {
     totalPerFile[c.fileId] = (totalPerFile[c.fileId] ?? 0) + 1;
-    if (!c.viewedByDesigner) {
+    if (!c.viewedByDesigner && c.authorRole === "contractor") {
       unreadPerFile[c.fileId] = (unreadPerFile[c.fileId] ?? 0) + 1;
     }
   }
@@ -121,6 +123,8 @@ export default async function ContractorProjectPage({ params }: Props) {
       unreadPerFile={unreadPerFile}
       totalPerFile={totalPerFile}
       designerName={designerName}
+      autoOpenFileId={autoOpenFileId}
+      autoOpenFolderId={autoOpenFolderId}
       info={{
         investmentStreet: assignment.investmentStreet,
         investmentCity: assignment.investmentCity,

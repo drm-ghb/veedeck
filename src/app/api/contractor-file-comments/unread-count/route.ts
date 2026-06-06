@@ -12,6 +12,7 @@ export async function GET() {
   const count = await prisma.contractorFileComment.count({
     where: {
       viewedByDesigner: false,
+      authorRole: "contractor",
       file: {
         folder: {
           assignment: {

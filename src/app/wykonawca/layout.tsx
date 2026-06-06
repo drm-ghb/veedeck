@@ -5,6 +5,7 @@ import Link from "next/link";
 import { SignOutButton } from "@/components/dashboard/SignOutButton";
 import { Engineering } from "@/components/ui/icons";
 import ContractorChatButton from "@/components/wykonawca/ContractorChatButton";
+import { ForceLightMode } from "@/components/wykonawca/ForceLightMode";
 import Image from "next/image";
 
 export default async function ContractorLayout({ children }: { children: React.ReactNode }) {
@@ -39,6 +40,7 @@ export default async function ContractorLayout({ children }: { children: React.R
 
   return (
     <div className="h-dvh flex flex-col bg-muted/60">
+      <ForceLightMode />
       <nav className="relative z-10 px-4 flex items-center gap-3 py-3 border-b border-border">
         <Link href="/wykonawca" className="flex items-center gap-2 font-semibold text-foreground">
           {designerLogo ? (

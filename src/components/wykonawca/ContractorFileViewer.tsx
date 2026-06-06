@@ -12,6 +12,7 @@ interface FileItem {
   displayUrl: string | null;
   effectiveType: string;
   unreadCount: number;
+  totalComments: number;
 }
 
 interface Props {
@@ -41,6 +42,7 @@ export default function ContractorFileViewer({
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>(
     Object.fromEntries(files.map((f) => [f.id, f.unreadCount]))
   );
+  const totalComments = Object.fromEntries(files.map((f) => [f.id, f.totalComments]));
 
   const file = files[index];
   const isImage = file?.effectiveType === "image";
@@ -48,6 +50,7 @@ export default function ContractorFileViewer({
   const hasPrev = index > 0;
   const hasNext = index < files.length - 1;
   const unread = unreadCounts[file?.id] ?? 0;
+  const total = totalComments[file?.id] ?? 0;
 
   const go = useCallback(
     (newIndex: number) => {
@@ -120,15 +123,23 @@ export default function ContractorFileViewer({
               className={`relative flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md border transition-colors ${
                 commentOpen
                   ? "bg-primary text-primary-foreground border-primary"
+                  : unread > 0
+                  ? "border-violet-400 text-violet-600 bg-violet-50 dark:bg-violet-950/30 dark:text-violet-400 dark:border-violet-700"
                   : "border-transparent text-muted-foreground hover:bg-muted"
               }`}
               title="Komentarze"
             >
               <MessageSquare size={14} />
               <span className="hidden sm:inline">Komentarze</span>
-              {unread > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 bg-primary text-primary-foreground text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
-                  {unread > 9 ? "9+" : unread}
+              {(unread > 0 || total > 0) && (
+                <span className={`absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 text-[10px] font-bold rounded-full flex items-center justify-center leading-none ${
+                  commentOpen
+                    ? "bg-primary-foreground text-primary"
+                    : unread > 0
+                    ? "bg-violet-600 text-white"
+                    : "bg-muted-foreground/30 text-foreground"
+                }`}>
+                  {unread > 0 ? (unread > 9 ? "9+" : unread) : total > 9 ? "9+" : total}
                 </span>
               )}
             </button>
