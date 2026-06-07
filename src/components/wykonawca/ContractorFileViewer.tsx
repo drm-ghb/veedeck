@@ -24,6 +24,10 @@ interface Props {
   authorName: string;
   authorRole: "contractor" | "designer";
   backHref: string;
+  /** When provided, component acts as overlay (no URL changes, close calls this instead of router.push) */
+  onClose?: () => void;
+  /** Open comments panel immediately on mount */
+  initialCommentsOpen?: boolean;
 }
 
 export default function ContractorFileViewer({
@@ -35,11 +39,13 @@ export default function ContractorFileViewer({
   authorName,
   authorRole,
   backHref,
+  onClose,
+  initialCommentsOpen = false,
 }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [index, setIndex] = useState(initialIndex);
-  const [commentOpen, setCommentOpen] = useState(false);
+  const [commentOpen, setCommentOpen] = useState(initialCommentsOpen);
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>(
     Object.fromEntries(files.map((f) => [f.id, f.unreadCount]))
   );
@@ -57,23 +63,25 @@ export default function ContractorFileViewer({
     (newIndex: number) => {
       setIndex(newIndex);
       setCommentOpen(false);
-      router.replace(
-        `/wykonawca/projekty/${assignmentId}/foldery/${folderId}/pliki/${files[newIndex].id}`,
-        { scroll: false }
-      );
+      if (!onClose) {
+        router.replace(
+          `/wykonawca/projekty/${assignmentId}/foldery/${folderId}/pliki/${files[newIndex].id}`,
+          { scroll: false }
+        );
+      }
     },
-    [router, assignmentId, folderId, files]
+    [router, assignmentId, folderId, files, onClose]
   );
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === "ArrowLeft" && hasPrev) go(index - 1);
       if (e.key === "ArrowRight" && hasNext) go(index + 1);
-      if (e.key === "Escape") router.push(backHref);
+      if (e.key === "Escape") { if (onClose) onClose(); else router.push(backHref); }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [index, hasPrev, hasNext, go, router, backHref]);
+  }, [index, hasPrev, hasNext, go, router, backHref, onClose]);
 
   function openComments() {
     setCommentOpen(true);
@@ -87,11 +95,11 @@ export default function ContractorFileViewer({
     }
   }
 
-  // Auto-open comments when navigated from a notification (?comments=1)
+  // Auto-open comments when navigated from a notification (?comments=1) — only for route mode
   useEffect(() => {
+    if (onClose) return; // overlay mode: initialCommentsOpen handles this
     if (searchParams.get("comments") === "1" && file) {
       openComments();
-      // Remove the query param without remounting
       router.replace(
         `/wykonawca/projekty/${assignmentId}/foldery/${folderId}/pliki/${file.id}`,
         { scroll: false }
@@ -108,22 +116,40 @@ export default function ContractorFileViewer({
       <div className="border-b bg-card flex-shrink-0">
         <div className="flex items-center gap-3 px-4 py-2.5">
           {/* Back arrow */}
-          <Link
-            href={backHref}
-            className="flex-shrink-0 text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ChevronLeft size={20} />
-          </Link>
+          {onClose ? (
+            <button
+              onClick={onClose}
+              className="flex-shrink-0 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ChevronLeft size={20} />
+            </button>
+          ) : (
+            <Link
+              href={backHref}
+              className="flex-shrink-0 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ChevronLeft size={20} />
+            </Link>
+          )}
           <div className="w-px h-4 bg-border flex-shrink-0" />
 
           {/* Breadcrumb */}
           <nav className="flex items-center gap-1 min-w-0 flex-1 text-sm overflow-hidden">
-            <Link
-              href={backHref}
-              className="min-w-0 shrink text-muted-foreground hover:text-foreground transition-colors font-medium truncate max-w-[160px]"
-            >
-              {folderName}
-            </Link>
+            {onClose ? (
+              <button
+                onClick={onClose}
+                className="min-w-0 shrink text-muted-foreground hover:text-foreground transition-colors font-medium truncate max-w-[160px]"
+              >
+                {folderName}
+              </button>
+            ) : (
+              <Link
+                href={backHref}
+                className="min-w-0 shrink text-muted-foreground hover:text-foreground transition-colors font-medium truncate max-w-[160px]"
+              >
+                {folderName}
+              </Link>
+            )}
             <ChevronLeft size={13} className="flex-shrink-0 text-muted-foreground/40 rotate-180" />
             <span className="text-foreground font-semibold truncate min-w-0 shrink">
               {file.name}
