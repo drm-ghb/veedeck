@@ -6,7 +6,6 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { Eye, EyeOff, Plus, FileText, Image, Ruler, Trash2, ChevronLeft, ChevronDown, ChevronRight, Download, FolderPlus, Pencil, Check, X, CheckSquare, GripVertical, Info, MessageSquare, MoreHorizontal } from "@/components/ui/icons";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import ContractorFileViewer from "@/components/wykonawca/ContractorFileViewer";
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, arrayMove, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -73,8 +72,6 @@ interface Props {
   unreadPerFile?: Record<string, number>;
   totalPerFile?: Record<string, number>;
   designerName?: string;
-  autoOpenFileId?: string;
-  autoOpenFolderId?: string;
 }
 
 function SortableSubfolderWrapper({ id, children }: { id: string; children: (dragHandleProps: { ref: (el: HTMLElement | null) => void; style: React.CSSProperties; dragListeners: object | undefined; dragAttributes: object | undefined }) => React.ReactNode }) {
@@ -145,14 +142,23 @@ function FileRow({ file, onDelete, bulkMode, selected, onSelect, unreadCount = 0
             </span>
           )}
         </button>
-        {displayUrl && (
-          <a href={displayUrl} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground" title="Pobierz">
-            <Download size={15} />
-          </a>
-        )}
-        <button onClick={onDelete} className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 text-muted-foreground hover:text-red-500 transition-colors" title="Usuń">
-          <Trash2 size={15} />
-        </button>
+        <DropdownMenu>
+          <DropdownMenuTrigger render={<button className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground" title="Więcej opcji" />}>
+            <MoreHorizontal size={15} />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-36">
+            {displayUrl && (
+              <DropdownMenuItem render={<a href={displayUrl} target="_blank" rel="noopener noreferrer" />}>
+                <Download size={13} className="mr-2" />
+                Pobierz
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuItem onClick={onDelete} className="text-destructive focus:text-destructive">
+              <Trash2 size={13} className="mr-2" />
+              Usuń
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   );
@@ -179,52 +185,10 @@ function subfolderUnreadTotal(sub: ContractorSubfolder, unreadCounts: Record<str
 export default function ContractorProjectView({
   contractorId, contractorName, assignmentId, projectTitle, projectId, folders, rooms, info,
   unreadPerFile = {}, totalPerFile = {}, designerName = "Projektant",
-  autoOpenFileId, autoOpenFolderId,
 }: Props) {
   const router = useRouter();
   const [infoOpen, setInfoOpen] = useState(false);
-  const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>(unreadPerFile);
-
-  interface ViewerState {
-    files: { id: string; name: string; displayUrl: string | null; effectiveType: string; unreadCount: number; totalComments: number }[];
-    index: number;
-    folderId: string;
-    folderName: string;
-    openComments: boolean;
-  }
-  const [viewerState, setViewerState] = useState<ViewerState | null>(null);
-
-  function buildFolderFiles(folderFiles: ContractorFile[]) {
-    return folderFiles.map((f) => ({
-      id: f.id,
-      name: f.name,
-      displayUrl: f.render?.fileUrl ?? f.fileUrl ?? null,
-      effectiveType: f.render?.fileType ?? f.fileType,
-      unreadCount: unreadCounts[f.id] ?? 0,
-      totalComments: totalPerFile[f.id] ?? 0,
-    }));
-  }
-
-  function openViewer(
-    fileId: string,
-    folderFiles: ContractorFile[],
-    folderId: string,
-    folderName: string,
-    withComments = false
-  ) {
-    const files = buildFolderFiles(folderFiles);
-    const index = files.findIndex((f) => f.id === fileId);
-    if (index === -1) return;
-    if (withComments && (unreadCounts[fileId] ?? 0) > 0) {
-      setUnreadCounts((prev) => ({ ...prev, [fileId]: 0 }));
-      fetch("/api/contractor-file-comments/mark-read", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fileId, role: "designer" }),
-      }).catch(() => {});
-    }
-    setViewerState({ files, index, folderId, folderName, openComments: withComments });
-  }
+  const [unreadCounts] = useState<Record<string, number>>(unreadPerFile);
   // Auto-expand folders/subfolders with unread on mount
   const firstUnreadFolderId = (() => {
     for (const folder of folders) {
@@ -243,24 +207,8 @@ export default function ContractorProjectView({
     return null;
   })();
 
-  const [expandedFolder, setExpandedFolder] = useState<string | null>(() => {
-    if (autoOpenFolderId) {
-      // find top-level folder that contains this folderId (could be top-level or subfolder)
-      for (const f of folders) {
-        if (f.id === autoOpenFolderId) return f.id;
-        if (f.subfolders.some((s) => s.id === autoOpenFolderId)) return f.id;
-      }
-    }
-    return firstUnreadFolderId;
-  });
-  const [expandedSubfolder, setExpandedSubfolder] = useState<string | null>(() => {
-    if (autoOpenFolderId) {
-      for (const f of folders) {
-        if (f.subfolders.some((s) => s.id === autoOpenFolderId)) return autoOpenFolderId;
-      }
-    }
-    return firstUnreadSubfolderId;
-  });
+  const [expandedFolder, setExpandedFolder] = useState<string | null>(firstUnreadFolderId);
+  const [expandedSubfolder, setExpandedSubfolder] = useState<string | null>(firstUnreadSubfolderId);
   const [addFileDialog, setAddFileDialog] = useState<string | null>(null);
   const [addFileSubfolder, setAddFileSubfolder] = useState<string | null>(null);
   const [newFolderParentId, setNewFolderParentId] = useState<string | null>(null);
@@ -273,26 +221,6 @@ export default function ContractorProjectView({
   useEffect(() => {
     setSubfolderOrder(Object.fromEntries(folders.map((f) => [f.id, f.subfolders])));
   }, [folders]);
-
-  // Auto-open viewer when navigating from a notification
-  useEffect(() => {
-    if (!autoOpenFileId) return;
-    for (const folder of folders) {
-      const inDirect = folder.files.find((f) => f.id === autoOpenFileId);
-      if (inDirect) {
-        openViewer(autoOpenFileId, folder.files, folder.id, folder.name, true);
-        return;
-      }
-      for (const sub of folder.subfolders) {
-        const inSub = sub.files.find((f) => f.id === autoOpenFileId);
-        if (inSub) {
-          openViewer(autoOpenFileId, sub.files, sub.id, sub.name, true);
-          return;
-        }
-      }
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
@@ -626,7 +554,7 @@ export default function ContractorProjectView({
                         {sub.files.length === 0 ? (
                           <p className="px-6 py-3 text-sm text-muted-foreground">Brak plików</p>
                         ) : (
-                          sub.files.map((file) => <FileRow key={file.id} file={file} onDelete={() => deleteFile(sub.id, file.id, file.name)} bulkMode={bulkFolderId === sub.id} selected={selectedFileIds.includes(file.id)} onSelect={() => toggleFileSelect(file.id)} unreadCount={unreadCounts[file.id] ?? 0} totalCount={totalPerFile[file.id] ?? 0} onFileClick={() => openViewer(file.id, sub.files, sub.id, sub.name, false)} onCommentClick={() => openViewer(file.id, sub.files, sub.id, sub.name, true)} />)
+                          sub.files.map((file) => <FileRow key={file.id} file={file} onDelete={() => deleteFile(sub.id, file.id, file.name)} bulkMode={bulkFolderId === sub.id} selected={selectedFileIds.includes(file.id)} onSelect={() => toggleFileSelect(file.id)} unreadCount={unreadCounts[file.id] ?? 0} totalCount={totalPerFile[file.id] ?? 0} onFileClick={() => router.push(`/wykonawcy/${contractorId}/projekty/${assignmentId}/foldery/${sub.id}/pliki/${file.id}`)} onCommentClick={() => router.push(`/wykonawcy/${contractorId}/projekty/${assignmentId}/foldery/${sub.id}/pliki/${file.id}?comments=1`)} />)
                         )}
                       </div>
                     )}
@@ -653,7 +581,7 @@ export default function ContractorProjectView({
                   <p className="px-4 py-3 text-sm text-muted-foreground">Brak plików w tym folderze</p>
                 ) : folder.files.length > 0 ? (
                   <div className="divide-y divide-border">
-                    {folder.files.map((file) => <FileRow key={file.id} file={file} onDelete={() => deleteFile(folder.id, file.id, file.name)} bulkMode={bulkFolderId === folder.id} selected={selectedFileIds.includes(file.id)} onSelect={() => toggleFileSelect(file.id)} unreadCount={unreadCounts[file.id] ?? 0} totalCount={totalPerFile[file.id] ?? 0} onFileClick={() => openViewer(file.id, folder.files, folder.id, folder.name, false)} onCommentClick={() => openViewer(file.id, folder.files, folder.id, folder.name, true)} />)}
+                    {folder.files.map((file) => <FileRow key={file.id} file={file} onDelete={() => deleteFile(folder.id, file.id, file.name)} bulkMode={bulkFolderId === folder.id} selected={selectedFileIds.includes(file.id)} onSelect={() => toggleFileSelect(file.id)} unreadCount={unreadCounts[file.id] ?? 0} totalCount={totalPerFile[file.id] ?? 0} onFileClick={() => router.push(`/wykonawcy/${contractorId}/projekty/${assignmentId}/foldery/${folder.id}/pliki/${file.id}`)} onCommentClick={() => router.push(`/wykonawcy/${contractorId}/projekty/${assignmentId}/foldery/${folder.id}/pliki/${file.id}?comments=1`)} />)}
                   </div>
                 ) : null}
               </div>
@@ -675,23 +603,6 @@ export default function ContractorProjectView({
         ))}
       </div>
     </div>
-
-    {viewerState && (
-      <div className="fixed inset-0 z-50 bg-background">
-        <ContractorFileViewer
-          files={viewerState.files}
-          initialIndex={viewerState.index}
-          assignmentId={assignmentId}
-          folderId={viewerState.folderId}
-          folderName={viewerState.folderName}
-          authorName={designerName}
-          authorRole="designer"
-          backHref=""
-          onClose={() => setViewerState(null)}
-          initialCommentsOpen={viewerState.openComments}
-        />
-      </div>
-    )}
 
     <EditProjectInfoDialog
       open={infoOpen}

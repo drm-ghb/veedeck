@@ -17,6 +17,11 @@ export default async function ContractorProjectPage({ params, searchParams }: Pr
   const { id, assignmentId } = await params;
   const { fileId: autoOpenFileId, folderId: autoOpenFolderId } = await searchParams;
 
+  // Redirect old notification links (?fileId=&folderId=) to the new route format
+  if (autoOpenFileId && autoOpenFolderId) {
+    redirect(`/wykonawcy/${id}/projekty/${assignmentId}/foldery/${autoOpenFolderId}/pliki/${autoOpenFileId}?comments=1`);
+  }
+
   const contractor = await prisma.contractor.findFirst({
     where: { id, designerId },
     select: { id: true, name: true },
@@ -123,8 +128,6 @@ export default async function ContractorProjectPage({ params, searchParams }: Pr
       unreadPerFile={unreadPerFile}
       totalPerFile={totalPerFile}
       designerName={designerName}
-      autoOpenFileId={autoOpenFileId}
-      autoOpenFolderId={autoOpenFolderId}
       info={{
         investmentStreet: assignment.investmentStreet,
         investmentCity: assignment.investmentCity,

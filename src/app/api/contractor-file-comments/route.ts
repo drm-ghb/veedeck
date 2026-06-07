@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
         data: {
           userId: designerId,
           message: `${author} dodał komentarz do pliku „${file.name}" w projekcie „${projectTitle}"`,
-          link: `/wykonawcy/${contractorId}/projekty/${assignmentId}?fileId=${fileId}&folderId=${folderId}`,
+          link: `/wykonawcy/${contractorId}/projekty/${assignmentId}/foldery/${folderId}/pliki/${fileId}?comments=1`,
           type: "contractor_comment",
         },
       });

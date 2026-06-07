@@ -30,6 +30,8 @@ interface Props {
   authorRole: "contractor" | "designer";
   onClose: () => void;
   onCountChange?: (fileId: string, count: number) => void;
+  /** "overlay" = fixed overlay (default, ContractorFilesGrid); "sidebar" = flex sibling (ContractorFileViewer) */
+  mode?: "overlay" | "sidebar";
 }
 
 function formatDate(iso: string) {
@@ -67,6 +69,7 @@ export default function ContractorFileCommentPanel({
   authorRole,
   onClose,
   onCountChange,
+  mode = "overlay",
 }: Props) {
   const [expanded, setExpanded] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
@@ -268,17 +271,22 @@ export default function ContractorFileCommentPanel({
     .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
 
   return (
-    <div className="fixed left-0 right-0 md:left-auto top-0 h-full z-50 flex flex-row items-end">
-      {/* Expand handle */}
+    <div className={
+      mode === "sidebar"
+        ? `relative h-full flex-shrink-0 transition-[width] duration-200 ${expanded ? "w-[640px]" : "w-80"}`
+        : `fixed inset-y-0 right-0 left-0 md:left-auto z-30 flex-shrink-0 transition-[width] duration-200 ${expanded ? "md:w-[640px]" : "md:w-80"}`
+    }>
+
+      {/* Expand handle — absolutely positioned outside the panel, bottom-left */}
       <button
         onClick={() => setExpanded(v => !v)}
-        className="hidden md:flex items-center justify-center w-5 h-12 bg-background border border-r-0 border-border rounded-l-md shadow-md text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
+        className="hidden md:flex items-center justify-center w-5 h-12 bg-card border border-r-0 border-border rounded-l-md shadow-md text-muted-foreground hover:text-foreground transition-colors absolute left-0 bottom-0 -translate-x-full z-10"
         title={expanded ? "Zwiń panel" : "Rozwiń panel"}
       >
         {expanded ? <ChevronRight size={13} /> : <ChevronLeft size={13} />}
       </button>
 
-      <div className={`h-full bg-background border-l border-border shadow-xl flex flex-col transition-[width] duration-200 w-full overflow-x-hidden ${expanded ? "md:w-[640px]" : "md:w-80"}`}>
+      <div className="h-full w-full flex flex-col bg-card border-l border-border shadow-xl md:shadow-none overflow-x-hidden">
         {/* Header */}
         <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-border shrink-0">
           <div className="flex items-center gap-2.5 min-w-0">

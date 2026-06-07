@@ -56,7 +56,7 @@ export default async function RenderPage({ params }: Props) {
   });
 
   return (
-    <div className={`fixed inset-0 top-[57px] z-20 bg-background ${sidebarVisible ? "md:left-14 md:rounded-tl-2xl" : ""}`}>
+    <div className={`fixed inset-0 top-[57px] z-40 bg-background ${sidebarVisible ? "md:left-14 md:rounded-tl-2xl" : ""}`}>
       <RenderViewer
         renderId={render.id}
         renderName={render.name}

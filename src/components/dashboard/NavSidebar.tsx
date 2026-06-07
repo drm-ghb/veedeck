@@ -29,6 +29,7 @@ function getSettingsHref(pathname: string): string {
 const HIDDEN_ON: RegExp[] = [
   /^\/projects\/[^/]+\/renders\//,
   /^\/listy\/.+/,
+  /^\/wykonawcy\/[^/]+\/projekty\/[^/]+\/foldery\//,
 ];
 
 export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userId, isTrial, initialCollapsed = false }: NavSidebarProps) {

@@ -49,10 +49,35 @@ export async function GET(
     select: { id: true, name: true, shareToken: true },
   });
 
-  const discussion = await prisma.discussion.findUnique({
+  let discussion = await prisma.discussion.findUnique({
     where: { projectId },
     select: { id: true },
   });
+
+  // Lazy-create discussion for legacy projects that predate auto-creation
+  if (!discussion) {
+    discussion = await prisma.discussion.create({
+      data: {
+        title: project.title,
+        type: "project",
+        ownerId: project.userId,
+        projectId,
+      },
+      select: { id: true },
+    });
+
+    // Add all client users linked to this project as participants
+    const clientLinks = await prisma.projectClient.findMany({
+      where: { projectId, userId: { not: null } },
+      select: { userId: true },
+    });
+    if (clientLinks.length > 0) {
+      await prisma.discussionParticipant.createMany({
+        data: clientLinks.map((l) => ({ discussionId: discussion!.id, userId: l.userId! })),
+        skipDuplicates: true,
+      });
+    }
+  }
 
   const { user, sharePassword, shareExpiresAt, ...rest } = project;
   const { name, showProfileName, showClientLogo, clientLogoUrl, ...userSettings } = user;

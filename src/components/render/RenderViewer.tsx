@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { pusherClient } from "@/lib/pusher";
@@ -294,6 +295,9 @@ export default function RenderViewer({
   const [isDragging, setIsDragging] = useState(false);
   const [newPinInternal, setNewPinInternal] = useState(false);
   const [zoom, setZoom] = useState(1);
+  const [panX, setPanX] = useState(0);
+  const [panY, setPanY] = useState(0);
+  const [isPanning, setIsPanning] = useState(false);
   const [pinFilter, setPinFilter] = useState<"current" | "all">(() => {
     if (typeof window !== "undefined") {
       return sessionStorage.getItem("renderflow_pinFilter") === "all" ? "all" : "current";
@@ -427,7 +431,12 @@ export default function RenderViewer({
 
   const imgRef = useRef<HTMLDivElement>(null);
   const lightboxImgRef = useRef<HTMLDivElement>(null);
+  const lightboxViewRef = useRef<HTMLDivElement>(null);
   const lastPinchDistRef = useRef(0);
+  const isDraggingRef = useRef(false);
+  const dragStartRef = useRef({ x: 0, y: 0, panX: 0, panY: 0 });
+  const touchPanRef = useRef({ x: 0, y: 0, panX: 0, panY: 0 });
+  const dragThresholdRef = useRef(false);
   const versionFileInputRef = useRef<HTMLInputElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const chatMessageRefs = useRef<Map<string, HTMLDivElement>>(new Map());
@@ -668,6 +677,8 @@ export default function RenderViewer({
 
   function openLightbox() {
     setZoom(1);
+    setPanX(0);
+    setPanY(0);
     setLightboxIndex(currentRenderIndex >= 0 ? currentRenderIndex : 0);
     setLightboxOpen(true);
   }
@@ -3131,7 +3142,7 @@ export default function RenderViewer({
           {/* Left navigation arrow */}
           {lightboxPrevRender && (
             <button
-              onClick={() => { setLightboxIndex((i) => i - 1); setZoom(1); cancelPending(); onViewCounted?.(lightboxPrevRender.id); }}
+              onClick={() => { setLightboxIndex((i) => i - 1); setZoom(1); setPanX(0); setPanY(0); cancelPending(); onViewCounted?.(lightboxPrevRender.id); }}
               className="absolute left-3 top-1/2 -translate-y-1/2 z-10 bg-white/10 hover:bg-white/20 border border-white/20 rounded-full p-2 text-white/70 hover:text-white transition-all sm:opacity-60 sm:hover:opacity-100"
               title={lightboxPrevRender.name}
             >
@@ -3141,7 +3152,7 @@ export default function RenderViewer({
           {/* Right navigation arrow */}
           {lightboxNextRender && (
             <button
-              onClick={() => { setLightboxIndex((i) => i + 1); setZoom(1); cancelPending(); onViewCounted?.(lightboxNextRender.id); }}
+              onClick={() => { setLightboxIndex((i) => i + 1); setZoom(1); setPanX(0); setPanY(0); cancelPending(); onViewCounted?.(lightboxNextRender.id); }}
               className="absolute right-3 top-1/2 -translate-y-1/2 z-10 bg-white/10 hover:bg-white/20 border border-white/20 rounded-full p-2 text-white/70 hover:text-white transition-all sm:opacity-60 sm:hover:opacity-100"
               title={lightboxNextRender.name}
             >
@@ -3149,17 +3160,51 @@ export default function RenderViewer({
             </button>
           )}
           <div
-            className="absolute inset-0 overflow-auto flex items-start justify-center p-4 sm:p-8"
+            ref={lightboxViewRef}
+            className={`absolute inset-0 overflow-hidden flex items-center justify-center select-none ${(mode === "pin" || productPinMode) ? "cursor-crosshair" : isPanning ? "cursor-grabbing" : zoom > 1 ? "cursor-grab" : "cursor-default"}`}
             onWheel={(e) => {
               e.preventDefault();
-              const delta = e.deltaY > 0 ? -0.12 : 0.12;
-              setZoom((z) => Math.max(0.25, Math.min(5, z + delta)));
+              const rect = lightboxViewRef.current!.getBoundingClientRect();
+              const cx = e.clientX - rect.left - rect.width / 2;
+              const cy = e.clientY - rect.top - rect.height / 2;
+              setZoom((z) => {
+                const delta = e.deltaY > 0 ? -0.12 : 0.12;
+                const newZ = Math.max(0.25, Math.min(5, z + delta));
+                const ratio = newZ / z;
+                if (newZ <= 1) { setPanX(0); setPanY(0); }
+                else {
+                  setPanX((px) => cx * (1 - ratio) + px * ratio);
+                  setPanY((py) => cy * (1 - ratio) + py * ratio);
+                }
+                return newZ;
+              });
             }}
+            onMouseDown={(e) => {
+              if (mode === "pin" || productPinMode || zoom <= 1) return;
+              isDraggingRef.current = true;
+              dragThresholdRef.current = false;
+              setIsPanning(true);
+              dragStartRef.current = { x: e.clientX, y: e.clientY, panX, panY };
+            }}
+            onMouseMove={(e) => {
+              if (!isDraggingRef.current) return;
+              const dx = e.clientX - dragStartRef.current.x;
+              const dy = e.clientY - dragStartRef.current.y;
+              if (!dragThresholdRef.current && Math.hypot(dx, dy) > 4) dragThresholdRef.current = true;
+              if (dragThresholdRef.current) {
+                setPanX(dragStartRef.current.panX + dx);
+                setPanY(dragStartRef.current.panY + dy);
+              }
+            }}
+            onMouseUp={() => { isDraggingRef.current = false; setIsPanning(false); }}
+            onMouseLeave={() => { isDraggingRef.current = false; setIsPanning(false); }}
             onTouchStart={(e) => {
               if (e.touches.length === 2) {
                 const dx = e.touches[0].clientX - e.touches[1].clientX;
                 const dy = e.touches[0].clientY - e.touches[1].clientY;
                 lastPinchDistRef.current = Math.hypot(dx, dy);
+              } else if (e.touches.length === 1 && !(mode === "pin" || productPinMode)) {
+                touchPanRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, panX, panY };
               }
             }}
             onTouchMove={(e) => {
@@ -3172,14 +3217,24 @@ export default function RenderViewer({
                   setZoom((z) => Math.max(0.25, Math.min(5, z * ratio)));
                 }
                 lastPinchDistRef.current = dist;
+              } else if (e.touches.length === 1 && !(mode === "pin" || productPinMode)) {
+                setPanX(touchPanRef.current.panX + e.touches[0].clientX - touchPanRef.current.x);
+                setPanY(touchPanRef.current.panY + e.touches[0].clientY - touchPanRef.current.y);
               }
             }}
           >
             <div
               ref={lightboxImgRef}
-              className={`relative flex-shrink-0 select-none ${(mode === "pin" || productPinMode) ? "cursor-crosshair" : "cursor-default"}`}
-              style={{ width: "fit-content", height: "fit-content" }}
+              className="relative flex-shrink-0 select-none"
+              style={{
+                width: "fit-content",
+                height: "fit-content",
+                transform: `translate(${panX}px, ${panY}px) scale(${zoom})`,
+                transformOrigin: "center center",
+                willChange: "transform",
+              }}
               onClick={(e) => {
+                if (dragThresholdRef.current) { dragThresholdRef.current = false; return; }
                 if (productPinMode) {
                   if (pending || pendingProductPos) return;
                   const rect = lightboxImgRef.current!.getBoundingClientRect();
@@ -3204,8 +3259,8 @@ export default function RenderViewer({
                 src={lightboxRender.fileUrl}
                 alt="Render"
                 style={{
-                  maxWidth: `calc((100vw - 2rem) * ${zoom})`,
-                  maxHeight: `calc((100vh - 120px - 2rem) * ${zoom})`,
+                  maxWidth: "calc(100vw - 2rem)",
+                  maxHeight: "calc(100vh - 120px)",
                   width: "auto",
                   height: "auto",
                 }}
@@ -3232,9 +3287,9 @@ export default function RenderViewer({
                   >
                     <Armchair size={14} className="text-white" />
                   </div>
-                  {hoveredProductPinId === pin.id && (
+                  {hoveredProductPinId === pin.id && createPortal(
                     <div
-                      className="fixed z-50 bg-card rounded-xl shadow-xl border border-border p-3 w-56"
+                      className="fixed z-[200] bg-card rounded-xl shadow-xl border border-border p-3 w-56"
                       style={getPopupStyle(pin.posX, pin.posY, lightboxImgRef.current, 224)}
                       onMouseEnter={() => handleProductPinMouseEnter(pin.id)}
                       onMouseLeave={handleProductPinMouseLeave}
@@ -3267,7 +3322,7 @@ export default function RenderViewer({
                         )}
                       </div>
                     </div>
-                  )}
+                  , document.body)}
                 </div>
                 );
               })}
@@ -3298,9 +3353,9 @@ export default function RenderViewer({
                     >
                       {i + 1}
                     </button>
-                    {hoveredCommentPinId === c.id && selectedId !== c.id && (
+                    {hoveredCommentPinId === c.id && selectedId !== c.id && createPortal(
                       <div
-                        className="fixed z-50 bg-card rounded-xl shadow-xl border border-border p-3 w-56"
+                        className="fixed z-[200] bg-card rounded-xl shadow-xl border border-border p-3 w-56"
                         style={getPopupStyle(c.posX!, c.posY!, lightboxImgRef.current, 224)}
                         onMouseEnter={() => handleCommentPinMouseEnter(c.id)}
                         onMouseLeave={handleCommentPinMouseLeave}
@@ -3316,7 +3371,7 @@ export default function RenderViewer({
                           </p>
                         )}
                       </div>
-                    )}
+                    , document.body)}
                   </div>
                 );
               })}
@@ -3335,10 +3390,10 @@ export default function RenderViewer({
               )}
 
               {/* New comment popup */}
-              {pending && (
+              {pending && createPortal(
                 <div
                   data-new-pin-popup=""
-                  className="fixed z-50 bg-card rounded-xl shadow-xl border border-border p-4 w-64"
+                  className="fixed z-[200] bg-card rounded-xl shadow-xl border border-border p-4 w-64"
                   style={getPopupStyle(pending.x, pending.y, lightboxImgRef.current, 256, visualVP.height || undefined, visualVP.offsetTop)}
                   onClick={(e) => e.stopPropagation()}
                   onMouseDown={(e) => e.stopPropagation()}
@@ -3420,12 +3475,12 @@ export default function RenderViewer({
                     </div>
                   )}
                 </div>
-              )}
+              , document.body)}
 
               {/* Thread popup for existing pin */}
-              {selectedComment && !pending && (
+              {selectedComment && !pending && createPortal(
                 <div
-                  className="fixed z-50 bg-card rounded-xl shadow-xl border border-border w-72 flex flex-col"
+                  className="fixed z-[200] bg-card rounded-xl shadow-xl border border-border w-72 flex flex-col"
                   style={{
                     ...getPopupStyle(selectedComment.posX!, selectedComment.posY!, lightboxImgRef.current, 288, visualVP.height || undefined, visualVP.offsetTop),
                     maxHeight: "360px",
@@ -3707,7 +3762,7 @@ export default function RenderViewer({
                     )}
                   </div>
                 </div>
-              )}
+              , document.body)}
             </div>
           </div>
           </div>
@@ -3721,7 +3776,7 @@ export default function RenderViewer({
               <ZoomOut size={18} />
             </button>
             <button
-              onClick={() => setZoom(1)}
+              onClick={() => { setZoom(1); setPanX(0); setPanY(0); }}
               className="text-xs text-white/60 hover:text-white w-14 text-center transition-colors"
             >
               {Math.round(zoom * 100)}%
