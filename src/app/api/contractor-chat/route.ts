@@ -37,7 +37,7 @@ export async function GET() {
         ? await prisma.discussionMessage.count({
             where: {
               discussionId: a.discussion.id,
-              userId: { not: session.user.id },
+              userId: { not: session.user!.id },
               ...(readAt ? { createdAt: { gt: readAt } } : {}),
             },
           })
