@@ -29,13 +29,30 @@ export async function GET() {
     orderBy: { createdAt: "asc" },
   });
 
-  return NextResponse.json(
-    assignments.map((a) => ({
-      assignmentId: a.id,
-      projectTitle: a.project.title,
-      discussionId: a.discussion?.id ?? null,
-      messages: a.discussion?.messages ?? [],
-      readAt: a.discussion?.readReceipts?.[0]?.readAt?.toISOString() ?? null,
-    }))
+  const results = await Promise.all(
+    assignments.map(async (a) => {
+      const readAt = a.discussion?.readReceipts?.[0]?.readAt ?? null;
+
+      const unreadCount = a.discussion
+        ? await prisma.discussionMessage.count({
+            where: {
+              discussionId: a.discussion.id,
+              userId: { not: session.user.id },
+              ...(readAt ? { createdAt: { gt: readAt } } : {}),
+            },
+          })
+        : 0;
+
+      return {
+        assignmentId: a.id,
+        projectTitle: a.project.title,
+        discussionId: a.discussion?.id ?? null,
+        messages: a.discussion?.messages ?? [],
+        readAt: readAt?.toISOString() ?? null,
+        unreadCount,
+      };
+    })
   );
+
+  return NextResponse.json(results);
 }

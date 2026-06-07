@@ -73,6 +73,7 @@ model User {
   sentInvitations            Invitation[]   @relation("InvitationDesigner")
   ownedDiscussions           Discussion[]   @relation("DiscussionOwner")
   discussionMessages         DiscussionMessage[] @relation("DiscussionMessageUser")
+  discussionParticipations   DiscussionParticipant[] @relation("DiscussionParticipants")
   projectClientAccounts      ProjectClient[] @relation("ProjectClientUser")
   createdTasks               Task[]         @relation("TaskCreator")
   assignedTasks              Task[]         @relation("TaskAssignee")
@@ -617,11 +618,24 @@ model Discussion {
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
 
-  owner                User                    @relation("DiscussionOwner", fields: [ownerId], references: [id], onDelete: Cascade)
-  project              Project?                @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  contractorAssignment ContractorAssignment?   @relation(fields: [contractorAssignmentId], references: [id], onDelete: SetNull)
+  owner                User                     @relation("DiscussionOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  project              Project?                 @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  contractorAssignment ContractorAssignment?    @relation(fields: [contractorAssignmentId], references: [id], onDelete: SetNull)
   messages             DiscussionMessage[]
   readReceipts         DiscussionReadReceipt[]
+  participants         DiscussionParticipant[]
+}
+
+model DiscussionParticipant {
+  id           String   @id @default(cuid())
+  discussionId String
+  userId       String
+  addedAt      DateTime @default(now())
+
+  discussion   Discussion @relation(fields: [discussionId], references: [id], onDelete: Cascade)
+  user         User       @relation("DiscussionParticipants", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([discussionId, userId])
 }
 
 model DiscussionMessage {

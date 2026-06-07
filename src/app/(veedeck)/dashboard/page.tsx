@@ -89,8 +89,9 @@ export default async function DashboardPage() {
   const endOfToday = new Date();
   endOfToday.setHours(23, 59, 59, 999);
 
-  const [renderflowProjectCount, listCount, notificationCount, todayEvents, pins, statusRequests, versionRequests, renderDiscussions, listMessages, renderReplies, listReplies, dueTasks] =
+  const [clientCount, renderflowProjectCount, listCount, notificationCount, todayEvents, pins, statusRequests, versionRequests, renderDiscussions, listMessages, renderReplies, listReplies, dueTasks] =
     await Promise.all([
+      prisma.client.count({ where: { designerId: userId } }),
       prisma.project.count({ where: { userId, archived: false, modules: { has: "renderflow" } } }),
       prisma.shoppingList.count({ where: { userId, archived: false } }),
       prisma.notification.count({ where: { userId, read: false } }),
@@ -330,6 +331,7 @@ export default async function DashboardPage() {
       userId={userId}
       hiddenModules={hiddenModules}
       stats={{
+        clients: clientCount,
         projects: activeProjectCount,
         renderflowProjects: renderflowProjectCount,
         lists: listCount,

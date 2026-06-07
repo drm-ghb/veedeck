@@ -29,6 +29,7 @@ import PdfThumbnail from "@/components/render/PdfThumbnail";
 import { useT } from "@/lib/i18n";
 
 interface Stats {
+  clients: number;
   projects: number;
   renderflowProjects: number;
   lists: number;
@@ -398,7 +399,7 @@ export default function DashboardView({
                 <Users size={16} className="text-primary" />
               </div>
               <div className="min-w-0">
-                <p className="text-xl font-bold leading-none">{stats.projects}</p>
+                <p className="text-xl font-bold leading-none">{stats.clients}</p>
                 <p className="text-xs text-muted-foreground mt-0.5 truncate">Klientów</p>
               </div>
             </Link>

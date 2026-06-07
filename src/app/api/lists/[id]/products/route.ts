@@ -25,17 +25,19 @@ export async function POST(
   });
   if (!list) return NextResponse.json({ error: "Nie znaleziono listy" }, { status: 404 });
 
-  // Find or create the unsorted section for this list
-  let unsortedSection = await prisma.listSection.findFirst({
-    where: { listId: id, unsorted: true },
+  // Find the first real section, or create one if none exists
+  let targetSection = await prisma.listSection.findFirst({
+    where: { listId: id, unsorted: false },
+    orderBy: { order: "asc" },
   });
-  if (!unsortedSection) {
-    unsortedSection = await prisma.listSection.create({
-      data: { listId: id, name: "__unsorted__", order: -1, unsorted: true },
+  if (!targetSection) {
+    const sectionCount = await prisma.listSection.count({ where: { listId: id } });
+    targetSection = await prisma.listSection.create({
+      data: { listId: id, name: "Sekcja 1", order: sectionCount, unsorted: false },
     });
   }
 
-  const sectionId = unsortedSection.id;
+  const sectionId = targetSection.id;
 
   // Link to library product only when explicitly added from library tab
   let finalProductId: string | null = null;

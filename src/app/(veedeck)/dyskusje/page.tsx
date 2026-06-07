@@ -9,11 +9,22 @@ export default async function DyskusjePage() {
   if (!session?.user?.id) redirect("/login");
   const userId = getWorkspaceUserId(session);
 
-  const dbUser = await prisma.user.findUnique({ where: { id: userId }, select: { avatarUrl: true } });
+  const dbUser = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { avatarUrl: true, ownerId: true, name: true, fullName: true },
+  });
 
-  const [discussions, projects] = await Promise.all([
+  const isTeamMember = !!dbUser?.ownerId;
+  // For team members: the workspace owner is the designer
+  const workspaceOwnerId = isTeamMember ? dbUser!.ownerId! : userId;
+
+  const discussionsWhere = isTeamMember
+    ? { participants: { some: { userId } } }
+    : { ownerId: userId };
+
+  const [discussions, projects, teamMembers] = await Promise.all([
     prisma.discussion.findMany({
-      where: { ownerId: userId },
+      where: discussionsWhere,
       include: {
         project: { select: { id: true, title: true } },
         _count: { select: { messages: true } },
@@ -23,11 +34,17 @@ export default async function DyskusjePage() {
           include: { lastMessage: { select: { createdAt: true } } },
           take: 1,
         },
+        participants: {
+          include: {
+            user: { select: { id: true, name: true, fullName: true, avatarUrl: true, role: true } },
+          },
+        },
       },
       orderBy: { updatedAt: "desc" },
     }),
+    // Projects belong to workspace owner (designer)
     prisma.project.findMany({
-      where: { userId, archived: false },
+      where: { userId: workspaceOwnerId, archived: false },
       select: {
         id: true,
         title: true,
@@ -35,7 +52,40 @@ export default async function DyskusjePage() {
       },
       orderBy: { title: "asc" },
     }),
+    // Team members of workspace owner
+    prisma.user.findMany({
+      where: { ownerId: workspaceOwnerId },
+      select: { id: true, name: true, fullName: true, avatarUrl: true },
+    }),
   ]);
+
+  // Auto-migrate: add client contacts as participants for project discussions
+  const projectDiscussions = discussions.filter((d) => d.projectId && d.type !== "contractor");
+  if (projectDiscussions.length > 0 && !isTeamMember) {
+    const projectIds = [...new Set(projectDiscussions.map((d) => d.projectId!))];
+    const projectsWithClients = await prisma.project.findMany({
+      where: { id: { in: projectIds } },
+      select: {
+        id: true,
+        client: { select: { contacts: { where: { userId: { not: null } }, select: { userId: true } } } },
+        clients: { where: { userId: { not: null } }, select: { userId: true } },
+      },
+    });
+    const toCreate: { discussionId: string; userId: string }[] = [];
+    for (const proj of projectsWithClients) {
+      const clientUserIds = [
+        ...(proj.client?.contacts ?? []).map((c) => c.userId),
+        ...(proj.clients ?? []).map((c) => c.userId),
+      ].filter((id): id is string => !!id);
+      const discIds = projectDiscussions.filter((d) => d.projectId === proj.id).map((d) => d.id);
+      for (const discId of discIds) {
+        for (const uid of clientUserIds) toCreate.push({ discussionId: discId, userId: uid });
+      }
+    }
+    if (toCreate.length > 0) {
+      await prisma.discussionParticipant.createMany({ data: toCreate, skipDuplicates: true });
+    }
+  }
 
   const discussionsWithUnread = await Promise.all(
     discussions.map(async (d) => {
@@ -56,6 +106,7 @@ export default async function DyskusjePage() {
     <DyskusjeView
       currentUserId={userId}
       currentUserAvatarUrl={dbUser?.avatarUrl ?? null}
+      isTeamMember={isTeamMember}
       initialDiscussions={discussionsWithUnread.map((d) => ({
         id: d.id,
         title: d.title,
@@ -76,11 +127,22 @@ export default async function DyskusjePage() {
         contractorAssignmentId: d.contractorAssignmentId ?? null,
         archived: d.archived,
         updatedAt: d.updatedAt.toISOString(),
+        participants: d.participants.map((p) => ({
+          userId: p.userId,
+          name: p.user.fullName || p.user.name || "",
+          avatarUrl: p.user.avatarUrl ?? null,
+          role: p.user.role,
+        })),
       }))}
       projects={projects.map((p) => ({
         id: p.id,
         title: p.title,
         contractorAssignmentId: p.contractorAssignments[0]?.id ?? null,
+      }))}
+      teamMembers={teamMembers.map((u) => ({
+        id: u.id,
+        name: u.fullName || u.name || "",
+        avatarUrl: u.avatarUrl ?? null,
       }))}
     />
   );

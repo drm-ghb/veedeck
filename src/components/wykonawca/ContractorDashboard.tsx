@@ -67,7 +67,9 @@ export default function ContractorDashboard({ assignmentId, projectTitle, folder
                   </p>
                 </div>
                 {folder.unreadCount > 0 && (
-                  <span className="absolute top-3 right-3 w-2.5 h-2.5 rounded-full bg-primary" />
+                  <span className="absolute top-3 right-3 text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                    Nieprzeczytane: {folder.unreadCount}
+                  </span>
                 )}
               </div>
             </Link>

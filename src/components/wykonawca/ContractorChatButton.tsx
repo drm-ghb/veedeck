@@ -40,6 +40,7 @@ interface ChatSummary {
   discussionId: string | null;
   messages: ChatMessage[];
   readAt: string | null;
+  unreadCount: number;
 }
 
 interface Props {
@@ -64,7 +65,7 @@ export default function ContractorChatButton({ contractorUserId, assignments }: 
   const [pendingAttachment, setPendingAttachment] = useState<{ url: string; name: string; type: string } | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
-  const [lastReadTimes, setLastReadTimes] = useState<Record<string, string>>({});
+  const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -81,36 +82,19 @@ export default function ContractorChatButton({ contractorUserId, assignments }: 
   const currentMessages = currentChat?.messages ?? [];
   const selectedAssignment = assignments.find((a) => a.id === selectedAssignmentId) ?? null;
 
-  // Init localStorage read times
-  useEffect(() => {
-    const times: Record<string, string> = {};
-    for (const a of assignments) {
-      const val = localStorage.getItem(`contractor-chat-read-${a.id}`);
-      if (val) times[a.id] = val;
-    }
-    setLastReadTimes(times);
-  }, []);
-
-  // Load all chats on mount for unread counting; merge server readAt with localStorage
+  // Load all chats on mount; use server-computed unreadCount for badge
   useEffect(() => {
     fetch("/api/contractor-chat")
       .then((r) => r.json())
       .then((data: ChatSummary[]) => {
         const map: Record<string, ChatSummary> = {};
-        for (const c of data) map[c.assignmentId] = c;
+        const counts: Record<string, number> = {};
+        for (const c of data) {
+          map[c.assignmentId] = c;
+          counts[c.assignmentId] = c.unreadCount;
+        }
         setChats(map);
-
-        setLastReadTimes((prev) => {
-          const merged = { ...prev };
-          for (const c of data) {
-            if (!c.readAt) continue;
-            const local = prev[c.assignmentId];
-            if (!local || new Date(c.readAt) > new Date(local)) {
-              merged[c.assignmentId] = c.readAt;
-            }
-          }
-          return merged;
-        });
+        setUnreadCounts(counts);
       })
       .catch(() => {});
   }, []);
@@ -135,6 +119,8 @@ export default function ContractorChatButton({ contractorUserId, assignments }: 
             projectTitle: a.projectTitle,
             discussionId: msg.discussionId,
             messages: [],
+            readAt: null,
+            unreadCount: 0,
           };
           if (existing.messages.some((m) => m.id === msg.id)) return prev;
           return {
@@ -146,6 +132,10 @@ export default function ContractorChatButton({ contractorUserId, assignments }: 
             },
           };
         });
+        // If message is from designer, increment unread badge
+        if (msg.userId !== contractorUserId) {
+          setUnreadCounts((prev) => ({ ...prev, [a.id]: (prev[a.id] ?? 0) + 1 }));
+        }
       });
       subscribedChannels.current.add(channelName);
     }
@@ -166,24 +156,13 @@ export default function ContractorChatButton({ contractorUserId, assignments }: 
     }
   }, [currentMessages.length, open, selectedAssignmentId]);
 
-  // Mark as read when chat is open
+  // Reset unread badge when chat is open for a specific assignment
   useEffect(() => {
     if (!open || !selectedAssignmentId) return;
-    const now = new Date().toISOString();
-    localStorage.setItem(`contractor-chat-read-${selectedAssignmentId}`, now);
-    setLastReadTimes((prev) => ({ ...prev, [selectedAssignmentId]: now }));
-  }, [open, selectedAssignmentId, currentMessages.length]);
+    setUnreadCounts((prev) => ({ ...prev, [selectedAssignmentId]: 0 }));
+  }, [open, selectedAssignmentId]);
 
-  function countUnread(assignmentId: string): number {
-    const chat = chats[assignmentId];
-    if (!chat) return 0;
-    const lastRead = lastReadTimes[assignmentId];
-    return chat.messages.filter(
-      (m) => m.userId !== contractorUserId && (!lastRead || new Date(m.createdAt) > new Date(lastRead))
-    ).length;
-  }
-
-  const totalUnread = assignments.reduce((sum, a) => sum + countUnread(a.id), 0);
+  const totalUnread = Object.values(unreadCounts).reduce((sum, n) => sum + n, 0);
 
   async function loadFullMessages(assignmentId: string) {
     setLoadingMessages(true);
@@ -199,6 +178,8 @@ export default function ContractorChatButton({ contractorUserId, assignments }: 
           projectTitle,
           discussionId: data.discussionId,
           messages: data.messages,
+          readAt: prev[assignmentId]?.readAt ?? null,
+          unreadCount: 0,
         },
       }));
     } finally {
@@ -251,9 +232,6 @@ export default function ContractorChatButton({ contractorUserId, assignments }: 
 
       setInput("");
       setPendingAttachment(null);
-      const now = new Date().toISOString();
-      localStorage.setItem(`contractor-chat-read-${selectedAssignmentId}`, now);
-      setLastReadTimes((prev) => ({ ...prev, [selectedAssignmentId]: now }));
     } catch {
       toast.error("Błąd wysyłania wiadomości");
     } finally {
@@ -383,7 +361,7 @@ export default function ContractorChatButton({ contractorUserId, assignments }: 
               <div className="flex-1 overflow-y-auto p-3 space-y-2">
                 <p className="text-xs text-muted-foreground px-1 pb-1">Wybierz projekt</p>
                 {assignments.map((a) => {
-                  const unread = countUnread(a.id);
+                  const unread = unreadCounts[a.id] ?? 0;
                   return (
                     <button
                       key={a.id}

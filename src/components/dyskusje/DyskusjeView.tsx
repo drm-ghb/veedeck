@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { ChatBubble, Plus, Trash2, Edit2, Check, X, ExternalLink, ChevronDown, ChevronLeft, Paperclip, FileText, FileSpreadsheet, File as FileIcon, Loader2, FolderOpen, Mic, Square, Search, Archive, ArchiveRestore, CornerDownLeft, MoreVertical, Send } from "@/components/ui/icons";
+import { ChatBubble, Plus, Trash2, Edit2, Check, X, ExternalLink, ChevronDown, ChevronLeft, Paperclip, FileText, FileSpreadsheet, File as FileIcon, Loader2, FolderOpen, Mic, Square, Search, Archive, ArchiveRestore, CornerDownLeft, MoreVertical, Send, Users, UserPlus, UserMinus } from "@/components/ui/icons";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import Pusher from "pusher-js";
@@ -28,6 +29,13 @@ interface ReadReceipt {
   lastMessageId: string | null;
 }
 
+interface Participant {
+  userId: string;
+  name: string;
+  avatarUrl: string | null;
+  role: string;
+}
+
 interface DiscussionSummary {
   id: string;
   title: string;
@@ -41,6 +49,7 @@ interface DiscussionSummary {
   contractorAssignmentId?: string | null;
   archived: boolean;
   updatedAt: string;
+  participants?: Participant[];
 }
 
 interface DiscussionMessage {
@@ -70,11 +79,19 @@ interface ProjectOption {
   contractorAssignmentId?: string | null;
 }
 
+interface TeamMember {
+  id: string;
+  name: string;
+  avatarUrl: string | null;
+}
+
 interface Props {
   currentUserId: string;
   currentUserAvatarUrl?: string | null;
   initialDiscussions: DiscussionSummary[];
   projects: ProjectOption[];
+  teamMembers?: TeamMember[];
+  isTeamMember?: boolean;
 }
 
 type AttachmentType = "image" | "document" | "audio" | "pdf";
@@ -111,7 +128,7 @@ function dayLabel(iso: string) {
   return new Date(iso).toLocaleDateString("pl-PL", { day: "2-digit", month: "long", year: "numeric" });
 }
 
-export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, initialDiscussions, projects }: Props) {
+export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, initialDiscussions, projects, teamMembers = [], isTeamMember = false }: Props) {
   const router = useRouter();
   const [discussions, setDiscussions] = useState<DiscussionSummary[]>(initialDiscussions);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -121,10 +138,20 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [replyingToMsg, setReplyingToMsg] = useState<{ id: string; content: string; author: string } | null>(null);
-  const [showNewForm, setShowNewForm] = useState(false);
+  const [showNewModal, setShowNewModal] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [newProjectId, setNewProjectId] = useState<string | null>(null);
   const [newIsContractorChat, setNewIsContractorChat] = useState(false);
+  const [newType, setNewType] = useState<"internal" | "project" | "contractor">("internal");
+  const [newParticipantIds, setNewParticipantIds] = useState<string[]>([]);
+  const [showMembers, setShowMembers] = useState(false);
+  const [membersData, setMembersData] = useState<{
+    owner: { id: string; name: string | null; fullName: string | null; avatarUrl: string | null; role: string } | null;
+    participants: { userId: string; user: { id: string; name: string | null; fullName: string | null; avatarUrl: string | null; role: string } }[];
+    eligibleTeamMembers: { id: string; name: string | null; fullName: string | null; avatarUrl: string | null; role: string }[];
+    eligibleClients: { id: string; name: string | null; fullName: string | null; avatarUrl: string | null; role: string }[];
+  } | null>(null);
+  const [loadingMembers, setLoadingMembers] = useState(false);
   const [headerEditing, setHeaderEditing] = useState(false);
   const [headerTitle, setHeaderTitle] = useState("");
   const [headerProjectId, setHeaderProjectId] = useState<string | null>(null);
@@ -194,6 +221,14 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
     selectedIdRef.current = selectedId;
   }, [selectedId]);
 
+  // Reload members panel when switching discussions
+  useEffect(() => {
+    if (showMembers && selectedId) {
+      setMembersData(null);
+      loadMembers(selectedId);
+    }
+  }, [selectedId]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Subscribe to all discussions on mount for real-time unread counting of non-selected threads
   useEffect(() => {
     const pusher = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY!, {
@@ -226,6 +261,13 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
           )
         );
       });
+    });
+
+    // Listen for being added to a new discussion (team members)
+    const userChannel = pusher.subscribe(`user-${currentUserId}`);
+    userChannel.bind("added-to-discussion", (data: { discussionId: string; title: string; addedBy: string }) => {
+      toast.info(`${data.addedBy} dodał Cię do dyskusji „${data.title}"`);
+      router.refresh();
     });
 
     return () => {
@@ -628,13 +670,14 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
     if (!newTitle.trim()) return;
     const selectedProject = projects.find((p) => p.id === newProjectId);
     const contractorAssignmentId =
-      newIsContractorChat && selectedProject?.contractorAssignmentId
+      newType === "contractor" && selectedProject?.contractorAssignmentId
         ? selectedProject.contractorAssignmentId
         : null;
 
     const body: Record<string, unknown> = {
       title: newTitle.trim(),
-      type: contractorAssignmentId ? "contractor" : newProjectId ? "project" : "internal",
+      type: newType,
+      participantIds: newParticipantIds,
       ...(contractorAssignmentId
         ? { contractorAssignmentId }
         : newProjectId
@@ -651,18 +694,57 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
       if (!res.ok) throw new Error();
       const d = await res.json();
       setDiscussions((prev) => [
-        { id: d.id, title: d.title, type: d.type, projectId: d.projectId ?? null, project: null, messageCount: 0, lastMessage: null, unreadCount: 0, archived: false, updatedAt: d.createdAt ?? new Date().toISOString() },
+        {
+          id: d.id, title: d.title, type: d.type,
+          projectId: d.projectId ?? null, project: null,
+          messageCount: 0, lastMessage: null, unreadCount: 0,
+          archived: false, updatedAt: d.createdAt ?? new Date().toISOString(),
+          participants: (d.participants ?? []).map((p: { userId: string; user: { id: string; name: string | null; fullName: string | null; avatarUrl: string | null; role: string } }) => ({
+            userId: p.userId, name: p.user.fullName || p.user.name || "", avatarUrl: p.user.avatarUrl ?? null, role: p.user.role,
+          })),
+        },
         ...prev,
       ]);
       setNewTitle("");
       setNewProjectId(null);
       setNewIsContractorChat(false);
-      setShowNewForm(false);
+      setNewType("internal");
+      setNewParticipantIds([]);
+      setShowNewModal(false);
       setSelectedId(d.id);
       router.refresh();
     } catch {
       toast.error("Nie udało się utworzyć dyskusji");
     }
+  }
+
+  async function loadMembers(discussionId: string) {
+    setLoadingMembers(true);
+    try {
+      const res = await fetch(`/api/discussions/${discussionId}/participants`);
+      if (!res.ok) throw new Error();
+      setMembersData(await res.json());
+    } catch {
+      toast.error("Nie udało się załadować uczestników");
+    } finally {
+      setLoadingMembers(false);
+    }
+  }
+
+  async function addMember(discussionId: string, userId: string) {
+    const res = await fetch(`/api/discussions/${discussionId}/participants`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId }),
+    });
+    if (!res.ok) { toast.error("Nie udało się dodać uczestnika"); return; }
+    await loadMembers(discussionId);
+  }
+
+  async function removeMember(discussionId: string, userId: string) {
+    const res = await fetch(`/api/discussions/${discussionId}/participants/${userId}`, { method: "DELETE" });
+    if (!res.ok) { toast.error("Nie udało się usunąć uczestnika"); return; }
+    await loadMembers(discussionId);
   }
 
   async function toggleArchive(id: string, currentArchived: boolean) {
@@ -735,6 +817,105 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
 
   return (
     <>
+      {/* Nowy wątek modal */}
+      {showNewModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
+          <div className="bg-background rounded-2xl shadow-xl w-full max-w-md flex flex-col gap-0 overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+              <h2 className="font-semibold text-base">Nowy wątek</h2>
+              <button
+                onClick={() => setShowNewModal(false)}
+                className="p-1.5 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <div className="px-6 py-4 space-y-4">
+              {/* Title */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Nazwa wątku</label>
+                <input
+                  autoFocus
+                  value={newTitle}
+                  onChange={(e) => setNewTitle(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Escape") setShowNewModal(false); }}
+                  placeholder="Np. Wycena projektu..."
+                  className="w-full text-sm px-3 py-2 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
+                />
+              </div>
+
+              {/* Type */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Typ</label>
+                <div className="flex gap-2">
+                  {(["internal", "project", "contractor"] as const).map((t) => (
+                    <button
+                      key={t}
+                      onClick={() => { setNewType(t); if (t === "internal") setNewProjectId(null); }}
+                      className={`flex-1 px-3 py-2 rounded-xl text-xs font-medium border transition-colors ${newType === t ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:text-foreground hover:bg-muted"}`}
+                    >
+                      {t === "internal" ? "Wewnętrzny" : t === "project" ? "Projektowy" : "Wykonawca"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Project selector */}
+              {newType !== "internal" && (
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Projekt</label>
+                  <select
+                    value={newProjectId ?? ""}
+                    onChange={(e) => setNewProjectId(e.target.value || null)}
+                    className="w-full text-sm px-3 py-2 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  >
+                    <option value="">Bez przypisania</option>
+                    {projects
+                      .filter((p) => newType !== "contractor" || !!p.contractorAssignmentId)
+                      .map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}
+                  </select>
+                </div>
+              )}
+
+              {/* Team members */}
+              {teamMembers.length > 0 && (
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Dodaj uczestników</label>
+                  <div className="space-y-1 max-h-40 overflow-y-auto">
+                    {teamMembers.map((m) => (
+                      <label key={m.id} className="flex items-center gap-2.5 px-3 py-2 rounded-xl border border-border bg-background hover:bg-muted transition-colors cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={newParticipantIds.includes(m.id)}
+                          onChange={(e) => setNewParticipantIds((prev) => e.target.checked ? [...prev, m.id] : prev.filter((id) => id !== m.id))}
+                          className="rounded accent-primary flex-shrink-0"
+                        />
+                        <Avatar name={m.name} logoUrl={m.avatarUrl} />
+                        <span className="text-sm flex-1 truncate">{m.name}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="flex gap-2 justify-end px-6 py-4 border-t border-border">
+              <button
+                onClick={() => setShowNewModal(false)}
+                className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground rounded-xl transition-colors"
+              >
+                Anuluj
+              </button>
+              <Button
+                onClick={createDiscussion}
+                disabled={!newTitle.trim()}
+              >
+                Utwórz wątek
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {annotatingImage && (
         <ImageAnnotationModal
           imageUrl={annotatingImage}
@@ -771,57 +952,16 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
           <div className="px-4 pt-4 pb-3 space-y-3 border-b border-border">
             <div className="flex items-center justify-between">
               <h2 className="font-semibold text-base">Dyskusje</h2>
-              <button
-                onClick={() => { setShowNewForm(true); setNewTitle(""); }}
-                className="p-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
-                title="Nowa dyskusja"
-              >
-                <Plus size={16} />
-              </button>
-            </div>
-
-            {showNewForm && (
-              <div className="px-1 py-2 space-y-2 border-b border-border bg-muted/20">
-                <input
-                  autoFocus
-                  value={newTitle}
-                  onChange={(e) => setNewTitle(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Escape") { setShowNewForm(false); setNewProjectId(null); setNewIsContractorChat(false); } }}
-                  placeholder="Nazwa wątku..."
-                  className="w-full text-sm px-2 py-1.5 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
-                />
-                <select
-                  value={newProjectId ?? ""}
-                  onChange={(e) => { setNewProjectId(e.target.value || null); setNewIsContractorChat(false); }}
-                  className="w-full text-sm px-2 py-1.5 rounded-md border border-border bg-background focus:outline-none focus:ring-1 focus:ring-primary/20"
+              {!isTeamMember && (
+                <Button
+                  size="sm"
+                  onClick={() => { setShowNewModal(true); setNewTitle(""); setNewType("internal"); setNewProjectId(null); setNewParticipantIds([]); }}
                 >
-                  <option value="">Bez przypisania do projektu</option>
-                  {projects.map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}
-                </select>
-                {newProjectId && projects.find((p) => p.id === newProjectId)?.contractorAssignmentId && (
-                  <label className="flex items-center gap-2 text-sm cursor-pointer select-none px-0.5">
-                    <input
-                      type="checkbox"
-                      checked={newIsContractorChat}
-                      onChange={(e) => setNewIsContractorChat(e.target.checked)}
-                      className="rounded accent-primary"
-                    />
-                    <span>Chat z wykonawcą</span>
-                  </label>
-                )}
-                <div className="flex gap-1 justify-end">
-                  <button
-                    onClick={() => { setShowNewForm(false); setNewProjectId(null); setNewIsContractorChat(false); }}
-                    className="text-xs px-2.5 py-1 text-muted-foreground hover:text-foreground rounded-md transition-colors"
-                  >Anuluj</button>
-                  <button
-                    onClick={createDiscussion}
-                    disabled={!newTitle.trim()}
-                    className="text-xs px-2.5 py-1 bg-primary text-primary-foreground rounded-md disabled:opacity-40 hover:opacity-90 transition-opacity"
-                  >Utwórz</button>
-                </div>
-              </div>
-            )}
+                  <Plus size={14} />
+                  Nowy wątek
+                </Button>
+              )}
+            </div>
 
             <div className="relative">
               <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
@@ -893,9 +1033,6 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                           </span>
                         )}
                         <span className={`text-sm font-medium truncate ${selectedId === d.id ? "text-primary" : ""}`}>{d.title}</span>
-                        {d.type === "contractor" && (
-                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 font-semibold shrink-0">Wykonawca</span>
-                        )}
                       </div>
                       <div className="flex items-center gap-1 shrink-0">
                         <span className="text-xs text-muted-foreground mt-0.5">
@@ -1023,7 +1160,13 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                     <div className="flex items-center gap-1.5">
                       <h2 className="font-semibold text-sm">{selected.title}</h2>
                       {selected.type === "contractor" && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 font-semibold shrink-0">Wykonawca</span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-orange-100 text-orange-700 font-semibold shrink-0">Wykonawca</span>
+                      )}
+                      {selected.type === "project" && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700 font-semibold shrink-0">Projektowy</span>
+                      )}
+                      {selected.type === "internal" && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground font-semibold shrink-0">Wewnętrzny</span>
                       )}
                     </div>
                     {selected.project ? (
@@ -1050,7 +1193,7 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                       const fileCount = messages.filter((m) => m.attachmentType === "document" || m.attachmentType === "pdf" || m.attachmentType === "image").length;
                       return (
                         <button
-                          onClick={() => { setShowResources((v) => !v); setResourceTab("all"); }}
+                          onClick={() => { setShowResources((v) => !v); setResourceTab("all"); setShowMembers(false); }}
                           className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs transition-colors ${showResources ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
                           title="Pliki dyskusji"
                         >
@@ -1059,6 +1202,24 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                         </button>
                       );
                     })()}
+                    {!isTeamMember && (
+                      <button
+                        onClick={() => {
+                          const opening = !showMembers;
+                          setShowMembers(opening);
+                          if (opening) { loadMembers(selected.id); setShowResources(false); }
+                        }}
+                        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs transition-colors ${showMembers ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
+                        title="Uczestnicy dyskusji"
+                      >
+                        <Users size={13} />
+                        Uczestnicy
+                        {/* +1 for owner */}
+                        {((selected.participants?.length ?? 0) + 1) > 1 && (
+                          <span className="font-semibold">{(selected.participants?.length ?? 0) + 1}</span>
+                        )}
+                      </button>
+                    )}
                     <button
                       onClick={startHeaderEdit}
                       className="p-1.5 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
@@ -1111,7 +1272,7 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
             <div className="flex-1 min-h-0 flex overflow-hidden">
 
               {/* Messages + input column — hidden on mobile when files open */}
-              <div className={`flex-1 min-h-0 flex flex-col min-w-0 ${showResources ? "hidden md:flex" : "flex"}`}>
+              <div className={`flex-1 min-h-0 flex flex-col min-w-0 ${(showResources || showMembers) ? "hidden md:flex" : "flex"}`}>
                 {chatSearchOpen && chatSearch.trim() ? (
                   <ChatSearchResults
                     messages={messages}
@@ -1340,6 +1501,131 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                         </div>
                       );
                     })()}
+                  </div>
+                </div>
+              )}
+
+              {/* Members sidebar */}
+              {showMembers && !isTeamMember && (
+                <div className="flex-1 md:flex-none md:w-80 flex flex-col overflow-hidden md:border-l md:border-border">
+                  <div className="flex items-center justify-between px-4 py-2.5 border-b border-border flex-shrink-0">
+                    <span className="text-sm font-semibold">Uczestnicy</span>
+                    <button
+                      onClick={() => setShowMembers(false)}
+                      className="p-1.5 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                  <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+                    {loadingMembers ? (
+                      <div className="flex items-center justify-center h-20 text-muted-foreground text-sm">
+                        <Loader2 size={16} className="animate-spin mr-2" /> Ładowanie...
+                      </div>
+                    ) : membersData ? (
+                      <>
+                        {/* Owner */}
+                        {membersData.owner && (
+                          <div>
+                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Właściciel</p>
+                            <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl border border-border bg-background">
+                              <Avatar name={membersData.owner.fullName || membersData.owner.name || "?"} logoUrl={membersData.owner.avatarUrl} />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium truncate">{membersData.owner.fullName || membersData.owner.name}</p>
+                                <p className="text-xs text-muted-foreground">Projektant</p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Current participants */}
+                        {membersData.participants.length > 0 && (
+                          <div>
+                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Obecni uczestnicy</p>
+                            <div className="space-y-1.5">
+                              {membersData.participants.map((p) => (
+                                <div key={p.userId} className="flex items-center gap-2.5 px-3 py-2 rounded-xl border border-border bg-background">
+                                  <Avatar name={p.user.fullName || p.user.name || "?"} logoUrl={p.user.avatarUrl} />
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium truncate">{p.user.fullName || p.user.name}</p>
+                                    <p className="text-xs text-muted-foreground">{p.user.role === "client" ? "Klient" : "Zespół"}</p>
+                                  </div>
+                                  <button
+                                    onClick={() => {
+                                      const name = p.user.fullName || p.user.name || "tego uczestnika";
+                                      if (!confirm(`Usunąć ${name} z dyskusji?`)) return;
+                                      removeMember(selected.id, p.userId);
+                                    }}
+                                    className="p-1.5 rounded-lg text-destructive hover:bg-destructive/10 transition-colors flex-shrink-0"
+                                    title="Usuń uczestnika"
+                                  >
+                                    <Trash2 size={13} />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Eligible team members */}
+                        {membersData.eligibleTeamMembers.length > 0 && (
+                          <div>
+                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Dodaj z zespołu</p>
+                            <div className="space-y-1.5">
+                              {membersData.eligibleTeamMembers.map((u) => (
+                                <div key={u.id} className="flex items-center gap-2.5 px-3 py-2 rounded-xl border border-border bg-background">
+                                  <Avatar name={u.fullName || u.name || "?"} logoUrl={u.avatarUrl} />
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium truncate">{u.fullName || u.name}</p>
+                                    <p className="text-xs text-muted-foreground">Zespół</p>
+                                  </div>
+                                  <button
+                                    onClick={() => addMember(selected.id, u.id)}
+                                    className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors flex-shrink-0"
+                                    title="Dodaj do dyskusji"
+                                  >
+                                    <Plus size={13} />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Eligible clients */}
+                        {membersData.eligibleClients.length > 0 && (
+                          <div>
+                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Dodaj klienta</p>
+                            <div className="space-y-1.5">
+                              {membersData.eligibleClients.map((u) => (
+                                <div key={u.id} className="flex items-center gap-2.5 px-3 py-2 rounded-xl border border-border bg-background">
+                                  <Avatar name={u.fullName || u.name || "?"} logoUrl={u.avatarUrl} />
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium truncate">{u.fullName || u.name}</p>
+                                    <p className="text-xs text-muted-foreground">Klient</p>
+                                  </div>
+                                  <button
+                                    onClick={() => addMember(selected.id, u.id)}
+                                    className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors flex-shrink-0"
+                                    title="Dodaj do dyskusji"
+                                  >
+                                    <Plus size={13} />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {membersData.participants.length === 0 && membersData.eligibleTeamMembers.length === 0 && membersData.eligibleClients.length === 0 && (
+                          <div className="flex flex-col items-center justify-center h-32 gap-2 text-muted-foreground">
+                            <Users size={28} className="opacity-30" />
+                            <p className="text-sm text-center">Brak dostępnych uczestników</p>
+                            <p className="text-xs text-center">Przypisz projekt z klientem lub dodaj członków zespołu</p>
+                          </div>
+                        )}
+                      </>
+                    ) : null}
                   </div>
                 </div>
               )}

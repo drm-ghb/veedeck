@@ -933,6 +933,9 @@ export default function ListDetail({ list, designerName, designerEmail, designer
   );
   const [budgetModalOpen, setBudgetModalOpen] = useState(false);
   const [budgetInput, setBudgetInput] = useState(list.budget != null ? String(list.budget) : "");
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [exportSelectedSections, setExportSelectedSections] = useState<Set<string>>(new Set());
+  const [exportHidePrices, setExportHidePrices] = useState(false);
   const [sectionBudgetInputs, setSectionBudgetInputs] = useState<Record<string, string>>(() =>
     Object.fromEntries(list.sections.map((s) => [s.id, s.budget != null ? String(s.budget) : ""]))
   );
@@ -1579,7 +1582,13 @@ export default function ListDetail({ list, designerName, designerEmail, designer
     : "";
   const hasTotal = allProducts.some((p) => parsePrice(p.price) !== null);
 
-  async function exportToPDF() {
+  function openExportPdfDialog() {
+    setExportSelectedSections(new Set(sections.filter((s) => !s.unsorted).map((s) => s.id)));
+    setExportHidePrices(false);
+    setExportDialogOpen(true);
+  }
+
+  async function exportToPDF(selectedSectionIds: Set<string>, hidePricesInPdf: boolean) {
     // Load images: try direct fetch first (works for UploadThing which has CORS *),
     // fall back to server-side proxy for external URLs without CORS headers.
     const loadImgToDataUrl = async (rawSrc: string): Promise<string | null> => {
@@ -1621,14 +1630,16 @@ export default function ListDetail({ list, designerName, designerEmail, designer
       } catch { return null; }
     };
 
-    const regularSections = sections.filter((s) => !s.unsorted);
-    const unsortedProducts = sections
-      .filter((s) => s.unsorted)
-      .flatMap((s) => s.products.filter((p) => !p.hidden));
-    const allVisible = [
-      ...regularSections.flatMap((s) => s.products.filter((p) => !p.hidden)),
-      ...unsortedProducts,
-    ];
+    // Filter to selected sections, strip prices if requested
+    const filteredSections = sections.filter((s) => selectedSectionIds.has(s.id));
+    const sectionsForPdf = hidePricesInPdf
+      ? filteredSections.map((s) => ({
+          ...s,
+          products: s.products.map((p) => ({ ...p, price: null })),
+        }))
+      : filteredSections;
+
+    const allVisible = sectionsForPdf.flatMap((s) => s.products.filter((p) => !p.hidden));
 
     const imgCache: Record<string, string> = {};
     await Promise.all(
@@ -1645,17 +1656,24 @@ export default function ListDetail({ list, designerName, designerEmail, designer
       logoDataUrl = await loadImgToDataUrl(designerLogoUrl);
     }
 
+    const pdfHasTotal = !hidePricesInPdf && allVisible.some((p) => parsePrice(p.price));
+    const pdfGrandTotal = hidePricesInPdf ? 0 : allVisible.reduce((sum, p) => {
+      const n = parsePrice(p.price);
+      return n !== null ? sum + n * p.quantity : sum;
+    }, 0);
+    const pdfGrandCurrency = hidePricesInPdf ? "" : (getCurrency(allVisible.find((p) => getCurrency(p.price))?.price ?? null));
+
     const pdf = await generateListPDF({
       template: currentPdfTemplate,
       lang,
       list,
-      sections,
+      sections: sectionsForPdf,
       designerName: authorName,
       designerEmail,
       designerLogoUrl,
-      grandTotal,
-      grandCurrency,
-      hasTotal,
+      grandTotal: pdfGrandTotal,
+      grandCurrency: pdfGrandCurrency,
+      hasTotal: pdfHasTotal,
       imgCache,
       logoDataUrl,
     });
@@ -1786,7 +1804,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
               </button>
             } />
             <DropdownMenuContent align="end" className="w-40">
-              <DropdownMenuItem onClick={exportToPDF}>
+              <DropdownMenuItem onClick={openExportPdfDialog}>
                 <FileDown size={13} className="mr-2" />
                 Eksport PDF
               </DropdownMenuItem>
@@ -2196,6 +2214,91 @@ export default function ListDetail({ list, designerName, designerEmail, designer
           />
         ) : null;
       })()}
+
+      {/* Export PDF dialog */}
+      {exportDialogOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-0 sm:p-4"
+          onClick={() => setExportDialogOpen(false)}
+        >
+          <div
+            className="w-full sm:max-w-sm bg-card rounded-t-2xl sm:rounded-2xl shadow-xl overflow-hidden flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+              <h2 className="text-sm font-semibold">Ustawienia eksportu PDF</h2>
+              <button
+                onClick={() => setExportDialogOpen(false)}
+                className="w-7 h-7 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-4 space-y-4 overflow-y-auto max-h-[60vh]">
+              {/* Sekcje */}
+              <div className="space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Sekcje</p>
+                {sections.filter((s) => !s.unsorted).map((s) => (
+                  <label key={s.id} className="flex items-center gap-2.5 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={exportSelectedSections.has(s.id)}
+                      onChange={(e) => {
+                        const next = new Set(exportSelectedSections);
+                        if (e.target.checked) next.add(s.id);
+                        else next.delete(s.id);
+                        setExportSelectedSections(next);
+                      }}
+                      className="w-4 h-4 rounded accent-primary"
+                    />
+                    <span className="text-sm">{s.name}</span>
+                    <span className="text-xs text-muted-foreground ml-auto">{s.products.filter((p) => !p.hidden).length} prod.</span>
+                  </label>
+                ))}
+              </div>
+
+              {/* Separator */}
+              <div className="border-t border-border" />
+
+              {/* Ukryj ceny */}
+              <label className="flex items-center justify-between gap-3 cursor-pointer select-none">
+                <div>
+                  <p className="text-sm font-medium">Ukryj ceny</p>
+                  <p className="text-xs text-muted-foreground">Ceny produktów nie będą widoczne w PDF</p>
+                </div>
+                <button
+                  role="switch"
+                  aria-checked={exportHidePrices}
+                  onClick={() => setExportHidePrices((v) => !v)}
+                  className={`relative inline-flex h-5 w-9 shrink-0 rounded-full border-2 border-transparent transition-colors ${exportHidePrices ? "bg-primary" : "bg-muted-foreground/30"}`}
+                >
+                  <span className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${exportHidePrices ? "translate-x-4" : "translate-x-0"}`} />
+                </button>
+              </label>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 px-4 py-3 border-t border-border">
+              <button
+                onClick={() => setExportDialogOpen(false)}
+                className="px-3 py-1.5 text-sm rounded-lg border border-border hover:bg-muted transition-colors"
+              >
+                Anuluj
+              </button>
+              <button
+                disabled={exportSelectedSections.size === 0}
+                onClick={() => {
+                  setExportDialogOpen(false);
+                  exportToPDF(exportSelectedSections, exportHidePrices);
+                }}
+                className="px-3 py-1.5 text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Generuj PDF
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Budget modal */}
       {budgetModalOpen && (

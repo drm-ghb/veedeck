@@ -185,6 +185,7 @@ export const User             = icon("person");
 export const UserRound        = icon("person");
 export const UserCircle       = icon("account_circle");
 export const UserPlus         = icon("person_add");
+export const UserMinus        = icon("person_remove");
 export const LogOut           = icon("logout");
 export const Mail             = icon("mail");
 export const Phone            = icon("phone");
