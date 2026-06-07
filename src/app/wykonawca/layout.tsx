@@ -6,6 +6,7 @@ import { SignOutButton } from "@/components/dashboard/SignOutButton";
 import { Engineering } from "@/components/ui/icons";
 import ContractorChatButton from "@/components/wykonawca/ContractorChatButton";
 import { ForceLightMode } from "@/components/wykonawca/ForceLightMode";
+import NotificationBell from "@/components/dashboard/NotificationBell";
 import Image from "next/image";
 
 export default async function ContractorLayout({ children }: { children: React.ReactNode }) {
@@ -55,6 +56,7 @@ export default async function ContractorLayout({ children }: { children: React.R
         </Link>
         <div className="ml-auto flex items-center gap-3">
           <span className="text-sm text-muted-foreground hidden sm:inline">{displayName}</span>
+          <NotificationBell userId={session.user.id!} viewAllHref="/wykonawca" />
           <ContractorChatButton
             contractorUserId={session.user.id!}
             assignments={assignments.map((a) => ({ id: a.id, projectTitle: a.project.title }))}

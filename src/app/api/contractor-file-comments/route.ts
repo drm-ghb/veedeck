@@ -37,37 +37,56 @@ export async function POST(req: NextRequest) {
 
   await pusherServer.trigger(`contractor-file-${fileId}`, "new-comment", comment);
 
-  // Notify the designer if comment was made by contractor
-  if (authorRole !== "designer") {
-    const file = await prisma.contractorFile.findUnique({
-      where: { id: fileId },
-      include: {
-        folder: {
-          include: {
-            assignment: {
-              select: { id: true, designerId: true, contractorId: true, project: { select: { title: true } } },
-            },
+  // Notify relevant party when a comment is made
+  const file = await prisma.contractorFile.findUnique({
+    where: { id: fileId },
+    include: {
+      folder: {
+        include: {
+          assignment: {
+            select: { id: true, designerId: true, contractorId: true, project: { select: { title: true } } },
           },
         },
       },
-    });
+    },
+  });
 
-    if (file) {
-      const designerId = file.folder.assignment.designerId;
-      const projectTitle = file.folder.assignment.project.title;
-      const assignmentId = file.folder.assignment.id;
-      const contractorId = file.folder.assignment.contractorId;
+  if (file) {
+    const designerId = file.folder.assignment.designerId;
+    const projectTitle = file.folder.assignment.project.title;
+    const assignmentId = file.folder.assignment.id;
+    const contractorId = file.folder.assignment.contractorId;
+    const folderId = file.folder.id;
 
+    if (authorRole !== "designer") {
+      // Contractor commented → notify designer
       const notification = await prisma.notification.create({
         data: {
           userId: designerId,
           message: `${author} dodał komentarz do pliku „${file.name}" w projekcie „${projectTitle}"`,
-          link: `/wykonawcy/${contractorId}/projekty/${assignmentId}?fileId=${fileId}&folderId=${file.folder.id}`,
+          link: `/wykonawcy/${contractorId}/projekty/${assignmentId}?fileId=${fileId}&folderId=${folderId}`,
           type: "contractor_comment",
         },
       });
       await pusherServer.trigger(`user-${designerId}`, "new-notification", notification);
       await pusherServer.trigger(`user-${designerId}`, "contractor-comment-unread", { delta: 1 });
+    } else {
+      // Designer commented → notify contractor
+      const contractorUser = await prisma.contractor.findUnique({
+        where: { id: contractorId },
+        select: { userId: true },
+      });
+      if (contractorUser?.userId) {
+        const notification = await prisma.notification.create({
+          data: {
+            userId: contractorUser.userId,
+            message: `${author} dodał komentarz do pliku „${file.name}" w projekcie „${projectTitle}"`,
+            link: `/wykonawca/projekty/${assignmentId}/foldery/${folderId}/pliki/${fileId}?comments=1`,
+            type: "designer_comment",
+          },
+        });
+        await pusherServer.trigger(`user-${contractorUser.userId}`, "new-notification", notification);
+      }
     }
   }
 

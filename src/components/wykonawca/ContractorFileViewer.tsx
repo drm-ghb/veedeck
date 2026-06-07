@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, FileText, MessageSquare } from "@/components/ui/icons";
 import ContractorFileCommentPanel from "./ContractorFileCommentPanel";
@@ -37,6 +37,7 @@ export default function ContractorFileViewer({
   backHref,
 }: Props) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [index, setIndex] = useState(initialIndex);
   const [commentOpen, setCommentOpen] = useState(false);
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>(
@@ -85,6 +86,19 @@ export default function ContractorFileViewer({
       }).catch(() => {});
     }
   }
+
+  // Auto-open comments when navigated from a notification (?comments=1)
+  useEffect(() => {
+    if (searchParams.get("comments") === "1" && file) {
+      openComments();
+      // Remove the query param without remounting
+      router.replace(
+        `/wykonawca/projekty/${assignmentId}/foldery/${folderId}/pliki/${file.id}`,
+        { scroll: false }
+      );
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (!file) return null;
 

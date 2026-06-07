@@ -17,9 +17,10 @@ interface Notification {
 interface NotificationBellProps {
   userId: string;
   iconOnly?: boolean;
+  viewAllHref?: string;
 }
 
-export default function NotificationBell({ userId }: NotificationBellProps) {
+export default function NotificationBell({ userId, viewAllHref = "/notifications" }: NotificationBellProps) {
   const t = useT();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [open, setOpen] = useState(false);
@@ -151,7 +152,7 @@ export default function NotificationBell({ userId }: NotificationBellProps) {
 
           <div className="border-t border-border">
             <Link
-              href="/notifications"
+              href={viewAllHref}
               onClick={() => setOpen(false)}
               className="flex items-center justify-center w-full py-2.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
             >

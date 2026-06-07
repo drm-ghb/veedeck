@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect, notFound } from "next/navigation";
+import { Suspense } from "react";
 import ContractorFileViewer from "@/components/wykonawca/ContractorFileViewer";
 
 interface Props {
@@ -71,16 +72,18 @@ export default async function ContractorFileViewPage({ params }: Props) {
 
   return (
     <div className="fixed inset-0 top-[53px] z-20 bg-background">
-      <ContractorFileViewer
-        files={files}
-        initialIndex={currentIndex}
-        assignmentId={assignmentId}
-        folderId={folderId}
-        folderName={folder.name}
-        authorName={contractor.name}
-        authorRole="contractor"
-        backHref={backHref}
-      />
+      <Suspense>
+        <ContractorFileViewer
+          files={files}
+          initialIndex={currentIndex}
+          assignmentId={assignmentId}
+          folderId={folderId}
+          folderName={folder.name}
+          authorName={contractor.name}
+          authorRole="contractor"
+          backHref={backHref}
+        />
+      </Suspense>
     </div>
   );
 }
