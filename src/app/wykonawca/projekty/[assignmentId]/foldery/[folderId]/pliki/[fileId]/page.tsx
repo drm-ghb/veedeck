@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { pusherServer } from "@/lib/pusher";
 import { redirect, notFound } from "next/navigation";
 import { Suspense } from "react";
 import ContractorFileViewer from "@/components/wykonawca/ContractorFileViewer";
@@ -63,6 +64,15 @@ export default async function ContractorFileViewPage({ params }: Props) {
     where: { fileId, posX: { not: null }, authorRole: "designer", viewedByContractor: false },
     data: { viewedByContractor: true },
   });
+
+  // Mark all notifications for this file as read and notify bell in real-time
+  const updated = await prisma.notification.updateMany({
+    where: { userId: session.user.id, read: false, link: { contains: `/pliki/${fileId}` } },
+    data: { read: true },
+  });
+  if (updated.count > 0) {
+    await pusherServer.trigger(`user-${session.user.id}`, "notifications-read", {});
+  }
 
   const files = folder.files.map((f) => ({
     id: f.id,

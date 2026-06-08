@@ -62,6 +62,7 @@ export default function NotificationBell({ userId, viewAllHref = "/notifications
         return [notif, ...prev];
       });
     });
+    channel.bind("notifications-read", refetch);
 
     return () => {
       channel.unbind_all();
