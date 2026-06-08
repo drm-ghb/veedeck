@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { getWorkspaceUserId } from "@/lib/workspace";
 import { startPrediction } from "@/lib/replicate";
 
 export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  getWorkspaceUserId(session); // validates workspace access
 
   const { imageUrl } = await req.json();
   if (!imageUrl || typeof imageUrl !== "string") {
@@ -14,12 +12,12 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const prediction = await startPrediction("stability-ai/triposr", {
+    const prediction = await startPrediction("nightmareai/real-esrgan", {
       image: imageUrl,
-      do_remove_background: true,
-      foreground_ratio: 0.85,
+      scale: 4,
+      face_enhance: false,
     });
-    return NextResponse.json({ taskId: prediction.id });
+    return NextResponse.json({ predictionId: prediction.id });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Unknown error";
     if (msg.includes("REPLICATE_API_TOKEN")) {

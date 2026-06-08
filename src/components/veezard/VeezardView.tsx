@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { VeezardIcon, ViewInAr, Sparkles, Image as ImageIcon } from "@/components/ui/icons";
 import Generator3DView from "./Generator3DView";
+import RenderBoosterView from "./RenderBoosterView";
 
 interface Model3D {
   id: string;
@@ -20,7 +21,7 @@ type VeezardTab = "generator3d" | "renderbooster" | "moodboard";
 
 const TABS: { id: VeezardTab; label: string; icon: React.ReactNode; soon?: boolean }[] = [
   { id: "generator3d",    label: "Generator 3D",  icon: <ViewInAr size={15} /> },
-  { id: "renderbooster",  label: "RenderBooster", icon: <Sparkles size={15} />, soon: true },
+  { id: "renderbooster",  label: "RenderBooster", icon: <Sparkles size={15} /> },
   { id: "moodboard",      label: "Moodboard",     icon: <ImageIcon size={15} />, soon: true },
 ];
 
@@ -36,7 +37,6 @@ export default function VeezardView({ initialModels }: { initialModels: Model3D[
         </div>
         <div className="flex items-center gap-2">
           <h1 className="text-lg font-semibold text-foreground">Veezard</h1>
-          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">wkrótce</span>
         </div>
       </div>
 
@@ -68,7 +68,7 @@ export default function VeezardView({ initialModels }: { initialModels: Model3D[
         {activeTab === "generator3d" && (
           <Generator3DView initialModels={initialModels} hideHeader />
         )}
-        {activeTab === "renderbooster" && <ComingSoon label="RenderBooster" />}
+        {activeTab === "renderbooster" && <RenderBoosterView />}
         {activeTab === "moodboard" && <ComingSoon label="Moodboard" />}
       </div>
     </div>
