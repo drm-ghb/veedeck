@@ -3,16 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import { FileText } from "@/components/ui/icons";
 
-// Module-level URL — webpack copies pdfjs worker to /_next/static/ at build time
-// with correct MIME type. Must be at module level for webpack static analysis.
-const workerSrc = new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url);
-
 // Singleton init — prevents race conditions when multiple thumbnails load simultaneously
 let pdfjsInitPromise: Promise<typeof import("pdfjs-dist")> | null = null;
 function getPdfJs() {
   if (!pdfjsInitPromise) {
     pdfjsInitPromise = import("pdfjs-dist").then((lib) => {
-      lib.GlobalWorkerOptions.workerSrc = workerSrc.href;
+      lib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
       return lib;
     });
   }
