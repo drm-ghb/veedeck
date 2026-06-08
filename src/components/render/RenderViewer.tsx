@@ -2110,7 +2110,7 @@ export default function RenderViewer({
             {/* Pending pin */}
             {pending && (
               <div
-                className="absolute w-7 h-7 rounded-full bg-blue-500 border-2 border-white text-white text-xs font-bold flex items-center justify-center shadow-lg z-10 animate-pulse pointer-events-none"
+                className="absolute w-7 h-7 rounded-full bg-slate-400 border-2 border-white text-white text-xs font-bold flex items-center justify-center shadow-lg z-10 animate-pulse pointer-events-none"
                 style={{
                   left: `calc(${pending.x}% - 14px)`,
                   top: `calc(${pending.y}% - 14px)`,
@@ -3386,7 +3386,7 @@ export default function RenderViewer({
               {/* Pending pin */}
               {pending && (
                 <div
-                  className="absolute w-7 h-7 rounded-full bg-blue-500 border-2 border-white text-white text-xs font-bold flex items-center justify-center shadow-lg z-10 animate-pulse pointer-events-none"
+                  className="absolute w-7 h-7 rounded-full bg-slate-400 border-2 border-white text-white text-xs font-bold flex items-center justify-center shadow-lg z-10 animate-pulse pointer-events-none"
                   style={{
                     left: `calc(${pending.x}% - 14px)`,
                     top: `calc(${pending.y}% - 14px)`,
