@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { FileText, Image, Ruler, ArrowLeft, Info, Pin } from "@/components/ui/icons";
+import { FileText, Image, Ruler, ArrowLeft, Info, Pin, MessageSquare } from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
 import ContractorProjectInfoSidebar, { type ProjectInfo } from "./ContractorProjectInfoSidebar";
 
@@ -75,7 +75,8 @@ export default function ContractorDashboard({ assignmentId, projectTitle, folder
                     </span>
                   )}
                   {folder.unreadCount > 0 && (
-                    <span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                    <span className="flex items-center gap-1 text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                      <MessageSquare size={11} />
                       Nieprzeczytane: {folder.unreadCount}
                     </span>
                   )}

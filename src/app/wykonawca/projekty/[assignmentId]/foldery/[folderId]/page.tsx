@@ -2,7 +2,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, Folder, Pin } from "@/components/ui/icons";
+import { ChevronLeft, Folder, Pin, MessageSquare } from "@/components/ui/icons";
 import ContractorFilesGrid from "@/components/wykonawca/ContractorFilesGrid";
 
 interface Props {
@@ -134,7 +134,8 @@ export default async function ContractorFolderPage({ params }: Props) {
                       </span>
                     )}
                     {subUnreadComments > 0 && (
-                      <span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                      <span className="flex items-center gap-1 text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                        <MessageSquare size={11} />
                         Nieprzeczytane: {subUnreadComments}
                       </span>
                     )}

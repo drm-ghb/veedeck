@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Info, Pin } from "@/components/ui/icons";
+import { Info, Pin, MessageSquare } from "@/components/ui/icons";
 import ContractorProjectInfoSidebar, { type ProjectInfo } from "./ContractorProjectInfoSidebar";
 
 interface ProjectCard {
@@ -45,7 +45,8 @@ export default function ContractorProjectCards({ cards }: Props) {
                   </span>
                 )}
                 {card.unreadCount > 0 && (
-                  <span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                  <span className="flex items-center gap-1 text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                    <MessageSquare size={11} />
                     Nieprzeczytane: {card.unreadCount}
                   </span>
                 )}
