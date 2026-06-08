@@ -33,7 +33,7 @@ export default function AppNavbar({
   extraRight,
 }: AppNavbarProps) {
   return (
-    <nav className="relative z-30">
+    <nav className="relative z-50">
       <div className="px-4 flex items-center gap-2 py-3">
         {/* Left: logo */}
         <div className="shrink-0 sm:flex-1 flex items-center gap-2">

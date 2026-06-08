@@ -18,22 +18,32 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const session = await auth();
-  const { fileId, content, author, authorRole } = await req.json();
+  const { fileId, content, title, author, authorRole, posX, posY } = await req.json();
 
   const trimmed = content?.trim();
   if (!fileId || !trimmed || !author) {
     return NextResponse.json({ error: "Brakujące pola" }, { status: 400 });
   }
 
-  const comment = await prisma.contractorFileComment.create({
-    data: {
-      fileId,
-      content: trimmed,
-      author,
-      authorRole: authorRole ?? "contractor",
-    },
-    include: { replies: true },
-  });
+  const isPin = posX !== null && posX !== undefined && posY !== null && posY !== undefined;
+
+  let comment;
+  try {
+    comment = await prisma.contractorFileComment.create({
+      data: {
+        fileId,
+        title: title?.trim() || null,
+        content: trimmed,
+        author,
+        authorRole: authorRole ?? "contractor",
+        ...(isPin ? { posX, posY } : {}),
+      },
+      include: { replies: true },
+    });
+  } catch (err) {
+    console.error("[contractor-file-comments POST]", err);
+    return NextResponse.json({ error: String(err) }, { status: 500 });
+  }
 
   await pusherServer.trigger(`contractor-file-${fileId}`, "new-comment", comment);
 
@@ -58,13 +68,17 @@ export async function POST(req: NextRequest) {
     const contractorId = file.folder.assignment.contractorId;
     const folderId = file.folder.id;
 
+    const pinSuffix = isPin ? `?pinId=${comment.id}` : `?comments=1`;
     if (authorRole !== "designer") {
       // Contractor commented → notify designer
+      const notifMessage = isPin
+        ? `${author} dodał pin do pliku „${file.name}" w projekcie „${projectTitle}"`
+        : `${author} dodał komentarz do pliku „${file.name}" w projekcie „${projectTitle}"`;
       const notification = await prisma.notification.create({
         data: {
           userId: designerId,
-          message: `${author} dodał komentarz do pliku „${file.name}" w projekcie „${projectTitle}"`,
-          link: `/wykonawcy/${contractorId}/projekty/${assignmentId}/foldery/${folderId}/pliki/${fileId}?comments=1`,
+          message: notifMessage,
+          link: `/wykonawcy/${contractorId}/projekty/${assignmentId}/foldery/${folderId}/pliki/${fileId}${pinSuffix}`,
           type: "contractor_comment",
         },
       });
@@ -77,11 +91,14 @@ export async function POST(req: NextRequest) {
         select: { userId: true },
       });
       if (contractorUser?.userId) {
+        const notifMessage = isPin
+          ? `${author} dodał pin do pliku „${file.name}" w projekcie „${projectTitle}"`
+          : `${author} dodał komentarz do pliku „${file.name}" w projekcie „${projectTitle}"`;
         const notification = await prisma.notification.create({
           data: {
             userId: contractorUser.userId,
-            message: `${author} dodał komentarz do pliku „${file.name}" w projekcie „${projectTitle}"`,
-            link: `/wykonawca/projekty/${assignmentId}/foldery/${folderId}/pliki/${fileId}?comments=1`,
+            message: notifMessage,
+            link: `/wykonawca/projekty/${assignmentId}/foldery/${folderId}/pliki/${fileId}${pinSuffix}`,
             type: "designer_comment",
           },
         });

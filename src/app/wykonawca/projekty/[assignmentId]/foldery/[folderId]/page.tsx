@@ -38,9 +38,10 @@ export default async function ContractorFolderPage({ params }: Props) {
       files: {
         include: {
           render: { select: { id: true, name: true, fileUrl: true, fileType: true } },
-          _count: { select: { comments: { where: { viewedByContractor: false, authorRole: "designer" } } } },
+          _count: { select: { comments: { where: { viewedByContractor: false, authorRole: "designer", posX: null } } } },
           comments: {
             select: {
+              posX: true,
               _count: { select: { replies: { where: { viewedByContractor: false } } } },
             },
           },
@@ -54,9 +55,10 @@ export default async function ContractorFolderPage({ params }: Props) {
           _count: { select: { files: true } },
           files: {
             select: {
-              _count: { select: { comments: { where: { viewedByContractor: false, authorRole: "designer" } } } },
+              _count: { select: { comments: { where: { viewedByContractor: false, authorRole: "designer", posX: null } } } },
               comments: {
                 select: {
+                  posX: true,
                   _count: { select: { replies: { where: { viewedByContractor: false } } } },
                 },
               },
@@ -102,7 +104,7 @@ export default async function ContractorFolderPage({ params }: Props) {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {folder.subfolders.map((sub) => {
             const subUnread = sub.files.reduce(
-              (sum, f) => sum + f._count.comments + f.comments.reduce((s2, c) => s2 + c._count.replies, 0),
+              (sum, f) => sum + f._count.comments + f.comments.filter((c) => c.posX == null).reduce((s2, c) => s2 + c._count.replies, 0),
               0
             );
             return (
@@ -131,14 +133,14 @@ export default async function ContractorFolderPage({ params }: Props) {
             createdAt: file.createdAt.toISOString(),
             displayUrl: file.render?.fileUrl ?? file.fileUrl ?? null,
             effectiveType: file.render?.fileType ?? file.fileType,
-            totalComments: file.comments.length,
+            totalComments: file.comments.filter((c) => c.posX == null).length,
           }))}
           assignmentId={assignmentId}
           folderId={folderId}
           initialUnreadCounts={Object.fromEntries(
             folder.files.map((file) => [
               file.id,
-              file._count.comments + file.comments.reduce((sum, c) => sum + c._count.replies, 0),
+              file._count.comments + file.comments.filter((c) => c.posX == null).reduce((sum, c) => sum + c._count.replies, 0),
             ])
           )}
           authorName={contractorName}

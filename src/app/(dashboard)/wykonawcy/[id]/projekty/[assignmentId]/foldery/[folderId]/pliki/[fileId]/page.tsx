@@ -40,7 +40,7 @@ export default async function DesignerContractorFileViewPage({ params }: Props) 
           fileType: true,
           render: { select: { fileUrl: true, fileType: true } },
           comments: {
-            select: { id: true, viewedByDesigner: true, authorRole: true },
+            select: { id: true, viewedByDesigner: true, authorRole: true, posX: true },
           },
         },
         orderBy: { createdAt: "desc" },
@@ -63,9 +63,20 @@ export default async function DesignerContractorFileViewPage({ params }: Props) 
     name: f.name,
     displayUrl: f.render?.fileUrl ?? f.fileUrl ?? null,
     effectiveType: f.render?.fileType ?? f.fileType,
-    totalComments: f.comments.length,
-    unreadCount: f.comments.filter((c) => !c.viewedByDesigner && c.authorRole === "contractor").length,
+    totalComments: f.comments.filter((c) => c.posX == null).length,
+    unreadCount: f.comments.filter((c) => c.posX == null && !c.viewedByDesigner && c.authorRole === "contractor").length,
   }));
+
+  // Mark all contractor_comment notifications for this file as read
+  await prisma.notification.updateMany({
+    where: {
+      userId: session.user.id,
+      type: "contractor_comment",
+      read: false,
+      link: { contains: `/pliki/${fileId}` },
+    },
+    data: { read: true },
+  });
 
   const backHref = `/wykonawcy/${id}/projekty/${assignmentId}`;
   const fileRouteBase = `/wykonawcy/${id}/projekty/${assignmentId}/foldery/${folderId}/pliki`;

@@ -44,6 +44,7 @@ export default async function ContractorFileViewPage({ params }: Props) {
               id: true,
               viewedByContractor: true,
               authorRole: true,
+              posX: true,
               _count: { select: { replies: { where: { viewedByContractor: false } } } },
             },
           },
@@ -62,10 +63,10 @@ export default async function ContractorFileViewPage({ params }: Props) {
     name: f.name,
     displayUrl: f.render?.fileUrl ?? f.fileUrl ?? null,
     effectiveType: f.render?.fileType ?? f.fileType,
-    totalComments: f.comments.length,
+    totalComments: f.comments.filter((c) => c.posX == null).length,
     unreadCount:
-      f.comments.filter((c) => !c.viewedByContractor && c.authorRole === "designer").length +
-      f.comments.reduce((sum, c) => sum + c._count.replies, 0),
+      f.comments.filter((c) => c.posX == null && !c.viewedByContractor && c.authorRole === "designer").length +
+      f.comments.filter((c) => c.posX == null).reduce((sum, c) => sum + c._count.replies, 0),
   }));
 
   const backHref = `/wykonawca/projekty/${assignmentId}/foldery/${folderId}`;

@@ -970,9 +970,12 @@ model ContractorFile {
 
 model ContractorFileComment {
   id                 String                 @id @default(cuid())
+  title              String?
   content            String
   author             String
   authorRole         String                 @default("contractor") // "contractor" | "designer"
+  posX               Float?
+  posY               Float?
   createdAt          DateTime               @default(now())
   fileId             String
   viewedByDesigner   Boolean                @default(false)

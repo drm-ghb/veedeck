@@ -1938,6 +1938,13 @@ export default function RenderViewer({
               <ChevronRight size={20} />
             </button>
           )}
+          {/* Pin mode hint */}
+          {(mode === "pin" || productPinMode) && !pending && !pendingProductPos && (
+            <div className="absolute top-3 left-1/2 -translate-x-1/2 z-10 bg-primary/90 text-primary-foreground text-xs px-3 py-1.5 rounded-full shadow pointer-events-none select-none">
+              Kliknij na zdjęcie, aby dodać pin
+            </div>
+          )}
+
           {/* PDF zoom controls */}
           {isPdf && (
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2 bg-black/50 backdrop-blur-sm rounded-full px-3 py-1.5 text-white text-sm select-none">

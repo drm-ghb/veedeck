@@ -19,6 +19,8 @@ interface Comment {
   author: string;
   authorRole: string;
   createdAt: string;
+  posX?: number | null;
+  posY?: number | null;
   replies: Reply[];
 }
 
@@ -254,6 +256,7 @@ export default function ContractorFileCommentPanel({
     | { type: "reply"; id: string; content: string; author: string; authorRole: string; createdAt: string; commentId: string; parentContent: string; parentAuthor: string };
 
   const flatItems: FlatItem[] = comments
+    .filter((c) => c.posX == null)
     .flatMap((c) => [
       { type: "comment" as const, id: c.id, content: c.content, author: c.author, authorRole: c.authorRole, createdAt: c.createdAt },
       ...c.replies.map((r) => ({

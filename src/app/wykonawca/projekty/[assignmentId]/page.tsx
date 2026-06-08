@@ -67,7 +67,7 @@ export default async function ContractorProjectPage({ params }: Props) {
     prisma.contractorFileReply.findMany({
       where: {
         viewedByContractor: false,
-        comment: { file: { folderId: { in: [...topFolderIds, ...allSubfolderIds] } } },
+        comment: { posX: null, file: { folderId: { in: [...topFolderIds, ...allSubfolderIds] } } },
       },
       select: { comment: { select: { file: { select: { folderId: true } } } } },
     }),
@@ -75,6 +75,7 @@ export default async function ContractorProjectPage({ params }: Props) {
       where: {
         viewedByContractor: false,
         authorRole: "designer",
+        posX: null,
         file: { folderId: { in: [...topFolderIds, ...allSubfolderIds] } },
       },
       select: { file: { select: { folderId: true } } },

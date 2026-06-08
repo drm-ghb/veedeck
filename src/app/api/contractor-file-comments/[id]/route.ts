@@ -7,7 +7,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const { content, viewedByDesigner } = await req.json();
+  const { content, viewedByDesigner, posX, posY } = await req.json();
 
   const comment = await prisma.contractorFileComment.findUnique({ where: { id } });
   if (!comment) return NextResponse.json({ error: "Nie znaleziono" }, { status: 404 });
@@ -17,6 +17,8 @@ export async function PATCH(
     data: {
       ...(content !== undefined ? { content: content.trim() } : {}),
       ...(viewedByDesigner !== undefined ? { viewedByDesigner } : {}),
+      ...(posX !== undefined ? { posX } : {}),
+      ...(posY !== undefined ? { posY } : {}),
     },
   });
 
@@ -24,6 +26,14 @@ export async function PATCH(
     await pusherServer.trigger(`contractor-file-${comment.fileId}`, "comment-edited", {
       id,
       content: content.trim(),
+    });
+  }
+
+  if (posX !== undefined || posY !== undefined) {
+    await pusherServer.trigger(`contractor-file-${comment.fileId}`, "pin-moved", {
+      id,
+      posX: updated.posX,
+      posY: updated.posY,
     });
   }
 
