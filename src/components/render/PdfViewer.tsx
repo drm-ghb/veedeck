@@ -3,13 +3,11 @@
 import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from "react";
 import { ChevronLeft, ChevronRight, FileText } from "@/components/ui/icons";
 
-const workerSrc = new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url);
-
 let pdfjsInitPromise: Promise<typeof import("pdfjs-dist")> | null = null;
 function getPdfJs() {
   if (!pdfjsInitPromise) {
     pdfjsInitPromise = import("pdfjs-dist").then((lib) => {
-      lib.GlobalWorkerOptions.workerSrc = workerSrc.href;
+      lib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
       return lib;
     });
   }
