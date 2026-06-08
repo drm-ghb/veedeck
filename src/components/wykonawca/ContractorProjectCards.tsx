@@ -41,7 +41,7 @@ export default function ContractorProjectCards({ cards }: Props) {
                 {card.unreadPinCount > 0 && (
                   <span className="flex items-center gap-1 text-xs font-semibold text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-950/30 px-2 py-0.5 rounded-full">
                     <Pin size={11} />
-                    {card.unreadPinCount}
+                    Nowe piny: {card.unreadPinCount}
                   </span>
                 )}
                 {card.unreadCount > 0 && (
