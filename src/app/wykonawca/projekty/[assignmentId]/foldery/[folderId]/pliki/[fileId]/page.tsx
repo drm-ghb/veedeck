@@ -58,6 +58,12 @@ export default async function ContractorFileViewPage({ params }: Props) {
   const currentIndex = folder.files.findIndex((f) => f.id === fileId);
   if (currentIndex === -1) notFound();
 
+  // Auto-mark designer pins as viewed when file is opened
+  await prisma.contractorFileComment.updateMany({
+    where: { fileId, posX: { not: null }, authorRole: "designer", viewedByContractor: false },
+    data: { viewedByContractor: true },
+  });
+
   const files = folder.files.map((f) => ({
     id: f.id,
     name: f.name,

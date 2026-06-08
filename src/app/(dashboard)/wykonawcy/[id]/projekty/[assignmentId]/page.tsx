@@ -57,17 +57,26 @@ export default async function ContractorProjectPage({ params, searchParams }: Pr
   });
   if (!assignment) notFound();
 
-  // Comment counts per file (total + unread)
+  // Comment and pin counts per file (total + unread)
   const allComments = await prisma.contractorFileComment.findMany({
     where: { file: { folder: { assignmentId } } },
-    select: { fileId: true, viewedByDesigner: true, authorRole: true },
+    select: { fileId: true, viewedByDesigner: true, authorRole: true, posX: true },
   });
   const unreadPerFile: Record<string, number> = {};
   const totalPerFile: Record<string, number> = {};
+  const unreadPinsPerFile: Record<string, number> = {};
+  const totalPinsPerFile: Record<string, number> = {};
   for (const c of allComments) {
-    totalPerFile[c.fileId] = (totalPerFile[c.fileId] ?? 0) + 1;
-    if (!c.viewedByDesigner && c.authorRole === "contractor") {
-      unreadPerFile[c.fileId] = (unreadPerFile[c.fileId] ?? 0) + 1;
+    if (c.posX == null) {
+      totalPerFile[c.fileId] = (totalPerFile[c.fileId] ?? 0) + 1;
+      if (!c.viewedByDesigner && c.authorRole === "contractor") {
+        unreadPerFile[c.fileId] = (unreadPerFile[c.fileId] ?? 0) + 1;
+      }
+    } else {
+      totalPinsPerFile[c.fileId] = (totalPinsPerFile[c.fileId] ?? 0) + 1;
+      if (!c.viewedByDesigner && c.authorRole === "contractor") {
+        unreadPinsPerFile[c.fileId] = (unreadPinsPerFile[c.fileId] ?? 0) + 1;
+      }
     }
   }
 
@@ -127,6 +136,8 @@ export default async function ContractorProjectPage({ params, searchParams }: Pr
       rooms={rooms}
       unreadPerFile={unreadPerFile}
       totalPerFile={totalPerFile}
+      unreadPinsPerFile={unreadPinsPerFile}
+      totalPinsPerFile={totalPinsPerFile}
       designerName={designerName}
       info={{
         investmentStreet: assignment.investmentStreet,

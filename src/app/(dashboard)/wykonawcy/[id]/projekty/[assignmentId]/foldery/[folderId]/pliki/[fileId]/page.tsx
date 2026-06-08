@@ -67,6 +67,12 @@ export default async function DesignerContractorFileViewPage({ params }: Props) 
     unreadCount: f.comments.filter((c) => c.posX == null && !c.viewedByDesigner && c.authorRole === "contractor").length,
   }));
 
+  // Auto-mark contractor pins as viewed when designer opens the file
+  await prisma.contractorFileComment.updateMany({
+    where: { fileId, posX: { not: null }, authorRole: "contractor", viewedByDesigner: false },
+    data: { viewedByDesigner: true },
+  });
+
   // Mark all contractor_comment notifications for this file as read
   await prisma.notification.updateMany({
     where: {

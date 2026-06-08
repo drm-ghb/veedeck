@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { FileText, Download, MessageSquare } from "@/components/ui/icons";
+import { FileText, Download, MessageSquare, Pin } from "@/components/ui/icons";
 import ContractorFileCommentPanel from "./ContractorFileCommentPanel";
 
 interface FileItem {
@@ -12,6 +12,7 @@ interface FileItem {
   displayUrl: string | null;
   effectiveType: string;
   totalComments?: number;
+  totalPins?: number;
 }
 
 interface Props {
@@ -21,6 +22,7 @@ interface Props {
   authorName: string;
   authorRole: "contractor" | "designer";
   initialUnreadCounts?: Record<string, number>;
+  initialUnreadPinCounts?: Record<string, number>;
 }
 
 export default function ContractorFilesGrid({
@@ -30,9 +32,11 @@ export default function ContractorFilesGrid({
   authorName,
   authorRole,
   initialUnreadCounts = {},
+  initialUnreadPinCounts = {},
 }: Props) {
   const [commentFileId, setCommentFileId] = useState<string | null>(null);
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>(initialUnreadCounts);
+  const [unreadPinCounts, setUnreadPinCounts] = useState<Record<string, number>>(initialUnreadPinCounts);
 
   function openComments(e: React.MouseEvent, fileId: string) {
     e.preventDefault();
@@ -66,13 +70,18 @@ export default function ContractorFilesGrid({
           const isImage = file.effectiveType === "image";
           const isPdf = file.effectiveType === "pdf";
           const unread = unreadCounts[file.id] ?? 0;
+          const unreadPins = unreadPinCounts[file.id] ?? 0;
+          const hasUnread = unread > 0 || unreadPins > 0;
 
           return (
             <Link
               key={file.id}
               href={`/wykonawca/projekty/${assignmentId}/foldery/${folderId}/pliki/${file.id}`}
+              onClick={() => {
+                if (unreadPins > 0) setUnreadPinCounts((prev) => ({ ...prev, [file.id]: 0 }));
+              }}
               className={`group relative rounded-xl border bg-card overflow-hidden block transition-all ${
-                unread > 0
+                hasUnread
                   ? "border-violet-400 shadow-[0_0_12px_2px_rgba(139,92,246,0.35)]"
                   : "border-border"
               }`}
@@ -99,25 +108,46 @@ export default function ContractorFilesGrid({
                     {new Date(file.createdAt).toLocaleDateString("pl-PL")}
                   </p>
                 </div>
-                {unread > 0 ? (
-                  <button
-                    onClick={(e) => openComments(e, file.id)}
-                    className="text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full shrink-0 hover:bg-primary/20 transition-colors"
-                  >
-                    Nieprzeczytane: {unread}
-                  </button>
-                ) : (
-                  <button
-                    onClick={(e) => openComments(e, file.id)}
-                    className="flex items-center gap-1 p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
-                    title="Komentarze"
-                  >
-                    <MessageSquare size={14} />
-                    {(file.totalComments ?? 0) > 0 && (
-                      <span className="text-[10px] font-medium">{file.totalComments}</span>
-                    )}
-                  </button>
-                )}
+                <div className="flex items-center gap-0.5 shrink-0">
+                  {/* Pin badge */}
+                  {(unreadPins > 0 || (file.totalPins ?? 0) > 0) && (
+                    <span
+                      className={`flex items-center gap-0.5 p-1 rounded-lg ${
+                        unreadPins > 0
+                          ? "text-violet-600 dark:text-violet-400"
+                          : "text-muted-foreground"
+                      }`}
+                      title="Piny"
+                    >
+                      <Pin size={13} />
+                      <span className="text-[10px] font-medium">
+                        {unreadPins > 0 ? unreadPins : (file.totalPins ?? 0)}
+                      </span>
+                    </span>
+                  )}
+                  {/* Comments button */}
+                  {unread > 0 ? (
+                    <button
+                      onClick={(e) => openComments(e, file.id)}
+                      className="flex items-center gap-0.5 p-1 rounded-lg text-violet-600 dark:text-violet-400 hover:bg-muted transition-colors"
+                      title="Komentarze"
+                    >
+                      <MessageSquare size={13} />
+                      <span className="text-[10px] font-medium">{unread}</span>
+                    </button>
+                  ) : (
+                    <button
+                      onClick={(e) => openComments(e, file.id)}
+                      className="flex items-center gap-0.5 p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                      title="Komentarze"
+                    >
+                      <MessageSquare size={13} />
+                      {(file.totalComments ?? 0) > 0 && (
+                        <span className="text-[10px] font-medium">{file.totalComments}</span>
+                      )}
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* Download — hover overlay on image */}

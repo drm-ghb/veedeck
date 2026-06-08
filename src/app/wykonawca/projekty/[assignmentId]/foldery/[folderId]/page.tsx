@@ -42,6 +42,8 @@ export default async function ContractorFolderPage({ params }: Props) {
           comments: {
             select: {
               posX: true,
+              authorRole: true,
+              viewedByContractor: true,
               _count: { select: { replies: { where: { viewedByContractor: false } } } },
             },
           },
@@ -59,6 +61,8 @@ export default async function ContractorFolderPage({ params }: Props) {
               comments: {
                 select: {
                   posX: true,
+                  authorRole: true,
+                  viewedByContractor: true,
                   _count: { select: { replies: { where: { viewedByContractor: false } } } },
                 },
               },
@@ -104,7 +108,11 @@ export default async function ContractorFolderPage({ params }: Props) {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {folder.subfolders.map((sub) => {
             const subUnread = sub.files.reduce(
-              (sum, f) => sum + f._count.comments + f.comments.filter((c) => c.posX == null).reduce((s2, c) => s2 + c._count.replies, 0),
+              (sum, f) =>
+                sum +
+                f._count.comments +
+                f.comments.filter((c) => c.posX == null).reduce((s2, c) => s2 + c._count.replies, 0) +
+                f.comments.filter((c) => c.posX != null && c.authorRole === "designer" && !c.viewedByContractor).length,
               0
             );
             return (
@@ -134,6 +142,7 @@ export default async function ContractorFolderPage({ params }: Props) {
             displayUrl: file.render?.fileUrl ?? file.fileUrl ?? null,
             effectiveType: file.render?.fileType ?? file.fileType,
             totalComments: file.comments.filter((c) => c.posX == null).length,
+            totalPins: file.comments.filter((c) => c.posX != null).length,
           }))}
           assignmentId={assignmentId}
           folderId={folderId}
@@ -141,6 +150,12 @@ export default async function ContractorFolderPage({ params }: Props) {
             folder.files.map((file) => [
               file.id,
               file._count.comments + file.comments.filter((c) => c.posX == null).reduce((sum, c) => sum + c._count.replies, 0),
+            ])
+          )}
+          initialUnreadPinCounts={Object.fromEntries(
+            folder.files.map((file) => [
+              file.id,
+              file.comments.filter((c) => c.posX != null && c.authorRole === "designer" && !c.viewedByContractor).length,
             ])
           )}
           authorName={contractorName}

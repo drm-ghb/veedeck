@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
-import { Eye, EyeOff, Plus, FileText, Image, Ruler, Trash2, ChevronLeft, ChevronDown, ChevronRight, Download, FolderPlus, Pencil, Check, X, CheckSquare, GripVertical, Info, MessageSquare, MoreHorizontal } from "@/components/ui/icons";
+import { Eye, EyeOff, Plus, FileText, Image, Ruler, Trash2, ChevronLeft, ChevronDown, ChevronRight, Download, FolderPlus, Pencil, Check, X, CheckSquare, GripVertical, Info, MessageSquare, MoreHorizontal, Pin } from "@/components/ui/icons";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, arrayMove, useSortable } from "@dnd-kit/sortable";
@@ -71,6 +71,8 @@ interface Props {
   info: ProjectInfoData;
   unreadPerFile?: Record<string, number>;
   totalPerFile?: Record<string, number>;
+  unreadPinsPerFile?: Record<string, number>;
+  totalPinsPerFile?: Record<string, number>;
   designerName?: string;
 }
 
@@ -88,7 +90,7 @@ function SortableSubfolderWrapper({ id, children }: { id: string; children: (dra
   );
 }
 
-function FileRow({ file, onDelete, bulkMode, selected, onSelect, unreadCount = 0, totalCount = 0, onFileClick, onCommentClick }: {
+function FileRow({ file, onDelete, bulkMode, selected, onSelect, unreadCount = 0, totalCount = 0, unreadPinCount = 0, totalPinCount = 0, onFileClick, onCommentClick }: {
   file: ContractorFile;
   onDelete: () => void;
   bulkMode?: boolean;
@@ -96,6 +98,8 @@ function FileRow({ file, onDelete, bulkMode, selected, onSelect, unreadCount = 0
   onSelect?: () => void;
   unreadCount?: number;
   totalCount?: number;
+  unreadPinCount?: number;
+  totalPinCount?: number;
   onFileClick?: () => void;
   onCommentClick?: () => void;
 }) {
@@ -130,6 +134,19 @@ function FileRow({ file, onDelete, bulkMode, selected, onSelect, unreadCount = 0
         <p className="text-xs text-muted-foreground">{new Date(file.createdAt).toLocaleDateString("pl-PL")}</p>
       </button>
       <div className="flex items-center gap-1 shrink-0">
+        {/* Pin badge */}
+        {(unreadPinCount > 0 || totalPinCount > 0) && (
+          <button
+            onClick={onFileClick}
+            className={`relative p-1.5 rounded-lg hover:bg-muted transition-colors ${unreadPinCount > 0 ? "text-primary hover:text-primary/80" : "text-muted-foreground hover:text-foreground"}`}
+            title="Piny"
+          >
+            <Pin size={15} />
+            <span className={`absolute -top-1 -right-1 min-w-[14px] h-3.5 px-0.5 text-[9px] font-bold rounded-full flex items-center justify-center leading-none transition-colors ${unreadPinCount > 0 ? "bg-primary text-primary-foreground" : "bg-muted-foreground/40 text-white"}`}>
+              {(unreadPinCount > 0 ? unreadPinCount : totalPinCount) > 99 ? "99+" : (unreadPinCount > 0 ? unreadPinCount : totalPinCount)}
+            </span>
+          </button>
+        )}
         <button
           onClick={onCommentClick}
           className={`relative p-1.5 rounded-lg hover:bg-muted transition-colors ${unreadCount > 0 ? "text-primary hover:text-primary/80" : "text-muted-foreground hover:text-foreground"}`}
@@ -170,25 +187,26 @@ function folderIcon(type: string) {
   return <FileText size={20} />;
 }
 
-function folderUnreadTotal(folder: ContractorFolder, unreadCounts: Record<string, number>): number {
-  let total = folder.files.reduce((s, f) => s + (unreadCounts[f.id] ?? 0), 0);
+function folderUnreadTotal(folder: ContractorFolder, unreadCounts: Record<string, number>, unreadPinCounts: Record<string, number>): number {
+  let total = folder.files.reduce((s, f) => s + (unreadCounts[f.id] ?? 0) + (unreadPinCounts[f.id] ?? 0), 0);
   for (const sub of folder.subfolders) {
-    total += sub.files.reduce((s, f) => s + (unreadCounts[f.id] ?? 0), 0);
+    total += sub.files.reduce((s, f) => s + (unreadCounts[f.id] ?? 0) + (unreadPinCounts[f.id] ?? 0), 0);
   }
   return total;
 }
 
-function subfolderUnreadTotal(sub: ContractorSubfolder, unreadCounts: Record<string, number>): number {
-  return sub.files.reduce((s, f) => s + (unreadCounts[f.id] ?? 0), 0);
+function subfolderUnreadTotal(sub: ContractorSubfolder, unreadCounts: Record<string, number>, unreadPinCounts: Record<string, number>): number {
+  return sub.files.reduce((s, f) => s + (unreadCounts[f.id] ?? 0) + (unreadPinCounts[f.id] ?? 0), 0);
 }
 
 export default function ContractorProjectView({
   contractorId, contractorName, assignmentId, projectTitle, projectId, folders, rooms, info,
-  unreadPerFile = {}, totalPerFile = {}, designerName = "Projektant",
+  unreadPerFile = {}, totalPerFile = {}, unreadPinsPerFile = {}, totalPinsPerFile = {}, designerName = "Projektant",
 }: Props) {
   const router = useRouter();
   const [infoOpen, setInfoOpen] = useState(false);
   const [unreadCounts] = useState<Record<string, number>>(unreadPerFile);
+  const [unreadPinCounts] = useState<Record<string, number>>(unreadPinsPerFile);
   // Auto-expand folders/subfolders with unread on mount
   const firstUnreadFolderId = (() => {
     for (const folder of folders) {
@@ -401,7 +419,7 @@ export default function ContractorProjectView({
                 <p className="text-xs text-muted-foreground">{folder._count.files + folder.subfolders.reduce((s, sub) => s + sub._count.files, 0)} plików</p>
               </div>
               <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
-                {(() => { const u = folderUnreadTotal(folder, unreadCounts); return u > 0 ? <Badge variant="default" className="text-xs">Nieprzeczytane: {u}</Badge> : null; })()}
+                {(() => { const u = folderUnreadTotal(folder, unreadCounts, unreadPinCounts); return u > 0 ? <Badge variant="default" className="text-xs">Nieprzeczytane: {u}</Badge> : null; })()}
                 {bulkFolderId === folder.id && selectedFileIds.length > 0 && (
                   <Button size="sm" variant="destructive" onClick={() => deleteSelected(folder.id)} className="gap-1.5">
                     <Trash2 size={14} />
@@ -502,7 +520,7 @@ export default function ContractorProjectView({
                             <span className="truncate">{sub.name}</span>
                             <span className="text-xs text-muted-foreground font-normal shrink-0">{sub._count.files} plików</span>
                           </button>
-                          {(() => { const u = subfolderUnreadTotal(sub, unreadCounts); return u > 0 ? <span className="shrink-0 min-w-[18px] h-[18px] px-1 bg-primary text-primary-foreground text-[10px] font-bold rounded-full flex items-center justify-center leading-none">{u > 9 ? "9+" : u}</span> : null; })()}
+                          {(() => { const u = subfolderUnreadTotal(sub, unreadCounts, unreadPinCounts); return u > 0 ? <span className="shrink-0 min-w-[18px] h-[18px] px-1 bg-primary text-primary-foreground text-[10px] font-bold rounded-full flex items-center justify-center leading-none">{u > 9 ? "9+" : u}</span> : null; })()}
                           <button
                             onClick={() => setAddFileSubfolder(sub.id)}
                             className="p-1 text-muted-foreground hover:text-foreground transition-colors"
@@ -554,7 +572,7 @@ export default function ContractorProjectView({
                         {sub.files.length === 0 ? (
                           <p className="px-6 py-3 text-sm text-muted-foreground">Brak plików</p>
                         ) : (
-                          sub.files.map((file) => <FileRow key={file.id} file={file} onDelete={() => deleteFile(sub.id, file.id, file.name)} bulkMode={bulkFolderId === sub.id} selected={selectedFileIds.includes(file.id)} onSelect={() => toggleFileSelect(file.id)} unreadCount={unreadCounts[file.id] ?? 0} totalCount={totalPerFile[file.id] ?? 0} onFileClick={() => router.push(`/wykonawcy/${contractorId}/projekty/${assignmentId}/foldery/${sub.id}/pliki/${file.id}`)} onCommentClick={() => router.push(`/wykonawcy/${contractorId}/projekty/${assignmentId}/foldery/${sub.id}/pliki/${file.id}?comments=1`)} />)
+                          sub.files.map((file) => <FileRow key={file.id} file={file} onDelete={() => deleteFile(sub.id, file.id, file.name)} bulkMode={bulkFolderId === sub.id} selected={selectedFileIds.includes(file.id)} onSelect={() => toggleFileSelect(file.id)} unreadCount={unreadCounts[file.id] ?? 0} totalCount={totalPerFile[file.id] ?? 0} unreadPinCount={unreadPinCounts[file.id] ?? 0} totalPinCount={totalPinsPerFile[file.id] ?? 0} onFileClick={() => router.push(`/wykonawcy/${contractorId}/projekty/${assignmentId}/foldery/${sub.id}/pliki/${file.id}`)} onCommentClick={() => router.push(`/wykonawcy/${contractorId}/projekty/${assignmentId}/foldery/${sub.id}/pliki/${file.id}?comments=1`)} />)
                         )}
                       </div>
                     )}
@@ -581,7 +599,7 @@ export default function ContractorProjectView({
                   <p className="px-4 py-3 text-sm text-muted-foreground">Brak plików w tym folderze</p>
                 ) : folder.files.length > 0 ? (
                   <div className="divide-y divide-border">
-                    {folder.files.map((file) => <FileRow key={file.id} file={file} onDelete={() => deleteFile(folder.id, file.id, file.name)} bulkMode={bulkFolderId === folder.id} selected={selectedFileIds.includes(file.id)} onSelect={() => toggleFileSelect(file.id)} unreadCount={unreadCounts[file.id] ?? 0} totalCount={totalPerFile[file.id] ?? 0} onFileClick={() => router.push(`/wykonawcy/${contractorId}/projekty/${assignmentId}/foldery/${folder.id}/pliki/${file.id}`)} onCommentClick={() => router.push(`/wykonawcy/${contractorId}/projekty/${assignmentId}/foldery/${folder.id}/pliki/${file.id}?comments=1`)} />)}
+                    {folder.files.map((file) => <FileRow key={file.id} file={file} onDelete={() => deleteFile(folder.id, file.id, file.name)} bulkMode={bulkFolderId === folder.id} selected={selectedFileIds.includes(file.id)} onSelect={() => toggleFileSelect(file.id)} unreadCount={unreadCounts[file.id] ?? 0} totalCount={totalPerFile[file.id] ?? 0} unreadPinCount={unreadPinCounts[file.id] ?? 0} totalPinCount={totalPinsPerFile[file.id] ?? 0} onFileClick={() => router.push(`/wykonawcy/${contractorId}/projekty/${assignmentId}/foldery/${folder.id}/pliki/${file.id}`)} onCommentClick={() => router.push(`/wykonawcy/${contractorId}/projekty/${assignmentId}/foldery/${folder.id}/pliki/${file.id}?comments=1`)} />)}
                   </div>
                 ) : null}
               </div>
