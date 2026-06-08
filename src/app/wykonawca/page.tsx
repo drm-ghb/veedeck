@@ -47,6 +47,8 @@ export default async function ContractorHomePage() {
               comments: {
                 select: {
                   posX: true,
+                  authorRole: true,
+                  viewedByContractor: true,
                   _count: { select: { replies: { where: { viewedByContractor: false } } } },
                 },
               },
@@ -60,6 +62,8 @@ export default async function ContractorHomePage() {
                   comments: {
                     select: {
                       posX: true,
+                      authorRole: true,
+                      viewedByContractor: true,
                       _count: { select: { replies: { where: { viewedByContractor: false } } } },
                     },
                   },
@@ -103,12 +107,28 @@ export default async function ContractorHomePage() {
       return sum + directUnread + subUnread;
     }, 0);
 
+    const unreadPinCount = a.folders.reduce((sum, f) => {
+      const directPins = f.files.reduce(
+        (s, file) => s + file.comments.filter((c) => c.posX != null && c.authorRole === "designer" && !c.viewedByContractor).length,
+        0
+      );
+      const subPins = f.subfolders.reduce(
+        (s, sub) => s + sub.files.reduce(
+          (s2, file) => s2 + file.comments.filter((c) => c.posX != null && c.authorRole === "designer" && !c.viewedByContractor).length,
+          0
+        ),
+        0
+      );
+      return sum + directPins + subPins;
+    }, 0);
+
     return {
       assignmentId: a.id,
       projectTitle: a.project.title,
       designerName: a.contractor.designer.name ?? a.contractor.designer.fullName ?? "Projektant",
       createdAt: a.createdAt.toISOString(),
       unreadCount,
+      unreadPinCount,
       info: {
         investmentStreet: a.investmentStreet,
         investmentCity: a.investmentCity,

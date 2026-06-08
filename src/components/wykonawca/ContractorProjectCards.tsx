@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Info } from "@/components/ui/icons";
+import { Info, Pin } from "@/components/ui/icons";
 import ContractorProjectInfoSidebar, { type ProjectInfo } from "./ContractorProjectInfoSidebar";
 
 interface ProjectCard {
@@ -14,6 +14,7 @@ interface ProjectCard {
   createdAt: string;
   info: ProjectInfo;
   unreadCount: number;
+  unreadPinCount: number;
 }
 
 interface Props {
@@ -36,11 +37,19 @@ export default function ContractorProjectCards({ cards }: Props) {
         {cards.map((card) => (
           <Link key={card.assignmentId} href={`/wykonawca/projekty/${card.assignmentId}`}>
             <Card className="relative hover:shadow-[0_4px_16px_rgba(25,33,61,0.2)] hover:border-primary/30 transition-all cursor-pointer h-full">
-              {card.unreadCount > 0 && (
-                <span className="absolute top-3 right-3 text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full z-10">
-                  Nieprzeczytane: {card.unreadCount}
-                </span>
-              )}
+              <div className="absolute top-3 right-3 flex items-center gap-1.5 z-10">
+                {card.unreadPinCount > 0 && (
+                  <span className="flex items-center gap-1 text-xs font-semibold text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-950/30 px-2 py-0.5 rounded-full">
+                    <Pin size={11} />
+                    {card.unreadPinCount}
+                  </span>
+                )}
+                {card.unreadCount > 0 && (
+                  <span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                    Nieprzeczytane: {card.unreadCount}
+                  </span>
+                )}
+              </div>
               <CardHeader>
                 <CardTitle className="text-base leading-snug">{card.projectTitle}</CardTitle>
                 <p className="text-sm text-muted-foreground">Projektant: {card.designerName}</p>
