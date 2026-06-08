@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { FileText, Image, Ruler, ArrowLeft, Info } from "@/components/ui/icons";
+import { FileText, Image, Ruler, ArrowLeft, Info, Pin } from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
 import ContractorProjectInfoSidebar, { type ProjectInfo } from "./ContractorProjectInfoSidebar";
 
@@ -13,6 +13,7 @@ interface Folder {
   visible: boolean;
   totalFiles: number;
   unreadCount: number;
+  unreadPinCount: number;
 }
 
 interface Props {
@@ -66,11 +67,19 @@ export default function ContractorDashboard({ assignmentId, projectTitle, folder
                     {folder.totalFiles === 1 ? "1 plik" : `${folder.totalFiles} plików`}
                   </p>
                 </div>
-                {folder.unreadCount > 0 && (
-                  <span className="absolute top-3 right-3 text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
-                    Nieprzeczytane: {folder.unreadCount}
-                  </span>
-                )}
+                <div className="absolute top-3 right-3 flex flex-col items-end gap-1">
+                  {folder.unreadPinCount > 0 && (
+                    <span className="flex items-center gap-1 text-xs font-semibold text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-950/30 px-2 py-0.5 rounded-full">
+                      <Pin size={11} />
+                      Nowe piny: {folder.unreadPinCount}
+                    </span>
+                  )}
+                  {folder.unreadCount > 0 && (
+                    <span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                      Nieprzeczytane: {folder.unreadCount}
+                    </span>
+                  )}
+                </div>
               </div>
             </Link>
           ))}

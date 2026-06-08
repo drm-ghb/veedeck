@@ -2,7 +2,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, Folder } from "@/components/ui/icons";
+import { ChevronLeft, Folder, Pin } from "@/components/ui/icons";
 import ContractorFilesGrid from "@/components/wykonawca/ContractorFilesGrid";
 
 interface Props {
@@ -107,12 +107,15 @@ export default async function ContractorFolderPage({ params }: Props) {
       {hasSubfolders ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {folder.subfolders.map((sub) => {
-            const subUnread = sub.files.reduce(
+            const subUnreadComments = sub.files.reduce(
               (sum, f) =>
                 sum +
                 f._count.comments +
-                f.comments.filter((c) => c.posX == null).reduce((s2, c) => s2 + c._count.replies, 0) +
-                f.comments.filter((c) => c.posX != null && c.authorRole === "designer" && !c.viewedByContractor).length,
+                f.comments.filter((c) => c.posX == null).reduce((s2, c) => s2 + c._count.replies, 0),
+              0
+            );
+            const subUnreadPins = sub.files.reduce(
+              (sum, f) => sum + f.comments.filter((c) => c.posX != null && c.authorRole === "designer" && !c.viewedByContractor).length,
               0
             );
             return (
@@ -123,11 +126,19 @@ export default async function ContractorFolderPage({ params }: Props) {
                     <p className="font-medium truncate">{sub.name}</p>
                     <p className="text-xs text-muted-foreground">{sub._count.files} plików</p>
                   </div>
-                  {subUnread > 0 && (
-                    <span className="absolute top-3 right-3 text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
-                      Nieprzeczytane: {subUnread}
-                    </span>
-                  )}
+                  <div className="absolute top-3 right-3 flex flex-col items-end gap-1">
+                    {subUnreadPins > 0 && (
+                      <span className="flex items-center gap-1 text-xs font-semibold text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-950/30 px-2 py-0.5 rounded-full">
+                        <Pin size={11} />
+                        Nowe piny: {subUnreadPins}
+                      </span>
+                    )}
+                    {subUnreadComments > 0 && (
+                      <span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                        Nieprzeczytane: {subUnreadComments}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </Link>
             );
