@@ -53,6 +53,7 @@ export default async function FolderPage({ params }: Props) {
           id: r.id,
           name: r.name,
           fileUrl: r.fileUrl,
+          fileType: r.fileType ?? undefined,
           commentCount: r._count.comments,
           viewCount: r.viewCount,
           status: r.status,
