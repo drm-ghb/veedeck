@@ -34,7 +34,6 @@ export default function RenderBoosterView() {
   function reset() {
     stopPolling();
     setPhase("idle");
-    setPredictionId(null);
     setProgress(0);
     setPreviewImage(null);
     setOutputUrl(null);
