@@ -8,82 +8,82 @@ datasource db {
 }
 
 model User {
-  id                         String         @id @default(cuid())
+  id                         String                  @id @default(cuid())
   name                       String?
-  email                      String         @unique
+  email                      String                  @unique
   emailVerified              DateTime?
   image                      String?
   password                   String?
-  createdAt                  DateTime       @default(now())
-  updatedAt                  DateTime       @updatedAt
-  role                       String         @default("designer") // "designer" | "client" | "contractor"
-  fullName                   String?                             // imię i nazwisko
-  avatarUrl                  String?                             // custom avatar
-  phonePrefix                String?        @default("+48")      // country code prefix
-  login                      String?        @unique              // client login e.g. "drychlik"
-  phone                      String?                             // contact phone
-  allowDirectStatusChange    Boolean        @default(false)
+  createdAt                  DateTime                @default(now())
+  updatedAt                  DateTime                @updatedAt
+  allowDirectStatusChange    Boolean                 @default(false)
   accentColor                String?
-  allowClientAcceptance      Boolean        @default(true)
-  allowClientComments        Boolean        @default(true)
-  autoArchiveOnAccept        Boolean        @default(false)
-  autoClosePinsOnAccept      Boolean        @default(false)
+  allowClientAcceptance      Boolean                 @default(true)
+  allowClientComments        Boolean                 @default(true)
+  autoArchiveOnAccept        Boolean                 @default(false)
+  autoClosePinsOnAccept      Boolean                 @default(false)
   clientLogoUrl              String?
   clientWelcomeMessage       String?
-  defaultRenderOrder         String         @default("order")
-  defaultRenderStatus        RenderStatus   @default(REVIEW)
-  hideCommentCount           Boolean        @default(false)
+  defaultRenderOrder         String                  @default("order")
+  defaultRenderStatus        RenderStatus            @default(REVIEW)
+  hideCommentCount           Boolean                 @default(false)
   maxPinsPerRender           Int?
-  notifyClientOnReply        Boolean        @default(true)
-  notifyClientOnStatusChange Boolean        @default(true)
-  requireClientEmail         Boolean        @default(false)
-  requirePinTitle            Boolean        @default(false)
-  allowClientVersionRestore  Boolean        @default(true)
-  showProfileName            Boolean        @default(false)
-  showClientLogo             Boolean        @default(false)
-  isAdmin                    Boolean        @default(false)
-  needsNameSetup             Boolean        @default(false)
-  globalHiddenModules        String[]       @default([])
-  listsCategoryOrder         String[]       @default([])
-  navMode                    String         @default("sidebar")
-  colorTheme                 String         @default("champagne")
-  pdfListTemplate            String         @default("violet")
-  extensionKey               String?        @unique
-  customCategories           String[]       @default([])
-  viewPreferences            Json?
-  trialEndsAt                DateTime?                           // null = brak trialu (isFree lub stary user)
-  isFree                     Boolean        @default(false)      // admin może oznaczyć usera jako darmowego
-  contactEmail               String?                             // real email for notifications (clients use this instead of @client.internal)
-  emailNotifEnabled          Boolean        @default(false)      // master toggle — email notifications off by default
-  emailNotifModules          String[]       @default([])         // e.g. ["renderflow", "listy"]
+  notifyClientOnReply        Boolean                 @default(true)
+  notifyClientOnStatusChange Boolean                 @default(true)
+  requireClientEmail         Boolean                 @default(false)
+  requirePinTitle            Boolean                 @default(false)
+  allowClientVersionRestore  Boolean                 @default(true)
+  isAdmin                    Boolean                 @default(false)
+  globalHiddenModules        String[]                @default([])
+  listsCategoryOrder         String[]                @default([])
+  navMode                    String                  @default("sidebar")
+  needsNameSetup             Boolean                 @default(false)
   ownerId                    String?
-  owner                      User?          @relation("TeamMembers", fields: [ownerId], references: [id])
-  teamMembers                User[]         @relation("TeamMembers")
-  subscription               Subscription?
-  discounts                  Discount[]
+  showProfileName            Boolean                 @default(false)
+  showClientLogo             Boolean                 @default(false)
+  colorTheme                 String                  @default("champagne")
+  extensionKey               String?                 @unique
+  customCategories           String[]                @default([])
+  login                      String?                 @unique
+  phone                      String?
+  role                       String                  @default("designer")
+  viewPreferences            Json?
+  avatarUrl                  String?
+  fullName                   String?
+  phonePrefix                String?                 @default("+48")
+  pdfListTemplate            String                  @default("violet")
+  isFree                     Boolean                 @default(false)
+  trialEndsAt                DateTime?
+  contactEmail               String?
+  emailNotifEnabled          Boolean                 @default(false)
+  emailNotifModules          String[]                @default([])
   accounts                   Account[]
   calendarEvents             CalendarEvent[]
   calendarGuestEntries       CalendarGuest[]
-  notifications              Notification[]
+  clients                    Client[]                @relation("DesignerClients")
+  contractors                Contractor[]            @relation("DesignerContractors")
+  contractorAccount          Contractor?             @relation("ContractorUser")
+  discounts                  Discount[]
+  ownedDiscussions           Discussion[]            @relation("DiscussionOwner")
+  discussionMessages         DiscussionMessage[]     @relation("DiscussionMessageUser")
+  discussionParticipations   DiscussionParticipant[] @relation("DiscussionParticipants")
+  sentInvitations            Invitation[]            @relation("InvitationDesigner")
+  models3d                   Model3D[]
   notes                      Note[]
+  notifications              Notification[]
   products                   Product[]
   projects                   Project[]
+  projectClientAccounts      ProjectClient[]         @relation("ProjectClientUser")
   sessions                   Session[]
   shoppingLists              ShoppingList[]
-  sentInvitations            Invitation[]   @relation("InvitationDesigner")
-  ownedDiscussions           Discussion[]   @relation("DiscussionOwner")
-  discussionMessages         DiscussionMessage[] @relation("DiscussionMessageUser")
-  discussionParticipations   DiscussionParticipant[] @relation("DiscussionParticipants")
-  projectClientAccounts      ProjectClient[] @relation("ProjectClientUser")
-  createdTasks               Task[]         @relation("TaskCreator")
-  assignedTasks              Task[]         @relation("TaskAssignee")
-  taskComments               TaskComment[]  @relation("TaskCommentAuthor")
-  taskStatuses               TaskStatusConfig[]
-  models3d                   Model3D[]
+  subscription               Subscription?
   surveys                    Survey[]
-  contractors                Contractor[]   @relation("DesignerContractors")
-  contractorAccount          Contractor?    @relation("ContractorUser")
-  clients                    Client[]       @relation("DesignerClients")
+  assignedTasks              Task[]                  @relation("TaskAssignee")
+  createdTasks               Task[]                  @relation("TaskCreator")
+  taskComments               TaskComment[]           @relation("TaskCommentAuthor")
+  taskStatuses               TaskStatusConfig[]
+  owner                      User?                   @relation("TeamMembers", fields: [ownerId], references: [id])
+  teamMembers                User[]                  @relation("TeamMembers")
 }
 
 model Invitation {
@@ -91,33 +91,33 @@ model Invitation {
   email      String
   token      String   @unique @default(cuid())
   designerId String
-  designer   User     @relation("InvitationDesigner", fields: [designerId], references: [id], onDelete: Cascade)
   status     String   @default("PENDING")
   expiresAt  DateTime
   createdAt  DateTime @default(now())
-  type       String   @default("team") // "team" | "client"
   projectId  String?
+  type       String   @default("team")
+  designer   User     @relation("InvitationDesigner", fields: [designerId], references: [id], onDelete: Cascade)
 }
 
 model Subscription {
   id           String    @id @default(cuid())
   userId       String    @unique
-  plan         String    // "standard" | "commercial" | "enterprise"
-  status       String    @default("active") // "active" | "cancelled"
+  plan         String
+  status       String    @default("active")
   billingName  String?
   billingEmail String?
   cardLast4    String?
   cardBrand    String?
-  cancelAt     DateTime?                    // ustawione przy anulowaniu — dostęp do tej daty
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
+  cancelAt     DateTime?
   user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Discount {
   id         String    @id @default(cuid())
   userId     String
-  type       String    // "percent" | "amount"
+  type       String
   value      Float
   validFrom  DateTime  @default(now())
   validUntil DateTime?
@@ -157,10 +157,10 @@ model CalendarEvent {
   location    String?
   description String?
   userId      String
-  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  guests      CalendarGuest[]
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  guests      CalendarGuest[]
 }
 
 model CalendarGuest {
@@ -169,14 +169,8 @@ model CalendarGuest {
   name    String?
   email   String?
   userId  String?
-  user    User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
   event   CalendarEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
-}
-
-enum CalendarEventType {
-  WYDARZENIE
-  ZADANIE
-  PRZYPOMNIENIE
+  user    User?         @relation(fields: [userId], references: [id])
 }
 
 model Account {
@@ -208,122 +202,122 @@ model Session {
 model Client {
   id                String          @id @default(cuid())
   designerId        String
-  designer          User            @relation("DesignerClients", fields: [designerId], references: [id], onDelete: Cascade)
   name              String
-  description       String?
-  startDate         DateTime?
-  endDate           DateTime?
-  addressStreet     String?
-  addressCity       String?
-  addressPostalCode String?
-  addressCountry    String?
-  hiddenModules     String[]        @default([])
-  clientCanUpload   Boolean         @default(false)
   createdAt         DateTime        @default(now())
   archived          Boolean         @default(false)
+  addressCity       String?
+  addressCountry    String?
+  addressPostalCode String?
+  addressStreet     String?
+  clientCanUpload   Boolean         @default(false)
+  description       String?
+  endDate           DateTime?
+  hiddenModules     String[]        @default([])
+  startDate         DateTime?
+  designer          User            @relation("DesignerClients", fields: [designerId], references: [id], onDelete: Cascade)
   projects          Project[]
   contacts          ProjectClient[] @relation("ClientContacts")
 }
 
 model Project {
-  id             String          @id @default(cuid())
-  title          String
-  description    String?
-  shareToken     String          @unique @default(cuid())
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
-  userId         String
-  clientEmail    String?
-  clientName     String?
-  clientPhone    String?
-  clientId       String?
-  archived       Boolean         @default(false)
-  shareExpiresAt DateTime?
-  sharePassword  String?
-  modules        String[]        @default([])
-  pinned             Boolean         @default(false)
-  hiddenModules      String[]        @default([])
-  slug               String?         @unique
-  addressCountry     String?
-  addressCity        String?
-  addressPostalCode  String?
-  addressStreet      String?
-  clientCanUpload              Boolean         @default(false)
-  startDate                    DateTime?
-  endDate                      DateTime?
-  paymentsSharedWithClient     Boolean         @default(false)
-  scheduleSharedWithClient     Boolean         @default(false)
-  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  client         Client?         @relation(fields: [clientId], references: [id], onDelete: SetNull)
-  clients        ProjectClient[]
-  renders        Render[]
-  rooms          Room[]
-  shoppingLists  ShoppingList[]
-  discussion     Discussion?
-  tasks          Task[]
-  surveys        Survey[]
-  paymentGroupsAsRfProject PaymentGroup[]  @relation("PaymentGroupRfProject")
-  paymentsAsRfProject      Payment[]       @relation("PaymentRfProject")
-  schedulePhases           SchedulePhase[] @relation("SchedulePhaseRfProject")
+  id                       String                 @id @default(cuid())
+  title                    String
+  description              String?
+  shareToken               String                 @unique @default(cuid())
+  createdAt                DateTime               @default(now())
+  updatedAt                DateTime               @updatedAt
+  userId                   String
+  clientEmail              String?
+  clientName               String?
+  archived                 Boolean                @default(false)
+  shareExpiresAt           DateTime?
+  sharePassword            String?
+  modules                  String[]               @default([])
+  pinned                   Boolean                @default(false)
+  hiddenModules            String[]               @default([])
+  slug                     String?                @unique
+  addressCity              String?
+  addressCountry           String?
+  addressPostalCode        String?
+  addressStreet            String?
+  clientCanUpload          Boolean                @default(false)
+  clientPhone              String?
+  endDate                  DateTime?
+  startDate                DateTime?
+  paymentsSharedWithClient Boolean                @default(false)
+  scheduleSharedWithClient Boolean                @default(false)
+  clientId                 String?
   contractorAssignments    ContractorAssignment[]
+  discussion               Discussion?
+  paymentsAsRfProject      Payment[]              @relation("PaymentRfProject")
+  paymentGroupsAsRfProject PaymentGroup[]         @relation("PaymentGroupRfProject")
+  client                   Client?                @relation(fields: [clientId], references: [id])
+  user                     User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clients                  ProjectClient[]
+  renders                  Render[]
+  rooms                    Room[]
+  schedulePhases           SchedulePhase[]        @relation("SchedulePhaseRfProject")
+  shoppingLists            ShoppingList[]
+  surveys                  Survey[]
+  tasks                    Task[]
 }
 
 model ProjectClient {
-  id            String         @id @default(cuid())
-  name          String
-  email         String?
-  phone         String?
-  projectId     String?        // kept during migration; will be removed after data is migrated
-  clientId      String?        // new: references Client entity; will become required after migration
-  createdAt     DateTime       @default(now())
-  isMainContact Boolean        @default(false)
-  order         Int            @default(0)
-  startDate     DateTime?
-  endDate       DateTime?
-  userId        String?
-  totalAmount   Float?
-  project       Project?       @relation(fields: [projectId], references: [id], onDelete: SetNull)
-  client        Client?        @relation("ClientContacts", fields: [clientId], references: [id], onDelete: Cascade)
-  user          User?          @relation("ProjectClientUser", fields: [userId], references: [id], onDelete: SetNull)
-  paymentGroups PaymentGroup[]
-  payments      Payment[]
-  docFolders      ClientDocFolder[]
-  docs            ClientDoc[]
-  surveys         Survey[]
-  schedulePhases  SchedulePhase[]
+  id             String            @id @default(cuid())
+  name           String
+  email          String?
+  projectId      String?
+  createdAt      DateTime          @default(now())
+  isMainContact  Boolean           @default(false)
+  phone          String?
+  endDate        DateTime?
+  startDate      DateTime?
+  userId         String?
+  order          Int               @default(0)
+  totalAmount    Float?
+  clientId       String?
+  docs           ClientDoc[]
+  docFolders     ClientDocFolder[]
+  payments       Payment[]
+  paymentGroups  PaymentGroup[]
+  client         Client?           @relation("ClientContacts", fields: [clientId], references: [id], onDelete: Cascade)
+  project        Project?          @relation(fields: [projectId], references: [id])
+  user           User?             @relation("ProjectClientUser", fields: [userId], references: [id])
+  schedulePhases SchedulePhase[]
+  surveys        Survey[]
 }
 
 model PaymentGroup {
-  id           String         @id @default(cuid())
-  clientId     String
-  parentId     String?
+  id               String         @id @default(cuid())
+  clientId         String
+  parentId         String?
+  name             String
+  order            Int            @default(0)
+  createdAt        DateTime       @default(now())
   rfProjectId      String?
-  hiddenFromClient Boolean    @default(false)
-  name         String
-  order        Int            @default(0)
-  createdAt    DateTime       @default(now())
-  client       ProjectClient  @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  parent       PaymentGroup?  @relation("PaymentGroupChildren", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  children     PaymentGroup[] @relation("PaymentGroupChildren")
-  payments     Payment[]
-  rfProject    Project?       @relation("PaymentGroupRfProject", fields: [rfProjectId], references: [id], onDelete: SetNull)
+  hiddenFromClient Boolean        @default(false)
+  payments         Payment[]
+  client           ProjectClient  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  parent           PaymentGroup?  @relation("PaymentGroupChildren", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  children         PaymentGroup[] @relation("PaymentGroupChildren")
+  rfProject        Project?       @relation("PaymentGroupRfProject", fields: [rfProjectId], references: [id])
 }
 
 model Payment {
-  id             String         @id @default(cuid())
+  id             String        @id @default(cuid())
   clientId       String
   groupId        String?
   name           String
   amount         Float
-  status         String         @default("pending")
+  status         String        @default("pending")
   attachmentUrl  String?
   attachmentName String?
-  order          Int            @default(0)
-  createdAt      DateTime       @default(now())
+  order          Int           @default(0)
+  createdAt      DateTime      @default(now())
   rfProjectId    String?
-  client         ProjectClient  @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  group          PaymentGroup?  @relation(fields: [groupId], references: [id], onDelete: SetNull)
-  rfProject      Project?       @relation("PaymentRfProject", fields: [rfProjectId], references: [id], onDelete: SetNull)
+  client         ProjectClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  group          PaymentGroup? @relation(fields: [groupId], references: [id])
+  rfProject      Project?      @relation("PaymentRfProject", fields: [rfProjectId], references: [id])
 }
 
 model ShoppingList {
@@ -336,10 +330,10 @@ model ShoppingList {
   shareToken String        @unique @default(cuid())
   archived   Boolean       @default(false)
   pinned     Boolean       @default(false)
-  order      Int           @default(0)
   slug       String?       @unique
   budget     Float?
   hidePrices Boolean       @default(false)
+  order      Int           @default(0)
   sections   ListSection[]
   project    Project?      @relation(fields: [projectId], references: [id])
   user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -359,30 +353,30 @@ model ListSection {
 }
 
 model ListProduct {
-  id           String               @id @default(cuid())
-  name         String
-  url          String?
-  imageUrl     String?
-  price        String?
-  manufacturer String?
-  color        String?
-  dimensions   String?
-  description  String?
-  deliveryTime String?
-  order        Int                  @default(0)
-  createdAt    DateTime             @default(now())
-  sectionId    String
-  quantity     Int                  @default(1)
-  category     String?
+  id            String               @id @default(cuid())
+  name          String
+  url           String?
+  imageUrl      String?
+  price         String?
+  manufacturer  String?
+  color         String?
+  description   String?
+  deliveryTime  String?
+  order         Int                  @default(0)
+  createdAt     DateTime             @default(now())
+  sectionId     String
+  quantity      Int                  @default(1)
   hidden        Boolean              @default(false)
   approval      String?
   productId     String?
-  supplier      String?
   catalogNumber String?
+  supplier      String?
+  dimensions    String?
+  category      String?
   note          String?
-  section      ListSection          @relation(fields: [sectionId], references: [id], onDelete: Cascade)
-  product      Product?             @relation(fields: [productId], references: [id], onDelete: SetNull)
-  comments     ListProductComment[]
+  product       Product?             @relation(fields: [productId], references: [id])
+  section       ListSection          @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  comments      ListProductComment[]
 }
 
 model ListProductComment {
@@ -402,8 +396,8 @@ model ListProductReply {
   content          String
   author           String
   createdAt        DateTime           @default(now())
-  viewedByDesigner Boolean            @default(false)
   commentId        String
+  viewedByDesigner Boolean            @default(false)
   comment          ListProductComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
 }
 
@@ -450,39 +444,38 @@ model Render {
   pinned                 Boolean                 @default(false)
   fileType               String                  @default("image")
   comments               Comment[]
-  productPins            RenderProductPin[]
+  contractorFiles        ContractorFile[]
   folder                 Folder?                 @relation(fields: [folderId], references: [id])
   project                Project                 @relation(fields: [projectId], references: [id], onDelete: Cascade)
   room                   Room?                   @relation(fields: [roomId], references: [id])
+  productPins            RenderProductPin[]
   versions               RenderVersion[]
   versionRestoreRequests VersionRestoreRequest[]
-  contractorFiles        ContractorFile[]
 }
 
 model RenderProductPin {
-  id        String   @id @default(cuid())
-  renderId  String
-  productId String
-  posX      Float
-  posY      Float
-  createdAt DateTime @default(now())
+  id                String         @id @default(cuid())
+  renderId          String
+  productId         String
+  posX              Float
+  posY              Float
+  createdAt         DateTime       @default(now())
   archivedVersionId String?
-
-  render          Render         @relation(fields: [renderId], references: [id], onDelete: Cascade)
-  product         Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
-  archivedVersion RenderVersion? @relation("ProductPinArchivedVersion", fields: [archivedVersionId], references: [id])
+  archivedVersion   RenderVersion? @relation("ProductPinArchivedVersion", fields: [archivedVersionId], references: [id])
+  product           Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  render            Render         @relation(fields: [renderId], references: [id], onDelete: Cascade)
 }
 
 model RenderVersion {
-  id            String   @id @default(cuid())
-  renderId      String
-  fileUrl       String
-  fileKey       String?
-  versionNumber Int
-  archivedAt    DateTime @default(now())
-  render        Render   @relation(fields: [renderId], references: [id], onDelete: Cascade)
+  id                  String             @id @default(cuid())
+  renderId            String
+  fileUrl             String
+  fileKey             String?
+  versionNumber       Int
+  archivedAt          DateTime           @default(now())
   archivedComments    Comment[]          @relation("CommentArchivedVersion")
   archivedProductPins RenderProductPin[] @relation("ProductPinArchivedVersion")
+  render              Render             @relation(fields: [renderId], references: [id], onDelete: Cascade)
 }
 
 model VersionRestoreRequest {
@@ -500,43 +493,43 @@ model VersionRestoreRequest {
 }
 
 model Comment {
-  id         String        @id @default(cuid())
-  content    String
-  posX       Float?
-  posY       Float?
-  posPage    Int?
-  status     CommentStatus @default(NEW)
-  author     String
-  createdAt  DateTime      @default(now())
-  updatedAt  DateTime      @updatedAt
-  renderId   String
-  title      String?
-  isInternal        Boolean       @default(false)
-  fromDesigner      Boolean       @default(false)
-  isAiSummary       Boolean       @default(false)
-  viewedByDesigner  Boolean       @default(false)
+  id                String         @id @default(cuid())
+  content           String
+  posX              Float?
+  posY              Float?
+  status            CommentStatus  @default(NEW)
+  author            String
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  renderId          String
+  title             String?
+  isInternal        Boolean        @default(false)
+  isAiSummary       Boolean        @default(false)
+  viewedByDesigner  Boolean        @default(false)
   voiceUrl          String?
-  imageUrl          String?
   archivedVersionId String?
-  replyToId         String?
-  replyToContent    String?
   replyToAuthor     String?
-  render          Render         @relation(fields: [renderId], references: [id], onDelete: Cascade)
-  archivedVersion RenderVersion? @relation("CommentArchivedVersion", fields: [archivedVersionId], references: [id])
-  replies    Reply[]
+  replyToContent    String?
+  replyToId         String?
+  imageUrl          String?
+  fromDesigner      Boolean        @default(false)
+  posPage           Int?
+  archivedVersion   RenderVersion? @relation("CommentArchivedVersion", fields: [archivedVersionId], references: [id])
+  render            Render         @relation(fields: [renderId], references: [id], onDelete: Cascade)
+  replies           Reply[]
 }
 
 model Reply {
   id               String   @id @default(cuid())
   content          String
   author           String
-  voiceUrl         String?
-  replyToId        String?
-  replyToContent   String?
-  replyToAuthor    String?
   createdAt        DateTime @default(now())
-  viewedByDesigner Boolean  @default(false)
   commentId        String
+  voiceUrl         String?
+  replyToAuthor    String?
+  replyToContent   String?
+  replyToId        String?
+  viewedByDesigner Boolean  @default(false)
   comment          Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
 }
 
@@ -585,53 +578,51 @@ model StatusChangeRequest {
 }
 
 model Product {
-  id           String               @id @default(cuid())
-  name         String
-  url          String?
-  imageUrl     String?
-  price        String?
-  manufacturer String?
-  color        String?
-  dimensions   String?
-  description  String?
+  id            String             @id @default(cuid())
+  name          String
+  url           String?
+  imageUrl      String?
+  price         String?
+  manufacturer  String?
+  color         String?
+  description   String?
   deliveryTime  String?
-  quantity      Int                  @default(1)
-  category      String?
-  supplier      String?
-  catalogNumber String?
-  favorite      Boolean              @default(false)
-  createdAt     DateTime             @default(now())
+  quantity      Int                @default(1)
+  createdAt     DateTime           @default(now())
   userId        String
-  user         User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
-  listProducts ListProduct[]
-  renderPins   RenderProductPin[]
+  catalogNumber String?
+  supplier      String?
+  dimensions    String?
+  category      String?
+  favorite      Boolean            @default(false)
+  listProducts  ListProduct[]
+  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  renderPins    RenderProductPin[]
 }
 
 model Discussion {
-  id                     String   @id @default(cuid())
+  id                     String                  @id @default(cuid())
   title                  String
-  type                   String   @default("internal") // "project" | "internal" | "contractor"
+  type                   String                  @default("internal")
   ownerId                String
-  projectId              String?  @unique
-  contractorAssignmentId String?  @unique
-  archived               Boolean  @default(false)
-  createdAt              DateTime @default(now())
-  updatedAt              DateTime @updatedAt
-
-  owner                User                     @relation("DiscussionOwner", fields: [ownerId], references: [id], onDelete: Cascade)
-  project              Project?                 @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  contractorAssignment ContractorAssignment?    @relation(fields: [contractorAssignmentId], references: [id], onDelete: SetNull)
-  messages             DiscussionMessage[]
-  readReceipts         DiscussionReadReceipt[]
-  participants         DiscussionParticipant[]
+  projectId              String?                 @unique
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  archived               Boolean                 @default(false)
+  contractorAssignmentId String?                 @unique
+  contractorAssignment   ContractorAssignment?   @relation(fields: [contractorAssignmentId], references: [id])
+  owner                  User                    @relation("DiscussionOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  project                Project?                @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  messages               DiscussionMessage[]
+  participants           DiscussionParticipant[]
+  readReceipts           DiscussionReadReceipt[]
 }
 
 model DiscussionParticipant {
-  id           String   @id @default(cuid())
+  id           String     @id @default(cuid())
   discussionId String
   userId       String
-  addedAt      DateTime @default(now())
-
+  addedAt      DateTime   @default(now())
   discussion   Discussion @relation(fields: [discussionId], references: [id], onDelete: Cascade)
   user         User       @relation("DiscussionParticipants", fields: [userId], references: [id], onDelete: Cascade)
 
@@ -639,46 +630,336 @@ model DiscussionParticipant {
 }
 
 model DiscussionMessage {
-  id           String   @id @default(cuid())
-  discussionId String
-  content      String
-  authorName   String
-  userId       String?
-  clientEmail  String?
-  sourceType   String   @default("chat") // "chat" | "render_comment" | "render_pin" | "product_comment"
-  sourceId        String?
-  sourceUrl       String?
-  sourceName      String?
-  sourceImageUrl  String?
-  attachmentUrl  String?
+  id             String                  @id @default(cuid())
+  discussionId   String
+  content        String
+  authorName     String
+  userId         String?
+  clientEmail    String?
+  sourceType     String                  @default("chat")
+  sourceId       String?
+  sourceUrl      String?
+  sourceName     String?
+  createdAt      DateTime                @default(now())
   attachmentName String?
-  attachmentType String? // "image" | "document"
-  replyToId      String?
-  replyToContent String?
-  replyToAuthor  String?
-  createdAt      DateTime @default(now())
+  attachmentType String?
+  attachmentUrl  String?
+  sourceImageUrl String?
   editedAt       DateTime?
-
-  discussion   Discussion              @relation(fields: [discussionId], references: [id], onDelete: Cascade)
-  user         User?                   @relation("DiscussionMessageUser", fields: [userId], references: [id], onDelete: SetNull)
-  readReceipts DiscussionReadReceipt[]
+  replyToAuthor  String?
+  replyToContent String?
+  replyToId      String?
+  discussion     Discussion              @relation(fields: [discussionId], references: [id], onDelete: Cascade)
+  user           User?                   @relation("DiscussionMessageUser", fields: [userId], references: [id])
+  readReceipts   DiscussionReadReceipt[]
 }
 
 model DiscussionReadReceipt {
-  id            String   @id @default(cuid())
+  id            String             @id @default(cuid())
   discussionId  String
-  readerId      String   // userId for designers, "client:<authorName>" for clients
+  readerId      String
   readerName    String
-  readerType    String   // "designer" | "client"
+  readerType    String
   lastMessageId String?
-  readAt        DateTime @default(now())
-
-  discussion   Discussion        @relation(fields: [discussionId], references: [id], onDelete: Cascade)
-  lastMessage  DiscussionMessage? @relation(fields: [lastMessageId], references: [id], onDelete: SetNull)
+  readAt        DateTime           @default(now())
+  discussion    Discussion         @relation(fields: [discussionId], references: [id], onDelete: Cascade)
+  lastMessage   DiscussionMessage? @relation(fields: [lastMessageId], references: [id])
 
   @@unique([discussionId, readerId])
 }
 
+model ClientDocFolder {
+  id        String        @id @default(cuid())
+  clientId  String
+  name      String
+  order     Int           @default(0)
+  pinned    Boolean       @default(false)
+  archived  Boolean       @default(false)
+  createdAt DateTime      @default(now())
+  docs      ClientDoc[]
+  client    ProjectClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+}
+
+model ClientDoc {
+  id        String           @id @default(cuid())
+  clientId  String
+  folderId  String?
+  name      String
+  fileUrl   String
+  fileKey   String
+  fileType  String           @default("file")
+  order     Int              @default(0)
+  pinned    Boolean          @default(false)
+  archived  Boolean          @default(false)
+  createdAt DateTime         @default(now())
+  client    ProjectClient    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  folder    ClientDocFolder? @relation(fields: [folderId], references: [id])
+}
+
+model Task {
+  id          String        @id @default(cuid())
+  title       String
+  description String?
+  status      String        @default("TODO")
+  priority    TaskPriority  @default(MEDIUM)
+  dueDate     DateTime?
+  projectId   String?
+  creatorId   String
+  assigneeId  String?
+  ownerId     String
+  parentId    String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  assignee    User?         @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  creator     User          @relation("TaskCreator", fields: [creatorId], references: [id], onDelete: Cascade)
+  parent      Task?         @relation("SubTasks", fields: [parentId], references: [id], onDelete: Cascade)
+  subTasks    Task[]        @relation("SubTasks")
+  project     Project?      @relation(fields: [projectId], references: [id])
+  comments    TaskComment[]
+}
+
+model TaskStatusConfig {
+  id        String   @id @default(cuid())
+  value     String
+  label     String
+  color     String   @default("#6b7280")
+  order     Int      @default(0)
+  ownerId   String
+  createdAt DateTime @default(now())
+  owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@unique([ownerId, value])
+}
+
+model TaskComment {
+  id        String   @id @default(cuid())
+  body      String
+  taskId    String
+  authorId  String
+  createdAt DateTime @default(now())
+  author    User     @relation("TaskCommentAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+}
+
+model Survey {
+  id             String           @id @default(cuid())
+  name           String
+  slug           String           @unique
+  shareToken     String           @unique @default(cuid())
+  status         String           @default("DRAFT")
+  archived       Boolean          @default(false)
+  pinned         Boolean          @default(false)
+  order          Int              @default(0)
+  userId         String
+  projectId      String?
+  clientId       String?
+  lastReminderAt DateTime?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  isTemplate     Boolean          @default(false)
+  client         ProjectClient?   @relation(fields: [clientId], references: [id])
+  project        Project?         @relation(fields: [projectId], references: [id])
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questions      SurveyQuestion[]
+  responses      SurveyResponse[]
+  sections       SurveySection[]
+}
+
+model SurveySection {
+  id        String           @id @default(cuid())
+  name      String
+  order     Int              @default(0)
+  surveyId  String
+  questions SurveyQuestion[]
+  survey    Survey           @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+}
+
+model SurveyQuestion {
+  id          String         @id @default(cuid())
+  label       String
+  description String?
+  type        String
+  required    Boolean        @default(false)
+  order       Int            @default(0)
+  options     Json?
+  config      Json?
+  sectionId   String?
+  surveyId    String
+  answers     SurveyAnswer[]
+  section     SurveySection? @relation(fields: [sectionId], references: [id])
+  survey      Survey         @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+}
+
+model SurveyResponse {
+  id              String         @id @default(cuid())
+  respondentEmail String
+  respondentName  String?
+  completedAt     DateTime?
+  surveyId        String
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  viewCount       Int            @default(0)
+  answers         SurveyAnswer[]
+  survey          Survey         @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+}
+
+model SurveyAnswer {
+  id         String         @id @default(cuid())
+  value      Json
+  questionId String
+  responseId String
+  createdAt  DateTime       @default(now())
+  question   SurveyQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  response   SurveyResponse @relation(fields: [responseId], references: [id], onDelete: Cascade)
+}
+
+model Model3D {
+  id           String   @id @default(cuid())
+  userId       String
+  name         String
+  category     String
+  meshyTaskId  String?
+  thumbnailUrl String?
+  urlGlb       String?
+  urlObj       String?
+  urlStl       String?
+  urlFbx       String?
+  createdAt    DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model SchedulePhase {
+  id          String         @id @default(cuid())
+  clientId    String
+  rfProjectId String?
+  name        String
+  startDate   DateTime?
+  endDate     DateTime?
+  done        Boolean        @default(false)
+  hidden      Boolean        @default(false)
+  order       Int            @default(0)
+  createdAt   DateTime       @default(now())
+  items       ScheduleItem[]
+  client      ProjectClient  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  rfProject   Project?       @relation("SchedulePhaseRfProject", fields: [rfProjectId], references: [id])
+}
+
+model ScheduleItem {
+  id          String        @id @default(cuid())
+  phaseId     String
+  name        String
+  description String?
+  startDate   DateTime?
+  endDate     DateTime?
+  done        Boolean       @default(false)
+  hidden      Boolean       @default(false)
+  order       Int           @default(0)
+  createdAt   DateTime      @default(now())
+  isSection   Boolean       @default(false)
+  phase       SchedulePhase @relation(fields: [phaseId], references: [id], onDelete: Cascade)
+}
+
+model Contractor {
+  id          String                 @id @default(cuid())
+  designerId  String
+  userId      String?                @unique
+  name        String
+  company     String?
+  trade       String?
+  email       String?
+  phone       String?
+  createdAt   DateTime               @default(now())
+  designer    User                   @relation("DesignerContractors", fields: [designerId], references: [id], onDelete: Cascade)
+  user        User?                  @relation("ContractorUser", fields: [userId], references: [id])
+  assignments ContractorAssignment[]
+}
+
+model ContractorAssignment {
+  id                   String             @id @default(cuid())
+  contractorId         String
+  projectId            String
+  designerId           String
+  archived             Boolean            @default(false)
+  createdAt            DateTime           @default(now())
+  designerContactName  String?
+  designerContactPhone String?
+  investmentCity       String?
+  investmentCountry    String?
+  investmentPostalCode String?
+  investmentStreet     String?
+  investorContactName  String?
+  investorContactPhone String?
+  projectNotes         String?
+  contractor           Contractor         @relation(fields: [contractorId], references: [id], onDelete: Cascade)
+  project              Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  folders              ContractorFolder[]
+  discussion           Discussion?
+
+  @@unique([contractorId, projectId])
+}
+
+model ContractorFolder {
+  id           String               @id @default(cuid())
+  assignmentId String
+  name         String
+  type         String
+  visible      Boolean              @default(true)
+  order        Int                  @default(0)
+  createdAt    DateTime             @default(now())
+  parentId     String?
+  files        ContractorFile[]
+  assignment   ContractorAssignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  parent       ContractorFolder?    @relation("SubFolders", fields: [parentId], references: [id], onDelete: Cascade)
+  subfolders   ContractorFolder[]   @relation("SubFolders")
+}
+
+model ContractorFile {
+  id           String                  @id @default(cuid())
+  folderId     String
+  name         String
+  renderId     String?
+  fileUrl      String?
+  fileKey      String?
+  fileType     String                  @default("image")
+  uploadedById String
+  createdAt    DateTime                @default(now())
+  folder       ContractorFolder        @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  render       Render?                 @relation(fields: [renderId], references: [id])
+  comments     ContractorFileComment[]
+}
+
+model ContractorFileComment {
+  id                 String                @id @default(cuid())
+  content            String
+  author             String
+  authorRole         String                @default("contractor")
+  createdAt          DateTime              @default(now())
+  fileId             String
+  viewedByDesigner   Boolean               @default(false)
+  viewedByContractor Boolean               @default(false)
+  posX               Float?
+  posY               Float?
+  title              String?
+  file               ContractorFile        @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  replies            ContractorFileReply[]
+}
+
+model ContractorFileReply {
+  id                 String                @id @default(cuid())
+  content            String
+  author             String
+  authorRole         String                @default("designer")
+  createdAt          DateTime              @default(now())
+  commentId          String
+  viewedByContractor Boolean               @default(false)
+  comment            ContractorFileComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+}
+
+enum CalendarEventType {
+  WYDARZENIE
+  ZADANIE
+  PRZYPOMNIENIE
+}
 
 enum RoomType {
   TOALETA
@@ -700,297 +981,8 @@ enum CommentStatus {
   DONE
 }
 
-model ClientDocFolder {
-  id        String         @id @default(cuid())
-  clientId  String
-  name      String
-  order     Int            @default(0)
-  pinned    Boolean        @default(false)
-  archived  Boolean        @default(false)
-  createdAt DateTime       @default(now())
-  client    ProjectClient  @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  docs      ClientDoc[]
-}
-
-model ClientDoc {
-  id        String           @id @default(cuid())
-  clientId  String
-  folderId  String?
-  name      String
-  fileUrl   String
-  fileKey   String
-  fileType  String           @default("file")
-  order     Int              @default(0)
-  pinned    Boolean          @default(false)
-  archived  Boolean          @default(false)
-  createdAt DateTime         @default(now())
-  client    ProjectClient    @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  folder    ClientDocFolder? @relation(fields: [folderId], references: [id], onDelete: SetNull)
-}
-
-model Task {
-  id          String       @id @default(cuid())
-  title       String
-  description String?
-  status      String       @default("TODO")
-  priority    TaskPriority @default(MEDIUM)
-  dueDate     DateTime?
-  projectId   String?
-  project     Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
-  creatorId   String
-  creator     User         @relation("TaskCreator", fields: [creatorId], references: [id], onDelete: Cascade)
-  assigneeId  String?
-  assignee    User?        @relation("TaskAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
-  ownerId     String
-  parentId    String?
-  parent      Task?        @relation("SubTasks", fields: [parentId], references: [id], onDelete: Cascade)
-  subTasks    Task[]       @relation("SubTasks")
-  comments    TaskComment[]
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-}
-
-model TaskStatusConfig {
-  id        String   @id @default(cuid())
-  value     String
-  label     String
-  color     String   @default("#6b7280")
-  order     Int      @default(0)
-  ownerId   String
-  owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-
-  @@unique([ownerId, value])
-}
-
-model TaskComment {
-  id        String   @id @default(cuid())
-  body      String
-  taskId    String
-  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  authorId  String
-  author    User     @relation("TaskCommentAuthor", fields: [authorId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-}
-
-
 enum TaskPriority {
   LOW
   MEDIUM
   HIGH
-}
-
-model Survey {
-  id             String          @id @default(cuid())
-  name           String
-  slug           String          @unique
-  shareToken     String          @unique @default(cuid())
-  status         String          @default("DRAFT") // DRAFT | ACTIVE | CLOSED
-  archived       Boolean         @default(false)
-  pinned         Boolean         @default(false)
-  order          Int             @default(0)
-  userId         String
-  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  projectId      String?
-  project        Project?        @relation(fields: [projectId], references: [id], onDelete: SetNull)
-  clientId       String?
-  client         ProjectClient?  @relation(fields: [clientId], references: [id], onDelete: SetNull)
-  lastReminderAt DateTime?
-  isTemplate     Boolean         @default(false)
-  sections       SurveySection[]
-  questions      SurveyQuestion[]
-  responses      SurveyResponse[]
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
-}
-
-model SurveySection {
-  id        String           @id @default(cuid())
-  name      String
-  order     Int              @default(0)
-  surveyId  String
-  survey    Survey           @relation(fields: [surveyId], references: [id], onDelete: Cascade)
-  questions SurveyQuestion[]
-}
-
-model SurveyQuestion {
-  id          String          @id @default(cuid())
-  label       String
-  description String?
-  type        String
-  required    Boolean         @default(false)
-  order       Int             @default(0)
-  options     Json?
-  config      Json?
-  sectionId   String?
-  section     SurveySection?  @relation(fields: [sectionId], references: [id], onDelete: SetNull)
-  surveyId    String
-  survey      Survey          @relation(fields: [surveyId], references: [id], onDelete: Cascade)
-  answers     SurveyAnswer[]
-}
-
-model SurveyResponse {
-  id              String        @id @default(cuid())
-  respondentEmail String
-  respondentName  String?
-  completedAt     DateTime?
-  viewCount       Int           @default(0)
-  surveyId        String
-  survey          Survey        @relation(fields: [surveyId], references: [id], onDelete: Cascade)
-  answers         SurveyAnswer[]
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-}
-
-model SurveyAnswer {
-  id         String         @id @default(cuid())
-  value      Json
-  questionId String
-  question   SurveyQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
-  responseId String
-  response   SurveyResponse @relation(fields: [responseId], references: [id], onDelete: Cascade)
-  createdAt  DateTime       @default(now())
-}
-
-model Model3D {
-  id           String   @id @default(cuid())
-  userId       String
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name         String
-  category     String
-  meshyTaskId  String?
-  thumbnailUrl String?
-  urlGlb       String?
-  urlObj       String?
-  urlStl       String?
-  urlFbx       String?
-  createdAt    DateTime @default(now())
-}
-
-model SchedulePhase {
-  id          String        @id @default(cuid())
-  clientId    String
-  rfProjectId String?
-  name        String
-  startDate   DateTime?
-  endDate     DateTime?
-  done        Boolean       @default(false)
-  hidden      Boolean       @default(false)
-  order       Int           @default(0)
-  createdAt   DateTime      @default(now())
-  client      ProjectClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  rfProject   Project?      @relation("SchedulePhaseRfProject", fields: [rfProjectId], references: [id], onDelete: SetNull)
-  items       ScheduleItem[]
-}
-
-model ScheduleItem {
-  id          String        @id @default(cuid())
-  phaseId     String
-  name        String
-  description String?
-  startDate   DateTime?
-  endDate     DateTime?
-  done        Boolean       @default(false)
-  hidden      Boolean       @default(false)
-  isSection   Boolean       @default(false)
-  order       Int           @default(0)
-  createdAt   DateTime      @default(now())
-  phase       SchedulePhase @relation(fields: [phaseId], references: [id], onDelete: Cascade)
-}
-
-model Contractor {
-  id          String   @id @default(cuid())
-  designerId  String
-  designer    User     @relation("DesignerContractors", fields: [designerId], references: [id], onDelete: Cascade)
-  userId      String?  @unique
-  user        User?    @relation("ContractorUser", fields: [userId], references: [id], onDelete: SetNull)
-  name        String
-  company     String?
-  trade       String?
-  email       String?
-  phone       String?
-  createdAt   DateTime @default(now())
-  assignments ContractorAssignment[]
-}
-
-model ContractorAssignment {
-  id           String     @id @default(cuid())
-  contractorId String
-  contractor   Contractor @relation(fields: [contractorId], references: [id], onDelete: Cascade)
-  projectId    String
-  project      Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  designerId   String
-  archived     Boolean    @default(false)
-  createdAt    DateTime   @default(now())
-  // Project info visible to contractor
-  investmentStreet      String?
-  investmentCity        String?
-  investmentPostalCode  String?
-  investmentCountry     String?
-  designerContactName   String?
-  designerContactPhone  String?
-  investorContactName   String?
-  investorContactPhone  String?
-  projectNotes          String?
-  folders      ContractorFolder[]
-  discussion   Discussion?
-
-  @@unique([contractorId, projectId])
-}
-
-model ContractorFolder {
-  id           String               @id @default(cuid())
-  assignmentId String
-  assignment   ContractorAssignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
-  parentId     String?
-  parent       ContractorFolder?    @relation("SubFolders", fields: [parentId], references: [id], onDelete: Cascade)
-  subfolders   ContractorFolder[]   @relation("SubFolders")
-  name         String
-  type         String
-  visible      Boolean              @default(true)
-  order        Int                  @default(0)
-  createdAt    DateTime             @default(now())
-  files        ContractorFile[]
-}
-
-model ContractorFile {
-  id           String                  @id @default(cuid())
-  folderId     String
-  folder       ContractorFolder        @relation(fields: [folderId], references: [id], onDelete: Cascade)
-  name         String
-  renderId     String?
-  render       Render?                 @relation(fields: [renderId], references: [id], onDelete: SetNull)
-  fileUrl      String?
-  fileKey      String?
-  fileType     String                  @default("image")
-  uploadedById String
-  createdAt    DateTime                @default(now())
-  comments     ContractorFileComment[]
-}
-
-model ContractorFileComment {
-  id                 String                 @id @default(cuid())
-  title              String?
-  content            String
-  author             String
-  authorRole         String                 @default("contractor") // "contractor" | "designer"
-  posX               Float?
-  posY               Float?
-  createdAt          DateTime               @default(now())
-  fileId             String
-  viewedByDesigner   Boolean                @default(false)
-  viewedByContractor Boolean                @default(false)
-  file               ContractorFile         @relation(fields: [fileId], references: [id], onDelete: Cascade)
-  replies            ContractorFileReply[]
-}
-
-model ContractorFileReply {
-  id                 String                @id @default(cuid())
-  content            String
-  author             String
-  authorRole         String                @default("designer") // "contractor" | "designer"
-  createdAt          DateTime              @default(now())
-  commentId          String
-  viewedByContractor Boolean               @default(false)
-  comment            ContractorFileComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
 }
