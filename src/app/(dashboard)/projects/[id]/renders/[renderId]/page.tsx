@@ -83,6 +83,7 @@ export default async function RenderPage({ params }: Props) {
           id: v.id,
           fileUrl: v.fileUrl,
           versionNumber: v.versionNumber,
+          label: v.label ?? null,
           archivedAt: v.archivedAt.toISOString(),
         }))}
         initialProductPins={productPins}

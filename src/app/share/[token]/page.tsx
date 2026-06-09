@@ -46,6 +46,7 @@ interface RenderVersion {
   id: string;
   fileUrl: string;
   versionNumber: number;
+  label?: string | null;
   archivedAt: string;
 }
 
