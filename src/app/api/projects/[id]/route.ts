@@ -120,6 +120,13 @@ export async function DELETE(
   const userId = getWorkspaceUserId(session);
 
   const { id } = await params;
+
+  // Archive first so clients immediately lose access (even if hard delete fails due to FK constraints)
+  await prisma.project.updateMany({
+    where: { id, userId },
+    data: { archived: true },
+  });
+
   await prisma.project.deleteMany({
     where: { id, userId },
   });

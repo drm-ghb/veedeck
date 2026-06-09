@@ -627,6 +627,7 @@ export default function ClientProjectPage() {
         }}
         onViewCounted={(renderId) => fetch(`/api/client/${activeProjectId}/renders/${renderId}/view`, { method: "POST" })}
         shareToken=""
+        clientProjectId={activeProjectId}
       />
     );
 

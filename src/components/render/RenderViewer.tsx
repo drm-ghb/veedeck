@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { ChevronLeft, ChevronRight, ChevronDown, Pin, X, Send, ZoomIn, ZoomOut, History, Upload, Maximize2, RotateCcw, Lock, LockOpen, SplitSquareHorizontal, ChevronsLeftRight, Sparkles, Package, Trash2, Edit2, ExternalLink, Mic, StopCircle, CheckCircle2, Armchair, Loader2, FileText, MoreVertical, CornerDownLeft, Paperclip, Download } from "@/components/ui/icons";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import RenderUploader from "./RenderUploader";
+import RenderComparePanel from "./RenderComparePanel";
 import PdfViewer from "./PdfViewer";
 import PdfThumbnail from "./PdfThumbnail";
 import { SwipeableMessage } from "@/components/ui/swipeable-message";
@@ -120,6 +121,7 @@ interface RenderViewerProps {
   onRenderSelect?: (render: RoomRender) => void;
   onViewCounted?: (renderId: string) => void;
   shareToken?: string;
+  clientProjectId?: string;
   initialProductPins?: ProductPin[];
   authorAvatarUrl?: string | null;
 }
@@ -239,6 +241,7 @@ export default function RenderViewer({
   onRenderSelect,
   onViewCounted,
   shareToken,
+  clientProjectId,
   initialProductPins,
   authorAvatarUrl,
 }: RenderViewerProps) {
@@ -292,6 +295,8 @@ export default function RenderViewer({
   const [deleting, setDeleting] = useState(false);
   const [restoringVersionId, setRestoringVersionId] = useState<string | null>(null);
   const [compareVersion, setCompareVersion] = useState<RenderVersion | null>(null);
+  const [compareRightLabel, setCompareRightLabel] = useState<string | null>(null);
+  const [showComparePanel, setShowComparePanel] = useState(false);
   const [sliderPos, setSliderPos] = useState(50);
   const [pendingVersionFile, setPendingVersionFile] = useState<File | null>(null);
   const [versionLabelInput, setVersionLabelInput] = useState("");
@@ -1419,7 +1424,7 @@ export default function RenderViewer({
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") setCompareVersion(null);
+      if (e.key === "Escape") { setCompareVersion(null); setCompareRightLabel(null); }
     }
     if (compareVersion) window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -1668,6 +1673,9 @@ export default function RenderViewer({
             <button onClick={openLightbox} title="Podgląd pełnoekranowy" className={`flex items-center justify-center w-8 h-8 rounded-md border transition-colors ${lightboxOpen ? "bg-primary text-primary-foreground border-primary" : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted"}`}>
               <Maximize2 size={15} />
             </button>
+            <button onClick={() => setShowComparePanel(true)} title="Porównaj" className={`flex items-center justify-center w-8 h-8 rounded-md border transition-colors ${showComparePanel ? "bg-primary text-primary-foreground border-primary" : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted"}`}>
+              <SplitSquareHorizontal size={15} />
+            </button>
             {isDesigner && (
               <button onClick={() => setShowVersionHistory(true)} title={`Historia wersji${versions.length > 0 ? ` (${versions.length})` : ""}`} className="relative flex items-center justify-center w-8 h-8 rounded-md border border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted transition-colors">
                 <History size={15} />
@@ -1762,6 +1770,9 @@ export default function RenderViewer({
               </button>
               <button onClick={openLightbox} title="Podgląd pełnoekranowy" className={`flex items-center justify-center w-8 h-8 rounded-md border transition-colors flex-shrink-0 ${lightboxOpen ? "bg-primary text-primary-foreground border-primary" : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted"}`}>
                 <Maximize2 size={15} />
+              </button>
+              <button onClick={() => setShowComparePanel(true)} title="Porównaj" className={`flex items-center justify-center w-8 h-8 rounded-md border transition-colors flex-shrink-0 ${showComparePanel ? "bg-primary text-primary-foreground border-primary" : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted"}`}>
+                <SplitSquareHorizontal size={15} />
               </button>
               {isDesigner && (
                 <button onClick={() => setShowVersionHistory(true)} title={`Historia wersji${versions.length > 0 ? ` (${versions.length})` : ""}`} className="relative flex items-center justify-center w-8 h-8 rounded-md border border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted transition-colors flex-shrink-0">
@@ -3826,7 +3837,7 @@ export default function RenderViewer({
               {renderName && <span className="text-white/40 text-sm ml-2">— {renderName}</span>}
             </div>
             <button
-              onClick={() => setCompareVersion(null)}
+              onClick={() => { setCompareVersion(null); setCompareRightLabel(null); }}
               className="text-white/60 hover:text-white transition-colors"
             >
               <X size={20} />
@@ -3875,7 +3886,7 @@ export default function RenderViewer({
               {compareVersion.label || `Wersja ${compareVersion.versionNumber}`}
             </div>
             <div className="absolute top-4 right-4 bg-black/60 text-white text-xs px-2.5 py-1 rounded-full pointer-events-none">
-              Aktualna
+              {compareRightLabel ?? "Aktualna"}
             </div>
           </div>
         </div>
@@ -4025,7 +4036,7 @@ export default function RenderViewer({
                       href={v.fileUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex-shrink-0 w-20 h-14 rounded-lg overflow-hidden border border-border bg-muted hover:opacity-80 transition-opacity flex items-center justify-center"
+                      className="flex-shrink-0 w-48 h-32 rounded-lg overflow-hidden border border-border bg-muted hover:opacity-80 transition-opacity flex items-center justify-center"
                       title="Otwórz pełny rozmiar"
                     >
                       {isPdf ? (
@@ -4047,39 +4058,41 @@ export default function RenderViewer({
                         Zastąpiono: {formatted}
                       </p>
                     </div>
-                    {!isPdf && (
-                    <button
-                      onClick={() => {
-                        setCompareVersion(v);
-                        setSliderPos(50);
-                        setShowVersionHistory(false);
-                      }}
-                      className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md border border-border text-gray-600 dark:text-gray-300 hover:bg-muted transition-colors flex-shrink-0"
-                      title="Porównaj z aktualną wersją"
-                    >
-                      <SplitSquareHorizontal size={12} />
-                      Porównaj
-                    </button>
-                    )}
-                    {(isDesigner || onVersionRestore || onVersionRestoreRequest) && (
-                      <button
-                        onClick={() => handleRestoreVersion(v.id)}
-                        disabled={restoringVersionId === v.id}
-                        className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md border border-border text-gray-600 dark:text-gray-300 hover:bg-muted transition-colors disabled:opacity-50 flex-shrink-0"
-                        title={
-                          !isDesigner && !allowClientVersionRestore
-                            ? "Wyślij prośbę o przywrócenie do projektanta"
-                            : "Przywróć tę wersję"
-                        }
-                      >
-                        <RotateCcw size={12} />
-                        {restoringVersionId === v.id
-                          ? "..."
-                          : !isDesigner && !allowClientVersionRestore
-                          ? "Poproś o przywrócenie"
-                          : "Przywróć"}
-                      </button>
-                    )}
+                    <div className="flex flex-col gap-1.5 flex-shrink-0">
+                      {!isPdf && (
+                        <button
+                          onClick={() => {
+                            setCompareVersion(v);
+                            setSliderPos(50);
+                            setShowVersionHistory(false);
+                          }}
+                          className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md border border-border text-gray-600 dark:text-gray-300 hover:bg-muted transition-colors"
+                          title="Porównaj z aktualną wersją"
+                        >
+                          <SplitSquareHorizontal size={12} />
+                          Porównaj
+                        </button>
+                      )}
+                      {(isDesigner || onVersionRestore || onVersionRestoreRequest) && (
+                        <button
+                          onClick={() => handleRestoreVersion(v.id)}
+                          disabled={restoringVersionId === v.id}
+                          className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md border border-border text-gray-600 dark:text-gray-300 hover:bg-muted transition-colors disabled:opacity-50"
+                          title={
+                            !isDesigner && !allowClientVersionRestore
+                              ? "Wyślij prośbę o przywrócenie do projektanta"
+                              : "Przywróć tę wersję"
+                          }
+                        >
+                          <RotateCcw size={12} />
+                          {restoringVersionId === v.id
+                            ? "..."
+                            : !isDesigner && !allowClientVersionRestore
+                            ? "Poproś o przywrócenie"
+                            : "Przywróć"}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 );
               })}
@@ -4087,6 +4100,22 @@ export default function RenderViewer({
           </div>
         </div>
       , document.body)}
+
+      {showComparePanel && (
+        <RenderComparePanel
+          renderId={renderId}
+          isDesigner={isDesigner}
+          shareToken={shareToken}
+          clientProjectId={clientProjectId}
+          renderName={renderName}
+          onClose={() => setShowComparePanel(false)}
+          onCompare={(fileUrl, label) => {
+            setCompareVersion({ id: "compare", fileUrl, label: label ?? null, versionNumber: 0, archivedAt: "" });
+            setCompareRightLabel("Oryginał");
+            setSliderPos(50);
+          }}
+        />
+      )}
     </div>
   );
 }

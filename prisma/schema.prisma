@@ -451,6 +451,18 @@ model Render {
   productPins            RenderProductPin[]
   versions               RenderVersion[]
   versionRestoreRequests VersionRestoreRequest[]
+  comparisonItems        RenderComparisonItem[]  @relation("ComparisonTarget")
+  comparisonSources      RenderComparisonItem[]  @relation("ComparisonSource")
+}
+
+model RenderComparisonItem {
+  id             String   @id @default(cuid())
+  renderId       String
+  sourceRenderId String
+  displayName    String?
+  createdAt      DateTime @default(now())
+  render         Render   @relation("ComparisonTarget", fields: [renderId], references: [id], onDelete: Cascade)
+  sourceRender   Render   @relation("ComparisonSource", fields: [sourceRenderId], references: [id], onDelete: Cascade)
 }
 
 model RenderProductPin {

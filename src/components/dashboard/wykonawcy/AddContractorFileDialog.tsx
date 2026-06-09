@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Upload, Image, Check, FileText, FolderPlus } from "@/components/ui/icons";
+import { Upload, Image, Check, FileText, FolderPlus, ChevronRight, ChevronDown } from "@/components/ui/icons";
 
 interface RenderItem {
   id: string;
@@ -332,6 +332,7 @@ export default function AddContractorFileDialog({
                         onClick={() => setExpandedRoom(expandedRoom === room.id ? null : room.id)}
                         className="flex-1 flex items-center gap-2 text-sm font-semibold text-left"
                       >
+                        {expandedRoom === room.id ? <ChevronDown size={15} className="flex-shrink-0" /> : <ChevronRight size={15} className="flex-shrink-0" />}
                         <span>{room.name}</span>
                         <span className="text-xs text-muted-foreground font-normal">{totalCount} plików</span>
                       </button>
@@ -361,6 +362,7 @@ export default function AddContractorFileDialog({
                                 onClick={() => setExpandedFolder(expandedFolder === folder.id ? null : folder.id)}
                                 className="flex-1 flex items-center gap-2 text-sm font-medium text-left"
                               >
+                                {expandedFolder === folder.id ? <ChevronDown size={14} className="flex-shrink-0" /> : <ChevronRight size={14} className="flex-shrink-0" />}
                                 <span>{folder.name}</span>
                                 <span className="text-xs text-muted-foreground font-normal">{folder.renders.length} plików</span>
                               </button>
