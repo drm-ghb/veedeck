@@ -43,8 +43,7 @@ export default async function ProjectPage({ params }: Props) {
     }),
   ]);
 
-  const shareUrl = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/share/${project.shareToken}`;
-  const clientPanelUrl = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/share/${project.shareToken}/dashboard`;
+  const shareUrl = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/client/${project.id}`;
 
   return (
     <div>

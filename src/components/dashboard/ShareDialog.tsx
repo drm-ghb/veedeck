@@ -57,7 +57,7 @@ export default function ShareDialog({
           <DialogHeader>
             <DialogTitle>Udostępnij projekt</DialogTitle>
             <DialogDescription>
-              Udostępnij ten link klientowi, aby mógł zobaczyć projekt i dodawać komentarze.
+              Wyślij ten link klientowi. Po kliknięciu zostanie poproszony o zalogowanie się na swoje konto.
             </DialogDescription>
           </DialogHeader>
           {moduleHidden && (
