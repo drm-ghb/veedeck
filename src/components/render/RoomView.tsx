@@ -266,6 +266,36 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
     }
   }, [startUpload, projectId, roomId, router]);
 
+  const handleFolderFileDrop = useCallback(async (files: File[], folderId: string) => {
+    setIsUploading(true);
+    try {
+      const results = await startUpload(files);
+      if (!results) throw new Error();
+      const created: Render[] = [];
+      for (let i = 0; i < results.length; i++) {
+        const file = files[i];
+        const r = results[i];
+        const name = file.name.replace(/\.[^.]+$/, "");
+        const fileType = file.type === "application/pdf" ? "pdf" : "image";
+        const res = await fetch("/api/renders", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ projectId, name, fileUrl: r.url, fileKey: r.key, roomId, folderId, fileType }),
+        });
+        if (res.ok) {
+          const render = await res.json();
+          created.push({ id: render.id, name: render.name, fileUrl: render.fileUrl, fileType: render.fileType ?? null, commentCount: 0, viewCount: 0, status: (render.status ?? "REVIEW") as "REVIEW" | "ACCEPTED", folderId: render.folderId ?? null, pinned: false, createdAt: new Date().toISOString() });
+        }
+      }
+      toast.success(`Dodano ${results.length} plik${results.length === 1 ? "" : results.length < 5 ? "i" : "ów"} do folderu`);
+      router.refresh();
+    } catch {
+      toast.error("Nie udało się przesłać plików");
+    } finally {
+      setIsUploading(false);
+    }
+  }, [startUpload, projectId, roomId, router]);
+
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   function handleFolderDragEnd(event: DragEndEvent) {
@@ -390,7 +420,7 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
 
   return (
     <div
-      className="relative"
+      className="relative min-h-[50vh]"
       onDragEnter={handleDragEnter}
       onDragLeave={handleDragLeave}
       onDragOver={(e) => e.preventDefault()}
@@ -535,7 +565,7 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
                   <SortableContext items={localFolders.map((f) => f.id)} strategy={rectSortingStrategy}>
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4">
                       {localFolders.map((folder) => (
-                        <SortableFolderCard key={folder.id} folder={folder} projectId={projectId} roomId={roomId} />
+                        <SortableFolderCard key={folder.id} folder={folder} projectId={projectId} roomId={roomId} onFileDrop={(files) => handleFolderFileDrop(files, folder.id)} />
                       ))}
                     </div>
                   </SortableContext>
@@ -774,7 +804,7 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
   );
 }
 
-function SortableFolderCard({ folder, projectId, roomId }: { folder: Folder; projectId: string; roomId: string }) {
+function SortableFolderCard({ folder, projectId, roomId, onFileDrop }: { folder: Folder; projectId: string; roomId: string; onFileDrop?: (files: File[]) => void }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: folder.id });
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -793,7 +823,7 @@ function SortableFolderCard({ folder, projectId, roomId }: { folder: Folder; pro
       >
         <GripVertical size={14} />
       </div>
-      <FolderCard folder={folder} projectId={projectId} roomId={roomId} />
+      <FolderCard folder={folder} projectId={projectId} roomId={roomId} onFileDrop={onFileDrop} />
     </div>
   );
 }
