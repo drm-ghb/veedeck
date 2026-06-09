@@ -26,27 +26,32 @@ export async function POST(
 
   const versionNumber = render._count.versions + 1;
 
-  await prisma.$transaction(async (tx) => {
-    const newVersion = await tx.renderVersion.create({
-      data: {
-        renderId: id,
-        fileUrl: render.fileUrl,
-        fileKey: render.fileKey,
-        versionNumber,
-        label: label || null,
-        archivedAt: new Date(),
-      },
+  try {
+    await prisma.$transaction(async (tx) => {
+      const newVersion = await tx.renderVersion.create({
+        data: {
+          renderId: id,
+          fileUrl: render.fileUrl,
+          fileKey: render.fileKey,
+          versionNumber,
+          label: label || null,
+          archivedAt: new Date(),
+        },
+      });
+      await tx.comment.updateMany({
+        where: { renderId: id, archivedVersionId: null },
+        data: { archivedVersionId: newVersion.id },
+      });
+      await tx.renderProductPin.updateMany({
+        where: { renderId: id, archivedVersionId: null },
+        data: { archivedVersionId: newVersion.id },
+      });
+      await tx.render.update({ where: { id }, data: { fileUrl, fileKey } });
     });
-    await tx.comment.updateMany({
-      where: { renderId: id, archivedVersionId: null },
-      data: { archivedVersionId: newVersion.id },
-    });
-    await tx.renderProductPin.updateMany({
-      where: { renderId: id, archivedVersionId: null },
-      data: { archivedVersionId: newVersion.id },
-    });
-    await tx.render.update({ where: { id }, data: { fileUrl, fileKey } });
-  });
+  } catch (e) {
+    console.error("version create error:", e);
+    return NextResponse.json({ error: String(e) }, { status: 500 });
+  }
 
   return NextResponse.json({ success: true });
 }
