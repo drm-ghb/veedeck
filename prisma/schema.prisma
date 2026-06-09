@@ -472,6 +472,7 @@ model RenderVersion {
   fileUrl             String
   fileKey             String?
   versionNumber       Int
+  label               String?
   archivedAt          DateTime           @default(now())
   archivedComments    Comment[]          @relation("CommentArchivedVersion")
   archivedProductPins RenderProductPin[] @relation("ProductPinArchivedVersion")

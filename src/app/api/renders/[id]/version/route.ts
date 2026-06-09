@@ -13,7 +13,7 @@ export async function POST(
   }
 
   const { id } = await params;
-  const { fileUrl, fileKey } = await req.json();
+  const { fileUrl, fileKey, label } = await req.json();
 
   const render = await prisma.render.findUnique({
     where: { id },
@@ -33,6 +33,7 @@ export async function POST(
         fileUrl: render.fileUrl,
         fileKey: render.fileKey,
         versionNumber,
+        label: label || null,
         archivedAt: new Date(),
       },
     });

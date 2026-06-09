@@ -68,6 +68,7 @@ interface RenderVersion {
   id: string;
   fileUrl: string;
   versionNumber: number;
+  label?: string | null;
   archivedAt: string;
 }
 
@@ -292,6 +293,10 @@ export default function RenderViewer({
   const [restoringVersionId, setRestoringVersionId] = useState<string | null>(null);
   const [compareVersion, setCompareVersion] = useState<RenderVersion | null>(null);
   const [sliderPos, setSliderPos] = useState(50);
+  const [pendingVersionFile, setPendingVersionFile] = useState<File | null>(null);
+  const [versionLabelInput, setVersionLabelInput] = useState("");
+  const [versionLabelError, setVersionLabelError] = useState(false);
+  const pendingVersionLabelRef = useRef("");
   const [isDragging, setIsDragging] = useState(false);
   const [newPinInternal, setNewPinInternal] = useState(false);
   const [zoom, setZoom] = useState(1);
@@ -553,7 +558,7 @@ export default function RenderViewer({
       const resp = await fetch(`/api/renders/${renderId}/version`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fileUrl: file.url, fileKey: file.key }),
+        body: JSON.stringify({ fileUrl: file.url, fileKey: file.key, label: pendingVersionLabelRef.current }),
       });
       if (resp.ok) {
         toast.success("Nowa wersja została dodana");
@@ -3867,10 +3872,55 @@ export default function RenderViewer({
             </div>
             {/* Labels */}
             <div className="absolute top-4 left-4 bg-black/60 text-white text-xs px-2.5 py-1 rounded-full pointer-events-none">
-              Wersja {compareVersion.versionNumber}
+              {compareVersion.label || `Wersja ${compareVersion.versionNumber}`}
             </div>
             <div className="absolute top-4 right-4 bg-black/60 text-white text-xs px-2.5 py-1 rounded-full pointer-events-none">
               Aktualna
+            </div>
+          </div>
+        </div>
+      , document.body)}
+
+      {pendingVersionFile && createPortal(
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4" style={{ zIndex: 9999 }} onClick={() => setPendingVersionFile(null)}>
+          <div className="bg-card rounded-xl shadow-xl border border-border w-full max-w-sm p-6" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-1">Nazwa wersji</h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Podaj nazwę dla tej wersji, np. &quot;Po poprawkach klienta&quot; lub &quot;Wersja finalna&quot;.</p>
+            <input
+              type="text"
+              autoFocus
+              placeholder="np. Po poprawkach klienta"
+              value={versionLabelInput}
+              onChange={(e) => { setVersionLabelInput(e.target.value); setVersionLabelError(false); }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  const trimmed = versionLabelInput.trim();
+                  if (!trimmed) { setVersionLabelError(true); return; }
+                  pendingVersionLabelRef.current = trimmed;
+                  startUpload([pendingVersionFile!]);
+                  setPendingVersionFile(null);
+                }
+              }}
+              className={`w-full px-3 py-2 text-sm rounded-lg border ${versionLabelError ? "border-red-400 focus:ring-red-400" : "border-border focus:ring-primary"} bg-background focus:outline-none focus:ring-2 mb-1`}
+            />
+            {versionLabelError && <p className="text-xs text-red-500 mb-3">Nazwa wersji jest wymagana.</p>}
+            {!versionLabelError && <div className="mb-3" />}
+            <div className="flex gap-2 justify-end">
+              <button onClick={() => setPendingVersionFile(null)} className="px-4 py-2 text-sm rounded-lg border border-border hover:bg-muted transition-colors">
+                Anuluj
+              </button>
+              <button
+                onClick={() => {
+                  const trimmed = versionLabelInput.trim();
+                  if (!trimmed) { setVersionLabelError(true); return; }
+                  pendingVersionLabelRef.current = trimmed;
+                  startUpload([pendingVersionFile!]);
+                  setPendingVersionFile(null);
+                }}
+                className="px-4 py-2 text-sm rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors"
+              >
+                Wgraj wersję
+              </button>
             </div>
           </div>
         </div>
@@ -3922,7 +3972,11 @@ export default function RenderViewer({
                       className="hidden"
                       onChange={(e) => {
                         const file = e.target.files?.[0];
-                        if (file) startUpload([file]);
+                        if (file) {
+                          setPendingVersionFile(file);
+                          setVersionLabelInput("");
+                          setVersionLabelError(false);
+                        }
                         e.target.value = "";
                       }}
                     />
@@ -3984,9 +4038,9 @@ export default function RenderViewer({
                         />
                       )}
                     </a>
-                    <div className="flex-1">
-                      <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">
-                        Wersja {v.versionNumber}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">
+                        {v.label || `Wersja ${v.versionNumber}`}
                       </p>
                       <p className="text-xs text-gray-400 mt-0.5">
                         Zarchiwizowano: {formatted}
