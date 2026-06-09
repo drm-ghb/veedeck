@@ -7,26 +7,26 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const { id } = await params;
-  const { fileUrl, fileKey, label } = await req.json();
-
-  const render = await prisma.render.findUnique({
-    where: { id },
-    include: { _count: { select: { versions: true } }, project: true },
-  });
-
-  if (!render || render.project.userId !== getWorkspaceUserId(session)) {
-    return NextResponse.json({ error: "Brak dostępu" }, { status: 403 });
-  }
-
-  const versionNumber = render._count.versions + 1;
-
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { id } = await params;
+    const { fileUrl, fileKey, label } = await req.json();
+
+    const render = await prisma.render.findUnique({
+      where: { id },
+      include: { _count: { select: { versions: true } }, project: true },
+    });
+
+    if (!render || render.project.userId !== getWorkspaceUserId(session)) {
+      return NextResponse.json({ error: "Brak dostępu" }, { status: 403 });
+    }
+
+    const versionNumber = render._count.versions + 1;
+
     await prisma.$transaction(async (tx) => {
       const newVersion = await tx.renderVersion.create({
         data: {
@@ -48,10 +48,9 @@ export async function POST(
       });
       await tx.render.update({ where: { id }, data: { fileUrl, fileKey } });
     });
-  } catch (e) {
-    console.error("version create error:", e);
-    return NextResponse.json({ error: String(e) }, { status: 500 });
-  }
 
-  return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true });
+  } catch (e) {
+    return NextResponse.json({ error: "Błąd serwera" }, { status: 500 });
+  }
 }
