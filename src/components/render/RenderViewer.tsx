@@ -3813,8 +3813,8 @@ export default function RenderViewer({
 
       {/* Version History Modal */}
       {/* Compare overlay */}
-      {compareVersion && (
-        <div className="fixed inset-0 z-50 bg-black flex flex-col">
+      {compareVersion && createPortal(
+        <div className="fixed inset-0 bg-black flex flex-col" style={{ zIndex: 9999 }}>
           <div className="flex items-center justify-between px-5 py-3 border-b border-white/10 flex-shrink-0">
             <div>
               <span className="text-white font-semibold text-sm">Porównanie wersji</span>
@@ -3874,7 +3874,7 @@ export default function RenderViewer({
             </div>
           </div>
         </div>
-      )}
+      , document.body)}
 
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" onClick={() => setShowDeleteConfirm(false)}>
