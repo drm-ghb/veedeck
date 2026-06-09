@@ -4044,7 +4044,7 @@ export default function RenderViewer({
                         {v.label || `Wersja ${v.versionNumber}`}
                       </p>
                       <p className="text-xs text-gray-400 mt-0.5">
-                        Zarchiwizowano: {formatted}
+                        Dodano: {formatted}
                       </p>
                     </div>
                     {!isPdf && (
