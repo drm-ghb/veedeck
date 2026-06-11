@@ -18,6 +18,8 @@ export default async function DyskusjePage() {
   // For team members: the workspace owner is the designer
   const workspaceOwnerId = isTeamMember ? dbUser!.ownerId! : userId;
 
+  const sessionUserId = session.user!.id!;
+
   const discussionsWhere = isTeamMember
     ? { participants: { some: { userId } } }
     : { ownerId: userId };
@@ -30,7 +32,7 @@ export default async function DyskusjePage() {
         _count: { select: { messages: true } },
         messages: { orderBy: { createdAt: "desc" }, take: 1 },
         readReceipts: {
-          where: { readerId: session.user.id! },
+          where: { readerId: sessionUserId },
           include: { lastMessage: { select: { createdAt: true } } },
           take: 1,
         },
@@ -94,7 +96,7 @@ export default async function DyskusjePage() {
       const unreadCount = await prisma.discussionMessage.count({
         where: {
           discussionId: d.id,
-          OR: [{ userId: { not: session.user.id! } }, { userId: null }],
+          OR: [{ userId: { not: sessionUserId } }, { userId: null }],
           ...(lastReadAt ? { createdAt: { gt: lastReadAt } } : {}),
         },
       });
@@ -104,7 +106,7 @@ export default async function DyskusjePage() {
 
   return (
     <DyskusjeView
-      currentUserId={session.user.id!}
+      currentUserId={sessionUserId}
       currentUserAvatarUrl={dbUser?.avatarUrl ?? null}
       isTeamMember={isTeamMember}
       initialDiscussions={discussionsWithUnread.map((d) => ({
