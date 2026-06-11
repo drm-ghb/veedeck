@@ -46,6 +46,7 @@ export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userI
   const [contractorUnread, setContractorUnread] = useState(0);
   const pusherRef = useRef<Pusher | null>(null);
   const pathnameRef = useRef(pathname);
+  const refetchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     pathnameRef.current = pathname;
@@ -81,14 +82,27 @@ export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userI
             cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
           });
         }
+        // Re-fetch the accurate count from API instead of incrementing blindly.
+        // This avoids race conditions where a message arrives both in the initial
+        // fetch (counted as unreadCount) AND as a Pusher event (double-counted).
+        function refetchUnreadCount() {
+          if (refetchTimerRef.current) clearTimeout(refetchTimerRef.current);
+          refetchTimerRef.current = setTimeout(() => {
+            fetch("/api/discussions")
+              .then((r) => r.json())
+              .then((fresh: { id: string; unreadCount?: number }[]) => {
+                if (!Array.isArray(fresh)) return;
+                const freshTotal = fresh.reduce((sum, d) => sum + (d.unreadCount ?? 0), 0);
+                localStorage.setItem("discussions-unread-count", String(freshTotal));
+                setDiscussionUnread(freshTotal);
+              }).catch(() => {});
+          }, 300);
+        }
+
         const handleNewMessage = (msg: { userId?: string | null }) => {
           if (msg.userId && msg.userId === userId) return;
           if (pathnameRef.current.startsWith("/dyskusje")) return;
-          setDiscussionUnread((prev) => {
-            const next = prev + 1;
-            localStorage.setItem("discussions-unread-count", String(next));
-            return next;
-          });
+          refetchUnreadCount();
         };
 
         data.forEach((d) => {
@@ -105,13 +119,9 @@ export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userI
             // Subscribe to future messages on this new discussion
             const ch = pusherRef.current!.subscribe(`discussion-${data.discussionId}`);
             ch.bind("new-message", handleNewMessage);
-            // Increment badge for the message that triggered new-discussion
+            // Re-fetch count when a new discussion has a pending message
             if (data.hasMessage && !pathnameRef.current.startsWith("/dyskusje")) {
-              setDiscussionUnread((prev) => {
-                const next = prev + 1;
-                localStorage.setItem("discussions-unread-count", String(next));
-                return next;
-              });
+              refetchUnreadCount();
             }
           });
           userChannel.bind("contractor-comment-unread", () => {
@@ -124,6 +134,7 @@ export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userI
       .catch(() => {});
 
     return () => {
+      if (refetchTimerRef.current) clearTimeout(refetchTimerRef.current);
       pusherRef.current?.disconnect();
       pusherRef.current = null;
     };

@@ -3,7 +3,7 @@
 import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { LayoutDashboard, LocalMall, PanelLeftClose, PanelLeftOpen, PushPin, Sun, Moon, HelpCircle, Settings, UserRound, X, CheckCircle, ChatBubble, LogOut, Payments, CalendarNote } from "@/components/ui/icons";
+import { LayoutDashboard, LocalMall, PanelLeftClose, PanelLeftOpen, PushPin, Sun, Moon, HelpCircle, Settings, UserRound, X, CheckCircle, ChatBubble, LogOut, Payments, CalendarNote, ClipboardList } from "@/components/ui/icons";
 import { signOut } from "next-auth/react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -41,6 +41,10 @@ interface ShareSidebarProps {
   showHarmonogram?: boolean;
   /** When provided, clicking Harmonogram calls this */
   onHarmonogramClick?: () => void;
+  /** When true, show Ankiety item in sidebar (client mode only) */
+  showAnkiety?: boolean;
+  /** When provided, clicking Ankiety calls this instead of navigating */
+  onAnkietyClick?: () => void;
   /** When provided, clicking Ustawienia calls this instead of navigating (client mode) */
   onSettingsClick?: () => void;
   /** When provided, use /client/[projectId] links instead of /share/[token] links */
@@ -65,6 +69,8 @@ export default function ShareSidebar({
   showDyskusje = false,
   showPayments = false,
   showHarmonogram = false,
+  showAnkiety = false,
+  onAnkietyClick,
   shoppingLists = [],
   onHomeClick,
   onProjectFlowClick,
@@ -92,6 +98,7 @@ export default function ShareSidebar({
   const [authorName, setAuthorName] = useState("");
   const [nameInput, setNameInput] = useState("");
   const [discussionUnread, setDiscussionUnread] = useState(0);
+  const [surveysUnread, setSurveysUnread] = useState(0);
   const [_internalMobileOpen, _setInternalMobileOpen] = useState(false);
   const mobileSidebarOpen = mobileOpen !== undefined ? mobileOpen : _internalMobileOpen;
   const setMobileSidebarOpen = (v: boolean) => {
@@ -157,6 +164,31 @@ export default function ShareSidebar({
       });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [discussionId, token, clientProjectId]);
+
+  // Surveys unread count — fetch on mount when in client mode with surveys enabled
+  useEffect(() => {
+    if (!clientProjectId || !showAnkiety) return;
+    const lastReadKey = `client-surveys-last-read-${clientProjectId}`;
+    const lastReadAt = localStorage.getItem(lastReadKey);
+    const url = lastReadAt
+      ? `/api/client/${clientProjectId}/surveys/unread?since=${encodeURIComponent(lastReadAt)}`
+      : `/api/client/${clientProjectId}/surveys/unread`;
+    fetch(url)
+      .then((r) => r.json())
+      .then((data) => { if (typeof data.count === "number") setSurveysUnread(data.count); })
+      .catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clientProjectId, showAnkiety]);
+
+  // Reset surveys badge when on ankiety or survey view
+  useEffect(() => {
+    if (!clientProjectId) return;
+    if (activeView === "ankiety" || activeView === "survey") {
+      setSurveysUnread(0);
+      localStorage.setItem(`client-surveys-last-read-${clientProjectId}`, new Date().toISOString());
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeView, clientProjectId]);
 
   const storageUnreadKey = clientProjectId
     ? `client-discussion-unread-${clientProjectId}`
@@ -450,6 +482,54 @@ export default function ShareSidebar({
             </span>
             {showLabels && "Harmonogram"}
           </button>
+        )}
+
+        {/* Ankiety */}
+        {clientProjectId && showAnkiety && (
+          onAnkietyClick ? (
+            <button
+              onClick={() => { onAnkietyClick(); setMobileSidebarOpen(false); }}
+              title={isCollapsed ? "Ankiety" : undefined}
+              className={`w-full ${linkCls(activeView === "ankiety" || activeView === "survey")}`}
+            >
+              <span className="flex-shrink-0 w-5 flex items-center justify-center relative">
+                <ClipboardList size={18} />
+                {surveysUnread > 0 && isCollapsed && !mobileSidebarOpen && (
+                  <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-0.5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center leading-none">
+                    {surveysUnread > 99 ? "99+" : surveysUnread}
+                  </span>
+                )}
+              </span>
+              {showLabels && "Ankiety"}
+              {showLabels && surveysUnread > 0 && (
+                <span className="ml-auto min-w-[20px] h-5 px-1.5 rounded-full bg-primary text-primary-foreground text-[11px] font-bold flex items-center justify-center leading-none">
+                  {surveysUnread > 99 ? "99+" : surveysUnread}
+                </span>
+              )}
+            </button>
+          ) : (
+            <Link
+              href={`/client/${clientProjectId}/ankiety`}
+              title={isCollapsed ? "Ankiety" : undefined}
+              className={linkCls(pathname === `/client/${clientProjectId}/ankiety`)}
+              onClick={() => setMobileSidebarOpen(false)}
+            >
+              <span className="flex-shrink-0 w-5 flex items-center justify-center relative">
+                <ClipboardList size={18} />
+                {surveysUnread > 0 && isCollapsed && !mobileSidebarOpen && (
+                  <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-0.5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center leading-none">
+                    {surveysUnread > 99 ? "99+" : surveysUnread}
+                  </span>
+                )}
+              </span>
+              {showLabels && "Ankiety"}
+              {showLabels && surveysUnread > 0 && (
+                <span className="ml-auto min-w-[20px] h-5 px-1.5 rounded-full bg-primary text-primary-foreground text-[11px] font-bold flex items-center justify-center leading-none">
+                  {surveysUnread > 99 ? "99+" : surveysUnread}
+                </span>
+              )}
+            </Link>
+          )
         )}
 
         {/* Dyskusje */}

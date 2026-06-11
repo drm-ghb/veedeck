@@ -26,12 +26,16 @@ export async function POST(
   });
   const readerName = user?.name || user?.email || "Projektant";
 
+  // Use the actual session user ID (not workspace ID) so team members track
+  // their own read position independently from the workspace owner.
+  const readerId = session.user.id!;
+
   const receipt = await prisma.discussionReadReceipt.upsert({
-    where: { discussionId_readerId: { discussionId: id, readerId: userId } },
+    where: { discussionId_readerId: { discussionId: id, readerId } },
     update: { lastMessageId, readerName, readAt: new Date() },
     create: {
       discussionId: id,
-      readerId: userId,
+      readerId,
       readerName,
       readerType: "designer",
       lastMessageId,

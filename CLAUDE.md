@@ -32,10 +32,93 @@
 
 Platforma do zarządzania projektami wnętrzarskimi. Umożliwia projektantom udostępnianie renderów klientom, zbieranie komentarzy/pinezek, zarządzanie listami zakupowymi i akceptację plików przez klientów.
 
-Trzy moduły:
-- **RenderFlow** — pokoje z renderami, komentarze/pinezki, wersjonowanie plików1
+Cztery moduły:
+- **RenderFlow** — pokoje z renderami, komentarze/pinezki, wersjonowanie plików
 - **Listy** — listy zakupowe z sekcjami i produktami, akceptacja przez klienta
 - **Projekty** (dawniej Veedeck) — ogólny widok projektów
+- **Wykonawcy** — zarządzanie wykonawcami i udostępnianie im plików projektowych
+
+---
+
+## Moduł Wykonawcy — architektura
+
+### Koncepcja
+Projektant zarządza bazą wykonawców (firmy, hydraulicy, malarze itp.) i przypisuje ich do konkretnych projektów. Każdy wykonawca ma własne konto w systemie i loguje się do swojego panelu (`/wykonawca/...`), gdzie widzi tylko swoje foldery i pliki.
+
+### Dwie strony modułu
+
+**Strona projektanta** (`/wykonawcy/...`) — zarządzanie:
+- Lista wykonawców: `/wykonawcy` — widok kafelkowy lub listowy, wyszukiwanie, sortowanie
+- Profil wykonawcy: `/wykonawcy/[id]` — dane kontaktowe, przypisane projekty (aktywne/archiwalne), zakładanie konta
+- Projekt wykonawcy: `/wykonawcy/[id]/projekty/[assignmentId]` — foldery, podfoldery, pliki, przesyłanie plików (drag & drop, dodawanie renderów z ProjectFlow)
+- Podgląd pliku przez projektanta: `/wykonawcy/[id]/projekty/[assignmentId]/foldery/[folderId]/pliki/[fileId]`
+
+**Panel wykonawcy** (`/wykonawca/...`) — widok klienta:
+- Dashboard: `/wykonawca` — lista przypisanych projektów (karty)
+- Projekt: `/wykonawca/projekty/[assignmentId]` — foldery z ikonami wg typu (rysunki/wizualizacje/inne), badge z nieprzeczytanymi
+- Folder: `/wykonawca/projekty/[assignmentId]/foldery/[folderId]` — siatka plików
+- Plik: `/wykonawca/projekty/[assignmentId]/foldery/[folderId]/pliki/[fileId]` — przeglądarka pliku z pinami i komentarzami
+
+### Modele Prisma
+
+```
+Contractor          — wykonawca (powiązany z designerId i opcjonalnie userId)
+ContractorAssignment — przypisanie wykonawcy do projektu (zawiera dane inwestycji, chat)
+ContractorFolder    — folder w przypisaniu (typ: "rysunki"|"wizualizacje"|inne, parentId dla podfolderów)
+ContractorFile      — plik w folderze (upload lub powiązany z Render przez renderId)
+ContractorFileComment — komentarz/pin do pliku (posX/posY dla pinów, viewedByDesigner/viewedByContractor)
+Discussion          — czat między projektantem a wykonawcą (contractorAssignmentId)
+```
+
+### API routes
+
+```
+/api/contractors/                          GET (lista), POST (utwórz)
+/api/contractors/[id]/                     PATCH (edytuj), DELETE
+/api/contractors/[id]/account/             POST (utwórz konto), PATCH (zmień login/hasło), DELETE (odłącz)
+/api/contractors/[id]/assignments/         GET, POST (przypisz projekt)
+/api/contractors/[id]/assignments/[aId]/   PATCH (archiwizuj), DELETE
+/api/contractors/[id]/assignments/[aId]/folders/[fId]/          GET (foldery+pliki), POST (dodaj plik)
+/api/contractors/[id]/assignments/[aId]/folders/[fId]/files/    GET
+/api/contractors/[id]/assignments/[aId]/folders/[fId]/files/[fileId]/  PATCH, DELETE
+/api/contractors/[id]/assignments/[aId]/folders/[fId]/subfolders/      POST
+
+/api/contractor/assignments/               GET (dla zalogowanego wykonawcy — jego projekty)
+/api/contractor/assignments/[aId]/         GET (szczegóły projektu dla wykonawcy)
+/api/contractor/assignments/[aId]/folders/[fId]/  GET (pliki w folderze dla wykonawcy)
+
+/api/contractor-file-comments/             GET, POST (pin/komentarz)
+/api/contractor-file-comments/[id]/        PATCH (przesuń pin), DELETE
+/api/contractor-file-comments/[id]/replies/         POST
+/api/contractor-file-comments/[id]/replies/[rId]/   PATCH, DELETE
+/api/contractor-file-comments/mark-read/   POST
+/api/contractor-file-comments/unread-count/ GET
+
+/api/contractor-chat/                      GET (lista dyskusji), POST (wyślij)
+/api/contractor-chat/[assignmentId]/       GET (historia czatu)
+
+/api/discussions/                          POST (utwórz)
+/api/discussions/[id]/                     GET, PATCH
+/api/discussions/[id]/messages/            GET, POST
+```
+
+### Autoryzacja
+
+- **Strona projektanta**: sesja `session.user.id` === `contractor.designerId` (standardowa sesja NextAuth)
+- **Panel wykonawcy**: sesja `session.user.role === "contractor"` — wykonawca loguje się jak normalny user, ale z `role: "contractor"`, dostaje tylko swoje dane przez `/api/contractor/...`
+- Konto wykonawcy tworzy projektant w `/api/contractors/[id]/account` (POST) — generuje login z emaila i hashuje hasło
+
+### Kluczowe detale implementacyjne
+
+- **Typy folderów**: `"rysunki"` → ikona linijki, `"wizualizacje"` → ikona obrazka, inne → ikona dokumentu
+- **Podfoldery**: `ContractorFolder.parentId` — drzewo dwupoziomowe (główny folder + podfoldery)
+- **Pliki z renderów**: `ContractorFile.renderId` — plik może być powiązany z istniejącym renderem z ProjectFlow (kopiuje URL, nie duplikuje pliku)
+- **Piny na plikach**: `ContractorFileComment` z `posX/posY` (procenty) — ten sam wzorzec co piny w RenderViewer, ale osobny model
+- **Real-time**: Pusher channel `contractor-file-{fileId}` — zdarzenia: `new-comment`, `comment-deleted`, `pin-moved`, `comment-edited`, `comment-reply`, `reply-deleted`
+- **Unread count**: osobne pola `viewedByDesigner` / `viewedByContractor` — projektant i wykonawca mają niezależne liczniki
+- **Czat**: `Discussion` z `contractorAssignmentId` — jeden czat na przypisanie; używa `DiscussionMessage` i `DiscussionParticipant`
+- **Informacje o projekcie**: `ContractorAssignment` zawiera dodatkowe pola: `designerContactName`, `investmentCity`, `investmentStreet`, `projectNotes`, `investorContactName` itp.
+- **Widoczność folderów**: `ContractorFolder.visible` — projektant może ukryć folder przed wykonawcą
 
 ---
 

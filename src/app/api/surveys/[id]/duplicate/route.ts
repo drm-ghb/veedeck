@@ -22,7 +22,7 @@ export async function POST(
   });
   if (!template) return NextResponse.json({ error: "Nie znaleziono szablonu" }, { status: 404 });
 
-  const { name, projectId } = await req.json();
+  const { name, assignedClientId } = await req.json();
   const surveyName = name?.trim() || template.name;
 
   const slug = await uniqueSlug(surveyName, (s) =>
@@ -35,7 +35,7 @@ export async function POST(
       name: surveyName,
       slug,
       userId,
-      projectId: projectId ?? null,
+      assignedClientId: assignedClientId ?? null,
       status: "DRAFT",
       isTemplate: false,
     },

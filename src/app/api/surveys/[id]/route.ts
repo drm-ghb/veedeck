@@ -20,6 +20,13 @@ export async function GET(
     include: {
       project: { select: { id: true, title: true } },
       client: { select: { id: true, name: true } },
+      assignedClient: {
+        select: {
+          id: true,
+          name: true,
+          projects: { where: { archived: false }, select: { id: true }, take: 1 },
+        },
+      },
       sections: { orderBy: { order: "asc" } },
       questions: { orderBy: { order: "asc" } },
       _count: { select: { responses: true } },
@@ -50,7 +57,7 @@ export async function PATCH(
   }
 
   const body = await req.json();
-  const { name, status, archived, pinned, order, projectId, clientId } = body;
+  const { name, status, archived, pinned, order, assignedClientId } = body;
 
   const updated = await prisma.survey.update({
     where: { id },
@@ -60,24 +67,32 @@ export async function PATCH(
       ...(archived !== undefined ? { archived } : {}),
       ...(pinned !== undefined ? { pinned } : {}),
       ...(order !== undefined ? { order } : {}),
-      ...(projectId !== undefined ? { projectId } : {}),
-      ...(clientId !== undefined ? { clientId } : {}),
+      ...(assignedClientId !== undefined ? { assignedClientId } : {}),
     },
   });
 
-  // Notify client when survey becomes ACTIVE
-  if (status === "ACTIVE" && survey.status !== "ACTIVE" && survey.clientId) {
-    const pc = await prisma.projectClient.findFirst({
-      where: { id: survey.clientId },
+  // Notify client contacts when survey becomes ACTIVE
+  const effectiveClientId = assignedClientId !== undefined ? assignedClientId : survey.assignedClientId;
+  if (status === "ACTIVE" && survey.status !== "ACTIVE" && effectiveClientId) {
+    const contacts = await prisma.projectClient.findMany({
+      where: { clientId: effectiveClientId, userId: { not: null } },
       select: { userId: true, projectId: true },
     });
-    if (pc?.userId) {
-      const linkProjectId = pc.projectId ?? updated.projectId;
+    const clientProjects = await prisma.project.findMany({
+      where: { clientId: effectiveClientId, archived: false },
+      select: { id: true },
+      take: 1,
+    });
+    const fallbackProjectId = clientProjects[0]?.id;
+    await Promise.all(contacts.map(async (pc) => {
+      if (!pc.userId) return;
+      const linkProjectId = pc.projectId ?? fallbackProjectId;
+      if (!linkProjectId) return;
       const notif = await prisma.notification.create({
         data: {
           userId: pc.userId,
           message: `Masz nową ankietę do wypełnienia: „${updated.name}"`,
-          link: `/client/${linkProjectId}/ankiety`,
+          link: `/client/${linkProjectId}?view=survey&surveyToken=${updated.shareToken}`,
           type: "info",
         },
       });
@@ -85,7 +100,7 @@ export async function PATCH(
         ...notif,
         createdAt: notif.createdAt.toISOString(),
       }).catch(() => {});
-    }
+    }));
   }
 
   return NextResponse.json(updated);

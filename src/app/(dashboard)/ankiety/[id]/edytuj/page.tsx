@@ -22,8 +22,13 @@ export default async function EditSurveyPage({
     include: {
       sections: { orderBy: { order: "asc" } },
       questions: { orderBy: { order: "asc" } },
-      project: { select: { id: true, title: true } },
-      client: { select: { id: true, name: true } },
+      assignedClient: {
+        select: {
+          id: true,
+          name: true,
+          projects: { where: { archived: false }, select: { id: true }, take: 1 },
+        },
+      },
     },
   });
 

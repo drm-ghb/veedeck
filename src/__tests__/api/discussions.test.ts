@@ -213,12 +213,24 @@ describe("POST /api/discussions", () => {
     const res = await POST(makeRequest("POST", { title: "Wątek", participantIds: [] }));
     expect(res.status).toBe(201);
     expect(prisma.discussionParticipant.createMany).not.toHaveBeenCalled();
-    expect(pusherServer.trigger).not.toHaveBeenCalled();
+    // Pusher fires new-discussion to owner but NOT added-to-discussion for any participant
+    expect(pusherServer.trigger).toHaveBeenCalledWith("user-user-1", "new-discussion", expect.any(Object));
+    expect(pusherServer.trigger).not.toHaveBeenCalledWith(expect.anything(), "added-to-discussion", expect.anything());
   });
 
   it("nie wysyła powiadomień gdy brak uczestników", async () => {
     const res = await POST(makeRequest("POST", { title: "Wątek" }));
     expect(res.status).toBe(201);
     expect(prisma.notification.create).not.toHaveBeenCalled();
+  });
+
+  it("zawsze wysyła new-discussion do właściciela (NavSidebar subscription)", async () => {
+    const res = await POST(makeRequest("POST", { title: "Wątek" }));
+    expect(res.status).toBe(201);
+    expect(pusherServer.trigger).toHaveBeenCalledWith(
+      "user-user-1",
+      "new-discussion",
+      expect.objectContaining({ discussionId: "disc-new", hasMessage: false })
+    );
   });
 });

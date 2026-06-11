@@ -60,9 +60,8 @@ interface Survey {
   name: string;
   status: string;
   shareToken: string;
-  projectId: string | null;
-  project: { id: string; title: string } | null;
-  client: { id: string; name: string } | null;
+  assignedClientId: string | null;
+  assignedClient: { id: string; name: string; projects: { id: string }[] } | null;
   sections: SurveySection[];
   questions: SurveyQuestion[];
 }
@@ -157,8 +156,9 @@ export default function SurveyEditor({ survey: initial }: Props) {
 
   function getShareLink(): string {
     const base = typeof window !== "undefined" ? window.location.origin : "";
-    if (survey.projectId && survey.client) {
-      return `${base}/client/${survey.projectId}/ankiety`;
+    const clientProjectId = survey.assignedClient?.projects[0]?.id;
+    if (survey.assignedClientId && clientProjectId) {
+      return `${base}/client/${clientProjectId}/ankiety`;
     }
     return `${base}/share/survey/${survey.shareToken}`;
   }
@@ -552,7 +552,7 @@ export default function SurveyEditor({ survey: initial }: Props) {
             {/* ── Survey title ── */}
             <div className="bg-card border-t-4 border-t-primary border border-border rounded-xl px-6 py-5">
               <h1 className="text-xl font-semibold">{survey.name}</h1>
-              {survey.project && <p className="text-sm text-muted-foreground mt-1">{survey.project.title}</p>}
+              {survey.assignedClient && <p className="text-sm text-muted-foreground mt-1">{survey.assignedClient.name}</p>}
             </div>
 
             {isEmpty && (
@@ -800,9 +800,9 @@ export default function SurveyEditor({ survey: initial }: Props) {
                 <X size={18} />
               </button>
             </div>
-            {survey.projectId && survey.client ? (
+            {survey.assignedClientId && survey.assignedClient ? (
               <p className="text-sm text-muted-foreground">
-                Klient <span className="font-medium text-foreground">{survey.client.name}</span> zobaczy ankietę w swoim panelu po zalogowaniu.
+                Klient <span className="font-medium text-foreground">{survey.assignedClient.name}</span> zobaczy ankietę w swoim panelu po zalogowaniu.
               </p>
             ) : (
               <p className="text-sm text-muted-foreground">

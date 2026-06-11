@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getClientProject } from "@/lib/client-access";
 
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
 ) {
   const session = await auth();
@@ -15,7 +15,9 @@ export async function GET(
   const project = await getClientProject(session, projectId);
   if (!project) return NextResponse.json({ error: "Nie znaleziono" }, { status: 404 });
 
-  // Collect all Client IDs this user is a contact for
+  const since = req.nextUrl.searchParams.get("since");
+  const sinceDate = since ? new Date(since) : null;
+
   const userLinks = await prisma.projectClient.findMany({
     where: { userId: session.user.id, clientId: { not: null } },
     select: { clientId: true },
@@ -25,47 +27,16 @@ export async function GET(
     ...userLinks.map((l) => l.clientId as string),
   ])];
 
-  if (clientIds.length === 0) return NextResponse.json([]);
+  if (clientIds.length === 0) return NextResponse.json({ count: 0 });
 
-  const surveys = await prisma.survey.findMany({
+  const count = await prisma.survey.count({
     where: {
       status: "ACTIVE",
       archived: false,
       assignedClientId: { in: clientIds },
-    },
-    orderBy: { order: "asc" },
-    select: {
-      id: true,
-      name: true,
-      shareToken: true,
-      createdAt: true,
-      _count: { select: { questions: true } },
-      responses: {
-        where: { respondentEmail: session.user.email! },
-        select: {
-          completedAt: true,
-          _count: { select: { answers: true } },
-        },
-        orderBy: [{ completedAt: "asc" }, { createdAt: "desc" }],
-        take: 1,
-      },
+      ...(sinceDate ? { createdAt: { gt: sinceDate } } : {}),
     },
   });
 
-  const result = surveys.map((s) => {
-    const response = s.responses[0] ?? null;
-    const totalQuestions = s._count.questions;
-    const answeredCount = response?._count.answers ?? 0;
-    return {
-      id: s.id,
-      name: s.name,
-      shareToken: s.shareToken,
-      createdAt: s.createdAt,
-      completed: response !== null && response.completedAt !== null,
-      answeredCount,
-      totalQuestions,
-    };
-  });
-
-  return NextResponse.json(result);
+  return NextResponse.json({ count });
 }

@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { Plus, Edit2, Trash2, ClipboardList, Eye, X } from "@/components/ui/icons";
 import { surveyTemplates, type SurveyTemplate } from "@/lib/surveyTemplates";
 
-type Project = { id: string; title: string };
+type Client = { id: string; name: string };
 
 interface CustomTemplate {
   id: string;
@@ -17,30 +17,30 @@ interface CustomTemplate {
 
 interface Props {
   customTemplates: CustomTemplate[];
-  projects: Project[];
+  clients: Client[];
 }
 
 // ── Use-template dialog ──────────────────────────────────────────────────────
 
 function UseTemplateDialog({
   templateName,
-  projects,
+  clients,
   onConfirm,
   onClose,
 }: {
   templateName: string;
-  projects: Project[];
-  onConfirm: (name: string, projectId: string) => Promise<void>;
+  clients: Client[];
+  onConfirm: (name: string, assignedClientId: string) => Promise<void>;
   onClose: () => void;
 }) {
   const [name, setName] = useState(templateName);
-  const [projectId, setProjectId] = useState("");
+  const [assignedClientId, setAssignedClientId] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit() {
     if (!name.trim()) return;
     setLoading(true);
-    await onConfirm(name.trim(), projectId);
+    await onConfirm(name.trim(), assignedClientId);
     setLoading(false);
   }
 
@@ -61,17 +61,17 @@ function UseTemplateDialog({
           />
         </div>
 
-        {projects.length > 0 && (
+        {clients.length > 0 && (
           <div className="space-y-1.5">
             <label className="text-sm font-medium">Klient (opcjonalne)</label>
             <select
-              value={projectId}
-              onChange={(e) => setProjectId(e.target.value)}
+              value={assignedClientId}
+              onChange={(e) => setAssignedClientId(e.target.value)}
               className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
             >
               <option value="">— bez przypisania —</option>
-              {projects.map((p) => (
-                <option key={p.id} value={p.id}>{p.title}</option>
+              {clients.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
               ))}
             </select>
           </div>
@@ -258,7 +258,7 @@ function TemplatePreview({ tpl, onClose, onUse }: { tpl: SurveyTemplate; onClose
 
 // ── Main component ───────────────────────────────────────────────────────────
 
-export default function TemplatesTab({ customTemplates: initial, projects }: Props) {
+export default function TemplatesTab({ customTemplates: initial, clients }: Props) {
   const router = useRouter();
   const [customTemplates, setCustomTemplates] = useState<CustomTemplate[]>(initial);
   const [useDialog, setUseDialog] = useState<{ type: "builtin"; templateId: string; name: string } | { type: "custom"; survey: CustomTemplate } | null>(null);
@@ -278,11 +278,11 @@ export default function TemplatesTab({ customTemplates: initial, projects }: Pro
   }
 
   // Use built-in template: create survey → apply template
-  async function handleUseBuiltin(name: string, projectId: string, templateId: string) {
+  async function handleUseBuiltin(name: string, assignedClientId: string, templateId: string) {
     const res = await fetch("/api/surveys", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, projectId: projectId || null }),
+      body: JSON.stringify({ name, assignedClientId: assignedClientId || null }),
     });
     if (!res.ok) { toast.error("Błąd tworzenia ankiety"); return; }
     const survey = await res.json();
@@ -299,11 +299,11 @@ export default function TemplatesTab({ customTemplates: initial, projects }: Pro
   }
 
   // Use custom template: duplicate
-  async function handleUseCustom(name: string, projectId: string, templateId: string) {
+  async function handleUseCustom(name: string, assignedClientId: string, templateId: string) {
     const res = await fetch(`/api/surveys/${templateId}/duplicate`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, projectId: projectId || null }),
+      body: JSON.stringify({ name, assignedClientId: assignedClientId || null }),
     });
     if (!res.ok) { toast.error("Błąd tworzenia ankiety"); return; }
     const survey = await res.json();
@@ -442,13 +442,13 @@ export default function TemplatesTab({ customTemplates: initial, projects }: Pro
       {useDialog && (
         <UseTemplateDialog
           templateName={useDialog.type === "builtin" ? useDialog.name : useDialog.survey.name}
-          projects={projects}
+          clients={clients}
           onClose={() => setUseDialog(null)}
-          onConfirm={async (name, projectId) => {
+          onConfirm={async (name, assignedClientId) => {
             if (useDialog.type === "builtin") {
-              await handleUseBuiltin(name, projectId, useDialog.templateId);
+              await handleUseBuiltin(name, assignedClientId, useDialog.templateId);
             } else {
-              await handleUseCustom(name, projectId, useDialog.survey.id);
+              await handleUseCustom(name, assignedClientId, useDialog.survey.id);
             }
           }}
         />

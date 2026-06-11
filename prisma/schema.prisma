@@ -217,6 +217,7 @@ model Client {
   designer          User            @relation("DesignerClients", fields: [designerId], references: [id], onDelete: Cascade)
   projects          Project[]
   contacts          ProjectClient[] @relation("ClientContacts")
+  assignedSurveys   Survey[]        @relation("SurveyAssignedClient")
 }
 
 model Project {
@@ -770,9 +771,11 @@ model Survey {
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
   isTemplate     Boolean          @default(false)
-  client         ProjectClient?   @relation(fields: [clientId], references: [id])
-  project        Project?         @relation(fields: [projectId], references: [id])
-  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assignedClientId String?
+  client           ProjectClient?   @relation(fields: [clientId], references: [id])
+  project          Project?         @relation(fields: [projectId], references: [id])
+  assignedClient   Client?          @relation("SurveyAssignedClient", fields: [assignedClientId], references: [id])
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   questions      SurveyQuestion[]
   responses      SurveyResponse[]
   sections       SurveySection[]

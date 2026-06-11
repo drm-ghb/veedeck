@@ -21,6 +21,9 @@ interface Props {
   };
   responseId: string;
   existingAnswers: Answer[];
+  readOnly?: boolean;
+  onRegisterSave?: (fn: () => Promise<void>) => void;
+  onSubmitted?: () => void;
 }
 
 type Attachment = { url: string; name: string };
@@ -51,7 +54,7 @@ function initAttachments(questions: SurveyQuestion[], existing: Answer[]): Recor
   return map;
 }
 
-export default function SurveyForm({ token, survey, responseId, existingAnswers }: Props) {
+export default function SurveyForm({ token, survey, responseId, existingAnswers, readOnly = false, onRegisterSave, onSubmitted }: Props) {
   const [answers, setAnswers] = useState<Record<string, unknown>>(
     () => initAnswers(survey.questions, existingAnswers)
   );
@@ -64,12 +67,69 @@ export default function SurveyForm({ token, survey, responseId, existingAnswers 
   const [showIncompleteConfirm, setShowIncompleteConfirm] = useState(false);
   const autoSaveTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const pendingRef = useRef(answers);
+  const pendingAttachmentsRef = useRef(attachments);
 
-  // Keep ref updated for auto-save closure
+  // Keep refs updated for auto-save / unmount-save closures
   useEffect(() => { pendingRef.current = answers; }, [answers]);
+  useEffect(() => { pendingAttachmentsRef.current = attachments; }, [attachments]);
+
+  // Save on unmount (captures latest answers via refs)
+  useEffect(() => {
+    if (readOnly) return;
+    return () => {
+      const ans = pendingRef.current;
+      const atts = pendingAttachmentsRef.current;
+      const payload = Object.entries(ans)
+        .filter(([questionId, v]) => {
+          const hasAnswer = v !== null && v !== undefined && v !== "" && !(Array.isArray(v) && v.length === 0);
+          const hasFiles = (atts[questionId]?.length ?? 0) > 0;
+          return hasAnswer || hasFiles;
+        })
+        .map(([questionId, value]) => {
+          const files = atts[questionId] ?? [];
+          if (files.length > 0) return { questionId, value: { answer: value, attachments: files } };
+          return { questionId, value };
+        });
+      if (payload.length === 0) return;
+      fetch(`/api/share/survey/${token}/response`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ responseId, answers: payload }),
+      }).catch(() => {});
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token, responseId, readOnly]);
+
+  // Register explicit save function for parent to call before navigation
+  useEffect(() => {
+    if (readOnly || !onRegisterSave) return;
+    onRegisterSave(async () => {
+      const ans = pendingRef.current;
+      const atts = pendingAttachmentsRef.current;
+      const payload = Object.entries(ans)
+        .filter(([questionId, v]) => {
+          const hasAnswer = v !== null && v !== undefined && v !== "" && !(Array.isArray(v) && v.length === 0);
+          const hasFiles = (atts[questionId]?.length ?? 0) > 0;
+          return hasAnswer || hasFiles;
+        })
+        .map(([questionId, value]) => {
+          const files = atts[questionId] ?? [];
+          if (files.length > 0) return { questionId, value: { answer: value, attachments: files } };
+          return { questionId, value };
+        });
+      if (payload.length === 0) return;
+      await fetch(`/api/share/survey/${token}/response`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ responseId, answers: payload }),
+      }).catch(() => {});
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token, responseId, readOnly]);
 
   // Auto-save every 30 seconds
   useEffect(() => {
+    if (readOnly) return;
     autoSaveTimer.current = setInterval(() => {
       const payload = buildPayload(pendingRef.current);
       if (payload.length === 0) return;
@@ -151,6 +211,7 @@ export default function SurveyForm({ token, survey, responseId, existingAnswers 
         return;
       }
       setSubmitted(true);
+      onSubmitted?.();
     } finally {
       setSubmitting(false);
     }
@@ -252,6 +313,7 @@ export default function SurveyForm({ token, survey, responseId, existingAnswers 
                 token={token}
                 attachments={attachments[q.id] ?? []}
                 onAttachmentsChange={(files) => setAttachments((prev) => ({ ...prev, [q.id]: files }))}
+                readOnly={readOnly}
               />
             ))}
           </div>
@@ -271,6 +333,7 @@ export default function SurveyForm({ token, survey, responseId, existingAnswers 
               token={token}
               attachments={attachments[q.id] ?? []}
               onAttachmentsChange={(files) => setAttachments((prev) => ({ ...prev, [q.id]: files }))}
+              readOnly={readOnly}
             />
           ))}
         </div>
@@ -280,13 +343,15 @@ export default function SurveyForm({ token, survey, responseId, existingAnswers 
         <p className="text-xs text-muted-foreground">* Pola wymagane</p>
       )}
 
-      <button
-        onClick={handleSubmit}
-        disabled={submitting}
-        className="w-full py-3 text-sm font-semibold bg-primary text-primary-foreground rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {submitting ? "Wysyłanie..." : "Wyślij ankietę"}
-      </button>
+      {!readOnly && (
+        <button
+          onClick={handleSubmit}
+          disabled={submitting}
+          className="w-full py-3 text-sm font-semibold bg-primary text-primary-foreground rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {submitting ? "Wysyłanie..." : "Wyślij ankietę"}
+        </button>
+      )}
     </div>
     </>
   );
@@ -302,6 +367,7 @@ function QuestionInput({
   token,
   attachments,
   onAttachmentsChange,
+  readOnly = false,
 }: {
   question: SurveyQuestion;
   value: unknown;
@@ -310,6 +376,7 @@ function QuestionInput({
   token: string;
   attachments: Attachment[];
   onAttachmentsChange: (files: Attachment[]) => void;
+  readOnly?: boolean;
 }) {
   const rawConfig = (question.config ?? {}) as Record<string, number | boolean>;
   const config = {
@@ -337,7 +404,8 @@ function QuestionInput({
           type="text"
           value={(value as string) ?? ""}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
+          disabled={readOnly}
+          className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-60 disabled:cursor-default"
           placeholder="Twoja odpowiedź..."
         />
       )}
@@ -346,8 +414,9 @@ function QuestionInput({
         <textarea
           value={(value as string) ?? ""}
           onChange={(e) => onChange(e.target.value)}
+          disabled={readOnly}
           rows={4}
-          className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
+          className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none disabled:opacity-60 disabled:cursor-default"
           placeholder="Twoja odpowiedź..."
         />
       )}
@@ -355,13 +424,13 @@ function QuestionInput({
       {question.type === "single_choice" && (
         <div className="space-y-2">
           {(question.options ?? []).map((opt) => (
-            <label key={opt} className="flex items-center gap-3 cursor-pointer group">
+            <label key={opt} className={`flex items-center gap-3 ${readOnly ? "cursor-default" : "cursor-pointer group"}`}>
               <div className={`w-4 h-4 rounded-full border-2 flex-shrink-0 transition-colors ${
-                value === opt ? "border-primary bg-primary" : "border-border group-hover:border-primary/50"
+                value === opt ? "border-primary bg-primary" : "border-border" + (readOnly ? "" : " group-hover:border-primary/50")
               }`}>
                 {value === opt && <div className="w-full h-full rounded-full bg-white scale-50 transform" />}
               </div>
-              <span className="text-sm" onClick={() => onChange(opt)}>{opt}</span>
+              <span className="text-sm" onClick={() => !readOnly && onChange(opt)}>{opt}</span>
             </label>
           ))}
         </div>
@@ -372,15 +441,16 @@ function QuestionInput({
           {(question.options ?? []).map((opt) => {
             const selected = Array.isArray(value) && (value as string[]).includes(opt);
             return (
-              <label key={opt} className="flex items-center gap-3 cursor-pointer">
+              <label key={opt} className={`flex items-center gap-3 ${readOnly ? "cursor-default" : "cursor-pointer"}`}>
                 <input
                   type="checkbox"
                   checked={selected}
+                  disabled={readOnly}
                   onChange={() => {
                     const current = Array.isArray(value) ? (value as string[]) : [];
                     onChange(selected ? current.filter((v) => v !== opt) : [...current, opt]);
                   }}
-                  className="w-4 h-4 rounded border-border accent-primary"
+                  className="w-4 h-4 rounded border-border accent-primary disabled:opacity-60"
                 />
                 <span className="text-sm">{opt}</span>
               </label>
@@ -397,11 +467,12 @@ function QuestionInput({
           ).map((n) => (
             <button
               key={n}
-              onClick={() => onChange(n)}
+              onClick={() => !readOnly && onChange(n)}
+              disabled={readOnly}
               className={`w-10 h-10 rounded-lg border-2 text-sm font-semibold transition-colors ${
                 value === n
                   ? "border-primary bg-primary text-primary-foreground"
-                  : "border-border hover:border-primary/50 hover:bg-muted"
+                  : "border-border" + (readOnly ? " opacity-50" : " hover:border-primary/50 hover:bg-muted")
               }`}
             >
               {n}
@@ -415,11 +486,12 @@ function QuestionInput({
           {["Tak", "Nie"].map((opt) => (
             <button
               key={opt}
-              onClick={() => onChange(opt)}
+              onClick={() => !readOnly && onChange(opt)}
+              disabled={readOnly}
               className={`px-6 py-2.5 rounded-xl text-sm font-semibold border-2 transition-colors ${
                 value === opt
                   ? "border-primary bg-primary text-primary-foreground"
-                  : "border-border hover:border-primary/50 hover:bg-muted"
+                  : "border-border" + (readOnly ? " opacity-50" : " hover:border-primary/50 hover:bg-muted")
               }`}
             >
               {opt}
@@ -444,7 +516,8 @@ function QuestionInput({
             step={config.step ?? 1000}
             value={typeof value === "number" ? value : (config.min ?? 0)}
             onChange={(e) => onChange(Number(e.target.value))}
-            className="w-full accent-primary"
+            disabled={readOnly}
+            className="w-full accent-primary disabled:opacity-60"
           />
           <div className="flex items-center gap-2">
             <input
@@ -457,14 +530,15 @@ function QuestionInput({
                 const n = Number(e.target.value);
                 if (!isNaN(n)) onChange(n);
               }}
-              className="w-36 px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
+              disabled={readOnly}
+              className="w-36 px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-60 disabled:cursor-default"
             />
             <span className="text-sm text-muted-foreground">zł</span>
           </div>
         </div>
       )}
 
-      {config.allowAttachments && (
+      {config.allowAttachments && !readOnly && (
         <div className="space-y-2 pt-1">
           <p className="text-xs font-medium text-muted-foreground">Załączniki (maks. 5 plików)</p>
           {attachments.length > 0 && (

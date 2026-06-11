@@ -105,13 +105,13 @@ export default function WykonawcyView({ contractors, unreadPerContractor = {} }:
             <div className="flex items-center gap-0.5 bg-muted rounded-md p-0.5 flex-shrink-0">
               <button
                 onClick={() => setView("grid")}
-                className={`p-1.5 rounded transition-colors ${view === "grid" ? "bg-card shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                className={`p-1.5 rounded transition-colors ${view === "grid" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
               >
                 <LayoutGrid size={15} />
               </button>
               <button
                 onClick={() => setView("list")}
-                className={`p-1.5 rounded transition-colors ${view === "list" ? "bg-card shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                className={`p-1.5 rounded transition-colors ${view === "list" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
               >
                 <List size={15} />
               </button>

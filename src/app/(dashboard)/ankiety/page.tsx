@@ -12,21 +12,20 @@ export default async function AnkietyPage() {
 
   const userId = getWorkspaceUserId(session as any);
 
-  const [surveys, projects, customTemplates] = await Promise.all([
+  const [surveys, clients, customTemplates] = await Promise.all([
     prisma.survey.findMany({
       where: { userId, isTemplate: false },
       include: {
-        project: { select: { id: true, title: true } },
-        client: { select: { id: true, name: true } },
+        assignedClient: { select: { id: true, name: true } },
         _count: { select: { responses: true } },
         responses: { select: { viewCount: true } },
       },
       orderBy: { order: "asc" },
     }),
-    prisma.project.findMany({
-      where: { userId, archived: false },
-      select: { id: true, title: true },
-      orderBy: { createdAt: "desc" },
+    prisma.client.findMany({
+      where: { designerId: userId, archived: false },
+      select: { id: true, name: true },
+      orderBy: { name: "asc" },
     }),
     prisma.survey.findMany({
       where: { userId, isTemplate: true },
@@ -42,5 +41,5 @@ export default async function AnkietyPage() {
     viewCount: s.responses.reduce((sum, r) => sum + r.viewCount, 0),
   }));
 
-  return <SurveysClient surveys={surveysWithViewCount as any} projects={projects} customTemplates={customTemplates as any} />;
+  return <SurveysClient surveys={surveysWithViewCount as any} clients={clients} customTemplates={customTemplates as any} />;
 }

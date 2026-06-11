@@ -11,52 +11,88 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { surveyTemplates } from "@/lib/surveyTemplates";
 
-type Project = { id: string; title: string };
+type Client = { id: string; name: string };
+type CustomTemplate = { id: string; name: string };
 
 interface Props {
   open: boolean;
   onClose: () => void;
   onCreated: (survey: any) => void;
-  projects: Project[];
+  clients: Client[];
+  customTemplates: CustomTemplate[];
 }
 
-export default function NewSurveyDialog({ open, onClose, onCreated, projects }: Props) {
+export default function NewSurveyDialog({ open, onClose, onCreated, clients, customTemplates }: Props) {
   const [name, setName] = useState("");
-  const [projectId, setProjectId] = useState("");
-  const [noClient, setNoClient] = useState(false);
+  const [assignedClientId, setAssignedClientId] = useState("");
+  const [templateValue, setTemplateValue] = useState(""); // "builtin:{id}" | "custom:{id}" | ""
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!open) {
       setName("");
-      setProjectId("");
-      setNoClient(false);
+      setAssignedClientId("");
+      setTemplateValue("");
     }
   }, [open]);
 
   async function handleSave() {
     if (!name.trim()) return;
     setLoading(true);
-    const res = await fetch("/api/surveys", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: name.trim(),
-        projectId: noClient ? null : (projectId || null),
-        clientId: null,
-      }),
-    });
-    setLoading(false);
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({}));
-      toast.error(body.error ?? "Błąd tworzenia ankiety");
-      return;
+
+    const clientId = assignedClientId || null;
+    const [templateType, templateId] = templateValue ? templateValue.split(":") : [];
+
+    try {
+      let survey: any;
+
+      if (templateType === "custom" && templateId) {
+        // Duplicate custom template → creates survey with questions in one step
+        const res = await fetch(`/api/surveys/${templateId}/duplicate`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: name.trim(), assignedClientId: clientId }),
+        });
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          toast.error(body.error ?? "Błąd tworzenia ankiety");
+          return;
+        }
+        survey = await res.json();
+      } else {
+        // Create blank survey
+        const res = await fetch("/api/surveys", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: name.trim(), assignedClientId: clientId }),
+        });
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          toast.error(body.error ?? "Błąd tworzenia ankiety");
+          return;
+        }
+        survey = await res.json();
+
+        // Apply built-in template if selected
+        if (templateType === "builtin" && templateId) {
+          await fetch(`/api/surveys/${survey.id}/apply-template`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ templateId }),
+          });
+        }
+      }
+
+      toast.success("Ankieta utworzona");
+      onCreated(survey);
+    } finally {
+      setLoading(false);
     }
-    const survey = await res.json();
-    toast.success("Ankieta utworzona");
-    onCreated(survey);
   }
+
+  const hasTemplates = surveyTemplates.length > 0 || customTemplates.length > 0;
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!loading && !v) onClose(); }}>
@@ -78,34 +114,52 @@ export default function NewSurveyDialog({ open, onClose, onCreated, projects }: 
             />
           </div>
 
-          {!noClient && projects.length > 0 && (
+          {hasTemplates && (
             <div className="space-y-1.5">
-              <Label htmlFor="survey-client">Klient (opcjonalne)</Label>
+              <Label htmlFor="survey-template">Szablon</Label>
               <select
-                id="survey-client"
-                value={projectId}
-                onChange={(e) => setProjectId(e.target.value)}
+                id="survey-template"
+                value={templateValue}
+                onChange={(e) => setTemplateValue(e.target.value)}
                 disabled={loading}
                 className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
               >
-                <option value="">— bez przypisania —</option>
-                {projects.map((p) => (
-                  <option key={p.id} value={p.id}>{p.title}</option>
-                ))}
+                <option value="">— Brak szablonu —</option>
+                {surveyTemplates.length > 0 && (
+                  <optgroup label="Szablony gotowe">
+                    {surveyTemplates.map((t) => (
+                      <option key={t.id} value={`builtin:${t.id}`}>{t.name}</option>
+                    ))}
+                  </optgroup>
+                )}
+                {customTemplates.length > 0 && (
+                  <optgroup label="Moje szablony">
+                    {customTemplates.map((t) => (
+                      <option key={t.id} value={`custom:${t.id}`}>{t.name}</option>
+                    ))}
+                  </optgroup>
+                )}
               </select>
             </div>
           )}
 
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={noClient}
-              onChange={(e) => { setNoClient(e.target.checked); if (e.target.checked) setProjectId(""); }}
-              disabled={loading}
-              className="rounded border-border"
-            />
-            <span className="text-sm text-muted-foreground">Ankieta bez przypisania (publiczny link)</span>
-          </label>
+          {clients.length > 0 && (
+            <div className="space-y-1.5">
+              <Label htmlFor="survey-client">Klient (opcjonalne)</Label>
+              <select
+                id="survey-client"
+                value={assignedClientId}
+                onChange={(e) => setAssignedClientId(e.target.value)}
+                disabled={loading}
+                className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
+              >
+                <option value="">— bez przypisania —</option>
+                {clients.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <Button onClick={handleSave} disabled={loading || !name.trim()} className="w-full">
             {loading ? "Tworzenie..." : "Utwórz ankietę"}

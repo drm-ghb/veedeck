@@ -31,15 +31,15 @@ export async function POST(req: NextRequest) {
   }
   const userId = getWorkspaceUserId(session);
 
-  const { name, projectId, clientId, isTemplate } = await req.json();
+  const { name, assignedClientId, isTemplate } = await req.json();
   if (!name?.trim()) {
     return NextResponse.json({ error: "Nazwa jest wymagana" }, { status: 400 });
   }
 
-  if (projectId) {
-    const project = await prisma.project.findFirst({ where: { id: projectId, userId } });
-    if (!project) {
-      return NextResponse.json({ error: "Projekt nie istnieje" }, { status: 403 });
+  if (assignedClientId) {
+    const client = await prisma.client.findFirst({ where: { id: assignedClientId, designerId: userId } });
+    if (!client) {
+      return NextResponse.json({ error: "Klient nie istnieje" }, { status: 403 });
     }
   }
 
@@ -52,8 +52,7 @@ export async function POST(req: NextRequest) {
         name: name.trim(),
         slug,
         userId,
-        projectId: projectId ?? null,
-        clientId: clientId ?? null,
+        assignedClientId: assignedClientId ?? null,
         status: "DRAFT",
         isTemplate: isTemplate === true,
       },

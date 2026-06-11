@@ -8,6 +8,8 @@ export async function GET() {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const userId = getWorkspaceUserId(session);
+  // Use raw session ID for per-user read tracking (team members have independent read positions)
+  const sessionUserId = session.user.id!;
 
   // Detect if team member (has ownerId)
   const dbUser = await prisma.user.findUnique({ where: { id: userId }, select: { ownerId: true } });
@@ -24,7 +26,7 @@ export async function GET() {
       _count: { select: { messages: true } },
       messages: { orderBy: { createdAt: "desc" }, take: 1 },
       readReceipts: {
-        where: { readerId: userId },
+        where: { readerId: sessionUserId },
         include: { lastMessage: { select: { createdAt: true } } },
         take: 1,
       },
@@ -45,7 +47,7 @@ export async function GET() {
       const unreadCount = await prisma.discussionMessage.count({
         where: {
           discussionId: d.id,
-          OR: [{ userId: { not: userId } }, { userId: null }],
+          OR: [{ userId: { not: sessionUserId } }, { userId: null }],
           ...(lastReadAt ? { createdAt: { gt: lastReadAt } } : {}),
         },
       });
@@ -90,6 +92,12 @@ export async function POST(req: NextRequest) {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const discussion = await prisma.discussion.create({ data: data as any });
+
+  // Notify the owner's NavSidebar so it subscribes to the new channel immediately
+  pusherServer.trigger(`user-${userId}`, "new-discussion", {
+    discussionId: discussion.id,
+    hasMessage: false,
+  }).catch(() => {});
 
   // Add participants
   const validParticipantIds = Array.isArray(participantIds)

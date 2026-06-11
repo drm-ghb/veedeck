@@ -31,6 +31,7 @@ export async function POST(
   // Deduplication — find existing response for this email
   const existing = await prisma.surveyResponse.findFirst({
     where: { surveyId: survey.id, respondentEmail: email.trim().toLowerCase() },
+    orderBy: [{ completedAt: "asc" }, { createdAt: "desc" }],
     include: { answers: true },
   });
 

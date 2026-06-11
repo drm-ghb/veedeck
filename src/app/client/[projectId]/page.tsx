@@ -10,10 +10,11 @@ import ShareSidebar from "@/components/share/ShareSidebar";
 import ClientDiscussionView from "@/components/dyskusje/ClientDiscussionView";
 import ClientPaymentsView from "@/components/share/ClientPaymentsView";
 import ClientScheduleView from "@/components/share/ClientScheduleView";
+import ClientSurveyView from "@/components/ankiety/share/ClientSurveyView";
 import ShareListClient from "@/components/listy/ShareListClient";
 import ModuleGuideSlider from "@/components/share/ModuleGuideSlider";
 import { getRoomIcon } from "@/lib/roomIcons";
-import { ChevronLeft, ChevronRight, ChatBubble, FileText, Folder, User, Mail, Lock, Info, LocalMall, Pencil, X, Eye, EyeOff, UserCircle, Check, CopyCheck, Download } from "@/components/ui/icons";
+import { ChevronLeft, ChevronRight, ChatBubble, FileText, Folder, User, Mail, Lock, Info, LocalMall, Pencil, X, Eye, EyeOff, UserCircle, Check, CopyCheck, Download, ClipboardList, CheckCircle } from "@/components/ui/icons";
 import PdfThumbnail from "@/components/render/PdfThumbnail";
 import Image from "next/image";
 import { Input } from "@/components/ui/input";
@@ -59,6 +60,7 @@ interface Project {
   hasDiscussion: boolean; discussionId: string | null; colorTheme: string;
   paymentsSharedWithClient: boolean;
   scheduleSharedWithClient: boolean;
+  hasSurveys: boolean;
 }
 
 export default function ClientProjectPage() {
@@ -105,6 +107,12 @@ export default function ClientProjectPage() {
       setView("discussion"); setSelectedRoom(null); setSelectedFolder(null);
     } else if (v === "settings") {
       setView("settings"); setSelectedRoom(null); setSelectedFolder(null);
+    } else if (v === "ankiety") {
+      setView("ankiety"); setSelectedRoom(null); setSelectedFolder(null);
+    } else if (v === "survey") {
+      const surveyToken = sp.get("surveyToken");
+      setView("ankiety"); setSelectedRoom(null); setSelectedFolder(null);
+      if (surveyToken) setPendingSurveyToken(surveyToken);
     } else if (v === "lists") {
       setView("lists"); setSelectedRoom(null); setSelectedFolder(null);
     } else if (v === "list" && listId) {
@@ -118,7 +126,7 @@ export default function ClientProjectPage() {
   const [clientProjects, setClientProjects] = useState<{ id: string; title: string; description: string | null; createdAt: string; renderCount: number }[]>([]);
   const [activeProjectId, setActiveProjectId] = useState(projectId);
   const [activeRooms, setActiveRooms] = useState<Room[] | null>(null);
-  const [view, setView] = useState<"home" | "projects" | "rooms" | "room" | "render" | "discussion" | "settings" | "lists" | "list" | "payments" | "schedule">("home");
+  const [view, setView] = useState<"home" | "projects" | "rooms" | "room" | "render" | "discussion" | "settings" | "lists" | "list" | "payments" | "schedule" | "ankiety" | "survey">("home");
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [selectedFolder, setSelectedFolder] = useState<{ id: string; name: string } | null>(null);
   const [selectedRender, setSelectedRender] = useState<Render | null>(null);
@@ -126,6 +134,46 @@ export default function ClientProjectPage() {
   const [selectedListData, setSelectedListData] = useState<ListData | null>(null);
   const [listLoading, setListLoading] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [surveys, setSurveys] = useState<{ id: string; name: string; shareToken: string; createdAt: string; completed: boolean; answeredCount: number; totalQuestions: number }[]>([]);
+  const [surveysLoading, setSurveysLoading] = useState(false);
+  const [surveysFetched, setSurveysFetched] = useState(false);
+  const [selectedSurvey, setSelectedSurvey] = useState<{ shareToken: string; name: string; readOnly?: boolean } | null>(null);
+  const [pendingSurveyToken, setPendingSurveyToken] = useState<string | null>(null);
+
+  const fetchSurveys = useCallback(async () => {
+    setSurveysLoading(true);
+    try {
+      const res = await fetch(`/api/client/${projectId}/surveys`);
+      if (res.ok) setSurveys(await res.json());
+    } catch { /* ignore */ } finally {
+      setSurveysLoading(false);
+      setSurveysFetched(true);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectId]);
+
+  const openAnkiety = useCallback(() => {
+    setView("ankiety");
+    navigate({ view: "ankiety" });
+    fetchSurveys();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fetchSurveys]);
+
+  useEffect(() => {
+    if (view === "ankiety" && !surveysFetched) {
+      fetchSurveys();
+    }
+  }, [view, surveysFetched, fetchSurveys]);
+
+  useEffect(() => {
+    if (!pendingSurveyToken || !surveysFetched) return;
+    const survey = surveys.find((s) => s.shareToken === pendingSurveyToken);
+    if (survey) {
+      setSelectedSurvey({ shareToken: survey.shareToken, name: survey.name });
+      setView("survey");
+    }
+    setPendingSurveyToken(null);
+  }, [pendingSurveyToken, surveysFetched, surveys]);
 
   const openList = useCallback(async (listId: string) => {
     setListLoading(true);
@@ -488,6 +536,8 @@ export default function ClientProjectPage() {
     showDyskusje: !project.hiddenModules.includes("dyskusje"),
     showPayments: project.paymentsSharedWithClient,
     showHarmonogram: project.scheduleSharedWithClient,
+    showAnkiety: project.hasSurveys,
+    onAnkietyClick: openAnkiety,
     shoppingLists: project.shoppingLists,
     onHomeClick: () => { setView("home"); setSelectedRoom(null); setSelectedFolder(null); navigate({}); },
     onProjectFlowClick: () => { if (clientProjects.length > 1) { setView("projects"); setSelectedRoom(null); setSelectedFolder(null); navigate({ view: "projects" }); } else if (project.rooms.length === 1) { setActiveRooms(null); setActiveProjectId(projectId); setSelectedRoom(project.rooms[0]); setSelectedFolder(null); setView("room"); navigate({ view: "room", roomId: project.rooms[0].id }); } else { setActiveRooms(null); setActiveProjectId(projectId); setView("rooms"); navigate({ view: "rooms" }); }},
@@ -570,6 +620,8 @@ export default function ClientProjectPage() {
             onPaymentsClick={() => { setView("payments"); navigate({ view: "payments" }); }}
             showHarmonogram={project.scheduleSharedWithClient}
             onHarmonogramClick={() => { setView("schedule"); navigate({ view: "schedule" }); }}
+            showAnkiety={project.hasSurveys}
+            onAnkietyClick={openAnkiety}
             clientProjectId={projectId}
             activeView={view}
             currentUserId={currentUserId}
@@ -652,6 +704,8 @@ export default function ClientProjectPage() {
             onPaymentsClick={() => { setView("payments"); navigate({ view: "payments" }); }}
             showHarmonogram={project.scheduleSharedWithClient}
             onHarmonogramClick={() => { setView("schedule"); navigate({ view: "schedule" }); }}
+            showAnkiety={project.hasSurveys}
+            onAnkietyClick={openAnkiety}
             clientProjectId={projectId}
             activeView={view}
             currentUserId={currentUserId}
@@ -981,6 +1035,88 @@ export default function ClientProjectPage() {
             );
           })()}
         </div>
+      )}
+
+      {view === "ankiety" && (
+        <div className="max-w-2xl">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-6">Ankiety</h2>
+          {surveysLoading ? (
+            <div className="flex items-center justify-center py-20 text-sm text-muted-foreground animate-pulse">Ładowanie...</div>
+          ) : surveys.length === 0 ? (
+            <div className="bg-card border border-border rounded-2xl p-10 text-center space-y-2">
+              <ClipboardList size={32} className="mx-auto text-muted-foreground/40" />
+              <p className="text-sm text-muted-foreground">Brak dostępnych ankiet.</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {surveys.map((survey) => (
+                <div key={survey.id} className="bg-card border border-border rounded-xl p-5 flex items-center justify-between gap-4">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-sm truncate">{survey.name}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {new Date(survey.createdAt).toLocaleDateString("pl-PL")}
+                    </p>
+                    {!survey.completed && survey.answeredCount > 0 && survey.totalQuestions > 0 && (
+                      <div className="mt-2 space-y-1">
+                        <div className="flex items-center justify-between text-xs text-muted-foreground">
+                          <span>{survey.answeredCount} / {survey.totalQuestions} odpowiedzi</span>
+                          <span>{Math.round((survey.answeredCount / survey.totalQuestions) * 100)}%</span>
+                        </div>
+                        <div className="w-full bg-muted rounded-full h-1.5">
+                          <div
+                            className="bg-primary h-1.5 rounded-full transition-all duration-300"
+                            style={{ width: `${Math.round((survey.answeredCount / survey.totalQuestions) * 100)}%` }}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-3 flex-shrink-0">
+                    {survey.completed ? (
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <div className="flex items-center gap-1.5 text-xs text-green-600 font-medium">
+                          <CheckCircle size={14} />
+                          Wypełniona
+                        </div>
+                        <button
+                          onClick={() => { setSelectedSurvey({ shareToken: survey.shareToken, name: survey.name, readOnly: true }); setView("survey"); navigate({ view: "ankiety" }); }}
+                          className="px-4 py-1.5 text-xs font-medium border border-border text-muted-foreground rounded-lg hover:bg-muted transition-colors"
+                        >
+                          Podgląd
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => { setSelectedSurvey({ shareToken: survey.shareToken, name: survey.name }); setView("survey"); navigate({ view: "ankiety" }); }}
+                        className="px-4 py-1.5 text-xs font-medium bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity"
+                      >
+                        Wypełnij
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {view === "survey" && selectedSurvey && (
+        <ClientSurveyView
+          token={selectedSurvey.shareToken}
+          surveyName={selectedSurvey.name}
+          clientEmail={userEmail}
+          clientName={(session?.user as any)?.fullName || authorName}
+          readOnly={selectedSurvey.readOnly}
+          onCompleted={() => {
+            setSurveys((prev) => prev.map((s) =>
+              s.shareToken === selectedSurvey.shareToken
+                ? { ...s, completed: true, answeredCount: s.totalQuestions }
+                : s
+            ));
+          }}
+          onBack={() => { setView("ankiety"); setSelectedSurvey(null); navigate({ view: "ankiety" }); fetchSurveys(); }}
+        />
       )}
 
       {view === "settings" && (

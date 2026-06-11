@@ -79,6 +79,22 @@ export async function GET(
     }
   }
 
+  // Collect all Client IDs this user is a contact for
+  const userLinks = await prisma.projectClient.findMany({
+    where: { userId: session.user.id, clientId: { not: null } },
+    select: { clientId: true },
+  });
+  const surveyClientIds = [...new Set([
+    ...(project.clientId ? [project.clientId] : []),
+    ...userLinks.map((l) => l.clientId as string),
+  ])];
+
+  const hasSurveys = surveyClientIds.length > 0
+    ? await prisma.survey.count({
+        where: { assignedClientId: { in: surveyClientIds }, status: "ACTIVE", archived: false },
+      }).then((n) => n > 0)
+    : false;
+
   const { user, sharePassword, shareExpiresAt, ...rest } = project;
   const { name, showProfileName, showClientLogo, clientLogoUrl, ...userSettings } = user;
 
@@ -91,5 +107,6 @@ export async function GET(
     clientLogoUrl: showClientLogo ? clientLogoUrl : null,
     hasDiscussion: !!discussion,
     discussionId: discussion?.id ?? null,
+    hasSurveys,
   });
 }

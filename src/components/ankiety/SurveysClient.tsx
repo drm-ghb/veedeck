@@ -1,15 +1,15 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
-  Search, Plus, LayoutGrid, List, MoreVertical, Archive, ArchiveRestore, Trash2, Edit2, Copy, Pin, PinOff, BarChart2, Eye,
+  Search, Plus, LayoutGrid, List, MoreVertical, Archive, ArchiveRestore, Trash2, Edit2, Copy, Pin, PinOff, BarChart2, Eye, ArrowDownUp,
 } from "@/components/ui/icons";
 import NewSurveyDialog from "./NewSurveyDialog";
 import TemplatesTab from "./TemplatesTab";
 
-type Project = { id: string; title: string };
+type Client = { id: string; name: string };
 type Survey = {
   id: string;
   name: string;
@@ -19,11 +19,9 @@ type Survey = {
   archived: boolean;
   pinned: boolean;
   order: number;
-  projectId: string | null;
-  clientId: string | null;
+  assignedClientId: string | null;
   createdAt: string;
-  project: { id: string; title: string } | null;
-  client: { id: string; name: string } | null;
+  assignedClient: { id: string; name: string } | null;
   _count: { responses: number };
   viewCount: number;
 };
@@ -37,11 +35,11 @@ interface CustomTemplate {
 
 interface Props {
   surveys: Survey[];
-  projects: Project[];
+  clients: Client[];
   customTemplates: CustomTemplate[];
 }
 
-type SortMode = "manual" | "az" | "date";
+type SortMode = "manual" | "az" | "date" | "status";
 type GroupMode = "none" | "status";
 type ViewMode = "grid" | "list";
 type Tab = "active" | "archived" | "templates";
@@ -67,12 +65,24 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-export default function SurveysClient({ surveys: initial, projects, customTemplates }: Props) {
+export default function SurveysClient({ surveys: initial, clients, customTemplates }: Props) {
   const router = useRouter();
   const [surveys, setSurveys] = useState<Survey[]>(initial);
   const [query, setQuery] = useState("");
-  const [sort, setSort] = useState<SortMode>("manual");
-  const [group, setGroup] = useState<GroupMode>("none");
+  const [sort, setSort] = useState<SortMode>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("ankiety-sort");
+      if (saved === "manual" || saved === "az" || saved === "date" || saved === "status") return saved;
+    }
+    return "manual";
+  });
+  const [group, setGroup] = useState<GroupMode>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("ankiety-group");
+      if (saved === "none" || saved === "status") return saved;
+    }
+    return "none";
+  });
   const [view, setView] = useState<ViewMode>(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("ankiety-view");
@@ -95,12 +105,12 @@ export default function SurveysClient({ surveys: initial, projects, customTempla
       const q = query.toLowerCase();
       list = list.filter((s) =>
         s.name.toLowerCase().includes(q) ||
-        s.project?.title.toLowerCase().includes(q) ||
-        s.client?.name.toLowerCase().includes(q)
+        s.assignedClient?.name.toLowerCase().includes(q)
       );
     }
     if (sort === "az") list = [...list].sort((a, b) => a.name.localeCompare(b.name, "pl"));
     if (sort === "date") list = [...list].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    if (sort === "status") list = [...list].sort((a, b) => STATUS_ORDER.indexOf(a.status) - STATUS_ORDER.indexOf(b.status));
     return list;
   }, [surveys, query, sort, tab]);
 
@@ -156,9 +166,9 @@ export default function SurveysClient({ surveys: initial, projects, customTempla
   const archivedCount = surveys.filter((s) => s.archived).length;
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+      <div className="flex items-center justify-between px-6 py-4">
         <h1 className="text-xl font-semibold">Ankiety</h1>
         <button
           onClick={() => setNewOpen(true)}
@@ -170,7 +180,7 @@ export default function SurveysClient({ surveys: initial, projects, customTempla
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-1 px-4 sm:px-6 pt-3 border-b border-border overflow-x-auto scrollbar-none">
+      <div className="flex items-center gap-1 px-4 sm:px-6 pt-3 border-b border-border overflow-x-auto overflow-y-hidden scrollbar-none">
         <button
           onClick={() => setTab("active")}
           className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors -mb-px whitespace-nowrap ${tab === "active" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}
@@ -192,61 +202,75 @@ export default function SurveysClient({ surveys: initial, projects, customTempla
       </div>
 
       {/* Toolbar */}
-      <div className="px-4 sm:px-6 py-3 border-b border-border space-y-2">
-        {/* Search — full width */}
-        <div className="relative">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+      <div className="px-4 sm:px-6 py-3 flex items-center gap-2">
+        <div className="relative flex-1 min-w-0">
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
           <input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Szukaj ankiet..."
-            className="w-full pl-9 pr-3 py-1.5 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
+            className="w-full pl-9 pr-4 py-2 border border-border rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-transparent"
           />
         </div>
 
-        {/* Controls row — sort, group, view toggle always together */}
-        <div className="flex items-center gap-2">
+        {/* Sort — mobile icon button */}
+        <div className={`relative sm:hidden w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-md border ${sort !== "manual" ? "border-gray-900 bg-gray-900 dark:border-gray-100 dark:bg-gray-100" : "border-gray-200 bg-white dark:border-gray-700 dark:bg-card"}`}>
+          <ArrowDownUp size={14} className={`pointer-events-none ${sort !== "manual" ? "text-white dark:text-gray-900" : "text-gray-500"}`} />
           <select
             value={sort}
-            onChange={(e) => setSort(e.target.value as SortMode)}
-            className="flex-1 min-w-0 px-2 py-1.5 text-sm border border-border rounded-lg bg-background focus:outline-none"
+            onChange={(e) => { const v = e.target.value as SortMode; setSort(v); localStorage.setItem("ankiety-sort", v); }}
+            className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
           >
             <option value="manual">Ręcznie</option>
             <option value="az">A–Z</option>
             <option value="date">Najnowsze</option>
+            <option value="status">Status</option>
           </select>
+        </div>
 
-          <select
-            value={group}
-            onChange={(e) => setGroup(e.target.value as GroupMode)}
-            className="flex-1 min-w-0 px-2 py-1.5 text-sm border border-border rounded-lg bg-background focus:outline-none"
+        {/* Sort — desktop select */}
+        <select
+          value={sort}
+          onChange={(e) => { const v = e.target.value as SortMode; setSort(v); localStorage.setItem("ankiety-sort", v); }}
+          className="hidden sm:block flex-shrink-0 text-xs border border-gray-200 dark:border-gray-700 rounded-md px-2 py-2 bg-white dark:bg-card text-gray-600 dark:text-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-300"
+        >
+          <option value="manual">Ręcznie</option>
+          <option value="az">A–Z</option>
+          <option value="date">Najnowsze</option>
+          <option value="status">Status</option>
+        </select>
+
+        {/* Group — desktop only */}
+        <select
+          value={group}
+          onChange={(e) => { const v = e.target.value as GroupMode; setGroup(v); localStorage.setItem("ankiety-group", v); }}
+          className="hidden sm:block flex-shrink-0 text-xs border border-gray-200 dark:border-gray-700 rounded-md px-2 py-2 bg-white dark:bg-card text-gray-600 dark:text-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-300"
+        >
+          <option value="none">Grupowanie</option>
+          <option value="status">Wg statusu</option>
+        </select>
+
+        <div className="flex items-center gap-0.5 bg-muted rounded-md p-0.5 flex-shrink-0">
+          <button
+            onClick={() => handleSetView("grid")}
+            className={`p-1.5 rounded transition-colors ${view === "grid" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
           >
-            <option value="none">Bez grupowania</option>
-            <option value="status">Grupuj: status</option>
-          </select>
-
-          <div className="ml-auto flex items-center gap-1 border border-border rounded-lg p-0.5 shrink-0">
-            <button
-              onClick={() => handleSetView("grid")}
-              className={`p-1.5 rounded-md transition-colors ${view === "grid" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground"}`}
-            >
-              <LayoutGrid size={16} />
-            </button>
-            <button
-              onClick={() => handleSetView("list")}
-              className={`p-1.5 rounded-md transition-colors ${view === "list" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground"}`}
-            >
-              <List size={16} />
-            </button>
-          </div>
+            <LayoutGrid size={15} />
+          </button>
+          <button
+            onClick={() => handleSetView("list")}
+            className={`p-1.5 rounded transition-colors ${view === "list" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+          >
+            <List size={15} />
+          </button>
         </div>
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto">
+      <div>
         {tab === "templates" ? (
-          <TemplatesTab customTemplates={customTemplates} projects={projects} />
+          <TemplatesTab customTemplates={customTemplates} clients={clients} />
         ) : (
           <div className="p-3 sm:p-6">
             {filtered.length === 0 ? (
@@ -321,7 +345,8 @@ export default function SurveysClient({ surveys: initial, projects, customTempla
         open={newOpen}
         onClose={() => setNewOpen(false)}
         onCreated={handleCreated}
-        projects={projects}
+        clients={clients}
+        customTemplates={customTemplates}
       />
     </div>
   );
@@ -346,7 +371,7 @@ function SurveyCard({ survey, openMenuId, setOpenMenuId, onArchive, onPin, onDel
   return (
     <a
       href={`/ankiety/${survey.id}/edytuj`}
-      className="relative block bg-card border border-border rounded-xl p-4 hover:shadow-sm hover:border-primary/30 transition-all cursor-pointer"
+      className={`relative block bg-card border border-border rounded-xl p-4 hover:shadow-sm hover:border-primary/30 transition-all cursor-pointer ${open ? "z-10" : ""}`}
     >
       {survey.pinned && (
         <span className="absolute top-3 right-10 text-primary opacity-60">
@@ -374,8 +399,7 @@ function SurveyCard({ survey, openMenuId, setOpenMenuId, onArchive, onPin, onDel
       <StatusBadge status={survey.status} />
 
       <div className="mt-3 space-y-1 text-xs text-muted-foreground">
-        {survey.project && <p>Klient: {survey.project.title}</p>}
-        {survey.client && <p>Klient: {survey.client.name}</p>}
+        {survey.assignedClient && <p>Klient: {survey.assignedClient.name}</p>}
         <div className="flex items-center justify-between pt-1">
           <p>{formatDate(survey.createdAt)} · {survey._count?.responses ?? 0} odpowiedzi</p>
           {survey.status === "ACTIVE" && (survey.viewCount ?? 0) > 0 && (
@@ -410,14 +434,14 @@ function SurveyTable({ surveys, openMenuId, setOpenMenuId, onArchive, onPin, onD
           {surveys.map((survey, i) => {
             const open = openMenuId === survey.id;
             return (
-              <tr key={survey.id} className={`border-b border-border last:border-0 ${i % 2 === 0 ? "" : "bg-muted/20"}`}>
+              <tr key={survey.id} className={`border-b border-border last:border-0 ${i % 2 === 0 ? "" : "bg-muted/20"} ${openMenuId === survey.id ? "relative z-10" : ""}`}>
                 <td className="px-4 py-3">
                   <a href={`/ankiety/${survey.id}/edytuj`} className="font-medium hover:text-primary transition-colors">
                     {survey.name}
                   </a>
                 </td>
                 <td className="px-4 py-3"><StatusBadge status={survey.status} /></td>
-                <td className="px-4 py-3 hidden md:table-cell text-muted-foreground">{survey.project?.title ?? "—"}</td>
+                <td className="px-4 py-3 hidden md:table-cell text-muted-foreground">{survey.assignedClient?.name ?? "—"}</td>
                 <td className="px-4 py-3 hidden md:table-cell text-muted-foreground">{formatDate(survey.createdAt)}</td>
                 <td className="px-4 py-3 text-muted-foreground">
                   <div className="flex items-center gap-3">
@@ -462,8 +486,22 @@ function SurveyMenu({ survey, onClose, onArchive, onPin, onDelete, onCopyLink }:
   onDelete: (s: Survey) => void;
   onCopyLink: (s: Survey) => void;
 }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [above, setAbove] = useState(false);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    if (!ref.current) return;
+    const rect = ref.current.getBoundingClientRect();
+    if (rect.bottom > window.innerHeight) setAbove(true);
+    setVisible(true);
+  }, []);
+
   return (
-    <div className="absolute right-0 top-full mt-1 z-20 bg-card border border-border rounded-xl shadow-lg py-1 min-w-44">
+    <div
+      ref={ref}
+      className={`absolute right-0 ${above ? "bottom-full mb-1" : "top-full mt-1"} z-20 bg-card border border-border rounded-xl shadow-lg py-1 min-w-44 transition-none ${visible ? "" : "opacity-0"}`}
+    >
       <a
         href={`/ankiety/${survey.id}/odpowiedzi`}
         className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted transition-colors"
