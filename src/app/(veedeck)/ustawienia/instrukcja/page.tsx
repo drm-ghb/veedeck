@@ -6,6 +6,7 @@ import {
   Pin, Check, ExternalLink, History,
   Paperclip, Mic, CornerDownLeft, X, Users,
   Package, CalendarDays, NotebookText, VeezardIcon, CheckSquare,
+  Engineering, FolderOpen, Ruler,
 } from "@/components/ui/icons";
 
 /* ─── DESIGNER PANEL ────────────────────────────────────────────────────── */
@@ -66,7 +67,19 @@ const DESIGNER_MODULES: DesignerStep[] = [
     ],
   },
   {
-    title: "5. Produkty",
+    title: "5. Wykonawcy",
+    desc: "Moduł do zarządzania wykonawcami — hydraulikami, malarzami, firmami budowlanymi i innymi specjalistami. Każdy wykonawca ma własne konto w systemie i loguje się do swojego panelu, gdzie widzi tylko przypisane mu foldery i pliki. Możesz tworzyć strukturę folderów, wgrywać dokumentację techniczną i ukrywać foldery, które nie są jeszcze gotowe do udostępnienia.",
+    steps: [
+      "Dodaj wykonawcę z danymi kontaktowymi (firma lub osoba)",
+      "Utwórz konto — wykonawca dostanie dane do logowania",
+      "Przypisz wykonawcę do projektu",
+      "Twórz foldery (Rysunki, Wizualizacje, Inne) i wgrywaj pliki",
+      "Wykonawca loguje się do swojego panelu i widzi swoje materiały",
+      "Ukrywaj foldery, które nie są jeszcze gotowe do udostępnienia",
+    ],
+  },
+  {
+    title: "6. Produkty",
     desc: "Biblioteka produktów — Twoja baza mebli, oświetlenia, akcesoriów i materiałów, które często używasz w projektach. Produkty możesz dodawać ręcznie lub za pomocą rozszerzenia veepick, a następnie szybko wstawiać je do dowolnej listy zakupowej bez ponownego wpisywania danych.",
     tips: [
       "Rozszerzenie veepick pozwala dodać produkt ze sklepu internetowego do biblioteki lub bezpośrednio do listy jednym kliknięciem — bez kopiowania linku, ceny ani zdjęcia.",
@@ -79,7 +92,7 @@ const DESIGNER_MODULES: DesignerStep[] = [
     ],
   },
   {
-    title: "6. Kalendarz",
+    title: "7. Kalendarz",
     desc: "Osobisty kalendarz projektanta. Możesz planować spotkania z klientami, dodawać zadania do wykonania i ustawiać przypomnienia. Widok miesięczny, tygodniowy i dzienny. Do wydarzeń można zapraszać uczestników.",
     steps: [
       "Dodaj wydarzenie, zadanie lub przypomnienie",
@@ -89,7 +102,7 @@ const DESIGNER_MODULES: DesignerStep[] = [
     ],
   },
   {
-    title: "7. Notatnik",
+    title: "8. Notatnik",
     desc: "Prosty notatnik do zapisywania pomysłów, uwag i informacji przy projektach. Notatki widoczne są tylko dla Ciebie. Każda notatka może zawierać tekst lub szkic — wbudowany szkicownik działa na komputerze, telefonie i tablecie. Gotowe notatki można archiwizować.",
     steps: [
       "Utwórz nową notatkę i nadaj jej tytuł",
@@ -99,7 +112,7 @@ const DESIGNER_MODULES: DesignerStep[] = [
     ],
   },
   {
-    title: "8. Zadania",
+    title: "9. Zadania",
     desc: "Moduł do zarządzania zadaniami projektanta. Możesz tworzyć zadania powiązane z projektami, przypisywać je do siebie lub innych osób, ustawiać priorytety i terminy oraz śledzić postęp w widoku listy lub tablicy kanban.",
     steps: [
       "Dodaj nowe zadanie z tytułem, opisem i terminem",
@@ -110,7 +123,7 @@ const DESIGNER_MODULES: DesignerStep[] = [
     ],
   },
   {
-    title: "9. Veezard",
+    title: "10. Veezard",
     desc: "Wkrótce dostępny w veedeck.",
     steps: [],
   },
@@ -192,10 +205,65 @@ const CLIENT_MODULES: ClientModule[] = [
   },
 ];
 
+/* ─── CONTRACTOR PANEL ──────────────────────────────────────────────────── */
+
+const CONTRACTOR_MODULES: ClientModule[] = [
+  {
+    id: "projekty",
+    name: "Moje projekty",
+    icon: <FolderOpen size={22} />,
+    desc: "Wykonawca widzi listę projektów, do których został przypisany przez projektanta. Każdy projekt wyświetla foldery z ikonami według typu (rysunki, wizualizacje, inne) oraz badge z nowymi plikami.",
+    steps: [
+      "Loguje się do swojego panelu",
+      "Widzi listę przypisanych projektów z podstawowymi informacjami",
+      "Otwiera projekt i przegląda foldery z dokumentacją",
+      "Badge informuje o nowych lub nieodczytanych plikach",
+    ],
+    features: [
+      { icon: <FolderOpen size={16} />, label: "Foldery", desc: "Struktura folderów tworzona przez projektanta" },
+      { icon: <Ruler size={16} />, label: "Typy plików", desc: "Rysunki, wizualizacje i inne — każdy typ z inną ikoną" },
+    ],
+  },
+  {
+    id: "pliki",
+    name: "Przeglądarka plików",
+    icon: <Engineering size={22} />,
+    desc: "Wykonawca otwiera plik i może go powiększyć, pobrać lub zostawić komentarz w konkretnym miejscu — tak samo jak pinezka w ProjectFlow. Projektant widzi te komentarze po swojej stronie.",
+    steps: [
+      "Otwiera folder i klika w plik",
+      "Przegląda plik w pełnym widoku",
+      "Klika w konkretne miejsce, żeby dodać pin z komentarzem",
+      "Pobiera plik lub otwiera go w nowej karcie",
+    ],
+    features: [
+      { icon: <Pin size={16} />, label: "Pinezka", desc: "Komentarz przypisany do konkretnego miejsca na rysunku" },
+      { icon: <Comment size={16} />, label: "Komentarz", desc: "Ogólna uwaga do pliku" },
+      { icon: <ExternalLink size={16} />, label: "Pobierz", desc: "Pobieranie pliku na urządzenie" },
+    ],
+  },
+  {
+    id: "czat",
+    name: "Czat z projektantem",
+    icon: <ChatBubble size={22} />,
+    desc: "Każde przypisanie do projektu ma własny czat z projektantem. Wykonawca może pisać wiadomości, wysyłać zdjęcia i dokumenty oraz nagrywać głosówki — tak samo jak w Dyskusjach.",
+    steps: [
+      "Otwiera zakładkę z czatem w projekcie",
+      "Pisze wiadomość lub przesyła plik",
+      "Nagrywa wiadomość głosową (przytrzymaj mikrofon)",
+      "Odpowiada na konkretną wiadomość projektanta",
+    ],
+    features: [
+      { icon: <Paperclip size={16} />, label: "Załącznik", desc: "Wysyłanie zdjęcia lub dokumentu" },
+      { icon: <Mic size={16} />, label: "Głosówka", desc: "Nagrywanie i wysyłanie wiadomości głosowej" },
+      { icon: <CornerDownLeft size={16} />, label: "Odpowiedz", desc: "Odpowiedź na konkretną wiadomość" },
+    ],
+  },
+];
+
 /* ─── PAGE ───────────────────────────────────────────────────────────────── */
 
 export default function InstrukcjaPage() {
-  const [tab, setTab] = useState<"designer" | "client">("designer");
+  const [tab, setTab] = useState<"designer" | "client" | "contractor">("designer");
 
   return (
     <div className="max-w-3xl space-y-8">
@@ -229,6 +297,16 @@ export default function InstrukcjaPage() {
         >
           Panel klienta
         </button>
+        <button
+          onClick={() => setTab("contractor")}
+          className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${
+            tab === "contractor"
+              ? "bg-background text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          Panel wykonawcy
+        </button>
       </div>
 
       {/* ── Designer panel ── */}
@@ -245,11 +323,12 @@ export default function InstrukcjaPage() {
                   {idx === 1 && <PushPin size={22} />}
                   {idx === 2 && <LocalMall size={22} />}
                   {idx === 3 && <ChatBubble size={22} />}
-                  {idx === 4 && <Package size={22} />}
-                  {idx === 5 && <CalendarDays size={22} />}
-                  {idx === 6 && <NotebookText size={22} />}
-                  {idx === 7 && <CheckSquare size={22} />}
-                  {idx === 8 && <VeezardIcon size={22} />}
+                  {idx === 4 && <Engineering size={22} />}
+                  {idx === 5 && <Package size={22} />}
+                  {idx === 6 && <CalendarDays size={22} />}
+                  {idx === 7 && <NotebookText size={22} />}
+                  {idx === 8 && <CheckSquare size={22} />}
+                  {idx === 9 && <VeezardIcon size={22} />}
                 </div>
                 <h2 className="font-semibold text-gray-900 dark:text-gray-100">{mod.title}</h2>
               </div>
@@ -274,6 +353,57 @@ export default function InstrukcjaPage() {
                     ))}
                   </ul>
                 </div>}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ── Contractor panel ── */}
+      {tab === "contractor" && (
+        <div className="space-y-6">
+          <p className="text-sm text-muted-foreground">
+            Tak wygląda platforma z perspektywy wykonawcy — co widzi i co może zrobić w swoim panelu.
+          </p>
+          {CONTRACTOR_MODULES.map((mod) => (
+            <div key={mod.id} className="bg-card border border-border rounded-2xl overflow-hidden">
+              <div className="flex items-center gap-3 px-6 py-4 border-b border-border bg-muted/30">
+                <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
+                  {mod.icon}
+                </div>
+                <h2 className="font-semibold text-gray-900 dark:text-gray-100">{mod.name}</h2>
+              </div>
+              <div className="px-6 py-5 space-y-4">
+                <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{mod.desc}</p>
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Co widzi i robi wykonawca</p>
+                  <ul className="space-y-1.5">
+                    {mod.steps.map((step, i) => (
+                      <li key={i} className="flex items-start gap-2.5 text-sm text-gray-700 dark:text-gray-300">
+                        <span className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <Check size={10} className="text-primary" />
+                        </span>
+                        {step}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Dostępne funkcje</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {mod.features.map((f, i) => (
+                      <div key={i} className="flex items-start gap-3 bg-muted/40 rounded-xl px-3 py-2.5">
+                        <div className="w-7 h-7 rounded-lg bg-background border border-border flex items-center justify-center text-primary flex-shrink-0">
+                          {f.icon}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold text-gray-900 dark:text-gray-100">{f.label}</p>
+                          <p className="text-[11px] text-muted-foreground leading-snug mt-0.5">{f.desc}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           ))}
