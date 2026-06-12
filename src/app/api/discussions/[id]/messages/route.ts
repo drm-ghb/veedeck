@@ -20,6 +20,7 @@ export async function GET(
   const messages = await prisma.discussionMessage.findMany({
     where: { discussionId: id },
     orderBy: { createdAt: "asc" },
+    include: { reactions: { select: { userId: true, userName: true, emoji: true } } },
   });
 
   const receipts = await prisma.discussionReadReceipt.findMany({

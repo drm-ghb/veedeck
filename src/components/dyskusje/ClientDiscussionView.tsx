@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { ChatBubble, ExternalLink, Paperclip, FileText, FileSpreadsheet, File as FileIcon, Loader2, FolderOpen, X, Mic, Square, Search, Edit2, Trash2, CornerDownLeft, MoreVertical, Send } from "@/components/ui/icons";
+import { ChatBubble, ExternalLink, Paperclip, FileText, FileSpreadsheet, File as FileIcon, Loader2, FolderOpen, X, Mic, Square, Search, Edit2, Trash2, CornerDownLeft, MoreVertical, Send, AddReaction } from "@/components/ui/icons";
 import { toast } from "sonner";
 import Pusher from "pusher-js";
 import { useUploadThing } from "@/lib/uploadthing-client";
@@ -9,6 +9,12 @@ import { convertHeicFiles } from "@/lib/convert-heic";
 import ImageAnnotationModal from "./ImageAnnotationModal";
 import { SwipeableMessage } from "@/components/ui/swipeable-message";
 import { playMessageSound } from "@/lib/notification-sound";
+
+interface MessageReaction {
+  userId: string;
+  userName: string;
+  emoji: string;
+}
 
 interface DiscussionMessage {
   id: string;
@@ -28,6 +34,7 @@ interface DiscussionMessage {
   replyToAuthor?: string | null;
   createdAt: string;
   editedAt?: string | null;
+  reactions?: MessageReaction[];
 }
 
 interface ReadReceipt {
@@ -216,6 +223,8 @@ function dayLabel(iso: string) {
   return new Date(iso).toLocaleDateString("pl-PL", { day: "2-digit", month: "long", year: "numeric" });
 }
 
+const REACTION_EMOJIS = ["❤️", "😂", "😮", "😢", "😡", "👍"];
+
 export default function ClientDiscussionView({ token, discussionId, discussionTitle, apiBasePath, initialAuthorName, currentUserId, currentUserAvatarUrl }: Props) {
   const msgApiBase = apiBasePath ?? `/api/share/${token}/discussions/${discussionId}`;
   const [messages, setMessages] = useState<DiscussionMessage[]>([]);
@@ -228,6 +237,9 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
   const [editingMsgContent, setEditingMsgContent] = useState("");
   const [replyingToMsg, setReplyingToMsg] = useState<{ id: string; content: string; author: string } | null>(null);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [openEmojiPickerId, setOpenEmojiPickerId] = useState<string | null>(null);
+  const [showMobileActionsId, setShowMobileActionsId] = useState<string | null>(null);
+  const emojiPickerRef = useRef<HTMLDivElement>(null);
   const [pendingAttachments, setPendingAttachments] = useState<PendingAttachment[]>([]);
   const [uploading, setUploading] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
@@ -333,6 +345,10 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
       setMessages((prev) => prev.filter((m) => m.id !== id));
     });
 
+    channel.bind("reaction-updated", ({ messageId, reactions }: { messageId: string; reactions: MessageReaction[] }) => {
+      setMessages((prev) => prev.map((m) => m.id === messageId ? { ...m, reactions } : m));
+    });
+
     return () => {
       pusherRef.current?.unsubscribe(`discussion-${discussionId}`);
     };
@@ -387,6 +403,15 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
     const files = Array.from(e.dataTransfer.files);
     if (files.length > 0) await uploadFiles(files);
   }, [uploadFiles]);
+
+  useEffect(() => {
+    if (!openEmojiPickerId) return;
+    function handle(e: MouseEvent) {
+      if (emojiPickerRef.current && !emojiPickerRef.current.contains(e.target as Node)) setOpenEmojiPickerId(null);
+    }
+    document.addEventListener("mousedown", handle);
+    return () => document.removeEventListener("mousedown", handle);
+  }, [openEmojiPickerId]);
 
   const startRecording = useCallback(async () => {
     try {
@@ -464,6 +489,27 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
       toast.error("Nie udało się usunąć wiadomości");
     }
   }, [msgApiBase, apiBasePath, authorName]);
+
+  const handleToggleReaction = useCallback(async (msgId: string, emoji: string) => {
+    if (!currentUserId) return;
+    setMessages((prev) => prev.map((m) => {
+      if (m.id !== msgId) return m;
+      const existing = m.reactions?.find((r) => r.userId === currentUserId && r.emoji === emoji);
+      const reactions = existing
+        ? (m.reactions || []).filter((r) => !(r.userId === currentUserId && r.emoji === emoji))
+        : [...(m.reactions || []), { userId: currentUserId, userName: initialAuthorName || authorName || "Gość", emoji }];
+      return { ...m, reactions };
+    }));
+    const res = await fetch(`${msgApiBase}/messages/${msgId}/reactions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ emoji }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      setMessages((prev) => prev.map((m) => m.id === msgId ? { ...m, reactions: data.reactions } : m));
+    }
+  }, [msgApiBase, currentUserId, initialAuthorName, authorName]);
 
   const sendMessage = useCallback(async () => {
     if ((!input.trim() && pendingAttachments.length === 0) || sending || !authorName) return;
@@ -767,6 +813,33 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
                       >
                         <CornerDownLeft size={14} />
                       </button>
+                      {currentUserId && (
+                        <div className="relative hidden md:block">
+                          <button
+                            onClick={() => setOpenEmojiPickerId(openEmojiPickerId === msg.id ? null : msg.id)}
+                            title="Reaguj"
+                            className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                          >
+                            <AddReaction size={14} />
+                          </button>
+                          {openEmojiPickerId === msg.id && (
+                            <div ref={emojiPickerRef} className={`absolute bottom-full mb-1 ${isOwn ? "right-0" : "left-0"} bg-popover border border-border rounded-2xl shadow-lg z-50 p-1.5 flex gap-0.5`}>
+                              {REACTION_EMOJIS.map((emoji) => {
+                                const hasReacted = msg.reactions?.some((r) => r.userId === currentUserId && r.emoji === emoji);
+                                return (
+                                  <button
+                                    key={emoji}
+                                    onClick={() => { handleToggleReaction(msg.id, emoji); setOpenEmojiPickerId(null); }}
+                                    className={`w-8 h-8 flex items-center justify-center rounded-xl text-base transition-all hover:scale-125 ${hasReacted ? "bg-primary/15 ring-2 ring-primary/30" : "hover:bg-muted"}`}
+                                  >
+                                    {emoji}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      )}
                       {(canEdit || canDelete) && (
                         <div className="relative">
                           <button
@@ -801,13 +874,13 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
                   );
 
                   return (
-                    <div key={msg.id} className={`flex items-end gap-2 ${isOwn ? "justify-end" : "justify-start"} group`} onClick={() => { if (openMenuId) setOpenMenuId(null); }}>
+                    <div key={msg.id} className={`flex items-end gap-2 ${isOwn ? "justify-end" : "justify-start"} group ${msg.reactions && msg.reactions.length > 0 ? "mb-6" : "mb-1.5"}`} onClick={() => { if (openMenuId) setOpenMenuId(null); }}>
                       {!isOwn && <Avatar name={msg.authorName} />}
                       <div className="max-w-[75%]">
                       <SwipeableMessage
                         isOwn={isOwn}
                         onReply={() => setReplyingToMsg({ id: msg.id, content: msg.content || "[załącznik]", author: msg.authorName })}
-                        onLongPress={(canEdit || canDelete) ? () => setOpenMenuId(msg.id) : undefined}
+                        onLongPress={() => setShowMobileActionsId(msg.id)}
                       >
                       <div className={`flex flex-col gap-0.5 ${isOwn ? "items-end" : "items-start"}`}>
                         {msg.replyToContent && (
@@ -835,12 +908,30 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
                             </div>
                           </div>
                         ) : (
-                          <div className="relative">
+                          (() => {
+                            const reactions = msg.reactions || [];
+                            const grouped = reactions.reduce((acc: Record<string, MessageReaction[]>, r) => {
+                              if (!acc[r.emoji]) acc[r.emoji] = [];
+                              acc[r.emoji].push(r);
+                              return acc;
+                            }, {});
+                            return (
+                          <div className={`relative w-fit ${reactions.length > 0 ? "pb-3" : ""}`}>
                             <div className={`flex flex-col gap-0.5 ${isOwn ? "items-end" : "items-start"}`}>
                               {msg.content && (
                                 <div className={`rounded-2xl px-3 py-2 text-sm ${isOwn ? "bg-primary text-primary-foreground" : "bg-background border border-border"}`}>
                                   {renderWithLinks(msg.content, isOwn)}
                                   {msg.editedAt && <span className="text-[10px] opacity-50 ml-1.5">(edytowano)</span>}
+                                  {!msg.attachmentType && (
+                                    <div className={`flex justify-end items-center gap-1 mt-1 -mb-0.5 ${isOwn ? "text-primary-foreground/50" : "text-muted-foreground/60"}`}>
+                                      {isOwn && receipts.filter((r) => r.lastMessageId === msg.id && r.readerName !== authorName).map((r) => (
+                                        <span key={r.readerId} title={`${r.readerName} przeczytał(a)`} className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[8px] font-bold leading-none flex-shrink-0 ${isOwn ? "bg-white/60 text-primary" : "bg-primary/30 text-primary"}`}>
+                                          {r.readerName.charAt(0).toUpperCase()}
+                                        </span>
+                                      ))}
+                                      <span className="text-[10px] whitespace-nowrap leading-none">{formatTimeOnly(msg.createdAt)}</span>
+                                    </div>
+                                  )}
                                 </div>
                               )}
                               {msg.attachmentType === "image" && msg.attachmentUrl && (
@@ -876,17 +967,23 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
                                 </div>
                               )}
                               {msg.attachmentType === "pdf" && msg.attachmentUrl && (
-                                <div className="flex flex-col gap-1 max-w-[280px]">
+                                <div className="max-w-[280px] w-[280px] rounded-xl overflow-hidden border border-border">
+                                  <a
+                                    href={msg.attachmentUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-2 px-3 py-2 bg-muted/60 hover:bg-muted transition-colors border-b border-border"
+                                  >
+                                    <FileText size={15} className="text-red-500 flex-shrink-0" />
+                                    <span className="text-xs font-medium truncate flex-1">{msg.attachmentName || "Dokument PDF"}</span>
+                                    <ExternalLink size={11} className="text-muted-foreground flex-shrink-0" />
+                                  </a>
                                   <iframe
                                     src={msg.attachmentUrl}
-                                    className="w-full rounded-xl border border-border"
+                                    className="w-full block"
                                     style={{ height: "200px", border: "none" }}
                                     title={msg.attachmentName || "PDF"}
                                   />
-                                  <a href={msg.attachmentUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground px-1 transition-colors">
-                                    <ExternalLink size={11} />
-                                    Otwórz pełny PDF
-                                  </a>
                                 </div>
                               )}
                               {msg.attachmentType === "document" && msg.attachmentUrl && (
@@ -904,34 +1001,83 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
                               {msg.attachmentType === "audio" && msg.attachmentUrl && (
                                 <audio src={msg.attachmentUrl} controls className="max-w-[260px] rounded-xl" />
                               )}
+                              {msg.attachmentType && (
+                                <div className={`flex justify-end items-center gap-1 mt-0.5 ${isOwn ? "text-foreground/50" : "text-muted-foreground/60"}`}>
+                                  {isOwn && receipts.filter((r) => r.lastMessageId === msg.id && r.readerName !== authorName).map((r) => (
+                                    <span key={r.readerId} title={`${r.readerName} przeczytał(a)`} className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[8px] font-bold leading-none flex-shrink-0 ${isOwn ? "bg-white/60 text-primary" : "bg-primary/30 text-primary"}`}>
+                                      {r.readerName.charAt(0).toUpperCase()}
+                                    </span>
+                                  ))}
+                                  <span className="text-[10px] whitespace-nowrap leading-none">{formatTimeOnly(msg.createdAt)}</span>
+                                </div>
+                              )}
                             </div>
+                            {reactions.length > 0 && (
+                              <div className="absolute bottom-0 right-0 translate-y-1/2 translate-x-1/4 flex gap-0.5 z-10">
+                                {Object.entries(grouped).map(([emoji, rs]) => (
+                                  <button
+                                    key={emoji}
+                                    onClick={() => handleToggleReaction(msg.id, emoji)}
+                                    title={rs.map((r) => r.userName).join(", ")}
+                                    className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs border shadow-sm transition-colors ${rs.some((r) => r.userId === currentUserId) ? "bg-primary/15 border-primary/30 text-primary" : "bg-card border-border text-foreground hover:bg-muted"}`}
+                                  >
+                                    {emoji}{rs.length > 1 && <span className="font-medium ml-0.5">{rs.length}</span>}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
                             {actionBar}
                           </div>
+                            );
+                          })()
                         )}
-                        {(() => {
-                          if (!isOwn) return null;
-                          const msgReceipts = receipts.filter(
-                            (r) => r.lastMessageId === msg.id && r.readerName !== authorName
-                          );
-                          return msgReceipts.length > 0 ? (
-                            <div className="flex items-center gap-1 px-1 mt-0.5">
-                              {msgReceipts.map((r) => (
-                                <span
-                                  key={r.readerId}
-                                  title={`${r.readerName} przeczytał(a)`}
-                                  className="w-4 h-4 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[9px] font-bold leading-none flex-shrink-0 cursor-default select-none"
-                                >
-                                  {r.readerName.charAt(0).toUpperCase()}
-                                </span>
-                              ))}
-                            </div>
-                          ) : null;
-                        })()}
-                        <span className="text-xs text-muted-foreground px-1 whitespace-nowrap">{formatTimeOnly(msg.createdAt)}</span>
                       </div>
                       </SwipeableMessage>
                       </div>
                       {isOwn && <Avatar name={msg.authorName} logoUrl={currentUserAvatarUrl} />}
+                      {showMobileActionsId === msg.id && (
+                        <div className="fixed inset-0 z-50 flex flex-col justify-end md:hidden" onClick={() => setShowMobileActionsId(null)}>
+                          <div className="bg-background border-t border-border rounded-t-2xl p-4 flex flex-col gap-3" onClick={(e) => e.stopPropagation()}>
+                            {currentUserId && (
+                              <div className="flex gap-2 justify-center">
+                                {REACTION_EMOJIS.map((emoji) => {
+                                  const hasReacted = msg.reactions?.some((r) => r.userId === currentUserId && r.emoji === emoji);
+                                  return (
+                                    <button
+                                      key={emoji}
+                                      onClick={() => { handleToggleReaction(msg.id, emoji); setShowMobileActionsId(null); }}
+                                      className={`w-10 h-10 flex items-center justify-center rounded-xl text-xl transition-all ${hasReacted ? "bg-primary/15 ring-2 ring-primary/30" : "hover:bg-muted"}`}
+                                    >
+                                      {emoji}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            )}
+                            {(canEdit || canDelete) && (
+                              <div className="flex flex-col gap-1">
+                                {canEdit && (
+                                  <button
+                                    onClick={() => { setEditingMsgContent(msg.content); setEditingMsgId(msg.id); setShowMobileActionsId(null); }}
+                                    className="w-full text-left px-4 py-3 text-sm hover:bg-muted flex items-center gap-3 rounded-xl transition-colors"
+                                  >
+                                    <Edit2 size={16} className="text-muted-foreground" /> Edytuj
+                                  </button>
+                                )}
+                                {canDelete && (
+                                  <button
+                                    onClick={() => { handleDeleteMsg(msg.id); setShowMobileActionsId(null); }}
+                                    className="w-full text-left px-4 py-3 text-sm text-destructive hover:bg-destructive/10 flex items-center gap-3 rounded-xl transition-colors"
+                                  >
+                                    <Trash2 size={16} /> Usuń
+                                  </button>
+                                )}
+                              </div>
+                            )}
+                            <button onClick={() => setShowMobileActionsId(null)} className="w-full py-2 text-sm text-muted-foreground text-center">Anuluj</button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   );
                     })}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { ChatBubble, Plus, Trash2, Edit2, Check, X, ExternalLink, ChevronDown, ChevronLeft, Paperclip, FileText, FileSpreadsheet, File as FileIcon, Loader2, FolderOpen, Mic, Square, Search, Archive, ArchiveRestore, CornerDownLeft, MoreVertical, Send, Users, UserPlus, UserMinus } from "@/components/ui/icons";
+import { ChatBubble, Plus, Trash2, Edit2, Check, X, ExternalLink, ChevronDown, ChevronLeft, Paperclip, FileText, FileSpreadsheet, File as FileIcon, Loader2, FolderOpen, Mic, Square, Search, Archive, ArchiveRestore, CornerDownLeft, MoreVertical, Send, Users, UserPlus, UserMinus, AddReaction } from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -52,6 +52,12 @@ interface DiscussionSummary {
   participants?: Participant[];
 }
 
+interface MessageReaction {
+  userId: string;
+  userName: string;
+  emoji: string;
+}
+
 interface DiscussionMessage {
   id: string;
   discussionId: string;
@@ -71,6 +77,7 @@ interface DiscussionMessage {
   replyToAuthor?: string | null;
   createdAt: string;
   editedAt?: string | null;
+  reactions?: MessageReaction[];
 }
 
 interface ProjectOption {
@@ -193,7 +200,9 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
   const [annotatingImage, setAnnotatingImage] = useState<string | null>(null);
   const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
   const [sendingAnnotation, setSendingAnnotation] = useState(false);
+  const [mobileActionsOpen, setMobileActionsOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const mobileActionsRef = useRef<HTMLDivElement>(null);
   const inputTextareaRef = useRef<HTMLTextAreaElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -320,6 +329,16 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
   }, []);
 
   useEffect(() => {
+    function handle(e: MouseEvent) {
+      if (mobileActionsRef.current && !mobileActionsRef.current.contains(e.target as Node)) {
+        setMobileActionsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handle);
+    return () => document.removeEventListener("mousedown", handle);
+  }, []);
+
+  useEffect(() => {
     if (!selectedId) return;
     setLoadingMessages(true);
     fetch(`/api/discussions/${selectedId}/messages`)
@@ -396,6 +415,10 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
 
     channel.bind("message-deleted", ({ id }: { id: string }) => {
       setMessages((prev) => prev.filter((m) => m.id !== id));
+    });
+
+    channel.bind("reaction-updated", ({ messageId, reactions }: { messageId: string; reactions: MessageReaction[] }) => {
+      setMessages((prev) => prev.map((m) => m.id === messageId ? { ...m, reactions } : m));
     });
 
     return () => {
@@ -783,6 +806,27 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
     } else {
       toast.error("Nie udało się usunąć wiadomości");
     }
+  }
+
+  async function handleToggleReaction(msgId: string, emoji: string) {
+    if (!selectedId) return;
+    // Optimistic update
+    setMessages((prev) => prev.map((m) => {
+      if (m.id !== msgId) return m;
+      const reactions = m.reactions ?? [];
+      const has = reactions.some((r) => r.userId === currentUserId && r.emoji === emoji);
+      return {
+        ...m,
+        reactions: has
+          ? reactions.filter((r) => !(r.userId === currentUserId && r.emoji === emoji))
+          : [...reactions, { userId: currentUserId, userName: "Ja", emoji }],
+      };
+    }));
+    await fetch(`/api/discussions/${selectedId}/messages/${msgId}/reactions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ emoji }),
+    });
   }
 
   async function deleteDiscussion(id: string) {
@@ -1182,65 +1226,139 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                     )}
                   </div>
                   <div className="ml-auto flex gap-1 items-center">
-                    <button
-                      onClick={() => { setChatSearchOpen((v) => !v); setChatSearch(""); }}
-                      title="Szukaj w wiadomościach"
-                      className={`p-1.5 rounded-lg transition-colors ${chatSearchOpen ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
-                    >
-                      <Search size={14} />
-                    </button>
-                    {(() => {
-                      const fileCount = messages.filter((m) => m.attachmentType === "document" || m.attachmentType === "pdf" || m.attachmentType === "image").length;
-                      return (
-                        <button
-                          onClick={() => { setShowResources((v) => !v); setResourceTab("all"); setShowMembers(false); }}
-                          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs transition-colors ${showResources ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
-                          title="Pliki dyskusji"
-                        >
-                          <FolderOpen size={13} />
-                          Pliki{fileCount > 0 && <span className="font-semibold">{fileCount}</span>}
-                        </button>
-                      );
-                    })()}
-                    {!isTeamMember && (
+                    {/* Desktop tools */}
+                    <div className="hidden md:flex gap-1 items-center">
                       <button
-                        onClick={() => {
-                          const opening = !showMembers;
-                          setShowMembers(opening);
-                          if (opening) { loadMembers(selected.id); setShowResources(false); }
-                        }}
-                        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs transition-colors ${showMembers ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
-                        title="Uczestnicy dyskusji"
+                        onClick={() => { setChatSearchOpen((v) => !v); setChatSearch(""); }}
+                        title="Szukaj w wiadomościach"
+                        className={`p-1.5 rounded-lg transition-colors ${chatSearchOpen ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
                       >
-                        <Users size={13} />
-                        Uczestnicy
-                        {/* +1 for owner */}
-                        {((selected.participants?.length ?? 0) + 1) > 1 && (
-                          <span className="font-semibold">{(selected.participants?.length ?? 0) + 1}</span>
-                        )}
+                        <Search size={14} />
                       </button>
-                    )}
-                    <button
-                      onClick={startHeaderEdit}
-                      className="p-1.5 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-                      title="Edytuj"
-                    >
-                      <Edit2 size={14} />
-                    </button>
-                    <button
-                      onClick={() => selected.archived ? toggleArchive(selected.id, true) : setShowArchiveConfirm(true)}
-                      className="p-1.5 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-                      title={selected.archived ? "Przywróć dyskusję" : "Zarchiwizuj dyskusję"}
-                    >
-                      {selected.archived ? <ArchiveRestore size={14} /> : <Archive size={14} />}
-                    </button>
-                    <button
-                      onClick={() => deleteDiscussion(selected.id)}
-                      className="p-1.5 rounded-lg text-muted-foreground hover:bg-muted hover:text-destructive transition-colors"
-                      title="Usuń dyskusję"
-                    >
-                      <Trash2 size={14} />
-                    </button>
+                      {(() => {
+                        const fileCount = messages.filter((m) => m.attachmentType === "document" || m.attachmentType === "pdf" || m.attachmentType === "image").length;
+                        return (
+                          <button
+                            onClick={() => { setShowResources((v) => !v); setResourceTab("all"); setShowMembers(false); }}
+                            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs transition-colors ${showResources ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
+                            title="Pliki dyskusji"
+                          >
+                            <FolderOpen size={13} />
+                            Pliki{fileCount > 0 && <span className="font-semibold">{fileCount}</span>}
+                          </button>
+                        );
+                      })()}
+                      {!isTeamMember && (
+                        <button
+                          onClick={() => {
+                            const opening = !showMembers;
+                            setShowMembers(opening);
+                            if (opening) { loadMembers(selected.id); setShowResources(false); }
+                          }}
+                          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs transition-colors ${showMembers ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
+                          title="Uczestnicy dyskusji"
+                        >
+                          <Users size={13} />
+                          Uczestnicy
+                          {((selected.participants?.length ?? 0) + 1) > 1 && (
+                            <span className="font-semibold">{(selected.participants?.length ?? 0) + 1}</span>
+                          )}
+                        </button>
+                      )}
+                      <button
+                        onClick={startHeaderEdit}
+                        className="p-1.5 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                        title="Edytuj"
+                      >
+                        <Edit2 size={14} />
+                      </button>
+                      <button
+                        onClick={() => selected.archived ? toggleArchive(selected.id, true) : setShowArchiveConfirm(true)}
+                        className="p-1.5 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                        title={selected.archived ? "Przywróć dyskusję" : "Zarchiwizuj dyskusję"}
+                      >
+                        {selected.archived ? <ArchiveRestore size={14} /> : <Archive size={14} />}
+                      </button>
+                      <button
+                        onClick={() => deleteDiscussion(selected.id)}
+                        className="p-1.5 rounded-lg text-muted-foreground hover:bg-muted hover:text-destructive transition-colors"
+                        title="Usuń dyskusję"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+
+                    {/* Mobile: 3-dot menu */}
+                    <div className="md:hidden relative" ref={mobileActionsRef}>
+                      <button
+                        onClick={() => setMobileActionsOpen((v) => !v)}
+                        className={`p-1.5 rounded-lg transition-colors ${mobileActionsOpen ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
+                        aria-label="Opcje wątku"
+                      >
+                        <MoreVertical size={18} />
+                      </button>
+                      {mobileActionsOpen && (
+                        <div className="absolute right-0 top-full mt-1 w-52 bg-card border border-border rounded-xl shadow-lg z-50 py-1 overflow-hidden">
+                          <button
+                            onClick={() => { setChatSearchOpen((v) => !v); setChatSearch(""); setMobileActionsOpen(false); }}
+                            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
+                          >
+                            <Search size={15} className="shrink-0 text-muted-foreground" />
+                            Szukaj w dyskusji
+                          </button>
+                          <button
+                            onClick={() => { setShowResources((v) => !v); setResourceTab("all"); setShowMembers(false); setMobileActionsOpen(false); }}
+                            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
+                          >
+                            <FolderOpen size={15} className="shrink-0 text-muted-foreground" />
+                            Pliki dyskusji
+                            {(() => {
+                              const fileCount = messages.filter((m) => m.attachmentType === "document" || m.attachmentType === "pdf" || m.attachmentType === "image").length;
+                              return fileCount > 0 ? <span className="ml-auto text-xs text-muted-foreground">{fileCount}</span> : null;
+                            })()}
+                          </button>
+                          {!isTeamMember && (
+                            <button
+                              onClick={() => {
+                                const opening = !showMembers;
+                                setShowMembers(opening);
+                                if (opening) { loadMembers(selected.id); setShowResources(false); }
+                                setMobileActionsOpen(false);
+                              }}
+                              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
+                            >
+                              <Users size={15} className="shrink-0 text-muted-foreground" />
+                              Uczestnicy
+                              {((selected.participants?.length ?? 0) + 1) > 1 && (
+                                <span className="ml-auto text-xs text-muted-foreground">{(selected.participants?.length ?? 0) + 1}</span>
+                              )}
+                            </button>
+                          )}
+                          <div className="mx-3 my-1 border-t border-border" />
+                          <button
+                            onClick={() => { startHeaderEdit(); setMobileActionsOpen(false); }}
+                            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
+                          >
+                            <Edit2 size={15} className="shrink-0 text-muted-foreground" />
+                            Edytuj tytuł
+                          </button>
+                          <button
+                            onClick={() => { selected.archived ? toggleArchive(selected.id, true) : setShowArchiveConfirm(true); setMobileActionsOpen(false); }}
+                            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
+                          >
+                            {selected.archived ? <ArchiveRestore size={15} className="shrink-0 text-muted-foreground" /> : <Archive size={15} className="shrink-0 text-muted-foreground" />}
+                            {selected.archived ? "Przywróć dyskusję" : "Zarchiwizuj"}
+                          </button>
+                          <button
+                            onClick={() => { deleteDiscussion(selected.id); setMobileActionsOpen(false); }}
+                            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
+                          >
+                            <Trash2 size={15} className="shrink-0" />
+                            Usuń dyskusję
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}
@@ -1304,6 +1422,7 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                             key={msg.id}
                             msg={msg}
                             isOwn={isOwn}
+                            currentUserId={currentUserId}
                             ownAvatarUrl={isOwn ? currentUserAvatarUrl : undefined}
                             onImageClick={setAnnotatingImage}
                             receipts={isOwn
@@ -1312,6 +1431,7 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                             onEdit={isOwn ? (content) => handleEditMsg(msg.id, content) : undefined}
                             onDelete={isOwn ? () => handleDeleteMsg(msg.id) : undefined}
                             onReply={() => setReplyingToMsg({ id: msg.id, content: msg.content || "[załącznik]", author: msg.authorName })}
+                            onReact={(emoji) => handleToggleReaction(msg.id, emoji)}
                           />
                         );
                       })}
@@ -1817,20 +1937,27 @@ function renderWithLinks(content: string, isOwn: boolean) {
   });
 }
 
-function MessageBubble({ msg, isOwn, ownAvatarUrl, onImageClick, receipts, onEdit, onDelete, onReply }: {
+const REACTION_EMOJIS = ["❤️", "😂", "😮", "😢", "😡", "👍"];
+
+function MessageBubble({ msg, isOwn, currentUserId, ownAvatarUrl, onImageClick, receipts, onEdit, onDelete, onReply, onReact }: {
   msg: DiscussionMessage;
   isOwn: boolean;
+  currentUserId?: string;
   ownAvatarUrl?: string | null;
   onImageClick: (url: string) => void;
   receipts?: ReadReceipt[];
   onEdit?: (content: string) => void;
   onDelete?: () => void;
   onReply?: () => void;
+  onReact?: (emoji: string) => void;
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(msg.content);
   const [showMenu, setShowMenu] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [showMobileActions, setShowMobileActions] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const emojiPickerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!showMenu) return;
@@ -1841,6 +1968,15 @@ function MessageBubble({ msg, isOwn, ownAvatarUrl, onImageClick, receipts, onEdi
     return () => document.removeEventListener("mousedown", handle);
   }, [showMenu]);
 
+  useEffect(() => {
+    if (!showEmojiPicker) return;
+    function handle(e: MouseEvent) {
+      if (emojiPickerRef.current && !emojiPickerRef.current.contains(e.target as Node)) setShowEmojiPicker(false);
+    }
+    document.addEventListener("mousedown", handle);
+    return () => document.removeEventListener("mousedown", handle);
+  }, [showEmojiPicker]);
+
   function saveEdit() {
     const trimmed = editContent.trim();
     if (!trimmed || trimmed === msg.content) { setIsEditing(false); return; }
@@ -1850,6 +1986,32 @@ function MessageBubble({ msg, isOwn, ownAvatarUrl, onImageClick, receipts, onEdi
 
   const actionBar = !isEditing && (
     <div className={`absolute top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 ${isOwn ? "right-full pr-1 flex-row-reverse" : "left-full pl-1"}`}>
+      {/* Emoji reaction picker — desktop only */}
+      <div className="hidden md:block relative" ref={emojiPickerRef}>
+        <button
+          onClick={() => setShowEmojiPicker(v => !v)}
+          title="Dodaj reakcję"
+          className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+        >
+          <AddReaction size={14} />
+        </button>
+        {showEmojiPicker && (
+          <div className={`absolute bottom-full mb-1 ${isOwn ? "right-0" : "left-0"} bg-popover border border-border rounded-2xl shadow-lg z-50 p-1.5 flex gap-0.5`}>
+            {REACTION_EMOJIS.map((emoji) => {
+              const hasReacted = msg.reactions?.some((r) => r.userId === currentUserId && r.emoji === emoji);
+              return (
+                <button
+                  key={emoji}
+                  onClick={() => { onReact?.(emoji); setShowEmojiPicker(false); }}
+                  className={`w-8 h-8 flex items-center justify-center rounded-xl text-base transition-all hover:scale-125 ${hasReacted ? "bg-primary/15 ring-2 ring-primary/30" : "hover:bg-muted"}`}
+                >
+                  {emoji}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
       <button
         onClick={onReply}
         title="Odpowiedz"
@@ -1891,13 +2053,13 @@ function MessageBubble({ msg, isOwn, ownAvatarUrl, onImageClick, receipts, onEdi
   );
 
   return (
-    <div className={`flex items-end gap-2 ${isOwn ? "justify-end" : "justify-start"} group`}>
+    <div className={`flex items-end gap-2 ${isOwn ? "justify-end" : "justify-start"} group ${msg.reactions && msg.reactions.length > 0 ? "mb-6" : "mb-1.5"}`}>
       {!isOwn && <Avatar name={msg.authorName} />}
       <div className="max-w-[75%]">
       <SwipeableMessage
         isOwn={isOwn}
         onReply={onReply}
-        onLongPress={(onEdit || onDelete) ? () => setShowMenu(true) : undefined}
+        onLongPress={() => setShowMobileActions(true)}
       >
       <div className={`flex flex-col gap-0.5 ${isOwn ? "items-end" : "items-start"}`}>
         {isEditing ? (
@@ -1923,12 +2085,36 @@ function MessageBubble({ msg, isOwn, ownAvatarUrl, onImageClick, receipts, onEdi
                 <span className="text-muted-foreground">{msg.replyToContent.length > 100 ? msg.replyToContent.slice(0, 100) + "…" : msg.replyToContent}</span>
               </div>
             )}
+            {(() => {
+              const reactions = msg.reactions && msg.reactions.length > 0
+                ? REACTION_EMOJIS.map((emoji) => {
+                    const group = msg.reactions!.filter((r) => r.emoji === emoji);
+                    if (group.length === 0) return null;
+                    return {
+                      emoji,
+                      count: group.length,
+                      hasReacted: group.some((r) => r.userId === currentUserId),
+                      names: group.map((r) => r.userName).join(", "),
+                    };
+                  }).filter(Boolean) as { emoji: string; count: number; hasReacted: boolean; names: string }[]
+                : [];
+              return (
             <div className="relative">
-              <div className={`flex flex-col gap-0.5 ${isOwn ? "items-end" : "items-start"}`}>
+              <div className={`relative w-fit flex flex-col gap-0.5 ${isOwn ? "items-end ml-auto" : "items-start"} ${reactions.length > 0 ? "pb-3" : ""}`}>
                 {msg.content && (
                   <div className={`rounded-2xl px-3 py-2 text-sm ${isOwn ? "bg-primary text-primary-foreground" : "bg-background border border-border"}`}>
                     {renderWithLinks(msg.content, isOwn)}
                     {msg.editedAt && <span className="text-[10px] opacity-50 ml-1.5">(edytowano)</span>}
+                    {!msg.attachmentType && (
+                      <div className={`flex justify-end items-center gap-1 mt-1 -mb-0.5 ${isOwn ? "text-primary-foreground/50" : "text-muted-foreground/60"}`}>
+                        {receipts?.map((r) => (
+                          <span key={r.readerId} title={`${r.readerName} przeczytał(a)`} className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[8px] font-bold leading-none flex-shrink-0 ${isOwn ? "bg-white/60 text-primary" : "bg-primary/30 text-primary"}`}>
+                            {r.readerName.charAt(0).toUpperCase()}
+                          </span>
+                        ))}
+                        <span className="text-[10px] whitespace-nowrap leading-none">{formatTimeOnly(msg.createdAt)}</span>
+                      </div>
+                    )}
                   </div>
                 )}
                 {msg.attachmentType === "image" && msg.attachmentUrl && (
@@ -1998,29 +2184,94 @@ function MessageBubble({ msg, isOwn, ownAvatarUrl, onImageClick, receipts, onEdi
                 {msg.attachmentType === "audio" && msg.attachmentUrl && (
                   <audio src={msg.attachmentUrl} controls className="max-w-[260px] rounded-xl" />
                 )}
+                {msg.attachmentType && (
+                  <div className={`flex justify-end items-center gap-1 mt-0.5 ${isOwn ? "text-foreground/50" : "text-muted-foreground/60"}`}>
+                    {receipts?.map((r) => (
+                      <span key={r.readerId} title={`${r.readerName} przeczytał(a)`} className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[8px] font-bold leading-none flex-shrink-0 ${isOwn ? "bg-white/60 text-primary" : "bg-primary/30 text-primary"}`}>
+                        {r.readerName.charAt(0).toUpperCase()}
+                      </span>
+                    ))}
+                    <span className="text-[10px] whitespace-nowrap leading-none">{formatTimeOnly(msg.createdAt)}</span>
+                  </div>
+                )}
+                {/* Reaction badges — overlapping bottom-right of bubble */}
+                {reactions.length > 0 && (
+                  <div className="absolute bottom-0 right-0 translate-y-1/2 translate-x-1/4 flex gap-0.5 z-10">
+                    {reactions.map(({ emoji, count, hasReacted, names }) => (
+                      <button
+                        key={emoji}
+                        title={names}
+                        onClick={() => onReact?.(emoji)}
+                        className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs border shadow-sm transition-colors ${
+                          hasReacted
+                            ? "bg-primary/15 border-primary/30 text-primary"
+                            : "bg-card border-border text-foreground hover:bg-muted"
+                        }`}
+                      >
+                        {emoji}{count > 1 && <span className="font-medium ml-0.5">{count}</span>}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
               {actionBar}
             </div>
+          );
+        })()}
           </>
         )}
-        {receipts && receipts.length > 0 && (
-          <div className="flex items-center gap-1 px-1 mt-0.5">
-            {receipts.map((r) => (
-              <span
-                key={r.readerId}
-                title={`${r.readerName} przeczytał(a)`}
-                className="w-4 h-4 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[9px] font-bold leading-none flex-shrink-0 cursor-default select-none"
-              >
-                {r.readerName.charAt(0).toUpperCase()}
-              </span>
-            ))}
-          </div>
-        )}
-        <span className="text-xs text-muted-foreground px-1 whitespace-nowrap">{formatTimeOnly(msg.createdAt)}</span>
       </div>
       </SwipeableMessage>
       </div>
       {isOwn && <Avatar name={msg.authorName} logoUrl={ownAvatarUrl} />}
+
+      {/* Mobile long-press actions panel */}
+      {showMobileActions && (
+        <>
+          <div className="fixed inset-0 z-40 bg-black/30" onClick={() => setShowMobileActions(false)} />
+          <div className={`fixed bottom-0 left-0 right-0 z-50 bg-card rounded-t-2xl shadow-xl pb-safe`}>
+            {/* Emoji bar */}
+            <div className="flex items-center justify-around px-6 py-4 border-b border-border">
+              {REACTION_EMOJIS.map((emoji) => {
+                const hasReacted = msg.reactions?.some((r) => r.userId === currentUserId && r.emoji === emoji);
+                return (
+                  <button
+                    key={emoji}
+                    onClick={() => { onReact?.(emoji); setShowMobileActions(false); }}
+                    className={`w-10 h-10 flex items-center justify-center rounded-full text-2xl transition-transform active:scale-125 ${hasReacted ? "bg-primary/15 ring-2 ring-primary/30" : "hover:bg-muted"}`}
+                  >
+                    {emoji}
+                  </button>
+                );
+              })}
+            </div>
+            {/* Edit / Delete — only for own messages */}
+            {(onEdit || onDelete) && (
+              <div className="py-1">
+                {onEdit && (
+                  <button
+                    onClick={() => { setEditContent(msg.content); setIsEditing(true); setShowMobileActions(false); }}
+                    className="w-full flex items-center gap-3 px-5 py-3 text-sm text-foreground hover:bg-muted transition-colors"
+                  >
+                    <Edit2 size={16} className="text-muted-foreground shrink-0" />
+                    Edytuj wiadomość
+                  </button>
+                )}
+                {onDelete && (
+                  <button
+                    onClick={() => { onDelete(); setShowMobileActions(false); }}
+                    className="w-full flex items-center gap-3 px-5 py-3 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
+                  >
+                    <Trash2 size={16} className="shrink-0" />
+                    Usuń wiadomość
+                  </button>
+                )}
+              </div>
+            )}
+            <div className="pb-2" />
+          </div>
+        </>
+      )}
     </div>
   );
 }

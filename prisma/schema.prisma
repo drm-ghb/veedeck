@@ -666,6 +666,19 @@ model DiscussionMessage {
   discussion     Discussion              @relation(fields: [discussionId], references: [id], onDelete: Cascade)
   user           User?                   @relation("DiscussionMessageUser", fields: [userId], references: [id])
   readReceipts   DiscussionReadReceipt[]
+  reactions      DiscussionMessageReaction[]
+}
+
+model DiscussionMessageReaction {
+  id        String            @id @default(cuid())
+  messageId String
+  userId    String
+  userName  String
+  emoji     String
+  createdAt DateTime          @default(now())
+  message   DiscussionMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId, emoji])
 }
 
 model DiscussionReadReceipt {

@@ -75,6 +75,7 @@ export const NotebookText     = icon("note_stack");
 export const NotebookPen      = icon("note_stack_add");
 export const MessageSquare    = icon("forum");
 export const ChatBubble       = icon("chat_bubble");
+export const AddReaction      = icon("add_reaction");
 export const Comment          = icon("comment");
 export const CheckSquare      = icon("check_box");
 export const Columns3         = icon("view_column");

@@ -25,6 +25,22 @@ export default function MobileMenu({ userName, logoUrl, hiddenModules = [], isTr
   const { theme, setTheme } = useTheme();
   const t = useT();
 
+  const [discussionUnread, setDiscussionUnread] = useState(0);
+
+  useEffect(() => {
+    function read() {
+      const val = localStorage.getItem("discussions-unread-count");
+      setDiscussionUnread(val ? parseInt(val, 10) : 0);
+    }
+    read();
+    window.addEventListener("discussions-unread-updated", read);
+    window.addEventListener("storage", read);
+    return () => {
+      window.removeEventListener("discussions-unread-updated", read);
+      window.removeEventListener("storage", read);
+    };
+  }, []);
+
   const navItems = [
     { label: t.nav.dashboard, href: "/dashboard", icon: <LayoutDashboard size={18} />, slug: null },
     { label: t.nav.projects, href: "/klienci", icon: <Users size={18} />, slug: null },
@@ -128,6 +144,11 @@ export default function MobileMenu({ userName, logoUrl, hiddenModules = [], isTr
                     </span>
                   )}
                 </span>
+                {item.href === "/dyskusje" && discussionUnread > 0 && (
+                  <span className="ml-auto min-w-[20px] h-5 px-1.5 rounded-full bg-primary text-primary-foreground text-[11px] font-bold flex items-center justify-center leading-none">
+                    {discussionUnread > 99 ? "99+" : discussionUnread}
+                  </span>
+                )}
               </Link>
             );
           })}

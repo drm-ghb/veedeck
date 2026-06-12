@@ -175,6 +175,46 @@ interface DashboardViewProps {
   dueTasks: DueTask[];
 }
 
+function MobileDiscussionsBubble() {
+  const [unreadCount, setUnreadCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    fetch("/api/discussions")
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data: { unreadCount: number }[]) => {
+        const total = data.reduce((sum, d) => sum + (d.unreadCount ?? 0), 0);
+        setUnreadCount(total);
+      })
+      .catch(() => setUnreadCount(0));
+  }, []);
+
+  if (unreadCount === null) return null;
+
+  const hasUnread = unreadCount > 0;
+
+  return (
+    <Link
+      href="/dyskusje"
+      className="sm:hidden flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border transition-colors bg-violet-500/10 border-violet-300/20 hover:bg-violet-500/15"
+    >
+      <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 bg-violet-500/10">
+        <ChatBubble size={14} className="text-violet-400 dark:text-violet-500" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm text-violet-500/70 dark:text-violet-400/60 leading-tight">
+          {hasUnread ? <span className="font-semibold text-violet-600 dark:text-violet-400">Nieprzeczytane w Dyskusjach</span> : "Brak nowych wiadomości"}
+        </p>
+      </div>
+      {hasUnread && (
+        <span className="shrink-0 min-w-[20px] h-5 px-1.5 rounded-full bg-violet-600 text-white text-[11px] font-semibold flex items-center justify-center">
+          {unreadCount}
+        </span>
+      )}
+      <ChevronRight size={14} className="shrink-0 text-violet-400" />
+    </Link>
+  );
+}
+
 function InfoTooltip({ items }: { items: string[] }) {
   return (
     <div className="relative group/tip inline-flex items-center">
@@ -379,6 +419,7 @@ export default function DashboardView({
           </h1>
         </div>
         <NewProjectDialog label={t.projekty.newClient} clientMode />
+        <MobileDiscussionsBubble />
       </div>
 
 
