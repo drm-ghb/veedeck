@@ -302,7 +302,8 @@ function ProjectListView({ projects }: { projects: Project[] }) {
       {projects.map((p, i) => (
         <div
           key={p.id}
-          className={`grid grid-cols-[1fr_80px] sm:grid-cols-[1fr_180px_160px_80px] gap-4 px-5 py-4 items-center hover:bg-muted/30 transition-colors ${i !== projects.length - 1 ? "border-b border-border" : ""}`}
+          onClick={() => router.push(`/projects/${p.id}`)}
+          className={`grid grid-cols-[1fr_80px] sm:grid-cols-[1fr_180px_160px_80px] gap-4 px-5 py-4 items-center hover:bg-muted/30 transition-colors cursor-pointer ${i !== projects.length - 1 ? "border-b border-border" : ""}`}
         >
           {/* Title + description */}
           <div className="min-w-0">
@@ -341,7 +342,7 @@ function ProjectListView({ projects }: { projects: Project[] }) {
           </p>
 
           {/* Actions */}
-          <div className="flex gap-1 justify-end items-center">
+          <div className="flex gap-1 justify-end items-center" onClick={(e) => e.stopPropagation()}>
             <Button
               size="sm"
               variant="ghost"
