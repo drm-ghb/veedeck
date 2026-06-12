@@ -70,7 +70,7 @@ export default async function DashboardPage() {
       name: true,
       pinned: true,
       updatedAt: true,
-      project: { select: { title: true } },
+      project: { select: { title: true, clientName: true } },
       _count: { select: { sections: true } },
     },
     orderBy: [{ pinned: "desc" }, { updatedAt: "desc" }],
@@ -386,6 +386,7 @@ export default async function DashboardPage() {
         name: l.name,
         pinned: l.pinned,
         projectTitle: l.project?.title ?? null,
+        clientName: l.project?.clientName ?? null,
         sectionCount: l._count.sections,
         updatedAt: l.updatedAt.toISOString(),
       }))}

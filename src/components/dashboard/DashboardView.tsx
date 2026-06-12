@@ -137,6 +137,7 @@ interface RecentList {
   name: string;
   pinned: boolean;
   projectTitle: string | null;
+  clientName: string | null;
   sectionCount: number;
   updatedAt: string;
 }
@@ -533,7 +534,7 @@ export default function DashboardView({
                         {project.pinned && <Pin size={11} className="text-red-500 fill-red-500 shrink-0" />}
                         {project.title}
                       </p>
-                      {project.clientName && <p className="text-xs text-muted-foreground truncate mt-0.5">{project.clientName}</p>}
+                      {project.clientName && <p className="text-xs text-muted-foreground truncate mt-0.5">Klient: {project.clientName}</p>}
                       <div className="flex items-center justify-between mt-2">
                         <span className="text-xs text-muted-foreground">
                           {project.renderCount > 0 ? `${project.renderCount} render${project.renderCount === 1 ? "" : "y"}` : "Brak renderów"}
@@ -590,8 +591,7 @@ export default function DashboardView({
                         {list.name}
                       </p>
                       <p className="text-xs text-muted-foreground truncate">
-                        {list.projectTitle ? `${list.projectTitle} · ` : ""}
-                        {list.sectionCount > 0 ? `${list.sectionCount} sekcj${list.sectionCount === 1 ? "a" : list.sectionCount < 5 ? "e" : "i"}` : "Brak sekcji"}
+                        {list.clientName ? `Klient: ${list.clientName}` : list.projectTitle ?? (list.sectionCount > 0 ? `${list.sectionCount} sekcj${list.sectionCount === 1 ? "a" : list.sectionCount < 5 ? "e" : "i"}` : "Brak sekcji")}
                       </p>
                     </div>
                     <span className="shrink-0 text-xs text-muted-foreground">{timeAgo(list.updatedAt)}</span>
