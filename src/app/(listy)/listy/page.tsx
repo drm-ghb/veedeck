@@ -38,6 +38,7 @@ export default async function ListyPage() {
         project: l.project ? {
           id: l.project.id,
           title: l.project.title,
+          clientName: l.project.clientName ?? null,
           hiddenModules: l.project.hiddenModules,
           clientHasNoAccount: !!(l.project.clientName) && !(l.project.clients[0]?.userId),
         } : null,

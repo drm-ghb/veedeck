@@ -83,7 +83,7 @@ export default function ProjectCard({
           <div className="flex flex-col gap-0.5 mt-1 min-h-[2.5rem]">
             <div className="flex items-center gap-1.5 min-w-0">
               <p className="text-sm text-gray-600 dark:text-gray-300 font-medium truncate">
-                {clientName ?? "\u00A0"}
+                {clientName ? `Klient: ${clientName}` : "\u00A0"}
               </p>
             </div>
             <p className="text-xs text-gray-400 dark:text-gray-500 truncate">

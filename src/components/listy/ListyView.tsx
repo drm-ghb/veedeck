@@ -51,7 +51,7 @@ interface ShoppingList {
   pinned: boolean;
   order: number;
   createdAt: string;
-  project: { id: string; title: string; hiddenModules: string[]; clientHasNoAccount: boolean } | null;
+  project: { id: string; title: string; clientName: string | null; hiddenModules: string[]; clientHasNoAccount: boolean } | null;
 }
 
 interface ListyViewProps {
@@ -465,7 +465,9 @@ function SortableListGridCard({ list, unreadCount, onCopyLink, menu }: {
         <div className="min-w-0">
           <p className="font-semibold text-sm text-foreground truncate">{list.name}</p>
           {list.project ? (
-            <p className="text-xs text-muted-foreground truncate mt-0.5">{list.project.title}</p>
+            <p className="text-xs text-muted-foreground truncate mt-0.5">
+              {list.project.clientName ? `Klient: ${list.project.clientName}` : list.project.title}
+            </p>
           ) : (
             <p className="text-xs text-muted-foreground/50 mt-0.5">Brak projektu</p>
           )}
@@ -535,7 +537,7 @@ function SortableListRowItem({ list, isLast, unreadCount, onNavigate, onCopyLink
           <span className="font-semibold text-sm text-foreground truncate">{list.name}</span>
         </div>
         <div className="flex items-center gap-2 mt-0.5">
-          {list.project && <span className="text-xs text-muted-foreground truncate">{list.project.title}</span>}
+          {list.project && <span className="text-xs text-muted-foreground truncate">{list.project.clientName ? `Klient: ${list.project.clientName}` : list.project.title}</span>}
           <span className="text-xs text-muted-foreground whitespace-nowrap">
             {new Date(list.createdAt).toLocaleDateString("pl-PL", { day: "2-digit", month: "short", year: "numeric" })}
           </span>

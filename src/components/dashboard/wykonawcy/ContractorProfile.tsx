@@ -499,7 +499,7 @@ export default function ContractorProfile({ contractor }: Props) {
                   <Link href={`/wykonawcy/${contractor.id}/projekty/${a.id}`} className="flex-1 min-w-0">
                     <p className="font-medium truncate">{a.project.title}</p>
                     {a.project.clientName && (
-                      <p className="text-sm text-muted-foreground truncate">{a.project.clientName}</p>
+                      <p className="text-sm text-muted-foreground truncate">Klient: {a.project.clientName}</p>
                     )}
                     <p className="text-xs text-muted-foreground mt-0.5">
                       Przypisano: {new Date(a.createdAt).toLocaleDateString("pl-PL")}
