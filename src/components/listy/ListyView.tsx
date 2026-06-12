@@ -536,7 +536,7 @@ function SortableListRowItem({ list, isLast, unreadCount, onNavigate, onCopyLink
           {list.pinned && <Pin size={11} className="text-red-500 fill-red-500 flex-shrink-0" />}
           <span className="font-semibold text-sm text-foreground truncate">{list.name}</span>
         </div>
-        <div className="flex items-center gap-2 mt-0.5">
+        <div className="flex flex-col gap-0 mt-0.5">
           {list.project && <span className="text-xs text-muted-foreground truncate">{list.project.clientName ? `Klient: ${list.project.clientName}` : list.project.title}</span>}
           <span className="text-xs text-muted-foreground whitespace-nowrap">
             Utworzono: {new Date(list.createdAt).toLocaleDateString("pl-PL", { day: "2-digit", month: "short", year: "numeric" })}
