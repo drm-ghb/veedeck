@@ -181,8 +181,9 @@ export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userI
   const forceCollapsed = HIDDEN_ON.some((pattern) => pattern.test(pathname));
   const isCollapsed = forceCollapsed || collapsed;
 
-  const order = sidebarOrder && sidebarOrder.length > 0
-    ? [...sidebarOrder, ...DEFAULT_SIDEBAR_ORDER.filter((k) => !sidebarOrder.includes(k))]
+  const normalizedSidebarOrder = sidebarOrder?.map((k) => k === "renderflow" ? "projectflow" : k);
+  const order = normalizedSidebarOrder && normalizedSidebarOrder.length > 0
+    ? [...normalizedSidebarOrder, ...DEFAULT_SIDEBAR_ORDER.filter((k) => !normalizedSidebarOrder.includes(k))]
     : DEFAULT_SIDEBAR_ORDER;
   const [dashboard, ...rest] = items;
   const sortedRest = [...rest].sort((a, b) => {
