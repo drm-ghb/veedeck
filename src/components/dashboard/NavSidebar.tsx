@@ -222,10 +222,10 @@ export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userI
                 )}
               </span>
               {!isCollapsed && (
-                <span className="flex-1 relative">
+                <span className="flex-1 flex items-center gap-1.5">
                   {item.label}
                   {"soon" in item && item.soon && (
-                    <span className="absolute -top-2.5 -right-1 text-[8px] font-bold uppercase tracking-wide px-1 py-px rounded-full bg-primary/15 text-primary leading-none whitespace-nowrap">
+                    <span className="text-[8px] font-bold uppercase tracking-wide px-1 py-px rounded-full bg-primary/15 text-primary leading-none whitespace-nowrap">
                       Wkrótce
                     </span>
                   )}
