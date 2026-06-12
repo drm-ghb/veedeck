@@ -1013,7 +1013,7 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
                               )}
                             </div>
                             {reactions.length > 0 && (
-                              <div className="absolute bottom-0 right-0 translate-y-1/2 translate-x-1/4 flex gap-0.5 z-10">
+                              <div className="absolute bottom-0 right-0 translate-y-1/2 flex gap-0.5 z-10">
                                 {Object.entries(grouped).map(([emoji, rs]) => (
                                   <button
                                     key={emoji}
