@@ -80,14 +80,9 @@ export default function ProjectCard({
             </div>
           </div>
 
-          <div className="flex flex-col gap-0.5 mt-1 min-h-[2.5rem]">
-            <div className="flex items-center gap-1.5 min-w-0">
-              <p className="text-sm text-gray-600 dark:text-gray-300 font-medium truncate">
-                {clientName ? `Klient: ${clientName}` : "\u00A0"}
-              </p>
-            </div>
-            <p className="text-xs text-gray-400 dark:text-gray-500 truncate">
-              {clientEmail ?? "\u00A0"}
+          <div className="flex flex-col gap-0.5 mt-1 min-h-[1.25rem]">
+            <p className="text-sm text-gray-600 dark:text-gray-300 font-medium truncate">
+              {clientName ? `Klient: ${clientName}` : "\u00A0"}
             </p>
           </div>
 
@@ -96,7 +91,7 @@ export default function ProjectCard({
           </CardDescription>
 
           <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-            {new Date(createdAt).toLocaleDateString("pl-PL")}
+            Utworzono: {new Date(createdAt).toLocaleDateString("pl-PL")}
           </p>
         </CardHeader>
         <CardFooter className="flex gap-2 flex-wrap" onClick={(e) => e.preventDefault()}>
