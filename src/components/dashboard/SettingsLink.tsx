@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { Settings } from "@/components/ui/icons";
 
 function getSettingsHref(pathname: string): string {
-  if (pathname.startsWith("/renderflow")) return "/ustawienia/renderflow";
+  if (pathname.startsWith("/projectflow")) return "/ustawienia/projectflow";
   if (pathname.startsWith("/listy")) return "/ustawienia/listy";
   if (pathname.startsWith("/klienci")) return "/ustawienia/ogolne";
   return "/ustawienia/ogolne";

@@ -18,7 +18,7 @@ export default function SettingsSidebar() {
       module: null,
     },
     {
-      href: "/ustawienia/renderflow",
+      href: "/ustawienia/projectflow",
       label: t.settings.renderflow,
       icon: <PushPin size={16} />,
       module: { href: "/klienci", label: "ProjectFlow" },

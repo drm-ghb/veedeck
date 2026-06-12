@@ -446,7 +446,7 @@ export default function DashboardView({
 
             {!hiddenModules.includes("renderflow") && (
               <Link
-                href="/renderflow"
+                href="/projectflow"
                 className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border hover:border-primary/30 hover:bg-primary/5 transition-colors"
               >
                 <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
@@ -499,7 +499,7 @@ export default function DashboardView({
         <div className="order-6 space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-semibold text-foreground">Ostatnie projekty ProjectFlow</h2>
-              <Link href="/renderflow" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-0.5 transition-colors">
+              <Link href="/projectflow" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-0.5 transition-colors">
                 Wszystkie <ChevronRight size={13} />
               </Link>
             </div>

@@ -20,7 +20,7 @@ interface NavSidebarProps {
 }
 
 function getSettingsHref(pathname: string): string {
-  if (pathname.startsWith("/renderflow")) return "/ustawienia/renderflow";
+  if (pathname.startsWith("/projectflow")) return "/ustawienia/projectflow";
   if (pathname.startsWith("/listy")) return "/ustawienia/listy";
   if (pathname.startsWith("/zadania")) return "/ustawienia/zadania";
   return "/ustawienia/ogolne";
@@ -158,7 +158,7 @@ export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userI
   const items = [
     { label: t.nav.dashboard, href: "/dashboard", icon: <LayoutDashboard size={18} />, slug: null, badge: 0, matchPrefixes: [] as string[] },
     { label: t.nav.projects, href: "/klienci", icon: <Users size={18} />, slug: null, badge: 0, matchPrefixes: [] as string[] },
-    { label: t.nav.renderflow, href: "/renderflow", icon: <PushPin size={18} />, slug: "renderflow", badge: 0, matchPrefixes: ["/projects/"] },
+    { label: t.nav.renderflow, href: "/projectflow", icon: <PushPin size={18} />, slug: "renderflow", badge: 0, matchPrefixes: ["/projects/"] },
     { label: t.nav.lists, href: "/listy", icon: <LocalMall size={18} />, slug: "listy", badge: 0, matchPrefixes: [] as string[] },
     { label: "Wykonawcy", href: "/wykonawcy", icon: <Engineering size={18} />, slug: null, badge: contractorUnread, matchPrefixes: [] as string[] },
     { label: t.nav.tasks, href: "/zadania", icon: <CheckSquare size={18} />, slug: null, badge: 0, matchPrefixes: [] as string[] },

@@ -47,7 +47,7 @@ export default async function ProjectPage({ params }: Props) {
 
   return (
     <div>
-      <Breadcrumb backHref="/renderflow" items={[
+      <Breadcrumb backHref="/projectflow" items={[
         { label: project.title },
       ]} />
 
