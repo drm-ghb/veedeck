@@ -8,7 +8,7 @@ import { LayoutDashboard, Users, LocalMall, Package, PanelLeftClose, PanelLeftOp
 import { useTheme } from "@/lib/theme";
 import { useT } from "@/lib/i18n";
 
-const DEFAULT_SIDEBAR_ORDER = ["klienci", "renderflow", "listy", "zadania", "ankiety", "produkty", "wykonawcy", "kalendarz", "notatnik", "dyskusje", "veezard"];
+const DEFAULT_SIDEBAR_ORDER = ["klienci", "projectflow", "listy", "zadania", "ankiety", "produkty", "wykonawcy", "kalendarz", "notatnik", "dyskusje", "veezard"];
 
 interface NavSidebarProps {
   hiddenModules: string[];
