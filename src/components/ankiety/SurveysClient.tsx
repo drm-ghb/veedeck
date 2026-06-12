@@ -424,7 +424,7 @@ function SurveyTable({ surveys, openMenuId, setOpenMenuId, onArchive, onPin, onD
           <tr className="bg-muted/50 border-b border-border">
             <th className="text-left px-4 py-3 font-medium text-muted-foreground">Nazwa</th>
             <th className="text-left px-4 py-3 font-medium text-muted-foreground">Status</th>
-            <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Projekt</th>
+            <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Klient</th>
             <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Data</th>
             <th className="text-left px-4 py-3 font-medium text-muted-foreground">Odpowiedzi</th>
             <th className="px-4 py-3" />
