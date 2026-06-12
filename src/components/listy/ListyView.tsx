@@ -539,7 +539,7 @@ function SortableListRowItem({ list, isLast, unreadCount, onNavigate, onCopyLink
         <div className="flex items-center gap-2 mt-0.5">
           {list.project && <span className="text-xs text-muted-foreground truncate">{list.project.clientName ? `Klient: ${list.project.clientName}` : list.project.title}</span>}
           <span className="text-xs text-muted-foreground whitespace-nowrap">
-            {new Date(list.createdAt).toLocaleDateString("pl-PL", { day: "2-digit", month: "short", year: "numeric" })}
+            Utworzono: {new Date(list.createdAt).toLocaleDateString("pl-PL", { day: "2-digit", month: "short", year: "numeric" })}
           </span>
         </div>
       </div>
