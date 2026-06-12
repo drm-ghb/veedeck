@@ -176,7 +176,7 @@ interface DashboardViewProps {
 }
 
 function MobileDiscussionsBubble() {
-  const [unreadCount, setUnreadCount] = useState<number | null>(null);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     fetch("/api/discussions")
@@ -185,10 +185,8 @@ function MobileDiscussionsBubble() {
         const total = data.reduce((sum, d) => sum + (d.unreadCount ?? 0), 0);
         setUnreadCount(total);
       })
-      .catch(() => setUnreadCount(0));
+      .catch(() => {});
   }, []);
-
-  if (unreadCount === null) return null;
 
   const hasUnread = unreadCount > 0;
 
