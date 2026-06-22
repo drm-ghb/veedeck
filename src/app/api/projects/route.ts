@@ -5,7 +5,7 @@ import { uniqueSlug } from "@/lib/slug";
 import { getWorkspaceUserId } from "@/lib/workspace";
 import bcrypt from "bcryptjs";
 import { generateClientLogin } from "@/lib/client-login";
-import { checkTeamPermission, checkProjectAccess } from "@/lib/permissions";
+import { checkTeamPermission } from "@/lib/permissions";
 
 export async function GET() {
   const session = await auth();
