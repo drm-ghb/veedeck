@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Script from "next/script";
 import { useUploadThing } from "@/lib/uploadthing-client";
+import { useT } from "@/lib/i18n";
 import {
   Upload, ViewInAr, Trash2, Download, ChevronDown, X,
   Check, Loader2, AlertCircle, Image as ImageIcon,
@@ -56,6 +57,7 @@ const EXPORT_FORMATS = [
 // ── Main component ───────────────────────────────────────────────────────────
 
 export default function Generator3DView({ initialModels, hideHeader }: { initialModels: Model3D[]; hideHeader?: boolean }) {
+  const t = useT();
   const [activeTab, setActiveTab] = useState<"generator" | "library">("generator");
   const [models, setModels] = useState<Model3D[]>(initialModels);
 
@@ -111,7 +113,7 @@ export default function Generator3DView({ initialModels, hideHeader }: { initial
           setPhase("done");
         } else if (data.status === "FAILED" || data.status === "EXPIRED") {
           stopPolling();
-          setErrorMsg(data.errorMessage ?? "Generowanie nie powiodło się.");
+          setErrorMsg(data.errorMessage ?? t.veezard.genFailed);
           setPhase("error");
         }
       } catch {
@@ -126,7 +128,7 @@ export default function Generator3DView({ initialModels, hideHeader }: { initial
 
   async function handleFile(file: File) {
     if (!file.type.startsWith("image/")) {
-      toast.error("Dopuszczalne formaty: JPG, PNG, SVG, WebP");
+      toast.error(t.veezard.genFormats);
       return;
     }
     // Local preview
@@ -147,7 +149,7 @@ export default function Generator3DView({ initialModels, hideHeader }: { initial
     const uploaded = await startUpload([file]);
     if (!uploaded?.[0]?.url) {
       setPhase("error");
-      setErrorMsg("Upload obrazu nie powiódł się.");
+      setErrorMsg(t.veezard.genUploadFailed);
       return;
     }
 
@@ -162,7 +164,7 @@ export default function Generator3DView({ initialModels, hideHeader }: { initial
     if (!genRes.ok) {
       const err = await genRes.json();
       setPhase("error");
-      setErrorMsg(err.error ?? "Błąd generowania.");
+      setErrorMsg(err.error ?? t.veezard.genError);
       return;
     }
 
@@ -219,7 +221,7 @@ export default function Generator3DView({ initialModels, hideHeader }: { initial
     });
 
     if (!res.ok) {
-      toast.error("Nie udało się zapisać modelu.");
+      toast.error(t.veezard.saveFailed);
       setSaving(false);
       return;
     }
@@ -228,17 +230,17 @@ export default function Generator3DView({ initialModels, hideHeader }: { initial
     setModels((prev) => [model, ...prev]);
     setSaving(false);
     setSaved(true);
-    toast.success(`Model "${model.name}" zapisany w bibliotece.`);
+    toast.success(`"${model.name}" ${t.veezard.modelSavedSuffix}`);
   }
 
   // ── Delete from library ────────────────────────────────────────────────────
 
   async function handleDelete(id: string) {
     const res = await fetch(`/api/veezard/library/${id}`, { method: "DELETE" });
-    if (!res.ok) { toast.error("Nie udało się usunąć modelu."); return; }
+    if (!res.ok) { toast.error(t.veezard.deleteFailed); return; }
     setModels((prev) => prev.filter((m) => m.id !== id));
     setDeleteId(null);
-    toast.success("Model usunięty.");
+    toast.success(t.veezard.modelDeleted);
   }
 
   // ── Export download ────────────────────────────────────────────────────────
@@ -266,8 +268,8 @@ export default function Generator3DView({ initialModels, hideHeader }: { initial
               <ViewInAr size={20} />
             </div>
             <div>
-              <h1 className="text-lg font-semibold text-foreground">Generator 3D</h1>
-              <p className="text-xs text-muted-foreground">Generuj modele 3D na podstawie zdjęć</p>
+              <h1 className="text-lg font-semibold text-foreground">{t.veezard.gen3DTitle}</h1>
+              <p className="text-xs text-muted-foreground">{t.veezard.gen3DSubtitle}</p>
             </div>
           </div>
         )}
@@ -284,7 +286,7 @@ export default function Generator3DView({ initialModels, hideHeader }: { initial
                   : "text-muted-foreground hover:text-foreground hover:bg-muted"
               }`}
             >
-              {tab === "generator" ? "Generator" : `Biblioteka (${models.length})`}
+              {tab === "generator" ? t.veezard.gen3DTitle : `${t.veezard.library} (${models.length})`}
             </button>
           ))}
         </div>
@@ -362,6 +364,7 @@ function GeneratorTab({
   onExportClose: () => void;
   downloadUrl: (format: string) => string | null;
 }) {
+  const t = useT();
   const [dragOver, setDragOver] = useState(false);
 
   const canSave = saveName.trim().length > 0 && saveCategory.length > 0 && !saving && !saved;
@@ -384,11 +387,11 @@ function GeneratorTab({
             <Upload size={28} />
           </div>
           <div className="text-center">
-            <p className="font-semibold text-foreground">Wrzuć zdjęcie produktu</p>
+            <p className="font-semibold text-foreground">{t.veezard.dropProduct}</p>
             <p className="text-sm text-muted-foreground mt-1">JPG, PNG, SVG, WebP · maks. 16 MB</p>
           </div>
           <p className="text-xs text-muted-foreground">
-            Na podstawie zdjęcia zostanie wygenerowany model 3D
+            {t.veezard.genDropDesc}
           </p>
           <input
             ref={fileInputRef}
@@ -400,11 +403,11 @@ function GeneratorTab({
         </div>
 
         <div className="mt-6 rounded-xl bg-muted/40 border border-border p-4 space-y-2">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Wskazówki</p>
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t.veezard.tips}</p>
           <ul className="space-y-1.5 text-sm text-muted-foreground">
-            <li className="flex items-start gap-2"><span className="text-primary mt-0.5">•</span>Najlepiej działa ze zdjęciami produktowymi na białym tle</li>
-            <li className="flex items-start gap-2"><span className="text-primary mt-0.5">•</span>Jeden obiekt na zdjęciu daje lepsze rezultaty</li>
-            <li className="flex items-start gap-2"><span className="text-primary mt-0.5">•</span>Generowanie trwa zwykle 1–3 minuty</li>
+            <li className="flex items-start gap-2"><span className="text-primary mt-0.5">•</span>{t.veezard.genTip1}</li>
+            <li className="flex items-start gap-2"><span className="text-primary mt-0.5">•</span>{t.veezard.genTip2}</li>
+            <li className="flex items-start gap-2"><span className="text-primary mt-0.5">•</span>{t.veezard.genTip3}</li>
           </ul>
         </div>
       </div>
@@ -415,7 +418,7 @@ function GeneratorTab({
     return (
       <div className="max-w-xl mx-auto flex flex-col items-center gap-4 py-16">
         <Loader2 size={36} className="text-primary animate-spin" />
-        <p className="font-medium text-foreground">Przesyłanie zdjęcia…</p>
+        <p className="font-medium text-foreground">{t.veezard.uploadingPhoto}</p>
       </div>
     );
   }
@@ -427,12 +430,12 @@ function GeneratorTab({
           {previewImage && (
             <div className="w-40 h-40 rounded-xl overflow-hidden border border-border flex-shrink-0">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={previewImage} alt="Podgląd" className="w-full h-full object-contain bg-muted" />
+              <img src={previewImage} alt={t.veezard.original} className="w-full h-full object-contain bg-muted" />
             </div>
           )}
           <div className="w-full space-y-3">
             <div className="flex items-center justify-between text-sm">
-              <span className="font-medium text-foreground">Generowanie modelu 3D…</span>
+              <span className="font-medium text-foreground">{t.veezard.generating}</span>
               <span className="text-muted-foreground">{progress}%</span>
             </div>
             <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
@@ -441,7 +444,7 @@ function GeneratorTab({
                 style={{ width: `${Math.max(progress, 5)}%` }}
               />
             </div>
-            <p className="text-xs text-muted-foreground text-center">Zwykle zajmuje 1–3 minuty. Możesz zamknąć tę stronę.</p>
+            <p className="text-xs text-muted-foreground text-center">{t.veezard.genProgress}</p>
           </div>
         </div>
       </div>
@@ -453,13 +456,13 @@ function GeneratorTab({
       <div className="max-w-xl mx-auto">
         <div className="flex flex-col items-center gap-4 py-12">
           <AlertCircle size={40} className="text-destructive" />
-          <p className="font-semibold text-foreground">Generowanie nie powiodło się</p>
+          <p className="font-semibold text-foreground">{t.veezard.genFailed2}</p>
           <p className="text-sm text-muted-foreground text-center">{errorMsg}</p>
           <button
             onClick={onReset}
             className="px-4 py-2 bg-primary text-primary-foreground text-sm font-medium rounded-lg hover:opacity-90 transition-opacity"
           >
-            Spróbuj ponownie
+            {t.veezard.tryAgain}
           </button>
         </div>
       </div>
@@ -481,7 +484,7 @@ function GeneratorTab({
           />
         ) : thumbnailUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={thumbnailUrl} alt="Podgląd" className="w-full h-full object-contain" />
+          <img src={thumbnailUrl} alt={t.veezard.original} className="w-full h-full object-contain" />
         ) : (
           <div className="flex items-center justify-center h-full text-muted-foreground">
             <ImageIcon size={48} />
@@ -490,7 +493,7 @@ function GeneratorTab({
 
         <button
           onClick={onReset}
-          title="Generuj nowy model"
+          title={t.veezard.generateNew}
           className="absolute top-3 right-3 w-8 h-8 rounded-full bg-background/80 backdrop-blur border border-border flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
         >
           <X size={14} />
@@ -502,13 +505,13 @@ function GeneratorTab({
         {/* Name + Category row */}
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="flex-1 space-y-1">
-            <label className="text-xs font-medium text-muted-foreground">Nazwa modelu</label>
+            <label className="text-xs font-medium text-muted-foreground">{t.veezard.modelName}</label>
             <input
               type="text"
               value={saveName}
               onChange={(e) => onSaveNameChange(e.target.value)}
               disabled={saved}
-              placeholder="np. Lampa Flos IC"
+              placeholder={t.veezard.modelNamePlaceholder}
               className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-50"
             />
           </div>
@@ -516,7 +519,7 @@ function GeneratorTab({
 
         {/* Category chips */}
         <div className="space-y-2">
-          <label className="text-xs font-medium text-muted-foreground">Kategoria</label>
+          <label className="text-xs font-medium text-muted-foreground">{t.veezard.category}</label>
           <div className="flex flex-wrap gap-2">
             {CATEGORIES.map((cat) => (
               <button
@@ -545,7 +548,7 @@ function GeneratorTab({
               className="flex items-center gap-2 px-3 py-2 text-sm font-medium border border-border rounded-lg bg-background hover:bg-muted transition-colors"
             >
               <Download size={15} />
-              Eksportuj
+              {t.veezard.export}
               <ChevronDown size={13} />
             </button>
             {exportOpen && (
@@ -591,7 +594,7 @@ function GeneratorTab({
             ) : saved ? (
               <Check size={15} />
             ) : null}
-            {saving ? "Zapisywanie…" : saved ? "Zapisano w bibliotece" : "Zapisz w bibliotece"}
+            {saving ? t.common.saving : saved ? t.veezard.savedInLibrary : t.veezard.saveInLibrary}
           </button>
         </div>
       </div>
@@ -610,6 +613,8 @@ function LibraryTab({
   onDeleteConfirm: (id: string) => void;
   onDeleteCancel: () => void;
 }) {
+  const t = useT();
+
   if (models.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-24 gap-4 text-muted-foreground">
@@ -617,8 +622,8 @@ function LibraryTab({
           <ViewInAr size={28} />
         </div>
         <div className="text-center">
-          <p className="font-medium text-foreground">Biblioteka jest pusta</p>
-          <p className="text-sm mt-1">Wygeneruj i zapisz pierwszy model 3D</p>
+          <p className="font-medium text-foreground">{t.veezard.libraryEmpty}</p>
+          <p className="text-sm mt-1">{t.veezard.libraryEmptyDesc}</p>
         </div>
       </div>
     );
@@ -657,7 +662,7 @@ function LibraryTab({
               <a
                 href={model.urlGlb}
                 download="model.glb"
-                title="Pobierz GLB"
+                title={t.veezard.downloadGlb}
                 className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs font-medium border border-border rounded-lg bg-background hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
               >
                 <Download size={12} />
@@ -670,19 +675,19 @@ function LibraryTab({
                   onClick={() => onDeleteConfirm(model.id)}
                   className="px-2 py-1.5 text-xs font-medium bg-destructive text-destructive-foreground rounded-lg hover:opacity-90 transition-opacity"
                 >
-                  Usuń
+                  {t.veezard.confirmDeleteModel}
                 </button>
                 <button
                   onClick={onDeleteCancel}
                   className="px-2 py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  Nie
+                  {t.veezard.cancelDeleteModel}
                 </button>
               </div>
             ) : (
               <button
                 onClick={() => onDeleteRequest(model.id)}
-                title="Usuń model"
+                title={t.veezard.deleteModel}
                 className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
               >
                 <Trash2 size={13} />

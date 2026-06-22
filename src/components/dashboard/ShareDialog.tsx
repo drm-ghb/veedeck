@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useT } from "@/lib/i18n";
 
 interface ShareDialogProps {
   shareUrl: string;
@@ -27,6 +28,7 @@ export default function ShareDialog({
   moduleSlug = "renderflow",
   moduleName = "ProjectFlow",
 }: ShareDialogProps) {
+  const t = useT();
   const [copied, setCopied] = useState(false);
   const [warningOpen, setWarningOpen] = useState(false);
 
@@ -51,24 +53,24 @@ export default function ShareDialog({
       <Dialog>
         <DialogTrigger render={<Button variant="outline" />}>
           <Share2 size={15} />
-          <span className="hidden sm:inline">Udostępnij</span>
+          <span className="hidden sm:inline">{t.projekty.shareDialog}</span>
         </DialogTrigger>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Udostępnij projekt</DialogTitle>
+            <DialogTitle>{t.projekty.shareProject}</DialogTitle>
             <DialogDescription>
-              Wyślij ten link klientowi. Po kliknięciu zostanie poproszony o zalogowanie się na swoje konto.
+              {t.projekty.shareDesc}
             </DialogDescription>
           </DialogHeader>
           {moduleHidden && (
             <div className="flex items-start gap-2 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 px-3 py-2.5 text-sm text-amber-800 dark:text-amber-300">
               <AlertTriangle size={15} className="flex-shrink-0 mt-0.5" />
-              <span>Moduł <strong>{moduleName}</strong> jest oznaczony jako <strong>NIE WIDOCZNY</strong> dla klienta. Przed udostępnieniem linku zmień to w ustawieniach projektu.</span>
+              <span>{t.projekty.shareModuleHidden}</span>
             </div>
           )}
           <div className="flex gap-2">
             <Input readOnly value={shareUrl} className="text-xs" />
-            <Button variant="outline" size="icon" onClick={handleCopy} title="Kopiuj link">
+            <Button variant="outline" size="icon" onClick={handleCopy} title={t.common.copyLink}>
               {copied ? <Check size={15} className="text-green-500" /> : <Copy size={15} />}
             </Button>
           </div>
@@ -81,17 +83,17 @@ export default function ShareDialog({
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <AlertTriangle size={18} className="text-amber-500" />
-              Moduł jest ukryty dla klienta
+              {t.common.moduleHiddenForClient}
             </DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            Moduł <strong>{moduleName}</strong> jest oznaczony jako <strong>NIE WIDOCZNY</strong> dla klienta. Przed udostępnieniem linku zmień to w ustawieniach projektu.
+            {t.projekty.shareModuleHidden}
           </p>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setWarningOpen(false)}>Zamknij</Button>
+            <Button variant="outline" onClick={() => setWarningOpen(false)}>{t.common.close}</Button>
             <Button variant="ghost" className="gap-1.5" onClick={() => { setWarningOpen(false); doCopy(); }}>
               <Check size={14} />
-              Mimo to skopiuj
+              {t.common.copyAnyway}
             </Button>
           </DialogFooter>
         </DialogContent>

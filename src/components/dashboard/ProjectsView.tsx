@@ -81,7 +81,7 @@ export default function ProjectsView({ projects, archivedProjects }: ProjectsVie
   }
 
   async function handleDelete(id: string, title: string) {
-    if (!confirm(`Usunąć projekt "${title}" z ProjectFlow?`)) return;
+    if (!confirm(t.projekty.confirmRemoveFromFlow.replace("{title}", title))) return;
     const res = await fetch(`/api/projects/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -103,7 +103,7 @@ export default function ProjectsView({ projects, archivedProjects }: ProjectsVie
           <p className="text-gray-500 mt-1">
             {projects.length === 0
               ? t.projekty.noProjectsEmpty
-              : `${projects.length} projekt${projects.length === 1 ? "" : projects.length < 5 ? "y" : "ów"}`}
+              : `${projects.length} ${projects.length === 1 ? t.projekty.projectSg : projects.length < 5 ? t.projekty.projectFw : t.projekty.projectMany}`}
           </p>
         </div>
         <NewProjectDialog module="renderflow" />
@@ -227,12 +227,12 @@ export default function ProjectsView({ projects, archivedProjects }: ProjectsVie
         archivedProjects.length === 0 ? (
           <div className="text-center py-16 text-gray-400">
             <p className="text-4xl mb-4">📦</p>
-            <p className="text-lg">Brak zarchiwizowanych projektów</p>
+            <p className="text-lg">{t.projekty.noProjectsArchived}</p>
           </div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-16 text-gray-400">
             <p className="text-4xl mb-4">🔍</p>
-            <p className="text-lg">Brak projektów pasujących do &quot;{search}&quot;</p>
+            <p className="text-lg">{t.projekty.noProjectsActive} &quot;{search}&quot;</p>
           </div>
         ) : (
           <div className="bg-card border border-border rounded-xl overflow-hidden">
@@ -248,12 +248,12 @@ export default function ProjectsView({ projects, archivedProjects }: ProjectsVie
                   {p.clientName && (
                     <p className="text-xs text-gray-400 truncate">{p.clientName}</p>
                   )}
-                  <Badge variant="secondary" className="text-xs mt-1">{p.renderCount} renderów</Badge>
+                  <Badge variant="secondary" className="text-xs mt-1">{p.renderCount} {t.projekty.renders}</Badge>
                 </div>
                 <div className="flex gap-2 ml-4 flex-shrink-0">
                   <Button size="sm" variant="outline" onClick={() => handleRestore(p.id)}>
                     <ArchiveRestore size={14} />
-                    Przywróć
+                    {t.common.restore}
                   </Button>
                   <Button
                     size="sm"
@@ -274,6 +274,7 @@ export default function ProjectsView({ projects, archivedProjects }: ProjectsVie
 }
 
 function ProjectListView({ projects }: { projects: Project[] }) {
+  const t = useT();
   const [warningLink, setWarningLink] = useState<string | null>(null);
 
   function handleCopyLink(p: Project) {
@@ -292,10 +293,10 @@ function ProjectListView({ projects }: { projects: Project[] }) {
     <div className="bg-card border border-border rounded-xl overflow-hidden min-w-[320px]">
       {/* Header */}
       <div className="grid grid-cols-[1fr_80px] sm:grid-cols-[1fr_180px_160px_80px] gap-4 px-5 py-3 bg-muted/50 border-b border-border text-xs font-medium text-muted-foreground uppercase tracking-wide">
-        <span>Projekt</span>
-        <span className="hidden sm:block">Klient</span>
-        <span className="hidden sm:block">Data</span>
-        <span className="text-right">Akcje</span>
+        <span>{t.projekty.colProject}</span>
+        <span className="hidden sm:block">{t.projekty.colClient}</span>
+        <span className="hidden sm:block">{t.projekty.colDate}</span>
+        <span className="text-right">{t.projekty.colActions}</span>
       </div>
 
       {/* Rows */}
@@ -314,7 +315,7 @@ function ProjectListView({ projects }: { projects: Project[] }) {
             {p.description && (
               <p className="text-xs text-gray-400 truncate mt-0.5">{p.description}</p>
             )}
-            <Badge variant="secondary" className="text-xs mt-1">{p.renderCount} renderów</Badge>
+            <Badge variant="secondary" className="text-xs mt-1">{p.renderCount} {t.projekty.renders}</Badge>
           </div>
 
           {/* Client */}
@@ -348,7 +349,7 @@ function ProjectListView({ projects }: { projects: Project[] }) {
               variant="ghost"
               className="text-xs text-muted-foreground hover:text-primary"
               onClick={() => handleCopyLink(p)}
-              title="Skopiuj link"
+              title={t.common.copyLink}
             >
               🔗
             </Button>
@@ -374,21 +375,21 @@ function ProjectListView({ projects }: { projects: Project[] }) {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <AlertTriangle size={18} className="text-amber-500" />
-              Moduł jest ukryty dla klienta
+              {t.common.moduleHiddenForClient}
             </DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            Moduł <strong>ProjectFlow</strong> jest oznaczony jako <strong>NIE WIDOCZNY</strong> dla klienta. Przed udostępnieniem linku zmień to w ustawieniach projektu.
+            {t.projekty.shareModuleHidden}
           </p>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setWarningLink(null)}>Zamknij</Button>
+            <Button variant="outline" onClick={() => setWarningLink(null)}>{t.common.close}</Button>
             <Button variant="ghost" className="gap-1.5" onClick={() => {
               if (warningLink) navigator.clipboard.writeText(warningLink);
               setWarningLink(null);
-              toast.success("Link skopiowany do schowka");
+              toast.success(t.common.linkCopied);
             }}>
               <Check size={14} />
-              Mimo to skopiuj
+              {t.common.copyAnyway}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -398,6 +399,7 @@ function ProjectListView({ projects }: { projects: Project[] }) {
 }
 
 function NoAccountWarning({ projectId }: { projectId: string }) {
+  const t = useT();
   return (
     <Link
       href={`/klienci/${projectId}?tab=contacts`}
@@ -405,7 +407,7 @@ function NoAccountWarning({ projectId }: { projectId: string }) {
       onClick={(e) => e.stopPropagation()}
     >
       <KeyRound size={13} />
-      Brak konta
+      {t.projekty.noAccount}
     </Link>
   );
 }

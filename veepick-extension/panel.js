@@ -1,7 +1,7 @@
 // Veepick Panel — injected into the page on extension icon click
 (function () {
   const PANEL_ID = "veepick-panel";
-  const PANEL_VERSION = "3.0";
+  const PANEL_VERSION = "3.2";
 
   // Toggle if already exists and version matches; replace if outdated
   const existing = document.getElementById(PANEL_ID);
@@ -112,6 +112,7 @@
     }
     #veepick-panel .vp-dd-item:hover { background: #f4f4f8; }
     #veepick-panel .vp-dd-item.vp-dd-selected { color: #4f46e5 !important; font-weight: 600; }
+    #veepick-panel .vp-dd-item.vp-dd-ph { color: #9ca3af; font-style: italic; font-size: 12px; }
     #veepick-panel .vp-dd-item.vp-dd-selected::after { content: "✓"; font-size: 11px; color: #4f46e5; }
     #veepick-panel .vp-field { margin-bottom: clamp(6px, 1vh, 10px); }
     #veepick-panel .vp-btn {
@@ -370,6 +371,10 @@
   // ── Helpers ───────────────────────────────────────────────────────────────
   const vp = (id) => document.getElementById(id);
 
+  function esc(s) {
+    return String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
   function showScreen(name) {
     ["vp-screenSetup", "vp-screenSettings", "vp-screenMain"].forEach((id) => {
       vp(id).classList.toggle("vp-hidden", id !== name);
@@ -463,11 +468,11 @@
       <div class="vp-history-item">
         <div class="vp-history-img">${item.imageUrl ? "" : "🛍"}</div>
         <div class="vp-history-info">
-          <div class="vp-history-name" title="${item.name}">${item.name}</div>
-          <div class="vp-history-meta">${item.listName} · ${item.sectionName}</div>
+          <div class="vp-history-name" title="${esc(item.name)}">${esc(item.name)}</div>
+          <div class="vp-history-meta">${esc(item.listName)} · ${esc(item.sectionName)}</div>
           <div class="vp-history-meta">${formatRelativeTime(item.addedAt)}</div>
         </div>
-        <button class="vp-history-del" title="Usuń z listy" data-pid="${item.productId}" data-lid="${item.listId}" data-sid="${item.sectionId}">🗑</button>
+        <button class="vp-history-del" title="Usuń z listy" data-pid="${esc(item.productId)}" data-lid="${esc(item.listId)}" data-sid="${esc(item.sectionId)}">🗑</button>
       </div>
     `).join("");
 
@@ -514,7 +519,7 @@
     sidebarOpen = false;
     sidebar.classList.remove("vp-sb-open");
     setTimeout(() => { if (!sidebarOpen) sidebar.classList.remove("vp-sb-shown"); }, 230);
-    if (vp("vp-sidebarToggle")) vp("vp-sidebarToggle").textContent = "Podgląd listy";
+    if (vp("vp-sidebarToggle")) vp("vp-sidebarToggle").textContent = "Podgląd sekcji";
   }
 
   function toggleSidebar() {
@@ -546,8 +551,8 @@
         <div class="vp-sb-item">
           <div class="vp-sb-img">${p.imageUrl ? "" : "🛍"}</div>
           <div class="vp-sb-info">
-            <div class="vp-sb-name" title="${p.name}">${p.name}</div>
-            ${p.price ? `<div class="vp-sb-price">${p.price}</div>` : ""}
+            <div class="vp-sb-name" title="${esc(p.name)}">${esc(p.name)}</div>
+            ${p.price ? `<div class="vp-sb-price">${esc(p.price)}</div>` : ""}
           </div>
         </div>
       `).join("");
@@ -806,7 +811,7 @@
     list.innerHTML = "";
     for (const item of items) {
       const div = document.createElement("div");
-      div.className = "vp-dd-item" + (item.value === el.dataset.value ? " vp-dd-selected" : "");
+      div.className = "vp-dd-item" + (item.value === el.dataset.value ? " vp-dd-selected" : "") + (!item.value ? " vp-dd-ph" : "");
       div.dataset.value = item.value;
       div.textContent = item.label;
       div.addEventListener("click", (e) => {
@@ -865,7 +870,7 @@
     if (!list) { updateAddBtn(); return; }
     const items = [
       { value: "", label: "Wybierz sekcję..." },
-      ...list.sections.map(s => ({ value: s.id, label: s.name }))
+      ...list.sections.filter(s => !s.unsorted).map(s => ({ value: s.id, label: s.name }))
     ];
     buildDropdownItems("vp-selectSection", items, (value) => {
       if (rememberListSection) chrome.storage.local.set({ lastSectionId: value });

@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import Link from "next/link";
 import { Folder, Pin, Upload } from "@/components/ui/icons";
 import FolderMenu from "./FolderMenu";
+import { useT } from "@/lib/i18n";
 
 interface FolderCardProps {
   folder: { id: string; name: string; renderCount: number; pinned: boolean };
@@ -13,6 +14,7 @@ interface FolderCardProps {
 }
 
 export default function FolderCard({ folder, projectId, roomId, onFileDrop }: FolderCardProps) {
+  const t = useT();
   const count = folder.renderCount;
   const [isDragOver, setIsDragOver] = useState(false);
   const dragCounter = useRef(0);
@@ -61,7 +63,7 @@ export default function FolderCard({ folder, projectId, roomId, onFileDrop }: Fo
         <div className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl pointer-events-none">
           <div className="flex flex-col items-center gap-1">
             <Upload size={20} className="text-primary" />
-            <span className="text-xs font-semibold text-primary">Upuść tutaj</span>
+            <span className="text-xs font-semibold text-primary">{t.render.dropHere}</span>
           </div>
         </div>
       )}
@@ -73,7 +75,7 @@ export default function FolderCard({ folder, projectId, roomId, onFileDrop }: Fo
         {folder.name}
       </p>
       <p className="text-xs text-muted-foreground mt-1">
-        {count} plik{count === 1 ? "" : count < 5 ? "i" : "ów"}
+        {count} {count === 1 ? t.render.fileSingular : count < 5 ? t.render.fileFew : t.render.fileMany}
       </p>
       <div
         className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity"

@@ -6,6 +6,7 @@ import Underline from "@tiptap/extension-underline";
 import Placeholder from "@tiptap/extension-placeholder";
 import { useEffect } from "react";
 import { Bold, Italic, Underline as UnderlineIcon, Strikethrough, List, ListOrdered } from "@/components/ui/icons";
+import { useT } from "@/lib/i18n";
 
 interface TaskDescriptionEditorProps {
   content: string;
@@ -49,11 +50,12 @@ export function TaskDescriptionEditor({
   onBlur,
   placeholder,
 }: TaskDescriptionEditorProps) {
+  const t = useT();
   const editor = useEditor({
     extensions: [
       StarterKit,
       Underline,
-      Placeholder.configure({ placeholder: placeholder ?? "Dodaj opis..." }),
+      Placeholder.configure({ placeholder: placeholder ?? t.tasks.addDescPlaceholder }),
     ],
     content,
     immediatelyRender: false,
@@ -77,23 +79,23 @@ export function TaskDescriptionEditor({
   return (
     <div className="border border-border rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-primary/20">
       <div className="flex items-center gap-0.5 px-2 py-1 border-b border-border bg-muted/30">
-        <ToolBtn active={editor.isActive("bold")} onClick={() => editor.chain().focus().toggleBold().run()} title="Pogrubienie (Ctrl+B)">
+        <ToolBtn active={editor.isActive("bold")} onClick={() => editor.chain().focus().toggleBold().run()} title={t.tasks.boldTitle}>
           <Bold size={13} />
         </ToolBtn>
-        <ToolBtn active={editor.isActive("italic")} onClick={() => editor.chain().focus().toggleItalic().run()} title="Kursywa (Ctrl+I)">
+        <ToolBtn active={editor.isActive("italic")} onClick={() => editor.chain().focus().toggleItalic().run()} title={t.tasks.italicTitle}>
           <Italic size={13} />
         </ToolBtn>
-        <ToolBtn active={editor.isActive("underline")} onClick={() => editor.chain().focus().toggleUnderline().run()} title="Podkreślenie (Ctrl+U)">
+        <ToolBtn active={editor.isActive("underline")} onClick={() => editor.chain().focus().toggleUnderline().run()} title={t.tasks.underlineTitle}>
           <UnderlineIcon size={13} />
         </ToolBtn>
-        <ToolBtn active={editor.isActive("strike")} onClick={() => editor.chain().focus().toggleStrike().run()} title="Przekreślenie">
+        <ToolBtn active={editor.isActive("strike")} onClick={() => editor.chain().focus().toggleStrike().run()} title={t.tasks.strikeTitle}>
           <Strikethrough size={13} />
         </ToolBtn>
         <div className="w-px h-3.5 bg-border mx-0.5" />
-        <ToolBtn active={editor.isActive("bulletList")} onClick={() => editor.chain().focus().toggleBulletList().run()} title="Lista punktowana">
+        <ToolBtn active={editor.isActive("bulletList")} onClick={() => editor.chain().focus().toggleBulletList().run()} title={t.tasks.bulletListTitle}>
           <List size={13} />
         </ToolBtn>
-        <ToolBtn active={editor.isActive("orderedList")} onClick={() => editor.chain().focus().toggleOrderedList().run()} title="Lista numerowana">
+        <ToolBtn active={editor.isActive("orderedList")} onClick={() => editor.chain().focus().toggleOrderedList().run()} title={t.tasks.orderedListTitle}>
           <ListOrdered size={13} />
         </ToolBtn>
       </div>

@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getWorkspaceUserId } from "@/lib/workspace";
 import { pusherServer } from "@/lib/pusher";
+import { checkTeamPermission } from "@/lib/permissions";
 
 const taskInclude = {
   project: { select: { id: true, title: true } },
@@ -40,6 +41,9 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!await checkTeamPermission(session, "taskCanCreate")) {
+    return NextResponse.json({ error: "Brak uprawnień do tworzenia zadań" }, { status: 403 });
+  }
 
   const ownerId = getWorkspaceUserId(session);
   const body = await req.json();

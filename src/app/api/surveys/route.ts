@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { uniqueSlug } from "@/lib/slug";
 import { getWorkspaceUserId } from "@/lib/workspace";
+import { checkTeamPermission } from "@/lib/permissions";
 
 export async function GET() {
   const session = await auth();
@@ -28,6 +29,9 @@ export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (!await checkTeamPermission(session, "surveyCanCreate")) {
+    return NextResponse.json({ error: "Brak uprawnień do tworzenia ankiet" }, { status: 403 });
   }
   const userId = getWorkspaceUserId(session);
 

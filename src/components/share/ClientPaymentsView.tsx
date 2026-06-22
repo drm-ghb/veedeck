@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Check, ChevronDown, ChevronRight, Loader2 } from "@/components/ui/icons";
+import { useT } from "@/lib/i18n";
 
 interface RfProject {
   id: string;
@@ -31,6 +32,7 @@ function formatPLN(amount: number) {
 }
 
 function PaymentRow({ payment }: { payment: Payment }) {
+  const t = useT();
   return (
     <div className="flex items-center gap-3 py-2.5 px-4">
       <div className={`w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center ${
@@ -49,7 +51,7 @@ function PaymentRow({ payment }: { payment: Payment }) {
           ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
           : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
       }`}>
-        {payment.status === "paid" ? "Opłacone" : "Do opłacenia"}
+        {payment.status === "paid" ? t.share.paymentsPaid : t.share.paymentsDue}
       </span>
     </div>
   );
@@ -80,6 +82,7 @@ function GroupBlock({ group, payments, groups, depth }: { group: PaymentGroup; p
 }
 
 export default function ClientPaymentsView({ projectId }: { projectId: string }) {
+  const t = useT();
   const [groups, setGroups] = useState<PaymentGroup[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -129,21 +132,21 @@ export default function ClientPaymentsView({ projectId }: { projectId: string })
   return (
     <div className="flex-1 overflow-y-auto">
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
-        <h1 className="text-xl font-bold">Płatności</h1>
+        <h1 className="text-xl font-bold">{t.share.payments}</h1>
 
         {/* Summary */}
         {payments.length > 0 && (
           <div className="bg-card border border-border rounded-xl p-4 grid grid-cols-3 gap-4 text-center">
             <div>
-              <p className="text-xs text-muted-foreground mb-1">Razem</p>
+              <p className="text-xs text-muted-foreground mb-1">{t.share.paymentsTotal}</p>
               <p className="text-sm font-bold tabular-nums">{formatPLN(total)}</p>
             </div>
             <div>
-              <p className="text-xs text-muted-foreground mb-1">Opłacone</p>
+              <p className="text-xs text-muted-foreground mb-1">{t.share.paymentsPaid}</p>
               <p className="text-sm font-bold tabular-nums text-green-600 dark:text-green-400">{formatPLN(paidTotal)}</p>
             </div>
             <div>
-              <p className="text-xs text-muted-foreground mb-1">Do opłacenia</p>
+              <p className="text-xs text-muted-foreground mb-1">{t.share.paymentsDue}</p>
               <p className={`text-sm font-bold tabular-nums ${remaining > 0 ? "text-amber-600 dark:text-amber-400" : "text-green-600 dark:text-green-400"}`}>{formatPLN(Math.max(0, remaining))}</p>
             </div>
           </div>
@@ -176,7 +179,7 @@ export default function ClientPaymentsView({ projectId }: { projectId: string })
               className="w-full flex items-center gap-2 px-4 py-3 bg-muted/30 hover:bg-muted/50 transition-colors text-left border-b border-border"
             >
               {sectionCollapsed["unassigned"] ? <ChevronRight size={15} className="text-muted-foreground flex-shrink-0" /> : <ChevronDown size={15} className="text-muted-foreground flex-shrink-0" />}
-              <span className="text-sm font-semibold flex-1">Pozostałe</span>
+              <span className="text-sm font-semibold flex-1">{t.share.paymentsRemaining}</span>
             </button>
             {!sectionCollapsed["unassigned"] && (
               <div className="divide-y divide-border/30">
@@ -188,7 +191,7 @@ export default function ClientPaymentsView({ projectId }: { projectId: string })
         )}
 
         {payments.length === 0 && (
-          <p className="text-center text-sm text-muted-foreground py-12">Brak płatności.</p>
+          <p className="text-center text-sm text-muted-foreground py-12">{t.share.noPayments}</p>
         )}
       </div>
     </div>

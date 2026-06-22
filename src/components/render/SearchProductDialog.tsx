@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { useT } from "@/lib/i18n";
 
 interface Product {
   id: string;
@@ -82,6 +83,7 @@ function ProductList({ products, onSelect }: { products: Product[]; onSelect: (p
 }
 
 export default function SearchProductDialog({ open, onClose, onSelect, projectId, renderId }: Props) {
+  const t = useT();
   const search = useProductSearch();
 
   // Per-render state memory: remembers tab/list/section as long as same render is active
@@ -273,12 +275,12 @@ export default function SearchProductDialog({ open, onClose, onSelect, projectId
 
   const tabs: { key: Tab; label: string }[] = projectId
     ? [
-        { key: "all", label: "Wszystkie produkty" },
-        { key: "list", label: "Produkty z listy" },
-        { key: "recent", label: "Ostatnio dodane" },
+        { key: "all", label: t.products.tabAllProducts },
+        { key: "list", label: t.products.tabListProducts },
+        { key: "recent", label: t.products.tabRecentProducts },
       ]
     : [
-        { key: "all", label: "Wszystkie produkty" },
+        { key: "all", label: t.products.tabAllProducts },
       ];
 
   return (
@@ -324,7 +326,7 @@ export default function SearchProductDialog({ open, onClose, onSelect, projectId
                   autoFocus
                   value={localQuery}
                   onChange={(e) => setLocalQuery(e.target.value)}
-                  placeholder="Szukaj produktu..."
+                  placeholder={t.products.searchProductPlaceholder}
                   className="flex-1 border-0 shadow-none focus-visible:ring-0 px-0 text-sm bg-transparent"
                 />
                 {localQuery && (
@@ -348,7 +350,7 @@ export default function SearchProductDialog({ open, onClose, onSelect, projectId
                 >
                   <LocalMall size={11} className="text-muted-foreground shrink-0" />
                   <span className="truncate">
-                    {allLists.find((l) => l.id === selectedListId)?.name ?? "Wybierz listę"}
+                    {allLists.find((l) => l.id === selectedListId)?.name ?? t.render.searchSelectList}
                   </span>
                   <ChevronDown size={11} className="text-muted-foreground shrink-0" />
                 </button>
@@ -378,7 +380,7 @@ export default function SearchProductDialog({ open, onClose, onSelect, projectId
                               : "bg-muted text-muted-foreground hover:text-foreground"
                           }`}
                         >
-                          Wszystkie
+                          {t.render.searchAllSections}
                         </button>
                         {listSections.map((s) => (
                           <button
@@ -424,7 +426,7 @@ export default function SearchProductDialog({ open, onClose, onSelect, projectId
                           autoFocus
                           value={projectSearch}
                           onChange={(e) => setProjectSearch(e.target.value)}
-                          placeholder="Szukaj projektu..."
+                          placeholder={t.render.searchProjectPlaceholder}
                           className="flex-1 bg-transparent text-xs outline-none placeholder:text-muted-foreground"
                         />
                       </div>
@@ -461,7 +463,7 @@ export default function SearchProductDialog({ open, onClose, onSelect, projectId
                         const q = projectSearch.toLowerCase();
                         return l.name.toLowerCase().includes(q) || (l.projectTitle ?? "").toLowerCase().includes(q);
                       }).length === 0 && (
-                        <p className="text-xs text-muted-foreground text-center py-4">Brak wyników</p>
+                        <p className="text-xs text-muted-foreground text-center py-4">{t.render.searchNoResults}</p>
                       )}
                     </div>
                   </div>
@@ -479,11 +481,11 @@ export default function SearchProductDialog({ open, onClose, onSelect, projectId
                     <Package size={28} className="opacity-30" />
                     <p className="text-sm">
                       {selectedListId
-                        ? `Lista „${allLists.find((l) => l.id === selectedListId)?.name ?? ""}" nie ma produktów`
-                        : "Wybierz listę zakupową z menu powyżej"}
+                        ? `Lista „${allLists.find((l) => l.id === selectedListId)?.name ?? ""}" ${t.render.searchListNoProducts}`
+                        : t.render.searchSelectListHint}
                     </p>
                     <Link href="/listy" onClick={handleClose} className="text-xs text-primary hover:underline">
-                      Przejdź do modułu Listy →
+                      {t.render.searchGoToLists}
                     </Link>
                   </div>
                 )}
@@ -500,7 +502,7 @@ export default function SearchProductDialog({ open, onClose, onSelect, projectId
                   ) : (
                     <div className="flex flex-col items-center justify-center gap-2 py-12 text-muted-foreground">
                       <Package size={28} className="opacity-30" />
-                      <p className="text-sm">Brak wyników</p>
+                      <p className="text-sm">{t.render.searchNoResults}</p>
                     </div>
                   );
                 })()}
@@ -517,7 +519,7 @@ export default function SearchProductDialog({ open, onClose, onSelect, projectId
                   autoFocus
                   value={localQuery}
                   onChange={(e) => setLocalQuery(e.target.value)}
-                  placeholder="Szukaj produktu..."
+                  placeholder={t.products.searchProductPlaceholder}
                   className="flex-1 border-0 shadow-none focus-visible:ring-0 px-0 text-sm bg-transparent"
                 />
                 {localQuery && (
@@ -535,7 +537,7 @@ export default function SearchProductDialog({ open, onClose, onSelect, projectId
                 {!recentLoading && recentProducts.length === 0 && (
                   <div className="flex flex-col items-center justify-center gap-2 py-12 text-muted-foreground">
                     <Package size={28} className="opacity-30" />
-                    <p className="text-sm">Brak przypiętych produktów w tym projekcie</p>
+                    <p className="text-sm">{t.products.noRecentProducts}</p>
                   </div>
                 )}
                 {!recentLoading && recentProducts.length > 0 && (() => {
@@ -548,7 +550,7 @@ export default function SearchProductDialog({ open, onClose, onSelect, projectId
                   ) : (
                     <div className="flex flex-col items-center justify-center gap-2 py-12 text-muted-foreground">
                       <Package size={28} className="opacity-30" />
-                      <p className="text-sm">Brak wyników</p>
+                      <p className="text-sm">{t.render.searchNoResults}</p>
                     </div>
                   );
                 })()}
@@ -566,13 +568,13 @@ export default function SearchProductDialog({ open, onClose, onSelect, projectId
                   autoFocus
                   value={search.query}
                   onChange={(e) => search.handleQueryChange(e.target.value)}
-                  placeholder="Szukaj produktu..."
+                  placeholder={t.products.searchProductPlaceholder}
                   className="flex-1 border-0 shadow-none focus-visible:ring-0 px-0 text-sm bg-transparent"
                 />
                 <button
                   type="button"
                   onClick={() => setShowFilters((v) => !v)}
-                  title="Filtry zaawansowane"
+                  title={t.products.advancedFilters}
                   className={`relative flex-shrink-0 transition-colors ${
                     showFilters || totalActiveFilters > 0
                       ? "text-primary"
@@ -604,7 +606,7 @@ export default function SearchProductDialog({ open, onClose, onSelect, projectId
                         }`}
                       >
                         {search.filters.onlyFavorites ? <StarFilled size={14} /> : <StarOutline size={14} />}
-                        Tylko ulubione
+                        {t.products.onlyFavorites}
                       </button>
 
                       {/* Kategorie */}
@@ -615,7 +617,7 @@ export default function SearchProductDialog({ open, onClose, onSelect, projectId
                             className="flex items-center justify-between w-full mb-2"
                           >
                             <div className="flex items-center gap-2">
-                              <span className="text-sm font-medium">Kategorie</span>
+                              <span className="text-sm font-medium">{t.products.filterCategories}</span>
                               {getActiveCount("categories") > 0 && (
                                 <Badge variant="secondary" className="text-xs">
                                   {getActiveCount("categories")}
@@ -632,7 +634,7 @@ export default function SearchProductDialog({ open, onClose, onSelect, projectId
                             <div className="space-y-2 ml-1">
                               {search.availableFilters.categories.length > 5 && (
                                 <Input
-                                  placeholder="Szukaj..."
+                                  placeholder={t.products.filterSearch}
                                   value={filterSearch.categories}
                                   onChange={(e) =>
                                     setFilterSearch((p) => ({ ...p, categories: e.target.value }))
@@ -674,7 +676,7 @@ export default function SearchProductDialog({ open, onClose, onSelect, projectId
                             className="flex items-center justify-between w-full mb-2"
                           >
                             <div className="flex items-center gap-2">
-                              <span className="text-sm font-medium">Producenci</span>
+                              <span className="text-sm font-medium">{t.products.filterManufacturers}</span>
                               {getActiveCount("manufacturers") > 0 && (
                                 <Badge variant="secondary" className="text-xs">
                                   {getActiveCount("manufacturers")}
@@ -691,7 +693,7 @@ export default function SearchProductDialog({ open, onClose, onSelect, projectId
                             <div className="space-y-2 ml-1">
                               {search.availableFilters.manufacturers.length > 5 && (
                                 <Input
-                                  placeholder="Szukaj..."
+                                  placeholder={t.products.filterSearch}
                                   value={filterSearch.manufacturers}
                                   onChange={(e) =>
                                     setFilterSearch((p) => ({ ...p, manufacturers: e.target.value }))
@@ -735,7 +737,7 @@ export default function SearchProductDialog({ open, onClose, onSelect, projectId
                             className="flex items-center justify-between w-full mb-2"
                           >
                             <div className="flex items-center gap-2">
-                              <span className="text-sm font-medium">Kolory</span>
+                              <span className="text-sm font-medium">{t.products.filterColors}</span>
                               {getActiveCount("colors") > 0 && (
                                 <Badge variant="secondary" className="text-xs">
                                   {getActiveCount("colors")}
@@ -752,7 +754,7 @@ export default function SearchProductDialog({ open, onClose, onSelect, projectId
                             <div className="space-y-2 ml-1">
                               {search.availableFilters.colors.length > 5 && (
                                 <Input
-                                  placeholder="Szukaj..."
+                                  placeholder={t.products.filterSearch}
                                   value={filterSearch.colors}
                                   onChange={(e) =>
                                     setFilterSearch((p) => ({ ...p, colors: e.target.value }))
@@ -798,7 +800,7 @@ export default function SearchProductDialog({ open, onClose, onSelect, projectId
                           }}
                           className="w-full"
                         >
-                          Wyczyść filtry
+                          {t.products.clearFilters}
                         </Button>
                       )}
                     </div>
@@ -817,8 +819,8 @@ export default function SearchProductDialog({ open, onClose, onSelect, projectId
                       <Package size={28} className="opacity-30" />
                       <p className="text-sm">
                         {search.query || totalActiveFilters > 0
-                          ? "Brak wyników"
-                          : "Zacznij wpisywać nazwę produktu"}
+                          ? t.render.searchNoResults
+                          : t.render.searchAllHint}
                       </p>
                     </div>
                   )}

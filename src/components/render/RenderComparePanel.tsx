@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
+import { useT } from "@/lib/i18n";
 import { X, Trash2, Edit2, SplitSquareHorizontal, Plus, Check, Loader2, Image, FileText, ChevronDown, ChevronRight } from "@/components/ui/icons";
 import { toast } from "sonner";
 import RenderComparePicker, { type PickerRenderItem } from "./RenderComparePicker";
@@ -52,6 +53,7 @@ function ItemThumbnail({ src, fileType }: { src: string; fileType: string }) {
 }
 
 export default function RenderComparePanel({ renderId, isDesigner, shareToken, clientProjectId, renderName, onClose, onCompare }: Props) {
+  const t = useT();
   const [items, setItems] = useState<ComparisonItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -108,8 +110,8 @@ export default function RenderComparePanel({ renderId, isDesigner, shareToken, c
     }
     setItems((prev) => [...prev, ...added]);
     setAddingIds([]);
-    if (added.length > 0) toast.success(`Dodano ${added.length} ${added.length === 1 ? "plik" : "pliki"} do porównania`);
-    if (failCount > 0) toast.error(`Nie udało się dodać ${failCount} ${failCount === 1 ? "pliku" : "plików"}`);
+    if (added.length > 0) toast.success(`${added.length} ${added.length === 1 ? t.render.compareFileSingular : added.length < 5 ? t.render.compareFileFew : t.render.compareFileMany} ${t.render.compareAddedToComparison}`);
+    if (failCount > 0) toast.error(`${t.render.compareAddFailed} ${failCount} ${failCount === 1 ? t.render.compareFileSingular : t.render.compareFileMany}`);
   }
 
   function startEdit(item: ComparisonItem) {
@@ -151,7 +153,7 @@ export default function RenderComparePanel({ renderId, isDesigner, shareToken, c
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-border flex-shrink-0">
             <div>
-              <h2 className="text-base font-semibold text-foreground">Porównanie</h2>
+              <h2 className="text-base font-semibold text-foreground">{t.render.compareTitle}</h2>
               {renderName && <p className="text-xs text-muted-foreground mt-0.5">{renderName}</p>}
             </div>
             <div className="flex items-center gap-2">
@@ -162,7 +164,7 @@ export default function RenderComparePanel({ renderId, isDesigner, shareToken, c
                   className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md bg-muted text-gray-700 dark:text-gray-300 hover:bg-muted/80 transition-colors disabled:opacity-50"
                 >
                   <Plus size={14} />
-                  Dodaj plik
+                  {t.render.compareAddFile}
                 </button>
               )}
               <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors">
@@ -183,15 +185,15 @@ export default function RenderComparePanel({ renderId, isDesigner, shareToken, c
             {!loading && isDesigner && !hasItems && (
               <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
                 <SplitSquareHorizontal size={32} className="text-muted-foreground mb-3 opacity-40" />
-                <p className="text-sm font-medium text-foreground mb-1">Brak plików do porównania</p>
-                <p className="text-xs text-muted-foreground">Kliknij „Dodaj plik", aby wybrać pliki z ProjectFlow</p>
+                <p className="text-sm font-medium text-foreground mb-1">{t.render.compareNoFiles}</p>
+                <p className="text-xs text-muted-foreground">{t.render.compareNoFilesHint}</p>
               </div>
             )}
 
             {/* Client: no items → show picker inline */}
             {!loading && !isDesigner && !hasItems && (
               <div className="p-4">
-                <p className="text-sm text-muted-foreground mb-3">Wybierz plik z ProjectFlow, aby porównać:</p>
+                <p className="text-sm text-muted-foreground mb-3">{t.render.compareClientHint}</p>
                 <ClientPickerInline
                   projectRendersUrl={projectRendersUrl}
                   excludeRenderId={renderId}
@@ -243,9 +245,9 @@ export default function RenderComparePanel({ renderId, isDesigner, shareToken, c
                             )}
                           </div>
                         )}
-                        {location && <p className="text-xs text-muted-foreground truncate mt-0.5"><span className="font-medium">Folder:</span> {location}</p>}
+                        {location && <p className="text-xs text-muted-foreground truncate mt-0.5"><span className="font-medium">{t.render.compareFolder}</span> {location}</p>}
                         <p className="text-xs text-muted-foreground">
-                          Dodano: {formatDate(item.sourceRender.createdAt)}
+                          {t.render.compareAdded} {formatDate(item.sourceRender.createdAt)}
                         </p>
                       </div>
 
@@ -254,10 +256,10 @@ export default function RenderComparePanel({ renderId, isDesigner, shareToken, c
                           <button
                             onClick={() => { onCompare(item.sourceRender.fileUrl, label); }}
                             className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-md border border-border text-foreground hover:bg-muted transition-colors"
-                            title="Porównaj z oryginałem"
+                            title={t.render.compareBtnTitle}
                           >
                             <SplitSquareHorizontal size={12} />
-                            Porównaj
+                            {t.render.compareBtn}
                           </button>
                         )}
                         {isDesigner && (
@@ -265,7 +267,7 @@ export default function RenderComparePanel({ renderId, isDesigner, shareToken, c
                             onClick={() => handleDelete(item.id)}
                             disabled={deletingId === item.id}
                             className="text-muted-foreground hover:text-red-500 transition-colors p-1.5 rounded-md hover:bg-red-50 dark:hover:bg-red-950/30 disabled:opacity-50"
-                            title="Usuń"
+                            title={t.common.delete}
                           >
                             {deletingId === item.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
                           </button>
@@ -300,6 +302,7 @@ function ClientPickerInline({ projectRendersUrl, excludeRenderId, onCompare }: {
   excludeRenderId: string;
   onCompare: (render: PickerRenderItem) => void;
 }) {
+  const t = useT();
   const [rooms, setRooms] = useState<{ id: string; name: string; folders: { id: string; name: string; renders: PickerRenderItem[] }[]; renders: PickerRenderItem[] }[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedRoom, setExpandedRoom] = useState<string | null>(null);
@@ -321,8 +324,8 @@ function ClientPickerInline({ projectRendersUrl, excludeRenderId, onCompare }: {
       .finally(() => setLoading(false));
   }, [projectRendersUrl, excludeRenderId]);
 
-  if (loading) return <p className="text-sm text-muted-foreground text-center py-4">Ładowanie…</p>;
-  if (rooms.length === 0) return <p className="text-sm text-muted-foreground text-center py-4">Brak plików w projekcie</p>;
+  if (loading) return <p className="text-sm text-muted-foreground text-center py-4">{t.render.compareLoading}</p>;
+  if (rooms.length === 0) return <p className="text-sm text-muted-foreground text-center py-4">{t.render.compareNoFilesProject}</p>;
 
   return (
     <div className="space-y-2">
@@ -336,7 +339,7 @@ function ClientPickerInline({ projectRendersUrl, excludeRenderId, onCompare }: {
             >
               {expandedRoom === room.id ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
               <span>{room.name}</span>
-              <span className="text-xs text-muted-foreground font-normal">{allRenders.length} plików</span>
+              <span className="text-xs text-muted-foreground font-normal">{allRenders.length} {allRenders.length === 1 ? t.render.compareFileSingular : allRenders.length < 5 ? t.render.compareFileFew : t.render.compareFileMany}</span>
             </button>
             {expandedRoom === room.id && (
               <div className="border-t border-border divide-y divide-border">
@@ -348,7 +351,7 @@ function ClientPickerInline({ projectRendersUrl, excludeRenderId, onCompare }: {
                     >
                       {expandedFolder === folder.id ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
                       <span>{folder.name}</span>
-                      <span className="text-xs text-muted-foreground font-normal">{folder.renders.length} plików</span>
+                      <span className="text-xs text-muted-foreground font-normal">{folder.renders.length} {folder.renders.length === 1 ? t.render.compareFileSingular : folder.renders.length < 5 ? t.render.compareFileFew : t.render.compareFileMany}</span>
                     </button>
                     {expandedFolder === folder.id && (
                       <div className="p-3 grid grid-cols-3 gap-2">
@@ -376,6 +379,7 @@ function ClientPickerInline({ projectRendersUrl, excludeRenderId, onCompare }: {
 }
 
 function CompareTile({ render, onCompare }: { render: PickerRenderItem; onCompare: () => void }) {
+  const t = useT();
   return (
     <div className="flex flex-col items-center gap-1 rounded-lg overflow-hidden border border-border bg-muted/20">
       <div className="w-full aspect-video flex items-center justify-center overflow-hidden bg-muted">
@@ -394,7 +398,7 @@ function CompareTile({ render, onCompare }: { render: PickerRenderItem; onCompar
             className="mt-1 w-full flex items-center justify-center gap-1 text-xs py-0.5 rounded bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
           >
             <SplitSquareHorizontal size={11} />
-            Porównaj
+            {t.render.compareBtn}
           </button>
         )}
       </div>

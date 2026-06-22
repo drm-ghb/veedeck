@@ -12,6 +12,7 @@ import {
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import EditRoomDialog from "./EditRoomDialog";
+import { useT } from "@/lib/i18n";
 
 interface RoomMenuProps {
   room: {
@@ -24,6 +25,7 @@ interface RoomMenuProps {
 }
 
 export default function RoomMenu({ room }: RoomMenuProps) {
+  const t = useT();
   const [editOpen, setEditOpen] = useState(false);
   const router = useRouter();
 
@@ -34,10 +36,10 @@ export default function RoomMenu({ room }: RoomMenuProps) {
       body: JSON.stringify({ pinned: !room.pinned }),
     });
     if (res.ok) {
-      toast.success(room.pinned ? "Odpięto pomieszczenie" : "Pomieszczenie przypięte");
+      toast.success(room.pinned ? t.projekty.roomUnpinned : t.projekty.roomPinned);
       router.refresh();
     } else {
-      toast.error("Błąd operacji");
+      toast.error(t.render.operationError);
     }
   }
 
@@ -48,21 +50,21 @@ export default function RoomMenu({ room }: RoomMenuProps) {
       body: JSON.stringify({ archived: true }),
     });
     if (res.ok) {
-      toast.success("Pomieszczenie zarchiwizowane");
+      toast.success(t.projekty.roomArchived);
       router.refresh();
     } else {
-      toast.error("Błąd archiwizacji");
+      toast.error(t.projekty.roomArchiveError);
     }
   }
 
   async function handleDelete() {
-    if (!confirm(`Usunąć pomieszczenie "${room.name}"?`)) return;
+    if (!confirm(t.projekty.confirmDeleteRoom)) return;
     const res = await fetch(`/api/rooms/${room.id}`, { method: "DELETE" });
     if (res.ok) {
-      toast.success("Pomieszczenie usunięte");
+      toast.success(t.projekty.roomDeleted);
       router.refresh();
     } else {
-      toast.error("Błąd usuwania");
+      toast.error(t.projekty.roomDeleteError);
     }
   }
 
@@ -78,26 +80,26 @@ export default function RoomMenu({ room }: RoomMenuProps) {
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={handlePin}>
             {room.pinned ? <PinOff size={14} /> : <Pin size={14} />}
-            {room.pinned ? "Odepnij" : "Przypnij"}
+            {room.pinned ? t.common.unpinAction : t.common.pinAction}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => { window.location.href = `/api/rooms/${room.id}/download`; }}>
             <Download size={14} />
-            Pobierz
+            {t.render.download}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => setEditOpen(true)}>
             <Pencil size={14} />
-            Edytuj
+            {t.common.edit}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={handleArchive}>
             <Archive size={14} />
-            Archiwizuj
+            {t.common.archive}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem variant="destructive" onClick={handleDelete}>
             <Trash2 size={14} />
-            Usuń
+            {t.common.delete}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

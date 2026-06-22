@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/icons";
 import NewSurveyDialog from "./NewSurveyDialog";
 import TemplatesTab from "./TemplatesTab";
+import { useT } from "@/lib/i18n";
 
 type Client = { id: string; name: string };
 type Survey = {
@@ -24,6 +25,7 @@ type Survey = {
   assignedClient: { id: string; name: string } | null;
   _count: { responses: number };
   viewCount: number;
+  hasCompletedResponse: boolean;
 };
 
 interface CustomTemplate {
@@ -45,28 +47,34 @@ type ViewMode = "grid" | "list";
 type Tab = "active" | "archived" | "templates";
 
 const STATUS_ORDER: Survey["status"][] = ["ACTIVE", "DRAFT", "CLOSED"];
-const STATUS_LABELS: Record<string, string> = { ACTIVE: "Aktywne", DRAFT: "Szkice", CLOSED: "Zamknięte" };
 
-function StatusBadge({ status }: { status: string }) {
+function StatusBadge({ status, completed }: { status: string; completed?: boolean }) {
+  const t = useT();
+  if (status === "ACTIVE" && completed) return (
+    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+      {t.ankiety.statusActiveCompleted}
+    </span>
+  );
   if (status === "ACTIVE") return (
     <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
-      Aktywna
+      {t.ankiety.statusActive}
     </span>
   );
   if (status === "CLOSED") return (
     <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-      Zamknięta
+      {t.ankiety.statusClosed}
     </span>
   );
   return (
     <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">
-      Szkic
+      {t.ankiety.statusDraft}
     </span>
   );
 }
 
 export default function SurveysClient({ surveys: initial, clients, customTemplates }: Props) {
   const router = useRouter();
+  const t = useT();
   const [surveys, setSurveys] = useState<Survey[]>(initial);
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<SortMode>(() => {
@@ -117,39 +125,39 @@ export default function SurveysClient({ surveys: initial, clients, customTemplat
   async function handleArchive(survey: Survey) {
     setOpenMenuId(null);
     const res = await fetch(`/api/surveys/${survey.id}/archive`, { method: "POST" });
-    if (!res.ok) { toast.error("Błąd archiwizacji"); return; }
+    if (!res.ok) { toast.error(t.ankiety.archiveError); return; }
     const updated = await res.json();
     setSurveys((prev) => prev.map((s) => s.id === survey.id ? { ...s, archived: updated.archived } : s));
-    toast.success(updated.archived ? "Ankieta zarchiwizowana" : "Ankieta przywrócona");
+    toast.success(updated.archived ? t.ankiety.surveyArchived : t.ankiety.surveyRestored);
   }
 
   async function handlePin(survey: Survey) {
     setOpenMenuId(null);
     const res = await fetch(`/api/surveys/${survey.id}/pin`, { method: "POST" });
-    if (!res.ok) { toast.error("Błąd przypinania"); return; }
+    if (!res.ok) { toast.error(t.ankiety.pinError); return; }
     const updated = await res.json();
     setSurveys((prev) => prev.map((s) => s.id === survey.id ? { ...s, pinned: updated.pinned } : s));
-    toast.success(updated.pinned ? "Ankieta przypięta" : "Ankieta odpięta");
+    toast.success(updated.pinned ? t.ankiety.surveyPinned : t.ankiety.surveyUnpinned);
   }
 
   async function handleDelete(survey: Survey) {
     setOpenMenuId(null);
-    if (!confirm(`Czy na pewno chcesz usunąć ankietę "${survey.name}"?`)) return;
+    if (!confirm(t.ankiety.confirmDelete)) return;
     const res = await fetch(`/api/surveys/${survey.id}`, { method: "DELETE" });
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
-      toast.error(body.error ?? "Błąd usuwania ankiety");
+      toast.error(body.error ?? t.ankiety.deleteError);
       return;
     }
     setSurveys((prev) => prev.filter((s) => s.id !== survey.id));
-    toast.success("Ankieta usunięta");
+    toast.success(t.ankiety.surveyDeleted);
   }
 
   function handleCopyLink(survey: Survey) {
     setOpenMenuId(null);
     const url = `${window.location.origin}/share/survey/${survey.shareToken}`;
     navigator.clipboard.writeText(url);
-    toast.success("Link skopiowany");
+    toast.success(t.common.linkCopied);
   }
 
   function handleCreated(survey: Survey) {
@@ -159,7 +167,7 @@ export default function SurveysClient({ surveys: initial, clients, customTemplat
   }
 
   function formatDate(dateStr: string) {
-    return new Date(dateStr).toLocaleDateString("pl-PL", { day: "numeric", month: "short", year: "numeric" });
+    return new Date(dateStr).toLocaleDateString();
   }
 
   const activeCount = surveys.filter((s) => !s.archived).length;
@@ -169,13 +177,13 @@ export default function SurveysClient({ surveys: initial, clients, customTemplat
     <div className="flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-4">
-        <h1 className="text-xl font-semibold">Ankiety</h1>
+        <h1 className="text-xl font-semibold">{t.ankiety.title}</h1>
         <button
           onClick={() => setNewOpen(true)}
           className="flex items-center gap-2 px-3 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity"
         >
           <Plus size={16} />
-          Nowa ankieta
+          {t.ankiety.newSurvey}
         </button>
       </div>
 
@@ -185,19 +193,19 @@ export default function SurveysClient({ surveys: initial, clients, customTemplat
           onClick={() => setTab("active")}
           className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors -mb-px whitespace-nowrap ${tab === "active" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}
         >
-          Aktywne <span className="ml-1 text-xs text-muted-foreground">({activeCount})</span>
+          {t.ankiety.statusActivePlural} <span className="ml-1 text-xs text-muted-foreground">({activeCount})</span>
         </button>
         <button
           onClick={() => setTab("archived")}
           className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors -mb-px whitespace-nowrap ${tab === "archived" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}
         >
-          Zarchiwizowane <span className="ml-1 text-xs text-muted-foreground">({archivedCount})</span>
+          {t.common.archived} <span className="ml-1 text-xs text-muted-foreground">({archivedCount})</span>
         </button>
         <button
           onClick={() => setTab("templates")}
           className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors -mb-px whitespace-nowrap ${tab === "templates" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}
         >
-          Szablony
+          {t.ankiety.templatesTab}
         </button>
       </div>
 
@@ -209,7 +217,7 @@ export default function SurveysClient({ surveys: initial, clients, customTemplat
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Szukaj ankiet..."
+            placeholder={t.ankiety.searchPlaceholder}
             className="w-full pl-9 pr-4 py-2 border border-border rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-transparent"
           />
         </div>
@@ -222,10 +230,10 @@ export default function SurveysClient({ surveys: initial, clients, customTemplat
             onChange={(e) => { const v = e.target.value as SortMode; setSort(v); localStorage.setItem("ankiety-sort", v); }}
             className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
           >
-            <option value="manual">Ręcznie</option>
-            <option value="az">A–Z</option>
-            <option value="date">Najnowsze</option>
-            <option value="status">Status</option>
+            <option value="manual">{t.ankiety.sortManual}</option>
+            <option value="az">{t.common.az}</option>
+            <option value="date">{t.common.newest}</option>
+            <option value="status">{t.ankiety.sortStatus}</option>
           </select>
         </div>
 
@@ -235,10 +243,10 @@ export default function SurveysClient({ surveys: initial, clients, customTemplat
           onChange={(e) => { const v = e.target.value as SortMode; setSort(v); localStorage.setItem("ankiety-sort", v); }}
           className="hidden sm:block flex-shrink-0 text-xs border border-gray-200 dark:border-gray-700 rounded-md px-2 py-2 bg-white dark:bg-card text-gray-600 dark:text-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-300"
         >
-          <option value="manual">Ręcznie</option>
-          <option value="az">A–Z</option>
-          <option value="date">Najnowsze</option>
-          <option value="status">Status</option>
+          <option value="manual">{t.ankiety.sortManual}</option>
+          <option value="az">{t.common.az}</option>
+          <option value="date">{t.common.newest}</option>
+          <option value="status">{t.ankiety.sortStatus}</option>
         </select>
 
         {/* Group — desktop only */}
@@ -247,8 +255,8 @@ export default function SurveysClient({ surveys: initial, clients, customTemplat
           onChange={(e) => { const v = e.target.value as GroupMode; setGroup(v); localStorage.setItem("ankiety-group", v); }}
           className="hidden sm:block flex-shrink-0 text-xs border border-gray-200 dark:border-gray-700 rounded-md px-2 py-2 bg-white dark:bg-card text-gray-600 dark:text-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-300"
         >
-          <option value="none">Grupowanie</option>
-          <option value="status">Wg statusu</option>
+          <option value="none">{t.ankiety.groupBy}</option>
+          <option value="status">{t.ankiety.groupByStatus}</option>
         </select>
 
         <div className="flex items-center gap-0.5 bg-muted rounded-md p-0.5 flex-shrink-0">
@@ -275,13 +283,13 @@ export default function SurveysClient({ surveys: initial, clients, customTemplat
           <div className="p-3 sm:p-6">
             {filtered.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 text-center text-muted-foreground">
-                <p className="text-sm">{tab === "archived" ? "Brak zarchiwizowanych ankiet." : "Brak aktywnych ankiet."}</p>
+                <p className="text-sm">{tab === "archived" ? t.ankiety.noArchived : t.ankiety.noActive}</p>
                 {tab === "active" && (
                   <button
                     onClick={() => setNewOpen(true)}
                     className="mt-3 text-sm text-primary hover:underline"
                   >
-                    Utwórz pierwszą ankietę
+                    {t.ankiety.createFirst}
                   </button>
                 )}
               </div>
@@ -293,7 +301,7 @@ export default function SurveysClient({ surveys: initial, clients, customTemplat
                   return (
                     <div key={status}>
                       <div className="flex items-center gap-2 mb-3">
-                        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{STATUS_LABELS[status]}</span>
+                        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{status === "ACTIVE" ? t.ankiety.statusActivePlural : status === "DRAFT" ? t.ankiety.statusDraftPlural : t.ankiety.statusClosedPlural}</span>
                         <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">{items.length}</span>
                       </div>
                       {view === "grid" ? (
@@ -366,6 +374,7 @@ interface CardProps {
 }
 
 function SurveyCard({ survey, openMenuId, setOpenMenuId, onArchive, onPin, onDelete, onCopyLink, formatDate }: CardProps) {
+  const t = useT();
   const open = openMenuId === survey.id;
 
   return (
@@ -383,7 +392,16 @@ function SurveyCard({ survey, openMenuId, setOpenMenuId, onArchive, onPin, onDel
         <span className="font-semibold text-sm text-foreground line-clamp-2 flex-1">
           {survey.name}
         </span>
-        <div className="relative flex-shrink-0" onClick={(e) => e.preventDefault()}>
+        <div className="relative flex-shrink-0 flex items-center gap-1" onClick={(e) => e.preventDefault()}>
+          {survey.hasCompletedResponse && (
+            <a
+              href={`/ankiety/${survey.id}/odpowiedzi`}
+              className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium bg-primary/10 text-primary rounded-md hover:bg-primary/20 transition-colors"
+            >
+              <BarChart2 size={13} />
+              {t.ankiety.responses}
+            </a>
+          )}
           <button
             onClick={(e) => { e.preventDefault(); setOpenMenuId(open ? null : survey.id); }}
             className="p-1 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
@@ -396,14 +414,14 @@ function SurveyCard({ survey, openMenuId, setOpenMenuId, onArchive, onPin, onDel
         </div>
       </div>
 
-      <StatusBadge status={survey.status} />
+      <StatusBadge status={survey.status} completed={survey.hasCompletedResponse} />
 
       <div className="mt-3 space-y-1 text-xs text-muted-foreground">
-        {survey.assignedClient && <p>Klient: {survey.assignedClient.name}</p>}
+        {survey.assignedClient && <p>{t.ankiety.clientLabel} {survey.assignedClient.name}</p>}
         <div className="flex items-center justify-between pt-1">
-          <p>{formatDate(survey.createdAt)} · {survey._count?.responses ?? 0} odpowiedzi</p>
+          <p>{formatDate(survey.createdAt)} · {survey._count?.responses ?? 0} {t.ankiety.responses}</p>
           {survey.status === "ACTIVE" && (survey.viewCount ?? 0) > 0 && (
-            <span className="flex items-center gap-1 text-muted-foreground" title="Liczba wyświetleń ankiety przez klienta">
+            <span className="flex items-center gap-1 text-muted-foreground" title={t.ankiety.viewCountTitle}>
               <Eye size={12} />
               {survey.viewCount}
             </span>
@@ -417,17 +435,18 @@ function SurveyCard({ survey, openMenuId, setOpenMenuId, onArchive, onPin, onDel
 // ── Survey Table (list view) ───────────────────────────────────────────────
 
 function SurveyTable({ surveys, openMenuId, setOpenMenuId, onArchive, onPin, onDelete, onCopyLink, formatDate }: Omit<CardProps, "survey"> & { surveys: Survey[] }) {
+  const t = useT();
   return (
-    <div className="border border-border rounded-xl overflow-hidden">
+    <div className="border border-border rounded-xl overflow-visible">
       <table className="w-full text-sm">
         <thead>
           <tr className="bg-muted/50 border-b border-border">
-            <th className="text-left px-4 py-3 font-medium text-muted-foreground">Nazwa</th>
-            <th className="text-left px-4 py-3 font-medium text-muted-foreground">Status</th>
-            <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Klient</th>
-            <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Data</th>
-            <th className="text-left px-4 py-3 font-medium text-muted-foreground">Odpowiedzi</th>
-            <th className="px-4 py-3" />
+            <th className="text-left px-4 py-3 font-medium text-muted-foreground rounded-tl-xl">{t.ankiety.colName}</th>
+            <th className="text-left px-4 py-3 font-medium text-muted-foreground">{t.ankiety.colStatus}</th>
+            <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">{t.ankiety.colClient}</th>
+            <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">{t.ankiety.colDate}</th>
+            <th className="text-left px-4 py-3 font-medium text-muted-foreground">{t.ankiety.colResponses}</th>
+            <th className="px-4 py-3 rounded-tr-xl" />
           </tr>
         </thead>
         <tbody>
@@ -440,14 +459,14 @@ function SurveyTable({ surveys, openMenuId, setOpenMenuId, onArchive, onPin, onD
                     {survey.name}
                   </a>
                 </td>
-                <td className="px-4 py-3"><StatusBadge status={survey.status} /></td>
+                <td className="px-4 py-3"><StatusBadge status={survey.status} completed={survey.hasCompletedResponse} /></td>
                 <td className="px-4 py-3 hidden md:table-cell text-muted-foreground">{survey.assignedClient?.name ?? "—"}</td>
                 <td className="px-4 py-3 hidden md:table-cell text-muted-foreground">{formatDate(survey.createdAt)}</td>
                 <td className="px-4 py-3 text-muted-foreground">
                   <div className="flex items-center gap-3">
                     <span>{survey._count?.responses ?? 0}</span>
                     {survey.status === "ACTIVE" && (survey.viewCount ?? 0) > 0 && (
-                      <span className="flex items-center gap-1" title="Liczba wyświetleń ankiety przez klienta">
+                      <span className="flex items-center gap-1" title={t.ankiety.viewCountTitle}>
                         <Eye size={12} />
                         {survey.viewCount}
                       </span>
@@ -455,7 +474,16 @@ function SurveyTable({ surveys, openMenuId, setOpenMenuId, onArchive, onPin, onD
                   </div>
                 </td>
                 <td className="px-4 py-3">
-                  <div className="relative flex justify-end">
+                  <div className="relative flex items-center justify-end gap-1">
+                    {survey.hasCompletedResponse && (
+                      <a
+                        href={`/ankiety/${survey.id}/odpowiedzi`}
+                        className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium bg-primary/10 text-primary rounded-md hover:bg-primary/20 transition-colors"
+                      >
+                        <BarChart2 size={13} />
+                        {t.ankiety.responses}
+                      </a>
+                    )}
                     <button
                       onClick={() => setOpenMenuId(open ? null : survey.id)}
                       className="p-1 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
@@ -486,6 +514,7 @@ function SurveyMenu({ survey, onClose, onArchive, onPin, onDelete, onCopyLink }:
   onDelete: (s: Survey) => void;
   onCopyLink: (s: Survey) => void;
 }) {
+  const t = useT();
   const ref = useRef<HTMLDivElement>(null);
   const [above, setAbove] = useState(false);
   const [visible, setVisible] = useState(false);
@@ -507,14 +536,14 @@ function SurveyMenu({ survey, onClose, onArchive, onPin, onDelete, onCopyLink }:
         className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted transition-colors"
       >
         <BarChart2 size={14} />
-        Odpowiedzi
+        {t.ankiety.responses}
       </a>
       <a
         href={`/ankiety/${survey.id}/edytuj`}
         className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted transition-colors"
       >
         <Edit2 size={14} />
-        Edytuj
+        {t.common.edit}
       </a>
       {survey.status === "ACTIVE" && (
         <button
@@ -522,7 +551,7 @@ function SurveyMenu({ survey, onClose, onArchive, onPin, onDelete, onCopyLink }:
           className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted transition-colors"
         >
           <Copy size={14} />
-          Kopiuj link
+          {t.common.copyLink}
         </button>
       )}
       <button
@@ -530,14 +559,14 @@ function SurveyMenu({ survey, onClose, onArchive, onPin, onDelete, onCopyLink }:
         className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted transition-colors"
       >
         {survey.pinned ? <PinOff size={14} /> : <Pin size={14} />}
-        {survey.pinned ? "Odepnij" : "Przypnij"}
+        {survey.pinned ? t.common.unpinAction : t.common.pinAction}
       </button>
       <button
         onClick={() => onArchive(survey)}
         className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted transition-colors"
       >
         {survey.archived ? <ArchiveRestore size={14} /> : <Archive size={14} />}
-        {survey.archived ? "Przywróć" : "Archiwizuj"}
+        {survey.archived ? t.common.restore : t.common.archive}
       </button>
       <div className="border-t border-border my-1" />
       <button
@@ -545,7 +574,7 @@ function SurveyMenu({ survey, onClose, onArchive, onPin, onDelete, onCopyLink }:
         className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
       >
         <Trash2 size={14} />
-        Usuń
+        {t.common.delete}
       </button>
     </div>
   );

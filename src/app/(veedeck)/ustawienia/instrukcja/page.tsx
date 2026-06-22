@@ -6,7 +6,7 @@ import {
   Pin, Check, ExternalLink, History,
   Paperclip, Mic, CornerDownLeft, X, Users,
   Package, CalendarDays, NotebookText, VeezardIcon, CheckSquare,
-  Engineering, FolderOpen, Ruler,
+  Engineering, FolderOpen, Ruler, ClipboardList,
 } from "@/components/ui/icons";
 
 /* ─── DESIGNER PANEL ────────────────────────────────────────────────────── */
@@ -57,25 +57,25 @@ const DESIGNER_MODULES: DesignerStep[] = [
     ],
   },
   {
-    title: "4. Dyskusje",
-    desc: "Wbudowany komunikator między Tobą a klientem. Po dodaniu klienta wątek dyskusji tworzy się automatycznie — nie musisz nic konfigurować. To idealne miejsce na szybkie ustalenia, pytania i przesyłanie materiałów inspiracyjnych bez używania maila.",
+    title: "4. Zadania",
+    desc: "Moduł do zarządzania zadaniami projektanta. Możesz tworzyć zadania powiązane z projektami, przypisywać je do siebie lub innych osób, ustawiać priorytety i terminy oraz śledzić postęp w widoku listy lub tablicy kanban.",
     steps: [
-      "Wątek powstaje automatycznie po dodaniu klienta",
-      "Piszesz wiadomości, wysyłasz zdjęcia i dokumenty",
-      "Klient odpowiada bezpośrednio ze swojego panelu",
-      "Cała historia komunikacji zostaje w jednym miejscu",
+      "Dodaj nowe zadanie z tytułem, opisem i terminem",
+      "Przypisz zadanie do projektu i wybierz priorytet",
+      "Śledź postęp — statusy: Do zrobienia, W trakcie, Gotowe",
+      "Przeglądaj zadania w widoku listy lub tablicy kanban",
+      "Dodawaj podzadania dla bardziej złożonych działań",
     ],
   },
   {
-    title: "5. Wykonawcy",
-    desc: "Moduł do zarządzania wykonawcami — hydraulikami, malarzami, firmami budowlanymi i innymi specjalistami. Każdy wykonawca ma własne konto w systemie i loguje się do swojego panelu, gdzie widzi tylko przypisane mu foldery i pliki. Możesz tworzyć strukturę folderów, wgrywać dokumentację techniczną i ukrywać foldery, które nie są jeszcze gotowe do udostępnienia.",
+    title: "5. Ankiety",
+    desc: "Moduł do tworzenia i wysyłania ankiet do klientów. Możesz budować ankiety z różnymi typami pytań (jednokrotny wybór, wielokrotny wybór, tekst, skala), przypisywać je do klientów i śledzić odpowiedzi w panelu wyników.",
     steps: [
-      "Dodaj wykonawcę z danymi kontaktowymi (firma lub osoba)",
-      "Utwórz konto — wykonawca dostanie dane do logowania",
-      "Przypisz wykonawcę do projektu",
-      "Twórz foldery (Rysunki, Wizualizacje, Inne) i wgrywaj pliki",
-      "Wykonawca loguje się do swojego panelu i widzi swoje materiały",
-      "Ukrywaj foldery, które nie są jeszcze gotowe do udostępnienia",
+      "Utwórz nową ankietę i nadaj jej nazwę",
+      "Dodaj pytania — wybierz typ (jednokrotny wybór, tekst, skala itp.)",
+      "Przypisz ankietę do klienta i aktywuj",
+      "Klient otrzymuje link i wypełnia ankietę w swoim panelu",
+      "Przeglądaj wyniki i odpowiedzi w zakładce Odpowiedzi",
     ],
   },
   {
@@ -92,7 +92,19 @@ const DESIGNER_MODULES: DesignerStep[] = [
     ],
   },
   {
-    title: "7. Kalendarz",
+    title: "7. Wykonawcy",
+    desc: "Moduł do zarządzania wykonawcami — hydraulikami, malarzami, firmami budowlanymi i innymi specjalistami. Każdy wykonawca ma własne konto w systemie i loguje się do swojego panelu, gdzie widzi tylko przypisane mu foldery i pliki. Możesz tworzyć strukturę folderów, wgrywać dokumentację techniczną i ukrywać foldery, które nie są jeszcze gotowe do udostępnienia.",
+    steps: [
+      "Dodaj wykonawcę z danymi kontaktowymi (firma lub osoba)",
+      "Utwórz konto — wykonawca dostanie dane do logowania",
+      "Przypisz wykonawcę do projektu",
+      "Twórz foldery (Rysunki, Wizualizacje, Inne) i wgrywaj pliki",
+      "Wykonawca loguje się do swojego panelu i widzi swoje materiały",
+      "Ukrywaj foldery, które nie są jeszcze gotowe do udostępnienia",
+    ],
+  },
+  {
+    title: "8. Kalendarz",
     desc: "Osobisty kalendarz projektanta. Możesz planować spotkania z klientami, dodawać zadania do wykonania i ustawiać przypomnienia. Widok miesięczny, tygodniowy i dzienny. Do wydarzeń można zapraszać uczestników.",
     steps: [
       "Dodaj wydarzenie, zadanie lub przypomnienie",
@@ -102,7 +114,7 @@ const DESIGNER_MODULES: DesignerStep[] = [
     ],
   },
   {
-    title: "8. Notatnik",
+    title: "9. Notatnik",
     desc: "Prosty notatnik do zapisywania pomysłów, uwag i informacji przy projektach. Notatki widoczne są tylko dla Ciebie. Każda notatka może zawierać tekst lub szkic — wbudowany szkicownik działa na komputerze, telefonie i tablecie. Gotowe notatki można archiwizować.",
     steps: [
       "Utwórz nową notatkę i nadaj jej tytuł",
@@ -112,18 +124,17 @@ const DESIGNER_MODULES: DesignerStep[] = [
     ],
   },
   {
-    title: "9. Zadania",
-    desc: "Moduł do zarządzania zadaniami projektanta. Możesz tworzyć zadania powiązane z projektami, przypisywać je do siebie lub innych osób, ustawiać priorytety i terminy oraz śledzić postęp w widoku listy lub tablicy kanban.",
+    title: "10. Dyskusje",
+    desc: "Wbudowany komunikator między Tobą a klientem. Po dodaniu klienta wątek dyskusji tworzy się automatycznie — nie musisz nic konfigurować. To idealne miejsce na szybkie ustalenia, pytania i przesyłanie materiałów inspiracyjnych bez używania maila.",
     steps: [
-      "Dodaj nowe zadanie z tytułem, opisem i terminem",
-      "Przypisz zadanie do projektu i wybierz priorytet",
-      "Śledź postęp — statusy: Do zrobienia, W trakcie, Gotowe",
-      "Przeglądaj zadania w widoku listy lub tablicy kanban",
-      "Dodawaj podzadania dla bardziej złożonych działań",
+      "Wątek powstaje automatycznie po dodaniu klienta",
+      "Piszesz wiadomości, wysyłasz zdjęcia i dokumenty",
+      "Klient odpowiada bezpośrednio ze swojego panelu",
+      "Cała historia komunikacji zostaje w jednym miejscu",
     ],
   },
   {
-    title: "10. Veezard",
+    title: "11. Veezard",
     desc: "Wkrótce dostępny w veedeck.",
     steps: [],
   },
@@ -322,13 +333,14 @@ export default function InstrukcjaPage() {
                   {idx === 0 && <Users size={22} />}
                   {idx === 1 && <PushPin size={22} />}
                   {idx === 2 && <LocalMall size={22} />}
-                  {idx === 3 && <ChatBubble size={22} />}
-                  {idx === 4 && <Engineering size={22} />}
+                  {idx === 3 && <CheckSquare size={22} />}
+                  {idx === 4 && <ClipboardList size={22} />}
                   {idx === 5 && <Package size={22} />}
-                  {idx === 6 && <CalendarDays size={22} />}
-                  {idx === 7 && <NotebookText size={22} />}
-                  {idx === 8 && <CheckSquare size={22} />}
-                  {idx === 9 && <VeezardIcon size={22} />}
+                  {idx === 6 && <Engineering size={22} />}
+                  {idx === 7 && <CalendarDays size={22} />}
+                  {idx === 8 && <NotebookText size={22} />}
+                  {idx === 9 && <ChatBubble size={22} />}
+                  {idx === 10 && <VeezardIcon size={22} />}
                 </div>
                 <h2 className="font-semibold text-gray-900 dark:text-gray-100">{mod.title}</h2>
               </div>

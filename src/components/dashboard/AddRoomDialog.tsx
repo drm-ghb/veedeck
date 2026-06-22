@@ -14,12 +14,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { ICON_OPTIONS, getRoomIcon } from "@/lib/roomIcons";
+import { useT } from "@/lib/i18n";
 
 interface AddRoomDialogProps {
   projectId: string;
 }
 
 export default function AddRoomDialog({ projectId }: AddRoomDialogProps) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [icon, setIcon] = useState<string>("INNE");
@@ -42,13 +44,13 @@ export default function AddRoomDialog({ projectId }: AddRoomDialogProps) {
 
       if (!res.ok) throw new Error();
 
-      toast.success(`Folder "${name.trim()}" dodany`);
+      toast.success(t.projekty.roomAdded);
       setOpen(false);
       setName("");
       setIcon("INNE");
       router.refresh();
     } catch {
-      toast.error("Błąd dodawania folderu");
+      toast.error(t.projekty.roomAddError);
     } finally {
       setLoading(false);
     }
@@ -57,27 +59,27 @@ export default function AddRoomDialog({ projectId }: AddRoomDialogProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger render={<Button />}>
-        + Dodaj
+        {t.projekty.addRoom}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Nowy folder</DialogTitle>
+          <DialogTitle>{t.projekty.newRoom}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="space-y-1.5">
-            <Label htmlFor="roomName">Nazwa *</Label>
+            <Label htmlFor="roomName">{t.projekty.roomName}</Label>
             <Input
               id="roomName"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="np. Kuchnia główna, Sypialnia 1..."
+              placeholder={t.projekty.roomNamePlaceholder}
               required
               autoFocus
             />
           </div>
 
           <div className="space-y-1.5">
-            <Label>Ikona</Label>
+            <Label>{t.projekty.roomIcon}</Label>
             <div className="grid grid-cols-4 gap-2">
               {ICON_OPTIONS.map(({ key, label, icon: Icon }) => (
                 <button
@@ -100,10 +102,10 @@ export default function AddRoomDialog({ projectId }: AddRoomDialogProps) {
 
           <div className="flex gap-2 justify-end pt-1">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              Anuluj
+              {t.common.cancel}
             </Button>
             <Button type="submit" disabled={loading || !name.trim()}>
-              {loading ? "Dodawanie..." : "Dodaj"}
+              {loading ? t.projekty.creating : t.common.add}
             </Button>
           </div>
         </form>

@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { uniqueSlug } from "@/lib/slug";
 import { getWorkspaceUserId } from "@/lib/workspace";
+import { checkTeamPermission } from "@/lib/permissions";
 
 async function getOwnedList(id: string, userId: string) {
   return prisma.shoppingList.findFirst({ where: { id, userId } });
@@ -44,6 +45,9 @@ export async function DELETE(
 ) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!await checkTeamPermission(session, "listCanDelete")) {
+    return NextResponse.json({ error: "Brak uprawnień do usuwania list" }, { status: 403 });
+  }
   const userId = getWorkspaceUserId(session);
 
   const { id } = await params;

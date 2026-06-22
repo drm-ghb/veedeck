@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Eye, EyeOff } from "@/components/ui/icons";
+import { useT } from "@/lib/i18n";
 
 interface Props {
   open: boolean;
@@ -16,6 +17,7 @@ interface Props {
 }
 
 export default function AddClientDialog({ open, onOpenChange, onCreated }: Props) {
+  const t = useT();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [contactName, setContactName] = useState("");
@@ -36,9 +38,9 @@ export default function AddClientDialog({ open, onOpenChange, onCreated }: Props
   }
 
   async function handleSubmit() {
-    if (!name.trim()) { toast.error("Podaj nazwę klienta"); return; }
+    if (!name.trim()) { toast.error(t.projekty.clientNameRequired); return; }
     if (contactEmail.trim() && !contactEmail.includes("@")) {
-      toast.error("Podaj poprawny adres e-mail");
+      toast.error(t.projekty.emailInvalid);
       return;
     }
     setLoading(true);
@@ -57,10 +59,10 @@ export default function AddClientDialog({ open, onOpenChange, onCreated }: Props
       });
       if (!res.ok) {
         const d = await res.json();
-        toast.error(d.error ?? "Błąd");
+        toast.error(d.error ?? t.common.error);
         return;
       }
-      toast.success("Klient dodany");
+      toast.success(t.projekty.clientAdded);
       onOpenChange(false);
       reset();
       onCreated();
@@ -73,11 +75,11 @@ export default function AddClientDialog({ open, onOpenChange, onCreated }: Props
     <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (!v) reset(); }}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Nowy klient</DialogTitle>
+          <DialogTitle>{t.projekty.addClientTitle}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label>Nazwa klienta <span className="text-destructive">*</span></Label>
+            <Label>{t.projekty.clientNameInputLabel} <span className="text-destructive">*</span></Label>
             <Input
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -88,18 +90,18 @@ export default function AddClientDialog({ open, onOpenChange, onCreated }: Props
           </div>
 
           <div className="space-y-1.5">
-            <Label>Kontakt <span className="text-muted-foreground font-normal">(opcjonalnie)</span></Label>
+            <Label>{t.projekty.clientContactLabel} <span className="text-muted-foreground font-normal">{t.common.optional}</span></Label>
             <Input
               value={contactName}
               onChange={(e) => setContactName(e.target.value)}
               placeholder="Jan Kowalski"
             />
-            <p className="text-xs text-muted-foreground">Stanie się głównym kontaktem w zakładce Kontakty</p>
+            <p className="text-xs text-muted-foreground">{t.projekty.clientContactHint}</p>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label>E-mail</Label>
+              <Label>{t.projekty.clientEmailLabel}</Label>
               <Input
                 type="email"
                 value={contactEmail}
@@ -108,7 +110,7 @@ export default function AddClientDialog({ open, onOpenChange, onCreated }: Props
               />
             </div>
             <div className="space-y-1.5">
-              <Label>Telefon</Label>
+              <Label>{t.projekty.phoneLabel}</Label>
               <Input
                 value={contactPhone}
                 onChange={(e) => setContactPhone(e.target.value)}
@@ -118,13 +120,13 @@ export default function AddClientDialog({ open, onOpenChange, onCreated }: Props
           </div>
 
           <div className="space-y-1.5">
-            <Label>Hasło do konta klienta <span className="text-muted-foreground font-normal">(opcjonalnie)</span></Label>
+            <Label>{t.projekty.clientPasswordLabel} <span className="text-muted-foreground font-normal">{t.common.optional}</span></Label>
             <div className="relative">
               <Input
                 type={showPassword ? "text" : "password"}
                 value={contactPassword}
                 onChange={(e) => setContactPassword(e.target.value)}
-                placeholder="Klient zaloguje się tym hasłem"
+                placeholder={t.projekty.clientPasswordLoginPlaceholder}
                 className="pr-9"
               />
               <button
@@ -136,12 +138,12 @@ export default function AddClientDialog({ open, onOpenChange, onCreated }: Props
               </button>
             </div>
             {contactPassword.trim() && contactEmail.trim() && (
-              <p className="text-xs text-muted-foreground">Login: <span className="font-mono font-medium text-foreground">{contactEmail.trim().toLowerCase()}</span></p>
+              <p className="text-xs text-muted-foreground">{t.projekty.clientLoginPrefix} <span className="font-mono font-medium text-foreground">{contactEmail.trim().toLowerCase()}</span></p>
             )}
           </div>
 
           <div className="space-y-1.5">
-            <Label>Opis <span className="text-muted-foreground font-normal">(opcjonalnie)</span></Label>
+            <Label>{t.projekty.clientDescLabel} <span className="text-muted-foreground font-normal">{t.common.optional}</span></Label>
             <Textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -151,9 +153,9 @@ export default function AddClientDialog({ open, onOpenChange, onCreated }: Props
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => { onOpenChange(false); reset(); }}>Anuluj</Button>
+          <Button variant="outline" onClick={() => { onOpenChange(false); reset(); }}>{t.common.cancel}</Button>
           <Button onClick={handleSubmit} disabled={loading || !name.trim()}>
-            {loading ? "Dodawanie…" : "Dodaj klienta"}
+            {loading ? t.projekty.addingLabel : t.projekty.addClientBtn}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Mail } from "@/components/ui/icons";
+import { useT } from "@/lib/i18n";
 import SurveyForm from "./SurveyForm";
 import type { SurveyQuestion, SurveySection } from "../SurveyEditor";
 
@@ -27,6 +28,7 @@ type Stage =
   | { type: "form"; responseId: string; existingAnswers: Answer[] };
 
 export default function SurveyEmailGate({ token, survey }: Props) {
+  const t = useT();
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
@@ -34,8 +36,8 @@ export default function SurveyEmailGate({ token, survey }: Props) {
   const [stage, setStage] = useState<Stage>({ type: "gate" });
 
   async function handleStart() {
-    if (!email.trim()) { setError("Wpisz adres e-mail."); return; }
-    if (!email.includes("@")) { setError("Podaj poprawny adres e-mail."); return; }
+    if (!email.trim()) { setError(t.ankiety.emailRequired); return; }
+    if (!email.includes("@")) { setError(t.ankiety.emailInvalid); return; }
     setError("");
     setLoading(true);
 
@@ -48,7 +50,7 @@ export default function SurveyEmailGate({ token, survey }: Props) {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error ?? "Nie udało się rozpocząć ankiety.");
+        setError(data.error ?? t.ankiety.startSurveyError);
         return;
       }
 
@@ -58,7 +60,7 @@ export default function SurveyEmailGate({ token, survey }: Props) {
         setStage({ type: "form", responseId: data.responseId, existingAnswers: data.existingAnswers ?? [] });
       }
     } catch {
-      setError("Błąd połączenia. Spróbuj ponownie.");
+      setError(t.ankiety.connectionError);
     } finally {
       setLoading(false);
     }
@@ -68,9 +70,9 @@ export default function SurveyEmailGate({ token, survey }: Props) {
     return (
       <div className="bg-card border border-border rounded-2xl p-10 text-center space-y-3">
         <div className="text-4xl">✓</div>
-        <h2 className="text-xl font-bold">Ankieta już wypełniona</h2>
+        <h2 className="text-xl font-bold">{t.ankiety.alreadyCompleted}</h2>
         <p className="text-sm text-muted-foreground">
-          Twoje odpowiedzi zostały wcześniej zapisane. Dziękujemy za udział!
+          {t.ankiety.alreadyCompletedDesc}
         </p>
       </div>
     );
@@ -92,12 +94,12 @@ export default function SurveyEmailGate({ token, survey }: Props) {
     <div className="bg-card border border-border rounded-2xl p-8 space-y-5">
       <div className="flex items-center gap-3 text-sm text-muted-foreground">
         <Mail size={18} />
-        Aby wypełnić ankietę, podaj swój adres e-mail.
+        {t.ankiety.emailGateDesc}
       </div>
 
       <div className="space-y-3">
         <div className="space-y-1.5">
-          <label className="text-sm font-medium">Adres e-mail *</label>
+          <label className="text-sm font-medium">{t.ankiety.emailGateLabel}</label>
           <input
             type="email"
             value={email}
@@ -112,7 +114,7 @@ export default function SurveyEmailGate({ token, survey }: Props) {
 
         <div className="space-y-1.5">
           <label className="text-sm font-medium">
-            Imię i nazwisko <span className="font-normal text-muted-foreground">(opcjonalne)</span>
+            {t.ankiety.nameOptional}
           </label>
           <input
             type="text"
@@ -135,7 +137,7 @@ export default function SurveyEmailGate({ token, survey }: Props) {
         disabled={loading || !email.trim()}
         className="w-full py-2.5 text-sm font-medium bg-primary text-primary-foreground rounded-xl hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
       >
-        {loading ? "Sprawdzanie..." : "Rozpocznij ankietę"}
+        {loading ? t.ankiety.checkingEmail : t.ankiety.startSurvey}
       </button>
     </div>
   );

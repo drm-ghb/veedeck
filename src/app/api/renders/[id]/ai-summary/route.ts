@@ -7,6 +7,50 @@ import Anthropic from "@anthropic-ai/sdk";
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
+type CommentForMd = {
+  posX: number | null;
+  title: string | null;
+  author: string;
+  content: string;
+  replies: { author: string; content: string }[];
+};
+
+function buildConversationMarkdown(renderName: string, comments: CommentForMd[]): string {
+  const pins = comments.filter(c => c.posX !== null);
+  const chat = comments.filter(c => c.posX === null);
+
+  const lines: string[] = [
+    `# Konwersacja dla renderu: ${renderName}`,
+    `Łączna liczba wpisów: ${comments.length}`,
+    "",
+  ];
+
+  if (pins.length > 0) {
+    lines.push("## Piny na renderze");
+    for (const pin of pins) {
+      const title = pin.title ? ` [${pin.title}]` : "";
+      lines.push(`**${pin.author}${title}:** ${pin.content}`);
+      for (const r of pin.replies) {
+        lines.push(`  - ${r.author}: ${r.content}`);
+      }
+    }
+    lines.push("");
+  }
+
+  if (chat.length > 0) {
+    lines.push("## Wiadomości czatu");
+    for (const msg of chat) {
+      lines.push(`**${msg.author}:** ${msg.content}`);
+      for (const r of msg.replies) {
+        lines.push(`  - ${r.author}: ${r.content}`);
+      }
+    }
+    lines.push("");
+  }
+
+  return lines.join("\n");
+}
+
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -41,15 +85,7 @@ export async function POST(
     return NextResponse.json({ error: "Brak komentarzy do podsumowania" }, { status: 400 });
   }
 
-  const formatted = allComments.map(c => {
-    const type = c.posX !== null ? "PIN" : "CZAT";
-    const title = c.title ? ` [${c.title}]` : "";
-    let text = `[${type}${title}] ${c.author}: ${c.content}`;
-    if (c.replies.length > 0) {
-      text += "\n" + c.replies.map(r => `  → ${r.author}: ${r.content}`).join("\n");
-    }
-    return text;
-  }).join("\n\n");
+  const md = buildConversationMarkdown(render.name, allComments);
 
   // System prompt is separated from user-supplied data to prevent prompt injection
   const systemPrompt = `Jesteś asystentem analizującym konwersację w projekcie wnętrzarskim dla renderu "${render.name}". Twoje zadanie to napisanie zwięzłego podsumowania PO POLSKU (maks. 300 słów) zawierającego:
@@ -64,7 +100,7 @@ Jeśli dana sekcja nie ma treści, pomiń ją. Pisz w czasie przeszłym. Bądź 
     model: "claude-haiku-4-5-20251001",
     max_tokens: 600,
     system: systemPrompt,
-    messages: [{ role: "user", content: `Oto lista pinów i wiadomości z czatu:\n\n${formatted}` }],
+    messages: [{ role: "user", content: md }],
   });
 
   const summary = (message.content[0] as { type: string; text: string }).text;
@@ -83,5 +119,5 @@ Jeśli dana sekcja nie ma treści, pomiń ją. Pisz w czasie przeszłym. Bądź 
 
   await pusherServer.trigger(`render-${renderId}`, "new-comment", comment);
 
-  return NextResponse.json(comment, { status: 201 });
+  return NextResponse.json({ ...comment, markdown: md }, { status: 201 });
 }

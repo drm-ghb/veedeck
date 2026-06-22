@@ -180,7 +180,7 @@ export default function EditListDialog({ list, open, onOpenChange }: EditListDia
                       onClick={() => setSelectedProject(null)}
                       className="text-xs text-muted-foreground hover:text-foreground ml-2 shrink-0"
                     >
-                      Zmień
+                      {t.listy.changeBtn}
                     </button>
                   </div>
                 ) : (

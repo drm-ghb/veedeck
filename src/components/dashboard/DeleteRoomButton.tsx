@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { X } from "@/components/ui/icons";
+import { useT } from "@/lib/i18n";
 
 interface DeleteRoomButtonProps {
   roomId: string;
@@ -10,18 +11,19 @@ interface DeleteRoomButtonProps {
 }
 
 export default function DeleteRoomButton({ roomId, roomName }: DeleteRoomButtonProps) {
+  const t = useT();
   const router = useRouter();
 
   async function handleDelete(e: React.MouseEvent) {
     e.stopPropagation();
-    if (!confirm(`Usunąć pomieszczenie "${roomName}"?`)) return;
+    if (!confirm(t.projekty.confirmDeleteRoom)) return;
 
     const res = await fetch(`/api/rooms/${roomId}`, { method: "DELETE" });
     if (res.ok) {
-      toast.success("Pomieszczenie usunięte");
+      toast.success(t.projekty.roomDeleted);
       router.refresh();
     } else {
-      toast.error("Błąd usuwania");
+      toast.error(t.projekty.roomDeleteError);
     }
   }
 
@@ -29,7 +31,7 @@ export default function DeleteRoomButton({ roomId, roomName }: DeleteRoomButtonP
     <button
       onClick={handleDelete}
       className="text-gray-400 hover:text-red-500 transition-colors ml-1"
-      title="Usuń pomieszczenie"
+      title={t.projekty.deleteRoom}
     >
       <X size={14} />
     </button>

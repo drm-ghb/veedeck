@@ -63,7 +63,7 @@ export default function NewListDialog() {
     if (!name.trim()) return;
     if (clientTab === "new" && !clientEntityName.trim()) return;
     if (clientTab === "new" && newClientEmail.trim() && !newClientEmail.includes("@")) {
-      setNewClientEmailError("Podaj poprawny adres e-mail (brak znaku @)");
+      setNewClientEmailError(t.listy.invalidEmail);
       return;
     }
     if (clientTab === "existing" && !selectedClient) return;
@@ -165,7 +165,7 @@ export default function NewListDialog() {
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                Nowy klient
+                {t.listy.newClientTab}
               </button>
               <button
                 type="button"
@@ -176,7 +176,7 @@ export default function NewListDialog() {
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                Istniejący klient
+                {t.listy.existingClientTab}
               </button>
             </div>
 
@@ -184,16 +184,16 @@ export default function NewListDialog() {
             {clientTab === "new" && (
               <div className="space-y-3">
                 <div className="space-y-1.5">
-                  <Label>Nazwa klienta <span className="text-destructive">*</span></Label>
+                  <Label>{t.listy.clientEntityName} <span className="text-destructive">*</span></Label>
                   <Input
                     value={clientEntityName}
                     onChange={(e) => setClientEntityName(e.target.value)}
-                    placeholder="np. Kowalski, Firma ABC"
+                    placeholder={t.listy.clientEntityPlaceholder}
                   />
                 </div>
                 <div className="grid grid-cols-3 gap-3">
                   <div className="space-y-1.5">
-                    <Label>Nazwa kontaktu</Label>
+                    <Label>{t.listy.contactNameLabel}</Label>
                     <Input
                       value={newClientName}
                       onChange={(e) => setNewClientName(e.target.value)}
@@ -201,7 +201,7 @@ export default function NewListDialog() {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label>E-mail</Label>
+                    <Label>{t.auth.email}</Label>
                     <Input
                       type="email"
                       value={newClientEmail}
@@ -211,7 +211,7 @@ export default function NewListDialog() {
                     {newClientEmailError && <p className="text-xs text-destructive mt-1">{newClientEmailError}</p>}
                   </div>
                   <div className="space-y-1.5">
-                    <Label>Telefon</Label>
+                    <Label>{t.wykonawcy.labelPhone}</Label>
                     <Input
                       type="tel"
                       value={newClientPhone}
@@ -222,8 +222,8 @@ export default function NewListDialog() {
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="newClientPassword">
-                    Hasło do konta{" "}
-                    <span className="text-muted-foreground font-normal">(opcjonalnie)</span>
+                    {t.listy.accountPassword}{" "}
+                    <span className="text-muted-foreground font-normal">{t.common.optional}</span>
                   </Label>
                   <div className="relative">
                     <Input
@@ -231,7 +231,7 @@ export default function NewListDialog() {
                       type={showNewClientPassword ? "text" : "password"}
                       value={newClientPassword}
                       onChange={(e) => setNewClientPassword(e.target.value)}
-                      placeholder="Klient zaloguje się tym hasłem"
+                      placeholder={t.listy.newClientPasswordPlaceholder}
                       className="pr-9"
                     />
                     <button
@@ -244,8 +244,8 @@ export default function NewListDialog() {
                   </div>
                   {newClientPassword.trim() && (
                     newClientEmail.trim()
-                      ? <p className="text-xs text-muted-foreground">Login: <span className="font-mono font-medium text-foreground">{newClientEmail.trim().toLowerCase()}</span></p>
-                      : <p className="text-xs text-destructive">Podaj e-mail klienta — będzie używany jako login do panelu</p>
+                      ? <p className="text-xs text-muted-foreground">{t.listy.loginPrefix} <span className="font-mono font-medium text-foreground">{newClientEmail.trim().toLowerCase()}</span></p>
+                      : <p className="text-xs text-destructive">{t.listy.emailRequiredForLogin}</p>
                   )}
                 </div>
               </div>
@@ -267,7 +267,7 @@ export default function NewListDialog() {
                       onClick={() => setSelectedClient(null)}
                       className="text-xs text-muted-foreground hover:text-foreground ml-2 shrink-0"
                     >
-                      Zmień
+                      {t.listy.changeBtn}
                     </button>
                   </div>
                 ) : (
@@ -275,7 +275,7 @@ export default function NewListDialog() {
                     <div className="relative">
                       <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
                       <Input
-                        placeholder="Szukaj klienta…"
+                        placeholder={t.listy.searchClientPlaceholder}
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         className="pl-9"
@@ -286,7 +286,7 @@ export default function NewListDialog() {
                         <p className="text-sm text-muted-foreground text-center py-6">{t.common.loading}</p>
                       ) : filtered.length === 0 ? (
                         <p className="text-sm text-muted-foreground text-center py-6">
-                          {search ? t.common.noResults : "Brak klientów"}
+                          {search ? t.common.noResults : t.listy.noClients}
                         </p>
                       ) : (
                         filtered.map((c, i) => (

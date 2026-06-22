@@ -22,17 +22,27 @@ export default async function DashboardLayout({
   });
 
   const ownerId = dbUser?.ownerId;
-  const ownerSettings = ownerId
-    ? await prisma.user.findUnique({
-        where: { id: ownerId },
-        select: { globalHiddenModules: true, clientLogoUrl: true },
-      })
-    : null;
+  const [ownerSettings, memberPerms] = await Promise.all([
+    ownerId
+      ? prisma.user.findUnique({
+          where: { id: ownerId },
+          select: { globalHiddenModules: true, clientLogoUrl: true },
+        })
+      : null,
+    ownerId
+      ? prisma.teamMemberPermission.findUnique({
+          where: { memberId: session.user.id! },
+          select: { hiddenModules: true },
+        })
+      : null,
+  ]);
 
   const fullName = dbUser?.fullName ?? null;
   const firstName = (fullName || dbUser?.name)?.split(" ")[0] ?? dbUser?.email ?? null;
   const avatarUrl = dbUser?.avatarUrl ?? null;
-  const hiddenModules = (ownerSettings ?? dbUser)?.globalHiddenModules ?? [];
+  const baseHidden = (ownerSettings ?? dbUser)?.globalHiddenModules ?? [];
+  const memberHidden = memberPerms?.hiddenModules ?? [];
+  const hiddenModules = [...new Set([...baseHidden, ...memberHidden])];
   const sidebarOrder = ((dbUser?.viewPreferences as Record<string, unknown>)?.sidebarOrder as string[]) ?? [];
   const isTrial = !!(dbUser?.trialEndsAt && !dbUser.isFree);
 

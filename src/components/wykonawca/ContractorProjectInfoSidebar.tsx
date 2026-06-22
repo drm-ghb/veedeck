@@ -1,6 +1,7 @@
 "use client";
 
 import { X, MapPin, Phone, User, FileText } from "@/components/ui/icons";
+import { useT } from "@/lib/i18n";
 
 export interface ProjectInfo {
   investmentStreet?: string | null;
@@ -32,6 +33,7 @@ function Row({ label, value }: { label: string; value: string | null | undefined
 }
 
 export default function ContractorProjectInfoSidebar({ open, onClose, projectTitle, info }: Props) {
+  const t = useT();
   const address = [
     info.investmentStreet,
     info.investmentPostalCode && info.investmentCity
@@ -67,7 +69,7 @@ export default function ContractorProjectInfoSidebar({ open, onClose, projectTit
         {/* Header */}
         <div className="flex items-center justify-between gap-2 px-5 py-4 border-b border-border">
           <div className="min-w-0">
-            <p className="text-xs text-muted-foreground">Informacje o projekcie</p>
+            <p className="text-xs text-muted-foreground">{t.wykonawcy.projectInfoTitle}</p>
             <p className="font-semibold truncate">{projectTitle}</p>
           </div>
           <button
@@ -82,7 +84,7 @@ export default function ContractorProjectInfoSidebar({ open, onClose, projectTit
         <div className="flex-1 overflow-y-auto px-5 py-5 space-y-6">
           {isEmpty ? (
             <p className="text-sm text-muted-foreground text-center py-8">
-              Brak informacji o projekcie.
+              {t.wykonawcy.noProjectInfo}
             </p>
           ) : (
             <>
@@ -90,7 +92,7 @@ export default function ContractorProjectInfoSidebar({ open, onClose, projectTit
                 <section className="rounded-xl bg-muted/50 border border-border p-4 space-y-2">
                   <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     <MapPin size={12} />
-                    Adres inwestycji
+                    {t.wykonawcy.investmentAddress}
                   </div>
                   <p className="text-sm leading-relaxed">{address}</p>
                 </section>
@@ -100,13 +102,13 @@ export default function ContractorProjectInfoSidebar({ open, onClose, projectTit
                 <section className="rounded-xl bg-muted/50 border border-border p-4 space-y-3">
                   <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     <User size={12} />
-                    Kontakt do projektanta
+                    {t.wykonawcy.designerContact}
                   </div>
                   <div className="space-y-2">
-                    <Row label="Imię i nazwisko" value={info.designerContactName} />
+                    <Row label={t.wykonawcy.labelName} value={info.designerContactName} />
                     {info.designerContactPhone && (
                       <div>
-                        <p className="text-xs text-muted-foreground">Telefon</p>
+                        <p className="text-xs text-muted-foreground">{t.wykonawcy.labelPhone}</p>
                         <a
                           href={`tel:${info.designerContactPhone}`}
                           className="text-sm font-medium text-primary hover:underline flex items-center gap-1.5 mt-0.5"
@@ -124,13 +126,13 @@ export default function ContractorProjectInfoSidebar({ open, onClose, projectTit
                 <section className="rounded-xl bg-muted/50 border border-border p-4 space-y-3">
                   <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     <User size={12} />
-                    Kontakt do inwestora
+                    {t.wykonawcy.investorContact}
                   </div>
                   <div className="space-y-2">
-                    <Row label="Imię i nazwisko" value={info.investorContactName} />
+                    <Row label={t.wykonawcy.labelName} value={info.investorContactName} />
                     {info.investorContactPhone && (
                       <div>
-                        <p className="text-xs text-muted-foreground">Telefon</p>
+                        <p className="text-xs text-muted-foreground">{t.wykonawcy.labelPhone}</p>
                         <a
                           href={`tel:${info.investorContactPhone}`}
                           className="text-sm font-medium text-primary hover:underline flex items-center gap-1.5 mt-0.5"
@@ -148,7 +150,7 @@ export default function ContractorProjectInfoSidebar({ open, onClose, projectTit
                 <section className="rounded-xl bg-muted/50 border border-border p-4 space-y-2">
                   <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     <FileText size={12} />
-                    Opis
+                    {t.wykonawcy.notes}
                   </div>
                   <p className="text-sm whitespace-pre-wrap leading-relaxed">{info.projectNotes}</p>
                 </section>

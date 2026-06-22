@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { FileText } from "@/components/ui/icons";
+import { useT } from "@/lib/i18n";
 
 // Singleton init — prevents race conditions when multiple thumbnails load simultaneously
 let pdfjsInitPromise: Promise<typeof import("pdfjs-dist")> | null = null;
@@ -22,6 +23,7 @@ interface PdfThumbnailProps {
 }
 
 export default function PdfThumbnail({ fileUrl, className, iconSize = 36 }: PdfThumbnailProps) {
+  const t = useT();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [status, setStatus] = useState<"loading" | "done" | "error">("loading");
   const [retryKey, setRetryKey] = useState(0);
@@ -73,10 +75,10 @@ export default function PdfThumbnail({ fileUrl, className, iconSize = 36 }: PdfT
       <div
         className={`flex flex-col items-center justify-center gap-1 bg-muted cursor-pointer ${className ?? ""}`}
         onClick={() => setRetryKey((k) => k + 1)}
-        title="Kliknij aby spróbować ponownie"
+        title={t.render.pdfRetryTitle}
       >
         <FileText size={iconSize} className="text-red-400" />
-        <span className="text-[10px] text-muted-foreground">Odśwież</span>
+        <span className="text-[10px] text-muted-foreground">{t.render.pdfRefresh}</span>
       </div>
     );
   }

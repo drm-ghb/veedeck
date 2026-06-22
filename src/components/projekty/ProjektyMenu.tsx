@@ -129,8 +129,7 @@ export default function ProjektyMenu({ project }: ProjektyMenuProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>{t.projekty.confirmDeleteProject.replace("{title}", project.title)}</AlertDialogTitle>
             <AlertDialogDescription>
-              Czy jesteś pewien, że chcesz trwale usunąć ten projekt? Wszystkie dane
-              z nim związane zostaną usunięte na zawsze.
+              {t.projekty.confirmDeleteProject}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -140,7 +139,7 @@ export default function ProjektyMenu({ project }: ProjektyMenuProps) {
               disabled={deleting}
               className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
             >
-              {deleting ? "Usuwanie..." : t.projekty.deleteForever}
+              {deleting ? t.projekty.deletingLabel : t.projekty.deleteForever}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { User, Mail, Lock, Info, Sun, Moon, Monitor, Palette, Image as ImageIcon, Layers, LocalMall, Package, Globe, PushPin, Pencil, X, Eye, EyeOff, Phone, UserCircle, Trash2, GripVertical, LayoutDashboard, Users, CheckSquare, CalendarDays, NotebookText, ChatBubble, VeezardIcon, Engineering, ClipboardList } from "@/components/ui/icons";
+import { User, Mail, Lock, Info, Sun, Moon, Monitor, Palette, Image as ImageIcon, Layers, LocalMall, Package, Globe, PushPin, Pencil, X, Eye, EyeOff, Phone, UserCircle, Trash2, GripVertical, LayoutDashboard, Users, CheckSquare, CalendarDays, NotebookText, ChatBubble, VeezardIcon, Engineering, ClipboardList, ChevronDown } from "@/components/ui/icons";
 import { useTheme, type Theme, type ColorTheme } from "@/lib/theme";
 import { useT, useLang } from "@/lib/i18n";
 import Cropper from "react-easy-crop";
@@ -144,17 +144,17 @@ export function SettingsGeneral({
 
   const DEFAULT_SIDEBAR_ORDER = ["klienci", "renderflow", "listy", "zadania", "ankiety", "produkty", "wykonawcy", "kalendarz", "notatnik", "dyskusje", "veezard"];
   const SIDEBAR_ITEM_META: Record<string, { label: string; icon: React.ElementType }> = {
-    klienci:     { label: "Klienci",        icon: Users },
-    wykonawcy:   { label: "Wykonawcy",      icon: Engineering },
-    renderflow:  { label: "ProjectFlow",    icon: PushPin },
-    listy:       { label: "Listy zakupowe", icon: LocalMall },
-    zadania:     { label: "Zadania",        icon: CheckSquare },
-    produkty:    { label: "Produkty",       icon: Package },
-    kalendarz:   { label: "Kalendarz",      icon: CalendarDays },
-    notatnik:    { label: "Notatnik",       icon: NotebookText },
-    dyskusje:    { label: "Dyskusje",       icon: ChatBubble },
-    ankiety:     { label: "Ankiety",        icon: ClipboardList },
-    veezard:     { label: "Veezard",        icon: VeezardIcon },
+    klienci:     { label: t.nav.projects,     icon: Users },
+    wykonawcy:   { label: t.nav.contractors,  icon: Engineering },
+    renderflow:  { label: t.nav.renderflow,   icon: PushPin },
+    listy:       { label: t.nav.lists,        icon: LocalMall },
+    zadania:     { label: t.nav.tasks,        icon: CheckSquare },
+    produkty:    { label: t.nav.products,     icon: Package },
+    kalendarz:   { label: t.nav.calendar,     icon: CalendarDays },
+    notatnik:    { label: t.nav.notes,        icon: NotebookText },
+    dyskusje:    { label: t.nav.discussions,  icon: ChatBubble },
+    ankiety:     { label: t.nav.surveys,      icon: ClipboardList },
+    veezard:     { label: t.nav.veezard,      icon: VeezardIcon },
   };
   const initialOrder = initialSidebarOrder.length > 0
     ? [...initialSidebarOrder, ...DEFAULT_SIDEBAR_ORDER.filter((k) => !initialSidebarOrder.includes(k))]
@@ -179,10 +179,10 @@ export function SettingsGeneral({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sidebarOrder }),
       });
-      toast.success("Kolejność sidebar zapisana");
+      toast.success(t.settings.sidebarOrderSaved);
       router.refresh();
     } catch {
-      toast.error("Błąd zapisu");
+      toast.error(t.settings.saveError);
     } finally {
       setSidebarOrderSaving(false);
     }
@@ -197,10 +197,10 @@ export function SettingsGeneral({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sidebarOrder: DEFAULT_SIDEBAR_ORDER }),
       });
-      toast.success("Przywrócono domyślną kolejność");
+      toast.success(t.settings.sidebarOrderReset);
       router.refresh();
     } catch {
-      toast.error("Błąd zapisu");
+      toast.error(t.settings.saveError);
     } finally {
       setSidebarOrderSaving(false);
     }
@@ -209,6 +209,7 @@ export function SettingsGeneral({
   const [showProfileName, setShowProfileName] = useState(initialShowProfileName);
   const [showClientLogo, setShowClientLogo] = useState(initialShowClientLogo);
   const [globalHiddenModules, setGlobalHiddenModules] = useState<string[]>(initialGlobalHiddenModules);
+  const [modulesExpanded, setModulesExpanded] = useState(false);
   const [clientLogoUrl, setClientLogoUrl] = useState<string | null>(initialClientLogoUrl);
   const [welcomeMsg, setWelcomeMsg] = useState(initialClientWelcomeMessage ?? "");
   const [welcomeLoading, setWelcomeLoading] = useState(false);
@@ -332,7 +333,7 @@ export function SettingsGeneral({
 
   async function handleEmailSave() {
     if (!email.trim()) return;
-    if (!email.includes("@")) { toast.error("Podaj poprawny adres e-mail (brak znaku @)"); return; }
+    if (!email.includes("@")) { toast.error(t.projekty.emailInvalid); return; }
     setEmailLoading(true);
     try {
       const res = await patchUser({ email: email.trim() });
@@ -401,12 +402,12 @@ const COLOR_THEMES: {
     primary: string;
     accent: string;
   }[] = [
-    { slug: "violet", name: "Violet", subtitle: "Indygo — domyślny", sidebar: "#EDEEF2", background: "#FFFFFF", primary: "#4F46E5", accent: "#A5B4FC" },
-    { slug: "champagne", name: "Champagne Linen", subtitle: "Len i brąz", sidebar: "#F7F3EA", background: "#EEE9DF", primary: "#8B613C", accent: "#C2A878" },
-    { slug: "obsidian", name: "Obsidian Gold", subtitle: "Złoto na czerni", sidebar: "#12110F", background: "#F7F5F0", primary: "#C7A46C", accent: "#8A6A3A" },
-    { slug: "navy", name: "Royal Navy", subtitle: "Granat i srebro", sidebar: "#0A1230", background: "#F2F3F6", primary: "#15224F", accent: "#B8C0DB" },
-    { slug: "plum", name: "Plum Noir", subtitle: "Śliwka i róż", sidebar: "#1F1320", background: "#F5F1ED", primary: "#5A2545", accent: "#C98A6B" },
-    { slug: "mono", name: "Monochrome", subtitle: "Czerń, szarość i biel", sidebar: "#EAEAEA", background: "#F0F0F0", primary: "#111111", accent: "#333333" },
+    { slug: "violet", name: "Violet", subtitle: t.settings.colorThemeViolet, sidebar: "#EDEEF2", background: "#FFFFFF", primary: "#4F46E5", accent: "#A5B4FC" },
+    { slug: "champagne", name: "Champagne Linen", subtitle: t.settings.colorThemeChampagne, sidebar: "#F7F3EA", background: "#EEE9DF", primary: "#8B613C", accent: "#C2A878" },
+    { slug: "obsidian", name: "Obsidian Gold", subtitle: t.settings.colorThemeObsidian, sidebar: "#12110F", background: "#F7F5F0", primary: "#C7A46C", accent: "#8A6A3A" },
+    { slug: "navy", name: "Royal Navy", subtitle: t.settings.colorThemeNavy, sidebar: "#0A1230", background: "#F2F3F6", primary: "#15224F", accent: "#B8C0DB" },
+    { slug: "plum", name: "Plum Noir", subtitle: t.settings.colorThemePlum, sidebar: "#1F1320", background: "#F5F1ED", primary: "#5A2545", accent: "#C98A6B" },
+    { slug: "mono", name: "Monochrome", subtitle: t.settings.colorThemeMono, sidebar: "#EAEAEA", background: "#F0F0F0", primary: "#111111", accent: "#333333" },
   ];
 
   async function handleColorThemeChange(slug: ColorTheme) {
@@ -426,7 +427,7 @@ const COLOR_THEMES: {
     setDeleteLoading(true);
     const res = await fetch("/api/user", { method: "DELETE" });
     if (!res.ok) {
-      toast.error("Błąd podczas usuwania konta");
+      toast.error(t.settings.deleteAccountError);
       setDeleteLoading(false);
       return;
     }
@@ -464,7 +465,7 @@ const COLOR_THEMES: {
             )}
             <div className="flex flex-col gap-2">
               <Button size="sm" onClick={() => avatarFileInputRef.current?.click()} disabled={avatarCropUploading}>
-                <Pencil size={14} className="mr-1.5" />{avatarUrl ? t.settings.changeAvatar : "Dodaj avatar"}
+                <Pencil size={14} className="mr-1.5" />{avatarUrl ? t.settings.changeAvatar : t.settings.addAvatar}
               </Button>
               {avatarUrl && (
                 <Button size="sm" variant="outline" onClick={handleRemoveAvatar}>{t.settings.deleteAvatar}</Button>
@@ -630,13 +631,13 @@ const COLOR_THEMES: {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={clientLogoUrl} alt="Logo" className="w-12 h-12 object-cover rounded-full border border-border" />
                 <Button size="sm" variant="outline" onClick={() => logoFileInputRef.current?.click()} disabled={cropUploading}>
-                  <Pencil size={14} className="mr-1.5" />Edytuj
+                  <Pencil size={14} className="mr-1.5" />{t.common.edit}
                 </Button>
                 <Button size="sm" variant="outline" onClick={handleRemoveLogo}>{t.settings.deleteLogo}</Button>
               </div>
             ) : (
               <Button size="sm" onClick={() => logoFileInputRef.current?.click()} disabled={cropUploading}>
-                {cropUploading ? "Przesyłanie..." : "Dodaj logo"}
+                {cropUploading ? t.settings.uploading : t.settings.addLogo}
               </Button>
             )}
           </div>
@@ -661,52 +662,59 @@ const COLOR_THEMES: {
       <section className="space-y-4">
         <SectionHeader title={t.settings.modulesVisibility} />
 
-        <div className="bg-card border border-border rounded-2xl p-6 space-y-1">
-          <p className="text-xs text-gray-400 mb-4">{t.settings.modulesVisibilityDesc}</p>
-          {[
-            {
-              slug: "renderflow",
-              label: "ProjectFlow",
-              description: t.settings.renderflowModuleDesc,
-              icon: (
-                <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center flex-shrink-0">
-                  <PushPin size={18} className="text-white" />
-                </div>
-              ),
-            },
-            {
-              slug: "listy",
-              label: t.settings.lists,
-              description: t.settings.listsModuleDesc,
-              icon: (
-                <div className="w-9 h-9 rounded-xl bg-[#0f766e] flex items-center justify-center flex-shrink-0">
-                  <LocalMall size={18} className="text-white" />
-                </div>
-              ),
-            },
-            {
-              slug: "produkty",
-              label: "Produkty",
-              description: t.settings.productsModuleDesc,
-              icon: (
-                <div className="w-9 h-9 rounded-xl bg-[#7c3aed] flex items-center justify-center flex-shrink-0">
-                  <Package size={18} className="text-white" />
-                </div>
-              ),
-            },
-          ].map(({ slug, label, description, icon }) => {
-            const visible = !globalHiddenModules.includes(slug);
+        <div className="bg-card border border-border rounded-2xl overflow-hidden">
+          <div className="px-6 pt-6 pb-2">
+            <p className="text-xs text-gray-400 mb-4">{t.settings.modulesVisibilityDesc}</p>
+          </div>
+          {(() => {
+            const allModules = [
+              { slug: "renderflow", label: t.nav.renderflow, description: t.settings.renderflowModuleDesc, icon: <PushPin size={18} className="text-muted-foreground shrink-0" /> },
+              { slug: "klienci", label: t.nav.projects, description: t.settings.klienciModuleDesc, icon: <Users size={18} className="text-muted-foreground shrink-0" /> },
+              { slug: "listy", label: t.nav.lists, description: t.settings.listsModuleDesc, icon: <LocalMall size={18} className="text-muted-foreground shrink-0" /> },
+              { slug: "wykonawcy", label: t.nav.contractors, description: t.settings.wykonawcyModuleDesc, icon: <Engineering size={18} className="text-muted-foreground shrink-0" /> },
+              { slug: "zadania", label: t.nav.tasks, description: t.settings.zadaniaModuleDesc, icon: <CheckSquare size={18} className="text-muted-foreground shrink-0" /> },
+              { slug: "produkty", label: t.nav.products, description: t.settings.productsModuleDesc, icon: <Package size={18} className="text-muted-foreground shrink-0" /> },
+              { slug: "kalendarz", label: t.nav.calendar, description: t.settings.kalendarzModuleDesc, icon: <CalendarDays size={18} className="text-muted-foreground shrink-0" /> },
+              { slug: "notatnik", label: t.nav.notes, description: t.settings.notatnikModuleDesc, icon: <NotebookText size={18} className="text-muted-foreground shrink-0" /> },
+              { slug: "dyskusje", label: t.nav.discussions, description: t.settings.dyskusjeModuleDesc, icon: <ChatBubble size={18} className="text-muted-foreground shrink-0" /> },
+              { slug: "ankiety", label: t.nav.surveys, description: t.settings.ankietyModuleDesc, icon: <ClipboardList size={18} className="text-muted-foreground shrink-0" /> },
+              { slug: "veezard", label: t.nav.veezard, description: t.settings.veezardModuleDesc, icon: <VeezardIcon size={18} className="text-muted-foreground shrink-0" /> },
+            ];
             return (
-              <div key={slug} className="flex items-center gap-4 py-3 border-b border-border last:border-0">
-                {icon}
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{label}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">{description}</p>
+              <>
+                <div
+                  className="relative overflow-hidden transition-all duration-300"
+                  style={{ maxHeight: modulesExpanded ? `${allModules.length * 61}px` : "220px" }}
+                >
+                  <div className="px-6 space-y-0">
+                    {allModules.map(({ slug, label, description, icon }) => {
+                      const visible = !globalHiddenModules.includes(slug);
+                      return (
+                        <div key={slug} className="flex items-center gap-4 py-3 border-b border-border last:border-0">
+                          {icon}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{label}</p>
+                            <p className="text-xs text-gray-400 mt-0.5">{description}</p>
+                          </div>
+                          <ToggleSwitch checked={visible} onToggle={() => toggleGlobalModule(slug)} />
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {!modulesExpanded && (
+                    <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-card to-transparent pointer-events-none" />
+                  )}
                 </div>
-                <ToggleSwitch checked={visible} onToggle={() => toggleGlobalModule(slug)} />
-              </div>
+                <button
+                  onClick={() => setModulesExpanded((v) => !v)}
+                  className="w-full flex items-center justify-center gap-1.5 py-3 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors border-t border-border"
+                >
+                  <ChevronDown size={15} className={`transition-transform duration-300 ${modulesExpanded ? "rotate-180" : ""}`} />
+                  {modulesExpanded ? t.common.collapse : t.common.showAll}
+                </button>
+              </>
             );
-          })}
+          })()}
         </div>
       </section>
 
@@ -747,9 +755,9 @@ const COLOR_THEMES: {
               />
             </div>
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setAvatarCropSrc(null)}>Anuluj</Button>
+              <Button variant="outline" onClick={() => setAvatarCropSrc(null)}>{t.common.cancel}</Button>
               <Button onClick={handleAvatarCropApply} disabled={avatarCropUploading}>
-                {avatarCropUploading ? "Przesyłanie..." : "Zastosuj"}
+                {avatarCropUploading ? t.settings.uploading : t.settings.apply}
               </Button>
             </div>
           </div>
@@ -760,7 +768,7 @@ const COLOR_THEMES: {
       {cropSrc && (
         <div className="fixed inset-0 z-50 flex flex-col bg-black/90">
           <div className="flex items-center justify-between px-6 py-4 bg-card border-b border-border flex-shrink-0">
-            <h3 className="font-semibold text-sm">Kadrowanie logo</h3>
+            <h3 className="font-semibold text-sm">{t.settings.cropLogo}</h3>
             <button onClick={() => setCropSrc(null)} className="text-muted-foreground hover:text-foreground transition-colors">
               <X size={18} />
             </button>
@@ -792,9 +800,9 @@ const COLOR_THEMES: {
               />
             </div>
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setCropSrc(null)}>Anuluj</Button>
+              <Button variant="outline" onClick={() => setCropSrc(null)}>{t.common.cancel}</Button>
               <Button onClick={handleCropApply} disabled={cropUploading}>
-                {cropUploading ? "Przesyłanie..." : "Zastosuj"}
+                {cropUploading ? t.settings.uploading : t.settings.apply}
               </Button>
             </div>
           </div>
@@ -803,7 +811,7 @@ const COLOR_THEMES: {
 
       {/* ── Motyw kolorystyczny ── */}
       <section className="space-y-4">
-        <SectionHeader title="Motyw kolorystyczny" />
+        <SectionHeader title={t.settings.colorTheme} />
 
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           {COLOR_THEMES.map(({ slug, name, subtitle, sidebar, background, primary, accent }) => {
@@ -892,14 +900,14 @@ const COLOR_THEMES: {
 
       {/* Email notifications */}
       <section className="space-y-4">
-        <SectionHeader title="Powiadomienia email" />
+        <SectionHeader title={t.settings.emailNotif} />
         <div className="bg-card border border-border rounded-2xl p-6 space-y-5">
           {/* Master toggle */}
           <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="text-sm font-medium text-foreground">Powiadomienia email</p>
+              <p className="text-sm font-medium text-foreground">{t.settings.emailNotif}</p>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Otrzymuj email gdy klient doda pin, komentarz lub złoży prośbę
+                {t.settings.emailNotifDesc}
               </p>
             </div>
             <ToggleSwitch
@@ -920,10 +928,10 @@ const COLOR_THEMES: {
           {/* Module checkboxes */}
           {emailNotifEnabled && (
             <div className="space-y-3 pt-1 border-t border-border">
-              <p className="text-xs text-muted-foreground pt-1">Wybierz moduły, z których chcesz otrzymywać powiadomienia:</p>
+              <p className="text-xs text-muted-foreground pt-1">{t.settings.emailNotifModuleSelect}</p>
               {[
-                { slug: "renderflow", label: "ProjectFlow", desc: "Piny, komentarze, prośby o status i przywrócenie wersji" },
-                { slug: "listy", label: "Listy zakupowe", desc: "Komentarze do produktów na listach" },
+                { slug: "renderflow", label: t.nav.renderflow, desc: t.settings.emailNotifRenderflowDesc },
+                { slug: "listy", label: t.nav.lists, desc: t.settings.emailNotifListsDesc },
               ].map(({ slug, label, desc }) => {
                 const checked = emailNotifModules.includes(slug);
                 return (
@@ -959,9 +967,9 @@ const COLOR_THEMES: {
       </section>
 
       <section className="space-y-4">
-        <SectionHeader title="Kolejność sidebar" />
+        <SectionHeader title={t.settings.sidebarOrder} />
         <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
-          <p className="text-xs text-muted-foreground">Dashboard jest zawsze pierwszy. Przeciągnij pozostałe moduły aby zmienić kolejność.</p>
+          <p className="text-xs text-muted-foreground">{t.settings.sidebarOrderDesc}</p>
 
           {/* Fixed Dashboard row */}
           <div className="flex items-center gap-3 px-3 py-2.5 bg-muted/50 border border-border rounded-xl opacity-60">
@@ -984,10 +992,10 @@ const COLOR_THEMES: {
 
           <div className="flex gap-2 pt-1">
             <Button size="sm" onClick={saveSidebarOrder} disabled={sidebarOrderSaving}>
-              {sidebarOrderSaving ? "Zapisywanie..." : "Zapisz"}
+              {sidebarOrderSaving ? t.common.saving : t.common.save}
             </Button>
             <Button size="sm" variant="outline" onClick={resetSidebarOrder} disabled={sidebarOrderSaving}>
-              Przywróć domyślne
+              {t.settings.sidebarResetDefault}
             </Button>
           </div>
         </div>
@@ -995,30 +1003,30 @@ const COLOR_THEMES: {
 
       {isDesigner && (
         <section>
-          <SectionHeader title="Strefa niebezpieczna" />
+          <SectionHeader title={t.settings.dangerZone} />
           <div className="border border-destructive/40 rounded-2xl p-6 space-y-4">
             <div className="flex items-start gap-3">
               <Trash2 size={18} className="text-destructive shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm font-medium text-foreground">Usuń konto</p>
+                <p className="text-sm font-medium text-foreground">{t.settings.deleteAccount}</p>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Trwale usuwa konto wraz ze wszystkimi projektami, renderami, listami zakupowymi i danymi. Tej operacji nie można cofnąć.
+                  {t.settings.deleteAccountDesc}
                 </p>
               </div>
             </div>
             {!deleteConfirm ? (
               <Button variant="outline" size="sm" className="border-destructive/50 text-destructive hover:bg-destructive hover:text-destructive-foreground" onClick={() => setDeleteConfirm(true)}>
-                Usuń konto
+                {t.settings.deleteAccount}
               </Button>
             ) : (
               <div className="space-y-3">
-                <p className="text-sm font-medium text-destructive">Czy na pewno chcesz usunąć konto? Tej operacji nie można cofnąć.</p>
+                <p className="text-sm font-medium text-destructive">{t.settings.deleteAccountConfirm}</p>
                 <div className="flex gap-2">
                   <Button variant="destructive" size="sm" onClick={handleDeleteAccount} disabled={deleteLoading}>
-                    {deleteLoading ? "Usuwanie..." : "Tak, usuń moje konto"}
+                    {deleteLoading ? t.settings.deleting : t.settings.deleteAccountBtn}
                   </Button>
                   <Button variant="outline" size="sm" onClick={() => setDeleteConfirm(false)} disabled={deleteLoading}>
-                    Anuluj
+                    {t.common.cancel}
                   </Button>
                 </div>
               </div>

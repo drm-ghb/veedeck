@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Eye, ArrowLeft } from "@/components/ui/icons";
 import { useRouter } from "next/navigation";
 import type { SurveyQuestion, SurveySection } from "./SurveyEditor";
+import { useT } from "@/lib/i18n";
 
 interface Survey {
   id: string;
@@ -15,6 +16,7 @@ interface Survey {
 
 export default function SurveyPreview({ survey }: { survey: Survey }) {
   const router = useRouter();
+  const t = useT();
 
   const sectionedQuestions = survey.sections.map((s) => ({
     section: s,
@@ -28,14 +30,14 @@ export default function SurveyPreview({ survey }: { survey: Survey }) {
       <div className="bg-amber-50 dark:bg-amber-950/30 border-b border-amber-200 dark:border-amber-800 px-4 py-2 flex items-center justify-between">
         <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400 text-xs font-medium">
           <Eye size={14} />
-          Tryb podglądu — tak wygląda ankieta dla klienta
+          {t.ankiety.previewBanner}
         </div>
         <button
           onClick={() => router.back()}
           className="flex items-center gap-1.5 text-xs text-amber-700 dark:text-amber-400 hover:underline"
         >
           <ArrowLeft size={12} />
-          Wróć do edytora
+          {t.ankiety.previewBack}
         </button>
       </div>
 
@@ -52,7 +54,7 @@ export default function SurveyPreview({ survey }: { survey: Survey }) {
         <div className="w-full max-w-2xl space-y-6">
           <div>
             <h1 className="text-2xl font-bold text-foreground mb-1">{survey.name}</h1>
-            <p className="text-sm text-muted-foreground">Podgląd ankiety — odpowiedzi nie będą zapisane.</p>
+            <p className="text-sm text-muted-foreground">{t.ankiety.previewNote}</p>
           </div>
 
           {/* Sectioned questions */}
@@ -78,7 +80,7 @@ export default function SurveyPreview({ survey }: { survey: Survey }) {
             disabled
             className="w-full py-3 text-sm font-semibold bg-primary text-primary-foreground rounded-xl opacity-40 cursor-not-allowed"
           >
-            Wyślij ankietę (podgląd)
+            {t.ankiety.previewSubmit}
           </button>
         </div>
       </main>
@@ -91,6 +93,7 @@ export default function SurveyPreview({ survey }: { survey: Survey }) {
 }
 
 function PreviewQuestion({ question }: { question: SurveyQuestion }) {
+  const t = useT();
   const [value, setValue] = useState<unknown>(null);
   const config = (question.config ?? {}) as Record<string, number>;
 
@@ -112,7 +115,7 @@ function PreviewQuestion({ question }: { question: SurveyQuestion }) {
           value={(value as string) ?? ""}
           onChange={(e) => setValue(e.target.value)}
           className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
-          placeholder="Twoja odpowiedź..."
+          placeholder={t.ankiety.answerPlaceholder}
         />
       )}
 
@@ -122,7 +125,7 @@ function PreviewQuestion({ question }: { question: SurveyQuestion }) {
           onChange={(e) => setValue(e.target.value)}
           rows={4}
           className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
-          placeholder="Twoja odpowiedź..."
+          placeholder={t.ankiety.answerPlaceholder}
         />
       )}
 
@@ -177,7 +180,7 @@ function PreviewQuestion({ question }: { question: SurveyQuestion }) {
 
       {question.type === "yes_no" && (
         <div className="flex items-center gap-3">
-          {["Tak", "Nie"].map((opt) => (
+          {[t.ankiety.yesOption, t.ankiety.noOption].map((opt) => (
             <button
               key={opt}
               onClick={() => setValue(opt)}

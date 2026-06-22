@@ -12,6 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { surveyTemplates } from "@/lib/surveyTemplates";
+import { useT } from "@/lib/i18n";
 
 type Client = { id: string; name: string };
 type CustomTemplate = { id: string; name: string };
@@ -25,6 +26,7 @@ interface Props {
 }
 
 export default function NewSurveyDialog({ open, onClose, onCreated, clients, customTemplates }: Props) {
+  const t = useT();
   const [name, setName] = useState("");
   const [assignedClientId, setAssignedClientId] = useState("");
   const [templateValue, setTemplateValue] = useState(""); // "builtin:{id}" | "custom:{id}" | ""
@@ -57,7 +59,7 @@ export default function NewSurveyDialog({ open, onClose, onCreated, clients, cus
         });
         if (!res.ok) {
           const body = await res.json().catch(() => ({}));
-          toast.error(body.error ?? "Błąd tworzenia ankiety");
+          toast.error(body.error ?? t.ankiety.createSurveyError);
           return;
         }
         survey = await res.json();
@@ -70,7 +72,7 @@ export default function NewSurveyDialog({ open, onClose, onCreated, clients, cus
         });
         if (!res.ok) {
           const body = await res.json().catch(() => ({}));
-          toast.error(body.error ?? "Błąd tworzenia ankiety");
+          toast.error(body.error ?? t.ankiety.createSurveyError);
           return;
         }
         survey = await res.json();
@@ -85,7 +87,7 @@ export default function NewSurveyDialog({ open, onClose, onCreated, clients, cus
         }
       }
 
-      toast.success("Ankieta utworzona");
+      toast.success(t.ankiety.surveyCreated);
       onCreated(survey);
     } finally {
       setLoading(false);
@@ -98,16 +100,16 @@ export default function NewSurveyDialog({ open, onClose, onCreated, clients, cus
     <Dialog open={open} onOpenChange={(v) => { if (!loading && !v) onClose(); }}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>+ Nowa ankieta</DialogTitle>
+          <DialogTitle>+ {t.ankiety.newSurvey}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 pt-1">
           <div className="space-y-1.5">
-            <Label htmlFor="survey-name">Nazwa ankiety</Label>
+            <Label htmlFor="survey-name">{t.ankiety.surveyNameLabel}</Label>
             <Input
               id="survey-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="np. Ankieta onboardingowa"
+              placeholder={t.ankiety.surveyNamePlaceholder}
               disabled={loading}
               onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleSave(); } }}
               autoFocus
@@ -116,7 +118,7 @@ export default function NewSurveyDialog({ open, onClose, onCreated, clients, cus
 
           {hasTemplates && (
             <div className="space-y-1.5">
-              <Label htmlFor="survey-template">Szablon</Label>
+              <Label htmlFor="survey-template">{t.ankiety.templateLabel}</Label>
               <select
                 id="survey-template"
                 value={templateValue}
@@ -124,18 +126,18 @@ export default function NewSurveyDialog({ open, onClose, onCreated, clients, cus
                 disabled={loading}
                 className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
               >
-                <option value="">— Brak szablonu —</option>
+                <option value="">{t.ankiety.noTemplate}</option>
                 {surveyTemplates.length > 0 && (
-                  <optgroup label="Szablony gotowe">
-                    {surveyTemplates.map((t) => (
-                      <option key={t.id} value={`builtin:${t.id}`}>{t.name}</option>
+                  <optgroup label={t.ankiety.builtinTemplatesOptgroup}>
+                    {surveyTemplates.map((tpl) => (
+                      <option key={tpl.id} value={`builtin:${tpl.id}`}>{tpl.name}</option>
                     ))}
                   </optgroup>
                 )}
                 {customTemplates.length > 0 && (
-                  <optgroup label="Moje szablony">
-                    {customTemplates.map((t) => (
-                      <option key={t.id} value={`custom:${t.id}`}>{t.name}</option>
+                  <optgroup label={t.ankiety.myTemplatesOptgroup}>
+                    {customTemplates.map((tpl) => (
+                      <option key={tpl.id} value={`custom:${tpl.id}`}>{tpl.name}</option>
                     ))}
                   </optgroup>
                 )}
@@ -145,7 +147,7 @@ export default function NewSurveyDialog({ open, onClose, onCreated, clients, cus
 
           {clients.length > 0 && (
             <div className="space-y-1.5">
-              <Label htmlFor="survey-client">Klient (opcjonalne)</Label>
+              <Label htmlFor="survey-client">{t.ankiety.clientOptional}</Label>
               <select
                 id="survey-client"
                 value={assignedClientId}
@@ -153,7 +155,7 @@ export default function NewSurveyDialog({ open, onClose, onCreated, clients, cus
                 disabled={loading}
                 className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
               >
-                <option value="">— bez przypisania —</option>
+                <option value="">{t.ankiety.noClient}</option>
                 {clients.map((c) => (
                   <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
@@ -162,7 +164,7 @@ export default function NewSurveyDialog({ open, onClose, onCreated, clients, cus
           )}
 
           <Button onClick={handleSave} disabled={loading || !name.trim()} className="w-full">
-            {loading ? "Tworzenie..." : "Utwórz ankietę"}
+            {loading ? t.ankiety.creating : t.ankiety.createSurvey}
           </Button>
         </div>
       </DialogContent>

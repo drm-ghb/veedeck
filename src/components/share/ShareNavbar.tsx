@@ -109,7 +109,7 @@ export default function ShareNavbar({ backHref, backLabel, clientLogoUrl, design
           <div className="flex items-center gap-2">
             {(clientName || authorName) && (
               <span className="hidden sm:flex items-center gap-1.5 text-sm text-muted-foreground">
-                <span className="font-medium text-foreground">Panel klienta:</span>
+                <span className="font-medium text-foreground">{t.share.clientPanel}</span>
                 {clientName || authorName}
               </span>
             )}
@@ -119,7 +119,7 @@ export default function ShareNavbar({ backHref, backLabel, clientLogoUrl, design
             {clientName && (
               <button
                 onClick={() => signOut({ callbackUrl: "/login" })}
-                title="Wyloguj"
+                title={t.nav.logout}
                 className="hidden md:flex p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
               >
                 <LogOut size={18} />
@@ -129,7 +129,7 @@ export default function ShareNavbar({ backHref, backLabel, clientLogoUrl, design
               <button
                 className="md:hidden p-1.5 rounded-md text-gray-500 dark:text-gray-400 hover:bg-muted transition-colors"
                 onClick={onMobileMenuOpen}
-                aria-label="Nawigacja"
+                aria-label={t.share.navAriaLabel}
               >
                 <Menu size={20} />
               </button>

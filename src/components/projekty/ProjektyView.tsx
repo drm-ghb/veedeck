@@ -69,7 +69,7 @@ export default function ProjektyView({ projects, archivedProjects }: ProjektyVie
   async function handleDelete(id: string, title: string) {
     if (!confirm(t.projekty.confirmDeleteProject.replace("{title}", title))) return;
     const res = await fetch(`/api/projects/${id}`, { method: "DELETE" });
-    if (res.ok) { toast.success("Klient usunięty"); router.refresh(); }
+    if (res.ok) { toast.success(t.projekty.clientDeleted); router.refresh(); }
     else toast.error(t.projekty.projectDeleteError);
   }
 
@@ -85,7 +85,7 @@ export default function ProjektyView({ projects, archivedProjects }: ProjektyVie
           <p className="text-gray-500 mt-1">
             {projects.length === 0
               ? t.projekty.noProjectsEmpty
-              : `${projects.length} projekt${projects.length === 1 ? "" : projects.length < 5 ? "y" : "ów"}`}
+              : `${projects.length} ${projects.length === 1 ? t.projekty.projectCountUnit : projects.length < 5 ? t.projekty.projectCountUnitFew : t.projekty.projectCountUnitMany}`}
           </p>
         </div>
         <NewProjectDialog label={t.projekty.newClient} clientMode />

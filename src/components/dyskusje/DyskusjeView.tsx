@@ -11,6 +11,7 @@ import { convertHeicFiles } from "@/lib/convert-heic";
 import ImageAnnotationModal from "./ImageAnnotationModal";
 import { SwipeableMessage } from "@/components/ui/swipeable-message";
 import { playMessageSound } from "@/lib/notification-sound";
+import { useT } from "@/lib/i18n";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -136,6 +137,7 @@ function dayLabel(iso: string) {
 }
 
 export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, initialDiscussions, projects, teamMembers = [], isTeamMember = false }: Props) {
+  const t = useT();
   const router = useRouter();
   const [discussions, setDiscussions] = useState<DiscussionSummary[]>(initialDiscussions);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -275,7 +277,7 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
     // Listen for being added to a new discussion (team members)
     const userChannel = pusher.subscribe(`user-${currentUserId}`);
     userChannel.bind("added-to-discussion", (data: { discussionId: string; title: string; addedBy: string }) => {
-      toast.info(`${data.addedBy} dodał Cię do dyskusji „${data.title}"`);
+      toast.info(t.dyskusje.addedToDiscussion.replace("{by}", data.addedBy).replace("{title}", data.title));
       router.refresh();
     });
 
@@ -492,7 +494,7 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        toast.error(err.error || "Nie udało się zapisać zmian");
+        toast.error(err.error || t.dyskusje.saveChangesError);
         return;
       }
       const updated = await res.json();
@@ -514,7 +516,7 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
       setHeaderIsContractorChat(false);
       router.refresh();
     } catch {
-      toast.error("Nie udało się zapisać zmian");
+      toast.error(t.dyskusje.saveChangesError);
     } finally {
       setSavingHeader(false);
     }
@@ -538,7 +540,7 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
       });
       setPendingAttachments((prev) => [...prev, ...newAttachments]);
     } catch {
-      toast.error("Nie udało się przesłać pliku");
+      toast.error(t.dyskusje.uploadFileError);
     } finally {
       setUploading(false);
     }
@@ -596,7 +598,7 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
           if (!result?.[0]) throw new Error();
           setPendingAttachments((prev) => [...prev, { url: result[0].url, name: audioFile.name, type: "audio" }]);
         } catch {
-          toast.error("Nie udało się przesłać nagrania");
+          toast.error(t.dyskusje.uploadRecordingError);
         } finally {
           setUploading(false);
         }
@@ -607,7 +609,7 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
       setRecordingSeconds(0);
       recordingTimerRef.current = setInterval(() => setRecordingSeconds((s) => s + 1), 1000);
     } catch {
-      toast.error("Brak dostępu do mikrofonu");
+      toast.error(t.render.micAccessDenied);
     }
   }, [startUpload]);
 
@@ -657,7 +659,7 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
       setPendingAttachments([]);
       setReplyingToMsg(null);
     } catch {
-      toast.error("Nie udało się wysłać wiadomości");
+      toast.error(t.dyskusje.sendError);
     } finally {
       setSending(false);
     }
@@ -683,7 +685,7 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
       if (!res.ok) throw new Error();
       setAnnotatingImage(null);
     } catch {
-      toast.error("Nie udało się wysłać zaznaczonego zdjęcia");
+      toast.error(t.dyskusje.sendImageError);
     } finally {
       setSendingAnnotation(false);
     }
@@ -737,7 +739,7 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
       setSelectedId(d.id);
       router.refresh();
     } catch {
-      toast.error("Nie udało się utworzyć dyskusji");
+      toast.error(t.dyskusje.createDiscussionError);
     }
   }
 
@@ -748,7 +750,7 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
       if (!res.ok) throw new Error();
       setMembersData(await res.json());
     } catch {
-      toast.error("Nie udało się załadować uczestników");
+      toast.error(t.dyskusje.loadMembersError);
     } finally {
       setLoadingMembers(false);
     }
@@ -760,13 +762,13 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userId }),
     });
-    if (!res.ok) { toast.error("Nie udało się dodać uczestnika"); return; }
+    if (!res.ok) { toast.error(t.dyskusje.addMemberError); return; }
     await loadMembers(discussionId);
   }
 
   async function removeMember(discussionId: string, userId: string) {
     const res = await fetch(`/api/discussions/${discussionId}/participants/${userId}`, { method: "DELETE" });
-    if (!res.ok) { toast.error("Nie udało się usunąć uczestnika"); return; }
+    if (!res.ok) { toast.error(t.dyskusje.removeMemberError); return; }
     await loadMembers(discussionId);
   }
 
@@ -781,7 +783,7 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
       setDiscussions((prev) => prev.map((d) => (d.id === id ? { ...d, archived: !currentArchived } : d)));
       if (selectedId === id) { setSelectedId(null); setMessages([]); setHeaderEditing(false); }
     } catch {
-      toast.error("Nie udało się " + (currentArchived ? "przywrócić" : "zarchiwizować") + " dyskusji");
+      toast.error(currentArchived ? t.dyskusje.restoreError : t.dyskusje.archiveError);
     }
   }
 
@@ -794,17 +796,17 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
     if (res.ok) {
       setMessages((prev) => prev.map((m) => m.id === msgId ? { ...m, content, editedAt: new Date().toISOString() } : m));
     } else {
-      toast.error("Nie udało się edytować wiadomości");
+      toast.error(t.dyskusje.editMessageError);
     }
   }
 
   async function handleDeleteMsg(msgId: string) {
-    if (!confirm("Usunąć tę wiadomość?")) return;
+    if (!confirm(t.dyskusje.deleteConfirm)) return;
     const res = await fetch(`/api/discussions/${selectedId}/messages/${msgId}`, { method: "DELETE" });
     if (res.ok) {
       setMessages((prev) => prev.filter((m) => m.id !== msgId));
     } else {
-      toast.error("Nie udało się usunąć wiadomości");
+      toast.error(t.dyskusje.deleteError);
     }
   }
 
@@ -819,7 +821,7 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
         ...m,
         reactions: has
           ? reactions.filter((r) => !(r.userId === currentUserId && r.emoji === emoji))
-          : [...reactions, { userId: currentUserId, userName: "Ja", emoji }],
+          : [...reactions, { userId: currentUserId, userName: t.dyskusje.meName, emoji }],
       };
     }));
     await fetch(`/api/discussions/${selectedId}/messages/${msgId}/reactions`, {
@@ -832,8 +834,8 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
   async function deleteDiscussion(id: string) {
     const d = discussions.find((x) => x.id === id);
     const msg = d?.type === "project"
-      ? "Usunąć tę dyskusję projektu i wszystkie wiadomości? Projekt nie straci danych."
-      : "Usunąć tę dyskusję i wszystkie wiadomości?";
+      ? t.dyskusje.deleteDiscussionProjectConfirm
+      : t.dyskusje.deleteDiscussionConfirm;
     if (!confirm(msg)) return;
     try {
       const res = await fetch(`/api/discussions/${id}`, { method: "DELETE" });
@@ -842,11 +844,11 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
       if (selectedId === id) { setSelectedId(null); setMessages([]); setHeaderEditing(false); }
       router.refresh();
     } catch {
-      toast.error("Nie udało się usunąć dyskusji");
+      toast.error(t.dyskusje.deleteDiscussionError);
     }
   }
 
-  const selectedProjectLabel = projects.find((p) => p.id === headerProjectId)?.title ?? "Brak przypisania";
+  const selectedProjectLabel = projects.find((p) => p.id === headerProjectId)?.title ?? t.dyskusje.noProject;
 
   const messageGroups = useMemo(() => {
     const groups: { label: string; msgs: DiscussionMessage[] }[] = [];
@@ -866,7 +868,7 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
           <div className="bg-background rounded-2xl shadow-xl w-full max-w-md flex flex-col gap-0 overflow-hidden">
             <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-              <h2 className="font-semibold text-base">Nowy wątek</h2>
+              <h2 className="font-semibold text-base">{t.dyskusje.newThread}</h2>
               <button
                 onClick={() => setShowNewModal(false)}
                 className="p-1.5 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
@@ -877,28 +879,28 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
             <div className="px-6 py-4 space-y-4">
               {/* Title */}
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Nazwa wątku</label>
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{t.dyskusje.threadNameLabel}</label>
                 <input
                   autoFocus
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Escape") setShowNewModal(false); }}
-                  placeholder="Np. Wycena projektu..."
+                  placeholder={t.dyskusje.threadNamePlaceholder}
                   className="w-full text-sm px-3 py-2 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
                 />
               </div>
 
               {/* Type */}
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Typ</label>
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{t.dyskusje.typeLabel}</label>
                 <div className="flex gap-2">
-                  {(["internal", "project", "contractor"] as const).map((t) => (
+                  {(["internal", "project", "contractor"] as const).map((typ) => (
                     <button
-                      key={t}
-                      onClick={() => { setNewType(t); if (t === "internal") setNewProjectId(null); }}
-                      className={`flex-1 px-3 py-2 rounded-xl text-xs font-medium border transition-colors ${newType === t ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:text-foreground hover:bg-muted"}`}
+                      key={typ}
+                      onClick={() => { setNewType(typ); if (typ === "internal") setNewProjectId(null); }}
+                      className={`flex-1 px-3 py-2 rounded-xl text-xs font-medium border transition-colors ${newType === typ ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:text-foreground hover:bg-muted"}`}
                     >
-                      {t === "internal" ? "Wewnętrzny" : t === "project" ? "Projektowy" : "Wykonawca"}
+                      {typ === "internal" ? t.dyskusje.typeInternal : typ === "project" ? t.dyskusje.typeProject : t.dyskusje.typeContractor}
                     </button>
                   ))}
                 </div>
@@ -907,13 +909,13 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
               {/* Project selector */}
               {newType !== "internal" && (
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Projekt</label>
+                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{t.dyskusje.projectLabel}</label>
                   <select
                     value={newProjectId ?? ""}
                     onChange={(e) => setNewProjectId(e.target.value || null)}
                     className="w-full text-sm px-3 py-2 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
                   >
-                    <option value="">Bez przypisania</option>
+                    <option value="">{t.dyskusje.noAssignment}</option>
                     {projects
                       .filter((p) => newType !== "contractor" || !!p.contractorAssignmentId)
                       .map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}
@@ -924,7 +926,7 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
               {/* Team members */}
               {teamMembers.length > 0 && (
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Dodaj uczestników</label>
+                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{t.dyskusje.addParticipantsLabel}</label>
                   <div className="space-y-1 max-h-40 overflow-y-auto">
                     {teamMembers.map((m) => (
                       <label key={m.id} className="flex items-center gap-2.5 px-3 py-2 rounded-xl border border-border bg-background hover:bg-muted transition-colors cursor-pointer">
@@ -947,13 +949,13 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                 onClick={() => setShowNewModal(false)}
                 className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground rounded-xl transition-colors"
               >
-                Anuluj
+                {t.common.cancel}
               </button>
               <Button
                 onClick={createDiscussion}
                 disabled={!newTitle.trim()}
               >
-                Utwórz wątek
+                {t.dyskusje.createThread}
               </Button>
             </div>
           </div>
@@ -971,20 +973,20 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
       <AlertDialog open={showArchiveConfirm} onOpenChange={setShowArchiveConfirm}>
         <AlertDialogContent size="sm">
           <AlertDialogHeader>
-            <AlertDialogTitle>Zarchiwizować dyskusję?</AlertDialogTitle>
+            <AlertDialogTitle>{t.dyskusje.archiveDiscussionTitle}</AlertDialogTitle>
             <AlertDialogDescription>
-              Dyskusja zostanie przeniesiona do archiwum. Możesz ją przywrócić w dowolnym momencie.
+              {t.dyskusje.archiveDiscussionDesc}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Anuluj</AlertDialogCancel>
+            <AlertDialogCancel>{t.common.cancel}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 if (selected) toggleArchive(selected.id, false);
                 setShowArchiveConfirm(false);
               }}
             >
-              Zarchiwizuj
+              {t.dyskusje.archiveAction}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -995,14 +997,14 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
           {/* Header */}
           <div className="px-4 pt-4 pb-3 space-y-3 border-b border-border">
             <div className="flex items-center justify-between">
-              <h2 className="font-semibold text-base">Dyskusje</h2>
+              <h2 className="font-semibold text-base">{t.nav.discussions}</h2>
               {!isTeamMember && (
                 <Button
                   size="sm"
                   onClick={() => { setShowNewModal(true); setNewTitle(""); setNewType("internal"); setNewProjectId(null); setNewParticipantIds([]); }}
                 >
                   <Plus size={14} />
-                  Nowy wątek
+                  {t.dyskusje.newThread}
                 </Button>
               )}
             </div>
@@ -1013,7 +1015,7 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Szukaj w dyskusjach..."
+                placeholder={t.dyskusje.searchDiscussionsPlaceholder}
                 className="w-full pl-7 pr-7 py-1.5 text-sm bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
               />
               {search && (
@@ -1028,18 +1030,18 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                 value={typeFilter}
                 onChange={(v) => setTypeFilter(v as typeof typeFilter)}
                 options={[
-                  { value: "all", label: "Wszystkie" },
-                  { value: "internal", label: "Wewnętrzne" },
-                  { value: "project", label: "Projektowe" },
-                  { value: "contractor", label: "Wykonawca" },
+                  { value: "all", label: t.dyskusje.allTab },
+                  { value: "internal", label: t.dyskusje.filterInternal },
+                  { value: "project", label: t.dyskusje.filterProject },
+                  { value: "contractor", label: t.dyskusje.typeContractor },
                 ]}
               />
               <PillDropdown
                 value={archivedFilter}
                 onChange={(v) => setArchivedFilter(v as typeof archivedFilter)}
                 options={[
-                  { value: "active", label: "Aktywne" },
-                  { value: "archived", label: "Zarchiwizowane" },
+                  { value: "active", label: t.common.active },
+                  { value: "archived", label: t.common.archived },
                 ]}
               />
             </div>
@@ -1049,11 +1051,11 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
             {discussions.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full gap-2 text-muted-foreground px-4 text-center">
                 <ChatBubble size={32} className="opacity-30" />
-                <p className="text-sm">Brak dyskusji</p>
-                <p className="text-xs">Dyskusje projektu tworzone są automatycznie</p>
+                <p className="text-sm">{t.dyskusje.noDiscussions}</p>
+                <p className="text-xs">{t.dyskusje.noDiscussionsHint}</p>
               </div>
             ) : filteredDiscussions.length === 0 ? (
-              <div className="px-4 py-8 text-center text-sm text-muted-foreground">Brak wyników</div>
+              <div className="px-4 py-8 text-center text-sm text-muted-foreground">{t.common.noResults}</div>
             ) : (
               filteredDiscussions.map((d) => (
                   <button
@@ -1086,7 +1088,7 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                     </div>
                     {d.lastMessage ? (
                       <p className="text-xs text-muted-foreground truncate pl-3.5">
-                        {d.lastMessage.content || "Załącznik"}
+                        {d.lastMessage.content || t.dyskusje.attachmentLabel}
                       </p>
                     ) : d.project ? (
                       <p className="text-xs text-muted-foreground truncate pl-3.5">{d.project.title}</p>
@@ -1112,8 +1114,8 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                   <div className="w-14 h-14 rounded-full bg-primary/15 flex items-center justify-center">
                     <Paperclip size={28} className="text-primary" />
                   </div>
-                  <p className="text-base font-semibold text-primary">Upuść pliki, aby dodać do dyskusji</p>
-                  <p className="text-xs text-muted-foreground">Obrazy, PDF, dokumenty</p>
+                  <p className="text-base font-semibold text-primary">{t.dyskusje.dropFilesDesc}</p>
+                  <p className="text-xs text-muted-foreground">{t.dyskusje.fileTypesDesc}</p>
                 </div>
               </div>
             )}
@@ -1133,14 +1135,14 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                       onClick={saveHeaderEdit}
                       disabled={savingHeader}
                       className="p-1.5 rounded-lg text-primary hover:bg-primary/10 transition-colors disabled:opacity-40"
-                      title="Zapisz"
+                      title={t.common.save}
                     >
                       <Check size={14} />
                     </button>
                     <button
                       onClick={cancelHeaderEdit}
                       className="p-1.5 rounded-lg text-muted-foreground hover:bg-muted transition-colors"
-                      title="Anuluj"
+                      title={t.common.cancel}
                     >
                       <X size={14} />
                     </button>
@@ -1163,7 +1165,7 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                             onClick={() => { setHeaderProjectId(null); setHeaderIsContractorChat(false); setShowProjectDropdown(false); }}
                             className={`w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors ${headerProjectId === null ? "font-medium text-primary" : "text-muted-foreground"}`}
                           >
-                            Brak przypisania
+                            {t.dyskusje.noProject}
                           </button>
                           {projects.map((p) => (
                             <button
@@ -1186,7 +1188,7 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                           onChange={(e) => setHeaderIsContractorChat(e.target.checked)}
                           className="rounded accent-primary"
                         />
-                        Chat z wykonawcą
+                        {t.dyskusje.contractorChat}
                       </label>
                     )}
                   </div>
@@ -1196,7 +1198,7 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                   <button
                     onClick={() => setSelectedId(null)}
                     className="md:hidden p-1.5 -ml-1 rounded-lg text-muted-foreground hover:bg-muted transition-colors flex-shrink-0"
-                    aria-label="Wróć do listy"
+                    aria-label={t.dyskusje.backToList}
                   >
                     <ChevronLeft size={20} />
                   </button>
@@ -1204,13 +1206,13 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                     <div className="flex items-center gap-1.5">
                       <h2 className="font-semibold text-sm">{selected.title}</h2>
                       {selected.type === "contractor" && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-orange-100 text-orange-700 font-semibold shrink-0">Wykonawca</span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-orange-100 text-orange-700 font-semibold shrink-0">{t.dyskusje.typeContractor}</span>
                       )}
                       {selected.type === "project" && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700 font-semibold shrink-0">Projektowy</span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700 font-semibold shrink-0">{t.dyskusje.typeProject}</span>
                       )}
                       {selected.type === "internal" && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground font-semibold shrink-0">Wewnętrzny</span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground font-semibold shrink-0">{t.dyskusje.typeInternal}</span>
                       )}
                     </div>
                     {selected.project ? (
@@ -1222,7 +1224,7 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                         <ExternalLink size={10} />
                       </a>
                     ) : (
-                      <span className="text-xs text-muted-foreground">Brak przypisania do projektu</span>
+                      <span className="text-xs text-muted-foreground">{t.dyskusje.noProjectAssignment}</span>
                     )}
                   </div>
                   <div className="ml-auto flex gap-1 items-center">
@@ -1230,7 +1232,7 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                     <div className="hidden md:flex gap-1 items-center">
                       <button
                         onClick={() => { setChatSearchOpen((v) => !v); setChatSearch(""); }}
-                        title="Szukaj w wiadomościach"
+                        title={t.dyskusje.searchTitle}
                         className={`p-1.5 rounded-lg transition-colors ${chatSearchOpen ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
                       >
                         <Search size={14} />
@@ -1241,10 +1243,10 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                           <button
                             onClick={() => { setShowResources((v) => !v); setResourceTab("all"); setShowMembers(false); }}
                             className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs transition-colors ${showResources ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
-                            title="Pliki dyskusji"
+                            title={t.dyskusje.discussionFiles}
                           >
                             <FolderOpen size={13} />
-                            Pliki{fileCount > 0 && <span className="font-semibold">{fileCount}</span>}
+                            {t.dyskusje.filesLabel}{fileCount > 0 && <span className="font-semibold">{fileCount}</span>}
                           </button>
                         );
                       })()}
@@ -1256,10 +1258,10 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                             if (opening) { loadMembers(selected.id); setShowResources(false); }
                           }}
                           className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs transition-colors ${showMembers ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
-                          title="Uczestnicy dyskusji"
+                          title={t.dyskusje.participantsTitle}
                         >
                           <Users size={13} />
-                          Uczestnicy
+                          {t.dyskusje.participants}
                           {((selected.participants?.length ?? 0) + 1) > 1 && (
                             <span className="font-semibold">{(selected.participants?.length ?? 0) + 1}</span>
                           )}
@@ -1268,21 +1270,21 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                       <button
                         onClick={startHeaderEdit}
                         className="p-1.5 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-                        title="Edytuj"
+                        title={t.common.edit}
                       >
                         <Edit2 size={14} />
                       </button>
                       <button
                         onClick={() => selected.archived ? toggleArchive(selected.id, true) : setShowArchiveConfirm(true)}
                         className="p-1.5 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-                        title={selected.archived ? "Przywróć dyskusję" : "Zarchiwizuj dyskusję"}
+                        title={selected.archived ? t.dyskusje.restoreDiscussion : t.dyskusje.archiveDiscussion}
                       >
                         {selected.archived ? <ArchiveRestore size={14} /> : <Archive size={14} />}
                       </button>
                       <button
                         onClick={() => deleteDiscussion(selected.id)}
                         className="p-1.5 rounded-lg text-muted-foreground hover:bg-muted hover:text-destructive transition-colors"
-                        title="Usuń dyskusję"
+                        title={t.dyskusje.deleteDiscussion}
                       >
                         <Trash2 size={14} />
                       </button>
@@ -1293,7 +1295,7 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                       <button
                         onClick={() => setMobileActionsOpen((v) => !v)}
                         className={`p-1.5 rounded-lg transition-colors ${mobileActionsOpen ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
-                        aria-label="Opcje wątku"
+                        aria-label={t.dyskusje.threadOptions}
                       >
                         <MoreVertical size={18} />
                       </button>
@@ -1304,14 +1306,14 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                             className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
                           >
                             <Search size={15} className="shrink-0 text-muted-foreground" />
-                            Szukaj w dyskusji
+                            {t.dyskusje.searchInDiscussion}
                           </button>
                           <button
                             onClick={() => { setShowResources((v) => !v); setResourceTab("all"); setShowMembers(false); setMobileActionsOpen(false); }}
                             className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
                           >
                             <FolderOpen size={15} className="shrink-0 text-muted-foreground" />
-                            Pliki dyskusji
+                            {t.dyskusje.discussionFiles}
                             {(() => {
                               const fileCount = messages.filter((m) => m.attachmentType === "document" || m.attachmentType === "pdf" || m.attachmentType === "image").length;
                               return fileCount > 0 ? <span className="ml-auto text-xs text-muted-foreground">{fileCount}</span> : null;
@@ -1328,7 +1330,7 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                               className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
                             >
                               <Users size={15} className="shrink-0 text-muted-foreground" />
-                              Uczestnicy
+                              {t.dyskusje.participants}
                               {((selected.participants?.length ?? 0) + 1) > 1 && (
                                 <span className="ml-auto text-xs text-muted-foreground">{(selected.participants?.length ?? 0) + 1}</span>
                               )}
@@ -1340,21 +1342,21 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                             className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
                           >
                             <Edit2 size={15} className="shrink-0 text-muted-foreground" />
-                            Edytuj tytuł
+                            {t.dyskusje.editTitle}
                           </button>
                           <button
                             onClick={() => { selected.archived ? toggleArchive(selected.id, true) : setShowArchiveConfirm(true); setMobileActionsOpen(false); }}
                             className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
                           >
                             {selected.archived ? <ArchiveRestore size={15} className="shrink-0 text-muted-foreground" /> : <Archive size={15} className="shrink-0 text-muted-foreground" />}
-                            {selected.archived ? "Przywróć dyskusję" : "Zarchiwizuj"}
+                            {selected.archived ? t.dyskusje.restoreDiscussion : t.dyskusje.archiveAction}
                           </button>
                           <button
                             onClick={() => { deleteDiscussion(selected.id); setMobileActionsOpen(false); }}
                             className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
                           >
                             <Trash2 size={15} className="shrink-0" />
-                            Usuń dyskusję
+                            {t.dyskusje.deleteDiscussion}
                           </button>
                         </div>
                       )}
@@ -1374,7 +1376,7 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                     type="text"
                     value={chatSearch}
                     onChange={(e) => setChatSearch(e.target.value)}
-                    placeholder="Szukaj wiadomości i plików..."
+                    placeholder={t.dyskusje.searchPlaceholder}
                     className="w-full pl-7 pr-7 py-1.5 text-sm bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
                   />
                   {chatSearch && (
@@ -1400,12 +1402,12 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                 ) : (
                   <div className="flex-1 min-h-0 overflow-y-auto px-5 py-4 space-y-3 relative">
                 {loadingMessages ? (
-                  <div className="flex items-center justify-center h-full text-muted-foreground text-sm">Ładowanie...</div>
+                  <div className="flex items-center justify-center h-full text-muted-foreground text-sm">{t.common.loading}</div>
                 ) : messages.length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-full gap-2 text-muted-foreground">
                     <ChatBubble size={32} className="opacity-30" />
-                    <p className="text-sm">Brak wiadomości</p>
-                    <p className="text-xs">Zacznij pisać aby rozpocząć dyskusję</p>
+                    <p className="text-sm">{t.dyskusje.noMessages}</p>
+                    <p className="text-xs">{t.dyskusje.startTypingDesignerDesc}</p>
                   </div>
                 ) : (
                   messageGroups.map(group => (
@@ -1430,7 +1432,7 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                               : undefined}
                             onEdit={isOwn ? (content) => handleEditMsg(msg.id, content) : undefined}
                             onDelete={isOwn ? () => handleDeleteMsg(msg.id) : undefined}
-                            onReply={() => setReplyingToMsg({ id: msg.id, content: msg.content || "[załącznik]", author: msg.authorName })}
+                            onReply={() => setReplyingToMsg({ id: msg.id, content: msg.content || t.dyskusje.attachmentLabel, author: msg.authorName })}
                             onReact={(emoji) => handleToggleReaction(msg.id, emoji)}
                           />
                         );
@@ -1484,7 +1486,7 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
               {isRecording && (
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-destructive/10 border border-destructive/20 text-sm text-destructive">
                   <span className="w-2 h-2 rounded-full bg-destructive animate-pulse flex-shrink-0" />
-                  <span className="flex-1 text-xs font-medium">Nagrywanie... {recordingSeconds}s</span>
+                  <span className="flex-1 text-xs font-medium">{t.dyskusje.recordingTime.replace("{n}", String(recordingSeconds))}</span>
                 </div>
               )}
               <div className="flex items-end gap-2">
@@ -1500,7 +1502,7 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                   onClick={() => fileInputRef.current?.click()}
                   disabled={uploading || isRecording}
                   className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-primary text-white transition-colors disabled:opacity-40 hover:opacity-90"
-                  title="Załącz pliki"
+                  title={t.dyskusje.attachFiles}
                 >
                   {uploading ? <Loader2 size={16} className="animate-spin" /> : <Paperclip size={16} />}
                 </button>
@@ -1514,7 +1516,7 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                     e.target.style.overflowY = e.target.scrollHeight > 160 ? "auto" : "hidden";
                   }}
                   onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
-                  placeholder="Napisz wiadomość..."
+                  placeholder={t.dyskusje.messagePlaceholder}
                   rows={1}
                   style={{ height: "40px", overflowY: "hidden" }}
                   className="flex-1 min-h-10 max-h-40 px-3 py-2 text-sm resize-none rounded-2xl bg-muted focus:outline-none"
@@ -1543,7 +1545,7 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                 <div className="flex-1 md:flex-none md:w-80 flex flex-col overflow-hidden md:border-l md:border-border">
                   {/* Sidebar header with close button */}
                   <div className="flex items-center justify-between px-4 py-2.5 border-b border-border flex-shrink-0">
-                    <span className="text-sm font-semibold">Pliki dyskusji</span>
+                    <span className="text-sm font-semibold">{t.dyskusje.discussionFiles}</span>
                     <button
                       onClick={() => setShowResources(false)}
                       className="p-1.5 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
@@ -1554,10 +1556,10 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                   {/* Tabs */}
                   <div className="flex gap-0 border-b border-border px-4 flex-shrink-0">
                     {([
-                      { key: "all", label: "Wszystkie" },
-                      { key: "images", label: "Zdjęcia" },
-                      { key: "docs", label: "Dokumenty" },
-                      { key: "sheets", label: "Arkusze" },
+                      { key: "all", label: t.dyskusje.allTab },
+                      { key: "images", label: t.dyskusje.photosTab },
+                      { key: "docs", label: t.dyskusje.docsTab },
+                      { key: "sheets", label: t.dyskusje.sheetsTab },
                     ] as const).map((tab) => (
                       <button
                         key={tab.key}
@@ -1586,7 +1588,7 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                       if (filtered.length === 0) return (
                         <div className="flex flex-col items-center justify-center h-40 gap-2 text-muted-foreground">
                           <FolderOpen size={32} className="opacity-30" />
-                          <p className="text-sm">Brak plików</p>
+                          <p className="text-sm">{t.render.noFiles}</p>
                         </div>
                       );
                       return (
@@ -1629,7 +1631,7 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
               {showMembers && !isTeamMember && (
                 <div className="flex-1 md:flex-none md:w-80 flex flex-col overflow-hidden md:border-l md:border-border">
                   <div className="flex items-center justify-between px-4 py-2.5 border-b border-border flex-shrink-0">
-                    <span className="text-sm font-semibold">Uczestnicy</span>
+                    <span className="text-sm font-semibold">{t.dyskusje.participants}</span>
                     <button
                       onClick={() => setShowMembers(false)}
                       className="p-1.5 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
@@ -1640,19 +1642,19 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                   <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
                     {loadingMembers ? (
                       <div className="flex items-center justify-center h-20 text-muted-foreground text-sm">
-                        <Loader2 size={16} className="animate-spin mr-2" /> Ładowanie...
+                        <Loader2 size={16} className="animate-spin mr-2" /> {t.common.loading}
                       </div>
                     ) : membersData ? (
                       <>
                         {/* Owner */}
                         {membersData.owner && (
                           <div>
-                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Właściciel</p>
+                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">{t.dyskusje.ownerLabel}</p>
                             <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl border border-border bg-background">
                               <Avatar name={membersData.owner.fullName || membersData.owner.name || "?"} logoUrl={membersData.owner.avatarUrl} />
                               <div className="flex-1 min-w-0">
                                 <p className="text-sm font-medium truncate">{membersData.owner.fullName || membersData.owner.name}</p>
-                                <p className="text-xs text-muted-foreground">Projektant</p>
+                                <p className="text-xs text-muted-foreground">{t.dyskusje.designerRole}</p>
                               </div>
                             </div>
                           </div>
@@ -1661,23 +1663,23 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                         {/* Current participants */}
                         {membersData.participants.length > 0 && (
                           <div>
-                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Obecni uczestnicy</p>
+                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">{t.dyskusje.currentParticipants}</p>
                             <div className="space-y-1.5">
                               {membersData.participants.map((p) => (
                                 <div key={p.userId} className="flex items-center gap-2.5 px-3 py-2 rounded-xl border border-border bg-background">
                                   <Avatar name={p.user.fullName || p.user.name || "?"} logoUrl={p.user.avatarUrl} />
                                   <div className="flex-1 min-w-0">
                                     <p className="text-sm font-medium truncate">{p.user.fullName || p.user.name}</p>
-                                    <p className="text-xs text-muted-foreground">{p.user.role === "client" ? "Klient" : "Zespół"}</p>
+                                    <p className="text-xs text-muted-foreground">{p.user.role === "client" ? t.dyskusje.clientRole : t.dyskusje.teamRole}</p>
                                   </div>
                                   <button
                                     onClick={() => {
                                       const name = p.user.fullName || p.user.name || "tego uczestnika";
-                                      if (!confirm(`Usunąć ${name} z dyskusji?`)) return;
+                                      if (!confirm(t.dyskusje.removeMemberConfirm.replace("{name}", name))) return;
                                       removeMember(selected.id, p.userId);
                                     }}
                                     className="p-1.5 rounded-lg text-destructive hover:bg-destructive/10 transition-colors flex-shrink-0"
-                                    title="Usuń uczestnika"
+                                    title={t.dyskusje.removeMember}
                                   >
                                     <Trash2 size={13} />
                                   </button>
@@ -1690,19 +1692,19 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                         {/* Eligible team members */}
                         {membersData.eligibleTeamMembers.length > 0 && (
                           <div>
-                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Dodaj z zespołu</p>
+                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">{t.dyskusje.addFromTeam}</p>
                             <div className="space-y-1.5">
                               {membersData.eligibleTeamMembers.map((u) => (
                                 <div key={u.id} className="flex items-center gap-2.5 px-3 py-2 rounded-xl border border-border bg-background">
                                   <Avatar name={u.fullName || u.name || "?"} logoUrl={u.avatarUrl} />
                                   <div className="flex-1 min-w-0">
                                     <p className="text-sm font-medium truncate">{u.fullName || u.name}</p>
-                                    <p className="text-xs text-muted-foreground">Zespół</p>
+                                    <p className="text-xs text-muted-foreground">{t.dyskusje.teamRole}</p>
                                   </div>
                                   <button
                                     onClick={() => addMember(selected.id, u.id)}
                                     className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors flex-shrink-0"
-                                    title="Dodaj do dyskusji"
+                                    title={t.dyskusje.addToDiscussion}
                                   >
                                     <Plus size={13} />
                                   </button>
@@ -1715,19 +1717,19 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                         {/* Eligible clients */}
                         {membersData.eligibleClients.length > 0 && (
                           <div>
-                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Dodaj klienta</p>
+                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">{t.dyskusje.addClient}</p>
                             <div className="space-y-1.5">
                               {membersData.eligibleClients.map((u) => (
                                 <div key={u.id} className="flex items-center gap-2.5 px-3 py-2 rounded-xl border border-border bg-background">
                                   <Avatar name={u.fullName || u.name || "?"} logoUrl={u.avatarUrl} />
                                   <div className="flex-1 min-w-0">
                                     <p className="text-sm font-medium truncate">{u.fullName || u.name}</p>
-                                    <p className="text-xs text-muted-foreground">Klient</p>
+                                    <p className="text-xs text-muted-foreground">{t.dyskusje.clientRole}</p>
                                   </div>
                                   <button
                                     onClick={() => addMember(selected.id, u.id)}
                                     className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors flex-shrink-0"
-                                    title="Dodaj do dyskusji"
+                                    title={t.dyskusje.addToDiscussion}
                                   >
                                     <Plus size={13} />
                                   </button>
@@ -1740,8 +1742,8 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                         {membersData.participants.length === 0 && membersData.eligibleTeamMembers.length === 0 && membersData.eligibleClients.length === 0 && (
                           <div className="flex flex-col items-center justify-center h-32 gap-2 text-muted-foreground">
                             <Users size={28} className="opacity-30" />
-                            <p className="text-sm text-center">Brak dostępnych uczestników</p>
-                            <p className="text-xs text-center">Przypisz projekt z klientem lub dodaj członków zespołu</p>
+                            <p className="text-sm text-center">{t.dyskusje.noParticipants}</p>
+                            <p className="text-xs text-center">{t.dyskusje.noParticipantsHint}</p>
                           </div>
                         )}
                       </>
@@ -1754,7 +1756,7 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
         ) : (
           <div className="flex-1 hidden md:flex flex-col items-center justify-center text-muted-foreground gap-3 bg-background">
             <ChatBubble size={48} className="opacity-20" />
-            <p className="text-sm">Wybierz dyskusję aby zobaczyć wiadomości</p>
+            <p className="text-sm">{t.dyskusje.selectDiscussion}</p>
           </div>
         )}
       </div>
@@ -1833,6 +1835,7 @@ function ChatSearchResults({ messages, query, onImageClick }: {
   query: string;
   onImageClick: (url: string) => void;
 }) {
+  const t = useT();
   const q = query.toLowerCase();
   const textMatches = messages.filter(
     (m) => m.content && m.content.toLowerCase().includes(q)
@@ -1847,18 +1850,18 @@ function ChatSearchResults({ messages, query, onImageClick }: {
   return (
     <div className="flex-1 overflow-y-auto px-5 py-4">
       <p className="text-xs text-muted-foreground mb-3 font-medium uppercase tracking-wide">
-        {total === 0 ? "Brak wyników" : `${total} ${total === 1 ? "wynik" : total < 5 ? "wyniki" : "wyników"}`}
+        {total === 0 ? t.common.noResults : `${total} ${total === 1 ? t.dyskusje.resultSingular : total < 5 ? t.dyskusje.resultFew : t.dyskusje.resultMany}`}
       </p>
       {total === 0 ? (
         <div className="flex flex-col items-center justify-center h-40 gap-2 text-muted-foreground">
           <Search size={32} className="opacity-30" />
-          <p className="text-sm">Brak wiadomości ani plików pasujących do wyszukiwania</p>
+          <p className="text-sm">{t.dyskusje.noSearchResults}</p>
         </div>
       ) : (
         <div className="space-y-4">
           {textMatches.length > 0 && (
             <div>
-              <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">Wiadomości ({textMatches.length})</p>
+              <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">{t.dyskusje.messagesLabel} ({textMatches.length})</p>
               <div className="space-y-2">
                 {textMatches.map((m) => {
                   const idx = m.content!.toLowerCase().indexOf(q);
@@ -1885,7 +1888,7 @@ function ChatSearchResults({ messages, query, onImageClick }: {
           )}
           {fileMatches.length > 0 && (
             <div>
-              <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">Pliki ({fileMatches.length})</p>
+              <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">{t.dyskusje.filesLabel} ({fileMatches.length})</p>
               <div className="space-y-2">
                 {fileMatches.map((m) => (
                   <div key={m.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-border bg-background">
@@ -1951,6 +1954,7 @@ function MessageBubble({ msg, isOwn, currentUserId, ownAvatarUrl, onImageClick, 
   onReply?: () => void;
   onReact?: (emoji: string) => void;
 }) {
+  const t = useT();
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(msg.content);
   const [showMenu, setShowMenu] = useState(false);
@@ -1990,7 +1994,7 @@ function MessageBubble({ msg, isOwn, currentUserId, ownAvatarUrl, onImageClick, 
       <div className="hidden md:block relative" ref={emojiPickerRef}>
         <button
           onClick={() => setShowEmojiPicker(v => !v)}
-          title="Dodaj reakcję"
+          title={t.dyskusje.addReactionBtn}
           className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
         >
           <AddReaction size={14} />
@@ -2014,7 +2018,7 @@ function MessageBubble({ msg, isOwn, currentUserId, ownAvatarUrl, onImageClick, 
       </div>
       <button
         onClick={onReply}
-        title="Odpowiedz"
+        title={t.share.reply}
         className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
       >
         <CornerDownLeft size={14} />
@@ -2034,7 +2038,7 @@ function MessageBubble({ msg, isOwn, currentUserId, ownAvatarUrl, onImageClick, 
                   onClick={() => { setEditContent(msg.content); setIsEditing(true); setShowMenu(false); }}
                   className="w-full text-left px-3 py-2 text-sm hover:bg-muted flex items-center gap-2 transition-colors"
                 >
-                  <Edit2 size={13} className="text-muted-foreground" /> Edytuj
+                  <Edit2 size={13} className="text-muted-foreground" /> {t.common.edit}
                 </button>
               )}
               {onDelete && (
@@ -2042,7 +2046,7 @@ function MessageBubble({ msg, isOwn, currentUserId, ownAvatarUrl, onImageClick, 
                   onClick={() => { onDelete(); setShowMenu(false); }}
                   className="w-full text-left px-3 py-2 text-sm text-destructive hover:bg-destructive/10 flex items-center gap-2 transition-colors"
                 >
-                  <Trash2 size={13} /> Usuń
+                  <Trash2 size={13} /> {t.common.delete}
                 </button>
               )}
             </div>
@@ -2073,8 +2077,8 @@ function MessageBubble({ msg, isOwn, currentUserId, ownAvatarUrl, onImageClick, 
               rows={2}
             />
             <div className="flex gap-1 justify-end">
-              <button onClick={() => setIsEditing(false)} className="px-2 py-1 text-xs text-muted-foreground hover:text-foreground transition-colors">Anuluj</button>
-              <button onClick={saveEdit} className="px-2 py-1 text-xs bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity">Zapisz</button>
+              <button onClick={() => setIsEditing(false)} className="px-2 py-1 text-xs text-muted-foreground hover:text-foreground transition-colors">{t.common.cancel}</button>
+              <button onClick={saveEdit} className="px-2 py-1 text-xs bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity">{t.common.save}</button>
             </div>
           </div>
         ) : (
@@ -2104,11 +2108,11 @@ function MessageBubble({ msg, isOwn, currentUserId, ownAvatarUrl, onImageClick, 
                 {msg.content && (
                   <div className={`rounded-2xl px-3 py-2 text-sm ${isOwn ? "bg-primary text-primary-foreground" : "bg-background border border-border"}`}>
                     {renderWithLinks(msg.content, isOwn)}
-                    {msg.editedAt && <span className="text-[10px] opacity-50 ml-1.5">(edytowano)</span>}
+                    {msg.editedAt && <span className="text-[10px] opacity-50 ml-1.5">{t.dyskusje.editedLabel}</span>}
                     {!msg.attachmentType && (
                       <div className={`flex justify-end items-center gap-1 mt-1 -mb-0.5 ${isOwn ? "text-primary-foreground/50" : "text-muted-foreground/60"}`}>
                         {receipts?.map((r) => (
-                          <span key={r.readerId} title={`${r.readerName} przeczytał(a)`} className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[8px] font-bold leading-none flex-shrink-0 ${isOwn ? "bg-white/60 text-primary" : "bg-primary/30 text-primary"}`}>
+                          <span key={r.readerId} title={t.dyskusje.readBy.replace("{name}", r.readerName)} className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[8px] font-bold leading-none flex-shrink-0 ${isOwn ? "bg-white/60 text-primary" : "bg-primary/30 text-primary"}`}>
                             {r.readerName.charAt(0).toUpperCase()}
                           </span>
                         ))}
@@ -2122,7 +2126,7 @@ function MessageBubble({ msg, isOwn, currentUserId, ownAvatarUrl, onImageClick, 
                     <button
                       onClick={() => onImageClick(msg.attachmentUrl!)}
                       className="block rounded-2xl overflow-hidden border border-border hover:opacity-90 transition-opacity focus:outline-none focus:ring-2 focus:ring-primary/40"
-                      title="Kliknij aby zaznaczyć"
+                      title={t.dyskusje.clickToAnnotate}
                     >
                       <img
                         src={msg.attachmentUrl}
@@ -2144,7 +2148,7 @@ function MessageBubble({ msg, isOwn, currentUserId, ownAvatarUrl, onImageClick, 
                       className="flex items-center gap-2 px-3 py-2 rounded-2xl border border-border text-sm text-muted-foreground hover:text-foreground"
                     >
                       <FileIcon size={16} className="flex-shrink-0" />
-                      <span className="truncate max-w-[220px]">{msg.attachmentName || "Zdjęcie"}</span>
+                      <span className="truncate max-w-[220px]">{msg.attachmentName || t.dyskusje.imageLabel}</span>
                       <ExternalLink size={12} className="flex-shrink-0" />
                     </a>
                   </div>
@@ -2158,7 +2162,7 @@ function MessageBubble({ msg, isOwn, currentUserId, ownAvatarUrl, onImageClick, 
                       className="flex items-center gap-2 px-3 py-2 bg-muted/60 hover:bg-muted transition-colors border-b border-border"
                     >
                       <FileText size={15} className="text-red-500 flex-shrink-0" />
-                      <span className="text-xs font-medium truncate flex-1">{msg.attachmentName || "Dokument PDF"}</span>
+                      <span className="text-xs font-medium truncate flex-1">{msg.attachmentName || t.dyskusje.pdfLabel}</span>
                       <ExternalLink size={11} className="text-muted-foreground flex-shrink-0" />
                     </a>
                     <iframe
@@ -2187,7 +2191,7 @@ function MessageBubble({ msg, isOwn, currentUserId, ownAvatarUrl, onImageClick, 
                 {msg.attachmentType && (
                   <div className={`flex justify-end items-center gap-1 mt-0.5 ${isOwn ? "text-foreground/50" : "text-muted-foreground/60"}`}>
                     {receipts?.map((r) => (
-                      <span key={r.readerId} title={`${r.readerName} przeczytał(a)`} className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[8px] font-bold leading-none flex-shrink-0 ${isOwn ? "bg-white/60 text-primary" : "bg-primary/30 text-primary"}`}>
+                      <span key={r.readerId} title={t.dyskusje.readBy.replace("{name}", r.readerName)} className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[8px] font-bold leading-none flex-shrink-0 ${isOwn ? "bg-white/60 text-primary" : "bg-primary/30 text-primary"}`}>
                         {r.readerName.charAt(0).toUpperCase()}
                       </span>
                     ))}
@@ -2254,7 +2258,7 @@ function MessageBubble({ msg, isOwn, currentUserId, ownAvatarUrl, onImageClick, 
                     className="w-full flex items-center gap-3 px-5 py-3 text-sm text-foreground hover:bg-muted transition-colors"
                   >
                     <Edit2 size={16} className="text-muted-foreground shrink-0" />
-                    Edytuj wiadomość
+                    {t.dyskusje.editMessage}
                   </button>
                 )}
                 {onDelete && (
@@ -2263,7 +2267,7 @@ function MessageBubble({ msg, isOwn, currentUserId, ownAvatarUrl, onImageClick, 
                     className="w-full flex items-center gap-3 px-5 py-3 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
                   >
                     <Trash2 size={16} className="shrink-0" />
-                    Usuń wiadomość
+                    {t.dyskusje.deleteMessage}
                   </button>
                 )}
               </div>

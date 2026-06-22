@@ -8,6 +8,7 @@ import ListSectionNav from "./ListSectionNav";
 import { pusherClient } from "@/lib/pusher";
 
 import { getUnreadSet, syncListUnread } from "@/lib/list-unread-store";
+import { useT } from "@/lib/i18n";
 
 function parsePrice(price: string | null): number | null {
   if (!price) return null;
@@ -29,7 +30,7 @@ function getCurrency(price: string | null): string {
 
 function formatPriceNum(n: number): string {
   const hasDec = n % 1 !== 0;
-  return n.toLocaleString("pl-PL", { minimumFractionDigits: hasDec ? 2 : 0, maximumFractionDigits: 2 });
+  return n.toLocaleString(undefined, { minimumFractionDigits: hasDec ? 2 : 0, maximumFractionDigits: 2 });
 }
 
 interface Product {
@@ -119,7 +120,8 @@ export default function ShareListClient({
     }
     return init;
   });
-  const [authorName, setAuthorName] = useState("Klient");
+  const t = useT();
+  const [authorName, setAuthorName] = useState(t.listy.clientLabel);
   const [lightbox, setLightbox] = useState<string | null>(null);
   const commentsPanelProductIdRef = useRef<string | null>(null);
 
@@ -240,7 +242,7 @@ export default function ShareListClient({
 
       <div className="space-y-10">
       {sections.length === 0 && (
-        <p className="text-center text-muted-foreground py-16">Lista jest pusta.</p>
+        <p className="text-center text-muted-foreground py-16">{t.listy.listEmpty}</p>
       )}
 
       {sections.map((section) => (
@@ -263,7 +265,7 @@ export default function ShareListClient({
 
           {section.products.length === 0 ? (
             <p className="text-sm text-muted-foreground border border-dashed border-border rounded-xl p-6 text-center">
-              Brak produktów w tej sekcji
+              {t.listy.noProductsInSection}
             </p>
           ) : (
             <div className="bg-card border border-border rounded-xl overflow-hidden">
@@ -280,19 +282,19 @@ export default function ShareListClient({
                     <button
                       onClick={() => handleApproval(product.id, approval === "accepted" ? null : "accepted")}
                       className={`w-7 h-7 rounded flex items-center justify-center transition-colors ${approval === "accepted" ? "bg-green-500 text-white" : "text-muted-foreground hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-950"}`}
-                      title={approval === "accepted" ? "Cofnij akceptację" : "Zaakceptuj"}
+                      title={approval === "accepted" ? t.render.undoAcceptance : t.render.acceptBtn}
                     ><Check size={14} /></button>
                     <button
                       onClick={() => handleApproval(product.id, approval === "rejected" ? null : "rejected")}
                       className={`w-7 h-7 rounded flex items-center justify-center transition-colors ${approval === "rejected" ? "bg-red-500 text-white" : "text-muted-foreground hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950"}`}
-                      title={approval === "rejected" ? "Cofnij odrzucenie" : "Odrzuć"}
+                      title={approval === "rejected" ? t.listy.undoRejection : t.listy.rejectBtn}
                     ><X size={14} /></button>
                   </>
                 );
                 const totalCommentCount = commentCounts[product.id] ?? product.commentCount;
                 const displayCount = unread ? count : totalCommentCount;
                 const commentBtn = (size: number) => (
-                  <button onClick={() => openCommentsPanel(product.id)} className="relative flex items-center justify-center w-7 h-7 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors" title="Komentarze">
+                  <button onClick={() => openCommentsPanel(product.id)} className="relative flex items-center justify-center w-7 h-7 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors" title={t.listy.commentsTitle}>
                     <Comment size={size} className={`transition-colors ${unread ? "text-blue-500" : ""}`} />
                     {displayCount > 0 && <span className={`absolute -top-1 -right-1 min-w-[14px] h-[14px] rounded-full text-white text-[9px] font-bold flex items-center justify-center px-0.5 leading-none transition-colors ${unread ? "bg-primary" : "bg-muted-foreground/40"}`}>{displayCount > 99 ? "99+" : displayCount}</span>}
                   </button>
@@ -312,26 +314,26 @@ export default function ShareListClient({
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <p className="font-medium text-sm truncate">{product.name}</p>
-                          {approval === "accepted" && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 shrink-0">Zaakceptowane</span>}
-                          {approval === "rejected" && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 shrink-0">Odrzucone</span>}
+                          {approval === "accepted" && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 shrink-0">{t.listy.accepted}</span>}
+                          {approval === "rejected" && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 shrink-0">{t.listy.rejected}</span>}
                         </div>
                         {product.manufacturer && <p className="text-xs text-muted-foreground mt-0.5">{product.manufacturer}</p>}
                         <div className="flex flex-col gap-y-0.5 mt-1">
-                          {product.color && <span className="text-xs text-muted-foreground">Kolor: {product.color}</span>}
-                          {product.dimensions && <span className="text-xs text-muted-foreground">Wymiar: {product.dimensions}</span>}
-                          {product.deliveryTime && <span className="text-xs text-muted-foreground">Dostawa: {product.deliveryTime}</span>}
+                          {product.color && <span className="text-xs text-muted-foreground">{t.listy.fieldColor}: {product.color}</span>}
+                          {product.dimensions && <span className="text-xs text-muted-foreground">{t.listy.fieldDimensions}: {product.dimensions}</span>}
+                          {product.deliveryTime && <span className="text-xs text-muted-foreground">{t.listy.fieldDelivery}: {product.deliveryTime}</span>}
                         </div>
                         {product.note && <p className="text-xs text-muted-foreground italic mt-1">📝 {product.note}</p>}
                       </div>
                       <div className="flex items-center gap-3 shrink-0">
                         <div className="flex items-center gap-1.5">
-                          <span className="text-xs text-muted-foreground">Szt.:</span>
+                          <span className="text-xs text-muted-foreground">{t.listy.qtyLabel}</span>
                           <span className="text-sm font-medium tabular-nums">{product.quantity}</span>
                         </div>
                         {totalPrice !== null && !hidePrices && (
                           <div className="text-right min-w-[72px]">
                             <p className="text-sm font-semibold tabular-nums">{formatPriceNum(totalPrice)} {currency}</p>
-                            {product.quantity > 1 && unitPrice !== null && <p className="text-xs text-muted-foreground tabular-nums">{formatPriceNum(unitPrice)} / szt.</p>}
+                            {product.quantity > 1 && unitPrice !== null && <p className="text-xs text-muted-foreground tabular-nums">{formatPriceNum(unitPrice)} {t.listy.perUnit}</p>}
                           </div>
                         )}
                         {product.url ? <a href={product.url} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors"><ExternalLink size={13} /></a> : <span className="w-4" />}
@@ -365,13 +367,13 @@ export default function ShareListClient({
                         {/* Row 2: price + approval badge */}
                         <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                           {totalPrice !== null && !hidePrices && <span className="text-sm font-semibold text-foreground tabular-nums">{formatPriceNum(totalPrice)} {currency}</span>}
-                          {approval === "accepted" && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">Zaakceptowane</span>}
-                          {approval === "rejected" && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">Odrzucone</span>}
+                          {approval === "accepted" && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">{t.listy.accepted}</span>}
+                          {approval === "rejected" && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">{t.listy.rejected}</span>}
                         </div>
                         {/* Row 3: qty + link | comments */}
                         <div className="flex items-center justify-between mt-1.5">
                           <div className="flex items-center gap-2">
-                            <span className="text-xs text-muted-foreground">Szt.: <span className="font-medium text-foreground">{product.quantity}</span></span>
+                            <span className="text-xs text-muted-foreground">{t.listy.qtyLabel} <span className="font-medium text-foreground">{product.quantity}</span></span>
                             {product.url && <a href={product.url} target="_blank" rel="noopener noreferrer" className="w-6 h-6 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"><ExternalLink size={13} /></a>}
                           </div>
                           {commentBtn(14)}

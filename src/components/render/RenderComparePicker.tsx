@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { X, Check, ChevronRight, ChevronDown, Image, FileText, SplitSquareHorizontal } from "@/components/ui/icons";
 import { createPortal } from "react-dom";
+import { useT } from "@/lib/i18n";
 
 export interface PickerRenderItem {
   id: string;
@@ -50,6 +51,7 @@ function Thumbnail({
   onToggle: () => void;
   onCompare?: () => void;
 }) {
+  const t = useT();
   return (
     <div className="relative flex flex-col items-center gap-1 rounded-lg overflow-hidden border border-border bg-muted/30 hover:bg-muted/60 transition-colors">
       <button
@@ -84,7 +86,7 @@ function Thumbnail({
             className="mt-1 w-full flex items-center justify-center gap-1 text-xs py-0.5 rounded bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
           >
             <SplitSquareHorizontal size={12} />
-            Porównaj
+            {t.render.compareBtn}
           </button>
         )}
       </div>
@@ -93,6 +95,7 @@ function Thumbnail({
 }
 
 export default function RenderComparePicker({ projectRendersUrl, excludeRenderId, mode, onAdd, onCompare, onClose }: Props) {
+  const t = useT();
   const [rooms, setRooms] = useState<PickerRoom[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedRoom, setExpandedRoom] = useState<string | null>(null);
@@ -143,7 +146,7 @@ export default function RenderComparePicker({ projectRendersUrl, excludeRenderId
       <div className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-2xl flex flex-col" style={{ maxHeight: "80vh" }} onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-border flex-shrink-0">
-          <h2 className="text-base font-semibold text-foreground">Wybierz z ProjectFlow</h2>
+          <h2 className="text-base font-semibold text-foreground">{t.render.comparePickerTitle}</h2>
           <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors">
             <X size={18} />
           </button>
@@ -152,10 +155,10 @@ export default function RenderComparePicker({ projectRendersUrl, excludeRenderId
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-4 space-y-2">
           {loading && (
-            <p className="text-sm text-muted-foreground text-center py-8">Ładowanie…</p>
+            <p className="text-sm text-muted-foreground text-center py-8">{t.render.compareLoading}</p>
           )}
           {!loading && rooms.length === 0 && (
-            <p className="text-sm text-muted-foreground text-center py-8">Brak plików w projekcie</p>
+            <p className="text-sm text-muted-foreground text-center py-8">{t.render.compareNoFilesProject}</p>
           )}
           {!loading && rooms.map((room) => {
             const roomRenders = allInRoom(room);
@@ -169,7 +172,7 @@ export default function RenderComparePicker({ projectRendersUrl, excludeRenderId
                   >
                     {expandedRoom === room.id ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                     <span>{room.name}</span>
-                    <span className="text-xs text-muted-foreground font-normal">{roomRenders.length} plików</span>
+                    <span className="text-xs text-muted-foreground font-normal">{roomRenders.length} {roomRenders.length === 1 ? t.render.compareFileSingular : roomRenders.length < 5 ? t.render.compareFileFew : t.render.compareFileMany}</span>
                   </button>
                 </div>
 
@@ -185,7 +188,7 @@ export default function RenderComparePicker({ projectRendersUrl, excludeRenderId
                           >
                             {expandedFolder === folder.id ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                             <span>{folder.name}</span>
-                            <span className="text-xs text-muted-foreground font-normal">{folder.renders.length} plików</span>
+                            <span className="text-xs text-muted-foreground font-normal">{folder.renders.length} {folder.renders.length === 1 ? t.render.compareFileSingular : folder.renders.length < 5 ? t.render.compareFileFew : t.render.compareFileMany}</span>
                           </button>
                         </div>
                         {expandedFolder === folder.id && (
@@ -230,14 +233,14 @@ export default function RenderComparePicker({ projectRendersUrl, excludeRenderId
         {mode === "add" && (
           <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-border flex-shrink-0">
             <button onClick={onClose} className="px-4 py-2 text-sm rounded-lg border border-border hover:bg-muted transition-colors">
-              Anuluj
+              {t.common.cancel}
             </button>
             <button
               onClick={handleAdd}
               disabled={selected.length === 0}
               className="px-4 py-2 text-sm rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
             >
-              {selected.length > 0 ? `Dodaj zaznaczone (${selected.length})` : "Dodaj"}
+              {selected.length > 0 ? `${t.render.compareAddSelected} (${selected.length})` : t.render.compareAddBtn}
             </button>
           </div>
         )}

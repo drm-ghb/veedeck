@@ -4,6 +4,8 @@ import { useState, useEffect, useRef } from "react";
 import { UploadButton } from "@uploadthing/react";
 import type { OurFileRouter } from "@/lib/uploadthing";
 import type { SurveyQuestion, SurveySection } from "../SurveyEditor";
+import { toast } from "sonner";
+import { useT } from "@/lib/i18n";
 
 interface Answer {
   id: string;
@@ -55,6 +57,7 @@ function initAttachments(questions: SurveyQuestion[], existing: Answer[]): Recor
 }
 
 export default function SurveyForm({ token, survey, responseId, existingAnswers, readOnly = false, onRegisterSave, onSubmitted }: Props) {
+  const t = useT();
   const [answers, setAnswers] = useState<Record<string, unknown>>(
     () => initAnswers(survey.questions, existingAnswers)
   );
@@ -173,7 +176,7 @@ export default function SurveyForm({ token, survey, responseId, existingAnswers,
       const val = answers[q.id];
       const isEmpty = val === null || val === undefined || val === "" ||
         (Array.isArray(val) && val.length === 0);
-      if (isEmpty) errs[q.id] = "To pytanie jest wymagane.";
+      if (isEmpty) errs[q.id] = t.ankiety.requiredError;
     }
     setErrors(errs);
     return Object.keys(errs).length === 0;
@@ -207,7 +210,7 @@ export default function SurveyForm({ token, survey, responseId, existingAnswers,
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        alert(body.error ?? "Nie udało się wysłać ankiety.");
+        alert(body.error ?? t.ankiety.submitError);
         return;
       }
       setSubmitted(true);
@@ -229,8 +232,8 @@ export default function SurveyForm({ token, survey, responseId, existingAnswers,
     return (
       <div className="bg-card border border-border rounded-2xl p-10 text-center space-y-3">
         <div className="text-5xl">🎉</div>
-        <h2 className="text-xl font-bold">Dziękujemy!</h2>
-        <p className="text-sm text-muted-foreground">Twoje odpowiedzi zostały zapisane. Możesz teraz zamknąć tę stronę.</p>
+        <h2 className="text-xl font-bold">{t.ankiety.thankYou}</h2>
+        <p className="text-sm text-muted-foreground">{t.ankiety.thankYouDesc}</p>
       </div>
     );
   }
@@ -257,23 +260,23 @@ export default function SurveyForm({ token, survey, responseId, existingAnswers,
     {showIncompleteConfirm && (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" onClick={() => setShowIncompleteConfirm(false)}>
         <div className="bg-card border border-border rounded-2xl shadow-xl w-full max-w-sm p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
-          <h3 className="font-semibold text-base">Nie wszystkie pytania wypełnione</h3>
+          <h3 className="font-semibold text-base">{t.ankiety.notAllAnswered}</h3>
           <p className="text-sm text-muted-foreground">
-            Nie wszystkie pytania zostały uzupełnione. Czy na pewno chcesz wysłać ankietę?
+            {t.ankiety.incompleteConfirmMsg}
           </p>
           <div className="flex justify-end gap-2 pt-1">
             <button
               onClick={() => setShowIncompleteConfirm(false)}
               className="px-4 py-2 text-sm rounded-xl border border-border hover:bg-muted transition-colors"
             >
-              Anuluj
+              {t.common.cancel}
             </button>
             <button
               onClick={() => { setShowIncompleteConfirm(false); doSubmit(); }}
               disabled={submitting}
               className="px-4 py-2 text-sm font-semibold rounded-xl bg-primary text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-50"
             >
-              Wyślij i tak
+              {t.ankiety.sendAnyway}
             </button>
           </div>
         </div>
@@ -284,7 +287,7 @@ export default function SurveyForm({ token, survey, responseId, existingAnswers,
       {survey.questions.length > 0 && (
         <div className="space-y-1.5">
           <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>{answered} / {survey.questions.length} odpowiedzi</span>
+            <span>{answered} / {survey.questions.length} {t.ankiety.progressLabel}</span>
             <span>{progress}%</span>
           </div>
           <div className="w-full bg-muted rounded-full h-1.5">
@@ -340,7 +343,7 @@ export default function SurveyForm({ token, survey, responseId, existingAnswers,
       )}
 
       {required > 0 && (
-        <p className="text-xs text-muted-foreground">* Pola wymagane</p>
+        <p className="text-xs text-muted-foreground">{t.ankiety.requiredMark}</p>
       )}
 
       {!readOnly && (
@@ -349,7 +352,7 @@ export default function SurveyForm({ token, survey, responseId, existingAnswers,
           disabled={submitting}
           className="w-full py-3 text-sm font-semibold bg-primary text-primary-foreground rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {submitting ? "Wysyłanie..." : "Wyślij ankietę"}
+          {submitting ? t.ankiety.submitting : t.ankiety.submit}
         </button>
       )}
     </div>
@@ -378,6 +381,7 @@ function QuestionInput({
   onAttachmentsChange: (files: Attachment[]) => void;
   readOnly?: boolean;
 }) {
+  const t = useT();
   const rawConfig = (question.config ?? {}) as Record<string, number | boolean>;
   const config = {
     ...rawConfig,
@@ -406,7 +410,7 @@ function QuestionInput({
           onChange={(e) => onChange(e.target.value)}
           disabled={readOnly}
           className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-60 disabled:cursor-default"
-          placeholder="Twoja odpowiedź..."
+          placeholder={t.ankiety.yourAnswerPlaceholder}
         />
       )}
 
@@ -417,7 +421,7 @@ function QuestionInput({
           disabled={readOnly}
           rows={4}
           className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none disabled:opacity-60 disabled:cursor-default"
-          placeholder="Twoja odpowiedź..."
+          placeholder={t.ankiety.yourAnswerPlaceholder}
         />
       )}
 
@@ -483,7 +487,7 @@ function QuestionInput({
 
       {question.type === "yes_no" && (
         <div className="flex items-center gap-3">
-          {["Tak", "Nie"].map((opt) => (
+          {[t.ankiety.yesLabel, t.ankiety.noLabel].map((opt) => (
             <button
               key={opt}
               onClick={() => !readOnly && onChange(opt)}
@@ -503,11 +507,11 @@ function QuestionInput({
       {question.type === "budget_range" && (
         <div className="space-y-3">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">{(config.min ?? 0).toLocaleString("pl-PL")} zł</span>
+            <span className="text-muted-foreground">{(config.min ?? 0).toLocaleString()} zł</span>
             <span className="font-semibold text-primary">
-              {typeof value === "number" ? value.toLocaleString("pl-PL") : (config.min ?? 0).toLocaleString("pl-PL")} zł
+              {typeof value === "number" ? value.toLocaleString() : (config.min ?? 0).toLocaleString()} zł
             </span>
-            <span className="text-muted-foreground">{(config.max ?? 200000).toLocaleString("pl-PL")} zł</span>
+            <span className="text-muted-foreground">{(config.max ?? 200000).toLocaleString()} zł</span>
           </div>
           <input
             type="range"
@@ -538,40 +542,57 @@ function QuestionInput({
         </div>
       )}
 
-      {config.allowAttachments && !readOnly && (
-        <div className="space-y-2 pt-1">
-          <p className="text-xs font-medium text-muted-foreground">Załączniki (maks. 5 plików)</p>
-          {attachments.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {attachments.map((f, i) => (
-                <div key={i} className="flex items-center gap-1.5 px-2.5 py-1.5 bg-muted rounded-lg text-xs">
-                  <a href={f.url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline max-w-[140px] truncate">{f.name}</a>
-                  <button
-                    type="button"
-                    onClick={() => onAttachmentsChange(attachments.filter((_, j) => j !== i))}
-                    className="text-muted-foreground hover:text-foreground ml-1"
-                  >×</button>
-                </div>
-              ))}
-            </div>
-          )}
-          {attachments.length < 5 && (
-            <UploadButton<OurFileRouter, "surveyAnswerUploader">
-              endpoint="surveyAnswerUploader"
-              headers={{ "x-survey-token": token }}
-              content={{ button: "Dodaj załączniki", allowedContent: "" }}
-              onClientUploadComplete={(res) => {
-                onAttachmentsChange([...attachments, ...res.map((f) => ({ url: f.url, name: f.name }))]);
-              }}
-              appearance={{
-                button: "bg-muted text-foreground border border-border hover:bg-muted/80 rounded-lg text-xs font-medium px-3 py-2 h-auto ut-uploading:opacity-70",
-                allowedContent: "hidden",
-                container: "flex-row",
-              }}
-            />
-          )}
-        </div>
-      )}
+      {config.allowAttachments && !readOnly && (() => {
+        const maxFiles = typeof config.maxAttachments === "number" ? config.maxAttachments : null;
+        const atLimit = maxFiles !== null && attachments.length >= maxFiles;
+        return (
+          <div className="space-y-2 pt-1">
+            <p className="text-xs font-medium text-muted-foreground">
+              {t.ankiety.attachmentsLabel}{maxFiles !== null ? ` (${t.ankiety.maxFiles}: ${maxFiles})` : ""}
+            </p>
+            {attachments.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {attachments.map((f, i) => (
+                  <div key={i} className="flex items-center gap-1.5 px-2.5 py-1.5 bg-muted rounded-lg text-xs">
+                    <a href={f.url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline max-w-[140px] truncate">{f.name}</a>
+                    <button
+                      type="button"
+                      onClick={() => onAttachmentsChange(attachments.filter((_, j) => j !== i))}
+                      className="text-muted-foreground hover:text-foreground ml-1"
+                    >×</button>
+                  </div>
+                ))}
+              </div>
+            )}
+            {!atLimit ? (
+              <UploadButton<OurFileRouter, "surveyAnswerUploader">
+                endpoint="surveyAnswerUploader"
+                headers={{ "x-survey-token": token }}
+                content={{ button: t.ankiety.addAttachments, allowedContent: "" }}
+                onBeforeUploadBegin={(files) => {
+                  if (maxFiles === null) return files;
+                  const remaining = maxFiles - attachments.length;
+                  if (files.length > remaining) {
+                    toast.error(t.ankiety.canAddMoreFiles.replace("{remaining}", String(remaining)).replace("{selected}", String(files.length)).replace("{added}", String(remaining)));
+                    return files.slice(0, remaining);
+                  }
+                  return files;
+                }}
+                onClientUploadComplete={(res) => {
+                  onAttachmentsChange([...attachments, ...res.map((f) => ({ url: f.url, name: f.name }))]);
+                }}
+                appearance={{
+                  button: "bg-violet-600 text-white border-0 hover:bg-violet-700 rounded-lg text-xs font-medium px-3 py-2 h-auto ut-uploading:opacity-70",
+                  allowedContent: "hidden",
+                  container: "flex-row",
+                }}
+              />
+            ) : (
+              <p className="text-xs text-amber-600 dark:text-amber-500 font-medium">{t.ankiety.maxFilesReachedLabel.replace("{count}", String(maxFiles))}</p>
+            )}
+          </div>
+        );
+      })()}
 
       {error && <p className="text-xs text-red-500">{error}</p>}
     </div>

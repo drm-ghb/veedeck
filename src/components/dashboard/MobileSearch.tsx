@@ -146,7 +146,7 @@ export default function MobileSearch() {
             })}
             {!loading && query.length < 2 && (
               <div className="px-4 py-8 text-center text-sm text-muted-foreground">
-                Wpisz co najmniej 2 znaki, aby wyszukać
+                {t.common.searchMinChars}
               </div>
             )}
           </div>

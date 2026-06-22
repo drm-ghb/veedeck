@@ -8,6 +8,7 @@ import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MoreVertical, Trash2, Edit2 } from "@/components/ui/icons";
 import EditContractorDialog from "./EditContractorDialog";
+import { useT } from "@/lib/i18n";
 
 interface Props {
   id: string;
@@ -19,18 +20,19 @@ interface Props {
 }
 
 export default function ContractorCard({ id, name, company, trade, activeAssignments, unreadCount = 0 }: Props) {
+  const t = useT();
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
 
   async function handleDelete() {
-    if (!confirm(`Usunąć wykonawcę "${name}"? Spowoduje to usunięcie wszystkich przypisań i plików.`)) return;
+    if (!confirm(`${t.common.delete} "${name}"? ${t.wykonawcy.deleteConfirmMsg}`)) return;
     const res = await fetch(`/api/contractors/${id}`, { method: "DELETE" });
     if (res.ok) {
-      toast.success("Wykonawca usunięty");
+      toast.success(t.wykonawcy.deletedOk);
       router.refresh();
     } else {
-      toast.error("Błąd podczas usuwania wykonawcy");
+      toast.error(t.wykonawcy.deleteError);
     }
   }
 
@@ -64,14 +66,14 @@ export default function ContractorCard({ id, name, company, trade, activeAssignm
                       className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-muted transition-colors"
                     >
                       <Edit2 size={14} />
-                      Edytuj
+                      {t.common.edit}
                     </button>
                     <button
                       onClick={() => { setMenuOpen(false); handleDelete(); }}
                       className="flex items-center gap-2 w-full px-3 py-2 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
                     >
                       <Trash2 size={14} />
-                      Usuń
+                      {t.common.delete}
                     </button>
                   </div>
                 )}
@@ -82,7 +84,7 @@ export default function ContractorCard({ id, name, company, trade, activeAssignm
           <div className="flex items-center gap-2 mt-2 flex-wrap">
             {unreadCount > 0 && (
               <Badge variant="default" className="text-xs">
-                Nieprzeczytane komentarze: {unreadCount}
+                {t.wykonawcy.unreadComments} {unreadCount}
               </Badge>
             )}
             {trade && (
@@ -90,10 +92,10 @@ export default function ContractorCard({ id, name, company, trade, activeAssignm
             )}
             <Badge variant="secondary" className="text-xs">
               {activeAssignments === 1
-                ? "1 aktywny projekt"
+                ? t.wykonawcy.project1
                 : (activeAssignments % 10 >= 2 && activeAssignments % 10 <= 4 && !(activeAssignments % 100 >= 12 && activeAssignments % 100 <= 14))
-                ? `${activeAssignments} aktywne projekty`
-                : `${activeAssignments} aktywnych projektów`}
+                ? `${activeAssignments} ${t.wykonawcy.projectFew}`
+                : `${activeAssignments} ${t.wykonawcy.projectMany}`}
             </Badge>
           </div>
         </CardHeader>

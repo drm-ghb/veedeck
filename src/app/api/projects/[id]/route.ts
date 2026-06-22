@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { uniqueSlug } from "@/lib/slug";
 import { getWorkspaceUserId } from "@/lib/workspace";
 import bcrypt from "bcryptjs";
+import { checkTeamPermission } from "@/lib/permissions";
 
 export async function GET(
   _req: NextRequest,
@@ -116,6 +117,9 @@ export async function DELETE(
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (!await checkTeamPermission(session, "projCanDelete")) {
+    return NextResponse.json({ error: "Brak uprawnień do usuwania projektów" }, { status: 403 });
   }
   const userId = getWorkspaceUserId(session);
 

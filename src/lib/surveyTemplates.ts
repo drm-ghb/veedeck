@@ -13,7 +13,7 @@ export interface TemplateQuestion {
   required: boolean;
   description?: string;
   options?: string[];
-  config?: Record<string, number>;
+  config?: Record<string, unknown>;
 }
 
 export interface TemplateSection {
@@ -269,6 +269,12 @@ export const surveyTemplates: SurveyTemplate[] = [
             label: "Czego absolutnie nie chcesz w swoim wnętrzu?",
             type: "long_text",
             required: false,
+          },
+          {
+            label: "Podziel się inspiracjami (max. 5 plików).",
+            type: "long_text",
+            required: false,
+            config: { allowAttachments: true, maxAttachments: 5 },
           },
         ],
       },

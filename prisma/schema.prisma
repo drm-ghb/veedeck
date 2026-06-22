@@ -84,6 +84,50 @@ model User {
   taskStatuses               TaskStatusConfig[]
   owner                      User?                   @relation("TeamMembers", fields: [ownerId], references: [id])
   teamMembers                User[]                  @relation("TeamMembers")
+  memberPermission           TeamMemberPermission?   @relation("MemberPermissions")
+  ownedMemberPermissions     TeamMemberPermission[]  @relation("OwnedPermissions")
+}
+
+model TeamMemberPermission {
+  id        String   @id @default(cuid())
+  memberId  String   @unique
+  ownerId   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Widoczność modułów (lista ukrytych slugów)
+  hiddenModules String[] @default([])
+
+  // ProjectFlow
+  pfCanUpload        Boolean @default(true)
+  pfCanDelete        Boolean @default(false)
+  pfCanManageFolders Boolean @default(true)
+
+  // Listy zakupowe
+  listCanCreate Boolean @default(true)
+  listCanDelete Boolean @default(false)
+
+  // Wykonawcy
+  contrCanCreate Boolean @default(true)
+  contrCanEdit   Boolean @default(true)
+  contrCanDelete Boolean @default(false)
+
+  // Projekty & Klienci
+  projCanCreate    Boolean  @default(true)
+  projCanDelete    Boolean  @default(false)
+  allowAllClients  Boolean  @default(true)
+  allowedClientIds String[] @default([])
+
+  // Zadania
+  taskCanCreate Boolean @default(true)
+  taskCanDelete Boolean @default(false)
+
+  // Ankiety
+  surveyCanCreate Boolean @default(true)
+  surveyCanDelete Boolean @default(false)
+
+  member User @relation("MemberPermissions", fields: [memberId], references: [id], onDelete: Cascade)
+  owner  User @relation("OwnedPermissions", fields: [ownerId], references: [id], onDelete: Cascade)
 }
 
 model Invitation {
@@ -780,7 +824,10 @@ model Survey {
   userId         String
   projectId      String?
   clientId       String?
-  lastReminderAt DateTime?
+  lastReminderAt    DateTime?
+  aiSummary         String?
+  aiSummaryMarkdown String?
+  aiSummaryAt       DateTime?
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
   isTemplate     Boolean          @default(false)

@@ -2,14 +2,6 @@
 
 import { useState, useEffect } from "react";
 
-const CATEGORY_LABELS: Record<string, string> = {
-  OSWIETLENIE: "Oświetlenie",
-  AKCESORIA: "Akcesoria",
-  MEBLE: "Meble",
-  ARMATURA: "Armatura",
-  OKLADZINY_SCIENNE: "Okładziny ścienne",
-  PODLOGA: "Podłoga",
-};
 import { useProductSearch } from "./useProductSearch";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -24,6 +16,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Search, Loader2, ChevronDown, ChevronRight, SlidersHorizontal, StarFilled, StarOutline } from "@/components/ui/icons";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 
 interface Product {
   id: string;
@@ -42,6 +35,15 @@ interface Props {
 }
 
 export function SearchProductDialog({ open, onOpenChange, onSelectProduct }: Props) {
+  const t = useT();
+  const CATEGORY_LABELS: Record<string, string> = {
+    OSWIETLENIE: t.products.catLampy,
+    AKCESORIA: t.products.catAkcesoria,
+    MEBLE: t.products.catMeble,
+    ARMATURA: t.products.catArmatura,
+    OKLADZINY_SCIENNE: t.products.catOkladziny,
+    PODLOGA: t.products.catPodloga,
+  };
   const search = useProductSearch();
   const [expandedFilters, setExpandedFilters] = useState<Record<string, boolean>>({
     categories: true,
@@ -97,7 +99,7 @@ export function SearchProductDialog({ open, onOpenChange, onSelectProduct }: Pro
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="w-[90vw] max-w-6xl sm:max-w-6xl h-[85vh] p-0 flex flex-col overflow-hidden overflow-y-hidden">
         <DialogHeader className="px-6 pt-6 pb-4 border-b">
-          <DialogTitle>Zaawansowane wyszukiwanie</DialogTitle>
+          <DialogTitle>{t.products.searchTitle}</DialogTitle>
         </DialogHeader>
 
         <div className="flex flex-1 overflow-hidden min-h-0">
@@ -114,7 +116,7 @@ export function SearchProductDialog({ open, onOpenChange, onSelectProduct }: Pro
                 }`}
               >
                 {search.filters.onlyFavorites ? <StarFilled size={14} /> : <StarOutline size={14} />}
-                Tylko ulubione
+                {t.products.onlyFavorites}
               </button>
 
               {/* Categories */}
@@ -124,7 +126,7 @@ export function SearchProductDialog({ open, onOpenChange, onSelectProduct }: Pro
                   className="flex items-center justify-between w-full mb-2"
                 >
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">Kategorie</span>
+                    <span className="text-sm font-medium">{t.products.filterCategories}</span>
                     {getActiveCount("categories") > 0 && (
                       <Badge variant="secondary" className="text-xs">
                         {getActiveCount("categories")}
@@ -141,7 +143,7 @@ export function SearchProductDialog({ open, onOpenChange, onSelectProduct }: Pro
                   <div className="space-y-2 ml-4">
                     {search.availableFilters.categories.length > 5 && (
                       <Input
-                        placeholder="Szukaj kategorii..."
+                        placeholder={t.products.filterSearch}
                         value={filterSearch.categories}
                         onChange={(e) => setFilterSearch((prev) => ({ ...prev, categories: e.target.value }))}
                         className="h-7 text-xs"
@@ -182,7 +184,7 @@ export function SearchProductDialog({ open, onOpenChange, onSelectProduct }: Pro
                   className="flex items-center justify-between w-full mb-2"
                 >
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">Producenci</span>
+                    <span className="text-sm font-medium">{t.products.filterManufacturers}</span>
                     {getActiveCount("manufacturers") > 0 && (
                       <Badge variant="secondary" className="text-xs">
                         {getActiveCount("manufacturers")}
@@ -199,7 +201,7 @@ export function SearchProductDialog({ open, onOpenChange, onSelectProduct }: Pro
                   <div className="space-y-2 ml-4">
                     {search.availableFilters.manufacturers.length > 5 && (
                       <Input
-                        placeholder="Szukaj producenta..."
+                        placeholder={t.products.filterSearch}
                         value={filterSearch.manufacturers}
                         onChange={(e) => setFilterSearch((prev) => ({ ...prev, manufacturers: e.target.value }))}
                         className="h-7 text-xs"
@@ -237,7 +239,7 @@ export function SearchProductDialog({ open, onOpenChange, onSelectProduct }: Pro
                   className="flex items-center justify-between w-full mb-2"
                 >
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">Kolory</span>
+                    <span className="text-sm font-medium">{t.products.filterColors}</span>
                     {getActiveCount("colors") > 0 && (
                       <Badge variant="secondary" className="text-xs">
                         {getActiveCount("colors")}
@@ -254,7 +256,7 @@ export function SearchProductDialog({ open, onOpenChange, onSelectProduct }: Pro
                   <div className="space-y-2 ml-4">
                     {search.availableFilters.colors.length > 5 && (
                       <Input
-                        placeholder="Szukaj koloru..."
+                        placeholder={t.products.filterSearch}
                         value={filterSearch.colors}
                         onChange={(e) => setFilterSearch((prev) => ({ ...prev, colors: e.target.value }))}
                         className="h-7 text-xs"
@@ -297,14 +299,14 @@ export function SearchProductDialog({ open, onOpenChange, onSelectProduct }: Pro
                   onClick={search.resetFilters}
                   className="w-full"
                 >
-                  Wyczyść filtry
+                  {t.products.clearFilters}
                 </Button>
               )}
             </div>
             {/* Mobile: show results button */}
             <div className="md:hidden p-4 border-t">
               <Button className="w-full" onClick={() => setMobileFiltersOpen(false)}>
-                Pokaż wyniki{totalActiveFilters > 0 ? ` (${totalActiveFilters})` : ""}
+                {t.products.showResults}{totalActiveFilters > 0 ? ` (${totalActiveFilters})` : ""}
               </Button>
             </div>
           </div>
@@ -316,7 +318,7 @@ export function SearchProductDialog({ open, onOpenChange, onSelectProduct }: Pro
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
-                    placeholder="Szukaj produktu..."
+                    placeholder={t.products.searchProductPlaceholder}
                     value={search.query}
                     onChange={(e) => search.handleQueryChange(e.target.value)}
                     className="pl-10"
@@ -340,8 +342,8 @@ export function SearchProductDialog({ open, onOpenChange, onSelectProduct }: Pro
               </div>
               <div className="mt-2 text-sm text-muted-foreground">
                 {search.loading
-                  ? "Szukam..."
-                  : `Znaleziono ${search.total} produktów`}
+                  ? t.products.searching
+                  : `${t.products.foundProducts} ${search.total} ${search.total === 1 ? t.products.productCountUnit : search.total < 5 ? t.products.productCountUnitFew : t.products.productCountUnitMany}`}
               </div>
             </div>
 
@@ -361,8 +363,8 @@ export function SearchProductDialog({ open, onOpenChange, onSelectProduct }: Pro
               {!search.loading && search.products.length === 0 && !search.error && (
                 <div className="p-4 text-center text-sm text-muted-foreground">
                   {search.query || Object.values(search.filters).some((f) => f.length > 0)
-                    ? "Brak wyników"
-                    : "Wpisz zapytanie lub wybierz filtry"}
+                    ? t.render.searchNoResults
+                    : t.products.searchHint}
                 </div>
               )}
 

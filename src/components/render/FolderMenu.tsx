@@ -20,6 +20,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import MoveFolderDialog from "./MoveFolderDialog";
+import { useT } from "@/lib/i18n";
 
 interface FolderMenuProps {
   folder: { id: string; name: string; pinned?: boolean; archived?: boolean };
@@ -29,6 +30,7 @@ interface FolderMenuProps {
 
 export default function FolderMenu({ folder, projectId, currentRoomId }: FolderMenuProps) {
   const router = useRouter();
+  const t = useT();
   const [renameOpen, setRenameOpen] = useState(false);
   const [moveOpen, setMoveOpen] = useState(false);
   const [name, setName] = useState(folder.name);
@@ -41,10 +43,10 @@ export default function FolderMenu({ folder, projectId, currentRoomId }: FolderM
       body: JSON.stringify({ pinned: !folder.pinned }),
     });
     if (res.ok) {
-      toast.success(folder.pinned ? "Odpięto folder" : "Folder przypięty");
+      toast.success(folder.pinned ? t.render.folderUnpinned : t.render.folderPinned);
       router.refresh();
     } else {
-      toast.error("Błąd operacji");
+      toast.error(t.render.operationError);
     }
   }
 
@@ -58,11 +60,11 @@ export default function FolderMenu({ folder, projectId, currentRoomId }: FolderM
     });
     setLoading(false);
     if (res.ok) {
-      toast.success("Nazwa folderu zmieniona");
+      toast.success(t.render.folderRenamed);
       setRenameOpen(false);
       router.refresh();
     } else {
-      toast.error("Błąd zmiany nazwy");
+      toast.error(t.render.renameError);
     }
   }
 
@@ -73,23 +75,23 @@ export default function FolderMenu({ folder, projectId, currentRoomId }: FolderM
       body: JSON.stringify({ archived: true }),
     });
     if (res.ok) {
-      toast.success("Folder zarchiwizowany");
+      toast.success(t.render.folderArchived);
       window.dispatchEvent(new CustomEvent("renderflow:folder-removed", { detail: { id: folder.id } }));
       router.refresh();
     } else {
-      toast.error("Błąd archiwizacji folderu");
+      toast.error(t.render.folderArchiveError);
     }
   }
 
   async function handleDelete() {
-    if (!confirm(`Usunąć folder "${folder.name}"? Pliki w folderze nie zostaną usunięte.`)) return;
+    if (!confirm(`${t.render.deleteFolder} "${folder.name}"?`)) return;
     const res = await fetch(`/api/folders/${folder.id}`, { method: "DELETE" });
     if (res.ok) {
-      toast.success("Folder usunięty");
+      toast.success(t.render.folderDeleted);
       window.dispatchEvent(new CustomEvent("renderflow:folder-removed", { detail: { id: folder.id } }));
       router.refresh();
     } else {
-      toast.error("Błąd usuwania folderu");
+      toast.error(t.render.deleteFolderError);
     }
   }
 
@@ -105,31 +107,31 @@ export default function FolderMenu({ folder, projectId, currentRoomId }: FolderM
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={handlePin}>
             {folder.pinned ? <PinOff size={14} /> : <Pin size={14} />}
-            {folder.pinned ? "Odepnij" : "Przypnij"}
+            {folder.pinned ? t.common.unpin : t.common.pin}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => { window.location.href = `/api/folders/${folder.id}/download`; }}>
             <Download size={14} />
-            Pobierz
+            {t.render.download}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => { setName(folder.name); setRenameOpen(true); }}>
             <Pencil size={14} />
-            Zmień nazwę
+            {t.render.rename}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={(e) => { e.preventDefault(); setMoveOpen(true); }}>
             <FolderInput size={14} />
-            Przenieś
+            {t.render.move}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleArchive}>
             <Archive size={14} />
-            Archiwizuj
+            {t.common.archive}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem variant="destructive" onClick={handleDelete}>
             <Trash2 size={14} />
-            Usuń folder
+            {t.render.deleteFolder}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -137,7 +139,7 @@ export default function FolderMenu({ folder, projectId, currentRoomId }: FolderM
       <Dialog open={renameOpen} onOpenChange={(v) => { if (!loading) setRenameOpen(v); }}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Zmień nazwę folderu</DialogTitle>
+            <DialogTitle>{t.render.renameFolder}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 pt-1">
             <Input
@@ -148,7 +150,7 @@ export default function FolderMenu({ folder, projectId, currentRoomId }: FolderM
               onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleRename(); } }}
             />
             <Button onClick={handleRename} disabled={loading || !name.trim()} className="w-full">
-              {loading ? "Zapisywanie..." : "Zapisz"}
+              {loading ? t.common.saving : t.common.save}
             </Button>
           </div>
         </DialogContent>

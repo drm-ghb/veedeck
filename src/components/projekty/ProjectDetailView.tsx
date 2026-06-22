@@ -100,13 +100,13 @@ const MODULES_CONFIG = [
   {
     slug: "renderflow",
     labelKey: "moduleRenderflow" as const,
-    description: "Wizualizacje projektu",
+    descriptionKey: "moduleDescRenderflow" as const,
     icon: "renderflow" as const,
   },
   {
     slug: "listy",
     labelKey: "moduleLists" as const,
-    description: "Listy produktów dla klienta",
+    descriptionKey: "moduleDescLists" as const,
     icon: "cart" as const,
   },
 ];
@@ -252,7 +252,7 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
   async function sendClientInvite() {
     if (!inviteEmail.trim()) return;
     if (!inviteEmail.includes("@")) {
-      toast.error("Podaj poprawny adres e-mail (brak znaku @)");
+      toast.error(t.projekty.emailInvalid);
       return;
     }
     setSendingInvite(true);
@@ -264,10 +264,10 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
     const data = await res.json().catch(() => ({}));
     setSendingInvite(false);
     if (!res.ok) {
-      toast.error((data as { error?: string }).error || "Nie udało się wysłać zaproszenia");
+      toast.error((data as { error?: string }).error || t.projekty.inviteSendError);
       return;
     }
-    toast.success("Zaproszenie zostało wysłane");
+    toast.success(t.projekty.inviteSent);
     setShowInviteDialog(false);
     setInviteEmail("");
   }
@@ -344,7 +344,7 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
   async function addClient() {
     if (!newClientName.trim() || !newClientPassword.trim()) return;
     if (newClientEmail.trim() && !newClientEmail.includes("@")) {
-      toast.error("Podaj poprawny adres e-mail (brak znaku @)");
+      toast.error(t.projekty.emailInvalid);
       return;
     }
     setAddingClient(true);
@@ -399,7 +399,7 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
 
   async function saveClientEdit(clientId: string) {
     if (editEmail.trim() && !editEmail.includes("@")) {
-      toast.error("Podaj poprawny adres e-mail (brak znaku @)");
+      toast.error(t.projekty.emailInvalid);
       return;
     }
     setSavingEdit(true);
@@ -466,7 +466,7 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
     if (!password?.trim() || password.trim().length < 4) return;
     const accEmail = createAccountEmail[clientId]?.trim();
     if (accEmail && !accEmail.includes("@")) {
-      toast.error("Podaj poprawny adres e-mail (brak znaku @)");
+      toast.error(t.projekty.emailInvalid);
       return;
     }
     setCreatingAccount((prev) => ({ ...prev, [clientId]: true }));
@@ -480,7 +480,7 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
         }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error((data as { error?: string }).error || "Błąd tworzenia konta");
+      if (!res.ok) throw new Error((data as { error?: string }).error || t.projekty.accountCreateError);
       setClients((prev) =>
         prev.map((c) => c.id === clientId ? { ...c, userId: data.userId, user: data.user } : c)
       );
@@ -493,9 +493,9 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
       }
       setCreateAccountOpen((prev) => ({ ...prev, [clientId]: false }));
       setCreateAccountPassword((prev) => ({ ...prev, [clientId]: "" }));
-      toast.success("Konto klienta zostało utworzone");
+      toast.success(t.projekty.accountCreated);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Błąd tworzenia konta");
+      toast.error(err instanceof Error ? err.message : t.projekty.accountCreateError);
     } finally {
       setCreatingAccount((prev) => ({ ...prev, [clientId]: false }));
     }
@@ -591,7 +591,7 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
           <h1 className="text-2xl font-bold">{project.clientName ?? project.title}</h1>
           <Button variant="outline" size="sm" onClick={copyPanelLink} className="gap-2 flex-shrink-0">
             {copiedPanel ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
-            {copiedPanel ? "Skopiowano!" : "Kopiuj link do panelu"}
+            {copiedPanel ? t.projekty.copiedPanel : t.projekty.copyPanelLink}
           </Button>
         </div>
       </div>
@@ -603,16 +603,16 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
           <div className="flex-1">
             {clients.filter((c) => !c.userId).length === 1 ? (
               <>
-                Klient <strong>{clients.find((c) => !c.userId)?.name}</strong> nie ma jeszcze konta —{" "}
+                {t.projekty.bannerNoAccountSingle.replace("{name}", clients.find((c) => !c.userId)?.name ?? "")}{" "}
                 <button onClick={() => setActiveTab("contacts")} className="underline hover:no-underline">
-                  nadaj hasło w zakładce Kontakty
+                  {t.projekty.bannerContactsTabLink}
                 </button>
               </>
             ) : (
               <>
-                <strong>{clients.filter((c) => !c.userId).length}</strong> klientów nie ma kont —{" "}
+                {t.projekty.bannerNoAccountMultiple.replace("{count}", String(clients.filter((c) => !c.userId).length))}{" "}
                 <button onClick={() => setActiveTab("contacts")} className="underline hover:no-underline">
-                  nadaj hasła w zakładce Kontakty
+                  {t.projekty.bannerContactsTabLinkMultiple}
                 </button>
               </>
             )}
@@ -638,11 +638,11 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
                 : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
-            {tab === "info" && "Informacje ogólne"}
-            {tab === "contacts" && "Kontakty"}
-            {tab === "payments" && "Płatności"}
-            {tab === "schedule" && "Harmonogram"}
-            {tab === "documents" && "Dokumenty"}
+            {tab === "info" && t.projekty.tabInfo}
+            {tab === "contacts" && t.projekty.clients}
+            {tab === "payments" && t.projekty.tabPayments}
+            {tab === "schedule" && t.projekty.tabSchedule}
+            {tab === "documents" && t.projekty.tabDocuments}
           </button>
         ))}
       </div>
@@ -658,11 +658,11 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
                 size="sm"
                 variant="outline"
                 className="gap-1.5"
-                title="Wyślij zaproszenie"
+                title={t.projekty.sendInvite}
                 onClick={() => setShowInviteDialog(true)}
               >
                 <Mail size={13} />
-                <span className="hidden sm:inline">Wyślij zaproszenie</span>
+                <span className="hidden sm:inline">{t.projekty.sendInvite}</span>
               </Button>
               <Button
                 size="sm"
@@ -697,7 +697,7 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
                 </div>
                 <div className="space-y-1.5">
                   <Label>
-                    Hasło
+                    {t.projekty.passwordClientLabel}
                     <span className="text-destructive ml-0.5">*</span>
                   </Label>
                   <div className="relative">
@@ -705,7 +705,7 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
                       type={showNewPassword ? "text" : "password"}
                       value={newClientPassword}
                       onChange={(e) => setNewClientPassword(e.target.value)}
-                      placeholder="Hasło dla klienta"
+                      placeholder={t.projekty.passwordClientPlaceholder}
                       className="pr-9"
                     />
                     <button
@@ -729,7 +729,7 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label>Telefon (opcjonalnie)</Label>
+                  <Label>{t.projekty.phoneOptLabel}</Label>
                   <Input
                     type="tel"
                     value={newClientPhone}
@@ -769,7 +769,7 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
                     onClick={addClient}
                     disabled={addingClient || !newClientName.trim() || !newClientPassword.trim()}
                   >
-                    {addingClient ? "Dodawanie..." : t.common.add}
+                    {addingClient ? t.projekty.adding : t.common.add}
                   </Button>
                 </div>
               </div>
@@ -802,7 +802,7 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
                       )}
                       {!client.userId && (
                         <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 flex-shrink-0">
-                          Brak konta
+                          {t.projekty.noAccount}
                         </span>
                       )}
                     </div>
@@ -825,7 +825,7 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
                         <button
                           onClick={() => setCreateAccountOpen((prev) => ({ ...prev, [client.id]: !prev[client.id] }))}
                           className={`transition-colors p-1 rounded ${createAccountOpen[client.id] ? "text-amber-600" : "text-muted-foreground hover:text-foreground"}`}
-                          title="Nadaj hasło — utwórz konto"
+                          title={t.projekty.grantPassword}
                         >
                           <KeyRound size={14} />
                         </button>
@@ -834,7 +834,7 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
                         <button
                           onClick={() => setCredentialsOpen((prev) => ({ ...prev, [client.id]: !prev[client.id] }))}
                           className={`transition-colors p-1 rounded ${credentialsOpen[client.id] ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}
-                          title="Dane logowania"
+                          title={t.projekty.loginData}
                         >
                           <KeyRound size={14} />
                         </button>
@@ -842,14 +842,14 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
                       <button
                         onClick={() => editingClientId === client.id ? cancelEditing() : startEditing(client)}
                         className="text-muted-foreground hover:text-foreground transition-colors p-1"
-                        title="Edytuj dane kontaktowe"
+                        title={t.projekty.editContact}
                       >
                         <Pencil size={14} />
                       </button>
                       <button
                         onClick={() => removeClient(client.id)}
                         className="text-muted-foreground hover:text-destructive transition-colors p-1"
-                        title="Usuń klienta"
+                        title={t.projekty.deleteClient}
                       >
                         <X size={15} />
                       </button>
@@ -861,7 +861,7 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
                         <Input
                           value={clientCreds[client.id].login}
                           onChange={(e) => setClientCreds((prev) => ({ ...prev, [client.id]: { ...prev[client.id], login: e.target.value } }))}
-                          placeholder="Login"
+                          placeholder={t.projekty.loginPlaceholder}
                           className="h-7 text-xs font-mono w-32 px-2"
                         />
                         <div className="relative w-36">
@@ -869,7 +869,7 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
                             type={clientCreds[client.id].showPassword ? "text" : "password"}
                             value={clientCreds[client.id].password}
                             onChange={(e) => setClientCreds((prev) => ({ ...prev, [client.id]: { ...prev[client.id], password: e.target.value } }))}
-                            placeholder="Nowe hasło"
+                            placeholder={t.projekty.newPasswordPlaceholder}
                             className="h-7 text-xs pr-7 w-full px-2"
                           />
                           <button
@@ -895,14 +895,14 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
                           type="email"
                           value={editEmail}
                           onChange={(e) => setEditEmail(e.target.value)}
-                          placeholder="Email kontaktowy"
+                          placeholder={t.projekty.contactEmailPlaceholder}
                           className="h-8 text-sm"
                         />
                         <Input
                           type="tel"
                           value={editPhone}
                           onChange={(e) => setEditPhone(e.target.value)}
-                          placeholder="Telefon"
+                          placeholder={t.projekty.phonePlaceholder}
                           className="h-8 text-sm"
                         />
                       </div>
@@ -922,12 +922,12 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
                         type="email"
                         value={createAccountEmail[client.id] ?? ""}
                         onChange={(e) => setCreateAccountEmail((prev) => ({ ...prev, [client.id]: e.target.value }))}
-                        placeholder="E-mail klienta (login do panelu)"
+                        placeholder={t.projekty.emailLoginPlaceholder}
                         className="h-7 text-xs px-2"
                       />
                       {createAccountEmail[client.id]?.trim()
                         ? <p className="text-xs text-muted-foreground">Login: <span className="font-mono font-medium text-foreground">{createAccountEmail[client.id].trim().toLowerCase()}</span></p>
-                        : <p className="text-xs text-muted-foreground">Login: <span className="font-mono font-medium text-foreground">{generateClientLogin(client.name)}</span> <span className="text-muted-foreground/60">(podaj e-mail, aby użyć go jako loginu)</span></p>
+                        : <p className="text-xs text-muted-foreground">Login: <span className="font-mono font-medium text-foreground">{generateClientLogin(client.name)}</span> <span className="text-muted-foreground/60">{t.projekty.loginHintEmail}</span></p>
                       }
                       <div className="flex items-center gap-2">
                         <div className="relative w-48">
@@ -937,7 +937,7 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
                             onChange={(e) =>
                               setCreateAccountPassword((prev) => ({ ...prev, [client.id]: e.target.value }))
                             }
-                            placeholder="Ustaw hasło"
+                            placeholder={t.projekty.setPasswordPlaceholder}
                             className="h-7 text-xs pr-7 px-2"
                             onKeyDown={(e) => e.key === "Enter" && createClientAccount(client.id)}
                           />
@@ -961,7 +961,7 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
                           }
                           onClick={() => createClientAccount(client.id)}
                         >
-                          {creatingAccount[client.id] ? "Tworzenie..." : "Utwórz konto"}
+                          {creatingAccount[client.id] ? t.projekty.creatingAccount : t.projekty.createAccount}
                         </Button>
                       </div>
                     </div>
@@ -1008,21 +1008,21 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
             {project.clientEntityId ? (
               <>
                 <div className="space-y-1.5">
-                  <Label htmlFor="client-name">Nazwa klienta</Label>
+                  <Label htmlFor="client-name">{t.projekty.clientNameInputLabel}</Label>
                   <Input
                     id="client-name"
                     value={clientEntityName}
                     onChange={(e) => setClientEntityName(e.target.value)}
-                    placeholder="Nazwa klienta"
+                    placeholder={t.projekty.clientNameInputLabel}
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="proj-title">Nazwa projektu</Label>
+                  <Label htmlFor="proj-title">{t.projekty.projectNameLabel}</Label>
                   <Input
                     id="proj-title"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    placeholder="Nazwa projektu"
+                    placeholder={t.projekty.projectNameLabel}
                   />
                 </div>
               </>
@@ -1033,7 +1033,7 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
                   id="proj-title"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Nazwa projektu"
+                  placeholder={t.projekty.projectNameLabel}
                 />
               </div>
             )}
@@ -1049,11 +1049,11 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label htmlFor="proj-start">Data rozpoczęcia współpracy</Label>
+                <Label htmlFor="proj-start">{t.projekty.startDateLabel}</Label>
                 <DatePicker value={projectStartDate} onChange={setProjectStartDate} />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="proj-end">Data zakończenia współpracy</Label>
+                <Label htmlFor="proj-end">{t.projekty.endDateLabel}</Label>
                 <DatePicker value={projectEndDate} onChange={setProjectEndDate} />
               </div>
             </div>
@@ -1131,7 +1131,7 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
         {clientProjects.length > 0 && (
           <section className="bg-card border border-border rounded-xl p-5">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground mb-3">
-              Inne projekty klienta
+              {t.projekty.clientProjectsHeader}
             </h2>
             <div className="space-y-1">
               {clientProjects.map((p) => (
@@ -1156,6 +1156,7 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {MODULES_CONFIG.map((mod) => {
               const label = t.projekty[mod.labelKey];
+              const description = t.projekty[mod.descriptionKey];
               const active = hasResources(mod.slug);
               const hidden = hiddenModules.includes(mod.slug);
               return (
@@ -1198,7 +1199,7 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
                           {active ? t.projekty.moduleActive : t.projekty.moduleNoResources}
                         </span>
                       </div>
-                      <p className="text-xs text-muted-foreground">{mod.description}</p>
+                      <p className="text-xs text-muted-foreground">{description}</p>
                     </div>
                   </div>
 
@@ -1253,14 +1254,14 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
       <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Wyślij zaproszenie</DialogTitle>
+            <DialogTitle>{t.projekty.sendInvite}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <p className="text-sm text-muted-foreground">
-              Klient otrzyma e-mail z linkiem do założenia konta.
+              {t.projekty.inviteDesc}
             </p>
             <div className="space-y-1.5">
-              <Label htmlFor="invite-email">Adres e-mail</Label>
+              <Label htmlFor="invite-email">{t.projekty.inviteEmailLabel}</Label>
               <Input
                 id="invite-email"
                 type="email"
@@ -1271,19 +1272,19 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
                 autoFocus
               />
               {checkingEmail && (
-                <p className="text-xs text-muted-foreground">Sprawdzanie...</p>
+                <p className="text-xs text-muted-foreground">{t.projekty.checkingEmail}</p>
               )}
               {!checkingEmail && inviteEmailExists && (
-                <p className="text-xs text-destructive">Konto z tym adresem e-mail już istnieje.</p>
+                <p className="text-xs text-destructive">{t.projekty.emailAlreadyExists}</p>
               )}
             </div>
           </div>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => { setShowInviteDialog(false); setInviteEmail(""); setInviteEmailExists(false); setCheckingEmail(false); }}>
-              Anuluj
+              {t.common.cancel}
             </Button>
             <Button onClick={sendClientInvite} disabled={sendingInvite || !inviteEmail.trim() || inviteEmailExists || checkingEmail}>
-              {sendingInvite ? "Wysyłanie..." : "Wyślij"}
+              {sendingInvite ? t.projekty.sending : t.projekty.send}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1333,13 +1334,14 @@ function SortableClientItem({ id, children }: { id: string; children: React.Reac
 }
 
 function SortableClientItemHandle({ id }: { id: string }) {
+  const t = useT();
   const { attributes, listeners } = useSortable({ id });
   return (
     <div
       {...attributes}
       {...listeners}
       className="text-muted-foreground hover:text-foreground cursor-grab active:cursor-grabbing flex-shrink-0"
-      title="Przeciągnij, aby zmienić kolejność"
+      title={t.projekty.dragToReorder}
     >
       <GripVertical size={14} />
     </div>

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import AddClientDialog from "@/components/projekty/AddClientDialog";
 import EditClientDialog from "@/components/projekty/EditClientDialog";
+import { useT } from "@/lib/i18n";
 
 interface ClientProject {
   id: string;
@@ -34,13 +35,6 @@ interface Props {
 type Tab = "active" | "archived";
 type SortBy = "name" | "newest" | "oldest" | "projects";
 
-const SORT_LABELS: Record<SortBy, string> = {
-  name: "Nazwa (A-Z)",
-  newest: "Najnowsi",
-  oldest: "Najstarsi",
-  projects: "Najwięcej projektów",
-};
-
 function sortClients(list: Client[], sortBy: SortBy): Client[] {
   const arr = [...list];
   if (sortBy === "name") arr.sort((a, b) => a.name.localeCompare(b.name, "pl"));
@@ -52,6 +46,13 @@ function sortClients(list: Client[], sortBy: SortBy): Client[] {
 
 export default function ClientsView({ clients, archivedClients }: Props) {
   const router = useRouter();
+  const t = useT();
+  const SORT_LABELS: Record<SortBy, string> = {
+    name: t.projekty.sortName,
+    newest: t.projekty.sortNewest,
+    oldest: t.projekty.sortOldest,
+    projects: t.projekty.sortMostProjects,
+  };
   const [tab, setTab] = useState<Tab>("active");
   const [search, setSearch] = useState("");
   const [addOpen, setAddOpen] = useState(false);
@@ -84,22 +85,22 @@ export default function ClientsView({ clients, archivedClients }: Props) {
       body: JSON.stringify({ archived: !client.archived }),
     });
     if (res.ok) {
-      toast.success(client.archived ? "Klient przywrócony" : "Klient zarchiwizowany");
+      toast.success(client.archived ? t.projekty.clientRestored : t.projekty.clientArchived);
       router.refresh();
     } else {
-      toast.error("Błąd");
+      toast.error(t.common.error);
     }
     setMenuOpen(null);
   }
 
   async function handleDelete(client: Client) {
-    if (!confirm(`Usuń klienta "${client.name}"? Projekty zostaną odpięte.`)) return;
+    if (!confirm(`${t.projekty.confirmDeleteProject.replace("{title}", client.name)}`)) return;
     const res = await fetch(`/api/clients/${client.id}`, { method: "DELETE" });
     if (res.ok) {
-      toast.success("Klient usunięty");
+      toast.success(t.projekty.clientDeleted);
       router.refresh();
     } else {
-      toast.error("Błąd");
+      toast.error(t.common.error);
     }
     setMenuOpen(null);
   }
@@ -111,14 +112,16 @@ export default function ClientsView({ clients, archivedClients }: Props) {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-4">
         <div>
-          <h1 className="text-2xl font-bold">Klienci</h1>
+          <h1 className="text-2xl font-bold">{t.projekty.title}</h1>
           <p className="text-muted-foreground mt-1">
-            {clients.length === 0 ? "Brak klientów" : `${clients.length} aktywn${clients.length === 1 ? "y" : "ych"}`}
+            {clients.length === 0
+              ? t.projekty.noClientsEmpty
+              : `${clients.length} ${clients.length === 1 ? t.projekty.clientActiveSg : t.projekty.clientActivePl}`}
           </p>
         </div>
         <Button onClick={() => setAddOpen(true)} className="flex items-center gap-2 sm:self-start">
           <Plus size={16} />
-          Nowy klient
+          {t.projekty.addClient}
         </Button>
       </div>
 
@@ -131,7 +134,7 @@ export default function ClientsView({ clients, archivedClients }: Props) {
               tab === "active" ? "border-foreground text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
-            Aktywni
+            {t.projekty.activeTab}
             {clients.length > 0 && (
               <span className={`ml-1.5 text-xs px-1.5 py-0.5 rounded-full ${tab === "active" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
                 {clients.length}
@@ -144,7 +147,7 @@ export default function ClientsView({ clients, archivedClients }: Props) {
               tab === "archived" ? "border-foreground text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
-            Archiwum
+            {t.projekty.archivedTab}
             {archivedClients.length > 0 && (
               <span className={`ml-1.5 text-xs px-1.5 py-0.5 rounded-full ${tab === "archived" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
                 {archivedClients.length}
@@ -163,7 +166,7 @@ export default function ClientsView({ clients, archivedClients }: Props) {
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Szukaj klienta…"
+              placeholder={t.projekty.searchClientPlaceholderV2}
               className="w-full pl-9 pr-4 py-2 border border-border rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-transparent"
             />
           </div>
@@ -202,22 +205,22 @@ export default function ClientsView({ clients, archivedClients }: Props) {
           <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
             <Users size={28} className="text-primary" />
           </div>
-          <h2 className="text-lg font-semibold text-foreground mb-1">Brak klientów</h2>
-          <p className="text-sm text-muted-foreground max-w-xs">Dodaj pierwszego klienta, aby zarządzać projektami i kontaktami.</p>
+          <h2 className="text-lg font-semibold text-foreground mb-1">{t.projekty.noClientsEmpty}</h2>
+          <p className="text-sm text-muted-foreground max-w-xs">{t.projekty.noClientsEmptyDesc}</p>
         </div>
       )}
 
       {/* Empty state — tab empty */}
       {allClients.length > 0 && list.length === 0 && (
         <div className="text-center py-16 text-muted-foreground">
-          <p className="text-sm">{tab === "archived" ? "Brak archiwalnych klientów" : "Brak aktywnych klientów"}</p>
+          <p className="text-sm">{tab === "archived" ? t.projekty.noArchivedClients : t.projekty.noActiveClients}</p>
         </div>
       )}
 
       {/* No search results */}
       {list.length > 0 && filtered.length === 0 && search && (
         <div className="text-center py-16 text-muted-foreground">
-          <p className="text-sm">Brak wyników dla &quot;{search}&quot;</p>
+          <p className="text-sm">{t.projekty.noClientsSearch} &quot;{search}&quot;</p>
         </div>
       )}
 
@@ -230,15 +233,15 @@ export default function ClientsView({ clients, archivedClients }: Props) {
                 <div className="flex items-center gap-2">
                   <p className="font-semibold text-foreground truncate">{client.name}</p>
                   {client.hasContactsWithoutAccount && (
-                    <span title="Kontakty bez skonfigurowanego konta" className="flex-shrink-0 text-amber-500">
+                    <span title={t.projekty.contactsWithoutAccount} className="flex-shrink-0 text-amber-500">
                       <AlertTriangle size={14} />
                     </span>
                   )}
                 </div>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {client._count.projects === 0
-                    ? "Brak projektów"
-                    : `${client._count.projects} ${client._count.projects === 1 ? "projekt" : client._count.projects < 5 ? "projekty" : "projektów"}`}
+                    ? t.projekty.clientNoProjects
+                    : `${client._count.projects} ${client._count.projects === 1 ? t.projekty.clientProjectSg : client._count.projects < 5 ? t.projekty.clientProjectFw : t.projekty.clientProjectPl}`}
                 </p>
               </Link>
 
@@ -259,20 +262,20 @@ export default function ClientsView({ clients, archivedClients }: Props) {
                         onClick={() => { setEditClient(client); setMenuOpen(null); }}
                         className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-muted transition-colors"
                       >
-                        <Pencil size={14} /> Edytuj
+                        <Pencil size={14} /> {t.projekty.editClientLabel}
                       </button>
                       <button
                         onClick={() => handleArchive(client)}
                         className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-muted transition-colors"
                       >
                         {client.archived ? <ArchiveRestore size={14} /> : <Archive size={14} />}
-                        {client.archived ? "Przywróć" : "Archiwizuj"}
+                        {client.archived ? t.projekty.restoreClientLabel : t.projekty.archiveClientLabel}
                       </button>
                       <button
                         onClick={() => handleDelete(client)}
                         className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-muted text-destructive transition-colors"
                       >
-                        <Trash2 size={14} /> Usuń
+                        <Trash2 size={14} /> {t.projekty.deleteClientLabel}
                       </button>
                     </div>
                   </>

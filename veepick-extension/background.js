@@ -1,8 +1,4 @@
 chrome.runtime.onInstalled.addListener(() => {
-  chrome.storage.local.get(["offlineQueue"], (data) => {
-    if (!data.offlineQueue) chrome.storage.local.set({ offlineQueue: [] });
-  });
-
   chrome.contextMenus.removeAll(() => {
     chrome.contextMenus.create({
       id: "veepick-pick-image",

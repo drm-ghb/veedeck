@@ -2,11 +2,12 @@
 
 import { useState, useRef, useEffect } from "react";
 import { ChevronLeft, ChevronRight, X } from "@/components/ui/icons";
+import { useT } from "@/lib/i18n";
 
 interface DatePickerProps {
   value: string; // "YYYY-MM-DD" or ""
   onChange: (value: string) => void;
-  placeholder?: string;
+  placeholder?: string | undefined;
   className?: string;
   /** Red border / text when date is overdue */
   error?: boolean;
@@ -18,22 +19,19 @@ interface DatePickerProps {
   compact?: boolean;
 }
 
-const MONTHS_PL = [
-  "Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec",
-  "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień",
-];
-const DAYS_PL = ["Pn", "Wt", "Śr", "Cz", "Pt", "Sb", "Nd"];
-
 export default function DatePicker({
   value,
   onChange,
-  placeholder = "Wybierz datę",
+  placeholder,
   className = "",
   error = false,
   initialOpen = false,
   onClose,
   compact = false,
 }: DatePickerProps) {
+  const t = useT();
+  const MONTHS = [t.calendar.month0, t.calendar.month1, t.calendar.month2, t.calendar.month3, t.calendar.month4, t.calendar.month5, t.calendar.month6, t.calendar.month7, t.calendar.month8, t.calendar.month9, t.calendar.month10, t.calendar.month11];
+  const DAYS = [t.calendar.dpDayMon, t.calendar.dpDayTue, t.calendar.dpDayWed, t.calendar.dpDayThu, t.calendar.dpDayFri, t.calendar.dpDaySat, t.calendar.dpDaySun];
   const [open, setOpen] = useState(initialOpen);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -119,7 +117,7 @@ export default function DatePicker({
     <div ref={containerRef} className={`relative ${className}`}>
       <button ref={triggerRef} type="button" onClick={handleToggle} className={triggerCls}>
         <span className={displayValue ? "" : "text-muted-foreground"}>
-          {displayValue || placeholder}
+          {displayValue || placeholder || t.common.selectDate}
         </span>
         {value && !compact && (
           <span
@@ -149,7 +147,7 @@ export default function DatePicker({
             >
               <ChevronLeft size={15} />
             </button>
-            <span className="text-sm font-semibold">{MONTHS_PL[month]} {year}</span>
+            <span className="text-sm font-semibold">{MONTHS[month]} {year}</span>
             <button
               type="button"
               onClick={() => setDisplayMonth(new Date(year, month + 1, 1))}
@@ -162,7 +160,7 @@ export default function DatePicker({
           <div className="px-2 pt-2 pb-3">
             {/* Day-of-week headers */}
             <div className="grid grid-cols-7 mb-1">
-              {DAYS_PL.map((d) => (
+              {DAYS.map((d) => (
                 <div key={d} className="text-center text-[10px] font-medium text-muted-foreground py-1">
                   {d}
                 </div>
@@ -208,7 +206,7 @@ export default function DatePicker({
                 onClick={() => { onChange(""); setOpen(false); }}
                 className="mt-2 w-full text-xs text-muted-foreground hover:text-foreground text-center py-1 rounded-lg hover:bg-muted transition-colors"
               >
-                Wyczyść datę
+                {t.common.clearDate}
               </button>
             )}
           </div>

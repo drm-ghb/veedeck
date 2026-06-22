@@ -10,6 +10,7 @@ import Image from "@tiptap/extension-image";
 import { useEffect, useRef, useState, lazy, Suspense } from "react";
 import { toast } from "sonner";
 import { useUploadThing } from "@/lib/uploadthing-client";
+import { useT } from "@/lib/i18n";
 import {
   Bold,
   Italic,
@@ -88,6 +89,7 @@ export function NoteEditor({
   noteId,
   onAttachmentAdded,
 }: NoteEditorProps) {
+  const t = useT();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pendingFileRef = useRef<{ isImage: boolean; name: string } | null>(null);
   const [drawingOpen, setDrawingOpen] = useState(false);
@@ -108,13 +110,13 @@ export function NoteEditor({
           body: JSON.stringify({ name, url: f.url, key: f.key }),
         }).then((r) => {
           if (r.ok) onAttachmentAdded?.();
-          else toast.error("Błąd zapisywania załącznika");
+          else toast.error(t.notatnik.attachmentSaveError);
         });
       }
     },
     onUploadError: () => {
       pendingFileRef.current = null;
-      toast.error("Błąd przesyłania pliku");
+      toast.error(t.notatnik.fileUploadError);
     },
   });
 
@@ -174,28 +176,28 @@ export function NoteEditor({
         <ToolBtn
           active={editor.isActive("bold")}
           onClick={() => editor.chain().focus().toggleBold().run()}
-          title="Pogrubienie (Ctrl+B)"
+          title={t.notatnik.toolBold}
         >
           <Bold size={15} />
         </ToolBtn>
         <ToolBtn
           active={editor.isActive("italic")}
           onClick={() => editor.chain().focus().toggleItalic().run()}
-          title="Kursywa (Ctrl+I)"
+          title={t.notatnik.toolItalic}
         >
           <Italic size={15} />
         </ToolBtn>
         <ToolBtn
           active={editor.isActive("underline")}
           onClick={() => editor.chain().focus().toggleUnderline().run()}
-          title="Podkreślenie (Ctrl+U)"
+          title={t.notatnik.toolUnderline}
         >
           <UnderlineIcon size={15} />
         </ToolBtn>
         <ToolBtn
           active={editor.isActive("strike")}
           onClick={() => editor.chain().focus().toggleStrike().run()}
-          title="Przekreślenie"
+          title={t.notatnik.toolStrike}
         >
           <Strikethrough size={15} />
         </ToolBtn>
@@ -205,21 +207,21 @@ export function NoteEditor({
         <ToolBtn
           active={editor.isActive("bulletList")}
           onClick={() => editor.chain().focus().toggleBulletList().run()}
-          title="Lista punktowana"
+          title={t.notatnik.toolBulletList}
         >
           <List size={15} />
         </ToolBtn>
         <ToolBtn
           active={editor.isActive("orderedList")}
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
-          title="Lista numerowana"
+          title={t.notatnik.toolOrderedList}
         >
           <ListOrdered size={15} />
         </ToolBtn>
         <ToolBtn
           active={editor.isActive("taskList")}
           onClick={() => editor.chain().focus().toggleTaskList().run()}
-          title="Checklista"
+          title={t.notatnik.toolChecklist}
         >
           <ListChecks size={15} />
         </ToolBtn>
@@ -229,7 +231,7 @@ export function NoteEditor({
         {/* Drawing */}
         <button
           type="button"
-          title={noteId ? "Dodaj rysunek (rysik / mysz)" : "Zapisz notatkę, aby dodać rysunek"}
+          title={noteId ? t.notatnik.toolDraw : t.notatnik.toolDrawDisabled}
           disabled={!canAttach}
           onClick={() => setDrawingOpen(true)}
           className="p-1.5 rounded transition-colors text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed"
@@ -240,7 +242,7 @@ export function NoteEditor({
         {/* File attachment */}
         <button
           type="button"
-          title={noteId ? "Załącz plik" : "Zapisz notatkę, aby załączyć plik"}
+          title={noteId ? t.notatnik.toolAttach : t.notatnik.toolAttachDisabled}
           disabled={!canAttach}
           onClick={() => fileInputRef.current?.click()}
           className="p-1.5 rounded transition-colors text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed"

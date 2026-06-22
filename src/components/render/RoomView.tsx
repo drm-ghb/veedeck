@@ -29,6 +29,7 @@ import FolderCard from "./FolderCard";
 import PdfThumbnail from "./PdfThumbnail";
 import BulkActionBar from "./BulkActionBar";
 import BulkMoveDialog from "./BulkMoveDialog";
+import { useT } from "@/lib/i18n";
 
 type RenderStatus = "REVIEW" | "ACCEPTED";
 type SortBy = "manual" | "name" | "createdAt";
@@ -95,6 +96,7 @@ const GRID_COLS_CLASS: Record<number, string> = {
 };
 
 export default function RoomView({ projectId, roomId, renders, archivedRenders, folders, archivedFolders }: RoomViewProps) {
+  const t = useT();
   const [tab, setTab] = useState<"active" | "archived">("active");
   const [viewMode, setViewMode] = useViewPreference("renderflow-room", "grid");
   const [gridCols, setGridCols] = useGridCols("renderflow-room");
@@ -257,10 +259,10 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
         setLocalRenders((prev) => [...prev, ...created]);
         addHighlight(created.map((r) => r.id));
       }
-      toast.success(`Dodano ${results.length} plik${results.length === 1 ? "" : results.length < 5 ? "i" : "ów"}`);
+      toast.success(`${t.render.filesAddedPrefix} ${results.length} ${results.length === 1 ? t.render.fileSingular : results.length < 5 ? t.render.fileFew : t.render.fileMany}`);
       router.refresh();
     } catch {
-      toast.error("Nie udało się przesłać plików");
+      toast.error(t.render.filesUploadError);
     } finally {
       setIsUploading(false);
     }
@@ -287,10 +289,10 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
           created.push({ id: render.id, name: render.name, fileUrl: render.fileUrl, fileType: render.fileType ?? null, commentCount: 0, viewCount: 0, status: (render.status ?? "REVIEW") as "REVIEW" | "ACCEPTED", folderId: render.folderId ?? null, pinned: false, createdAt: new Date().toISOString() });
         }
       }
-      toast.success(`Dodano ${results.length} plik${results.length === 1 ? "" : results.length < 5 ? "i" : "ów"} do folderu`);
+      toast.success(`${t.render.filesAddedPrefix} ${results.length} ${results.length === 1 ? t.render.fileSingular : results.length < 5 ? t.render.fileFew : t.render.fileMany} ${t.render.addedToFolder}`);
       router.refresh();
     } catch {
-      toast.error("Nie udało się przesłać plików");
+      toast.error(t.render.filesUploadError);
     } finally {
       setIsUploading(false);
     }
@@ -326,7 +328,7 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
   }
 
   async function handleBulkAction(action: "archive" | "delete") {
-    if (action === "delete" && !confirm(`Usunąć ${selectedIds.size} ${selectedIds.size === 1 ? "plik" : "pliki/plików"}?`)) return;
+    if (action === "delete" && !confirm(t.render.confirmDeleteSelectedFiles)) return;
     const ids = Array.from(selectedIds);
     setBulkLoading(true);
     setLocalRenders((prev) => prev.filter((r) => !ids.includes(r.id)));
@@ -338,10 +340,10 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
         body: JSON.stringify({ ids, action }),
       });
       if (!res.ok) throw new Error();
-      toast.success(action === "archive" ? "Zarchiwizowano pliki" : "Usunięto pliki");
+      toast.success(action === "archive" ? t.render.filesArchived : t.render.filesDeleted);
       router.refresh();
     } catch {
-      toast.error("Błąd operacji");
+      toast.error(t.render.operationError);
       router.refresh();
     } finally {
       setBulkLoading(false);
@@ -359,9 +361,9 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
   }
 
   const SORT_LABELS: Record<SortBy, string> = {
-    manual: "Ręcznie",
-    name: "Nazwa",
-    createdAt: "Data utworzenia",
+    manual: t.render.sortManual,
+    name: t.render.sortName,
+    createdAt: t.render.sortDate,
   };
 
   async function handleRestore(renderId: string) {
@@ -371,10 +373,10 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
       body: JSON.stringify({ archived: false }),
     });
     if (res.ok) {
-      toast.success("Render przywrócony");
+      toast.success(t.render.renderRestored);
       router.refresh();
     } else {
-      toast.error("Błąd przywracania");
+      toast.error(t.render.restoreError);
     }
   }
 
@@ -385,35 +387,35 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
       body: JSON.stringify({ archived: false }),
     });
     if (res.ok) {
-      toast.success("Folder przywrócony");
+      toast.success(t.render.folderRestored);
       router.refresh();
     } else {
-      toast.error("Błąd przywracania");
+      toast.error(t.render.restoreError);
     }
   }
 
   async function handleDeleteFolder(folderId: string, name: string) {
-    if (!confirm(`Usunąć folder "${name}"? Pliki w folderze nie zostaną usunięte.`)) return;
+    if (!confirm(t.render.confirmDeleteFolder.replace("{name}", name))) return;
     setLocalFolders((prev) => prev.filter((f) => f.id !== folderId));
     const res = await fetch(`/api/folders/${folderId}`, { method: "DELETE" });
     if (res.ok) {
-      toast.success("Folder usunięty");
+      toast.success(t.render.folderDeleted);
       router.refresh();
     } else {
-      toast.error("Błąd usuwania folderu");
+      toast.error(t.render.deleteError);
       router.refresh();
     }
   }
 
   async function handleDelete(renderId: string, name: string) {
-    if (!confirm(`Usunąć render "${name}"?`)) return;
+    if (!confirm(t.render.confirmDeleteRender.replace("{name}", name))) return;
     setLocalRenders((prev) => prev.filter((r) => r.id !== renderId));
     const res = await fetch(`/api/renders/${renderId}`, { method: "DELETE" });
     if (res.ok) {
-      toast.success("Render usunięty");
+      toast.success(t.render.renderDeleted);
       router.refresh();
     } else {
-      toast.error("Błąd usuwania");
+      toast.error(t.render.deleteError);
       router.refresh();
     }
   }
@@ -433,9 +435,9 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
               <Upload size={28} className="text-primary" />
             </div>
             <p className="text-base font-semibold text-primary">
-              {isUploading ? "Wgrywanie plików..." : "Upuść pliki, aby dodać do pomieszczenia"}
+              {isUploading ? t.render.uploadingFiles : t.render.dropFilesToRoom}
             </p>
-            <p className="text-xs text-muted-foreground">Obrazy i pliki PDF</p>
+            <p className="text-xs text-muted-foreground">{t.render.imagesAndPdfs}</p>
           </div>
         </div>
       )}
@@ -450,7 +452,7 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
                 : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
-            Pliki
+            {t.render.tabFiles}
             {localRenders.length > 0 && (
               <span className={`ml-1.5 text-xs px-1.5 py-0.5 rounded-full ${tab === "active" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
                 {localRenders.length}
@@ -465,7 +467,7 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
                 : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
-            Zarchiwizowane
+            {t.render.tabArchived}
             {(archivedRenders.length + archivedFolders.length) > 0 && (
               <span className={`ml-1.5 text-xs px-1.5 py-0.5 rounded-full ${tab === "archived" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
                 {archivedRenders.length + archivedFolders.length}
@@ -477,7 +479,7 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
           <div className="flex items-center gap-2 mb-1">
             <button
               onClick={() => { setSelectionMode((v) => !v); setSelectedIds(new Set()); }}
-              title={selectionMode ? "Wyjdź z zaznaczania" : "Zaznacz pliki"}
+              title={selectionMode ? t.render.exitSelect : t.render.selectFiles}
               className={`relative p-1.5 rounded-md transition-colors ${selectionMode ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
             >
               <CopyCheck size={15} />
@@ -491,7 +493,7 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
             <div className="relative" ref={sortRef}>
               <button
                 onClick={() => setSortOpen((v) => !v)}
-                title="Sortowanie"
+                title={t.render.sorting}
                 className={`flex items-center gap-1 px-2 py-1.5 rounded-md text-xs transition-colors ${sortBy !== "manual" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
               >
                 <ArrowUpDown size={13} />
@@ -517,7 +519,7 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
               <button
                 onClick={() => { setViewMode("grid"); setGridOpen((v) => !v); }}
                 className={`p-1.5 rounded transition-colors ${viewMode === "grid" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
-                title="Układ siatki"
+                title={t.render.gridLayout}
               >
                 <span className="inline-flex items-baseline gap-0.5">
                   <LayoutGrid size={15} />
@@ -532,7 +534,7 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
                       onClick={() => { setGridCols(n); setViewMode("grid"); setGridOpen(false); }}
                       className={`flex items-center justify-between w-full px-3 py-1.5 text-sm transition-colors hover:bg-muted ${gridCols === n && viewMode === "grid" ? "text-foreground font-medium" : "text-muted-foreground"}`}
                     >
-                      {n} kolumny
+                      {n} {t.render.columns}
                       {gridCols === n && viewMode === "grid" && <Check size={12} />}
                     </button>
                   ))}
@@ -553,8 +555,8 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
       {tab === "active" ? (
         !hasContent ? (
           <div className="text-center py-16 text-muted-foreground">
-            <p className="text-lg font-medium">Brak plików</p>
-            <p className="text-sm mt-1">Dodaj pierwszy plik lub folder klikając przyciski powyżej.</p>
+            <p className="text-lg font-medium">{t.render.noFiles}</p>
+            <p className="text-sm mt-1">{t.render.noFilesHint}</p>
           </div>
         ) : (
           <div className="space-y-8">
@@ -584,7 +586,7 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
               <div>
                 {localFolders.length > 0 && (
                   <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
-                    Pozostałe pliki
+                    {t.render.remainingFiles}
                   </p>
                 )}
                 {viewMode === "grid" ? (
@@ -622,7 +624,7 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
                             <div className="flex items-center justify-between gap-2">
                               <div className="flex items-center gap-1.5">
                                 <span className={`flex-shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${render.status === "ACCEPTED" ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"}`}>
-                                  {render.status === "ACCEPTED" ? "Zaakceptowany" : "Do weryfikacji"}
+                                  {render.status === "ACCEPTED" ? t.render.statusAccepted : t.render.statusReview}
                                 </span>
                                 {render.commentCount > 0 && (
                                   <span className="text-xs text-muted-foreground flex items-center gap-1"><Pin size={11} />{render.commentCount}</span>
@@ -679,7 +681,7 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
                             </div>
                           </div>
                           <span className={`flex-shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${render.status === "ACCEPTED" ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"}`}>
-                            {render.status === "ACCEPTED" ? "Zaakceptowany" : "Do weryfikacji"}
+                            {render.status === "ACCEPTED" ? t.render.statusAccepted : t.render.statusReview}
                           </span>
                           {!selectionMode && (
                             <div className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" onClick={(e) => e.preventDefault()}>
@@ -703,13 +705,13 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
       ) : archivedRenders.length === 0 && archivedFolders.length === 0 ? (
         <div className="text-center py-16 text-muted-foreground">
           <p className="text-4xl mb-4">📦</p>
-          <p className="text-lg">Brak zarchiwizowanych elementów</p>
+          <p className="text-lg">{t.render.noArchivedItems}</p>
         </div>
       ) : (
         <div className="space-y-8">
           {archivedFolders.length > 0 && (
             <div>
-              <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Foldery</p>
+              <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">{t.render.foldersLabel}</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4">
                 {archivedFolders.map((folder) => (
                   <Card key={folder.id} className="p-5 opacity-60">
@@ -718,12 +720,12 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
                     </div>
                     <p className="font-semibold text-foreground truncate mb-1">{folder.name}</p>
                     <p className="text-xs text-muted-foreground mb-3">
-                      {folder.renderCount} plik{folder.renderCount === 1 ? "" : folder.renderCount < 5 ? "i" : "ów"}
+                      {folder.renderCount} {folder.renderCount === 1 ? t.render.fileSingular : folder.renderCount < 5 ? t.render.fileFew : t.render.fileMany}
                     </p>
                     <div className="flex gap-2">
                       <Button size="sm" variant="outline" className="flex-1" onClick={() => handleRestoreFolder(folder.id)}>
                         <ArchiveRestore size={14} />
-                        Przywróć
+                        {t.common.restore}
                       </Button>
                       <Button
                         size="sm"
@@ -742,7 +744,7 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
           {archivedRenders.length > 0 && (
             <div>
               {archivedFolders.length > 0 && (
-                <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Pliki</p>
+                <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">{t.render.filesLabel}</p>
               )}
               <div className={`grid ${GRID_COLS_CLASS[gridCols]} gap-2 sm:gap-4`}>
                 {archivedRenders.map((render) => (
@@ -763,7 +765,7 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
                       <div className="flex gap-2">
                         <Button size="sm" variant="outline" className="flex-1" onClick={() => handleRestore(render.id)}>
                           <ArchiveRestore size={14} />
-                          Przywróć
+                          {t.common.restore}
                         </Button>
                         <Button
                           size="sm"
@@ -805,6 +807,7 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
 }
 
 function SortableFolderCard({ folder, projectId, roomId, onFileDrop }: { folder: Folder; projectId: string; roomId: string; onFileDrop?: (files: File[]) => void }) {
+  const t = useT();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: folder.id });
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -819,7 +822,7 @@ function SortableFolderCard({ folder, projectId, roomId, onFileDrop }: { folder:
         {...listeners}
         suppressHydrationWarning
         className="absolute top-1/2 -translate-y-1/2 right-2 z-20 p-1 rounded text-muted-foreground/40 hover:text-foreground cursor-grab active:cursor-grabbing transition-colors"
-        title="Przeciągnij, aby zmienić kolejność"
+        title={t.render.dragToReorder}
       >
         <GripVertical size={14} />
       </div>

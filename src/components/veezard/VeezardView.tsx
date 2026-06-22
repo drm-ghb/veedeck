@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { VeezardIcon, ViewInAr, Sparkles, Image as ImageIcon } from "@/components/ui/icons";
+import { useT } from "@/lib/i18n";
 import Generator3DView from "./Generator3DView";
 import RenderBoosterView from "./RenderBoosterView";
 
@@ -19,14 +20,15 @@ interface Model3D {
 
 type VeezardTab = "generator3d" | "renderbooster" | "moodboard";
 
-const TABS: { id: VeezardTab; label: string; icon: React.ReactNode; soon?: boolean }[] = [
-  { id: "generator3d",    label: "Generator 3D",  icon: <ViewInAr size={15} /> },
-  { id: "renderbooster",  label: "RenderBooster", icon: <Sparkles size={15} /> },
-  { id: "moodboard",      label: "Moodboard",     icon: <ImageIcon size={15} />, soon: true },
-];
-
 export default function VeezardView({ initialModels }: { initialModels: Model3D[] }) {
+  const t = useT();
   const [activeTab, setActiveTab] = useState<VeezardTab>("generator3d");
+
+  const TABS: { id: VeezardTab; label: string; icon: React.ReactNode; soon?: boolean }[] = [
+    { id: "generator3d",   label: "Generator 3D",  icon: <ViewInAr size={15} /> },
+    { id: "renderbooster", label: "RenderBooster", icon: <Sparkles size={15} /> },
+    { id: "moodboard",     label: "Moodboard",     icon: <ImageIcon size={15} />, soon: true },
+  ];
 
   return (
     <div className="flex flex-col h-full">
@@ -56,7 +58,7 @@ export default function VeezardView({ initialModels }: { initialModels: Model3D[
             {tab.label}
             {tab.soon && (
               <span className="text-[9px] font-bold px-1 py-0.5 rounded bg-muted text-muted-foreground ml-0.5">
-                wkrótce
+                {t.veezard.soon}
               </span>
             )}
           </button>
@@ -76,6 +78,7 @@ export default function VeezardView({ initialModels }: { initialModels: Model3D[
 }
 
 function ComingSoon({ label }: { label: string }) {
+  const t = useT();
   return (
     <div className="flex flex-col items-center justify-center h-full gap-4 text-muted-foreground py-24">
       <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center">
@@ -83,9 +86,9 @@ function ComingSoon({ label }: { label: string }) {
       </div>
       <div className="text-center">
         <p className="font-semibold text-foreground">{label}</p>
-        <p className="text-sm mt-1">Ta funkcja jest w przygotowaniu</p>
+        <p className="text-sm mt-1">{t.veezard.comingSoon}</p>
       </div>
-      <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-primary/10 text-primary">wkrótce</span>
+      <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-primary/10 text-primary">{t.veezard.soon}</span>
     </div>
   );
 }

@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useT } from "@/lib/i18n";
 
 interface LoginLog {
   id: string;
@@ -38,6 +39,7 @@ export default function AdminLogsClient({
   loginLogs: LoginLog[];
   activityLogs: ActivityLog[];
 }) {
+  const t = useT();
   const [tab, setTab] = useState<Tab>("login");
   const [loginLogs, setLoginLogs] = useState(initialLoginLogs);
   const [activityLogs, setActivityLogs] = useState(initialActivityLogs);
@@ -53,7 +55,7 @@ export default function AdminLogsClient({
         setActivityLogs(data.activityLogs);
       }
     } catch {
-      toast.error("Błąd odświeżania logów");
+      toast.error(t.admin.refreshError);
     } finally {
       setLoading(false);
     }
@@ -91,7 +93,7 @@ export default function AdminLogsClient({
                 : "text-white/40 hover:text-white/70"
             }`}
           >
-            Historia logowań
+            {t.admin.loginHistory}
           </button>
           <button
             onClick={() => setTab("activity")}
@@ -101,7 +103,7 @@ export default function AdminLogsClient({
                 : "text-white/40 hover:text-white/70"
             }`}
           >
-            Aktywność / błędy
+            {t.admin.activityLogs}
           </button>
         </div>
         <Button
@@ -112,7 +114,7 @@ export default function AdminLogsClient({
           className="border-white/10 text-white/50 hover:text-white/80 hover:bg-white/5 bg-transparent"
         >
           <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
-          Odśwież
+          {t.admin.refresh}
         </Button>
       </div>
 
@@ -121,12 +123,12 @@ export default function AdminLogsClient({
         <div className="bg-white/3 border border-white/8 rounded-xl overflow-hidden">
           <div className="grid grid-cols-[20px_1fr_180px_120px] gap-4 px-5 py-3 bg-white/3 border-b border-white/8 text-xs font-medium text-white/30 uppercase tracking-wide">
             <span></span>
-            <span>Email</span>
-            <span>Data</span>
-            <span>Status</span>
+            <span>{t.admin.emailCol}</span>
+            <span>{t.admin.dateCol}</span>
+            <span>{t.admin.statusCol}</span>
           </div>
           {loginLogs.length === 0 && (
-            <p className="text-center text-white/30 py-12 text-sm">Brak logów</p>
+            <p className="text-center text-white/30 py-12 text-sm">{t.admin.noLogs}</p>
           )}
           {loginLogs.map((log, i) => (
             <div
@@ -149,7 +151,7 @@ export default function AdminLogsClient({
                   log.success ? "text-green-400" : "text-red-400"
                 }`}
               >
-                {log.success ? "Sukces" : "Nieudane"}
+                {log.success ? t.admin.successLabel : t.admin.failedLabel}
               </span>
             </div>
           ))}
@@ -161,11 +163,11 @@ export default function AdminLogsClient({
         <div className="bg-white/3 border border-white/8 rounded-xl overflow-hidden">
           <div className="grid grid-cols-[20px_1fr_180px] gap-4 px-5 py-3 bg-white/3 border-b border-white/8 text-xs font-medium text-white/30 uppercase tracking-wide">
             <span></span>
-            <span>Zdarzenie</span>
-            <span>Data</span>
+            <span>{t.admin.eventCol}</span>
+            <span>{t.admin.dateCol}</span>
           </div>
           {activityLogs.length === 0 && (
-            <p className="text-center text-white/30 py-12 text-sm">Brak logów</p>
+            <p className="text-center text-white/30 py-12 text-sm">{t.admin.noLogs}</p>
           )}
           {activityLogs.map((log, i) => (
             <div

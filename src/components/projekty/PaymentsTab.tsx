@@ -9,6 +9,7 @@ import {
   Paperclip, Check, X, Download, Loader2, GripVertical, Users, Eye, EyeOff,
 } from "@/components/ui/icons";
 import { useUploadThing } from "@/lib/uploadthing-client";
+import { useT } from "@/lib/i18n";
 import {
   DndContext,
   DragOverlay,
@@ -30,6 +31,7 @@ import { CSS } from "@dnd-kit/utilities";
 // ── Upload button ────────────────────────────────────────────────────────────
 
 function AttachmentUploadButton({ onUploaded }: { onUploaded: (url: string, name: string) => void }) {
+  const t = useT();
   const [uploading, setUploading] = useState(false);
   const { startUpload } = useUploadThing("paymentAttachmentUploader");
 
@@ -41,7 +43,7 @@ function AttachmentUploadButton({ onUploaded }: { onUploaded: (url: string, name
       const uploaded = await startUpload([f]);
       if (uploaded?.[0]) onUploaded(uploaded[0].ufsUrl, f.name);
     } catch {
-      toast.error("Błąd przesyłania pliku");
+      toast.error(t.payments.uploadError);
     } finally {
       setUploading(false);
     }
@@ -124,17 +126,18 @@ function ExportPaymentsDialog({
   onConfirm: (key: string) => void;
   onClose: () => void;
 }) {
+  const t = useT();
   const [key, setKey] = useState(sections[0]?.key ?? "");
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
       <div className="bg-card border border-border rounded-2xl shadow-xl w-full max-w-sm mx-4 p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
-        <h2 className="font-semibold text-base">Eksport płatności</h2>
+        <h2 className="font-semibold text-base">{t.payments.exportTitle}</h2>
         {sections.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Brak danych do eksportu.</p>
+          <p className="text-sm text-muted-foreground">{t.payments.noExportData}</p>
         ) : (
           <div className="space-y-2">
-            <label className="text-sm font-medium">Projekt</label>
+            <label className="text-sm font-medium">{t.payments.projectLabel}</label>
             <select
               value={key}
               onChange={(e) => setKey(e.target.value)}
@@ -147,10 +150,10 @@ function ExportPaymentsDialog({
           </div>
         )}
         <div className="flex justify-end gap-2 pt-1">
-          <Button variant="outline" size="sm" onClick={onClose}>Anuluj</Button>
+          <Button variant="outline" size="sm" onClick={onClose}>{t.common.cancel}</Button>
           <Button size="sm" disabled={!key} onClick={() => onConfirm(key)}>
             <Download size={13} className="mr-1.5" />
-            Pobierz CSV
+            {t.payments.downloadCsv}
           </Button>
         </div>
       </div>
@@ -169,6 +172,7 @@ function NewPaymentProjectDialog({
   onConfirm: (rfProjectId: string, projectTitle: string) => Promise<void>;
   onClose: () => void;
 }) {
+  const t = useT();
   const [rfProjectId, setRfProjectId] = useState<string>(rfProjects[0]?.id ?? "");
   const [loading, setLoading] = useState(false);
 
@@ -184,13 +188,13 @@ function NewPaymentProjectDialog({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
       <div className="bg-card border border-border rounded-2xl shadow-xl p-6 w-full max-w-md space-y-4 mx-4">
-        <h2 className="font-semibold text-base">Nowa płatność</h2>
+        <h2 className="font-semibold text-base">{t.payments.newPaymentTitle}</h2>
 
         <div className="space-y-1.5">
-          <label className="text-sm font-medium">Projekt ProjectFlow</label>
+          <label className="text-sm font-medium">{t.payments.projectFlowProjectLabel}</label>
           {rfProjects.length === 0 ? (
             <p className="text-sm text-muted-foreground bg-muted/50 rounded-lg px-3 py-2">
-              Brak projektów powiązanych z tym klientem.
+              {t.payments.noProjectsLinked}
             </p>
           ) : (
             <select
@@ -211,14 +215,14 @@ function NewPaymentProjectDialog({
             disabled={loading}
             className="flex-1 py-2 text-sm border border-border rounded-lg hover:bg-muted transition-colors"
           >
-            Anuluj
+            {t.common.cancel}
           </button>
           <button
             onClick={handleSubmit}
             disabled={loading || !rfProjectId}
             className="flex-1 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity disabled:opacity-40"
           >
-            {loading ? "Tworzenie..." : "Utwórz"}
+            {loading ? t.payments.creating : t.payments.create}
           </button>
         </div>
       </div>
@@ -255,6 +259,7 @@ function GroupRow({
   onToggleCollapse, onStartEdit, onSaveEdit, onCancelEdit, onEditNameChange,
   onDelete, onAddSubgroup, onAddPayment,
 }: GroupRowProps) {
+  const t = useT();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging, isOver } = useSortable({
     id: group.id,
     data: { type: "group", parentId: group.parentId },
@@ -300,12 +305,12 @@ function GroupRow({
           <>
             <span className="flex-1 text-sm font-semibold" onClick={onToggleCollapse}>{group.name}</span>
             {isDropTarget && (
-              <span className="text-xs text-primary font-medium flex-shrink-0 mr-1">Upuść tutaj</span>
+              <span className="text-xs text-primary font-medium flex-shrink-0 mr-1">{t.payments.dropHere}</span>
             )}
             <span className="text-sm font-medium tabular-nums text-muted-foreground">{formatPLN(groupTotal)}</span>
             <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity ml-1">
-              <button onClick={(e) => { e.stopPropagation(); onAddSubgroup(); }} className="p-1 rounded text-muted-foreground hover:text-foreground" title="Dodaj podgrupę"><Plus size={12} /></button>
-              <button onClick={(e) => { e.stopPropagation(); onAddPayment(); }} className="p-1 rounded text-muted-foreground hover:text-foreground" title="Dodaj płatność"><Plus size={12} className="opacity-60" /></button>
+              <button onClick={(e) => { e.stopPropagation(); onAddSubgroup(); }} className="p-1 rounded text-muted-foreground hover:text-foreground" title={t.payments.addSubgroup}><Plus size={12} /></button>
+              <button onClick={(e) => { e.stopPropagation(); onAddPayment(); }} className="p-1 rounded text-muted-foreground hover:text-foreground" title={t.payments.addPaymentTitle}><Plus size={12} className="opacity-60" /></button>
               <button onClick={(e) => { e.stopPropagation(); onStartEdit(); }} className="p-1 rounded text-muted-foreground hover:text-foreground"><Pencil size={12} /></button>
               <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="p-1 rounded text-muted-foreground hover:text-destructive"><Trash2 size={12} /></button>
             </div>
@@ -348,6 +353,7 @@ function PaymentRow({
   onStartEdit, onSaveEdit, onCancelEdit, onEditNameChange, onEditAmountChange,
   onToggleStatus, onDelete, onUploadComplete, onSaveAmountInline,
 }: PaymentRowProps) {
+  const t = useT();
   const [inlineAmountEdit, setInlineAmountEdit] = useState(false);
   const [inlineAmountValue, setInlineAmountValue] = useState("");
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -375,7 +381,7 @@ function PaymentRow({
 
       <button
         onClick={onToggleStatus}
-        title={payment.status === "paid" ? "Oznacz jako nieopłacone" : "Oznacz jako opłacone"}
+        title={payment.status === "paid" ? t.payments.markAsUnpaid : t.payments.markAsPaid}
         className={`w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-colors ${
           payment.status === "paid"
             ? "bg-green-500 border-green-500 text-white"
@@ -440,11 +446,11 @@ function PaymentRow({
               ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
               : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
           }`}>
-            {payment.status === "paid" ? "Opłacone" : "Do opłacenia"}
+            {payment.status === "paid" ? t.payments.paid : t.payments.pending}
           </span>
           <div className="flex-shrink-0">
             {payment.attachmentUrl ? (
-              <a href={payment.attachmentUrl} target="_blank" rel="noopener noreferrer" title={payment.attachmentName ?? "Załącznik"} className="text-muted-foreground hover:text-foreground transition-colors">
+              <a href={payment.attachmentUrl} target="_blank" rel="noopener noreferrer" title={payment.attachmentName ?? t.payments.attachment} className="text-muted-foreground hover:text-foreground transition-colors">
                 <Paperclip size={13} />
               </a>
             ) : (
@@ -488,6 +494,7 @@ function ProjectSection({
   onToggleShare?: () => void;
   children: React.ReactNode;
 }) {
+  const t = useT();
   return (
     <div className={`border border-border rounded-xl overflow-hidden mb-3 ${isHidden ? "opacity-60" : ""}`}>
       <div className="flex items-center gap-2 px-4 py-3 bg-muted/30 hover:bg-muted/50 transition-colors">
@@ -502,7 +509,7 @@ function ProjectSection({
           <button
             onClick={(e) => { e.stopPropagation(); onToggleShare(); }}
             disabled={sharingLoading}
-            title={shared ? "Ukryj płatności przed klientem" : "Udostępnij płatności klientowi"}
+            title={shared ? t.payments.hideFromClient : t.payments.shareWithClientTitle}
             className={`flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium rounded-md border transition-colors flex-shrink-0 ${
               shared
                 ? "bg-primary/10 border-primary/30 text-primary hover:bg-primary/20"
@@ -510,13 +517,13 @@ function ProjectSection({
             }`}
           >
             <Users size={11} />
-            {shared ? "Udostępniono" : "Udostępnij"}
+            {shared ? t.payments.shared : t.payments.share}
           </button>
         )}
         {onToggleHidden && (
           <button
             onClick={(e) => { e.stopPropagation(); onToggleHidden(); }}
-            title={isHidden ? "Pokaż klientowi" : "Ukryj przed klientem"}
+            title={isHidden ? t.payments.showToClient : t.payments.hideTitle}
             className="p-1 rounded text-muted-foreground hover:text-foreground flex-shrink-0 transition-colors"
           >
             {isHidden ? <EyeOff size={14} /> : <Eye size={14} />}
@@ -525,7 +532,7 @@ function ProjectSection({
         {onDelete && (
           <button
             onClick={(e) => { e.stopPropagation(); onDelete(); }}
-            title="Usuń sekcję"
+            title={t.payments.deleteSection}
             className="p-1 rounded text-muted-foreground hover:text-destructive flex-shrink-0 transition-colors"
           >
             <Trash2 size={14} />
@@ -544,6 +551,7 @@ function ProjectSection({
 // ── Main component ───────────────────────────────────────────────────────────
 
 export function PaymentsTab({ clientId, projectId, paymentsSharedWithClient: initialShared }: Props) {
+  const t = useT();
   const [groups, setGroups] = useState<PaymentGroup[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [rfProjects, setRfProjects] = useState<RfProject[]>([]);
@@ -626,7 +634,7 @@ export function PaymentsTab({ clientId, projectId, paymentsSharedWithClient: ini
   for (const rfProjId of rfProjectIds) {
     if (rfProjId === null) continue;
     const rfProject = rfProjects.find((p) => p.id === rfProjId);
-    const label = rfProject?.title ?? "Nieznany projekt";
+    const label = rfProject?.title ?? t.payments.unknownProject;
     sections.push({
       key: rfProjId,
       label,
@@ -650,7 +658,7 @@ export function PaymentsTab({ clientId, projectId, paymentsSharedWithClient: ini
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ clientId, groupId: null, rfProjectId, name: projectTitle, amount: 0 }),
     });
-    if (!res.ok) { toast.error("Błąd tworzenia płatności"); return; }
+    if (!res.ok) { toast.error(t.payments.createError); return; }
     const newPayment = await res.json();
     setPayments((prev) => [...prev, newPayment]);
     setShowNewPaymentDialog(false);
@@ -660,7 +668,7 @@ export function PaymentsTab({ clientId, projectId, paymentsSharedWithClient: ini
   async function handleDeleteSection(rfProjectId: string) {
     const sectionGroups = groups.filter((g) => g.rfProjectId === rfProjectId && g.parentId === null);
     const sectionPayments = payments.filter((p) => p.rfProjectId === rfProjectId && p.groupId === null);
-    if (!confirm(`Usunąć całą sekcję płatności z tym projektem i wszystkie jej elementy?`)) return;
+    if (!confirm(t.payments.deleteSectionConfirm)) return;
     for (const g of sectionGroups) {
       await fetch(`/api/payment-groups/${g.id}`, { method: "DELETE" });
     }
@@ -694,7 +702,7 @@ export function PaymentsTab({ clientId, projectId, paymentsSharedWithClient: ini
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ clientId, parentId, name: newGroupName.trim(), rfProjectId: rfProjectId ?? null }),
     });
-    if (!res.ok) { toast.error("Błąd dodawania grupy"); return; }
+    if (!res.ok) { toast.error(t.payments.addGroupError); return; }
     const newGroup = await res.json();
     setGroups((prev) => [...prev, newGroup]);
     setNewGroupName("");
@@ -713,7 +721,7 @@ export function PaymentsTab({ clientId, projectId, paymentsSharedWithClient: ini
         amount: newPaymentAmount.trim() ? parseFloat(newPaymentAmount.replace(",", ".")) : 0,
       }),
     });
-    if (!res.ok) { toast.error("Błąd dodawania płatności"); return; }
+    if (!res.ok) { toast.error(t.payments.addPaymentError); return; }
     const newPayment = await res.json();
     setPayments((prev) => [...prev, newPayment]);
     setNewPaymentName("");
@@ -723,13 +731,13 @@ export function PaymentsTab({ clientId, projectId, paymentsSharedWithClient: ini
 
   async function handleDeleteGroup(id: string) {
     const res = await fetch(`/api/payment-groups/${id}`, { method: "DELETE" });
-    if (!res.ok) { toast.error("Błąd usuwania grupy"); return; }
+    if (!res.ok) { toast.error(t.payments.deleteGroupError); return; }
     load();
   }
 
   async function handleDeletePayment(id: string) {
     const res = await fetch(`/api/payments/${id}`, { method: "DELETE" });
-    if (!res.ok) { toast.error("Błąd usuwania płatności"); return; }
+    if (!res.ok) { toast.error(t.payments.deletePaymentError); return; }
     setPayments((prev) => prev.filter((p) => p.id !== id));
   }
 
@@ -743,7 +751,7 @@ export function PaymentsTab({ clientId, projectId, paymentsSharedWithClient: ini
     });
     if (!res.ok) {
       setPayments((prev) => prev.map((p) => p.id === payment.id ? { ...p, status: payment.status } : p));
-      toast.error("Błąd zmiany statusu");
+      toast.error(t.payments.statusError);
     }
   }
 
@@ -754,7 +762,7 @@ export function PaymentsTab({ clientId, projectId, paymentsSharedWithClient: ini
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: editingGroupName.trim() }),
     });
-    if (!res.ok) { toast.error("Błąd zapisu grupy"); return; }
+    if (!res.ok) { toast.error(t.payments.saveGroupError); return; }
     setGroups((prev) => prev.map((g) => g.id === id ? { ...g, name: editingGroupName.trim() } : g));
     setEditingGroupId(null);
   }
@@ -767,7 +775,7 @@ export function PaymentsTab({ clientId, projectId, paymentsSharedWithClient: ini
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: editingPaymentName.trim(), amount }),
     });
-    if (!res.ok) { toast.error("Błąd zapisu płatności"); return; }
+    if (!res.ok) { toast.error(t.payments.savePaymentError); return; }
     setPayments((prev) => prev.map((p) => p.id === id ? { ...p, name: editingPaymentName.trim(), amount } : p));
     setEditingPaymentId(null);
   }
@@ -778,7 +786,7 @@ export function PaymentsTab({ clientId, projectId, paymentsSharedWithClient: ini
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ attachmentUrl: url, attachmentName: name }),
     });
-    if (!res.ok) { toast.error("Błąd zapisu załącznika"); return; }
+    if (!res.ok) { toast.error(t.payments.saveAttachmentError); return; }
     setPayments((prev) => prev.map((p) => p.id === paymentId ? { ...p, attachmentUrl: url, attachmentName: name } : p));
   }
 
@@ -800,7 +808,7 @@ export function PaymentsTab({ clientId, projectId, paymentsSharedWithClient: ini
       for (const id of rfProjectIds) map[id] = newShared;
       return map;
     });
-    toast.success(newShared ? "Płatności udostępnione klientowi" : "Płatności ukryte dla klienta");
+    toast.success(newShared ? t.payments.sharedSuccess : t.payments.hiddenSuccess);
   }
 
   function handleExportCSV(sectionKey: string, sectionLabel: string, sectionRfProjectId: string | null) {
@@ -808,10 +816,10 @@ export function PaymentsTab({ clientId, projectId, paymentsSharedWithClient: ini
     const sectionPayments = sectionRfProjectId === null
       ? payments.filter((p) => !p.rfProjectId)
       : payments.filter((p) => p.rfProjectId === sectionRfProjectId);
-    const rows = [["Nazwa", "Kwota (PLN)", "Status", "Grupa"]];
+    const rows = [[t.payments.csvName, t.payments.csvAmount, t.payments.csvStatus, t.payments.csvGroup]];
     for (const p of sectionPayments) {
       const group = groups.find((g) => g.id === p.groupId);
-      rows.push([p.name, p.amount.toString(), p.status === "paid" ? "Opłacone" : "Do opłacenia", group?.name ?? ""]);
+      rows.push([p.name, p.amount.toString(), p.status === "paid" ? t.payments.paid : t.payments.pending, group?.name ?? ""]);
     }
     const csv = rows.map((r) => r.map((c) => `"${c}"`).join(",")).join("\n");
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
@@ -848,7 +856,7 @@ export function PaymentsTab({ clientId, projectId, paymentsSharedWithClient: ini
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ groupId: overId }),
-        }).catch(() => toast.error("Błąd przenoszenia płatności"));
+        }).catch(() => toast.error(t.payments.movePaymentError));
       } else {
         const activePayment = payments.find((p) => p.id === activeId);
         const overPayment = payments.find((p) => p.id === overId);
@@ -861,7 +869,7 @@ export function PaymentsTab({ clientId, projectId, paymentsSharedWithClient: ini
           reordered.forEach((p) => fetch(`/api/payments/${p.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ order: p.order }) }).catch(() => {}));
         } else {
           setPayments((prev) => prev.map((p) => p.id === activeId ? { ...p, groupId: overPayment.groupId } : p));
-          fetch(`/api/payments/${activeId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ groupId: overPayment.groupId }) }).catch(() => toast.error("Błąd przenoszenia płatności"));
+          fetch(`/api/payments/${activeId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ groupId: overPayment.groupId }) }).catch(() => toast.error(t.payments.movePaymentError));
         }
       }
     } else if (activeType === "group") {
@@ -878,7 +886,7 @@ export function PaymentsTab({ clientId, projectId, paymentsSharedWithClient: ini
         } else {
           if (isDescendant(activeId, overId, groups)) return;
           setGroups((prev) => prev.map((g) => g.id === activeId ? { ...g, parentId: overId } : g));
-          fetch(`/api/payment-groups/${activeId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ parentId: overId }) }).catch(() => toast.error("Błąd przenoszenia grupy"));
+          fetch(`/api/payment-groups/${activeId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ parentId: overId }) }).catch(() => toast.error(t.payments.moveGroupError));
         }
       }
     }
@@ -891,7 +899,7 @@ export function PaymentsTab({ clientId, projectId, paymentsSharedWithClient: ini
     if (addingGroup !== key) return null;
     return (
       <div className="flex items-center gap-2 mt-2 ml-4">
-        <Input autoFocus placeholder="Nazwa grupy" value={newGroupName} onChange={(e) => setNewGroupName(e.target.value)}
+        <Input autoFocus placeholder={t.payments.groupNamePlaceholder} value={newGroupName} onChange={(e) => setNewGroupName(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter") handleAddGroup(parentId, rfProjectId); if (e.key === "Escape") { setAddingGroup(null); setNewGroupName(""); } }}
           className="h-7 text-sm" />
         <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleAddGroup(parentId, rfProjectId)}><Check size={14} /></Button>
@@ -905,10 +913,10 @@ export function PaymentsTab({ clientId, projectId, paymentsSharedWithClient: ini
     if (addingPayment !== key) return null;
     return (
       <div className="flex items-center gap-2 mt-2 ml-4">
-        <Input autoFocus placeholder="Nazwa płatności" value={newPaymentName} onChange={(e) => setNewPaymentName(e.target.value)}
+        <Input autoFocus placeholder={t.payments.paymentNamePlaceholder} value={newPaymentName} onChange={(e) => setNewPaymentName(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter") handleAddPayment(groupId, rfProjectId); if (e.key === "Escape") { setAddingPayment(null); setNewPaymentName(""); setNewPaymentAmount(""); } }}
           className="h-7 text-sm flex-1" />
-        <Input placeholder="Kwota" value={newPaymentAmount} onChange={(e) => setNewPaymentAmount(e.target.value)}
+        <Input placeholder={t.payments.amountPlaceholder} value={newPaymentAmount} onChange={(e) => setNewPaymentAmount(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter") handleAddPayment(groupId, rfProjectId); }} className="h-7 text-sm w-28" />
         <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleAddPayment(groupId, rfProjectId)}><Check size={14} /></Button>
         <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => { setAddingPayment(null); setNewPaymentName(""); setNewPaymentAmount(""); }}><X size={14} /></Button>
@@ -971,7 +979,7 @@ export function PaymentsTab({ clientId, projectId, paymentsSharedWithClient: ini
           const amount = parseFloat(val.replace(",", "."));
           if (isNaN(amount)) return;
           setPayments((prev) => prev.map((p) => p.id === payment.id ? { ...p, amount } : p));
-          fetch(`/api/payments/${payment.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ amount }) }).catch(() => toast.error("Błąd zapisu kwoty"));
+          fetch(`/api/payments/${payment.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ amount }) }).catch(() => toast.error(t.payments.saveAmountError));
         }}
       />
     );
@@ -1045,23 +1053,23 @@ export function PaymentsTab({ clientId, projectId, paymentsSharedWithClient: ini
             }`}
           >
             <Users size={14} />
-            {allShared ? "Udostępniono klientowi" : "Udostępnij klientowi"}
+            {allShared ? t.payments.sharedWithClient : t.payments.shareWithClientBtn}
           </button>
         )}
         <Button variant="outline" size="sm" onClick={() => setShowExportDialog(true)} className="gap-1.5">
           <Download size={13} />
-          Eksport CSV
+          {t.payments.exportCsv}
         </Button>
         <Button onClick={() => setShowNewPaymentDialog(true)} size="sm" className="gap-1.5">
           <Plus size={13} />
-          Nowa płatność
+          {t.payments.newPayment}
         </Button>
       </div>
 
       {showExportDialog && (() => {
         const exportSections = [
           ...sections.map((s) => ({ key: s.key, label: s.label, rfProjectId: s.rfProjectId })),
-          ...(hasUnassigned ? [{ key: "unassigned", label: "Nieprzypisane", rfProjectId: null }] : []),
+          ...(hasUnassigned ? [{ key: "unassigned", label: t.payments.unassigned, rfProjectId: null }] : []),
         ];
         return (
           <ExportPaymentsDialog
@@ -1094,10 +1102,10 @@ export function PaymentsTab({ clientId, projectId, paymentsSharedWithClient: ini
               {!sectionCollapsed[section.key] && (
                 <div className="flex items-center gap-2 mt-2 px-2">
                   <Button variant="outline" size="sm" className="gap-1 h-7 text-xs" onClick={() => { setAddingGroup(section.rfProjectId ?? "none"); setNewGroupName(""); }}>
-                    <Plus size={11} />Dodaj grupę
+                    <Plus size={11} />{t.payments.addGroup}
                   </Button>
                   <Button variant="outline" size="sm" className="gap-1 h-7 text-xs" onClick={() => { setAddingPayment(section.rfProjectId ?? "none"); setNewPaymentName(""); setNewPaymentAmount(""); }}>
-                    <Plus size={11} />Dodaj płatność
+                    <Plus size={11} />{t.payments.addPaymentBtn}
                   </Button>
                 </div>
               )}
@@ -1108,7 +1116,7 @@ export function PaymentsTab({ clientId, projectId, paymentsSharedWithClient: ini
           {hasUnassigned && (
             <ProjectSection
               key="unassigned"
-              label="Nieprzypisane"
+              label={t.payments.unassigned}
               rfProjectId={null}
               isCollapsed={!!sectionCollapsed["unassigned"]}
               onToggle={() => setSectionCollapsed((c) => ({ ...c, unassigned: !c["unassigned"] }))}
@@ -1127,10 +1135,10 @@ export function PaymentsTab({ clientId, projectId, paymentsSharedWithClient: ini
               {!sectionCollapsed["unassigned"] && (
                 <div className="flex items-center gap-2 mt-2 px-2">
                   <Button variant="outline" size="sm" className="gap-1 h-7 text-xs" onClick={() => { setAddingGroup("unassigned"); setNewGroupName(""); }}>
-                    <Plus size={11} />Dodaj grupę
+                    <Plus size={11} />{t.payments.addGroup}
                   </Button>
                   <Button variant="outline" size="sm" className="gap-1 h-7 text-xs" onClick={() => { setAddingPayment("unassigned"); setNewPaymentName(""); setNewPaymentAmount(""); }}>
-                    <Plus size={11} />Dodaj płatność
+                    <Plus size={11} />{t.payments.addPaymentBtn}
                   </Button>
                 </div>
               )}
@@ -1139,14 +1147,14 @@ export function PaymentsTab({ clientId, projectId, paymentsSharedWithClient: ini
         </>
       ) : (
         <div className="text-center py-12 text-sm text-muted-foreground border border-border border-dashed rounded-xl">
-          Brak płatności. Kliknij &quot;Nowa płatność&quot; aby dodać.
+          {t.payments.noPayments}
         </div>
       )}
 
       {/* Footer */}
       {payments.length > 0 && (
         <div className="flex items-center justify-between pt-3 border-t border-border">
-          <span className="text-sm text-muted-foreground">Łącznie do opłacenia:</span>
+          <span className="text-sm text-muted-foreground">{t.payments.totalDue}</span>
           <span className={`text-sm font-bold tabular-nums ${remaining <= 0 ? "text-green-600 dark:text-green-400" : "text-foreground"}`}>
             {formatPLN(Math.max(0, remaining))}
           </span>

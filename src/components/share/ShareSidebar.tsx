@@ -365,7 +365,7 @@ export default function ShareSidebar({
       {/* Mobile close button */}
       {mobileSidebarOpen && (
         <div className="md:hidden flex items-center justify-between px-3 py-3 border-b border-border flex-shrink-0">
-          <span className="text-sm font-semibold text-foreground">Nawigacja</span>
+          <span className="text-sm font-semibold text-foreground">{t.share.navAriaLabel}</span>
           <button
             onClick={() => setMobileSidebarOpen(false)}
             className="p-1 rounded text-muted-foreground hover:text-foreground transition-colors"
@@ -460,13 +460,13 @@ export default function ShareSidebar({
         {showPayments && onPaymentsClick && (
           <button
             onClick={() => { onPaymentsClick(); setMobileSidebarOpen(false); }}
-            title={isCollapsed ? "Płatności" : undefined}
+            title={isCollapsed ? t.share.payments : undefined}
             className={`w-full ${linkCls(clientProjectId ? activeView === "payments" : false)}`}
           >
             <span className="flex-shrink-0 w-5 flex items-center justify-center">
               <Payments size={18} />
             </span>
-            {showLabels && "Płatności"}
+            {showLabels && t.share.payments}
           </button>
         )}
 
@@ -474,13 +474,13 @@ export default function ShareSidebar({
         {showHarmonogram && onHarmonogramClick && (
           <button
             onClick={() => { onHarmonogramClick(); setMobileSidebarOpen(false); }}
-            title={isCollapsed ? "Harmonogram" : undefined}
+            title={isCollapsed ? t.share.schedule : undefined}
             className={`w-full ${linkCls(clientProjectId ? activeView === "schedule" : false)}`}
           >
             <span className="flex-shrink-0 w-5 flex items-center justify-center">
               <CalendarNote size={18} />
             </span>
-            {showLabels && "Harmonogram"}
+            {showLabels && t.share.schedule}
           </button>
         )}
 
@@ -489,7 +489,7 @@ export default function ShareSidebar({
           onAnkietyClick ? (
             <button
               onClick={() => { onAnkietyClick(); setMobileSidebarOpen(false); }}
-              title={isCollapsed ? "Ankiety" : undefined}
+              title={isCollapsed ? t.nav.surveys : undefined}
               className={`w-full ${linkCls(activeView === "ankiety" || activeView === "survey")}`}
             >
               <span className="flex-shrink-0 w-5 flex items-center justify-center relative">
@@ -500,7 +500,7 @@ export default function ShareSidebar({
                   </span>
                 )}
               </span>
-              {showLabels && "Ankiety"}
+              {showLabels && t.nav.surveys}
               {showLabels && surveysUnread > 0 && (
                 <span className="ml-auto min-w-[20px] h-5 px-1.5 rounded-full bg-primary text-primary-foreground text-[11px] font-bold flex items-center justify-center leading-none">
                   {surveysUnread > 99 ? "99+" : surveysUnread}
@@ -510,7 +510,7 @@ export default function ShareSidebar({
           ) : (
             <Link
               href={`/client/${clientProjectId}/ankiety`}
-              title={isCollapsed ? "Ankiety" : undefined}
+              title={isCollapsed ? t.nav.surveys : undefined}
               className={linkCls(pathname === `/client/${clientProjectId}/ankiety`)}
               onClick={() => setMobileSidebarOpen(false)}
             >
@@ -522,7 +522,7 @@ export default function ShareSidebar({
                   </span>
                 )}
               </span>
-              {showLabels && "Ankiety"}
+              {showLabels && t.nav.surveys}
               {showLabels && surveysUnread > 0 && (
                 <span className="ml-auto min-w-[20px] h-5 px-1.5 rounded-full bg-primary text-primary-foreground text-[11px] font-bold flex items-center justify-center leading-none">
                   {surveysUnread > 99 ? "99+" : surveysUnread}
@@ -654,7 +654,7 @@ export default function ShareSidebar({
             <span className="flex-shrink-0 w-5 flex items-center justify-center">
               <LogOut size={18} />
             </span>
-            Wyloguj
+            {t.nav.logout}
           </button>
         )}
 

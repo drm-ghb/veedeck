@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { pusherServer } from "@/lib/pusher";
 import { getWorkspaceUserId } from "@/lib/workspace";
+import { checkTeamPermission } from "@/lib/permissions";
 
 export async function PATCH(
   req: NextRequest,
@@ -119,6 +120,9 @@ export async function DELETE(
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (!await checkTeamPermission(session, "pfCanDelete")) {
+    return NextResponse.json({ error: "Brak uprawnień do usuwania renderów" }, { status: 403 });
   }
   const userId = getWorkspaceUserId(session);
 

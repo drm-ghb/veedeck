@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Pin } from "@/components/ui/icons";
 import { getRoomIcon } from "@/lib/roomIcons";
 import RoomMenu from "./RoomMenu";
+import { useT } from "@/lib/i18n";
 
 interface RoomCardProps {
   room: {
@@ -18,6 +19,7 @@ interface RoomCardProps {
 }
 
 export default function RoomCard({ room, projectId }: RoomCardProps) {
+  const t = useT();
   const Icon = getRoomIcon(room.type, room.icon);
   const count = room._count.renders;
 
@@ -40,7 +42,7 @@ export default function RoomCard({ room, projectId }: RoomCardProps) {
       {/* Count */}
       <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
         <span>☰</span>
-        {count} plik{count === 1 ? "" : count < 5 ? "i" : "ów"}
+        {count} {count === 1 ? t.render.fileSingular : count < 5 ? t.render.fileFew : t.render.fileMany}
       </p>
 
       {/* Menu */}

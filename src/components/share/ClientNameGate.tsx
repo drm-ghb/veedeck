@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useT } from "@/lib/i18n";
 
 interface Props {
   token: string;
@@ -15,6 +16,7 @@ interface Props {
 
 export default function ClientNameGate({ token, requireClientEmail, clientLogoUrl, designerName, children }: Props) {
   const { data: session, status } = useSession();
+  const t = useT();
   const [nameSet, setNameSet] = useState<boolean | null>(null);
   const [nameInput, setNameInput] = useState("");
   const [emailInput, setEmailInput] = useState("");
@@ -33,7 +35,7 @@ export default function ClientNameGate({ token, requireClientEmail, clientLogoUr
     if (!nameInput.trim()) return;
     if (requireClientEmail && !emailInput.trim()) return;
     if (emailInput.trim() && !emailInput.includes("@")) {
-      setEmailError("Podaj poprawny adres e-mail (brak znaku @)");
+      setEmailError(t.projekty.emailInvalid);
       return;
     }
     setEmailError("");
@@ -51,7 +53,7 @@ export default function ClientNameGate({ token, requireClientEmail, clientLogoUr
       <div className="w-full max-w-sm">
         <div className="bg-card border border-border rounded-2xl p-8 shadow-sm">
           <p className="text-sm text-muted-foreground text-center mb-5">
-            Witaj w panelu klienta projektanta:
+            {t.share.clientGateWelcome}
           </p>
 
           {(clientLogoUrl || designerName) && (
@@ -67,14 +69,14 @@ export default function ClientNameGate({ token, requireClientEmail, clientLogoUr
           )}
 
           <p className="text-sm text-muted-foreground text-center mb-5">
-            Podaj swoje imię, aby móc przeglądać swój projekt
+            {t.share.clientGateEnterName}
           </p>
 
           <div className="space-y-2">
             <Input
               value={nameInput}
               onChange={(e) => setNameInput(e.target.value)}
-              placeholder="Twoje imię"
+              placeholder={t.share.clientGateNamePlaceholder}
               onKeyDown={(e) => e.key === "Enter" && !requireClientEmail && handleSetName()}
               autoFocus
             />
@@ -84,7 +86,7 @@ export default function ClientNameGate({ token, requireClientEmail, clientLogoUr
                   type="email"
                   value={emailInput}
                   onChange={(e) => { setEmailInput(e.target.value); if (emailError) setEmailError(""); }}
-                  placeholder="Twój email"
+                  placeholder={t.share.clientGateEmailPlaceholder}
                   onKeyDown={(e) => e.key === "Enter" && handleSetName()}
                 />
                 {emailError && <p className="text-xs text-destructive mt-1">{emailError}</p>}
@@ -95,7 +97,7 @@ export default function ClientNameGate({ token, requireClientEmail, clientLogoUr
               disabled={!nameInput.trim() || (requireClientEmail && !emailInput.trim())}
               className="w-full mt-1"
             >
-              Przejdź do panelu
+              {t.share.clientGateEnter}
             </Button>
           </div>
         </div>

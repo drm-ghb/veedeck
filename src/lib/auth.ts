@@ -100,6 +100,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           token.trialEndsAt = dbUser?.trialEndsAt?.toISOString() ?? null;
           token.isFree = dbUser?.isFree ?? false;
           token.hasActiveSubscription = dbUser?.subscription?.status === "active";
+          if (dbUser?.ownerId) {
+            const memberPerms = await prisma.teamMemberPermission.findUnique({
+              where: { memberId: user.id as string },
+              select: { hiddenModules: true },
+            });
+            token.memberHiddenModules = memberPerms?.hiddenModules ?? [];
+          } else {
+            token.memberHiddenModules = [];
+          }
         } catch (e) {
           console.error("[auth] JWT callback prisma error:", e);
           token.needsNameSetup = false;
@@ -119,6 +128,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           token.trialEndsAt = dbUser?.trialEndsAt?.toISOString() ?? null;
           token.isFree = dbUser?.isFree ?? false;
           token.hasActiveSubscription = dbUser?.subscription?.status === "active";
+          if (dbUser?.ownerId) {
+            const memberPerms = await prisma.teamMemberPermission.findUnique({
+              where: { memberId: userId },
+              select: { hiddenModules: true },
+            });
+            token.memberHiddenModules = memberPerms?.hiddenModules ?? [];
+          } else {
+            token.memberHiddenModules = [];
+          }
         } catch (e) {
           console.error("[auth] JWT callback prisma error (refresh):", e);
           token.ownerId = null;
@@ -139,6 +157,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           token.trialEndsAt = dbUser?.trialEndsAt?.toISOString() ?? null;
           token.isFree = dbUser?.isFree ?? false;
           token.hasActiveSubscription = dbUser?.subscription?.status === "active";
+          if (dbUser?.ownerId) {
+            const memberPerms = await prisma.teamMemberPermission.findUnique({
+              where: { memberId: userId },
+              select: { hiddenModules: true },
+            });
+            token.memberHiddenModules = memberPerms?.hiddenModules ?? [];
+          } else {
+            token.memberHiddenModules = [];
+          }
         } catch (e) {
           console.error("[auth] JWT callback prisma error (update):", e);
         }

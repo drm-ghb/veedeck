@@ -50,6 +50,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { generateClientLogin } from "@/lib/client-login";
+import { useT } from "@/lib/i18n";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -105,6 +106,7 @@ function SortableContactItem({ contact, children }: { contact: Contact; children
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function ClientDetailView({ client: initialClient }: Props) {
+  const t = useT();
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -201,10 +203,10 @@ export default function ClientDetailView({ client: initialClient }: Props) {
         }),
       });
       if (!res.ok) throw new Error();
-      toast.success("Zapisano");
+      toast.success(t.common.saved);
       router.refresh();
     } catch {
-      toast.error("Błąd zapisu");
+      toast.error(t.settings.saveError);
     } finally {
       setSavingInfo(false);
     }
@@ -224,9 +226,9 @@ export default function ClientDetailView({ client: initialClient }: Props) {
         }),
       });
       if (!res.ok) throw new Error();
-      toast.success("Zapisano");
+      toast.success(t.common.saved);
     } catch {
-      toast.error("Błąd zapisu");
+      toast.error(t.settings.saveError);
     } finally {
       setSavingAddr(false);
     }
@@ -244,7 +246,7 @@ export default function ClientDetailView({ client: initialClient }: Props) {
         body: JSON.stringify({ hiddenModules: newHidden }),
       });
     } catch {
-      toast.error("Błąd zapisu");
+      toast.error(t.settings.saveError);
       setHiddenModules(hiddenModules);
     }
   }
@@ -259,7 +261,7 @@ export default function ClientDetailView({ client: initialClient }: Props) {
         body: JSON.stringify({ clientCanUpload: newValue }),
       });
     } catch {
-      toast.error("Błąd zapisu");
+      toast.error(t.settings.saveError);
       setClientCanUpload(clientCanUpload);
     }
   }
@@ -281,7 +283,7 @@ export default function ClientDetailView({ client: initialClient }: Props) {
   async function addContact() {
     if (!newName.trim()) return;
     if (newEmail.trim() && !newEmail.includes("@")) {
-      toast.error("Podaj poprawny adres e-mail (brak znaku @)");
+      toast.error(t.projekty.emailInvalid);
       return;
     }
     setAddingContact(true);
@@ -314,9 +316,9 @@ export default function ClientDetailView({ client: initialClient }: Props) {
       setShowNewPassword(false);
       setNewIsMain(false);
       setShowAddContact(false);
-      toast.success("Kontakt dodany");
+      toast.success(t.projekty.contactAdded);
     } catch {
-      toast.error("Błąd dodawania kontaktu");
+      toast.error(t.projekty.contactAddError);
     } finally {
       setAddingContact(false);
     }
@@ -336,7 +338,7 @@ export default function ClientDetailView({ client: initialClient }: Props) {
 
   async function saveContactEdit(contactId: string) {
     if (editEmail.trim() && !editEmail.includes("@")) {
-      toast.error("Podaj poprawny adres e-mail (brak znaku @)");
+      toast.error(t.projekty.emailInvalid);
       return;
     }
     setSavingEdit(true);
@@ -350,9 +352,9 @@ export default function ClientDetailView({ client: initialClient }: Props) {
       const updated = await res.json();
       setContacts((prev) => prev.map((c) => c.id === contactId ? { ...c, email: updated.email, phone: updated.phone } : c));
       cancelEditing();
-      toast.success("Zapisano");
+      toast.success(t.common.saved);
     } catch {
-      toast.error("Błąd zapisu");
+      toast.error(t.settings.saveError);
     } finally {
       setSavingEdit(false);
     }
@@ -375,9 +377,9 @@ export default function ClientDetailView({ client: initialClient }: Props) {
       const updated = await res.json();
       setContacts((prev) => prev.map((c) => c.id === contactId ? { ...c, user: updated.user ?? c.user } : c));
       setClientCreds((prev) => ({ ...prev, [contactId]: { ...prev[contactId], password: "", showPassword: false } }));
-      toast.success("Zapisano");
+      toast.success(t.common.saved);
     } catch {
-      toast.error("Błąd zapisu");
+      toast.error(t.settings.saveError);
     }
   }
 
@@ -390,9 +392,9 @@ export default function ClientDetailView({ client: initialClient }: Props) {
       });
       if (!res.ok) throw new Error();
       setContacts((prev) => prev.map((c) => ({ ...c, isMainContact: c.id === contactId })));
-      toast.success("Ustawiono główny kontakt");
+      toast.success(t.projekty.mainContactSet);
     } catch {
-      toast.error("Błąd zapisu");
+      toast.error(t.settings.saveError);
     }
   }
 
@@ -401,7 +403,7 @@ export default function ClientDetailView({ client: initialClient }: Props) {
     if (!password?.trim() || password.trim().length < 4) return;
     const accEmail = createAccountEmail[contactId]?.trim();
     if (accEmail && !accEmail.includes("@")) {
-      toast.error("Podaj poprawny adres e-mail (brak znaku @)");
+      toast.error(t.projekty.emailInvalid);
       return;
     }
     setCreatingAccount((prev) => ({ ...prev, [contactId]: true }));
@@ -415,7 +417,7 @@ export default function ClientDetailView({ client: initialClient }: Props) {
         }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error((data as { error?: string }).error || "Błąd tworzenia konta");
+      if (!res.ok) throw new Error((data as { error?: string }).error || t.projekty.accountCreateError);
       setContacts((prev) =>
         prev.map((c) => c.id === contactId ? { ...c, userId: data.userId, user: data.user } : c)
       );
@@ -428,9 +430,9 @@ export default function ClientDetailView({ client: initialClient }: Props) {
       }
       setCreateAccountOpen((prev) => ({ ...prev, [contactId]: false }));
       setCreateAccountPassword((prev) => ({ ...prev, [contactId]: "" }));
-      toast.success("Konto klienta zostało utworzone");
+      toast.success(t.projekty.accountCreated);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Błąd tworzenia konta");
+      toast.error(err instanceof Error ? err.message : t.projekty.accountCreateError);
     } finally {
       setCreatingAccount((prev) => ({ ...prev, [contactId]: false }));
     }
@@ -443,9 +445,9 @@ export default function ClientDetailView({ client: initialClient }: Props) {
       });
       if (!res.ok) throw new Error();
       setContacts((prev) => prev.filter((c) => c.id !== contactId));
-      toast.success("Kontakt usunięty");
+      toast.success(t.projekty.contactDeleted);
     } catch {
-      toast.error("Błąd usuwania kontaktu");
+      toast.error(t.projekty.contactDeleteError);
     }
   }
 
@@ -471,7 +473,7 @@ export default function ClientDetailView({ client: initialClient }: Props) {
 
   async function sendClientInvite() {
     if (!inviteEmail.trim() || !inviteEmail.includes("@")) {
-      toast.error("Podaj poprawny adres e-mail");
+      toast.error(t.projekty.emailInvalid);
       return;
     }
     setSendingInvite(true);
@@ -483,10 +485,10 @@ export default function ClientDetailView({ client: initialClient }: Props) {
     const data = await res.json().catch(() => ({}));
     setSendingInvite(false);
     if (!res.ok) {
-      toast.error((data as { error?: string }).error || "Nie udało się wysłać zaproszenia");
+      toast.error((data as { error?: string }).error || t.projekty.inviteSendError);
       return;
     }
-    toast.success("Zaproszenie zostało wysłane");
+    toast.success(t.projekty.inviteSent);
     setShowInviteDialog(false);
     setInviteEmail("");
   }
@@ -502,7 +504,7 @@ export default function ClientDetailView({ client: initialClient }: Props) {
       {/* Back nav */}
       <div className="mb-6">
         <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-          <Link href="/klienci" className="hover:text-foreground transition-colors">Klienci</Link>
+          <Link href="/klienci" className="hover:text-foreground transition-colors">{t.projekty.title}</Link>
           <span>/</span>
           <span className="text-foreground font-medium truncate max-w-[200px]">{initialClient.name}</span>
         </div>
@@ -516,16 +518,16 @@ export default function ClientDetailView({ client: initialClient }: Props) {
           <div className="flex-1">
             {contacts.filter((c) => !c.userId).length === 1 ? (
               <>
-                Kontakt <strong>{contacts.find((c) => !c.userId)?.name}</strong> nie ma jeszcze konta —{" "}
+                {t.projekty.bannerNoAccountSingle.replace("{name}", contacts.find((c) => !c.userId)?.name ?? "")}{" "}
                 <button onClick={() => setActiveTab("contacts")} className="underline hover:no-underline">
-                  nadaj hasło w zakładce Kontakty
+                  {t.projekty.bannerContactsTabLink}
                 </button>
               </>
             ) : (
               <>
-                <strong>{contacts.filter((c) => !c.userId).length}</strong> kontaktów nie ma kont —{" "}
+                {t.projekty.bannerNoAccountMultiple.replace("{count}", String(contacts.filter((c) => !c.userId).length))}{" "}
                 <button onClick={() => setActiveTab("contacts")} className="underline hover:no-underline">
-                  nadaj hasła w zakładce Kontakty
+                  {t.projekty.bannerContactsTabLinkMultiple}
                 </button>
               </>
             )}
@@ -548,11 +550,11 @@ export default function ClientDetailView({ client: initialClient }: Props) {
                 : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
-            {tab === "info" && "Informacje ogólne"}
-            {tab === "contacts" && "Kontakty"}
-            {tab === "payments" && "Płatności"}
-            {tab === "schedule" && "Harmonogram"}
-            {tab === "documents" && "Dokumenty"}
+            {tab === "info" && t.projekty.tabInfo}
+            {tab === "contacts" && t.projekty.clients}
+            {tab === "payments" && t.projekty.tabPayments}
+            {tab === "schedule" && t.projekty.tabSchedule}
+            {tab === "documents" && t.projekty.tabDocuments}
           </button>
         ))}
       </div>
@@ -562,29 +564,29 @@ export default function ClientDetailView({ client: initialClient }: Props) {
         <div className="space-y-4">
           {/* Section 1: Informacje o kliencie */}
           <section className="bg-card border border-border rounded-xl p-5 space-y-4">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Informacje o kliencie</h2>
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">{t.projekty.projectInfo}</h2>
             <div className="space-y-1.5">
-              <Label htmlFor="client-name">Nazwa klienta</Label>
+              <Label htmlFor="client-name">{t.projekty.clientNameInputLabel}</Label>
               <Input
                 id="client-name"
                 value={clientName}
                 onChange={(e) => setClientName(e.target.value)}
-                placeholder="Nazwa klienta"
+                placeholder={t.projekty.clientNameInputLabel}
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="client-desc">Opis <span className="text-muted-foreground font-normal">(opcjonalnie)</span></Label>
+              <Label htmlFor="client-desc">{t.projekty.descriptionLabel}</Label>
               <Textarea
                 id="client-desc"
                 value={clientDescription}
                 onChange={(e) => setClientDescription(e.target.value)}
-                placeholder="Opis projektu..."
+                placeholder={t.projekty.descriptionPlaceholder}
                 rows={3}
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="start-date">Data rozpoczęcia współpracy</Label>
+                <Label htmlFor="start-date">{t.projekty.startDateLabel}</Label>
                 <div className="relative">
                   <Input
                     id="start-date"
@@ -605,7 +607,7 @@ export default function ClientDetailView({ client: initialClient }: Props) {
                 </div>
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="end-date">Data zakończenia współpracy</Label>
+                <Label htmlFor="end-date">{t.projekty.endDateLabel}</Label>
                 <div className="relative">
                   <Input
                     id="end-date"
@@ -628,65 +630,65 @@ export default function ClientDetailView({ client: initialClient }: Props) {
             </div>
             <div className="flex items-center justify-between pt-1">
               <span className="text-sm text-muted-foreground">
-                Utworzono: {new Date(initialClient.createdAt).toLocaleDateString("pl-PL", { day: "numeric", month: "long", year: "numeric" })}
+                {t.projekty.createdAt} {new Date(initialClient.createdAt).toLocaleDateString("pl-PL", { day: "numeric", month: "long", year: "numeric" })}
               </span>
               <Button onClick={saveInfo} disabled={savingInfo || !clientName.trim()} size="sm">
-                {savingInfo ? "Zapisywanie…" : "Zapisz"}
+                {savingInfo ? t.common.saving : t.common.save}
               </Button>
             </div>
           </section>
 
           {/* Section 2: Adres inwestycji */}
           <section className="bg-card border border-border rounded-xl p-5 space-y-4">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Adres inwestycji</h2>
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">{t.projekty.address}</h2>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="addr-street">Ulica</Label>
+                <Label htmlFor="addr-street">{t.projekty.street}</Label>
                 <Input
                   id="addr-street"
                   value={addrStreet}
                   onChange={(e) => setAddrStreet(e.target.value)}
-                  placeholder="ul. Przykładowa 12/3"
+                  placeholder={t.projekty.streetPlaceholder}
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="addr-city">Miasto</Label>
+                <Label htmlFor="addr-city">{t.projekty.city}</Label>
                 <Input
                   id="addr-city"
                   value={addrCity}
                   onChange={(e) => setAddrCity(e.target.value)}
-                  placeholder="Warszawa"
+                  placeholder={t.projekty.cityPlaceholder}
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="addr-postal">Kod pocztowy</Label>
+                <Label htmlFor="addr-postal">{t.projekty.postalCode}</Label>
                 <Input
                   id="addr-postal"
                   value={addrPostal}
                   onChange={(e) => setAddrPostal(e.target.value)}
-                  placeholder="00-000"
+                  placeholder={t.projekty.postalCodePlaceholder}
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="addr-country">Kraj</Label>
+                <Label htmlFor="addr-country">{t.projekty.country}</Label>
                 <Input
                   id="addr-country"
                   value={addrCountry}
                   onChange={(e) => setAddrCountry(e.target.value)}
-                  placeholder="Polska"
+                  placeholder={t.projekty.countryPlaceholder}
                 />
               </div>
             </div>
             <div className="flex justify-end">
               <Button onClick={saveAddress} disabled={savingAddr} size="sm">
-                {savingAddr ? "Zapisywanie…" : "Zapisz"}
+                {savingAddr ? t.common.saving : t.common.save}
               </Button>
             </div>
           </section>
 
           {/* Section 3: Moduły */}
           <section className="bg-card border border-border rounded-xl p-5 space-y-4">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Moduły</h2>
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">{t.projekty.modules}</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {/* RenderFlow tile */}
               <div className="border border-border rounded-xl p-4 space-y-3">
@@ -696,16 +698,16 @@ export default function ClientDetailView({ client: initialClient }: Props) {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-medium text-sm">Wizualizacje projektu</span>
+                      <span className="font-medium text-sm">{t.projekty.moduleRenderflow}</span>
                       <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
                         !hiddenModules.includes("renderflow")
                           ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
                           : "bg-muted text-muted-foreground"
                       }`}>
-                        {!hiddenModules.includes("renderflow") ? "Aktywny" : "Ukryty"}
+                        {!hiddenModules.includes("renderflow") ? t.projekty.moduleActive : t.projekty.moduleHidden}
                       </span>
                     </div>
-                    <p className="text-xs text-muted-foreground">Wizualizacje projektu</p>
+                    <p className="text-xs text-muted-foreground">{t.projekty.moduleDescRenderflow}</p>
                   </div>
                 </div>
                 <div className="space-y-2 border-t border-border pt-3">
@@ -714,14 +716,14 @@ export default function ClientDetailView({ client: initialClient }: Props) {
                       checked={!hiddenModules.includes("renderflow")}
                       onCheckedChange={() => toggleModule("renderflow")}
                     />
-                    <span className="text-sm">Widoczny dla klienta</span>
+                    <span className="text-sm">{t.projekty.moduleVisibleClient}</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer">
                     <Switch
                       checked={clientCanUpload}
                       onCheckedChange={toggleClientUpload}
                     />
-                    <span className="text-sm">Klient może dodawać pliki w ProjectFlow</span>
+                    <span className="text-sm">{t.projekty.clientCanUploadLabel}</span>
                   </label>
                 </div>
               </div>
@@ -734,16 +736,16 @@ export default function ClientDetailView({ client: initialClient }: Props) {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-medium text-sm">Listy produktów dla klienta</span>
+                      <span className="font-medium text-sm">{t.projekty.moduleLists}</span>
                       <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
                         !hiddenModules.includes("listy")
                           ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
                           : "bg-muted text-muted-foreground"
                       }`}>
-                        {!hiddenModules.includes("listy") ? "Aktywny" : "Ukryty"}
+                        {!hiddenModules.includes("listy") ? t.projekty.moduleActive : t.projekty.moduleHidden}
                       </span>
                     </div>
-                    <p className="text-xs text-muted-foreground">Listy produktów dla klienta</p>
+                    <p className="text-xs text-muted-foreground">{t.projekty.moduleDescLists}</p>
                   </div>
                 </div>
                 <div className="space-y-2 border-t border-border pt-3">
@@ -752,7 +754,7 @@ export default function ClientDetailView({ client: initialClient }: Props) {
                       checked={!hiddenModules.includes("listy")}
                       onCheckedChange={() => toggleModule("listy")}
                     />
-                    <span className="text-sm">Widoczny dla klienta</span>
+                    <span className="text-sm">{t.projekty.moduleVisibleClient}</span>
                   </label>
                 </div>
               </div>
@@ -765,7 +767,7 @@ export default function ClientDetailView({ client: initialClient }: Props) {
       {activeTab === "contacts" && (
         <section className="bg-card border border-border rounded-xl p-5">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Kontakty</h2>
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">{t.projekty.clients}</h2>
             <div className="flex items-center gap-2">
               <Button
                 size="sm"
@@ -774,7 +776,7 @@ export default function ClientDetailView({ client: initialClient }: Props) {
                 onClick={() => setShowInviteDialog(true)}
               >
                 <Mail size={13} />
-                <span className="hidden sm:inline">Wyślij zaproszenie</span>
+                <span className="hidden sm:inline">{t.projekty.sendInvite}</span>
               </Button>
               <Button
                 size="sm"
@@ -782,14 +784,14 @@ export default function ClientDetailView({ client: initialClient }: Props) {
                 onClick={() => setShowAddContact(true)}
               >
                 <Plus size={13} />
-                Dodaj kontakt
+                {t.projekty.addClient}
               </Button>
             </div>
           </div>
 
           {contacts.length === 0 && !showAddContact ? (
             <div className="text-center py-10 text-muted-foreground">
-              <p className="text-sm">Brak kontaktów. Dodaj pierwszą osobę kontaktową.</p>
+              <p className="text-sm">{t.projekty.noContactsHint}</p>
             </div>
           ) : (
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleContactDragEnd}>
@@ -803,10 +805,10 @@ export default function ClientDetailView({ client: initialClient }: Props) {
                             <div className="flex items-center gap-2 flex-wrap">
                               <span className="font-medium text-sm">{contact.name}</span>
                               {contact.isMainContact && (
-                                <span className="text-xs px-1.5 py-0.5 rounded bg-primary/10 text-primary font-medium">główny</span>
+                                <span className="text-xs px-1.5 py-0.5 rounded bg-primary/10 text-primary font-medium">{t.projekty.mainContactBadge}</span>
                               )}
                               {!contact.userId && (
-                                <span className="text-xs px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 font-medium">brak konta</span>
+                                <span className="text-xs px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 font-medium">{t.projekty.noAccount}</span>
                               )}
                             </div>
 
@@ -816,22 +818,22 @@ export default function ClientDetailView({ client: initialClient }: Props) {
                                   <Input
                                     value={editEmail}
                                     onChange={(e) => setEditEmail(e.target.value)}
-                                    placeholder="Email"
+                                    placeholder={t.projekty.emailLabel}
                                     className="text-xs h-8"
                                     type="email"
                                   />
                                   <Input
                                     value={editPhone}
                                     onChange={(e) => setEditPhone(e.target.value)}
-                                    placeholder="Telefon"
+                                    placeholder={t.projekty.phonePlaceholder}
                                     className="text-xs h-8"
                                   />
                                 </div>
                                 <div className="flex gap-1.5">
                                   <Button size="sm" className="h-7 text-xs" disabled={savingEdit} onClick={() => saveContactEdit(contact.id)}>
-                                    {savingEdit ? "Zapis…" : "Zapisz"}
+                                    {savingEdit ? t.common.saving : t.common.save}
                                   </Button>
-                                  <Button size="sm" variant="outline" className="h-7 text-xs" onClick={cancelEditing}>Anuluj</Button>
+                                  <Button size="sm" variant="outline" className="h-7 text-xs" onClick={cancelEditing}>{t.common.cancel}</Button>
                                 </div>
                               </div>
                             ) : (
@@ -849,12 +851,12 @@ export default function ClientDetailView({ client: initialClient }: Props) {
                                   className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
                                 >
                                   <KeyRound size={11} />
-                                  {credentialsOpen[contact.id] ? "Ukryj dane logowania" : "Dane logowania"}
+                                  {credentialsOpen[contact.id] ? t.projekty.hideCredentials : t.projekty.loginData}
                                 </button>
                                 {credentialsOpen[contact.id] && (
                                   <div className="mt-2 p-2.5 rounded-lg bg-muted/50 border border-border space-y-2">
                                     <div className="space-y-1">
-                                      <p className="text-xs text-muted-foreground font-medium">Login</p>
+                                      <p className="text-xs text-muted-foreground font-medium">{t.projekty.loginPlaceholder}</p>
                                       <div className="flex gap-1.5">
                                         <Input
                                           value={clientCreds[contact.id].login}
@@ -864,7 +866,7 @@ export default function ClientDetailView({ client: initialClient }: Props) {
                                       </div>
                                     </div>
                                     <div className="space-y-1">
-                                      <p className="text-xs text-muted-foreground font-medium">Nowe hasło</p>
+                                      <p className="text-xs text-muted-foreground font-medium">{t.projekty.newPasswordPlaceholder}</p>
                                       <div className="flex gap-1.5">
                                         <div className="relative flex-1">
                                           <Input
@@ -872,7 +874,7 @@ export default function ClientDetailView({ client: initialClient }: Props) {
                                             value={clientCreds[contact.id].password}
                                             onChange={(e) => setClientCreds((prev) => ({ ...prev, [contact.id]: { ...prev[contact.id], password: e.target.value } }))}
                                             className="text-xs h-7 pr-7"
-                                            placeholder="Zostaw puste aby nie zmieniać"
+                                            placeholder={t.projekty.leaveEmptyPassword}
                                           />
                                           <button
                                             type="button"
@@ -888,7 +890,7 @@ export default function ClientDetailView({ client: initialClient }: Props) {
                                           disabled={!clientCreds[contact.id].login.trim() && !clientCreds[contact.id].password.trim()}
                                           onClick={() => saveContactCreds(contact.id)}
                                         >
-                                          Zapisz
+                                          {t.common.save}
                                         </Button>
                                       </div>
                                     </div>
@@ -905,29 +907,29 @@ export default function ClientDetailView({ client: initialClient }: Props) {
                                   className="flex items-center gap-1 text-xs text-amber-600 hover:text-amber-800 dark:hover:text-amber-300 transition-colors"
                                 >
                                   <KeyRound size={11} />
-                                  {createAccountOpen[contact.id] ? "Ukryj" : "Utwórz konto"}
+                                  {createAccountOpen[contact.id] ? t.projekty.hide : t.projekty.createAccount}
                                 </button>
                                 {createAccountOpen[contact.id] && (
                                   <div className="mt-2 p-2.5 rounded-lg bg-muted/50 border border-border space-y-2">
                                     <div className="space-y-1">
-                                      <p className="text-xs text-muted-foreground font-medium">Email / login</p>
+                                      <p className="text-xs text-muted-foreground font-medium">{t.projekty.emailLoginLabel}</p>
                                       <Input
                                         type="email"
                                         value={createAccountEmail[contact.id] ?? ""}
                                         onChange={(e) => setCreateAccountEmail((prev) => ({ ...prev, [contact.id]: e.target.value }))}
-                                        placeholder="email@domena.pl (będzie loginem)"
+                                        placeholder={t.projekty.emailLoginHintShort}
                                         className="text-xs h-7"
                                       />
                                     </div>
                                     <div className="space-y-1">
-                                      <p className="text-xs text-muted-foreground font-medium">Hasło</p>
+                                      <p className="text-xs text-muted-foreground font-medium">{t.projekty.passwordClientLabel}</p>
                                       <div className="flex gap-1.5">
                                         <div className="relative flex-1">
                                           <Input
                                             type={createAccountShowPass[contact.id] ? "text" : "password"}
                                             value={createAccountPassword[contact.id] ?? ""}
                                             onChange={(e) => setCreateAccountPassword((prev) => ({ ...prev, [contact.id]: e.target.value }))}
-                                            placeholder="Min. 4 znaki"
+                                            placeholder={t.projekty.minCharsPlaceholder}
                                             className="text-xs h-7 pr-7"
                                           />
                                           <button
@@ -948,7 +950,7 @@ export default function ClientDetailView({ client: initialClient }: Props) {
                                           }
                                           onClick={() => createContactAccount(contact.id)}
                                         >
-                                          {creatingAccount[contact.id] ? "Tworzenie..." : "Utwórz konto"}
+                                          {creatingAccount[contact.id] ? t.projekty.creatingAccount : t.projekty.createAccount}
                                         </Button>
                                       </div>
                                     </div>
@@ -962,7 +964,7 @@ export default function ClientDetailView({ client: initialClient }: Props) {
                           <div className="flex items-center gap-1 flex-shrink-0">
                             {!contact.isMainContact && (
                               <button
-                                title="Ustaw jako główny kontakt"
+                                title={t.projekty.setAsMain}
                                 onClick={() => setMainContact(contact.id)}
                                 className="p-1.5 rounded text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
                               >
@@ -970,14 +972,14 @@ export default function ClientDetailView({ client: initialClient }: Props) {
                               </button>
                             )}
                             <button
-                              title="Edytuj kontakt"
+                              title={t.projekty.editContactShort}
                               onClick={() => editingId === contact.id ? cancelEditing() : startEditing(contact)}
                               className="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                             >
                               <Pencil size={14} />
                             </button>
                             <button
-                              title="Usuń kontakt"
+                              title={t.projekty.deleteContact}
                               onClick={() => removeContact(contact.id)}
                               className="p-1.5 rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
                             >
@@ -996,10 +998,10 @@ export default function ClientDetailView({ client: initialClient }: Props) {
           {/* Add contact form */}
           {showAddContact && (
             <div className="mt-4 p-4 border border-border rounded-xl bg-muted/30 space-y-3">
-              <p className="text-sm font-medium">Nowy kontakt</p>
+              <p className="text-sm font-medium">{t.projekty.newContact}</p>
               <div className="grid grid-cols-2 gap-3">
                 <div className="col-span-2 space-y-1">
-                  <Label className="text-xs">Imię i nazwisko *</Label>
+                  <Label className="text-xs">{t.projekty.clientFullName}</Label>
                   <Input
                     value={newName}
                     onChange={(e) => setNewName(e.target.value)}
@@ -1008,7 +1010,7 @@ export default function ClientDetailView({ client: initialClient }: Props) {
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs">Email</Label>
+                  <Label className="text-xs">{t.projekty.emailLabel}</Label>
                   <Input
                     type="email"
                     value={newEmail}
@@ -1017,7 +1019,7 @@ export default function ClientDetailView({ client: initialClient }: Props) {
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs">Telefon</Label>
+                  <Label className="text-xs">{t.projekty.phoneLabel}</Label>
                   <Input
                     value={newPhone}
                     onChange={(e) => setNewPhone(e.target.value)}
@@ -1026,14 +1028,14 @@ export default function ClientDetailView({ client: initialClient }: Props) {
                 </div>
                 <div className="col-span-2 space-y-1">
                   <Label className="text-xs">
-                    Hasło do konta <span className="text-muted-foreground font-normal">(opcjonalnie)</span>
+                    {t.projekty.contactPasswordOpt} <span className="text-muted-foreground font-normal">{t.common.optional}</span>
                   </Label>
                   <div className="relative">
                     <Input
                       type={showNewPassword ? "text" : "password"}
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder="Klient zaloguje się tym hasłem"
+                      placeholder={t.projekty.clientPasswordLoginPlaceholder}
                       className="pr-9"
                     />
                     <button
@@ -1060,14 +1062,14 @@ export default function ClientDetailView({ client: initialClient }: Props) {
                   onChange={(e) => setNewIsMain(e.target.checked)}
                   className="rounded border-border"
                 />
-                <Label htmlFor="new-main" className="text-xs cursor-pointer">Główny kontakt</Label>
+                <Label htmlFor="new-main" className="text-xs cursor-pointer">{t.projekty.mainContact}</Label>
               </div>
               <div className="flex gap-2 justify-end">
                 <Button size="sm" variant="outline" onClick={() => { setShowAddContact(false); setNewName(""); setNewEmail(""); setNewPhone(""); setNewPassword(""); }}>
-                  Anuluj
+                  {t.common.cancel}
                 </Button>
                 <Button size="sm" disabled={addingContact || !newName.trim()} onClick={addContact}>
-                  {addingContact ? "Dodawanie…" : "Dodaj"}
+                  {addingContact ? t.projekty.adding : t.common.add}
                 </Button>
               </div>
             </div>
@@ -1084,7 +1086,7 @@ export default function ClientDetailView({ client: initialClient }: Props) {
           />
         ) : (
           <div className="bg-card border border-border rounded-xl p-10 text-center text-muted-foreground">
-            <p className="text-sm">Dodaj kontakt w zakładce <button onClick={() => setActiveTab("contacts")} className="underline hover:no-underline">Kontakty</button>, aby skonfigurować płatności.</p>
+            <p className="text-sm">{t.projekty.addContactHint} <button onClick={() => setActiveTab("contacts")} className="underline hover:no-underline">{t.projekty.clients}</button>, {t.projekty.paymentsConfigSuffix}</p>
           </div>
         )
       )}
@@ -1098,7 +1100,7 @@ export default function ClientDetailView({ client: initialClient }: Props) {
           />
         ) : (
           <div className="bg-card border border-border rounded-xl p-10 text-center text-muted-foreground">
-            <p className="text-sm">Dodaj kontakt w zakładce <button onClick={() => setActiveTab("contacts")} className="underline hover:no-underline">Kontakty</button>, aby skonfigurować harmonogram.</p>
+            <p className="text-sm">{t.projekty.addContactHint} <button onClick={() => setActiveTab("contacts")} className="underline hover:no-underline">{t.projekty.clients}</button>, {t.projekty.scheduleConfigSuffix}</p>
           </div>
         )
       )}
@@ -1111,7 +1113,7 @@ export default function ClientDetailView({ client: initialClient }: Props) {
           </section>
         ) : (
           <div className="bg-card border border-border rounded-xl p-10 text-center text-muted-foreground">
-            <p className="text-sm">Dodaj kontakt w zakładce <button onClick={() => setActiveTab("contacts")} className="underline hover:no-underline">Kontakty</button>, aby zarządzać dokumentami.</p>
+            <p className="text-sm">{t.projekty.addContactHint} <button onClick={() => setActiveTab("contacts")} className="underline hover:no-underline">{t.projekty.clients}</button>, {t.projekty.documentsConfigSuffix}</p>
           </div>
         )
       )}
@@ -1120,11 +1122,11 @@ export default function ClientDetailView({ client: initialClient }: Props) {
       <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Wyślij zaproszenie</DialogTitle>
+            <DialogTitle>{t.projekty.sendInvite}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3 py-2">
             <div className="space-y-1.5">
-              <Label htmlFor="invite-email">Adres e-mail</Label>
+              <Label htmlFor="invite-email">{t.projekty.inviteEmailLabel}</Label>
               <Input
                 id="invite-email"
                 type="email"
@@ -1133,17 +1135,17 @@ export default function ClientDetailView({ client: initialClient }: Props) {
                 placeholder="klient@domena.pl"
                 autoFocus
               />
-              {checkingEmail && <p className="text-xs text-muted-foreground">Sprawdzanie…</p>}
-              {inviteEmailExists && <p className="text-xs text-amber-600">Ten adres e-mail jest już zarejestrowany w systemie.</p>}
+              {checkingEmail && <p className="text-xs text-muted-foreground">{t.projekty.checkingEmail}</p>}
+              {inviteEmailExists && <p className="text-xs text-amber-600">{t.projekty.emailAlreadyExists}</p>}
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowInviteDialog(false)}>Anuluj</Button>
+            <Button variant="outline" onClick={() => setShowInviteDialog(false)}>{t.common.cancel}</Button>
             <Button
               onClick={sendClientInvite}
               disabled={sendingInvite || !inviteEmail.trim()}
             >
-              {sendingInvite ? "Wysyłanie…" : "Wyślij zaproszenie"}
+              {sendingInvite ? t.projekty.sending : t.projekty.sendInvite}
             </Button>
           </DialogFooter>
         </DialogContent>

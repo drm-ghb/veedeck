@@ -405,7 +405,7 @@ export default function AddProductDialog({
                   ) : isDragOver ? (
                     <div className="flex flex-col items-center gap-2 pointer-events-none">
                       <ImagePlus size={22} className="text-primary" />
-                      <p className="text-xs font-medium text-primary">Upuść zdjęcie tutaj</p>
+                      <p className="text-xs font-medium text-primary">{t.products.dropPhotoHere}</p>
                     </div>
                   ) : (
                     <UploadButton<OurFileRouter, "productImageUploader">
@@ -426,7 +426,7 @@ export default function AddProductDialog({
                         allowedContent: "hidden",
                       }}
                       content={{
-                        button: <><ImagePlus size={20} className="text-muted-foreground" /><span>{t.products.chooseImage}</span><span className="text-[10px] text-muted-foreground/60">lub przeciągnij zdjęcie</span></>,
+                        button: <><ImagePlus size={20} className="text-muted-foreground" /><span>{t.products.chooseImage}</span><span className="text-[10px] text-muted-foreground/60">{t.products.orDragPhoto}</span></>,
                       }}
                     />
                   )}

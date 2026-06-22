@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Plus } from "@/components/ui/icons";
 import { toast } from "sonner";
+import { useT } from "@/lib/i18n";
 import AddEventDialog from "./AddEventDialog";
 import EventDetailDialog from "./EventDetailDialog";
 
@@ -31,18 +32,6 @@ const TYPE_COLORS: Record<EventType, { bg: string; text: string; dot: string; bo
   ZADANIE:       { bg: "bg-violet-100 dark:bg-violet-900/50", text: "text-violet-700 dark:text-violet-200", dot: "bg-violet-500",  border: "border-violet-400 dark:border-violet-500" },
   PRZYPOMNIENIE: { bg: "bg-amber-100 dark:bg-amber-900/50",  text: "text-amber-700 dark:text-amber-200",  dot: "bg-amber-500",   border: "border-amber-400 dark:border-amber-500" },
 };
-
-const TYPE_LABELS: Record<EventType, string> = {
-  WYDARZENIE: "Wydarzenie",
-  ZADANIE: "Zadanie",
-  PRZYPOMNIENIE: "Przypomnienie",
-};
-
-const DAY_NAMES_SHORT = ["Pon", "Wt", "Śr", "Czw", "Pt", "Sob", "Nd"];
-const MONTH_NAMES = [
-  "Styczeń","Luty","Marzec","Kwiecień","Maj","Czerwiec",
-  "Lipiec","Sierpień","Wrzesień","Październik","Listopad","Grudzień",
-];
 
 function toDateKey(date: Date) {
   return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
@@ -213,6 +202,19 @@ function TimeGrid({
 // ============================================================
 
 export default function CalendarView() {
+  const t = useT();
+  const TYPE_LABELS: Record<EventType, string> = {
+    WYDARZENIE: t.calendar.typeEvent,
+    ZADANIE: t.calendar.typeTask,
+    PRZYPOMNIENIE: t.calendar.typeReminder,
+  };
+  const DAY_NAMES_SHORT = [t.calendar.dayMon, t.calendar.dayTue, t.calendar.dayWed, t.calendar.dayThu, t.calendar.dayFri, t.calendar.daySat, t.calendar.daySun];
+  const MONTH_NAMES = [
+    t.calendar.month0, t.calendar.month1, t.calendar.month2, t.calendar.month3,
+    t.calendar.month4, t.calendar.month5, t.calendar.month6, t.calendar.month7,
+    t.calendar.month8, t.calendar.month9, t.calendar.month10, t.calendar.month11,
+  ];
+
   const [view, setView] = useState<View>("week");
   const [anchor, setAnchor] = useState(() => {
     const d = new Date();
@@ -252,7 +254,7 @@ export default function CalendarView() {
         const res = await fetch(`/api/calendar?from=${from}&to=${to}`);
         if (res.ok && !cancelled) setEvents(await res.json());
       } catch {
-        if (!cancelled) toast.error("Błąd ładowania wydarzeń");
+        if (!cancelled) toast.error(t.calendar.loadError);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -382,7 +384,7 @@ export default function CalendarView() {
                   </button>
                 ))}
                 {extra > 0 && (
-                  <span className="text-[10px] text-muted-foreground pl-1">+{extra} więcej</span>
+                  <span className="text-[10px] text-muted-foreground pl-1">+{extra} {t.calendar.moreLabel}</span>
                 )}
               </div>
             );
@@ -469,7 +471,7 @@ export default function CalendarView() {
               <ChevronLeft size={16} />
             </button>
             <button onClick={goToday} className="px-2.5 py-1 text-xs font-medium rounded-lg border border-border hover:bg-muted transition-colors">
-              Dziś
+              {t.calendar.today}
             </button>
             <button onClick={next} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors">
               <ChevronRight size={16} />
@@ -479,7 +481,7 @@ export default function CalendarView() {
           <div className="flex gap-0.5 bg-muted rounded-lg p-0.5">
             {(["month", "week", "day"] as View[]).map((v) => (
               <button key={v} onClick={() => setView(v)} className={`px-3 py-1 text-xs rounded-md transition-colors font-medium ${view === v ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
-                {v === "month" ? "Miesiąc" : v === "week" ? "Tydzień" : "Dzień"}
+                {v === "month" ? t.calendar.monthView : v === "week" ? t.calendar.weekView : t.calendar.dayView}
               </button>
             ))}
           </div>
@@ -490,7 +492,7 @@ export default function CalendarView() {
           <h2 className="text-sm font-semibold capitalize truncate flex-1">{navTitle()}</h2>
           <button onClick={() => { setAddDate(null); setAddOpen(true); }} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity flex-shrink-0">
             <Plus size={15} />
-            Dodaj
+            {t.calendar.addBtn}
           </button>
         </div>
       </div>

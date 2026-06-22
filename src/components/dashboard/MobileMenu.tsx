@@ -46,7 +46,7 @@ export default function MobileMenu({ userName, logoUrl, hiddenModules = [], isTr
     { label: t.nav.projects, href: "/klienci", icon: <Users size={18} />, slug: null },
     { label: t.nav.renderflow, href: "/projectflow", icon: <PushPin size={18} />, slug: "renderflow" },
     { label: t.nav.lists, href: "/listy", icon: <LocalMall size={18} />, slug: "listy" },
-    { label: "Wykonawcy", href: "/wykonawcy", icon: <Engineering size={18} />, slug: null },
+    { label: t.nav.contractors, href: "/wykonawcy", icon: <Engineering size={18} />, slug: null },
     { label: t.nav.tasks, href: "/zadania", icon: <CheckSquare size={18} />, slug: null },
     { label: t.nav.products, href: "/produkty", icon: <Package size={18} />, slug: "produkty" },
     { label: t.nav.calendar, href: "/kalendarz", icon: <CalendarDays size={18} />, slug: null },
@@ -140,7 +140,7 @@ export default function MobileMenu({ userName, logoUrl, hiddenModules = [], isTr
                   {item.label}
                   {"soon" in item && item.soon && (
                     <span className="absolute -top-2.5 -right-1 text-[8px] font-bold uppercase tracking-wide px-1 py-px rounded-full bg-primary/15 text-primary leading-none whitespace-nowrap">
-                      Wkrótce
+                      {t.common.soon}
                     </span>
                   )}
                 </span>
@@ -200,7 +200,7 @@ export default function MobileMenu({ userName, logoUrl, hiddenModules = [], isTr
                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-primary hover:bg-primary/10 transition-colors"
               >
                 <span className="w-5 flex items-center justify-center"><BookOpen size={18} /></span>
-                Jak zacząć?
+                {t.common.howToStart}
               </button>
             </>
           )}

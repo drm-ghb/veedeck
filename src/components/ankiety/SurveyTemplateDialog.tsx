@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { surveyTemplates } from "@/lib/surveyTemplates";
 import type { SurveySection, SurveyQuestion } from "./SurveyEditor";
+import { useT } from "@/lib/i18n";
 
 interface Props {
   open: boolean;
@@ -20,6 +21,7 @@ interface Props {
 }
 
 export default function SurveyTemplateDialog({ open, onClose, onApplied, surveyId }: Props) {
+  const t = useT();
   const [selected, setSelected] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -34,7 +36,7 @@ export default function SurveyTemplateDialog({ open, onClose, onApplied, surveyI
     setLoading(false);
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
-      toast.error(body.error ?? "Błąd zastosowania szablonu");
+      toast.error(body.error ?? t.ankiety.applyTemplateError);
       return;
     }
     const data = await res.json();
@@ -51,7 +53,7 @@ export default function SurveyTemplateDialog({ open, onClose, onApplied, surveyI
     <Dialog open={open} onOpenChange={(v) => { if (!loading && !v) onClose(); }}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Wybierz szablon</DialogTitle>
+          <DialogTitle>{t.ankiety.selectTemplate}</DialogTitle>
         </DialogHeader>
         <div className="space-y-3 py-1">
           {surveyTemplates.map((tpl) => (
@@ -70,7 +72,7 @@ export default function SurveyTemplateDialog({ open, onClose, onApplied, surveyI
                   <p className="text-xs text-muted-foreground mt-0.5">{tpl.description}</p>
                 </div>
                 <span className="text-xs text-muted-foreground flex-shrink-0 mt-0.5">
-                  {templateQuestionCount(tpl.id)} pytań
+                  {templateQuestionCount(tpl.id)} {t.ankiety.questionsCount}
                 </span>
               </div>
             </button>
@@ -78,10 +80,10 @@ export default function SurveyTemplateDialog({ open, onClose, onApplied, surveyI
         </div>
         <div className="flex gap-3 pt-2">
           <Button variant="outline" onClick={onClose} disabled={loading} className="flex-1">
-            Anuluj
+            {t.common.cancel}
           </Button>
           <Button onClick={handleApply} disabled={!selected || loading} className="flex-1">
-            {loading ? "Wczytywanie..." : "Zastosuj szablon"}
+            {loading ? t.common.loading : t.ankiety.applyTemplate}
           </Button>
         </div>
       </DialogContent>

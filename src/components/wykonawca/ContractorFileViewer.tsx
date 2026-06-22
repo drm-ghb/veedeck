@@ -11,6 +11,7 @@ import ContractorFileCommentPanel from "./ContractorFileCommentPanel";
 import PdfViewer from "@/components/render/PdfViewer";
 import { pusherClient } from "@/lib/pusher";
 import { toast } from "sonner";
+import { useT } from "@/lib/i18n";
 
 interface FileItem {
   id: string;
@@ -56,7 +57,7 @@ interface Props {
 }
 
 function formatDate(iso: string) {
-  return new Date(iso).toLocaleString("pl-PL", {
+  return new Date(iso).toLocaleString(undefined, {
     day: "2-digit",
     month: "2-digit",
     year: "2-digit",
@@ -104,6 +105,7 @@ export default function ContractorFileViewer({
   onClose,
   initialCommentsOpen = false,
 }: Props) {
+  const t = useT();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [index, setIndex] = useState(initialIndex);
@@ -377,7 +379,7 @@ export default function ContractorFileViewer({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ posX: pos.x, posY: pos.y }),
       });
-      if (!res.ok) toast.error("Nie udało się zapisać pozycji pinu");
+      if (!res.ok) toast.error(t.wykonawcy.pinSaveError);
     }
 
     document.addEventListener("mousemove", onMouseMove);
@@ -445,15 +447,15 @@ export default function ContractorFileViewer({
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        toast.error(data.error || "Błąd dodawania pinu");
+        toast.error(data.error || t.wykonawcy.pinAddError);
         return;
       }
       const created: PinComment = await res.json();
       setPins((prev) => prev.some((p) => p.id === created.id) ? prev : [...prev, created]);
       cancelPending();
-      toast.success("Pin dodany");
+      toast.success(t.wykonawcy.pinAdded);
     } catch {
-      toast.error("Błąd dodawania pinu");
+      toast.error(t.wykonawcy.pinAddError);
     } finally {
       setAddingPin(false);
     }
@@ -464,9 +466,9 @@ export default function ContractorFileViewer({
     if (res.ok) {
       setPins((prev) => prev.filter((p) => p.id !== pinId));
       setSelectedPinId(null);
-      toast.success("Pin usunięty");
+      toast.success(t.wykonawcy.pinDeleted);
     } else {
-      toast.error("Błąd usuwania pinu");
+      toast.error(t.wykonawcy.pinDeleteError);
     }
   }
 
@@ -483,7 +485,7 @@ export default function ContractorFileViewer({
       if (!res.ok) throw new Error();
       setPinReplyContent("");
     } catch {
-      toast.error("Błąd dodawania odpowiedzi");
+      toast.error(t.wykonawcy.replyError);
     } finally {
       setReplyingPin(false);
     }
@@ -501,7 +503,7 @@ export default function ContractorFileViewer({
       setPins((prev) => prev.map((p) => p.id === pinId ? { ...p, content: trimmed } : p));
       setEditingPinId(null);
     } else {
-      toast.error("Błąd edycji pinu");
+      toast.error(t.wykonawcy.pinEditError);
     }
   }
 
@@ -521,13 +523,13 @@ export default function ContractorFileViewer({
       );
       setEditingReplyId(null);
     } else {
-      toast.error("Błąd edycji odpowiedzi");
+      toast.error(t.wykonawcy.replyEditError);
     }
   }
 
   async function handleDeleteReply(pinId: string, replyId: string) {
     const res = await fetch(`/api/contractor-file-comments/${pinId}/replies/${replyId}`, { method: "DELETE" });
-    if (!res.ok) toast.error("Błąd usuwania odpowiedzi");
+    if (!res.ok) toast.error(t.wykonawcy.replyDeleteError);
   }
 
   function handlePinMouseEnter(id: string) {
@@ -607,14 +609,14 @@ export default function ContractorFileViewer({
                       ? "bg-primary text-primary-foreground border-primary"
                       : "border-transparent text-muted-foreground hover:bg-muted"
                   }`}
-                  title="Dodaj pin"
+                  title={t.wykonawcy.addPin}
                 >
                   <Pin size={14} />
-                  <span className="hidden sm:inline">Dodaj pin</span>
+                  <span className="hidden sm:inline">{t.wykonawcy.addPin}</span>
                 </button>
                 <button
                   onClick={() => setHidePins((v) => !v)}
-                  title={hidePins ? "Pokaż piny" : "Ukryj piny"}
+                  title={hidePins ? t.wykonawcy.showPins : t.wykonawcy.hidePins}
                   className={`flex items-center justify-center w-8 h-8 rounded-md border transition-colors ${
                     hidePins
                       ? "bg-primary text-primary-foreground border-primary"
@@ -637,10 +639,10 @@ export default function ContractorFileViewer({
                   ? "border-violet-400 text-violet-600 bg-violet-50 dark:bg-violet-950/30 dark:text-violet-400 dark:border-violet-700"
                   : "border-transparent text-muted-foreground hover:bg-muted"
               }`}
-              title="Komentarze"
+              title={t.wykonawcy.commentsTitle}
             >
               <MessageSquare size={14} />
-              <span className="hidden sm:inline">Komentarze</span>
+              <span className="hidden sm:inline">{t.wykonawcy.commentsTitle}</span>
               {(unread > 0 || total > 0) && (
                 <span className={`absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 text-[10px] font-bold rounded-full flex items-center justify-center leading-none ${
                   commentOpen
@@ -663,7 +665,7 @@ export default function ContractorFileViewer({
         <div className="hidden md:flex w-44 border-r bg-card flex-col flex-shrink-0 overflow-hidden">
           <div className="px-3 py-2.5 border-b flex-shrink-0">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-              Pliki ({files.length})
+              {t.wykonawcy.filesLabel} ({files.length})
             </p>
           </div>
           <div className="flex-1 overflow-y-auto p-2 space-y-1.5">
@@ -742,7 +744,7 @@ export default function ContractorFileViewer({
           {/* Pin mode cursor hint */}
           {pinMode && isImage && !pending && (
             <div className="absolute top-3 left-1/2 -translate-x-1/2 z-10 bg-primary/90 text-primary-foreground text-xs px-3 py-1.5 rounded-full shadow pointer-events-none select-none">
-              Kliknij na zdjęcie, aby dodać pin
+              {t.wykonawcy.clickToAddPin}
             </div>
           )}
 
@@ -766,7 +768,7 @@ export default function ContractorFileViewer({
                   <button
                     onClick={(e) => { e.stopPropagation(); setLightboxOpen(true); }}
                     className="absolute top-2 right-2 p-1.5 bg-black/40 hover:bg-black/60 text-white rounded-md transition-colors"
-                    title="Pełny ekran"
+                    title={t.wykonawcy.fullscreen}
                   >
                     <Maximize2 size={14} />
                   </button>
@@ -819,7 +821,7 @@ export default function ContractorFileViewer({
                           </p>
                           {pin.replies.length > 0 && (
                             <p className="text-xs text-muted-foreground mt-1.5">
-                              {pin.replies.length} {pin.replies.length === 1 ? "odpowiedź" : "odpowiedzi"}
+                              {pin.replies.length} {pin.replies.length === 1 ? t.wykonawcy.reply1 : t.wykonawcy.replyMany}
                             </p>
                           )}
                         </div>
@@ -851,7 +853,7 @@ export default function ContractorFileViewer({
                     onMouseDown={(e) => e.stopPropagation()}
                   >
                     <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Nowy pin</h3>
+                      <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t.wykonawcy.newPin}</h3>
                       <button onClick={cancelPending} className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
                         <X size={14} />
                       </button>
@@ -859,7 +861,7 @@ export default function ContractorFileViewer({
                     <Input
                       value={newPinTitle}
                       onChange={(e) => setNewPinTitle(e.target.value)}
-                      placeholder="Tytuł (opcjonalnie)"
+                      placeholder={t.wykonawcy.pinTitlePlaceholder}
                       className="mb-2 text-sm"
                       onKeyDown={(e) => { if (e.key === "Escape") cancelPending(); }}
                     />
@@ -867,7 +869,7 @@ export default function ContractorFileViewer({
                       <Textarea
                         value={newPinContent}
                         onChange={(e) => setNewPinContent(e.target.value)}
-                        placeholder="Opisz co wymaga zmiany..."
+                        placeholder={t.wykonawcy.pinContentPlaceholder}
                         className="text-sm resize-none pr-10 max-h-40 overflow-y-auto"
                         rows={3}
                         autoFocus
@@ -880,7 +882,7 @@ export default function ContractorFileViewer({
                         type="button"
                         disabled={addingPin}
                         onClick={newPinContent.trim() ? submitPin : undefined}
-                        title="Dodaj pin"
+                        title={t.wykonawcy.addPin}
                         className="absolute right-2 bottom-2 z-10 flex items-center justify-center w-8 h-8 rounded-md transition-colors text-muted-foreground hover:text-foreground disabled:opacity-40"
                       >
                         {addingPin ? (
@@ -926,7 +928,7 @@ export default function ContractorFileViewer({
                                   onClick={() => { setEditingPinId(selectedPin.id); setEditingPinText(selectedPin.content); setOpenPinMenu(false); }}
                                   className="w-full text-left px-3 py-2 text-xs hover:bg-muted flex items-center gap-2 transition-colors"
                                 >
-                                  <Edit2 size={12} className="text-muted-foreground" /> Edytuj
+                                  <Edit2 size={12} className="text-muted-foreground" /> {t.common.edit}
                                 </button>
                               )}
                               {(isDesigner || selectedPin.author === authorName) && (
@@ -934,7 +936,7 @@ export default function ContractorFileViewer({
                                   onClick={() => { deletePin(selectedPin.id); setOpenPinMenu(false); }}
                                   className="w-full text-left px-3 py-2 text-xs text-destructive hover:bg-destructive/10 flex items-center gap-2 transition-colors"
                                 >
-                                  <Trash2 size={12} /> Usuń pin
+                                  <Trash2 size={12} /> {t.wykonawcy.deletePin}
                                 </button>
                               )}
                             </div>
@@ -971,8 +973,8 @@ export default function ContractorFileViewer({
                               rows={2}
                             />
                             <div className="flex gap-1 justify-end">
-                              <button onClick={() => setEditingPinId(null)} className="px-2 py-1 text-xs text-gray-400 hover:text-gray-700 transition-colors">Anuluj</button>
-                              <button onClick={() => handleEditPin(selectedPin.id, editingPinText)} className="px-2 py-1 text-xs bg-primary text-primary-foreground rounded-lg hover:opacity-90">Zapisz</button>
+                              <button onClick={() => setEditingPinId(null)} className="px-2 py-1 text-xs text-gray-400 hover:text-gray-700 transition-colors">{t.common.cancel}</button>
+                              <button onClick={() => handleEditPin(selectedPin.id, editingPinText)} className="px-2 py-1 text-xs bg-primary text-primary-foreground rounded-lg hover:opacity-90">{t.common.save}</button>
                             </div>
                           </div>
                         ) : (
@@ -1021,8 +1023,8 @@ export default function ContractorFileViewer({
                                 rows={2}
                               />
                               <div className="flex gap-1 justify-end">
-                                <button onClick={() => setEditingReplyId(null)} className="px-2 py-1 text-xs text-gray-400 hover:text-gray-700 transition-colors">Anuluj</button>
-                                <button onClick={() => handleEditReply(selectedPin.id, r.id, editingReplyText)} className="px-2 py-1 text-xs bg-primary text-primary-foreground rounded-lg hover:opacity-90">Zapisz</button>
+                                <button onClick={() => setEditingReplyId(null)} className="px-2 py-1 text-xs text-gray-400 hover:text-gray-700 transition-colors">{t.common.cancel}</button>
+                                <button onClick={() => handleEditReply(selectedPin.id, r.id, editingReplyText)} className="px-2 py-1 text-xs bg-primary text-primary-foreground rounded-lg hover:opacity-90">{t.common.save}</button>
                               </div>
                             </div>
                           ) : (
@@ -1037,7 +1039,7 @@ export default function ContractorFileViewer({
                       <textarea
                         value={pinReplyContent}
                         onChange={(e) => setPinReplyContent(e.target.value)}
-                        placeholder="Odpowiedz..."
+                        placeholder={t.wykonawcy.replyPlaceholder}
                         rows={1}
                         style={{ height: "36px", overflowY: "hidden" }}
                         className="flex-1 min-h-9 px-3 py-2 text-sm resize-none rounded-xl bg-muted focus:outline-none max-h-32"
@@ -1105,11 +1107,11 @@ export default function ContractorFileViewer({
               onClick={() => { setPinMode((v) => !v); setPending(null); setSelectedPinId(null); }}
               className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md font-medium transition-colors ${pinMode ? "bg-white/20 text-white" : "bg-white text-black hover:bg-white/90"}`}
             >
-              <Pin size={14} /> {pinMode ? "Anuluj" : "Dodaj pin"}
+              <Pin size={14} /> {pinMode ? t.common.cancel : t.wykonawcy.addPin}
             </button>
             <button
               onClick={() => setHidePins((v) => !v)}
-              title={hidePins ? "Pokaż piny" : "Ukryj piny"}
+              title={hidePins ? t.wykonawcy.showPins : t.wykonawcy.hidePins}
               className={`p-2 rounded-md transition-colors ${hidePins ? "bg-white/20 text-white" : "text-white/60 hover:text-white hover:bg-white/10"}`}
             >
               <svg viewBox="0 0 24 24" className="w-[18px] h-[18px]" fill="currentColor"><path d="M16 9V4h1c.55 0 1-.45 1-1s-.45-1-1-1H7c-.55 0-1 .45-1 1s.45 1 1 1h1v5c0 1.66-1.34 3-3 3h10c-1.66 0-3-1.34-3-3zm-3 12v-6h-2v6c0 .55.45 1 1 1s1-.45 1-1z"/><path d="M3.51 3.51c-.39.39-.39 1.02 0 1.41l15.56 15.57c.39.39 1.02.39 1.41 0s.39-1.02 0-1.41L4.93 3.51c-.39-.39-1.02-.39-1.42 0z"/></svg>
@@ -1126,7 +1128,7 @@ export default function ContractorFileViewer({
         {/* Pin mode hint */}
         {pinMode && !pending && (
           <div className="absolute top-16 left-1/2 -translate-x-1/2 z-10 bg-primary/90 text-primary-foreground text-xs px-3 py-1.5 rounded-full shadow pointer-events-none select-none">
-            Kliknij na zdjęcie, aby dodać pin
+            {t.wykonawcy.clickToAddPin}
           </div>
         )}
 
@@ -1267,7 +1269,7 @@ export default function ContractorFileViewer({
                       <p className="text-sm text-foreground leading-snug line-clamp-3">{pin.title || pin.content}</p>
                       {pin.replies.length > 0 && (
                         <p className="text-xs text-muted-foreground mt-1.5">
-                          {pin.replies.length} {pin.replies.length === 1 ? "odpowiedź" : "odpowiedzi"}
+                          {pin.replies.length} {pin.replies.length === 1 ? t.wykonawcy.reply1 : t.wykonawcy.replyMany}
                         </p>
                       )}
                     </div>
@@ -1298,7 +1300,7 @@ export default function ContractorFileViewer({
             onMouseDown={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Nowy pin</h3>
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t.wykonawcy.newPin}</h3>
               <button onClick={cancelPending} className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
                 <X size={14} />
               </button>
@@ -1306,7 +1308,7 @@ export default function ContractorFileViewer({
             <Input
               value={newPinTitle}
               onChange={(e) => setNewPinTitle(e.target.value)}
-              placeholder="Tytuł (opcjonalnie)"
+              placeholder={t.wykonawcy.pinTitlePlaceholder}
               className="mb-2 text-sm"
               onKeyDown={(e) => { if (e.key === "Escape") cancelPending(); }}
             />
@@ -1314,7 +1316,7 @@ export default function ContractorFileViewer({
               <Textarea
                 value={newPinContent}
                 onChange={(e) => setNewPinContent(e.target.value)}
-                placeholder="Opisz co wymaga zmiany..."
+                placeholder={t.wykonawcy.pinContentPlaceholder}
                 className="text-sm resize-none pr-10 max-h-40 overflow-y-auto"
                 rows={3}
                 autoFocus
@@ -1327,7 +1329,7 @@ export default function ContractorFileViewer({
                 type="button"
                 disabled={addingPin}
                 onClick={newPinContent.trim() ? submitPin : undefined}
-                title="Dodaj pin"
+                title={t.wykonawcy.addPin}
                 className="absolute right-2 bottom-2 z-10 flex items-center justify-center w-8 h-8 rounded-md transition-colors text-muted-foreground hover:text-foreground disabled:opacity-40"
               >
                 {addingPin ? <Loader2 size={30} className="animate-spin" /> : <Send size={30} />}
@@ -1359,12 +1361,12 @@ export default function ContractorFileViewer({
                     <div className="absolute right-0 top-full mt-1 bg-popover border border-border rounded-xl shadow-lg z-[60] py-1 min-w-[130px]">
                       {selectedPin.author === authorName && (
                         <button onClick={() => { setEditingPinId(selectedPin.id); setEditingPinText(selectedPin.content); setOpenPinMenu(false); }} className="w-full text-left px-3 py-2 text-xs hover:bg-muted flex items-center gap-2 transition-colors">
-                          <Edit2 size={12} className="text-muted-foreground" /> Edytuj
+                          <Edit2 size={12} className="text-muted-foreground" /> {t.common.edit}
                         </button>
                       )}
                       {(isDesigner || selectedPin.author === authorName) && (
                         <button onClick={() => { deletePin(selectedPin.id); setOpenPinMenu(false); }} className="w-full text-left px-3 py-2 text-xs text-destructive hover:bg-destructive/10 flex items-center gap-2 transition-colors">
-                          <Trash2 size={12} /> Usuń pin
+                          <Trash2 size={12} /> {t.wykonawcy.deletePin}
                         </button>
                       )}
                     </div>
@@ -1397,7 +1399,7 @@ export default function ContractorFileViewer({
               <textarea
                 value={pinReplyContent}
                 onChange={(e) => setPinReplyContent(e.target.value)}
-                placeholder="Odpowiedz..."
+                placeholder={t.wykonawcy.replyPlaceholder}
                 rows={1}
                 style={{ height: "36px", overflowY: "hidden" }}
                 className="flex-1 min-h-9 px-3 py-2 text-sm resize-none rounded-xl bg-muted focus:outline-none max-h-32"

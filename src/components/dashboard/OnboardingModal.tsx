@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import { useT } from "@/lib/i18n";
 
 import {
   Users, PushPin, LocalMall, ChatBubble, Package,
@@ -18,97 +19,98 @@ interface Step {
   tip?: string;
 }
 
-const STEPS: Step[] = [
+const STORAGE_KEY = "onboarding-modal-v1";
+
+export default function OnboardingModal({ show }: { show: boolean }) {
+  const t = useT();
+  const pathname = usePathname();
+  const [step, setStep] = useState(0);
+  const [visible, setVisible] = useState(false);
+
+  const STEPS: Step[] = [
   {
     icon: Users,
-    title: "Klienci",
-    desc: "Punkt startowy platformy. Tu dodajesz klientów, których potem podpisujesz do projektów w ProjectFlow i list zakupowych.",
+    title: t.onboarding.clientsTitle,
+    desc: t.onboarding.clientsDesc,
     steps: [
-      'Przejdź do modułu Klienci i kliknij "Dodaj klienta"',
-      "Podaj imię, nazwisko i e-mail klienta",
-      "Opcjonalnie utwórz konto klienta — dostanie login do swojego panelu",
+      t.onboarding.clientsStep1,
+      t.onboarding.clientsStep2,
+      t.onboarding.clientsStep3,
     ],
   },
   {
     icon: PushPin,
-    title: "ProjectFlow — wizualizacje",
-    desc: "Udostępniaj wizualizacje i pliki projektu. Klient komentuje, akceptuje i śledzi zmiany w jednym miejscu.",
+    title: t.onboarding.projectFlowTitle,
+    desc: t.onboarding.projectFlowDesc,
     steps: [
-      "Utwórz projekt i przypisz istniejącego klienta",
-      "Dodaj pomieszczenia (np. Salon, Kuchnia)",
-      "W każdym pomieszczeniu wrzuć wizualizacje lub foldery",
+      t.onboarding.projectFlowStep1,
+      t.onboarding.projectFlowStep2,
+      t.onboarding.projectFlowStep3,
     ],
-    tip: "Nowego klienta możesz dodać bezpośrednio przy tworzeniu projektu.",
+    tip: t.onboarding.projectFlowTip,
   },
   {
     icon: LocalMall,
-    title: "Listy zakupowe",
-    desc: "Twórz zestawienia produktów, mebli i materiałów. Klient przegląda szczegóły, klika w linki sklepów i zatwierdza produkty.",
+    title: t.onboarding.listyTitle,
+    desc: t.onboarding.listyDesc,
     steps: [
-      "Utwórz listę i przypisz klienta",
-      "Dodaj sekcje (np. Salon, Sypialnia) i produkty w każdej sekcji",
-      "Udostępnij listę — klient zobaczy ją w swoim panelu",
+      t.onboarding.listyStep1,
+      t.onboarding.listyStep2,
+      t.onboarding.listyStep3,
     ],
-    tip: "Rozszerzenie veepick pozwala dodawać produkty ze sklepów jednym kliknięciem.",
+    tip: t.onboarding.listyTip,
   },
   {
     icon: ChatBubble,
-    title: "Dyskusje",
-    desc: "Wbudowany komunikator między Tobą a klientem. Wątek tworzy się automatycznie po dodaniu klienta — bez żadnej konfiguracji.",
+    title: t.onboarding.dyskusjeTitle,
+    desc: t.onboarding.dyskusjeDesc,
     steps: [
-      "Wątek powstaje automatycznie po dodaniu klienta",
-      "Piszesz wiadomości, wysyłasz zdjęcia i dokumenty",
-      "Klient odpowiada bezpośrednio ze swojego panelu",
+      t.onboarding.dyskusjeStep1,
+      t.onboarding.dyskusjeStep2,
+      t.onboarding.dyskusjeStep3,
     ],
   },
   {
     icon: Package,
-    title: "Produkty",
-    desc: "Twoja biblioteka często używanych mebli, oświetlenia i akcesoriów. Zapisz raz — wstawiaj do dowolnej listy zakupowej bez przepisywania.",
+    title: t.onboarding.produktyTitle,
+    desc: t.onboarding.produktyDesc,
     steps: [
-      "Dodaj produkty ręcznie lub przez rozszerzenie veepick",
-      "Otwórz listę zakupową i wstaw produkt z biblioteki",
-      "Wszystkie dane trafiają automatycznie",
+      t.onboarding.produktyStep1,
+      t.onboarding.produktyStep2,
+      t.onboarding.produktyStep3,
     ],
   },
   {
     icon: CalendarDays,
-    title: "Kalendarz",
-    desc: "Planuj spotkania z klientami, zadania i przypomnienia. Widok miesięczny, tygodniowy i dzienny.",
+    title: t.onboarding.kalendarTitle,
+    desc: t.onboarding.kalendarDesc,
     steps: [
-      "Dodaj wydarzenie, zadanie lub przypomnienie",
-      "Wybierz datę, godzinę i opcjonalnie zaproś uczestników",
-      "Śledź plan w wybranym widoku kalendarza",
+      t.onboarding.kalendarStep1,
+      t.onboarding.kalendarStep2,
+      t.onboarding.kalendarStep3,
     ],
   },
   {
     icon: NotebookText,
-    title: "Notatnik",
-    desc: "Zapisuj pomysły, notatki ze spotkań i szkice. Działa na komputerze, telefonie i tablecie.",
+    title: t.onboarding.notatnikTitle,
+    desc: t.onboarding.notatnikDesc,
     steps: [
-      "Utwórz notatkę i wpisz tekst lub narysuj szkic",
-      "Szkicownik działa na każdym urządzeniu — palcem lub rysorem",
-      "Archiwizuj nieaktualne notatki",
+      t.onboarding.notatnikStep1,
+      t.onboarding.notatnikStep2,
+      t.onboarding.notatnikStep3,
     ],
   },
   {
     icon: CheckSquare,
-    title: "Zadania",
-    desc: "Zarządzaj swoją pracą — twórz zadania powiązane z projektami, ustawiaj priorytety i śledź postęp w widoku listy lub kanban.",
+    title: t.onboarding.zadaniaTitle,
+    desc: t.onboarding.zadaniaDesc,
     steps: [
-      "Dodaj zadanie z tytułem, terminem i priorytetem",
-      "Przypisz do projektu i śledź statusy: Do zrobienia, W trakcie, Gotowe",
-      "Dodawaj podzadania dla złożonych działań",
+      t.onboarding.zadaniaStep1,
+      t.onboarding.zadaniaStep2,
+      t.onboarding.zadaniaStep3,
     ],
   },
-];
-
-const STORAGE_KEY = "onboarding-modal-v1";
-
-export default function OnboardingModal({ show }: { show: boolean }) {
-  const pathname = usePathname();
-  const [step, setStep] = useState(0);
-  const [visible, setVisible] = useState(false);
+  ];
 
   // Auto-show: only on /dashboard, only if not dismissed before
   useEffect(() => {
@@ -151,8 +153,8 @@ export default function OnboardingModal({ show }: { show: boolean }) {
         {/* Header */}
         <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-border">
           <div>
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Jak zacząć</p>
-            <p className="text-sm text-muted-foreground mt-0.5">Krok {step + 1} z {STEPS.length}</p>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t.onboarding.howToStart}</p>
+            <p className="text-sm text-muted-foreground mt-0.5">{t.onboarding.step} {step + 1} {t.onboarding.stepOf} {STEPS.length}</p>
           </div>
           <button
             onClick={dismiss}
@@ -194,7 +196,7 @@ export default function OnboardingModal({ show }: { show: boolean }) {
 
           {/* Steps */}
           <div>
-            <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-2">Jak to zrobić</p>
+            <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-2">{t.onboarding.howToDo}</p>
             <ul className="space-y-2">
               {current.steps.map((s, i) => (
                 <li key={i} className="flex items-start gap-2.5 text-sm text-foreground">
@@ -223,7 +225,7 @@ export default function OnboardingModal({ show }: { show: boolean }) {
               onClick={dismiss}
               className="text-sm text-muted-foreground hover:text-foreground transition-colors px-2 py-1.5"
             >
-              Pomiń
+              {t.onboarding.skip}
             </button>
             <div className="flex items-center gap-2">
               <button
@@ -232,7 +234,7 @@ export default function OnboardingModal({ show }: { show: boolean }) {
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border border-border text-foreground hover:bg-muted transition-colors disabled:opacity-30 disabled:pointer-events-none"
               >
                 <ChevronLeft size={15} />
-                Wstecz
+                {t.onboarding.back}
               </button>
               {isLast ? (
                 <button
@@ -240,14 +242,14 @@ export default function OnboardingModal({ show }: { show: boolean }) {
                   className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
                 >
                   <Check size={15} />
-                  Gotowe
+                  {t.onboarding.done}
                 </button>
               ) : (
                 <button
                   onClick={() => setStep(s => s + 1)}
                   className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
                 >
-                  Dalej
+                  {t.onboarding.next}
                   <ChevronRight size={15} />
                 </button>
               )}
@@ -260,7 +262,7 @@ export default function OnboardingModal({ show }: { show: boolean }) {
               className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors"
             >
               <BookOpen size={13} />
-              Zobacz pełną instrukcję
+              {t.onboarding.fullGuide}
             </Link>
           </div>
         </div>

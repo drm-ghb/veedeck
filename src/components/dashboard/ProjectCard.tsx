@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import ProjectMenu from "./ProjectMenu";
+import { useT } from "@/lib/i18n";
 
 interface ProjectCardProps {
   id: string;
@@ -39,6 +40,7 @@ export default function ProjectCard({
   hasClientAccounts = false,
   clientHasNoAccount = false,
 }: ProjectCardProps) {
+  const t = useT();
   const [warningOpen, setWarningOpen] = useState(false);
 
   function getShareUrl() {
@@ -53,13 +55,13 @@ export default function ProjectCard({
       return;
     }
     navigator.clipboard.writeText(getShareUrl());
-    toast.success("Link skopiowany do schowka");
+    toast.success(t.common.linkCopied);
   }
 
   function forceCopy() {
     navigator.clipboard.writeText(getShareUrl());
     setWarningOpen(false);
-    toast.success("Link skopiowany do schowka");
+    toast.success(t.common.linkCopied);
   }
 
   return (
@@ -73,7 +75,7 @@ export default function ProjectCard({
               {title}
             </CardTitle>
             <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.preventDefault()}>
-              <Badge variant="secondary">{renderCount} renderów</Badge>
+              <Badge variant="secondary">{renderCount} {t.projekty.renders}</Badge>
               <ProjectMenu
                 project={{ id, title, clientName, clientEmail, description, pinned }}
               />
@@ -82,7 +84,7 @@ export default function ProjectCard({
 
           <div className="flex flex-col gap-0.5 mt-1 min-h-[1.25rem]">
             <p className="text-sm text-gray-600 dark:text-gray-300 font-medium truncate">
-              {clientName ? `Klient: ${clientName}` : "\u00A0"}
+              {clientName ? `${t.projekty.colClient}: ${clientName}` : "\u00A0"}
             </p>
           </div>
 
@@ -91,18 +93,18 @@ export default function ProjectCard({
           </CardDescription>
 
           <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-            Utworzono: {new Date(createdAt).toLocaleDateString("pl-PL")}
+            {t.projekty.createdAt} {new Date(createdAt).toLocaleDateString()}
           </p>
         </CardHeader>
         <CardFooter className="flex gap-2 flex-wrap" onClick={(e) => e.preventDefault()}>
           <Button size="sm" variant="outline" onClick={copyShareLink}>
-            Skopiuj link
+            {t.common.copyLink}
           </Button>
           {clientHasNoAccount && clientName && (
             <Link href={`/klienci/${id}?tab=contacts`} onClick={(e) => e.stopPropagation()}>
               <Button size="sm" variant="ghost" className="gap-1.5 text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/30">
                 <KeyRound size={13} />
-                Brak konta
+                {t.projekty.noAccount}
               </Button>
             </Link>
           )}
@@ -115,17 +117,17 @@ export default function ProjectCard({
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <AlertTriangle size={18} className="text-amber-500" />
-              Moduł jest ukryty dla klienta
+              {t.common.moduleHiddenForClient}
             </DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            Moduł <strong>ProjectFlow</strong> jest oznaczony jako <strong>NIE WIDOCZNY</strong> dla klienta. Przed udostępnieniem linku zmień to w ustawieniach projektu.
+            {t.projekty.shareModuleHidden}
           </p>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setWarningOpen(false)}>Zamknij</Button>
+            <Button variant="outline" onClick={() => setWarningOpen(false)}>{t.common.close}</Button>
             <Button variant="ghost" className="gap-1.5" onClick={forceCopy}>
               <Check size={14} />
-              Mimo to skopiuj
+              {t.common.copyAnyway}
             </Button>
           </DialogFooter>
         </DialogContent>

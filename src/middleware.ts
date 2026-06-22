@@ -81,6 +81,29 @@ export default auth((req) => {
     }
   }
 
+  // --- Team member module access ---
+  const memberHiddenModules: string[] = (session?.user as any)?.memberHiddenModules ?? [];
+  if (memberHiddenModules.length > 0 && !pathname.startsWith("/api/")) {
+    const MODULE_ROUTES: Record<string, string> = {
+      renderflow: "/projectflow",
+      klienci: "/klienci",
+      listy: "/listy",
+      wykonawcy: "/wykonawcy",
+      zadania: "/zadania",
+      produkty: "/produkty",
+      kalendarz: "/kalendarz",
+      notatnik: "/notatnik",
+      dyskusje: "/dyskusje",
+      ankiety: "/ankiety",
+      veezard: "/veezard",
+    };
+    for (const [slug, route] of Object.entries(MODULE_ROUTES)) {
+      if (memberHiddenModules.includes(slug) && pathname.startsWith(route)) {
+        return NextResponse.redirect(new URL("/dashboard", req.url));
+      }
+    }
+  }
+
   // --- Regular user routes ---
 
   // Redirect to complete-profile if needsNameSetup

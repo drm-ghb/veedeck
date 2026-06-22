@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import { toast } from "sonner";
+import { useT } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -92,14 +93,15 @@ function getDateStatus(endDate: string | null, done: boolean): DateStatus {
 }
 
 function DateBadge({ startDate, endDate, done, variant = "pill" }: { startDate: string | null; endDate: string | null; done: boolean; variant?: "pill" | "plain" }) {
+  const t = useT();
   if (!startDate && !endDate) return null;
   const status = getDateStatus(endDate, done);
 
   const label = startDate && endDate
     ? `${formatDate(startDate)} — ${formatDate(endDate)}`
     : startDate
-    ? `od ${formatDate(startDate)}`
-    : `do ${formatDate(endDate)}`;
+    ? `${t.share.dateFrom} ${formatDate(startDate)}`
+    : `${t.share.dateTo} ${formatDate(endDate)}`;
 
   if (variant === "plain") {
     return (
@@ -169,6 +171,7 @@ function SortableItemRow({
   sectionDateRange?: { startDate: string | null; endDate: string | null };
   indented?: boolean;
 }) {
+  const t = useT();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: item.id,
     data: { type: "item", phaseId: item.phaseId },
@@ -226,10 +229,10 @@ function SortableItemRow({
           </span>
         )}
         <div className="w-24 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button onClick={() => onUpdate(item.id, { hidden: !item.hidden })} className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors" title={item.hidden ? "Pokaż klientowi" : "Ukryj przed klientem"}>
+          <button onClick={() => onUpdate(item.id, { hidden: !item.hidden })} className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors" title={item.hidden ? t.schedule.showClient : t.schedule.hideClient}>
             {item.hidden ? <EyeOff size={12} /> : <Eye size={12} />}
           </button>
-          <button onClick={() => onDelete(item.id)} className="p-1 rounded text-muted-foreground hover:text-red-500 hover:bg-muted transition-colors" title="Usuń">
+          <button onClick={() => onDelete(item.id)} className="p-1 rounded text-muted-foreground hover:text-red-500 hover:bg-muted transition-colors" title={t.schedule.deleteItem}>
             <Trash2 size={12} />
           </button>
         </div>
@@ -281,13 +284,13 @@ function SortableItemRow({
             <textarea
               value={descVal}
               onChange={(e) => setDescVal(e.target.value)}
-              placeholder="Opis działania..."
+              placeholder={t.schedule.descriptionPlaceholder}
               rows={2}
               className="w-full text-xs px-2 py-1 border border-border rounded-md bg-background resize-none focus:outline-none focus:ring-1 focus:ring-primary/30"
             />
             <div className="flex gap-1">
-              <button onClick={saveDesc} className="text-xs text-green-600 hover:underline">Zapisz</button>
-              <button onClick={() => { setDescVal(item.description ?? ""); setShowDesc(false); }} className="text-xs text-muted-foreground hover:underline">Anuluj</button>
+              <button onClick={saveDesc} className="text-xs text-green-600 hover:underline">{t.common.save}</button>
+              <button onClick={() => { setDescVal(item.description ?? ""); setShowDesc(false); }} className="text-xs text-muted-foreground hover:underline">{t.common.cancel}</button>
             </div>
           </div>
         ) : item.description ? (
@@ -299,11 +302,11 @@ function SortableItemRow({
         {/* Date edit inline */}
         {editDates && (
           <div className="mt-2 flex flex-wrap items-center gap-2">
-            <DatePicker value={startDate} onChange={setStartDate} placeholder="Data od" />
+            <DatePicker value={startDate} onChange={setStartDate} placeholder={t.schedule.startDatePlaceholder} />
             <span className="text-xs text-muted-foreground">—</span>
-            <DatePicker value={endDate} onChange={setEndDate} placeholder="Data do" />
-            <button onClick={saveDates} className="text-xs text-green-600 hover:underline">Zapisz</button>
-            <button onClick={() => { setStartDate(toDateStr(item.startDate)); setEndDate(toDateStr(item.endDate)); setEditDates(false); }} className="text-xs text-muted-foreground hover:underline">Anuluj</button>
+            <DatePicker value={endDate} onChange={setEndDate} placeholder={t.schedule.endDatePlaceholder} />
+            <button onClick={saveDates} className="text-xs text-green-600 hover:underline">{t.common.save}</button>
+            <button onClick={() => { setStartDate(toDateStr(item.startDate)); setEndDate(toDateStr(item.endDate)); setEditDates(false); }} className="text-xs text-muted-foreground hover:underline">{t.common.cancel}</button>
           </div>
         )}
 
@@ -319,23 +322,23 @@ function SortableItemRow({
       {/* Actions */}
       <div className="w-24 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
         {!editDates && !item.startDate && !item.endDate && (
-          <button onClick={() => setEditDates(true)} className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors" title="Ustaw daty">
+          <button onClick={() => setEditDates(true)} className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors" title={t.schedule.setDates}>
             <Pencil size={12} />
           </button>
         )}
         {!showDesc && !item.description && (
-          <button onClick={() => setShowDesc(true)} className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors" title="Dodaj opis">
+          <button onClick={() => setShowDesc(true)} className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors" title={t.schedule.addDescription}>
             <Plus size={12} />
           </button>
         )}
         <button
           onClick={() => onUpdate(item.id, { hidden: !item.hidden })}
           className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-          title={item.hidden ? "Pokaż klientowi" : "Ukryj przed klientem"}
+          title={item.hidden ? t.schedule.showClient : t.schedule.hideClient}
         >
           {item.hidden ? <EyeOff size={12} /> : <Eye size={12} />}
         </button>
-        <button onClick={() => onDelete(item.id)} className="p-1 rounded text-muted-foreground hover:text-red-500 hover:bg-muted transition-colors" title="Usuń">
+        <button onClick={() => onDelete(item.id)} className="p-1 rounded text-muted-foreground hover:text-red-500 hover:bg-muted transition-colors" title={t.common.delete}>
           <Trash2 size={12} />
         </button>
       </div>
@@ -360,6 +363,7 @@ function SortablePhaseRow({
   onUpdateItem: (id: string, data: Partial<ScheduleItem>) => void;
   onDeleteItem: (id: string) => void;
 }) {
+  const t = useT();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: phase.id,
     data: { type: "phase" },
@@ -413,7 +417,7 @@ function SortablePhaseRow({
         )}
         <button
           onClick={(e) => { e.stopPropagation(); onUpdatePhase(phase.id, { hidden: !phase.hidden }); }}
-          title={phase.hidden ? "Pokaż klientowi" : "Ukryj przed klientem"}
+          title={phase.hidden ? t.schedule.showClient : t.schedule.hideClient}
           className="p-1 rounded text-muted-foreground hover:text-foreground flex-shrink-0 transition-colors"
         >
           {phase.hidden ? <EyeOff size={13} /> : <Eye size={13} />}
@@ -421,7 +425,7 @@ function SortablePhaseRow({
         <button
           onClick={(e) => { e.stopPropagation(); onDeletePhase(phase.id); }}
           className="p-1 rounded text-muted-foreground hover:text-destructive flex-shrink-0 transition-colors"
-          title="Usuń harmonogram"
+          title={t.schedule.deleteSchedule}
         >
           <Trash2 size={13} />
         </button>
@@ -451,14 +455,14 @@ function SortablePhaseRow({
                 value={newItemName}
                 onChange={(e) => setNewItemName(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Escape") resetAddingItem(); }}
-                placeholder={addingItem === "section" ? "Nazwa etapu..." : "Nazwa działania..."}
+                placeholder={addingItem === "section" ? t.schedule.sectionNamePlaceholder : t.schedule.actionNamePlaceholder}
                 className="h-7 text-sm min-w-[160px] flex-1"
               />
               {addingItem === "item" && (
                 <>
-                  <DatePicker value={newItemStartDate} onChange={setNewItemStartDate} placeholder="Data od" />
+                  <DatePicker value={newItemStartDate} onChange={setNewItemStartDate} placeholder={t.schedule.startDatePlaceholder} />
                   <span className="text-xs text-muted-foreground">—</span>
-                  <DatePicker value={newItemEndDate} onChange={setNewItemEndDate} placeholder="Data do" />
+                  <DatePicker value={newItemEndDate} onChange={setNewItemEndDate} placeholder={t.schedule.endDatePlaceholder} />
                 </>
               )}
               <button
@@ -478,7 +482,7 @@ function SortablePhaseRow({
                 disabled={!newItemName.trim() || savingItem}
                 className="flex-shrink-0 text-sm font-medium text-primary hover:underline disabled:opacity-40"
               >
-                {savingItem ? <Loader2 size={13} className="animate-spin" /> : "Dodaj"}
+                {savingItem ? <Loader2 size={13} className="animate-spin" /> : t.schedule.add}
               </button>
               <button onClick={resetAddingItem} className="flex-shrink-0 text-muted-foreground">
                 <X size={14} />
@@ -487,10 +491,10 @@ function SortablePhaseRow({
           ) : (
             <div className="flex items-center gap-2 px-3 pt-1 pb-2">
               <Button variant="outline" size="sm" className="gap-1 h-7 text-xs" onClick={() => setAddingItem("section")}>
-                <Plus size={11} />Dodaj etap
+                <Plus size={11} />{t.schedule.addSection}
               </Button>
               <Button variant="outline" size="sm" className="gap-1 h-7 text-xs" onClick={() => setAddingItem("item")}>
-                <Plus size={11} />Dodaj działanie
+                <Plus size={11} />{t.schedule.addAction}
               </Button>
             </div>
           )}
@@ -511,17 +515,18 @@ function ExportDialog({
   onConfirm: (phaseId: string) => void;
   onClose: () => void;
 }) {
+  const t = useT();
   const [phaseId, setPhaseId] = useState(phases[0]?.id ?? "");
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
       <div className="bg-card border border-border rounded-2xl shadow-xl w-full max-w-sm mx-4 p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
-        <h2 className="font-semibold text-base">Eksport harmonogramu</h2>
+        <h2 className="font-semibold text-base">{t.schedule.exportTitle}</h2>
         {phases.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Brak harmonogramów do eksportu.</p>
+          <p className="text-sm text-muted-foreground">{t.schedule.noExportData}</p>
         ) : (
           <div className="space-y-2">
-            <label className="text-sm font-medium">Harmonogram</label>
+            <label className="text-sm font-medium">{t.schedule.newScheduleTitle}</label>
             <select
               value={phaseId}
               onChange={(e) => setPhaseId(e.target.value)}
@@ -534,10 +539,10 @@ function ExportDialog({
           </div>
         )}
         <div className="flex justify-end gap-2 pt-1">
-          <Button variant="outline" size="sm" onClick={onClose}>Anuluj</Button>
+          <Button variant="outline" size="sm" onClick={onClose}>{t.common.cancel}</Button>
           <Button size="sm" disabled={!phaseId} onClick={() => onConfirm(phaseId)}>
             <Download size={13} className="mr-1.5" />
-            Pobierz CSV
+            {t.schedule.downloadCsv}
           </Button>
         </div>
       </div>
@@ -556,18 +561,19 @@ function NewScheduleDialog({
   onConfirm: (rfProjectId: string, projectTitle: string) => void;
   onClose: () => void;
 }) {
+  const t = useT();
   const [rfProjectId, setRfProjectId] = useState(rfProjects[0]?.id ?? "");
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
       <div className="bg-card border border-border rounded-2xl shadow-xl w-full max-w-sm mx-4 p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
-        <h2 className="font-semibold text-base">Nowy harmonogram</h2>
+        <h2 className="font-semibold text-base">{t.schedule.newScheduleTitle}</h2>
 
         {rfProjects.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Brak projektów powiązanych z tym klientem.</p>
+          <p className="text-sm text-muted-foreground">{t.schedule.noLinkedProjects}</p>
         ) : (
           <div className="space-y-2">
-            <label className="text-sm font-medium">Projekt</label>
+            <label className="text-sm font-medium">{t.schedule.projectLabel}</label>
             <select
               value={rfProjectId}
               onChange={(e) => setRfProjectId(e.target.value)}
@@ -581,7 +587,7 @@ function NewScheduleDialog({
         )}
 
         <div className="flex justify-end gap-2 pt-1">
-          <Button variant="outline" size="sm" onClick={onClose}>Anuluj</Button>
+          <Button variant="outline" size="sm" onClick={onClose}>{t.common.cancel}</Button>
           <Button
             size="sm"
             disabled={!rfProjectId}
@@ -590,7 +596,7 @@ function NewScheduleDialog({
               if (project) onConfirm(project.id, project.title);
             }}
           >
-            Utwórz
+            {t.schedule.create}
           </Button>
         </div>
       </div>
@@ -601,6 +607,7 @@ function NewScheduleDialog({
 // ── Main component ─────────────────────────────────────────────────────────
 
 export function ScheduleTab({ clientId, projectId, scheduleSharedWithClient: initialShared }: Props) {
+  const t = useT();
   const [phases, setPhases] = useState<SchedulePhase[]>([]);
   const [rfProjects, setRfProjects] = useState<RfProject[]>([]);
   const [loading, setLoading] = useState(true);
@@ -644,7 +651,7 @@ export function ScheduleTab({ clientId, projectId, scheduleSharedWithClient: ini
     const phase = phases.find((p) => p.id === phaseId);
     if (!phase) return;
     setShowExportDialog(false);
-    const rows: string[][] = [["Etap", "Projekt RF", "Nazwa działania", "Opis", "Data od", "Data do", "Status"]];
+    const rows: string[][] = [[t.schedule.csvPhase, t.schedule.csvRfProject, t.schedule.csvItemName, t.schedule.csvDescription, t.schedule.csvStartDate, t.schedule.csvEndDate, t.schedule.csvStatus]];
     for (const item of phase.items) {
       rows.push([
         phase.name,
@@ -653,7 +660,7 @@ export function ScheduleTab({ clientId, projectId, scheduleSharedWithClient: ini
         item.description ?? "",
         item.startDate ? item.startDate.slice(0, 10) : "",
         item.endDate ? item.endDate.slice(0, 10) : "",
-        item.done ? "Ukończone" : "W toku",
+        item.done ? t.schedule.csvDone : t.schedule.csvInProgress,
       ]);
     }
     if (phase.items.length === 0) {
@@ -692,7 +699,7 @@ export function ScheduleTab({ clientId, projectId, scheduleSharedWithClient: ini
       for (const id of rfProjectIds) map[id] = newShared;
       return map;
     });
-    toast.success(newShared ? "Harmonogram udostępniony klientowi" : "Harmonogram ukryty dla klienta");
+    toast.success(newShared ? t.schedule.sharedSuccess : t.schedule.hiddenSuccess);
   }
 
   // ── Phase CRUD ─────────────────────────────────────────────────────────
@@ -704,7 +711,7 @@ export function ScheduleTab({ clientId, projectId, scheduleSharedWithClient: ini
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ clientId, name: projectTitle, rfProjectId: rfProjectId || undefined }),
     });
-    if (!res.ok) { const err = await res.json().catch(() => ({})); toast.error((err as any).error || `Błąd tworzenia harmonogramu (${res.status})`); return; }
+    if (!res.ok) { const err = await res.json().catch(() => ({})); toast.error((err as any).error || `${t.schedule.createError} (${res.status})`); return; }
     const phase = await res.json();
     setPhases((prev) => [...prev, phase]);
   }
@@ -716,13 +723,13 @@ export function ScheduleTab({ clientId, projectId, scheduleSharedWithClient: ini
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
-    if (!res.ok) { toast.error("Błąd zapisu etapu"); load(); }
+    if (!res.ok) { toast.error(t.schedule.phaseError); load(); }
   }
 
   async function handleDeletePhase(id: string) {
     setPhases((prev) => prev.filter((p) => p.id !== id));
     const res = await fetch(`/api/schedule/phases/${id}`, { method: "DELETE" });
-    if (!res.ok) { toast.error("Błąd usuwania etapu"); load(); }
+    if (!res.ok) { toast.error(t.schedule.phaseDeleteError); load(); }
   }
 
 
@@ -734,7 +741,7 @@ export function ScheduleTab({ clientId, projectId, scheduleSharedWithClient: ini
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name, startDate: startDate || undefined, endDate: endDate || undefined, isSection: isSection ?? false }),
     });
-    if (!res.ok) { toast.error("Błąd tworzenia działania"); return; }
+    if (!res.ok) { toast.error(t.schedule.itemCreateError); return; }
     const item = await res.json();
     setPhases((prev) => prev.map((p) => p.id === phaseId ? { ...p, items: [...p.items, item] } : p));
   }
@@ -749,13 +756,13 @@ export function ScheduleTab({ clientId, projectId, scheduleSharedWithClient: ini
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
-    if (!res.ok) { toast.error("Błąd zapisu działania"); load(); }
+    if (!res.ok) { toast.error(t.schedule.itemError); load(); }
   }
 
   async function handleDeleteItem(id: string) {
     setPhases((prev) => prev.map((p) => ({ ...p, items: p.items.filter((i) => i.id !== id) })));
     const res = await fetch(`/api/schedule/items/${id}`, { method: "DELETE" });
-    if (!res.ok) { toast.error("Błąd usuwania działania"); load(); }
+    if (!res.ok) { toast.error(t.schedule.itemDeleteError); load(); }
   }
 
   // ── DnD ───────────────────────────────────────────────────────────────
@@ -821,7 +828,7 @@ export function ScheduleTab({ clientId, projectId, scheduleSharedWithClient: ini
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ phaseId: targetPhaseId }),
-        }).catch(() => toast.error("Błąd przenoszenia działania"));
+        }).catch(() => toast.error(t.schedule.itemMoveError));
       }
     }
   }
@@ -832,7 +839,7 @@ export function ScheduleTab({ clientId, projectId, scheduleSharedWithClient: ini
     return (
       <div className="flex items-center justify-center py-16 text-muted-foreground gap-2">
         <Loader2 size={18} className="animate-spin" />
-        <span className="text-sm">Ładowanie harmonogramu...</span>
+        <span className="text-sm">{t.schedule.loading}</span>
       </div>
     );
   }
@@ -857,16 +864,16 @@ export function ScheduleTab({ clientId, projectId, scheduleSharedWithClient: ini
             }`}
           >
             <Users size={14} />
-            {allShared ? "Udostępniono klientowi" : "Udostępnij klientowi"}
+            {allShared ? t.schedule.sharedWithClient : t.schedule.shareWithClient}
           </button>
         )}
         <Button variant="outline" size="sm" onClick={() => setShowExportDialog(true)} className="gap-1.5">
           <Download size={13} />
-          Eksport CSV
+          {t.schedule.exportCsv}
         </Button>
         <Button onClick={() => setShowNewScheduleDialog(true)} size="sm" className="gap-1.5">
           <Plus size={13} />
-          Dodaj harmonogram
+          {t.schedule.addSchedule}
         </Button>
       </div>
 
@@ -891,7 +898,7 @@ export function ScheduleTab({ clientId, projectId, scheduleSharedWithClient: ini
       <div className="min-w-[520px]">
       {phases.length === 0 ? (
         <div className="bg-card border border-border border-dashed rounded-xl py-12 text-center">
-          <p className="text-sm text-muted-foreground">Brak harmonogramów — kliknij „Dodaj harmonogram" aby rozpocząć</p>
+          <p className="text-sm text-muted-foreground">{t.schedule.noSchedules}</p>
         </div>
       ) : (
         <DndContext

@@ -7,6 +7,7 @@ import {
   ShieldCheck, FolderOpen, KeyRound, Clock, Gift, Plus, Trash2, X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useT } from "@/lib/i18n";
 
 interface Discount {
   id: string;
@@ -47,6 +48,7 @@ export default function AdminUserDetailClient({
   user: User;
   currentUserId: string;
 }) {
+  const t = useT();
   const [user, setUser] = useState(initial);
   const router = useRouter();
 
@@ -70,16 +72,16 @@ export default function AdminUserDetailClient({
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   function trialLabel() {
-    if (user.isFree) return { text: "Darmowy dostęp", color: "text-emerald-400" };
-    if (user.subscription?.status === "active") return { text: `Subskrypcja: ${user.subscription.plan}`, color: "text-violet-400" };
-    if (!user.trialEndsAt) return { text: "Brak trialu", color: "text-white/30" };
+    if (user.isFree) return { text: t.admin.freeAccessTitle, color: "text-emerald-400" };
+    if (user.subscription?.status === "active") return { text: `${t.admin.subscriptionSection}: ${user.subscription.plan}`, color: "text-violet-400" };
+    if (!user.trialEndsAt) return { text: t.admin.noTrial, color: "text-white/30" };
     const days = Math.ceil((new Date(user.trialEndsAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-    if (days < 0) return { text: "Trial wygasł", color: "text-red-400" };
-    return { text: `Trial: ${days} dni`, color: days <= 5 ? "text-amber-400" : "text-white/60" };
+    if (days < 0) return { text: t.admin.trialExpired, color: "text-red-400" };
+    return { text: `${t.admin.trialSection}: ${days}d`, color: days <= 5 ? "text-amber-400" : "text-white/60" };
   }
 
   async function handleChangePassword() {
-    if (newPassword.length < 8) { toast.error("Hasło musi mieć minimum 8 znaków"); return; }
+    if (newPassword.length < 8) { toast.error(t.admin.passwordMinLength); return; }
     setSavingPassword(true);
     const res = await fetch(`/api/admin/users/${user.id}`, {
       method: "PATCH",
@@ -88,10 +90,10 @@ export default function AdminUserDetailClient({
     });
     setSavingPassword(false);
     if (res.ok) {
-      toast.success("Hasło zmienione");
+      toast.success(t.admin.passwordChanged);
       setNewPassword("");
     } else {
-      toast.error((await res.json()).error ?? "Błąd zmiany hasła");
+      toast.error((await res.json()).error ?? t.admin.passwordChangeError);
     }
   }
 
@@ -103,9 +105,9 @@ export default function AdminUserDetailClient({
     });
     if (res.ok) {
       setUser((u) => ({ ...u, isFree: !u.isFree }));
-      toast.success(!user.isFree ? "Dostęp darmowy włączony" : "Dostęp darmowy wyłączony");
+      toast.success(!user.isFree ? t.admin.freeEnabled : t.admin.freeDisabled);
     } else {
-      toast.error("Błąd");
+      toast.error(t.admin.genericError);
     }
   }
 
@@ -122,15 +124,15 @@ export default function AdminUserDetailClient({
       const data = await res.json();
       setUser((u) => ({ ...u, trialEndsAt: data.trialEndsAt }));
       setExtraDays("");
-      toast.success("Trial zaktualizowany");
+      toast.success(t.admin.trialUpdated);
     } else {
-      toast.error("Błąd aktualizacji trialu");
+      toast.error(t.admin.trialUpdateError);
     }
   }
 
   async function handleAddDiscount() {
     const val = parseFloat(discountValue);
-    if (!val || val <= 0) { toast.error("Podaj wartość rabatu"); return; }
+    if (!val || val <= 0) { toast.error(t.admin.discountRequired); return; }
     setSavingDiscount(true);
     const res = await fetch(`/api/admin/users/${user.id}/discount`, {
       method: "POST",
@@ -148,9 +150,9 @@ export default function AdminUserDetailClient({
       const d = await res.json();
       setUser((u) => ({ ...u, discounts: [d, ...u.discounts] }));
       setDiscountValue(""); setDiscountFrom(""); setDiscountUntil(""); setDiscountNote("");
-      toast.success("Rabat dodany");
+      toast.success(t.admin.discountAdded);
     } else {
-      toast.error("Błąd dodawania rabatu");
+      toast.error(t.admin.discountError);
     }
   }
 
@@ -162,18 +164,18 @@ export default function AdminUserDetailClient({
     });
     if (res.ok) {
       setUser((u) => ({ ...u, discounts: u.discounts.filter((d) => d.id !== discountId) }));
-      toast.success("Rabat usunięty");
+      toast.success(t.admin.discountDeleted);
     }
   }
 
   async function handleDelete() {
     const res = await fetch(`/api/admin/users/${user.id}`, { method: "DELETE" });
     if (res.ok) {
-      toast.success("Użytkownik usunięty");
+      toast.success(t.admin.userDeleted);
       router.push("/admin/users");
       router.refresh();
     } else {
-      toast.error((await res.json()).error ?? "Błąd usuwania");
+      toast.error((await res.json()).error ?? t.admin.deleteError);
       setConfirmDelete(false);
     }
   }
@@ -188,25 +190,25 @@ export default function AdminUserDetailClient({
 
         {/* Basic info */}
         <section className="bg-white/3 border border-white/8 rounded-xl p-6">
-          <h2 className="text-xs font-semibold text-white/30 uppercase tracking-wide mb-4">Informacje</h2>
+          <h2 className="text-xs font-semibold text-white/30 uppercase tracking-wide mb-4">{t.admin.infoSection}</h2>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="text-xs text-white/30 mb-0.5">Imię i nazwisko</p>
+              <p className="text-xs text-white/30 mb-0.5">{t.admin.fullName}</p>
               <p className="text-sm text-white">{user.fullName ?? user.name ?? "—"}</p>
             </div>
             <div>
-              <p className="text-xs text-white/30 mb-0.5">E-mail</p>
+              <p className="text-xs text-white/30 mb-0.5">{t.admin.emailLabel}</p>
               <p className="text-sm text-white">{user.email}</p>
             </div>
             <div>
-              <p className="text-xs text-white/30 mb-0.5">Rola</p>
+              <p className="text-xs text-white/30 mb-0.5">{t.admin.roleLabel}</p>
               <div className="flex items-center gap-2 flex-wrap">
                 <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${
                   user.role === "client"
                     ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/20"
                     : "bg-violet-500/15 text-violet-400 border border-violet-500/20"
                 }`}>
-                  {user.role === "client" ? "Klient" : "Projektant"}
+                  {user.role === "client" ? t.admin.clientRole : t.admin.designerRole}
                 </span>
                 {user.isAdmin && (
                   <span className="flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-400 border border-blue-500/20">
@@ -214,25 +216,25 @@ export default function AdminUserDetailClient({
                   </span>
                 )}
                 {isSelf && (
-                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-white/8 text-white/40">Ty</span>
+                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-white/8 text-white/40">{t.admin.selfBadge}</span>
                 )}
               </div>
             </div>
             <div>
-              <p className="text-xs text-white/30 mb-0.5">Dołączył</p>
+              <p className="text-xs text-white/30 mb-0.5">{t.admin.joined}</p>
               <p className="text-sm text-white">
                 {new Date(user.createdAt).toLocaleDateString("pl-PL", { day: "2-digit", month: "long", year: "numeric" })}
               </p>
             </div>
             <div>
-              <p className="text-xs text-white/30 mb-0.5">Projekty</p>
+              <p className="text-xs text-white/30 mb-0.5">{t.admin.projects}</p>
               <p className="flex items-center gap-1.5 text-sm text-white">
                 <FolderOpen size={14} className="text-white/30" />
                 {user._count.projects}
               </p>
             </div>
             <div>
-              <p className="text-xs text-white/30 mb-0.5">Status dostępu</p>
+              <p className="text-xs text-white/30 mb-0.5">{t.admin.accessStatus}</p>
               <p className={`text-sm font-medium ${trialColor}`}>{trialText}</p>
             </div>
           </div>
@@ -241,14 +243,14 @@ export default function AdminUserDetailClient({
         {/* Subscription */}
         {user.subscription && (
           <section className="bg-white/3 border border-white/8 rounded-xl p-6">
-            <h2 className="text-xs font-semibold text-white/30 uppercase tracking-wide mb-4">Subskrypcja</h2>
+            <h2 className="text-xs font-semibold text-white/30 uppercase tracking-wide mb-4">{t.admin.subscriptionSection}</h2>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-xs text-white/30 mb-0.5">Plan</p>
+                <p className="text-xs text-white/30 mb-0.5">{t.admin.planLabel}</p>
                 <p className="text-sm text-white capitalize">{user.subscription.plan}</p>
               </div>
               <div>
-                <p className="text-xs text-white/30 mb-0.5">Status</p>
+                <p className="text-xs text-white/30 mb-0.5">{t.admin.statusLabel}</p>
                 <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${
                   user.subscription.status === "active"
                     ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/20"
@@ -259,7 +261,7 @@ export default function AdminUserDetailClient({
               </div>
               {user.subscription.billingName && (
                 <div>
-                  <p className="text-xs text-white/30 mb-0.5">Dane płatnika</p>
+                  <p className="text-xs text-white/30 mb-0.5">{t.admin.billingNameLabel}</p>
                   <p className="text-sm text-white">{user.subscription.billingName}</p>
                   {user.subscription.billingEmail && (
                     <p className="text-xs text-white/40">{user.subscription.billingEmail}</p>
@@ -268,7 +270,7 @@ export default function AdminUserDetailClient({
               )}
               {user.subscription.cardLast4 && (
                 <div>
-                  <p className="text-xs text-white/30 mb-0.5">Karta</p>
+                  <p className="text-xs text-white/30 mb-0.5">{t.admin.cardLabel}</p>
                   <p className="text-sm text-white">
                     {user.subscription.cardBrand} ···· {user.subscription.cardLast4}
                   </p>
@@ -280,10 +282,10 @@ export default function AdminUserDetailClient({
 
         {/* Discounts */}
         <section className="bg-white/3 border border-white/8 rounded-xl p-6">
-          <h2 className="text-xs font-semibold text-white/30 uppercase tracking-wide mb-4">Rabaty</h2>
+          <h2 className="text-xs font-semibold text-white/30 uppercase tracking-wide mb-4">{t.admin.discountsTitle}</h2>
 
           {user.discounts.length === 0 && (
-            <p className="text-sm text-white/20 mb-5">Brak aktywnych rabatów</p>
+            <p className="text-sm text-white/20 mb-5">{t.admin.noDiscounts}</p>
           )}
 
           {user.discounts.length > 0 && (
@@ -313,42 +315,42 @@ export default function AdminUserDetailClient({
 
           {/* Add discount form */}
           <div className="space-y-3 pt-4 border-t border-white/6">
-            <p className="text-xs text-white/30 font-medium uppercase tracking-wide">Dodaj rabat</p>
+            <p className="text-xs text-white/30 font-medium uppercase tracking-wide">{t.admin.addDiscount}</p>
             <div className="flex gap-2">
               <button
                 onClick={() => setDiscountType("percent")}
                 className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors ${discountType === "percent" ? "bg-violet-600/20 border-violet-500/40 text-violet-300" : "bg-white/5 border-white/10 text-white/40 hover:text-white/60"}`}
               >
-                Procentowy
+                {t.admin.percentDiscount}
               </button>
               <button
                 onClick={() => setDiscountType("amount")}
                 className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors ${discountType === "amount" ? "bg-violet-600/20 border-violet-500/40 text-violet-300" : "bg-white/5 border-white/10 text-white/40 hover:text-white/60"}`}
               >
-                Kwotowy (zł)
+                {t.admin.amountDiscount}
               </button>
             </div>
             <input
               type="number"
               value={discountValue}
               onChange={(e) => setDiscountValue(e.target.value)}
-              placeholder={discountType === "percent" ? "np. 20 (= 20%)" : "np. 30 (= 30 zł)"}
+              placeholder={discountType === "percent" ? t.admin.percentPlaceholder : t.admin.amountPlaceholder}
               className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/20 focus:outline-none focus:border-violet-500/40"
             />
             <div className="flex gap-2">
               <div className="flex-1">
-                <label className="block text-xs text-white/30 mb-1">Obowiązuje od</label>
+                <label className="block text-xs text-white/30 mb-1">{t.admin.validFrom}</label>
                 <input type="date" value={discountFrom} onChange={(e) => setDiscountFrom(e.target.value)} className="w-full px-3 py-2 text-sm rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-violet-500/40" />
               </div>
               <div className="flex-1">
-                <label className="block text-xs text-white/30 mb-1">Wygasa (opcjonalnie)</label>
+                <label className="block text-xs text-white/30 mb-1">{t.admin.validUntil}</label>
                 <input type="date" value={discountUntil} onChange={(e) => setDiscountUntil(e.target.value)} className="w-full px-3 py-2 text-sm rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-violet-500/40" />
               </div>
             </div>
             <input
               value={discountNote}
               onChange={(e) => setDiscountNote(e.target.value)}
-              placeholder="Notatka (opcjonalnie)"
+              placeholder={t.admin.notePlaceholder}
               className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/20 focus:outline-none focus:border-violet-500/40"
             />
             <div className="flex justify-end">
@@ -359,7 +361,7 @@ export default function AdminUserDetailClient({
                 disabled={savingDiscount || !discountValue}
               >
                 <Plus size={14} className="mr-1" />
-                {savingDiscount ? "Dodawanie..." : "Dodaj rabat"}
+                {savingDiscount ? t.admin.addingDiscount : t.admin.addDiscount}
               </Button>
             </div>
           </div>
@@ -372,12 +374,12 @@ export default function AdminUserDetailClient({
         {/* Trial / Free */}
         {user.role === "designer" && !user.isAdmin && (
           <section className="bg-white/3 border border-white/8 rounded-xl p-5">
-            <h2 className="text-xs font-semibold text-white/30 uppercase tracking-wide mb-4">Dostęp</h2>
+            <h2 className="text-xs font-semibold text-white/30 uppercase tracking-wide mb-4">{t.admin.accessSection}</h2>
 
             <div className="flex items-center justify-between py-3 border-b border-white/6">
               <div>
-                <p className="text-sm text-white font-medium">Darmowy dostęp</p>
-                <p className="text-xs text-white/30 mt-0.5">Bezterminowy, bez trialu</p>
+                <p className="text-sm text-white font-medium">{t.admin.freeAccessTitle}</p>
+                <p className="text-xs text-white/30 mt-0.5">{t.admin.freeAccessDesc}</p>
               </div>
               <button
                 onClick={handleToggleFree}
@@ -388,20 +390,20 @@ export default function AdminUserDetailClient({
             </div>
 
             <div className="pt-3">
-              <p className="text-sm text-white font-medium mb-1">Trial</p>
+              <p className="text-sm text-white font-medium mb-1">{t.admin.trialSection}</p>
               {user.trialEndsAt ? (
                 <p className="text-xs text-white/40 mb-3">
-                  Kończy się: <span className="text-white/70">{new Date(user.trialEndsAt).toLocaleDateString("pl-PL", { day: "2-digit", month: "long", year: "numeric" })}</span>
+                  {t.admin.trialEnds} <span className="text-white/70">{new Date(user.trialEndsAt).toLocaleDateString("pl-PL", { day: "2-digit", month: "long", year: "numeric" })}</span>
                 </p>
               ) : (
-                <p className="text-xs text-white/30 mb-3">Brak ustawionego trialu</p>
+                <p className="text-xs text-white/30 mb-3">{t.admin.noTrialSet}</p>
               )}
               <div className="flex gap-2">
                 <input
                   type="number"
                   value={extraDays}
                   onChange={(e) => setExtraDays(e.target.value)}
-                  placeholder="Dni (ujemna = odejmij)"
+                  placeholder={t.admin.trialDaysInput}
                   className="flex-1 min-w-0 px-3 py-2 text-sm rounded-lg bg-white/5 border border-white/10 text-white placeholder-white/20 focus:outline-none focus:border-amber-500/40"
                 />
                 <Button
@@ -419,13 +421,13 @@ export default function AdminUserDetailClient({
 
         {/* Change password */}
         <section className="bg-white/3 border border-white/8 rounded-xl p-5">
-          <h2 className="text-xs font-semibold text-white/30 uppercase tracking-wide mb-4">Zmień hasło</h2>
+          <h2 className="text-xs font-semibold text-white/30 uppercase tracking-wide mb-4">{t.admin.changePassword}</h2>
           <input
             type="password"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleChangePassword()}
-            placeholder="Nowe hasło (min. 8 znaków)"
+            placeholder={t.admin.passwordPlaceholder}
             className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/20 focus:outline-none focus:border-blue-500/40 mb-3"
           />
           <Button
@@ -435,14 +437,14 @@ export default function AdminUserDetailClient({
             disabled={savingPassword || newPassword.length < 8}
           >
             <KeyRound size={14} className="mr-1.5" />
-            {savingPassword ? "Zapisywanie..." : "Ustaw hasło"}
+            {savingPassword ? t.common.saving : t.admin.setPassword}
           </Button>
         </section>
 
         {/* Delete */}
         {!isSelf && (
           <section className="bg-white/3 border border-red-500/10 rounded-xl p-5">
-            <h2 className="text-xs font-semibold text-white/30 uppercase tracking-wide mb-4">Strefa niebezpieczna</h2>
+            <h2 className="text-xs font-semibold text-white/30 uppercase tracking-wide mb-4">{t.admin.dangerZone}</h2>
             {!confirmDelete ? (
               <Button
                 className="w-full bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-500/20"
@@ -450,19 +452,19 @@ export default function AdminUserDetailClient({
                 onClick={() => setConfirmDelete(true)}
               >
                 <Trash2 size={14} className="mr-1.5" />
-                Usuń konto
+                {t.admin.deleteAccount}
               </Button>
             ) : (
               <div>
                 <p className="text-xs text-white/50 mb-3">
-                  Na pewno usunąć konto <span className="text-white/80 font-medium">{user.email}</span>? Tej operacji nie można cofnąć.
+                  {t.admin.deleteAccountConfirm} <span className="text-white/80 font-medium">{user.email}</span>? {t.admin.deleteAccountSuffix}
                 </p>
                 <div className="flex gap-2">
                   <Button variant="ghost" size="sm" className="flex-1 text-white/40 hover:text-white/70" onClick={() => setConfirmDelete(false)}>
-                    Anuluj
+                    {t.common.cancel}
                   </Button>
                   <Button size="sm" className="flex-1 bg-red-600 hover:bg-red-500 text-white border-0" onClick={handleDelete}>
-                    Usuń
+                    {t.admin.deleteBtn}
                   </Button>
                 </div>
               </div>

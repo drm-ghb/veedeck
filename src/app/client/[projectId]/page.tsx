@@ -1379,6 +1379,8 @@ export default function ClientProjectPage() {
           onPaymentsClick={() => { setView("payments"); navigate({ view: "payments" }); }}
           showHarmonogram={project.scheduleSharedWithClient}
           onHarmonogramClick={() => { setView("schedule"); navigate({ view: "schedule" }); }}
+          showAnkiety={project.hasSurveys}
+          onAnkietyClick={openAnkiety}
           clientProjectId={projectId}
           activeView={view}
           currentUserId={currentUserId}

@@ -253,7 +253,7 @@ export default function ListyView({ lists: initialLists }: ListyViewProps) {
           <p className="text-gray-500 mt-1">
             {activeLists.length === 0
               ? t.listy.noLists
-              : `${activeLists.length} aktywna${activeLists.length === 1 ? "" : activeLists.length < 5 ? "" : ""}`}
+              : `${activeLists.length} ${t.listy.activeLabel}`}
           </p>
         </div>
         <NewListDialog />
@@ -312,7 +312,7 @@ export default function ListyView({ lists: initialLists }: ListyViewProps) {
           <div className={`relative sm:hidden w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-md border ${sort !== "newest" ? "border-gray-900 bg-gray-900" : "border-gray-200 bg-white dark:border-gray-700 dark:bg-card"}`}>
             <ArrowDownUp size={14} className={`pointer-events-none ${sort !== "newest" ? "text-white" : "text-gray-500"}`} />
             <select value={sort} onChange={(e) => setSort(e.target.value as SortOption)} className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" aria-label={t.common.sort}>
-              <option value="manual">Własne</option>
+              <option value="manual">{t.listy.sortManual}</option>
               <option value="newest">{t.common.newest}</option>
               <option value="oldest">{t.common.oldest}</option>
               <option value="az">{t.common.az}</option>
@@ -321,7 +321,7 @@ export default function ListyView({ lists: initialLists }: ListyViewProps) {
           </div>
 
           <select value={sort} onChange={(e) => setSort(e.target.value as SortOption)} className="hidden sm:block flex-shrink-0 text-xs border border-gray-200 dark:border-gray-700 rounded-md px-2 py-2 bg-white dark:bg-card text-gray-600 dark:text-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-300">
-            <option value="manual">Własne</option>
+            <option value="manual">{t.listy.sortManual}</option>
             <option value="newest">{t.common.newest}</option>
             <option value="oldest">{t.common.oldest}</option>
             <option value="az">{t.common.az}</option>
@@ -441,6 +441,7 @@ function SortableListGridCard({ list, unreadCount, onCopyLink, menu }: {
   onCopyLink: (l: ShoppingList) => void;
   menu: React.ReactNode;
 }) {
+  const t = useT();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: list.id });
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
   return (
@@ -466,10 +467,10 @@ function SortableListGridCard({ list, unreadCount, onCopyLink, menu }: {
           <p className="font-semibold text-sm text-foreground truncate">{list.name}</p>
           {list.project ? (
             <p className="text-xs text-muted-foreground truncate mt-0.5">
-              {list.project.clientName ? `Klient: ${list.project.clientName}` : list.project.title}
+              {list.project.clientName ? `${t.home.clientPrefix} ${list.project.clientName}` : list.project.title}
             </p>
           ) : (
-            <p className="text-xs text-muted-foreground/50 mt-0.5">Brak projektu</p>
+            <p className="text-xs text-muted-foreground/50 mt-0.5">{t.listy.noProject}</p>
           )}
         </div>
       </Link>
@@ -487,7 +488,7 @@ function SortableListGridCard({ list, unreadCount, onCopyLink, menu }: {
             className="flex items-center gap-1 px-1.5 py-0.5 rounded text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/30 text-[11px] font-medium transition-colors"
           >
             <KeyRound size={12} />
-            Brak konta
+            {t.projekty.noAccount}
           </Link>
         )}
         <button
@@ -510,6 +511,7 @@ function SortableListRowItem({ list, isLast, unreadCount, onNavigate, onCopyLink
   onCopyLink: (l: ShoppingList) => void;
   menu: React.ReactNode;
 }) {
+  const t = useT();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: list.id });
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
   return (
@@ -524,7 +526,7 @@ function SortableListRowItem({ list, isLast, unreadCount, onNavigate, onCopyLink
         {...listeners}
         onClick={(e) => e.stopPropagation()}
         className="text-muted-foreground hover:text-foreground cursor-grab active:cursor-grabbing flex-shrink-0"
-        title="Przeciągnij, aby zmienić kolejność"
+        title={t.projekty.dragToReorder}
       >
         <GripVertical size={15} />
       </div>
@@ -537,9 +539,9 @@ function SortableListRowItem({ list, isLast, unreadCount, onNavigate, onCopyLink
           <span className="font-semibold text-sm text-foreground truncate">{list.name}</span>
         </div>
         <div className="flex flex-col gap-0 mt-0.5">
-          {list.project && <span className="text-xs text-muted-foreground truncate">{list.project.clientName ? `Klient: ${list.project.clientName}` : list.project.title}</span>}
+          {list.project && <span className="text-xs text-muted-foreground truncate">{list.project.clientName ? `${t.home.clientPrefix} ${list.project.clientName}` : list.project.title}</span>}
           <span className="text-xs text-muted-foreground whitespace-nowrap">
-            Utworzono: {new Date(list.createdAt).toLocaleDateString("pl-PL", { day: "2-digit", month: "short", year: "numeric" })}
+            {t.listy.createdPrefix} {new Date(list.createdAt).toLocaleDateString("pl-PL", { day: "2-digit", month: "short", year: "numeric" })}
           </span>
         </div>
       </div>
@@ -557,7 +559,7 @@ function SortableListRowItem({ list, isLast, unreadCount, onNavigate, onCopyLink
             className="flex items-center gap-1 px-1.5 py-0.5 rounded text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/30 text-[11px] font-medium transition-colors"
           >
             <KeyRound size={12} />
-            Brak konta
+            {t.projekty.noAccount}
           </Link>
         )}
         <button

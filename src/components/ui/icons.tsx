@@ -136,6 +136,7 @@ export const EyeOff           = icon("visibility_off");
 export const Lock             = icon("lock");
 export const LockOpen         = icon("lock_open");
 export const ShieldCheck      = icon("verified_user");
+export const Shield           = icon("shield");
 export const KeyRound         = icon("key");
 
 // ── Chevrons / Arrows ─────────────────────────────────────────────────────

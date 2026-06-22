@@ -6,6 +6,7 @@ import { ChevronRight, Folder, Home, Loader2 } from "@/components/ui/icons";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useT, useLang } from "@/lib/i18n";
 
 interface FolderItem {
   id: string;
@@ -32,6 +33,8 @@ type Target =
 
 export default function BulkMoveDialog({ open, onOpenChange, ids, projectId, onSuccess }: BulkMoveDialogProps) {
   const router = useRouter();
+  const t = useT();
+  const lang = useLang();
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -44,9 +47,9 @@ export default function BulkMoveDialog({ open, onOpenChange, ids, projectId, onS
     fetch(`/api/rooms?projectId=${projectId}`)
       .then((r) => r.json())
       .then((data) => setRooms(Array.isArray(data) ? data : []))
-      .catch(() => toast.error("Błąd pobierania pomieszczeń"))
+      .catch(() => toast.error(t.render.fetchRoomsError))
       .finally(() => setLoading(false));
-  }, [open, projectId]);
+  }, [open, projectId, t]);
 
   async function handleMove() {
     if (!selected) return;
@@ -63,16 +66,20 @@ export default function BulkMoveDialog({ open, onOpenChange, ids, projectId, onS
         body: JSON.stringify({ ids, action: "move", ...body }),
       });
       if (!res.ok) throw new Error();
-      toast.success(`Przeniesiono ${ids.length} ${ids.length === 1 ? "plik" : ids.length < 5 ? "pliki" : "plików"}`);
+      toast.success(t.render.moveFilesSuccess);
       onOpenChange(false);
       onSuccess();
       router.refresh();
     } catch {
-      toast.error("Błąd przenoszenia");
+      toast.error(t.render.moveError);
     } finally {
       setSaving(false);
     }
   }
+
+  const fileCountLabel = lang === "pl"
+    ? `${ids.length} ${ids.length === 1 ? t.render.fileSingular : ids.length < 5 ? t.render.fileFew : t.render.fileMany}`
+    : `${ids.length} ${ids.length === 1 ? t.render.fileSingular : t.render.fileMany}`;
 
   const selectedLabel = selected
     ? selected.type === "folder"
@@ -84,11 +91,11 @@ export default function BulkMoveDialog({ open, onOpenChange, ids, projectId, onS
     <Dialog open={open} onOpenChange={(o) => { if (!saving) onOpenChange(o); }}>
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle>Przenieś {ids.length} {ids.length === 1 ? "plik" : ids.length < 5 ? "pliki" : "plików"}</DialogTitle>
+          <DialogTitle>{t.render.move} {fileCountLabel}</DialogTitle>
         </DialogHeader>
 
         <p className="text-xs text-muted-foreground -mt-1 mb-1">
-          Wybierz pomieszczenie lub folder docelowy.
+          {t.render.selectTargetLocation}
         </p>
 
         {loading ? (
@@ -140,7 +147,7 @@ export default function BulkMoveDialog({ open, onOpenChange, ids, projectId, onS
               );
             })}
             {rooms.length === 0 && (
-              <p className="text-sm text-muted-foreground text-center py-4">Brak pomieszczeń</p>
+              <p className="text-sm text-muted-foreground text-center py-4">{t.render.noRooms}</p>
             )}
           </div>
         )}
@@ -148,11 +155,11 @@ export default function BulkMoveDialog({ open, onOpenChange, ids, projectId, onS
         <DialogFooter showCloseButton>
           <Button onClick={handleMove} disabled={saving || !selected}>
             {saving ? (
-              <><Loader2 size={14} className="animate-spin" /> Przenoszenie…</>
+              <><Loader2 size={14} className="animate-spin" /> {t.render.moving}</>
             ) : selectedLabel ? (
-              `Przenieś do: ${selectedLabel}`
+              `${t.render.moveTo} ${selectedLabel}`
             ) : (
-              "Przenieś"
+              t.render.move
             )}
           </Button>
         </DialogFooter>

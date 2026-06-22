@@ -106,7 +106,7 @@ export default function ProductCommentPanel({
       setUploadingImage(false);
     },
     onUploadError: () => {
-      toast.error("Błąd przesyłania zdjęcia");
+      toast.error(t.products.imageUploadError);
       setUploadingImage(false);
     },
   });
@@ -382,8 +382,8 @@ export default function ProductCommentPanel({
                       className="px-2 py-1.5 text-sm border border-border rounded-lg bg-background focus:outline-none resize-none" rows={2}
                     />
                     <div className="flex gap-1 justify-end">
-                      <button onClick={() => item.type === "comment" ? setEditingCommentId(null) : setEditingReplyId(null)} className="px-2 py-1 text-xs text-muted-foreground hover:text-foreground rounded-lg border">Anuluj</button>
-                      <button onClick={() => item.type === "comment" ? handleEditComment(item.id, editingCommentText) : handleEditReply(item.commentId, item.id, editingReplyText)} className="px-2 py-1 text-xs bg-primary text-primary-foreground rounded-lg hover:opacity-90">Zapisz</button>
+                      <button onClick={() => item.type === "comment" ? setEditingCommentId(null) : setEditingReplyId(null)} className="px-2 py-1 text-xs text-muted-foreground hover:text-foreground rounded-lg border">{t.common.cancel}</button>
+                      <button onClick={() => item.type === "comment" ? handleEditComment(item.id, editingCommentText) : handleEditReply(item.commentId, item.id, editingReplyText)} className="px-2 py-1 text-xs bg-primary text-primary-foreground rounded-lg hover:opacity-90">{t.common.save}</button>
                     </div>
                   </div>
                 ) : (
@@ -396,7 +396,7 @@ export default function ProductCommentPanel({
                       {item.content !== "[zdjęcie]" && item.content}
                       {item.type === "comment" && item.imageUrl && (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={item.imageUrl} alt="zdjęcie" className="mt-1 max-w-[200px] max-h-[200px] rounded-lg object-cover cursor-pointer" onClick={() => window.open(item.imageUrl!, "_blank")} />
+                        <img src={item.imageUrl} alt={t.share.photoAlt} className="mt-1 max-w-[200px] max-h-[200px] rounded-lg object-cover cursor-pointer" onClick={() => window.open(item.imageUrl!, "_blank")} />
                       )}
                       {showHighlights && unread && (
                         <span className="ml-1.5 text-[9px] font-semibold opacity-70">{t.share.newBadge}</span>
@@ -409,7 +409,7 @@ export default function ProductCommentPanel({
                           setReplyingToComment({ id: replyToId, content: item.content, author: item.author });
                           textareaRef.current?.focus();
                         }}
-                        title="Odpowiedz"
+                        title={t.share.reply}
                         className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                       >
                         <CornerDownLeft size={13} />
@@ -432,7 +432,7 @@ export default function ProductCommentPanel({
                                 }}
                                 className="w-full text-left px-3 py-2 text-xs hover:bg-muted flex items-center gap-2 transition-colors"
                               >
-                                <Edit2 size={12} className="text-muted-foreground" /> Edytuj
+                                <Edit2 size={12} className="text-muted-foreground" /> {t.common.edit}
                               </button>
                               <button
                                 onClick={() => {
@@ -442,7 +442,7 @@ export default function ProductCommentPanel({
                                 }}
                                 className="w-full text-left px-3 py-2 text-xs text-destructive hover:bg-destructive/10 flex items-center gap-2 transition-colors"
                               >
-                                <Trash2 size={12} /> Usuń
+                                <Trash2 size={12} /> {t.common.delete}
                               </button>
                             </div>
                           )}
@@ -479,7 +479,7 @@ export default function ProductCommentPanel({
           <div className="flex items-start gap-2 mb-2">
             <div className="relative">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={pendingImageUrl} alt="podgląd" className="h-20 w-20 rounded-lg object-cover border" />
+              <img src={pendingImageUrl} alt={t.share.previewAlt} className="h-20 w-20 rounded-lg object-cover border" />
               <button
                 onClick={() => setPendingImageUrl(null)}
                 className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-gray-800 text-white flex items-center justify-center hover:bg-red-500 transition-colors"
@@ -510,7 +510,7 @@ export default function ProductCommentPanel({
               type="button"
               disabled={uploadingImage || sending}
               onClick={() => imageInputRef.current?.click()}
-              title="Dodaj zdjęcie"
+              title={t.render.addPhoto}
               className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-primary text-white transition-colors disabled:opacity-40 hover:opacity-90"
             >
               {uploadingImage ? (
@@ -533,7 +533,7 @@ export default function ProductCommentPanel({
               if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
               if (e.key === "Escape") setReplyingToComment(null);
             }}
-            placeholder="Napisz wiadomość..."
+            placeholder={t.wykonawcy.messagePlaceholder}
             rows={1}
             style={{ height: "40px", overflowY: "hidden" }}
             className="flex-1 min-h-10 max-h-40 px-3 py-2 text-sm resize-none rounded-2xl bg-muted focus:outline-none"

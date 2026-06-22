@@ -4,48 +4,12 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, Loader2 } from "@/components/ui/icons";
-
-const PLANS = [
-  {
-    id: "standard",
-    name: "Standard",
-    price: "99 zł / msc",
-    features: [
-      "Dostęp do wszystkich modułów",
-      "Bez limitu klientów i projektów",
-    ],
-    note: null,
-  },
-  {
-    id: "commercial",
-    name: "Commercial",
-    price: "149 zł / msc",
-    features: [
-      "Dostęp do wszystkich modułów",
-      "Bez limitu klientów i projektów",
-      "Do 5 członków zespołu za darmo",
-    ],
-    note: null,
-    recommended: true,
-  },
-  {
-    id: "enterprise",
-    name: "Enterprise",
-    price: "Wycena indywidualna",
-    features: [
-      "Dostęp do wszystkich modułów",
-      "Bez limitu klientów i projektów",
-      "Nielimitowana liczba członków zespołu",
-      "Indywidualne modyfikacje systemu",
-      "Tworzenie modułów na zamówienie",
-    ],
-    note: "enterprise",
-  },
-] as const;
+import { useT } from "@/lib/i18n";
 
 type PlanId = "standard" | "commercial" | "enterprise";
 
 export default function TrialExpiredClient() {
+  const t = useT();
   const [selectedPlan, setSelectedPlan] = useState<PlanId | null>(null);
   const [step, setStep] = useState<"plans" | "payment">("plans");
   const [cardName, setCardName] = useState("");
@@ -55,14 +19,51 @@ export default function TrialExpiredClient() {
   const [saving, setSaving] = useState(false);
   const router = useRouter();
 
+  const PLANS = [
+    {
+      id: "standard" as PlanId,
+      name: "Standard",
+      price: "99 zł / msc",
+      features: [
+        t.subscription.featureAllModules,
+        t.subscription.featureUnlimited,
+      ],
+      recommended: false,
+    },
+    {
+      id: "commercial" as PlanId,
+      name: "Commercial",
+      price: "149 zł / msc",
+      features: [
+        t.subscription.featureAllModules,
+        t.subscription.featureUnlimited,
+        t.subscription.featureTeam5,
+      ],
+      recommended: true,
+    },
+    {
+      id: "enterprise" as PlanId,
+      name: "Enterprise",
+      price: t.subscription.priceEnterprise,
+      features: [
+        t.subscription.featureAllModules,
+        t.subscription.featureUnlimited,
+        t.subscription.featureTeamUnlimited,
+        t.subscription.featureCustomMods,
+        t.subscription.featureCustomModules,
+      ],
+      recommended: false,
+    },
+  ];
+
   async function handleSubscribe() {
     if (!selectedPlan) return;
     if (selectedPlan === "enterprise") {
-      toast.info("Skontaktuj się z nami pod adresem kontakt@arcdeck.pl");
+      toast.info(t.subscription.contactUsToast);
       return;
     }
     if (!cardName || !cardNumber || !cardExpiry || !cardCvc) {
-      toast.error("Uzupełnij wszystkie dane karty");
+      toast.error(t.subscription.fillCardData);
       return;
     }
     setSaving(true);
@@ -78,10 +79,10 @@ export default function TrialExpiredClient() {
     });
     setSaving(false);
     if (res.ok) {
-      toast.success("Subskrypcja aktywowana!");
+      toast.success(t.subscription.activated);
       router.push("/");
     } else {
-      toast.error("Błąd aktywacji subskrypcji");
+      toast.error(t.subscription.activationError);
     }
   }
 
@@ -91,8 +92,8 @@ export default function TrialExpiredClient() {
   return (
     <div className="w-full max-w-4xl">
       <div className="text-center mb-10">
-        <h1 className="text-3xl font-bold mb-2" style={{ color: "#111" }}>Twój okres próbny wygasł</h1>
-        <p style={{ color: "#6b7280" }}>Wybierz plan subskrypcji, aby kontynuować korzystanie z systemu.</p>
+        <h1 className="text-3xl font-bold mb-2" style={{ color: "#111" }}>{t.subscription.trialExpiredTitle}</h1>
+        <p style={{ color: "#6b7280" }}>{t.subscription.trialExpiredDesc}</p>
       </div>
 
       {step === "plans" && (
@@ -110,9 +111,9 @@ export default function TrialExpiredClient() {
                 }}
                 className="relative text-left p-6 rounded-2xl transition-all hover:border-violet-300"
               >
-                {"recommended" in plan && plan.recommended && (
+                {plan.recommended && (
                   <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[11px] font-semibold px-3 py-0.5 rounded-full bg-violet-600 text-white whitespace-nowrap">
-                    Polecany
+                    {t.subscription.recommended}
                   </span>
                 )}
                 <h3 className="text-lg font-semibold mb-1" style={{ color: "#111" }}>{plan.name}</h3>
@@ -132,9 +133,9 @@ export default function TrialExpiredClient() {
           <div className="flex justify-center">
             <button
               onClick={() => {
-                if (!selectedPlan) { toast.error("Wybierz plan"); return; }
+                if (!selectedPlan) { toast.error(t.subscription.selectPlanError); return; }
                 if (selectedPlan === "enterprise") {
-                  toast.info("Skontaktuj się z nami pod adresem kontakt@arcdeck.pl");
+                  toast.info(t.subscription.contactUsToast);
                   return;
                 }
                 setStep("payment");
@@ -142,7 +143,7 @@ export default function TrialExpiredClient() {
               disabled={!selectedPlan}
               className="px-8 py-3 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-semibold disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
-              Dalej — dane płatności
+              {t.subscription.nextPayment}
             </button>
           </div>
         </>
@@ -152,22 +153,22 @@ export default function TrialExpiredClient() {
         <div className="max-w-md mx-auto rounded-2xl p-8" style={{ backgroundColor: "#fff", border: "1px solid #e5e7eb" }}>
           <div className="flex items-center gap-2 mb-6">
             <button onClick={() => setStep("plans")} className="text-sm text-violet-600 hover:text-violet-800 transition-colors">
-              ← Zmień plan
+              {t.subscription.changePlan}
             </button>
             <span className="text-sm ml-auto" style={{ color: "#6b7280" }}>
               Plan: <span className="text-violet-600 capitalize font-medium">{selectedPlan}</span>
             </span>
           </div>
 
-          <h2 className="text-lg font-semibold mb-5" style={{ color: "#111" }}>Dane karty płatniczej</h2>
+          <h2 className="text-lg font-semibold mb-5" style={{ color: "#111" }}>{t.subscription.cardDataTitle}</h2>
 
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-1" style={{ color: "#374151" }}>Imię i nazwisko na karcie</label>
+              <label className="block text-sm font-medium mb-1" style={{ color: "#374151" }}>{t.subscription.cardNameLabel}</label>
               <input value={cardName} onChange={(e) => setCardName(e.target.value)} placeholder="Jan Kowalski" className={inputCls} />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1" style={{ color: "#374151" }}>Numer karty</label>
+              <label className="block text-sm font-medium mb-1" style={{ color: "#374151" }}>{t.subscription.cardNumberLabel}</label>
               <input
                 value={cardNumber}
                 onChange={(e) => {
@@ -180,7 +181,7 @@ export default function TrialExpiredClient() {
             </div>
             <div className="flex gap-3">
               <div className="flex-1">
-                <label className="block text-sm font-medium mb-1" style={{ color: "#374151" }}>Ważna do</label>
+                <label className="block text-sm font-medium mb-1" style={{ color: "#374151" }}>{t.subscription.cardExpiryLabel}</label>
                 <input
                   value={cardExpiry}
                   onChange={(e) => {
@@ -192,7 +193,7 @@ export default function TrialExpiredClient() {
                 />
               </div>
               <div className="w-28">
-                <label className="block text-sm font-medium mb-1" style={{ color: "#374151" }}>CVC</label>
+                <label className="block text-sm font-medium mb-1" style={{ color: "#374151" }}>{t.subscription.cardCvcLabel}</label>
                 <input
                   value={cardCvc}
                   onChange={(e) => setCardCvc(e.target.value.replace(/\D/g, "").slice(0, 4))}
@@ -204,7 +205,7 @@ export default function TrialExpiredClient() {
           </div>
 
           <p className="text-xs mt-4 mb-6" style={{ color: "#9ca3af" }}>
-            Dane karty są przechowywane bezpiecznie. Płatność jest pobierana miesięcznie.
+            {t.subscription.cardSecurity}
           </p>
 
           <button
@@ -213,7 +214,7 @@ export default function TrialExpiredClient() {
             className="w-full py-3 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-semibold disabled:opacity-60 transition-colors flex items-center justify-center gap-2"
           >
             {saving && <Loader2 size={16} className="animate-spin" />}
-            Aktywuj subskrypcję
+            {t.subscription.activateBtn}
           </button>
         </div>
       )}

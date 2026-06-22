@@ -6,6 +6,7 @@ import { ChevronRight, Folder, Home, Loader2 } from "@/components/ui/icons";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useT } from "@/lib/i18n";
 
 interface Folder {
   id: string;
@@ -40,6 +41,7 @@ export default function MoveRenderDialog({
   currentFolderId,
 }: MoveRenderDialogProps) {
   const router = useRouter();
+  const t = useT();
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -52,7 +54,7 @@ export default function MoveRenderDialog({
     fetch(`/api/rooms?projectId=${projectId}`)
       .then((r) => r.json())
       .then((data) => setRooms(Array.isArray(data) ? data : []))
-      .catch(() => toast.error("Błąd pobierania pomieszczeń"))
+      .catch(() => toast.error(t.render.fetchRoomsError))
       .finally(() => setLoading(false));
   }, [open, projectId]);
 
@@ -78,11 +80,11 @@ export default function MoveRenderDialog({
         body: JSON.stringify(body),
       });
       if (!res.ok) throw new Error();
-      toast.success("Plik przeniesiony");
+      toast.success(t.render.fileMovedSuccess);
       onOpenChange(false);
       router.refresh();
     } catch {
-      toast.error("Błąd przenoszenia pliku");
+      toast.error(t.render.moveRenderError);
     } finally {
       setSaving(false);
     }
@@ -98,11 +100,11 @@ export default function MoveRenderDialog({
     <Dialog open={open} onOpenChange={(o) => { if (!saving) onOpenChange(o); }}>
       <DialogContent className="sm:max-w-sm" onClick={(e) => e.stopPropagation()}>
         <DialogHeader>
-          <DialogTitle>Przenieś plik</DialogTitle>
+          <DialogTitle>{t.render.moveRender}</DialogTitle>
         </DialogHeader>
 
         <p className="text-xs text-muted-foreground -mt-1 mb-1">
-          Wybierz pomieszczenie lub folder docelowy dla <span className="font-medium text-foreground">{render.name}</span>.
+          {t.render.selectTargetRoomForFile} <span className="font-medium text-foreground">{render.name}</span>.
         </p>
 
         {loading ? (
@@ -133,7 +135,7 @@ export default function MoveRenderDialog({
                   >
                     <Home size={14} className="flex-shrink-0" />
                     <span className="flex-1 font-medium truncate">{room.name}</span>
-                    {isCurrent && <span className="text-[10px] opacity-60">aktualne</span>}
+                    {isCurrent && <span className="text-[10px] opacity-60">{t.render.currentLocation}</span>}
                   </button>
 
                   {/* Folders */}
@@ -174,7 +176,7 @@ export default function MoveRenderDialog({
               );
             })}
             {rooms.length === 0 && (
-              <p className="text-sm text-muted-foreground text-center py-4">Brak pomieszczeń</p>
+              <p className="text-sm text-muted-foreground text-center py-4">{t.render.noRooms}</p>
             )}
           </div>
         )}
@@ -185,11 +187,11 @@ export default function MoveRenderDialog({
             disabled={saving || !selected || isCurrentLocation(selected)}
           >
             {saving ? (
-              <><Loader2 size={14} className="animate-spin" /> Przenoszenie…</>
+              <><Loader2 size={14} className="animate-spin" /> {t.render.moving}</>
             ) : selectedLabel ? (
-              `Przenieś do: ${selectedLabel}`
+              `${t.render.moveTo} ${selectedLabel}`
             ) : (
-              "Przenieś"
+              t.render.move
             )}
           </Button>
         </DialogFooter>

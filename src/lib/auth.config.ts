@@ -20,6 +20,7 @@ export const authConfig: NextAuthConfig = {
         (session.user as any).trialEndsAt = token.trialEndsAt ?? null;
         (session.user as any).isFree = token.isFree ?? false;
         (session.user as any).hasActiveSubscription = token.hasActiveSubscription ?? false;
+        (session.user as any).memberHiddenModules = (token.memberHiddenModules as string[]) ?? [];
       }
       return session;
     },

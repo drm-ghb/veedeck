@@ -60,7 +60,7 @@ export default function ProjectMenu({ project }: ProjectMenuProps) {
   }
 
   async function handleDelete() {
-    if (!confirm(`Usunąć projekt "${project.title}" z ProjectFlow?`)) return;
+    if (!confirm(t.projekty.confirmRemoveFromFlow.replace("{title}", project.title))) return;
     const res = await fetch(`/api/projects/${project.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },

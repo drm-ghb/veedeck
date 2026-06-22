@@ -2,17 +2,12 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { toast } from "sonner";
+import { useT } from "@/lib/i18n";
 import { X, Plus, Send, Check, Square, CheckSquare, Trash2, MoreVertical, ChevronLeft } from "@/components/ui/icons";
 import TaskSelectField, { TaskSelectOption } from "./TaskSelectField";
 import { TaskDescriptionEditor } from "./TaskDescriptionEditor";
 import DatePicker from "@/components/ui/DatePicker";
 
-
-const PRIORITY_OPTIONS: TaskSelectOption[] = [
-  { value: "LOW",    label: "Niski",  dot: "bg-gray-400" },
-  { value: "MEDIUM", label: "Średni", dot: "bg-yellow-400" },
-  { value: "HIGH",   label: "Wysoki", dot: "bg-red-500" },
-];
 
 interface User {
   id: string;
@@ -64,8 +59,6 @@ interface TaskDetailPanelProps {
   statusOptions?: TaskSelectOption[];
 }
 
-const PRIORITY_LABELS: Record<string, string> = { LOW: "Niski", MEDIUM: "Średni", HIGH: "Wysoki" };
-
 function userDisplayName(u: User | null) {
   if (!u) return "—";
   return u.fullName || u.name || u.email;
@@ -77,13 +70,21 @@ function userInitials(u: User | null) {
   return n.slice(0, 2).toUpperCase();
 }
 
-const DEFAULT_STATUS_OPTIONS: TaskSelectOption[] = [
-  { value: "TODO",        label: "Do zrobienia", dot: "#6b7280" },
-  { value: "IN_PROGRESS", label: "W trakcie",    dot: "#3b82f6" },
-  { value: "DONE",        label: "Zrobione",      dot: "#22c55e" },
-];
-
 export default function TaskDetailPanel({ task, onClose, onUpdated, isSubTask = false, parentTaskTitle, onBack, onOpenTask, statusOptions }: TaskDetailPanelProps) {
+  const t = useT();
+
+  const DEFAULT_STATUS_OPTIONS: TaskSelectOption[] = [
+    { value: "TODO",        label: t.tasks.statusTodo,       dot: "#6b7280" },
+    { value: "IN_PROGRESS", label: t.tasks.statusInProgress, dot: "#3b82f6" },
+    { value: "DONE",        label: t.tasks.statusDone,       dot: "#22c55e" },
+  ];
+
+  const PRIORITY_OPTIONS: TaskSelectOption[] = [
+    { value: "LOW",    label: t.tasks.priorityLow,    dot: "bg-gray-400" },
+    { value: "MEDIUM", label: t.tasks.priorityMedium, dot: "bg-yellow-400" },
+    { value: "HIGH",   label: t.tasks.priorityHigh,   dot: "bg-red-500" },
+  ];
+
   const resolvedStatusOptions = statusOptions ?? DEFAULT_STATUS_OPTIONS;
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description || "");
@@ -153,16 +154,16 @@ export default function TaskDetailPanel({ task, onClose, onUpdated, isSubTask = 
   }, [task.id]);
 
   const projectOptions = useMemo<TaskSelectOption[]>(() => [
-    { value: "", label: "Brak" },
+    { value: "", label: t.tasks.noProject },
     ...projects.map((p) => ({ value: p.id, label: p.title })),
-  ], [projects]);
+  ], [projects, t]);
 
   const assigneeOptions = useMemo<TaskSelectOption[]>(() => [
-    { value: "", label: "Nieprzypisane" },
+    { value: "", label: t.tasks.unassigned },
     ...members.map((m) => ({
       value: m.id,
       label: m.isSelf
-        ? `${userDisplayName(m)} (Ty)`
+        ? `${userDisplayName(m)} ${t.tasks.selfSuffix}`
         : userDisplayName(m),
       avatarUrl: m.avatarUrl ?? null,
       initials: userInitials(m),
@@ -179,9 +180,9 @@ export default function TaskDetailPanel({ task, onClose, onUpdated, isSubTask = 
       if (!res.ok) throw new Error();
       onUpdated();
     } catch {
-      toast.error("Błąd zapisu");
+      toast.error(t.tasks.saveError);
     }
-  }, [task.id, onUpdated]);
+  }, [task.id, onUpdated, t]);
 
   async function sendComment() {
     if (!commentBody.trim()) return;
@@ -197,7 +198,7 @@ export default function TaskDetailPanel({ task, onClose, onUpdated, isSubTask = 
       setComments((prev) => [...prev, comment]);
       setCommentBody("");
     } catch {
-      toast.error("Błąd wysyłania komentarza");
+      toast.error(t.tasks.commentError);
     } finally {
       setSendingComment(false);
     }
@@ -218,7 +219,7 @@ export default function TaskDetailPanel({ task, onClose, onUpdated, isSubTask = 
       setSubTaskInput("");
       onUpdated();
     } catch {
-      toast.error("Błąd tworzenia podzadania");
+      toast.error(t.tasks.subtaskError);
     } finally {
       setAddingSubTask(false);
     }
@@ -235,7 +236,7 @@ export default function TaskDetailPanel({ task, onClose, onUpdated, isSubTask = 
       setSubTasks((prev) => prev.map((s) => s.id === sub.id ? { ...s, status: newStatus } : s));
       onUpdated();
     } catch {
-      toast.error("Błąd zmiany statusu");
+      toast.error(t.tasks.statusChangeError);
     }
   }
 
@@ -245,11 +246,11 @@ export default function TaskDetailPanel({ task, onClose, onUpdated, isSubTask = 
     try {
       const res = await fetch(`/api/tasks/${task.id}`, { method: "DELETE" });
       if (!res.ok) throw new Error();
-      toast.success("Zadanie usunięte");
+      toast.success(t.tasks.taskDeleted);
       onClose();
       onUpdated();
     } catch {
-      toast.error("Błąd usuwania zadania");
+      toast.error(t.tasks.deleteTaskError);
     }
   }
 
@@ -265,14 +266,14 @@ export default function TaskDetailPanel({ task, onClose, onUpdated, isSubTask = 
               <button
                 onClick={onBack}
                 className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors shrink-0 mr-1"
-                title="Wróć do zadania nadrzędnego"
+                title={t.tasks.backToParent}
               >
                 <ChevronLeft size={14} />
                 <span className="max-w-[120px] truncate">{parentTaskTitle}</span>
               </button>
             )}
             <div className="min-w-0">
-              <h2 className="text-sm font-semibold">{isSubTask ? "Szczegóły podzadania" : "Szczegóły zadania"}</h2>
+              <h2 className="text-sm font-semibold">{isSubTask ? t.tasks.subtaskDetails : t.tasks.taskDetails}</h2>
               <span className="text-xs text-muted-foreground">
                 {userDisplayName(task.creator)} · {new Date(task.createdAt).toLocaleDateString("pl-PL")}
               </span>
@@ -295,7 +296,7 @@ export default function TaskDetailPanel({ task, onClose, onUpdated, isSubTask = 
                   className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors text-left"
                 >
                   <Trash2 size={14} />
-                  Usuń zadanie
+                  {t.tasks.deleteTask}
                 </button>
               </div>
             )}
@@ -305,7 +306,7 @@ export default function TaskDetailPanel({ task, onClose, onUpdated, isSubTask = 
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
           {/* Tytuł */}
           <div className="space-y-1">
-            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Tytuł</label>
+            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{t.tasks.titleLabel}</label>
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -316,7 +317,7 @@ export default function TaskDetailPanel({ task, onClose, onUpdated, isSubTask = 
 
           {/* Opis */}
           <div className="space-y-1">
-            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Opis</label>
+            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{t.tasks.descLabel}</label>
             <TaskDescriptionEditor
               content={description}
               contentKey={task.id}
@@ -328,7 +329,7 @@ export default function TaskDetailPanel({ task, onClose, onUpdated, isSubTask = 
           {/* Status + Priorytet */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Status</label>
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{t.tasks.statusLabel}</label>
               <TaskSelectField
                 value={status}
                 onChange={(v) => { setStatus(v); patch({ status: v }); }}
@@ -336,7 +337,7 @@ export default function TaskDetailPanel({ task, onClose, onUpdated, isSubTask = 
               />
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Priorytet</label>
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{t.tasks.priorityLabel}</label>
               <TaskSelectField
                 value={priority}
                 onChange={(v) => { setPriority(v); patch({ priority: v }); }}
@@ -348,7 +349,7 @@ export default function TaskDetailPanel({ task, onClose, onUpdated, isSubTask = 
           {/* Termin + Klient */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Termin</label>
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{t.tasks.dueDateLabel}</label>
               <DatePicker
                 value={dueDate}
                 onChange={(v) => { setDueDate(v); patch({ dueDate: v || null }); }}
@@ -356,24 +357,24 @@ export default function TaskDetailPanel({ task, onClose, onUpdated, isSubTask = 
               />
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Klient</label>
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{t.tasks.clientLabel}</label>
               <TaskSelectField
                 value={projectId}
                 onChange={(v) => { setProjectId(v); patch({ projectId: v || null }); }}
                 options={projectOptions}
-                placeholder="Brak"
+                placeholder={t.tasks.noProject}
               />
             </div>
           </div>
 
           {/* Przypisz do */}
           <div className="space-y-1">
-            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Przypisz do</label>
+            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{t.tasks.assigneeLabel}</label>
             <TaskSelectField
               value={assigneeId}
               onChange={(v) => { setAssigneeId(v); patch({ assigneeId: v || null }); }}
               options={assigneeOptions}
-              placeholder="Nieprzypisane"
+              placeholder={t.tasks.unassigned}
             />
           </div>
 
@@ -384,7 +385,7 @@ export default function TaskDetailPanel({ task, onClose, onUpdated, isSubTask = 
               className="flex items-center gap-2 text-sm font-medium w-full text-left"
             >
               <CheckSquare size={15} className="text-muted-foreground" />
-              Podzadania ({subTasks.length})
+              {t.tasks.subtasksLabel} ({subTasks.length})
             </button>
 
             {subTaskExpanded && (
@@ -411,7 +412,7 @@ export default function TaskDetailPanel({ task, onClose, onUpdated, isSubTask = 
                     value={subTaskInput}
                     onChange={(e) => setSubTaskInput(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && addSubTask()}
-                    placeholder="Dodaj podzadanie..."
+                    placeholder={t.tasks.addSubtaskPlaceholder}
                     className="flex-1 text-sm px-2 py-1 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
                   />
                   <button
@@ -428,7 +429,7 @@ export default function TaskDetailPanel({ task, onClose, onUpdated, isSubTask = 
 
           {/* Komentarze */}
           <div className="space-y-3 border-t border-border pt-4">
-            <p className="text-sm font-medium">Komentarze ({comments.length})</p>
+            <p className="text-sm font-medium">{t.tasks.commentsLabel} ({comments.length})</p>
 
             {comments.map((c) => (
               <div key={c.id} className="flex gap-3">
@@ -449,7 +450,7 @@ export default function TaskDetailPanel({ task, onClose, onUpdated, isSubTask = 
             ))}
 
             {comments.length === 0 && (
-              <p className="text-sm text-muted-foreground">Brak komentarzy.</p>
+              <p className="text-sm text-muted-foreground">{t.tasks.noComments}</p>
             )}
           </div>
         </div>
@@ -468,7 +469,7 @@ export default function TaskDetailPanel({ task, onClose, onUpdated, isSubTask = 
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendComment(); }
               }}
-              placeholder="Napisz komentarz... (Enter — wyślij, Shift+Enter — nowa linia)"
+              placeholder={t.tasks.commentPlaceholder}
               rows={1}
               className="flex-1 px-3 py-2 text-sm border border-border rounded-2xl bg-muted/40 focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none overflow-hidden min-h-[38px]"
               style={{ height: "38px" }}

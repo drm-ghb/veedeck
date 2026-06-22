@@ -12,6 +12,7 @@ import BulkMoveDialog from "./BulkMoveDialog";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useUploadThing } from "@/lib/uploadthing-client";
+import { useT } from "@/lib/i18n";
 
 type RenderStatus = "REVIEW" | "ACCEPTED";
 
@@ -40,6 +41,7 @@ const GRID_COLS_CLASS: Record<number, string> = {
 };
 
 export default function FolderRenderView({ projectId, roomId, folderId, renders }: FolderRenderViewProps) {
+  const t = useT();
   const [viewMode, setViewMode] = useViewPreference("renderflow-room", "grid");
   const [gridCols, setGridCols] = useGridCols("renderflow-room");
   const [gridOpen, setGridOpen] = useState(false);
@@ -112,10 +114,10 @@ prevRenderIdsRef.current = currentIds;
           body: JSON.stringify({ projectId, name, fileUrl: r.url, fileKey: r.key, roomId, folderId, fileType }),
         });
       }
-      toast.success(`Dodano ${results.length} plik${results.length === 1 ? "" : results.length < 5 ? "i" : "ów"}`);
+      toast.success(`${t.render.filesAddedPrefix} ${results.length} ${results.length === 1 ? t.render.fileSingular : results.length < 5 ? t.render.fileFew : t.render.fileMany}`);
       router.refresh();
     } catch {
-      toast.error("Nie udało się przesłać plików");
+      toast.error(t.render.filesUploadError);
     } finally {
       setIsUploading(false);
     }
@@ -135,7 +137,7 @@ prevRenderIdsRef.current = currentIds;
   }
 
   async function handleBulkAction(action: "archive" | "delete") {
-    if (action === "delete" && !confirm(`Usunąć ${selectedIds.size} ${selectedIds.size === 1 ? "plik" : "pliki/plików"}?`)) return;
+    if (action === "delete" && !confirm(t.render.confirmDeleteSelectedFiles)) return;
     setBulkLoading(true);
     try {
       const res = await fetch("/api/renders/bulk", {
@@ -144,11 +146,11 @@ prevRenderIdsRef.current = currentIds;
         body: JSON.stringify({ ids: Array.from(selectedIds), action }),
       });
       if (!res.ok) throw new Error();
-      toast.success(action === "archive" ? "Zarchiwizowano pliki" : "Usunięto pliki");
+      toast.success(action === "archive" ? t.render.filesArchived : t.render.filesDeleted);
       exitSelection();
       router.refresh();
     } catch {
-      toast.error("Błąd operacji");
+      toast.error(t.render.operationError);
     } finally {
       setBulkLoading(false);
     }
@@ -182,9 +184,9 @@ prevRenderIdsRef.current = currentIds;
           <Upload size={28} className="text-primary" />
         </div>
         <p className="text-base font-semibold text-primary">
-          {isUploading ? "Wgrywanie plików..." : "Upuść pliki, aby dodać do folderu"}
+          {isUploading ? t.render.uploadingFiles : t.render.dropFilesToFolder}
         </p>
-        <p className="text-xs text-muted-foreground">Obrazy i pliki PDF</p>
+        <p className="text-xs text-muted-foreground">{t.render.imagesAndPdfs}</p>
       </div>
     </div>
   );
@@ -193,8 +195,8 @@ prevRenderIdsRef.current = currentIds;
     return (
       <div className="relative min-h-[200px] text-center py-16 text-muted-foreground" {...dragProps}>
         {dropOverlay}
-        <p className="text-lg font-medium">Brak plików</p>
-        <p className="text-sm mt-1">Dodaj pierwszy plik klikając przycisk powyżej lub przeciągnij tutaj.</p>
+        <p className="text-lg font-medium">{t.render.noFiles}</p>
+        <p className="text-sm mt-1">{t.render.noFilesFolderHint}</p>
       </div>
     );
   }
@@ -205,7 +207,7 @@ prevRenderIdsRef.current = currentIds;
       <div className="flex justify-end items-center gap-2 mb-4">
         <button
           onClick={() => { setSelectionMode((v) => !v); setSelectedIds(new Set()); }}
-          title={selectionMode ? "Wyjdź z zaznaczania" : "Zaznacz pliki"}
+          title={selectionMode ? t.render.exitSelect : t.render.selectFiles}
           className={`relative p-1.5 rounded-md transition-colors ${selectionMode ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
         >
           <CopyCheck size={15} />
@@ -220,7 +222,7 @@ prevRenderIdsRef.current = currentIds;
             <button
               onClick={() => { setViewMode("grid"); setGridOpen((v) => !v); }}
               className={`p-1.5 rounded transition-colors ${viewMode === "grid" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
-              title="Układ siatki"
+              title={t.render.gridLayout}
             >
               <span className="inline-flex items-baseline gap-0.5">
                 <LayoutGrid size={15} />
@@ -235,7 +237,7 @@ prevRenderIdsRef.current = currentIds;
                     onClick={() => { setGridCols(n); setViewMode("grid"); setGridOpen(false); }}
                     className={`flex items-center justify-between w-full px-3 py-1.5 text-sm transition-colors hover:bg-muted ${gridCols === n && viewMode === "grid" ? "text-foreground font-medium" : "text-muted-foreground"}`}
                   >
-                    {n} kolumny
+                    {n} {t.render.columns}
                     {gridCols === n && viewMode === "grid" && <Check size={12} />}
                   </button>
                 ))}
@@ -286,7 +288,7 @@ prevRenderIdsRef.current = currentIds;
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-1.5">
                       <span className={`flex-shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${render.status === "ACCEPTED" ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"}`}>
-                        {render.status === "ACCEPTED" ? "Zaakceptowany" : "Do weryfikacji"}
+                        {render.status === "ACCEPTED" ? t.render.statusAccepted : t.render.statusReview}
                       </span>
                       {render.commentCount > 0 && <span className="text-xs text-muted-foreground flex items-center gap-1"><Pin size={11} />{render.commentCount}</span>}
                       <span className="text-xs text-muted-foreground flex items-center gap-1"><Eye size={11} />{render.viewCount}</span>
@@ -341,7 +343,7 @@ prevRenderIdsRef.current = currentIds;
                   </div>
                 </div>
                 <span className={`flex-shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${render.status === "ACCEPTED" ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"}`}>
-                  {render.status === "ACCEPTED" ? "Zaakceptowany" : "Do weryfikacji"}
+                  {render.status === "ACCEPTED" ? t.render.statusAccepted : t.render.statusReview}
                 </span>
                 {!selectionMode && (
                   <div className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" onClick={(e) => e.preventDefault()}>

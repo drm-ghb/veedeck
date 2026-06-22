@@ -2,6 +2,7 @@
 
 import { useRef, useState, useEffect } from "react";
 import { X, Pen, Square, Minus, RotateCcw, Send } from "@/components/ui/icons";
+import { useT } from "@/lib/i18n";
 
 type Tool = "pen" | "rect" | "arrow";
 const COLORS = ["#ef4444", "#f97316", "#22c55e", "#3b82f6", "#ffffff", "#111111"];
@@ -14,6 +15,7 @@ interface Props {
 }
 
 export default function ImageAnnotationModal({ imageUrl, onClose, onSend, sending }: Props) {
+  const t = useT();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [tool, setTool] = useState<Tool>("pen");
   const [color, setColor] = useState(COLORS[0]);
@@ -134,16 +136,16 @@ export default function ImageAnnotationModal({ imageUrl, onClose, onSend, sendin
       <div className="flex flex-col bg-background rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden" style={{ maxHeight: "90vh" }}>
         {/* Toolbar */}
         <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border flex-shrink-0 flex-wrap">
-          <span className="text-sm font-medium mr-1">Zaznacz:</span>
+          <span className="text-sm font-medium mr-1">{t.dyskusje.annotateLabel}</span>
           <div className="flex items-center gap-1">
-            {(["pen", "rect", "arrow"] as Tool[]).map((t) => (
+            {(["pen", "rect", "arrow"] as Tool[]).map((toolId) => (
               <button
-                key={t}
-                onClick={() => setTool(t)}
-                title={t === "pen" ? "Odręczny" : t === "rect" ? "Prostokąt" : "Strzałka"}
-                className={`p-1.5 rounded-lg transition-colors ${tool === t ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}
+                key={toolId}
+                onClick={() => setTool(toolId)}
+                title={toolId === "pen" ? t.dyskusje.annotatePen : toolId === "rect" ? t.dyskusje.annotateRect : t.dyskusje.annotateArrow}
+                className={`p-1.5 rounded-lg transition-colors ${tool === toolId ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}
               >
-                {t === "pen" ? <Pen size={14} /> : t === "rect" ? <Square size={14} /> : <Minus size={14} />}
+                {toolId === "pen" ? <Pen size={14} /> : toolId === "rect" ? <Square size={14} /> : <Minus size={14} />}
               </button>
             ))}
           </div>
@@ -166,7 +168,7 @@ export default function ImageAnnotationModal({ imageUrl, onClose, onSend, sendin
           <button
             onClick={undo}
             disabled={!canUndo}
-            title="Cofnij"
+            title={t.dyskusje.annotateUndo}
             className="p-1.5 rounded-lg text-muted-foreground hover:bg-muted disabled:opacity-40 transition-colors"
           >
             <RotateCcw size={14} />
@@ -192,7 +194,7 @@ export default function ImageAnnotationModal({ imageUrl, onClose, onSend, sendin
         {/* Footer */}
         <div className="flex items-center justify-end gap-2 px-4 py-2.5 border-t border-border flex-shrink-0">
           <button onClick={onClose} className="px-4 py-1.5 text-sm rounded-xl border border-border hover:bg-muted transition-colors">
-            Anuluj
+            {t.common.cancel}
           </button>
           <button
             onClick={handleSend}
@@ -200,7 +202,7 @@ export default function ImageAnnotationModal({ imageUrl, onClose, onSend, sendin
             className="flex items-center gap-1.5 px-4 py-1.5 text-sm bg-primary text-primary-foreground rounded-xl hover:opacity-90 disabled:opacity-40 transition-opacity"
           >
             <Send size={13} />
-            {sending ? "Wysyłanie..." : "Wyślij zaznaczone"}
+            {sending ? t.dyskusje.annotateSending : t.dyskusje.annotateSend}
           </button>
         </div>
       </div>

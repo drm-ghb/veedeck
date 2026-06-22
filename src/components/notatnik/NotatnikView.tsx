@@ -483,7 +483,7 @@ export default function NotatnikView({ initialNotes, initialArchivedNotes }: Pro
                 <div className="shrink-0 border-t border-border/60 px-6 py-3 max-h-44 overflow-y-auto">
                   <p className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1.5">
                     <Paperclip size={12} />
-                    Załączniki ({attachments.length})
+                    {t.notatnik.attachmentsLabel} ({attachments.length})
                   </p>
                   <ul className="space-y-1">
                     {attachments.map((a) => (
@@ -495,7 +495,7 @@ export default function NotatnikView({ initialNotes, initialArchivedNotes }: Pro
                           target="_blank"
                           rel="noopener noreferrer"
                           className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors opacity-0 group-hover:opacity-100"
-                          title="Otwórz"
+                          title={t.notatnik.openAttachment}
                         >
                           <ExternalLink size={13} />
                         </a>
@@ -503,7 +503,7 @@ export default function NotatnikView({ initialNotes, initialArchivedNotes }: Pro
                           href={a.url}
                           download={a.name}
                           className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors opacity-0 group-hover:opacity-100"
-                          title="Pobierz"
+                          title={t.notatnik.downloadAttachment}
                         >
                           <Download size={13} />
                         </a>
@@ -511,7 +511,7 @@ export default function NotatnikView({ initialNotes, initialArchivedNotes }: Pro
                           type="button"
                           onClick={() => handleDeleteAttachment(a.id)}
                           className="p-1 rounded text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors opacity-0 group-hover:opacity-100"
-                          title="Usuń załącznik"
+                          title={t.notatnik.deleteAttachment}
                         >
                           <X size={13} />
                         </button>

@@ -35,6 +35,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useUploadThing } from "@/lib/uploadthing-client";
+import { useT } from "@/lib/i18n";
 
 interface ClientDoc {
   id: string;
@@ -195,6 +196,7 @@ function FolderRow({
   onDocDelete: (id: string) => void;
   uploading: boolean;
 }) {
+  const t = useT();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: folder.id });
   const [editing, setEditing] = useState(false);
   const [editName, setEditName] = useState(folder.name);
@@ -258,7 +260,7 @@ function FolderRow({
           onClick={(e) => e.stopPropagation()}
         >
           <FilePickerButton
-            label="Dodaj plik"
+            label={t.documents.addFile}
             disabled={uploading}
             onFiles={(files) => onPickFiles(files, folder.id)}
           />
@@ -281,7 +283,7 @@ function FolderRow({
             ))}
           </SortableContext>
           {folder.docs.length === 0 && (
-            <div className="text-xs text-gray-400 px-3 py-2">Brak plików w folderze</div>
+            <div className="text-xs text-gray-400 px-3 py-2">{t.documents.noFilesInFolder}</div>
           )}
         </div>
       )}
@@ -291,6 +293,7 @@ function FolderRow({
 
 // ---- Main component ----
 export default function DocumentsTab({ clientId }: DocumentsTabProps) {
+  const t = useT();
   const [folders, setFolders] = useState<ClientDocFolder[]>([]);
   const [looseDocs, setLooseDocs] = useState<ClientDoc[]>([]);
   const [loading, setLoading] = useState(true);
@@ -322,7 +325,7 @@ export default function DocumentsTab({ clientId }: DocumentsTabProps) {
       setFolders(foldersData);
       setLooseDocs(allDocs.filter((d) => d.folderId === null));
     } catch {
-      toast.error("Błąd ładowania dokumentów");
+      toast.error(t.documents.loadError);
     } finally {
       setLoading(false);
     }
@@ -339,7 +342,7 @@ export default function DocumentsTab({ clientId }: DocumentsTabProps) {
     try {
       for (const file of files) {
         const uploaded = await startUpload([file]);
-        if (!uploaded?.[0]) throw new Error("Brak odpowiedzi z serwera");
+        if (!uploaded?.[0]) throw new Error(t.documents.noServerResponse);
         const u = uploaded[0];
         const res = await fetch("/api/client-docs/files", {
           method: "POST",
@@ -352,7 +355,7 @@ export default function DocumentsTab({ clientId }: DocumentsTabProps) {
             fileKey: u.key,
           }),
         });
-        if (!res.ok) throw new Error("Błąd zapisu pliku");
+        if (!res.ok) throw new Error(t.documents.saveError);
         created.push(await res.json());
       }
       if (folderId) {
@@ -362,7 +365,7 @@ export default function DocumentsTab({ clientId }: DocumentsTabProps) {
       } else {
         setLooseDocs((prev) => [...prev, ...created]);
       }
-      toast.success(`Dodano ${created.length} plik${created.length === 1 ? "" : created.length < 5 ? "i" : "ów"}`);
+      toast.success(`${t.documents.addedFile} ${created.length} ${created.length === 1 ? t.render.compareFileSingular : created.length < 5 ? t.render.compareFileFew : t.render.compareFileMany}`);
     } catch (err) {
       if (created.length > 0) {
         // Some files succeeded — update state with what we have
@@ -374,7 +377,7 @@ export default function DocumentsTab({ clientId }: DocumentsTabProps) {
           setLooseDocs((prev) => [...prev, ...created]);
         }
       }
-      toast.error(err instanceof Error ? err.message : "Błąd przesyłania pliku");
+      toast.error(err instanceof Error ? err.message : t.documents.uploadError);
     } finally {
       setUploading(false);
     }
@@ -426,7 +429,7 @@ export default function DocumentsTab({ clientId }: DocumentsTabProps) {
       setNewFolderName("");
       setAddingFolder(false);
     } catch {
-      toast.error("Błąd tworzenia folderu");
+      toast.error(t.documents.folderCreateError);
     }
   };
 
@@ -441,7 +444,7 @@ export default function DocumentsTab({ clientId }: DocumentsTabProps) {
       const updated: ClientDocFolder = await res.json();
       setFolders((prev) => prev.map((f) => (f.id === id ? { ...f, name: updated.name } : f)));
     } catch {
-      toast.error("Błąd zmiany nazwy folderu");
+      toast.error(t.documents.folderRenameError);
     }
   };
 
@@ -455,7 +458,7 @@ export default function DocumentsTab({ clientId }: DocumentsTabProps) {
       }
       setFolders((prev) => prev.filter((f) => f.id !== id));
     } catch {
-      toast.error("Błąd usuwania folderu");
+      toast.error(t.documents.folderDeleteError);
     }
   };
 
@@ -476,7 +479,7 @@ export default function DocumentsTab({ clientId }: DocumentsTabProps) {
       );
       setLooseDocs((prev) => prev.map((d) => (d.id === id ? { ...d, name: updated.name } : d)));
     } catch {
-      toast.error("Błąd zmiany nazwy pliku");
+      toast.error(t.documents.docRenameError);
     }
   };
 
@@ -489,7 +492,7 @@ export default function DocumentsTab({ clientId }: DocumentsTabProps) {
       );
       setLooseDocs((prev) => prev.filter((d) => d.id !== id));
     } catch {
-      toast.error("Błąd usuwania pliku");
+      toast.error(t.documents.docDeleteError);
     }
   };
 
@@ -632,7 +635,7 @@ export default function DocumentsTab({ clientId }: DocumentsTabProps) {
   const activeFolder = activeId ? findFolder(activeId) : null;
 
   if (loading) {
-    return <div className="flex items-center justify-center py-16 text-sm text-gray-400">Ładowanie...</div>;
+    return <div className="flex items-center justify-center py-16 text-sm text-gray-400">{t.documents.loading}</div>;
   }
 
   return (
@@ -649,10 +652,10 @@ export default function DocumentsTab({ clientId }: DocumentsTabProps) {
           <div className="flex flex-col items-center gap-3 px-10 py-8 rounded-2xl border-2 border-dashed border-primary bg-background/80 shadow-lg">
             <UploadIcon className="w-8 h-8 text-primary" />
             <p className="text-sm font-semibold text-primary">
-              {uploading ? "Wgrywanie plików..." : "Upuść pliki tutaj"}
+              {uploading ? t.documents.uploadingFiles : t.documents.dropFilesHere}
             </p>
             {!uploading && (
-              <p className="text-xs text-muted-foreground">Pliki zostaną dodane bez folderu</p>
+              <p className="text-xs text-muted-foreground">{t.documents.filesAddedWithoutFolder}</p>
             )}
           </div>
         </div>
@@ -665,7 +668,7 @@ export default function DocumentsTab({ clientId }: DocumentsTabProps) {
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Szukaj dokumentów..."
+            placeholder={t.documents.searchPlaceholder}
             className="w-full pl-8 pr-7 py-1.5 text-sm border rounded-md outline-none focus:ring-1 focus:ring-blue-400"
           />
           {search && (
@@ -680,10 +683,10 @@ export default function DocumentsTab({ clientId }: DocumentsTabProps) {
           className="flex items-center gap-1 text-sm px-3 py-1.5 rounded-md border hover:bg-gray-50 transition-colors"
         >
           <PlusIcon className="w-3.5 h-3.5" />
-          Nowy folder
+          {t.documents.newFolder}
         </button>
         <FilePickerButton
-          label={uploading ? "Wgrywanie..." : "Dodaj plik"}
+          label={uploading ? t.documents.uploading : t.documents.addFile}
           disabled={uploading}
           onFiles={(files) => handleUploadFiles(files, null)}
         />
@@ -700,16 +703,16 @@ export default function DocumentsTab({ clientId }: DocumentsTabProps) {
               if (e.key === "Enter") handleAddFolder();
               if (e.key === "Escape") { setAddingFolder(false); setNewFolderName(""); }
             }}
-            placeholder="Nazwa folderu..."
+            placeholder={t.documents.folderNamePlaceholder}
             className="flex-1 text-sm border-b border-blue-400 outline-none py-0.5"
             autoFocus
           />
-          <button onClick={handleAddFolder} className="text-sm text-blue-600 hover:underline">Zapisz</button>
+          <button onClick={handleAddFolder} className="text-sm text-blue-600 hover:underline">{t.documents.save}</button>
           <button
             onClick={() => { setAddingFolder(false); setNewFolderName(""); }}
             className="text-sm text-gray-400 hover:text-gray-600"
           >
-            Anuluj
+            {t.documents.cancel}
           </button>
         </div>
       )}
@@ -741,7 +744,7 @@ export default function DocumentsTab({ clientId }: DocumentsTabProps) {
         {visibleLoose.length > 0 && (
           <div className={folders.length > 0 ? "mt-3 border-t pt-3" : ""}>
             {folders.length > 0 && (
-              <div className="text-xs text-gray-400 px-3 mb-1">Pliki bez folderu</div>
+              <div className="text-xs text-gray-400 px-3 mb-1">{t.documents.filesWithoutFolder}</div>
             )}
             <SortableContext items={looseDocIds} strategy={verticalListSortingStrategy}>
               {visibleLoose.map((doc) => (
@@ -771,15 +774,15 @@ export default function DocumentsTab({ clientId }: DocumentsTabProps) {
       {folders.length === 0 && looseDocs.length === 0 && !addingFolder && (
         <div className="text-center py-12 text-gray-400">
           <UploadIcon className="w-10 h-10 mx-auto mb-3 text-gray-200" />
-          <p className="text-sm">Brak dokumentów</p>
-          <p className="text-xs mt-1">Dodaj folder, wgraj pliki lub przeciągnij je tutaj z komputera</p>
+          <p className="text-sm">{t.documents.empty}</p>
+          <p className="text-xs mt-1">{t.documents.emptyHint}</p>
         </div>
       )}
 
       {/* Drop hint at bottom when not empty */}
       {(folders.length > 0 || looseDocs.length > 0) && !isDragOver && !uploading && (
         <p className="text-xs text-gray-300 text-center pt-2">
-          Przeciągnij pliki z komputera, aby je dodać
+          {t.documents.dropHint}
         </p>
       )}
     </div>

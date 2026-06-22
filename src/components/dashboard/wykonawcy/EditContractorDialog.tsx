@@ -6,14 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
-const TRADE_OPTIONS = [
-  { value: "malarz", label: "Malarz" },
-  { value: "hydraulik", label: "Hydraulik" },
-  { value: "elektryk", label: "Elektryk" },
-  { value: "firma wykończeniowa", label: "Firma wykończeniowa" },
-  { value: "inne", label: "Inne" },
-];
+import { useT } from "@/lib/i18n";
 
 interface Props {
   open: boolean;
@@ -23,6 +16,14 @@ interface Props {
 }
 
 export default function EditContractorDialog({ open, onOpenChange, contractor, onUpdated }: Props) {
+  const t = useT();
+  const tradeOptions = [
+    { value: "malarz", label: t.wykonawcy.tradePainter },
+    { value: "hydraulik", label: t.wykonawcy.tradePlumber },
+    { value: "elektryk", label: t.wykonawcy.tradeElectrician },
+    { value: "firma wykończeniowa", label: t.wykonawcy.tradeFinishing },
+    { value: "inne", label: t.wykonawcy.tradeOther },
+  ];
   const [name, setName] = useState(contractor.name);
   const [company, setCompany] = useState(contractor.company ?? "");
   const [trade, setTrade] = useState(contractor.trade ?? "");
@@ -42,7 +43,7 @@ export default function EditContractorDialog({ open, onOpenChange, contractor, o
 
   async function handleSubmit() {
     if (!name.trim()) {
-      toast.error("Imię i nazwisko jest wymagane");
+      toast.error(t.wykonawcy.nameRequired);
       return;
     }
     setLoading(true);
@@ -54,10 +55,10 @@ export default function EditContractorDialog({ open, onOpenChange, contractor, o
       });
       if (!res.ok) {
         const data = await res.json();
-        toast.error(data.error ?? "Błąd podczas zapisywania");
+        toast.error(data.error ?? t.wykonawcy.saveError);
         return;
       }
-      toast.success("Zmiany zapisane");
+      toast.success(t.wykonawcy.changesSaved);
       onOpenChange(false);
       onUpdated();
     } finally {
@@ -69,45 +70,45 @@ export default function EditContractorDialog({ open, onOpenChange, contractor, o
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Edytuj wykonawcę</DialogTitle>
+          <DialogTitle>{t.wykonawcy.editTitle}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-2">
           <div className="space-y-1">
-            <Label>Imię i nazwisko *</Label>
+            <Label>{t.wykonawcy.labelNameRequired}</Label>
             <Input value={name} onChange={(e) => setName(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleSubmit()} />
           </div>
           <div className="space-y-1">
-            <Label>Firma</Label>
+            <Label>{t.wykonawcy.labelCompany}</Label>
             <Input value={company} onChange={(e) => setCompany(e.target.value)} />
           </div>
           <div className="space-y-1">
-            <Label>Specjalizacja</Label>
+            <Label>{t.wykonawcy.labelSpecialization}</Label>
             <select
               value={trade}
               onChange={(e) => setTrade(e.target.value)}
               className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
             >
-              <option value="">Wybierz specjalność</option>
-              {TRADE_OPTIONS.map((o) => (
+              <option value="">{t.wykonawcy.selectSpecialty}</option>
+              {tradeOptions.map((o) => (
                 <option key={o.value} value={o.value}>{o.label}</option>
               ))}
             </select>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <Label>Email</Label>
+              <Label>{t.wykonawcy.labelEmail}</Label>
               <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
             </div>
             <div className="space-y-1">
-              <Label>Telefon</Label>
+              <Label>{t.wykonawcy.labelPhone}</Label>
               <Input value={phone} onChange={(e) => setPhone(e.target.value)} />
             </div>
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Anuluj</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>{t.common.cancel}</Button>
           <Button onClick={handleSubmit} disabled={loading}>
-            {loading ? "Zapisywanie…" : "Zapisz"}
+            {loading ? t.wykonawcy.savingBtn : t.common.save}
           </Button>
         </DialogFooter>
       </DialogContent>

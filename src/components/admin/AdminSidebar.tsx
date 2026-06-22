@@ -4,11 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { Users, Activity, ShieldCheck, LogOut } from "lucide-react";
-
-const items = [
-  { href: "/admin/users", label: "Użytkownicy", icon: <Users size={15} /> },
-  { href: "/admin/logs", label: "Logi", icon: <Activity size={15} /> },
-];
+import { useT } from "@/lib/i18n";
 
 export default function AdminSidebar({
   email,
@@ -17,7 +13,12 @@ export default function AdminSidebar({
   email: string;
   name: string | null;
 }) {
+  const t = useT();
   const pathname = usePathname();
+  const items = [
+    { href: "/admin/users", label: t.admin.usersNav, icon: <Users size={15} /> },
+    { href: "/admin/logs", label: t.admin.logsNav, icon: <Activity size={15} /> },
+  ];
 
   return (
     <div className="w-56 shrink-0 flex flex-col bg-[#0a0a0a] border-r border-white/5">
@@ -71,7 +72,7 @@ export default function AdminSidebar({
           className="flex items-center gap-2 text-xs text-white/25 hover:text-white/60 transition-colors"
         >
           <LogOut size={13} />
-          Wyloguj się
+          {t.admin.signOut}
         </button>
       </div>
     </div>

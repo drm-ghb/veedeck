@@ -16,6 +16,7 @@ import {
 import { useUploadThing } from "@/lib/uploadthing-client";
 import Pusher from "pusher-js";
 import { toast } from "sonner";
+import { useT } from "@/lib/i18n";
 
 interface Assignment {
   id: string;
@@ -53,6 +54,7 @@ function formatTime(iso: string) {
 }
 
 export default function ContractorChatButton({ contractorUserId, assignments }: Props) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [selectedAssignmentId, setSelectedAssignmentId] = useState<string | null>(
     assignments.length === 1 ? assignments[0].id : null
@@ -233,7 +235,7 @@ export default function ContractorChatButton({ contractorUserId, assignments }: 
       setInput("");
       setPendingAttachment(null);
     } catch {
-      toast.error("Błąd wysyłania wiadomości");
+      toast.error(t.wykonawcy.chatSendError);
     } finally {
       setSending(false);
     }
@@ -257,7 +259,7 @@ export default function ContractorChatButton({ contractorUserId, assignments }: 
         });
       }
     } catch {
-      toast.error("Błąd przesyłania pliku");
+      toast.error(t.wykonawcy.chatUploadError);
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -279,10 +281,10 @@ export default function ContractorChatButton({ contractorUserId, assignments }: 
           const result = await startUpload([file]);
           if (result?.[0]) {
             const url = (result[0] as any).url ?? (result[0] as any).uniUrls;
-            setPendingAttachment({ url, name: "Wiadomość głosowa", type: "audio" });
+            setPendingAttachment({ url, name: t.wykonawcy.voiceMessage, type: "audio" });
           }
         } catch {
-          toast.error("Błąd uploadu nagrania");
+          toast.error(t.wykonawcy.recordingUploadError);
         } finally {
           setUploading(false);
         }
@@ -293,7 +295,7 @@ export default function ContractorChatButton({ contractorUserId, assignments }: 
       setRecordingSeconds(0);
       recordingTimerRef.current = setInterval(() => setRecordingSeconds((s) => s + 1), 1000);
     } catch {
-      toast.error("Brak dostępu do mikrofonu");
+      toast.error(t.wykonawcy.micError);
     }
   }
 
@@ -321,7 +323,7 @@ export default function ContractorChatButton({ contractorUserId, assignments }: 
         className="relative flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
       >
         <MessageSquare size={15} />
-        <span className="hidden sm:inline">Zapytaj projektanta</span>
+        <span className="hidden sm:inline">{t.wykonawcy.chatBtn}</span>
         {totalUnread > 0 && (
           <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-bold px-1 leading-none pointer-events-none">
             {totalUnread > 99 ? "99+" : totalUnread}
@@ -349,7 +351,7 @@ export default function ContractorChatButton({ contractorUserId, assignments }: 
               )}
               <MessageSquare size={15} className="text-primary shrink-0" />
               <span className="font-semibold text-sm flex-1 truncate">
-                {selectedAssignment ? selectedAssignment.projectTitle : "Zapytaj projektanta"}
+                {selectedAssignment ? selectedAssignment.projectTitle : t.wykonawcy.chatBtn}
               </span>
               <button onClick={() => setOpen(false)} className="text-muted-foreground hover:text-foreground">
                 <X size={16} />
@@ -359,7 +361,7 @@ export default function ContractorChatButton({ contractorUserId, assignments }: 
             {/* Assignment picker */}
             {assignments.length > 1 && !selectedAssignmentId ? (
               <div className="flex-1 overflow-y-auto p-3 space-y-2">
-                <p className="text-xs text-muted-foreground px-1 pb-1">Wybierz projekt</p>
+                <p className="text-xs text-muted-foreground px-1 pb-1">{t.wykonawcy.chatSelectProject}</p>
                 {assignments.map((a) => {
                   const unread = unreadCounts[a.id] ?? 0;
                   return (
@@ -389,7 +391,7 @@ export default function ContractorChatButton({ contractorUserId, assignments }: 
                   ) : currentMessages.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground gap-2 py-8">
                       <MessageSquare size={32} className="opacity-20" />
-                      <p className="text-sm">Napisz wiadomość do projektanta</p>
+                      <p className="text-sm">{t.wykonawcy.emptyChat}</p>
                     </div>
                   ) : (
                     currentMessages.map((msg, i) => {
@@ -412,7 +414,7 @@ export default function ContractorChatButton({ contractorUserId, assignments }: 
                               )}
                               {msg.attachmentType === "image" && msg.attachmentUrl && (
                                 <a href={msg.attachmentUrl} target="_blank" rel="noopener noreferrer">
-                                  <img src={msg.attachmentUrl} alt={msg.attachmentName ?? "Zdjęcie"} className="rounded-xl max-h-40 object-cover mb-1" />
+                                  <img src={msg.attachmentUrl} alt={msg.attachmentName ?? t.wykonawcy.photo} className="rounded-xl max-h-40 object-cover mb-1" />
                                 </a>
                               )}
                               {msg.attachmentType === "audio" && msg.attachmentUrl && (
@@ -421,7 +423,7 @@ export default function ContractorChatButton({ contractorUserId, assignments }: 
                               {(msg.attachmentType === "document" || msg.attachmentType === "pdf") && msg.attachmentUrl && (
                                 <a href={msg.attachmentUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-xs underline mb-1 opacity-80">
                                   <FileText size={12} />
-                                  {msg.attachmentName ?? "Plik"}
+                                  {msg.attachmentName ?? t.wykonawcy.file}
                                 </a>
                               )}
                               {msg.content && (
@@ -461,7 +463,7 @@ export default function ContractorChatButton({ contractorUserId, assignments }: 
                   {isRecording && (
                     <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-destructive/10 border border-destructive/20 text-sm text-destructive">
                       <span className="w-2 h-2 rounded-full bg-destructive animate-pulse flex-shrink-0" />
-                      <span className="flex-1 text-xs font-medium">Nagrywanie... {recLabel}</span>
+                      <span className="flex-1 text-xs font-medium">{t.wykonawcy.recording} {recLabel}</span>
                     </div>
                   )}
                   <div className="flex items-end gap-2">
@@ -484,7 +486,7 @@ export default function ContractorChatButton({ contractorUserId, assignments }: 
                       onClick={() => fileInputRef.current?.click()}
                       disabled={uploading || isRecording}
                       className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-primary text-white transition-colors disabled:opacity-40 hover:opacity-90"
-                      title="Załącz plik"
+                      title={t.wykonawcy.attachFile}
                     >
                       {uploading ? <Loader2 size={16} className="animate-spin" /> : <Paperclip size={16} />}
                     </button>
@@ -492,7 +494,7 @@ export default function ContractorChatButton({ contractorUserId, assignments }: 
                       onClick={() => cameraInputRef.current?.click()}
                       disabled={uploading || isRecording}
                       className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-primary text-white transition-colors disabled:opacity-40 hover:opacity-90"
-                      title="Zrób zdjęcie"
+                      title={t.wykonawcy.takePhoto}
                     >
                       <Camera size={16} />
                     </button>
@@ -505,7 +507,7 @@ export default function ContractorChatButton({ contractorUserId, assignments }: 
                         e.target.style.overflowY = e.target.scrollHeight > 160 ? "auto" : "hidden";
                       }}
                       onKeyDown={handleKeyDown}
-                      placeholder="Napisz wiadomość..."
+                      placeholder={t.wykonawcy.chatMessagePlaceholder}
                       rows={1}
                       style={{ height: "40px", overflowY: "hidden" }}
                       className="flex-1 min-h-10 max-h-40 px-3 py-2 text-sm resize-none rounded-2xl bg-muted focus:outline-none"

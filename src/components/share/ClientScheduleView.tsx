@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Check, ChevronDown, ChevronRight, Loader2 } from "@/components/ui/icons";
+import { useT } from "@/lib/i18n";
 
 interface RfProject {
   id: string;
@@ -47,14 +48,15 @@ function getDateStatus(endDate: string | null, done: boolean): DateStatus {
 }
 
 function DateBadge({ startDate, endDate, done, variant = "pill" }: { startDate: string | null; endDate: string | null; done: boolean; variant?: "pill" | "plain" }) {
+  const t = useT();
   if (!startDate && !endDate) return null;
   const status = getDateStatus(endDate, done);
 
   const label = startDate && endDate
     ? `${formatDate(startDate)} — ${formatDate(endDate)}`
     : startDate
-    ? `od ${formatDate(startDate)}`
-    : `do ${formatDate(endDate)}`;
+    ? `${t.share.dateFrom} ${formatDate(startDate)}`
+    : `${t.share.dateTo} ${formatDate(endDate)}`;
 
   if (variant === "plain") {
     return (
@@ -112,6 +114,7 @@ function computeSectionRanges(items: ScheduleItem[]): Map<string, { startDate: s
 // ── Phase card ────────────────────────────────────────────────────────────
 
 function PhaseCard({ phase }: { phase: SchedulePhase }) {
+  const t = useT();
   const [collapsed, setCollapsed] = useState(false);
 
   const doneCount = phase.items.filter((i) => !i.isSection && i.done).length;
@@ -208,7 +211,7 @@ function PhaseCard({ phase }: { phase: SchedulePhase }) {
 
       {!collapsed && phase.items.length === 0 && (
         <div className="border-t border-border px-4 py-3">
-          <p className="text-xs text-muted-foreground">Brak działań w tym etapie.</p>
+          <p className="text-xs text-muted-foreground">{t.share.scheduleNoItems}</p>
         </div>
       )}
     </div>
@@ -218,6 +221,7 @@ function PhaseCard({ phase }: { phase: SchedulePhase }) {
 // ── Main component ────────────────────────────────────────────────────────
 
 export default function ClientScheduleView({ projectId }: { projectId: string }) {
+  const t = useT();
   const [phases, setPhases] = useState<SchedulePhase[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -225,10 +229,10 @@ export default function ClientScheduleView({ projectId }: { projectId: string })
   useEffect(() => {
     fetch(`/api/client/${projectId}/schedule`)
       .then(async (res) => {
-        if (!res.ok) { setError("Brak dostępu do harmonogramu."); return; }
+        if (!res.ok) { setError(t.share.scheduleAccessError); return; }
         setPhases(await res.json());
       })
-      .catch(() => setError("Błąd ładowania harmonogramu."))
+      .catch(() => setError(t.share.scheduleLoadError))
       .finally(() => setLoading(false));
   }, [projectId]);
 
@@ -236,7 +240,7 @@ export default function ClientScheduleView({ projectId }: { projectId: string })
     return (
       <div className="flex items-center justify-center py-16 text-muted-foreground gap-2">
         <Loader2 size={18} className="animate-spin" />
-        <span className="text-sm">Ładowanie harmonogramu...</span>
+        <span className="text-sm">{t.share.scheduleLoading}</span>
       </div>
     );
   }
@@ -256,9 +260,9 @@ export default function ClientScheduleView({ projectId }: { projectId: string })
   return (
     <div className="px-4 sm:px-6 py-6 max-w-3xl mx-auto space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold">Harmonogram projektu</h1>
+        <h1 className="text-xl font-bold">{t.share.scheduleTitle}</h1>
         {totalItems > 0 && (
-          <span className="text-sm text-muted-foreground">{overallProgress}% ukończone</span>
+          <span className="text-sm text-muted-foreground">{overallProgress}% {t.share.scheduleComplete}</span>
         )}
       </div>
 
@@ -274,7 +278,7 @@ export default function ClientScheduleView({ projectId }: { projectId: string })
 
       {phases.length === 0 ? (
         <div className="bg-card border border-border rounded-xl py-12 text-center">
-          <p className="text-sm text-muted-foreground">Harmonogram projektu jest jeszcze pusty.</p>
+          <p className="text-sm text-muted-foreground">{t.share.scheduleEmpty}</p>
         </div>
       ) : (
         <div className="space-y-3">

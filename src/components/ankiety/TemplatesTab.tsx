@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Plus, Edit2, Trash2, ClipboardList, Eye, X } from "@/components/ui/icons";
 import { surveyTemplates, type SurveyTemplate } from "@/lib/surveyTemplates";
+import { useT } from "@/lib/i18n";
 
 type Client = { id: string; name: string };
 
@@ -33,6 +34,7 @@ function UseTemplateDialog({
   onConfirm: (name: string, assignedClientId: string) => Promise<void>;
   onClose: () => void;
 }) {
+  const t = useT();
   const [name, setName] = useState(templateName);
   const [assignedClientId, setAssignedClientId] = useState("");
   const [loading, setLoading] = useState(false);
@@ -47,10 +49,10 @@ function UseTemplateDialog({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
       <div className="bg-card border border-border rounded-2xl shadow-xl p-6 w-full max-w-md space-y-4 mx-4">
-        <h2 className="font-semibold text-base">Utwórz ankietę z szablonu</h2>
+        <h2 className="font-semibold text-base">{t.ankiety.createFromTemplate}</h2>
 
         <div className="space-y-1.5">
-          <label className="text-sm font-medium">Nazwa ankiety</label>
+          <label className="text-sm font-medium">{t.ankiety.surveyNameLabel}</label>
           <input
             type="text"
             value={name}
@@ -63,13 +65,13 @@ function UseTemplateDialog({
 
         {clients.length > 0 && (
           <div className="space-y-1.5">
-            <label className="text-sm font-medium">Klient (opcjonalne)</label>
+            <label className="text-sm font-medium">{t.ankiety.clientOptional}</label>
             <select
               value={assignedClientId}
               onChange={(e) => setAssignedClientId(e.target.value)}
               className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
             >
-              <option value="">— bez przypisania —</option>
+              <option value="">{t.ankiety.noClient}</option>
               {clients.map((c) => (
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
@@ -83,14 +85,14 @@ function UseTemplateDialog({
             disabled={loading}
             className="flex-1 py-2 text-sm border border-border rounded-lg hover:bg-muted transition-colors"
           >
-            Anuluj
+            {t.common.cancel}
           </button>
           <button
             onClick={handleSubmit}
             disabled={loading || !name.trim()}
             className="flex-1 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity disabled:opacity-40"
           >
-            {loading ? "Tworzenie..." : "Utwórz"}
+            {loading ? t.ankiety.creating : t.ankiety.create}
           </button>
         </div>
       </div>
@@ -101,6 +103,7 @@ function UseTemplateDialog({
 // ── Template preview overlay ─────────────────────────────────────────────────
 
 function TemplatePreviewQuestion({ question }: { question: import("@/lib/surveyTemplates").TemplateQuestion }) {
+  const t = useT();
   const [value, setValue] = useState<unknown>(null);
   const config = (question.config ?? {}) as Record<string, number>;
 
@@ -119,13 +122,13 @@ function TemplatePreviewQuestion({ question }: { question: import("@/lib/surveyT
       {question.type === "short_text" && (
         <input type="text" value={(value as string) ?? ""} onChange={(e) => setValue(e.target.value)}
           className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card focus:outline-none focus:ring-2 focus:ring-primary/20"
-          placeholder="Twoja odpowiedź..." />
+          placeholder={t.ankiety.yourAnswerPlaceholder} />
       )}
 
       {question.type === "long_text" && (
         <textarea value={(value as string) ?? ""} onChange={(e) => setValue(e.target.value)} rows={3}
           className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
-          placeholder="Twoja odpowiedź..." />
+          placeholder={t.ankiety.yourAnswerPlaceholder} />
       )}
 
       {question.type === "single_choice" && (
@@ -173,7 +176,7 @@ function TemplatePreviewQuestion({ question }: { question: import("@/lib/surveyT
 
       {question.type === "yes_no" && (
         <div className="flex items-center gap-3">
-          {["Tak", "Nie"].map((opt) => (
+          {[t.ankiety.yesLabel, t.ankiety.noLabel].map((opt) => (
             <button key={opt} onClick={() => setValue(opt)}
               className={`px-6 py-2.5 rounded-xl text-sm font-semibold border-2 transition-colors ${value === opt ? "border-primary bg-primary text-primary-foreground" : "border-border hover:border-primary/50 hover:bg-muted"}`}>
               {opt}
@@ -202,6 +205,7 @@ function TemplatePreviewQuestion({ question }: { question: import("@/lib/surveyT
 }
 
 function TemplatePreview({ tpl, onClose, onUse }: { tpl: SurveyTemplate; onClose: () => void; onUse: () => void }) {
+  const t = useT();
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="bg-card border border-border rounded-2xl shadow-xl w-full max-w-2xl max-h-[85vh] flex flex-col">
@@ -245,10 +249,10 @@ function TemplatePreview({ tpl, onClose, onUse }: { tpl: SurveyTemplate; onClose
         {/* Footer */}
         <div className="flex gap-3 px-6 py-4 border-t border-border flex-shrink-0">
           <button onClick={onClose} className="flex-1 py-2 text-sm border border-border rounded-lg hover:bg-muted transition-colors">
-            Zamknij
+            {t.common.close}
           </button>
           <button onClick={onUse} className="flex-1 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity">
-            Użyj szablonu
+            {t.ankiety.useTemplate}
           </button>
         </div>
       </div>
@@ -259,6 +263,7 @@ function TemplatePreview({ tpl, onClose, onUse }: { tpl: SurveyTemplate; onClose
 // ── Main component ───────────────────────────────────────────────────────────
 
 export default function TemplatesTab({ customTemplates: initial, clients }: Props) {
+  const t = useT();
   const router = useRouter();
   const [customTemplates, setCustomTemplates] = useState<CustomTemplate[]>(initial);
   const [useDialog, setUseDialog] = useState<{ type: "builtin"; templateId: string; name: string } | { type: "custom"; survey: CustomTemplate } | null>(null);
@@ -266,13 +271,13 @@ export default function TemplatesTab({ customTemplates: initial, clients }: Prop
 
   // Create a new blank custom template
   async function handleNewTemplate() {
-    const name = "Nowy szablon";
+    const name = t.ankiety.newTemplate;
     const res = await fetch("/api/surveys", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name, isTemplate: true }),
     });
-    if (!res.ok) { toast.error("Błąd tworzenia szablonu"); return; }
+    if (!res.ok) { toast.error(t.ankiety.createTemplateError); return; }
     const survey = await res.json();
     router.push(`/ankiety/${survey.id}/edytuj`);
   }
@@ -284,7 +289,7 @@ export default function TemplatesTab({ customTemplates: initial, clients }: Prop
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name, assignedClientId: assignedClientId || null }),
     });
-    if (!res.ok) { toast.error("Błąd tworzenia ankiety"); return; }
+    if (!res.ok) { toast.error(t.ankiety.createSurveyError); return; }
     const survey = await res.json();
 
     await fetch(`/api/surveys/${survey.id}/apply-template`, {
@@ -293,7 +298,7 @@ export default function TemplatesTab({ customTemplates: initial, clients }: Prop
       body: JSON.stringify({ templateId }),
     });
 
-    toast.success("Ankieta utworzona");
+    toast.success(t.ankiety.surveyCreated);
     router.push(`/ankiety/${survey.id}/edytuj`);
     setUseDialog(null);
   }
@@ -305,23 +310,23 @@ export default function TemplatesTab({ customTemplates: initial, clients }: Prop
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name, assignedClientId: assignedClientId || null }),
     });
-    if (!res.ok) { toast.error("Błąd tworzenia ankiety"); return; }
+    if (!res.ok) { toast.error(t.ankiety.createSurveyError); return; }
     const survey = await res.json();
-    toast.success("Ankieta utworzona");
+    toast.success(t.ankiety.surveyCreated);
     router.push(`/ankiety/${survey.id}/edytuj`);
     setUseDialog(null);
   }
 
   async function handleDeleteCustom(template: CustomTemplate) {
-    if (!confirm(`Usuń szablon "${template.name}"?`)) return;
+    if (!confirm(t.ankiety.deleteTemplateConfirm.replace("{name}", template.name))) return;
     const res = await fetch(`/api/surveys/${template.id}`, { method: "DELETE" });
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
-      toast.error(body.error ?? "Błąd usuwania szablonu");
+      toast.error(body.error ?? t.ankiety.deleteTemplateError);
       return;
     }
-    setCustomTemplates((prev) => prev.filter((t) => t.id !== template.id));
-    toast.success("Szablon usunięty");
+    setCustomTemplates((prev) => prev.filter((tpl) => tpl.id !== template.id));
+    toast.success(t.ankiety.templateDeleted);
   }
 
   const totalQuestions = (t: (typeof surveyTemplates)[0]) => {
@@ -333,7 +338,7 @@ export default function TemplatesTab({ customTemplates: initial, clients }: Prop
     <div className="p-6 space-y-8">
       {/* Built-in templates */}
       <section>
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">Wbudowane szablony</h2>
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">{t.ankiety.builtinTemplatesTitle}</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {surveyTemplates.map((tpl) => (
             <div key={tpl.id} className="bg-card border border-border rounded-xl p-5 space-y-3 flex flex-col">
@@ -343,7 +348,7 @@ export default function TemplatesTab({ customTemplates: initial, clients }: Prop
                 </div>
                 <div className="min-w-0">
                   <p className="font-semibold text-sm">{tpl.name}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">{totalQuestions(tpl)} pytań · {tpl.sections.length} sekcji</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{totalQuestions(tpl)} {t.ankiety.questionsCount} · {tpl.sections.length} {t.ankiety.sectionsCount}</p>
                 </div>
               </div>
               <p className="text-xs text-muted-foreground leading-relaxed flex-1">{tpl.description}</p>
@@ -353,13 +358,13 @@ export default function TemplatesTab({ customTemplates: initial, clients }: Prop
                   className="flex items-center gap-1.5 px-3 py-1.5 text-xs border border-border rounded-lg hover:bg-muted transition-colors"
                 >
                   <Eye size={13} />
-                  Podgląd
+                  {t.ankiety.preview}
                 </button>
                 <button
                   onClick={() => setUseDialog({ type: "builtin", templateId: tpl.id, name: tpl.name })}
                   className="px-3 py-1.5 text-xs font-medium bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity"
                 >
-                  Użyj szablonu
+                  {t.ankiety.useTemplate}
                 </button>
               </div>
             </div>
@@ -370,21 +375,21 @@ export default function TemplatesTab({ customTemplates: initial, clients }: Prop
       {/* Custom templates */}
       <section>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Twoje szablony</h2>
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">{t.ankiety.myTemplatesTitle}</h2>
           <button
             onClick={handleNewTemplate}
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-border rounded-lg hover:bg-muted transition-colors"
           >
             <Plus size={14} />
-            Nowy szablon
+            {t.ankiety.newTemplate}
           </button>
         </div>
 
         {customTemplates.length === 0 ? (
           <div className="border border-dashed border-border rounded-xl p-10 text-center space-y-2">
-            <p className="text-sm text-muted-foreground">Nie masz jeszcze własnych szablonów.</p>
+            <p className="text-sm text-muted-foreground">{t.ankiety.noCustomTemplates}</p>
             <button onClick={handleNewTemplate} className="text-sm text-primary hover:underline">
-              Utwórz pierwszy szablon
+              {t.ankiety.createFirstTemplate}
             </button>
           </div>
         ) : (
@@ -394,20 +399,20 @@ export default function TemplatesTab({ customTemplates: initial, clients }: Prop
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <p className="font-semibold text-sm truncate">{tpl.name}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">{tpl._count.questions} pytań</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{tpl._count.questions} {t.ankiety.questionsCount}</p>
                   </div>
                   <div className="flex items-center gap-1 flex-shrink-0">
                     <a
                       href={`/ankiety/${tpl.id}/edytuj`}
                       className="p-1.5 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-                      title="Edytuj"
+                      title={t.common.edit}
                     >
                       <Edit2 size={14} />
                     </a>
                     <button
                       onClick={() => handleDeleteCustom(tpl)}
                       className="p-1.5 rounded-md text-muted-foreground hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-950/20 transition-colors"
-                      title="Usuń"
+                      title={t.common.delete}
                     >
                       <Trash2 size={14} />
                     </button>
@@ -418,7 +423,7 @@ export default function TemplatesTab({ customTemplates: initial, clients }: Prop
                   onClick={() => setUseDialog({ type: "custom", survey: tpl })}
                   className="w-full py-2 text-xs font-medium border border-primary text-primary rounded-lg hover:bg-primary/5 transition-colors"
                 >
-                  Użyj szablonu
+                  {t.ankiety.useTemplate}
                 </button>
               </div>
             ))}

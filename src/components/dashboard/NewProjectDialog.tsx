@@ -83,7 +83,7 @@ export default function NewProjectDialog({ module, label, clientMode, clientId: 
     if (!module && !fixedClientId && tab === "new" && !selectedClientId) {
       if (!clientEmail.trim()) return;
       if (!clientEmail.includes("@")) {
-        setClientEmailError("Podaj poprawny adres e-mail (brak znaku @)");
+        setClientEmailError(t.projekty.emailInvalid);
         return;
       }
     }
@@ -156,15 +156,15 @@ export default function NewProjectDialog({ module, label, clientMode, clientId: 
         {/* Client picker — only when no fixed client, not in module context, not in legacy clientMode */}
         {!fixedClientId && tab === "new" && !clientMode && !module && (
           <div className="space-y-1.5">
-            <Label>Klient <span className="text-destructive">*</span></Label>
+            <Label>{t.projekty.colClient} <span className="text-destructive">*</span></Label>
             {loadingClients ? (
               <div className="h-9 rounded-lg border border-border bg-muted/30 animate-pulse" />
             ) : clients.length === 0 ? (
-              <p className="text-xs text-muted-foreground">Brak klientów — najpierw dodaj klienta w module Klienci.</p>
+              <p className="text-xs text-muted-foreground">{t.projekty.noClientsHint}</p>
             ) : selectedClientId ? (
               <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-muted border border-border">
                 <span className="text-sm font-medium">{clients.find((c) => c.id === selectedClientId)?.name}</span>
-                <button type="button" onClick={() => setSelectedClientId("")} className="text-xs text-muted-foreground hover:text-foreground">Zmień</button>
+                <button type="button" onClick={() => setSelectedClientId("")} className="text-xs text-muted-foreground hover:text-foreground">{t.projekty.changeBtn}</button>
               </div>
             ) : (
               <div className="space-y-1.5">
@@ -174,7 +174,7 @@ export default function NewProjectDialog({ module, label, clientMode, clientId: 
                     type="text"
                     value={clientSearch}
                     onChange={(e) => setClientSearch(e.target.value)}
-                    placeholder="Szukaj klienta…"
+                    placeholder={t.projekty.searchClientPlaceholder}
                     className="w-full pl-9 pr-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
                   />
                 </div>
@@ -200,12 +200,12 @@ export default function NewProjectDialog({ module, label, clientMode, clientId: 
         {/* Fixed client info */}
         {fixedClientId && (
           <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/50 text-sm text-muted-foreground">
-            Klient: <span className="font-semibold text-foreground">{fixedClientName}</span>
+            {t.projekty.colClient}: <span className="font-semibold text-foreground">{fixedClientName}</span>
           </div>
         )}
 
         <div className="space-y-1.5">
-          <Label htmlFor="title">{clientMode ? "Nazwa klienta" : t.projekty.projectNameLabel} <span className="text-destructive">*</span></Label>
+          <Label htmlFor="title">{clientMode ? t.projekty.clientNameInputLabel : t.projekty.projectNameLabel} <span className="text-destructive">*</span></Label>
           <Input
             id="title"
             value={title}
@@ -237,7 +237,7 @@ export default function NewProjectDialog({ module, label, clientMode, clientId: 
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              Istniejący klient
+              {t.projekty.existingProjectTab}
             </button>
           </div>
         )}
@@ -249,7 +249,7 @@ export default function NewProjectDialog({ module, label, clientMode, clientId: 
               <>
                 {module && !fixedClientId && (
                   <div className="space-y-1.5">
-                    <Label htmlFor="clientName">Nazwa klienta <span className="text-destructive">*</span></Label>
+                    <Label htmlFor="clientName">{t.projekty.clientNameInputLabel} <span className="text-destructive">*</span></Label>
                     <Input
                       id="clientName"
                       value={clientName}
@@ -282,7 +282,7 @@ export default function NewProjectDialog({ module, label, clientMode, clientId: 
                     {clientEmailError && <p className="text-xs text-destructive mt-1">{clientEmailError}</p>}
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor="clientPhone">Telefon</Label>
+                    <Label htmlFor="clientPhone">{t.projekty.phoneLabel}</Label>
                     <Input
                       id="clientPhone"
                       type="tel"
@@ -295,8 +295,8 @@ export default function NewProjectDialog({ module, label, clientMode, clientId: 
 
                 <div className="space-y-1.5">
                   <Label htmlFor="clientPassword">
-                    Hasło do konta klienta{" "}
-                    <span className="text-muted-foreground font-normal">(opcjonalnie)</span>
+                    {t.projekty.clientPasswordLabel}{" "}
+                    <span className="text-muted-foreground font-normal">{t.common.optional}</span>
                   </Label>
                   <div className="relative">
                     <Input
@@ -304,7 +304,7 @@ export default function NewProjectDialog({ module, label, clientMode, clientId: 
                       type={showClientPassword ? "text" : "password"}
                       value={clientPassword}
                       onChange={(e) => setClientPassword(e.target.value)}
-                      placeholder="Klient zaloguje się tym hasłem"
+                      placeholder={t.projekty.clientPasswordLoginPlaceholder}
                       className="pr-9"
                     />
                     <button
@@ -318,7 +318,7 @@ export default function NewProjectDialog({ module, label, clientMode, clientId: 
                   {clientPassword.trim() && (
                     clientEmail.trim()
                       ? <p className="text-xs text-muted-foreground">Login: <span className="font-mono font-medium text-foreground">{clientEmail.trim().toLowerCase()}</span></p>
-                      : <p className="text-xs text-destructive">Podaj e-mail klienta — będzie używany jako login do panelu</p>
+                      : <p className="text-xs text-destructive">{t.projekty.emailRequiredForPassword}</p>
                   )}
                 </div>
               </>
@@ -361,7 +361,7 @@ export default function NewProjectDialog({ module, label, clientMode, clientId: 
                     onClick={() => setSelectedClientId("")}
                     className="text-xs text-muted-foreground hover:text-foreground ml-2 shrink-0"
                   >
-                    Zmień
+                    {t.projekty.changeBtn}
                   </button>
                 </div>
                 <div className="flex gap-2 justify-end pt-1">
@@ -380,7 +380,7 @@ export default function NewProjectDialog({ module, label, clientMode, clientId: 
                   <input
                     autoFocus
                     type="text"
-                    placeholder="Szukaj klienta…"
+                    placeholder={t.projekty.searchClientPlaceholder}
                     value={clientSearch}
                     onChange={(e) => setClientSearch(e.target.value)}
                     className="w-full pl-9 pr-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
@@ -391,7 +391,7 @@ export default function NewProjectDialog({ module, label, clientMode, clientId: 
                     <p className="text-sm text-muted-foreground text-center py-8">{t.common.loading}</p>
                   ) : clients.filter((c) => c.name.toLowerCase().includes(clientSearch.toLowerCase())).length === 0 ? (
                     <p className="text-sm text-muted-foreground text-center py-8">
-                      {clientSearch ? t.common.noResults : "Brak klientów"}
+                      {clientSearch ? t.common.noResults : t.projekty.noClientsSearch}
                     </p>
                   ) : (
                     clients

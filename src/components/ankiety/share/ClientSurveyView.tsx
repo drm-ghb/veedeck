@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { ChevronLeft } from "@/components/ui/icons";
 import SurveyForm from "./SurveyForm";
+import { useT } from "@/lib/i18n";
 import type { SurveyQuestion, SurveySection } from "../SurveyEditor";
 
 interface Answer {
@@ -29,6 +30,7 @@ interface Props {
 }
 
 export default function ClientSurveyView({ token, surveyName, clientEmail, clientName, onBack, onCompleted, readOnly = false }: Props) {
+  const t = useT();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [surveyData, setSurveyData] = useState<SurveyData | null>(null);
@@ -61,7 +63,7 @@ export default function ClientSurveyView({ token, surveyName, clientEmail, clien
         ]);
 
         if (!dataRes.ok || !startRes.ok) {
-          setError("Nie udało się załadować ankiety.");
+          setError(t.ankiety.loadSurveyError);
           return;
         }
 
@@ -71,7 +73,7 @@ export default function ClientSurveyView({ token, surveyName, clientEmail, clien
         setExistingAnswers(start.existingAnswers ?? []);
         setCompleted(start.completed ?? false);
       } catch {
-        setError("Błąd połączenia. Spróbuj ponownie.");
+        setError(t.ankiety.connectionError);
       } finally {
         setLoading(false);
       }
@@ -87,7 +89,7 @@ export default function ClientSurveyView({ token, surveyName, clientEmail, clien
         className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6"
       >
         <ChevronLeft size={16} />
-        Powrót do ankiet
+        {t.ankiety.backToSurveys}
       </button>
 
       <div className="max-w-2xl mx-auto">
@@ -95,7 +97,7 @@ export default function ClientSurveyView({ token, surveyName, clientEmail, clien
 
       {loading && (
         <div className="flex items-center justify-center py-20 text-sm text-muted-foreground animate-pulse">
-          Ładowanie...
+          {t.common.loading}
         </div>
       )}
 
@@ -108,9 +110,9 @@ export default function ClientSurveyView({ token, surveyName, clientEmail, clien
       {!loading && !error && completed && !readOnly && (
         <div className="bg-card border border-border rounded-2xl p-10 text-center space-y-3">
           <div className="text-4xl">✓</div>
-          <h2 className="text-xl font-bold">Ankieta już wypełniona</h2>
+          <h2 className="text-xl font-bold">{t.ankiety.alreadyCompleted}</h2>
           <p className="text-sm text-muted-foreground">
-            Twoje odpowiedzi zostały wcześniej zapisane. Dziękujemy za udział!
+            {t.ankiety.alreadyCompletedDesc}
           </p>
         </div>
       )}

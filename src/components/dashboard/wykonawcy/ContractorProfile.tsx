@@ -20,15 +20,10 @@ import {
   X,
   Info,
 } from "@/components/ui/icons";
+import { useT } from "@/lib/i18n";
 import AssignProjectDialog from "./AssignProjectDialog";
 
-const TRADE_OPTIONS = [
-  { value: "malarz", label: "Malarz" },
-  { value: "hydraulik", label: "Hydraulik" },
-  { value: "elektryk", label: "Elektryk" },
-  { value: "firma wykończeniowa", label: "Firma wykończeniowa" },
-  { value: "inne", label: "Inne" },
-];
+const TRADE_VALUES = ["malarz", "hydraulik", "elektryk", "firma wykończeniowa", "inne"] as const;
 
 interface Assignment {
   id: string;
@@ -60,6 +55,14 @@ interface Props {
 }
 
 export default function ContractorProfile({ contractor }: Props) {
+  const t = useT();
+  const tradeOptions = [
+    { value: "malarz", label: t.wykonawcy.tradePainter },
+    { value: "hydraulik", label: t.wykonawcy.tradePlumber },
+    { value: "elektryk", label: t.wykonawcy.tradeElectrician },
+    { value: "firma wykończeniowa", label: t.wykonawcy.tradeFinishing },
+    { value: "inne", label: t.wykonawcy.tradeOther },
+  ];
   const router = useRouter();
   const [tab, setTab] = useState<"active" | "archived">("active");
   const [assignOpen, setAssignOpen] = useState(false);
@@ -96,10 +99,10 @@ export default function ContractorProfile({ contractor }: Props) {
       method: "DELETE",
     });
     if (res.ok) {
-      toast.success("Przypisanie usunięte");
+      toast.success(t.wykonawcy.assignmentDeleted);
       router.refresh();
     } else {
-      toast.error("Błąd podczas usuwania przypisania");
+      toast.error(t.wykonawcy.assignmentDeleteError);
     }
   }
 
@@ -110,16 +113,16 @@ export default function ContractorProfile({ contractor }: Props) {
       body: JSON.stringify({ archived: !assignment.archived }),
     });
     if (res.ok) {
-      toast.success(assignment.archived ? "Przywrócono projekt" : "Projekt zarchiwizowany");
+      toast.success(assignment.archived ? t.wykonawcy.projectRestored : t.wykonawcy.projectArchived);
       router.refresh();
     } else {
-      toast.error("Błąd podczas aktualizacji");
+      toast.error(t.wykonawcy.updateError);
     }
   }
 
   async function saveInfo() {
     if (!name.trim()) {
-      toast.error("Imię i nazwisko jest wymagane");
+      toast.error(t.wykonawcy.nameRequired);
       return;
     }
     setSavingInfo(true);
@@ -137,10 +140,10 @@ export default function ContractorProfile({ contractor }: Props) {
       });
       if (!res.ok) {
         const data = await res.json();
-        toast.error(data.error ?? "Błąd podczas zapisywania");
+        toast.error(data.error ?? t.wykonawcy.saveError);
         return;
       }
-      toast.success("Zapisano");
+      toast.success(t.common.saved);
       router.refresh();
     } finally {
       setSavingInfo(false);
@@ -149,7 +152,7 @@ export default function ContractorProfile({ contractor }: Props) {
 
   async function createAccount() {
     if (!createPassword.trim() || createPassword.trim().length < 4) {
-      toast.error("Hasło musi mieć co najmniej 4 znaki");
+      toast.error(t.wykonawcy.passwordMinChars);
       return;
     }
     setCreatingAccount(true);
@@ -164,7 +167,7 @@ export default function ContractorProfile({ contractor }: Props) {
       });
       const data = await res.json();
       if (!res.ok) {
-        toast.error(data.error ?? "Błąd tworzenia konta");
+        toast.error(data.error ?? t.wykonawcy.createAccountError);
         return;
       }
       setAccountUser(data.user);
@@ -172,7 +175,7 @@ export default function ContractorProfile({ contractor }: Props) {
       setCreateOpen(false);
       setCreatePassword("");
       setCredsOpen(true);
-      toast.success("Konto wykonawcy zostało utworzone");
+      toast.success(t.wykonawcy.accountCreated);
     } finally {
       setCreatingAccount(false);
     }
@@ -192,13 +195,13 @@ export default function ContractorProfile({ contractor }: Props) {
       });
       const data = await res.json();
       if (!res.ok) {
-        toast.error(data.error ?? "Błąd zapisu");
+        toast.error(data.error ?? t.wykonawcy.saveError);
         return;
       }
       setAccountUser(data.user);
       setCredLogin(data.user.login);
       setCredPassword("");
-      toast.success("Dane logowania zaktualizowane");
+      toast.success(t.wykonawcy.credentialsUpdated);
     } finally {
       setSavingCreds(false);
     }
@@ -212,9 +215,9 @@ export default function ContractorProfile({ contractor }: Props) {
       setCredPassword("");
       setCredsOpen(false);
       setCreateOpen(false);
-      toast.success("Konto odłączone");
+      toast.success(t.wykonawcy.accountUnlinked);
     } else {
-      toast.error("Błąd podczas odłączania konta");
+      toast.error(t.wykonawcy.unlinkError);
     }
   }
 
@@ -224,10 +227,10 @@ export default function ContractorProfile({ contractor }: Props) {
     <div className="overflow-y-auto flex-1">
       {/* Dane */}
       <section className="p-4 space-y-3">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Dane</h3>
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t.wykonawcy.dataSection}</h3>
 
         <div className="space-y-1">
-          <Label className="text-xs">Imię i nazwisko *</Label>
+          <Label className="text-xs">{t.wykonawcy.labelNameRequired}</Label>
           <Input
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -237,7 +240,7 @@ export default function ContractorProfile({ contractor }: Props) {
         </div>
 
         <div className="space-y-1">
-          <Label className="text-xs">Firma</Label>
+          <Label className="text-xs">{t.wykonawcy.labelCompany}</Label>
           <Input
             value={company}
             onChange={(e) => setCompany(e.target.value)}
@@ -247,21 +250,21 @@ export default function ContractorProfile({ contractor }: Props) {
         </div>
 
         <div className="space-y-1">
-          <Label className="text-xs">Specjalizacja</Label>
+          <Label className="text-xs">{t.wykonawcy.labelSpecialization}</Label>
           <select
             value={trade}
             onChange={(e) => setTrade(e.target.value)}
             className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
           >
-            <option value="">Wybierz specjalizację</option>
-            {TRADE_OPTIONS.map((o) => (
+            <option value="">{t.wykonawcy.selectSpecialization}</option>
+            {tradeOptions.map((o) => (
               <option key={o.value} value={o.value}>{o.label}</option>
             ))}
           </select>
         </div>
 
         <div className="space-y-1">
-          <Label className="text-xs">Email</Label>
+          <Label className="text-xs">{t.wykonawcy.labelEmail}</Label>
           <Input
             type="email"
             value={email}
@@ -272,7 +275,7 @@ export default function ContractorProfile({ contractor }: Props) {
         </div>
 
         <div className="space-y-1">
-          <Label className="text-xs">Telefon</Label>
+          <Label className="text-xs">{t.wykonawcy.labelPhone}</Label>
           <Input
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
@@ -283,14 +286,14 @@ export default function ContractorProfile({ contractor }: Props) {
 
         <div className="flex justify-end pt-1">
           <Button size="sm" onClick={saveInfo} disabled={savingInfo || !name.trim()}>
-            {savingInfo ? "Zapisywanie…" : "Zapisz"}
+            {savingInfo ? t.wykonawcy.savingBtn : t.common.save}
           </Button>
         </div>
       </section>
 
       {/* Konto wykonawcy */}
       <section className="border-t border-border p-4 space-y-3">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Konto wykonawcy</h3>
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t.wykonawcy.accountSection}</h3>
 
         {accountUser ? (
           <div className="space-y-2">
@@ -303,14 +306,14 @@ export default function ContractorProfile({ contractor }: Props) {
                 onClick={() => setCredsOpen((v) => !v)}
                 className="text-xs text-muted-foreground hover:text-foreground transition-colors"
               >
-                {credsOpen ? "Ukryj" : "Edytuj"}
+                {credsOpen ? t.wykonawcy.hideCredsBtn : t.wykonawcy.editCredsBtn}
               </button>
             </div>
 
             {credsOpen && (
               <div className="p-3 rounded-lg bg-muted/50 border border-border space-y-2">
                 <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground font-medium">Login</p>
+                  <p className="text-xs text-muted-foreground font-medium">{t.wykonawcy.labelLogin}</p>
                   <Input
                     value={credLogin}
                     onChange={(e) => setCredLogin(e.target.value)}
@@ -318,13 +321,13 @@ export default function ContractorProfile({ contractor }: Props) {
                   />
                 </div>
                 <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground font-medium">Nowe hasło</p>
+                  <p className="text-xs text-muted-foreground font-medium">{t.wykonawcy.newPassword}</p>
                   <div className="relative">
                     <Input
                       type={showCredPass ? "text" : "password"}
                       value={credPassword}
                       onChange={(e) => setCredPassword(e.target.value)}
-                      placeholder="Zostaw puste aby nie zmieniać"
+                      placeholder={t.wykonawcy.leaveEmptyToKeep}
                       className="text-xs h-7 pr-7"
                     />
                     <button
@@ -341,7 +344,7 @@ export default function ContractorProfile({ contractor }: Props) {
                     onClick={unlinkAccount}
                     className="text-xs text-destructive hover:text-destructive/80 transition-colors"
                   >
-                    Odłącz konto
+                    {t.wykonawcy.unlinkAccount}
                   </button>
                   <Button
                     size="sm"
@@ -349,7 +352,7 @@ export default function ContractorProfile({ contractor }: Props) {
                     disabled={savingCreds || (!credLogin.trim() && !credPassword.trim())}
                     onClick={saveAccountCreds}
                   >
-                    {savingCreds ? "Zapis…" : "Zapisz"}
+                    {savingCreds ? t.wykonawcy.savingBtn : t.common.save}
                   </Button>
                 </div>
               </div>
@@ -357,35 +360,35 @@ export default function ContractorProfile({ contractor }: Props) {
           </div>
         ) : (
           <div className="space-y-2">
-            <p className="text-xs text-muted-foreground">Wykonawca nie ma jeszcze konta w systemie.</p>
+            <p className="text-xs text-muted-foreground">{t.wykonawcy.noAccount}</p>
             <button
               onClick={() => setCreateOpen((v) => !v)}
               className="flex items-center gap-1 text-xs text-amber-600 hover:text-amber-800 dark:hover:text-amber-300 transition-colors"
             >
               <KeyRound size={11} />
-              {createOpen ? "Anuluj" : "Utwórz konto"}
+              {createOpen ? t.common.cancel : t.wykonawcy.createAccountBtn}
             </button>
 
             {createOpen && (
               <div className="p-3 rounded-lg bg-muted/50 border border-border space-y-2">
                 <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground font-medium">Email / login</p>
+                  <p className="text-xs text-muted-foreground font-medium">{t.wykonawcy.emailLogin}</p>
                   <Input
                     type="email"
                     value={createEmail}
                     onChange={(e) => setCreateEmail(e.target.value)}
-                    placeholder="email@domena.pl (będzie loginem)"
+                    placeholder={t.wykonawcy.emailPlaceholder}
                     className="text-xs h-7"
                   />
                 </div>
                 <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground font-medium">Hasło</p>
+                  <p className="text-xs text-muted-foreground font-medium">{t.wykonawcy.labelPassword}</p>
                   <div className="relative">
                     <Input
                       type={showCreatePass ? "text" : "password"}
                       value={createPassword}
                       onChange={(e) => setCreatePassword(e.target.value)}
-                      placeholder="Min. 4 znaki"
+                      placeholder={t.wykonawcy.minChars}
                       className="text-xs h-7 pr-7"
                     />
                     <button
@@ -404,7 +407,7 @@ export default function ContractorProfile({ contractor }: Props) {
                     disabled={creatingAccount || !createPassword.trim() || createPassword.trim().length < 4}
                     onClick={createAccount}
                   >
-                    {creatingAccount ? "Tworzenie…" : "Utwórz konto"}
+                    {creatingAccount ? t.wykonawcy.creating : t.wykonawcy.createAccountBtn}
                   </Button>
                 </div>
               </div>
@@ -423,7 +426,7 @@ export default function ContractorProfile({ contractor }: Props) {
           <ChevronLeft size={20} />
         </Link>
         <nav className="flex items-center gap-1 text-sm text-muted-foreground overflow-hidden">
-          <Link href="/wykonawcy" className="hover:text-foreground transition-colors shrink-0">Wykonawcy</Link>
+          <Link href="/wykonawcy" className="hover:text-foreground transition-colors shrink-0">{t.wykonawcy.title}</Link>
           <span className="shrink-0">/</span>
           <span className="text-foreground font-medium truncate">{displayTitle || contractor.name}</span>
         </nav>
@@ -454,11 +457,11 @@ export default function ContractorProfile({ contractor }: Props) {
               {/* Informacje button — only on mobile (panel always visible on desktop) */}
               <Button variant="outline" size="sm" onClick={() => setInfoOpen(true)} className="gap-2 lg:hidden">
                 <Info size={14} />
-                Informacje
+                {t.wykonawcy.infoBtn}
               </Button>
               <Button onClick={() => setAssignOpen(true)} size="sm" className="gap-2 hidden sm:flex">
                 <Plus size={16} />
-                Przypisz projekt
+                {t.wykonawcy.assignProjectBtn}
               </Button>
             </div>
           </div>
@@ -466,7 +469,7 @@ export default function ContractorProfile({ contractor }: Props) {
           {/* Mobile: full-width assign button */}
           <Button onClick={() => setAssignOpen(true)} className="sm:hidden w-full gap-2">
             <Plus size={16} />
-            Przypisz projekt
+            {t.wykonawcy.assignProjectBtn}
           </Button>
 
           {/* Tabs */}
@@ -475,14 +478,14 @@ export default function ContractorProfile({ contractor }: Props) {
               onClick={() => setTab("active")}
               className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${tab === "active" ? "border-foreground text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"}`}
             >
-              Aktywne
+              {t.common.active}
               <span className={`ml-1.5 text-xs px-1.5 py-0.5 rounded-full ${tab === "active" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>{active.length}</span>
             </button>
             <button
               onClick={() => setTab("archived")}
               className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${tab === "archived" ? "border-foreground text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"}`}
             >
-              Zarchiwizowane
+              {t.common.archived}
               {archived.length > 0 && <span className={`ml-1.5 text-xs px-1.5 py-0.5 rounded-full ${tab === "archived" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>{archived.length}</span>}
             </button>
           </div>
@@ -490,7 +493,7 @@ export default function ContractorProfile({ contractor }: Props) {
           {/* Projects list */}
           {displayed.length === 0 ? (
             <div className="py-12 text-center text-muted-foreground text-sm">
-              {tab === "active" ? "Brak aktywnych projektów" : "Brak zarchiwizowanych projektów"}
+              {tab === "active" ? t.wykonawcy.noActiveProjects : t.wykonawcy.noArchivedProjects}
             </div>
           ) : (
             <div className="space-y-2">
@@ -499,16 +502,16 @@ export default function ContractorProfile({ contractor }: Props) {
                   <Link href={`/wykonawcy/${contractor.id}/projekty/${a.id}`} className="flex-1 min-w-0">
                     <p className="font-medium truncate">{a.project.title}</p>
                     {a.project.clientName && (
-                      <p className="text-sm text-muted-foreground truncate">Klient: {a.project.clientName}</p>
+                      <p className="text-sm text-muted-foreground truncate">{t.wykonawcy.clientLabel} {a.project.clientName}</p>
                     )}
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      Przypisano: {new Date(a.createdAt).toLocaleDateString("pl-PL")}
+                      {t.wykonawcy.assignedLabel} {new Date(a.createdAt).toLocaleDateString()}
                     </p>
                   </Link>
                   <div className="flex items-center gap-2 justify-end sm:justify-start shrink-0 flex-wrap">
                     {a.unreadCount > 0 && (
                       <Badge variant="default" className="text-xs whitespace-nowrap">
-                        Nieprzeczytane: {a.unreadCount > 99 ? "99+" : a.unreadCount}
+                        {t.wykonawcy.unread} {a.unreadCount > 99 ? "99+" : a.unreadCount}
                       </Badge>
                     )}
                     <Button
@@ -518,7 +521,7 @@ export default function ContractorProfile({ contractor }: Props) {
                       className="gap-1.5"
                     >
                       {a.archived ? <ArchiveRestore size={14} /> : <Archive size={14} />}
-                      <span className="hidden sm:inline">{a.archived ? "Przywróć" : "Archiwizuj"}</span>
+                      <span className="hidden sm:inline">{a.archived ? t.common.restore : t.common.archive}</span>
                     </Button>
                     <Button
                       variant="ghost"
@@ -527,7 +530,7 @@ export default function ContractorProfile({ contractor }: Props) {
                       className="gap-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
                     >
                       <Trash2 size={14} />
-                      <span className="hidden sm:inline">Usuń</span>
+                      <span className="hidden sm:inline">{t.common.delete}</span>
                     </Button>
                   </div>
                 </div>
@@ -539,7 +542,7 @@ export default function ContractorProfile({ contractor }: Props) {
         {/* Desktop info panel — always visible on lg+ */}
         <div className="hidden lg:flex flex-col w-72 shrink-0 rounded-xl border border-border bg-card">
           <div className="px-4 py-3 border-b border-border shrink-0">
-            <h2 className="text-sm font-semibold">Informacje o wykonawcy</h2>
+            <h2 className="text-sm font-semibold">{t.wykonawcy.contractorInfoTitle}</h2>
           </div>
           {infoPanelContent}
         </div>
@@ -556,7 +559,7 @@ export default function ContractorProfile({ contractor }: Props) {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
-              <h2 className="text-sm font-semibold">Informacje o wykonawcy</h2>
+              <h2 className="text-sm font-semibold">{t.wykonawcy.contractorInfoTitle}</h2>
               <button
                 onClick={() => setInfoOpen(false)}
                 className="w-7 h-7 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"

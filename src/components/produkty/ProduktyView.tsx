@@ -16,14 +16,6 @@ import { useT } from "@/lib/i18n";
 import AddProductToLibraryDialog from "./AddProductToLibraryDialog";
 import { SearchProductDialog } from "./SearchProductDialog";
 
-const CATEGORY_LABELS: Record<string, string> = {
-  OSWIETLENIE: "Oświetlenie",
-  AKCESORIA: "Akcesoria",
-  MEBLE: "Meble",
-  ARMATURA: "Armatura",
-  OKLADZINY_SCIENNE: "Okładziny ścienne",
-  PODLOGA: "Podłoga",
-};
 
 interface Product {
   id: string;
@@ -48,13 +40,6 @@ interface Props {
 type GroupBy = "none" | "category" | "manufacturer" | "favorites";
 type SortOption = "default" | "price-asc" | "price-desc" | "name-asc" | "name-desc";
 
-const SORT_LABELS: Record<SortOption, string> = {
-  "default": "Domyślne",
-  "price-asc": "Cena: od najniższej",
-  "price-desc": "Cena: od najwyższej",
-  "name-asc": "Nazwa: A–Z",
-  "name-desc": "Nazwa: Z–A",
-};
 
 function extractPrice(price: string | null): number {
   if (!price) return Infinity;
@@ -63,6 +48,7 @@ function extractPrice(price: string | null): number {
 }
 
 export default function ProduktyView({ initialProducts }: Props) {
+  const t = useT();
   const router = useRouter();
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [query, setQuery] = useState("");
@@ -73,6 +59,23 @@ export default function ProduktyView({ initialProducts }: Props) {
   const [editProduct, setEditProduct] = useState<Product | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [advancedSearchOpen, setAdvancedSearchOpen] = useState(false);
+
+  const SORT_LABELS: Record<SortOption, string> = {
+    "default": t.products.sortDefault,
+    "price-asc": t.products.sortPriceAsc,
+    "price-desc": t.products.sortPriceDesc,
+    "name-asc": t.products.sortNameAsc,
+    "name-desc": t.products.sortNameDesc,
+  };
+
+  const CATEGORY_LABELS_T_T: Record<string, string> = {
+    OSWIETLENIE: t.products.catLampy,
+    AKCESORIA: t.products.catAkcesoria,
+    MEBLE: t.products.catMeble,
+    ARMATURA: t.products.catArmatura,
+    OKLADZINY_SCIENNE: t.products.catOkladziny,
+    PODLOGA: t.products.catPodloga,
+  };
 
   const filtered = useMemo(() => {
     let list = products;
@@ -90,7 +93,7 @@ export default function ProduktyView({ initialProducts }: Props) {
       if (groupBy === "category") {
         list = list.filter((p) => (p.category ?? "") === folderKey);
       } else if (groupBy === "manufacturer") {
-        list = list.filter((p) => (p.manufacturer ?? "Brak producenta") === folderKey);
+        list = list.filter((p) => (p.manufacturer ?? t.products.noManufacturer) === folderKey);
       }
     }
     if (sortOption !== "default") {
@@ -122,7 +125,7 @@ export default function ProduktyView({ initialProducts }: Props) {
       const key =
         groupBy === "category"
           ? (p.category ?? "")
-          : (p.manufacturer ?? "Brak producenta");
+          : (p.manufacturer ?? t.products.noManufacturer);
       map.set(key, (map.get(key) ?? 0) + 1);
     }
     return Array.from(map.entries())
@@ -149,9 +152,9 @@ export default function ProduktyView({ initialProducts }: Props) {
       const res = await fetch(`/api/products/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error();
       setProducts((prev) => prev.filter((p) => p.id !== id));
-      toast.success("Produkt usunięty");
+      toast.success(t.products.productDeleted);
     } catch {
-      toast.error("Błąd usuwania produktu");
+      toast.error(t.products.productDeleteError);
     } finally {
       setDeletingId(null);
     }
@@ -175,7 +178,7 @@ export default function ProduktyView({ initialProducts }: Props) {
     });
     if (!res.ok) {
       setProducts((prev) => prev.map((p) => p.id === id ? { ...p, favorite: current } : p));
-      toast.error("Błąd zmiany ulubionego");
+      toast.error(t.products.favoriteError);
     }
   }
 
@@ -190,7 +193,7 @@ export default function ProduktyView({ initialProducts }: Props) {
   const folderLabel =
     folderKey !== null
       ? groupBy === "category"
-        ? (CATEGORY_LABELS[folderKey] ?? folderKey) || "Brak kategorii"
+        ? (CATEGORY_LABELS_T_T[folderKey] ?? folderKey) || t.products.noCategory
         : folderKey
       : null;
 
@@ -199,22 +202,22 @@ export default function ProduktyView({ initialProducts }: Props) {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Produkty</h1>
-          <p className="text-gray-500 mt-1">Twoja baza produktów ({products.length})</p>
+          <h1 className="text-2xl font-bold">{t.products.libraryTitle}</h1>
+          <p className="text-gray-500 mt-1">{t.products.libraryDesc} ({products.length})</p>
         </div>
         <Button onClick={() => { setEditProduct(null); setAddOpen(true); }} className="gap-2 shrink-0">
           <Plus size={15} />
-          Dodaj produkt
+          {t.products.addProduct}
         </Button>
       </div>
 
       {/* Tabs */}
       <div className="flex items-center gap-1 mb-5 border-b border-border overflow-x-auto scrollbar-none">
         {([
-          ["none", "Wszystkie", tabCounts.none],
-          ["favorites", "Ulubione", tabCounts.favorites],
-          ["category", "Kategorie", tabCounts.category],
-          ["manufacturer", "Producenci", tabCounts.manufacturer],
+          ["none", t.products.all, tabCounts.none],
+          ["favorites", t.products.favorites, tabCounts.favorites],
+          ["category", t.products.filterCategories, tabCounts.category],
+          ["manufacturer", t.products.filterManufacturers, tabCounts.manufacturer],
         ] as [GroupBy, string, number][]).map(([val, label, count]) => (
           <button
             key={val}
@@ -244,13 +247,13 @@ export default function ProduktyView({ initialProducts }: Props) {
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Szukaj po nazwie lub producencie..."
+            placeholder={t.products.searchByName}
             className="pl-9 pr-9 bg-background dark:bg-background"
           />
           <button
             type="button"
             onClick={() => setAdvancedSearchOpen(true)}
-            title="Zaawansowane wyszukiwanie"
+            title={t.products.searchTitle}
             className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
           >
             <SlidersHorizontal size={15} />
@@ -278,7 +281,7 @@ export default function ProduktyView({ initialProducts }: Props) {
         <div className="flex items-center gap-2">
           <button onClick={handleBack} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
             <ChevronLeft size={15} />
-            Wróć
+            {t.products.backBtn}
           </button>
           <span className="text-muted-foreground">/</span>
           <span className="text-sm font-medium">{folderLabel}</span>
@@ -289,12 +292,12 @@ export default function ProduktyView({ initialProducts }: Props) {
       {showFolders && (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
           {folders.length === 0 ? (
-            <p className="col-span-full text-sm text-muted-foreground py-8 text-center">Brak produktów</p>
+            <p className="col-span-full text-sm text-muted-foreground py-8 text-center">{t.products.noProductsInDB}</p>
           ) : (
             folders.map(({ key, count }) => {
               const label =
                 groupBy === "category"
-                  ? (CATEGORY_LABELS[key] ?? key) || "Brak kategorii"
+                  ? (CATEGORY_LABELS_T_T[key] ?? key) || t.products.noCategory
                   : key;
               return (
                 <button
@@ -307,7 +310,7 @@ export default function ProduktyView({ initialProducts }: Props) {
                   </div>
                   <div>
                     <p className="text-sm font-medium leading-tight">{label}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">{count} {count === 1 ? "produkt" : count < 5 ? "produkty" : "produktów"}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{count} {count === 1 ? t.products.productCountUnit : count < 5 ? t.products.productCountUnitFew : t.products.productCountUnitMany}</p>
                   </div>
                 </button>
               );
@@ -324,8 +327,8 @@ export default function ProduktyView({ initialProducts }: Props) {
               <Package size={40} className="mx-auto mb-3 opacity-30" />
               <p className="text-sm">
                 {products.length === 0
-                  ? "Brak produktów w bazie. Dodaj pierwszy produkt!"
-                  : "Nie znaleziono produktów pasujących do wyszukiwania."}
+                  ? t.products.noProductsLibHint
+                  : t.products.noProductsFound}
               </p>
             </div>
           ) : (
@@ -391,6 +394,15 @@ function ProductCard({
   onFavorite: () => void;
   deleting: boolean;
 }) {
+  const t = useT();
+  const CATEGORY_LABELS_T: Record<string, string> = {
+    OSWIETLENIE: t.products.catLampy,
+    AKCESORIA: t.products.catAkcesoria,
+    MEBLE: t.products.catMeble,
+    ARMATURA: t.products.catArmatura,
+    OKLADZINY_SCIENNE: t.products.catOkladziny,
+    PODLOGA: t.products.catPodloga,
+  };
   const [lightbox, setLightbox] = useState(false);
 
   return (
@@ -451,7 +463,7 @@ function ProductCard({
             <span className="text-xs text-muted-foreground">{product.dimensions}</span>
           )}
           {product.deliveryTime && (
-            <span className="text-xs text-muted-foreground">Dostawa: {product.deliveryTime}</span>
+            <span className="text-xs text-muted-foreground">{t.products.deliveryLabel} {product.deliveryTime}</span>
           )}
         </div>
       </div>
@@ -459,7 +471,7 @@ function ProductCard({
       {/* Category badge */}
       {product.category && (
         <span className="self-center shrink-0 text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
-          {CATEGORY_LABELS[product.category] ?? product.category}
+          {CATEGORY_LABELS_T[product.category] ?? product.category}
         </span>
       )}
 
@@ -467,7 +479,7 @@ function ProductCard({
       <div className="hidden md:flex items-center gap-1 shrink-0">
         <button
           onClick={onFavorite}
-          title={product.favorite ? "Usuń z ulubionych" : "Dodaj do ulubionych"}
+          title={product.favorite ? t.products.favoriteRemove : t.products.favoriteAdd}
           className={`p-1.5 rounded-md transition-colors ${product.favorite ? "text-yellow-400 hover:text-yellow-500" : "text-muted-foreground hover:text-yellow-400 hover:bg-muted"}`}
         >
           {product.favorite ? <StarFilled size={14} /> : <StarOutline size={14} />}
@@ -508,21 +520,21 @@ function ProductCard({
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={onFavorite}>
               {product.favorite ? <StarFilled size={14} className="text-yellow-400" /> : <StarOutline size={14} />}
-              {product.favorite ? "Usuń z ulubionych" : "Dodaj do ulubionych"}
+              {product.favorite ? t.products.favoriteRemove : t.products.favoriteAdd}
             </DropdownMenuItem>
             {product.url && (
               <DropdownMenuItem onClick={() => window.open(product.url!, "_blank", "noopener,noreferrer")}>
                 <ExternalLink size={14} />
-                Otwórz link
+                {t.products.openLink}
               </DropdownMenuItem>
             )}
             <DropdownMenuItem onClick={onEdit}>
               <Pencil size={14} />
-              Edytuj
+              {t.products.editProduct}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={onDelete} disabled={deleting} className="text-red-500 focus:text-red-500">
               <Trash2 size={14} />
-              Usuń
+              {t.products.deleteBtn}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

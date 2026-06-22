@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { X, Send, Trash2, Edit2, MoreHorizontal, CornerDownLeft, ChevronLeft, ChevronRight } from "@/components/ui/icons";
 import { pusherClient } from "@/lib/pusher";
 import { toast } from "sonner";
+import { useT } from "@/lib/i18n";
 
 interface Reply {
   id: string;
@@ -37,7 +38,7 @@ interface Props {
 }
 
 function formatDate(iso: string) {
-  return new Date(iso).toLocaleString("pl-PL", {
+  return new Date(iso).toLocaleString(undefined, {
     day: "2-digit",
     month: "2-digit",
     year: "2-digit",
@@ -73,6 +74,7 @@ export default function ContractorFileCommentPanel({
   onCountChange,
   mode = "overlay",
 }: Props) {
+  const t = useT();
   const [expanded, setExpanded] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -187,7 +189,7 @@ export default function ContractorFileCommentPanel({
       if (textareaRef.current) { textareaRef.current.style.height = "40px"; }
       setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
     } catch {
-      toast.error("Błąd podczas wysyłania");
+      toast.error(t.wykonawcy.sendError);
     } finally {
       setSending(false);
     }
@@ -205,7 +207,7 @@ export default function ContractorFileCommentPanel({
       if (!res.ok) throw new Error();
       setEditingCommentId(null);
     } catch {
-      toast.error("Błąd podczas edycji");
+      toast.error(t.wykonawcy.editError);
     }
   }
 
@@ -221,7 +223,7 @@ export default function ContractorFileCommentPanel({
       if (!res.ok) throw new Error();
       setEditingReplyId(null);
     } catch {
-      toast.error("Błąd podczas edycji");
+      toast.error(t.wykonawcy.editError);
     }
   }
 
@@ -230,7 +232,7 @@ export default function ContractorFileCommentPanel({
       const res = await fetch(`/api/contractor-file-comments/${commentId}`, { method: "DELETE" });
       if (!res.ok) throw new Error();
     } catch {
-      toast.error("Błąd podczas usuwania");
+      toast.error(t.wykonawcy.deleteError2);
     }
   }
 
@@ -239,7 +241,7 @@ export default function ContractorFileCommentPanel({
       const res = await fetch(`/api/contractor-file-comments/${commentId}/replies/${replyId}`, { method: "DELETE" });
       if (!res.ok) throw new Error();
     } catch {
-      toast.error("Błąd podczas usuwania");
+      toast.error(t.wykonawcy.deleteError2);
     }
   }
 
@@ -284,7 +286,7 @@ export default function ContractorFileCommentPanel({
       <button
         onClick={() => setExpanded(v => !v)}
         className="hidden md:flex items-center justify-center w-5 h-12 bg-card border border-r-0 border-border rounded-l-md shadow-md text-muted-foreground hover:text-foreground transition-colors absolute left-0 bottom-0 -translate-x-full z-10"
-        title={expanded ? "Zwiń panel" : "Rozwiń panel"}
+        title={expanded ? t.wykonawcy.collapsePanel : t.wykonawcy.expandPanel}
       >
         {expanded ? <ChevronRight size={13} /> : <ChevronLeft size={13} />}
       </button>
@@ -298,7 +300,7 @@ export default function ContractorFileCommentPanel({
               <img src={thumbnailUrl} alt={fileName} className="w-9 h-9 rounded-md object-cover shrink-0 border border-border" />
             )}
             <div className="min-w-0">
-              <p className="text-xs text-muted-foreground">Komentarze</p>
+              <p className="text-xs text-muted-foreground">{t.wykonawcy.commentsTitle}</p>
               <p className="text-sm font-semibold truncate">{fileName}</p>
             </div>
           </div>
@@ -313,11 +315,11 @@ export default function ContractorFileCommentPanel({
         {/* Messages */}
         <div className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-3 space-y-2">
           {loading && (
-            <p className="text-xs text-muted-foreground text-center py-8">Ładowanie…</p>
+            <p className="text-xs text-muted-foreground text-center py-8">{t.common.loading}</p>
           )}
           {!loading && flatItems.length === 0 && (
             <p className="text-xs text-muted-foreground text-center py-8">
-              Brak komentarzy. Napisz pierwszą wiadomość.
+              {t.wykonawcy.noComments}
             </p>
           )}
 
@@ -365,7 +367,7 @@ export default function ContractorFileCommentPanel({
                           onClick={() => item.type === "comment" ? setEditingCommentId(null) : setEditingReplyId(null)}
                           className="px-2 py-1 text-xs text-muted-foreground hover:text-foreground rounded-lg border"
                         >
-                          Anuluj
+                          {t.common.cancel}
                         </button>
                         <button
                           onClick={() =>
@@ -375,7 +377,7 @@ export default function ContractorFileCommentPanel({
                           }
                           className="px-2 py-1 text-xs bg-primary text-primary-foreground rounded-lg hover:opacity-90"
                         >
-                          Zapisz
+                          {t.common.save}
                         </button>
                       </div>
                     </div>
@@ -401,7 +403,7 @@ export default function ContractorFileCommentPanel({
                             setReplyingTo({ id: replyToId, content: item.content, author: item.author });
                             textareaRef.current?.focus();
                           }}
-                          title="Odpowiedz"
+                          title={t.wykonawcy.replyAction}
                           className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                         >
                           <CornerDownLeft size={13} />
@@ -432,7 +434,7 @@ export default function ContractorFileCommentPanel({
                                     }}
                                     className="w-full text-left px-3 py-2 text-xs hover:bg-muted flex items-center gap-2 transition-colors"
                                   >
-                                    <Edit2 size={12} className="text-muted-foreground" /> Edytuj
+                                    <Edit2 size={12} className="text-muted-foreground" /> {t.common.edit}
                                   </button>
                                 )}
                                 {canDelete(item.author) && (
@@ -444,7 +446,7 @@ export default function ContractorFileCommentPanel({
                                     }}
                                     className="w-full text-left px-3 py-2 text-xs text-destructive hover:bg-destructive/10 flex items-center gap-2 transition-colors"
                                   >
-                                    <Trash2 size={12} /> Usuń
+                                    <Trash2 size={12} /> {t.common.delete}
                                   </button>
                                 )}
                               </div>
@@ -494,7 +496,7 @@ export default function ContractorFileCommentPanel({
                 if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
                 if (e.key === "Escape") setReplyingTo(null);
               }}
-              placeholder="Napisz wiadomość…"
+              placeholder={t.wykonawcy.messagePlaceholder}
               rows={1}
               style={{ height: "40px", overflowY: "hidden" }}
               className="flex-1 min-h-10 max-h-40 px-3 py-2 text-sm resize-none rounded-2xl bg-muted focus:outline-none"

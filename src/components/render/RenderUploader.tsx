@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { useT } from "@/lib/i18n";
 
 interface Folder {
   id: string;
@@ -29,6 +30,7 @@ interface RenderUploaderProps {
 }
 
 export default function RenderUploader({ projectId, roomId, folderId: fixedFolderId, compact, folders = [] }: RenderUploaderProps) {
+  const t = useT();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [folderId, setFolderId] = useState<string>("");
@@ -41,19 +43,19 @@ export default function RenderUploader({ projectId, roomId, folderId: fixedFolde
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger render={<Button size={compact ? "icon-sm" : "default"} variant="default" className={compact ? "bg-gray-900 hover:bg-gray-700 dark:bg-white dark:hover:bg-gray-200 text-white dark:text-gray-900 h-6 w-6 rounded-md p-0 flex-shrink-0" : ""} title="Dodaj pliki" />}>
-        {compact ? <span className="text-base leading-none">+</span> : "+ Dodaj pliki"}
+      <DialogTrigger render={<Button size={compact ? "icon-sm" : "default"} variant="default" className={compact ? "bg-gray-900 hover:bg-gray-700 dark:bg-white dark:hover:bg-gray-200 text-white dark:text-gray-900 h-6 w-6 rounded-md p-0 flex-shrink-0" : ""} title={t.render.addFiles} />}>
+        {compact ? <span className="text-base leading-none">+</span> : `+ ${t.render.addFiles}`}
       </DialogTrigger>
 
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle>Dodaj pliki</DialogTitle>
+          <DialogTitle>{t.render.addFiles}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 pt-1">
           {folders.length > 0 && (
             <div className="space-y-1.5">
-              <Label htmlFor="render-folder">Folder (opcjonalnie)</Label>
+              <Label htmlFor="render-folder">{t.render.folderOptional}</Label>
               <select
                 id="render-folder"
                 value={folderId}
@@ -61,7 +63,7 @@ export default function RenderUploader({ projectId, roomId, folderId: fixedFolde
                 disabled={uploading}
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
               >
-                <option value="">— bez folderu —</option>
+                <option value="">{t.render.noFolder}</option>
                 {folders.map((f) => (
                   <option key={f.id} value={f.id}>{f.name}</option>
                 ))}
@@ -73,7 +75,7 @@ export default function RenderUploader({ projectId, roomId, folderId: fixedFolde
             <UploadButton<OurFileRouter, "renderUploader">
               endpoint="renderUploader"
               content={{
-                button: uploading ? "Wgrywanie..." : "Wybierz pliki",
+                button: uploading ? t.render.uploading : t.render.chooseFiles,
                 allowedContent: "",
               }}
               onUploadBegin={() => setUploading(true)}
@@ -101,12 +103,12 @@ export default function RenderUploader({ projectId, roomId, folderId: fixedFolde
                 setUploading(false);
                 setOpen(false);
                 const n = created.length;
-                toast.success(`Dodano ${n} plik${n === 1 ? "" : n < 5 ? "i" : "ów"}`);
+                toast.success(`${t.render.filesAddedPrefix} ${n} ${n === 1 ? t.render.fileSingular : n < 5 ? t.render.fileFew : t.render.fileMany}`);
                 router.refresh();
               }}
               onUploadError={(err) => {
                 setUploading(false);
-                toast.error(`Błąd uploadu: ${err.message}`);
+                toast.error(`${t.render.uploadError} ${err.message}`);
               }}
               appearance={{
                 button:
@@ -115,7 +117,7 @@ export default function RenderUploader({ projectId, roomId, folderId: fixedFolde
                 container: "w-full flex-col",
               }}
             />
-            <p className="text-xs text-gray-400 text-center">Obrazy i pliki PDF — do 10 naraz</p>
+            <p className="text-xs text-gray-400 text-center">{t.render.imagesAndPdfsLimit}</p>
           </div>
         </div>
       </DialogContent>

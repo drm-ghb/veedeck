@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { X, Search, UserPlus, XCircle } from "@/components/ui/icons";
 import { toast } from "sonner";
+import { useT } from "@/lib/i18n";
 import DatePicker from "@/components/ui/DatePicker";
 import TimePicker from "@/components/ui/TimePicker";
 import type { CalendarEvent, EventType } from "./CalendarView";
@@ -63,6 +64,7 @@ export default function AddEventDialog({
   onAdded,
   onUpdated,
 }: Props) {
+  const t = useT();
   const isEdit = !!editEvent;
 
   const [title, setTitle] = useState("");
@@ -113,9 +115,9 @@ export default function AddEventDialog({
     setTimeout(() => titleRef.current?.focus(), 50);
   }, [open]);
 
-  function handleStartTimeChange(t: string) {
-    setStartTime(t);
-    setEndTime(addHour(t));
+  function handleStartTimeChange(time: string) {
+    setStartTime(time);
+    setEndTime(addHour(time));
   }
 
   // Update dropdown position when it opens
@@ -171,8 +173,8 @@ export default function AddEventDialog({
   }
 
   async function handleSave() {
-    if (!title.trim()) { toast.error("Tytuł jest wymagany"); titleRef.current?.focus(); return; }
-    if (!eventDate) { toast.error("Data jest wymagana"); return; }
+    if (!title.trim()) { toast.error(t.calendar.titleRequired); titleRef.current?.focus(); return; }
+    if (!eventDate) { toast.error(t.calendar.dateRequired); return; }
 
     setSaving(true);
     try {
@@ -197,20 +199,20 @@ export default function AddEventDialog({
 
       if (!res.ok) {
         const data = await res.json();
-        toast.error(data.error ?? "Błąd zapisu");
+        toast.error(data.error ?? t.calendar.saveError);
         return;
       }
 
       const ev = await res.json();
       if (isEdit) {
-        toast.success("Zmiany zapisane");
+        toast.success(t.calendar.changesSaved);
         onUpdated?.(ev);
       } else {
-        toast.success("Wydarzenie dodane");
+        toast.success(t.calendar.eventAdded);
         onAdded(ev);
       }
     } catch {
-      toast.error("Błąd zapisu");
+      toast.error(t.calendar.saveError);
     } finally {
       setSaving(false);
     }
@@ -228,7 +230,7 @@ export default function AddEventDialog({
     PRZYPOMNIENIE: "border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
   };
   const typeLabels: Record<EventType, string> = {
-    WYDARZENIE: "Wydarzenie", ZADANIE: "Zadanie", PRZYPOMNIENIE: "Przypomnienie",
+    WYDARZENIE: t.calendar.typeEvent, ZADANIE: t.calendar.typeTask, PRZYPOMNIENIE: t.calendar.typeReminder,
   };
 
   return (
@@ -243,7 +245,7 @@ export default function AddEventDialog({
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-border flex-shrink-0">
           <h2 className="text-base font-semibold">
-            {isEdit ? "Edytuj wydarzenie" : "Nowe wydarzenie"}
+            {isEdit ? t.calendar.editEvent : t.calendar.newEvent}
           </h2>
           <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors">
             <X size={18} />
@@ -254,33 +256,33 @@ export default function AddEventDialog({
         <div className="overflow-y-auto flex-1 px-5 py-4 space-y-4">
           {/* Title */}
           <div>
-            <label className={labelClass}>Tytuł *</label>
+            <label className={labelClass}>{t.calendar.titleLabel}</label>
             <input
               ref={titleRef}
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSave()}
-              placeholder="Nazwa spotkania lub zadania"
+              placeholder={t.calendar.titlePlaceholder}
               className={fieldClass}
             />
           </div>
 
           {/* Type */}
           <div>
-            <label className={labelClass}>Typ</label>
+            <label className={labelClass}>{t.calendar.typeLabel}</label>
             <div className="grid grid-cols-3 gap-1.5">
-              {(["WYDARZENIE", "ZADANIE", "PRZYPOMNIENIE"] as EventType[]).map((t) => (
+              {(["WYDARZENIE", "ZADANIE", "PRZYPOMNIENIE"] as EventType[]).map((ev) => (
                 <button
-                  key={t}
-                  onClick={() => setType(t)}
+                  key={ev}
+                  onClick={() => setType(ev)}
                   className={`py-1.5 text-xs font-medium rounded-lg border transition-all ${
-                    type === t
-                      ? typeColors[t]
+                    type === ev
+                      ? typeColors[ev]
                       : "border-border text-muted-foreground hover:border-primary/40 hover:text-foreground"
                   }`}
                 >
-                  {typeLabels[t]}
+                  {typeLabels[ev]}
                 </button>
               ))}
             </div>
@@ -288,13 +290,13 @@ export default function AddEventDialog({
 
           {/* Date & time */}
           <div>
-            <label className={labelClass}>Data *</label>
-            <DatePicker value={eventDate} onChange={setEventDate} placeholder="Wybierz dzień" />
+            <label className={labelClass}>{t.calendar.dateLabel}</label>
+            <DatePicker value={eventDate} onChange={setEventDate} placeholder={t.calendar.datePlaceholder} />
           </div>
 
           {type !== "PRZYPOMNIENIE" && (
             <div>
-              <label className={labelClass}>Godziny</label>
+              <label className={labelClass}>{t.calendar.hoursLabel}</label>
               <div className="flex items-center gap-2">
                 <TimePicker value={startTime} onChange={handleStartTimeChange} className="flex-1" />
                 <span className="text-sm text-muted-foreground shrink-0">–</span>
@@ -305,7 +307,7 @@ export default function AddEventDialog({
 
           {type === "PRZYPOMNIENIE" && (
             <div>
-              <label className={labelClass}>Godzina</label>
+              <label className={labelClass}>{t.calendar.hourLabel}</label>
               <TimePicker value={startTime} onChange={setStartTime} className="w-[120px]" />
             </div>
           )}
@@ -314,18 +316,18 @@ export default function AddEventDialog({
           {type === "WYDARZENIE" && (
             <>
               <div>
-                <label className={labelClass}>Lokalizacja</label>
+                <label className={labelClass}>{t.calendar.locationLabel}</label>
                 <input
                   type="text"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
-                  placeholder="Adres lub nazwa miejsca"
+                  placeholder={t.calendar.locationPlaceholder}
                   className={fieldClass}
                 />
               </div>
 
               <div>
-                <label className={labelClass}>Dodaj gości</label>
+                <label className={labelClass}>{t.calendar.guestsLabel}</label>
                 <div className="relative">
                   <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
                     <Search size={14} />
@@ -339,7 +341,7 @@ export default function AddEventDialog({
                       if (e.key === "Enter") { e.preventDefault(); addManualGuest(); }
                       if (e.key === "Escape") setSugOpen(false);
                     }}
-                    placeholder="Wyszukaj klienta lub wpisz imię..."
+                    placeholder={t.calendar.guestPlaceholder}
                     className={`${fieldClass} pl-8`}
                   />
                   {sugOpen && (
@@ -365,7 +367,7 @@ export default function AddEventDialog({
                           className="w-full flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:bg-muted transition-colors border-t border-border"
                         >
                           <UserPlus size={13} />
-                          Dodaj „{guestQuery.trim()}"
+                          {t.calendar.addGuest} „{guestQuery.trim()}"
                         </button>
                       )}
                     </div>
@@ -393,11 +395,11 @@ export default function AddEventDialog({
           {/* Zadanie / Przypomnienie: description */}
           {(type === "ZADANIE" || type === "PRZYPOMNIENIE") && (
             <div>
-              <label className={labelClass}>Opis</label>
+              <label className={labelClass}>{t.calendar.descLabel}</label>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Opis..."
+                placeholder={t.calendar.descPlaceholder}
                 rows={3}
                 className={`${fieldClass} resize-none`}
               />
@@ -412,14 +414,14 @@ export default function AddEventDialog({
             onClick={onClose}
             className="px-4 py-2 text-sm rounded-lg border border-border hover:bg-muted transition-colors"
           >
-            Anuluj
+            {t.common.cancel}
           </button>
           <button
             onClick={handleSave}
             disabled={saving}
             className="px-4 py-2 text-sm font-medium rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-50"
           >
-            {saving ? "Zapisywanie..." : isEdit ? "Zapisz zmiany" : "Dodaj"}
+            {saving ? t.common.saving : isEdit ? t.calendar.saveChanges : t.calendar.addBtn}
           </button>
         </div>
       </div>

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { X, Clock, MapPin, Users, FileText, Trash2, Pencil } from "@/components/ui/icons";
 import { toast } from "sonner";
+import { useT } from "@/lib/i18n";
 import type { CalendarEvent, EventType } from "./CalendarView";
 
 interface Props {
@@ -26,22 +27,23 @@ export default function EventDetailDialog({
   fmtDate,
   fmtTime,
 }: Props) {
+  const t = useT();
   const [deleting, setDeleting] = useState(false);
   const colors = typeColors[event.type];
 
   async function handleDelete() {
-    if (!confirm(`Usunąć "${event.title}"?`)) return;
+    if (!confirm(`${t.calendar.deleteConfirmMsg} "${event.title}"?`)) return;
     setDeleting(true);
     try {
       const res = await fetch(`/api/calendar/${event.id}`, { method: "DELETE" });
       if (res.ok) {
-        toast.success("Wydarzenie usunięte");
+        toast.success(t.calendar.eventDeleted);
         onDeleted(event.id);
       } else {
-        toast.error("Błąd usuwania");
+        toast.error(t.calendar.deleteError);
       }
     } catch {
-      toast.error("Błąd usuwania");
+      toast.error(t.calendar.deleteError);
     } finally {
       setDeleting(false);
     }
@@ -80,9 +82,9 @@ export default function EventDetailDialog({
           <div className="flex items-start gap-2.5 text-sm">
             <Clock size={15} className="text-muted-foreground mt-0.5 flex-shrink-0" />
             <div>
-              <p className="text-foreground">{fmtDate(event.startAt)} o {fmtTime(event.startAt)}</p>
+              <p className="text-foreground">{fmtDate(event.startAt)} {t.calendar.atTime} {fmtTime(event.startAt)}</p>
               {event.endAt && (
-                <p className="text-muted-foreground text-xs">do {fmtDate(event.endAt)} {fmtTime(event.endAt)}</p>
+                <p className="text-muted-foreground text-xs">{t.calendar.until} {fmtDate(event.endAt)} {fmtTime(event.endAt)}</p>
               )}
             </div>
           </div>
@@ -131,10 +133,10 @@ export default function EventDetailDialog({
               className="flex items-center gap-1.5 text-sm text-red-500 hover:text-red-600 transition-colors disabled:opacity-50"
             >
               <Trash2 size={14} />
-              {deleting ? "Usuwanie..." : "Usuń"}
+              {deleting ? t.calendar.deleting : t.calendar.delete}
             </button>
           ) : (
-            <span className="text-xs text-muted-foreground italic flex items-center">Zaproszony/a</span>
+            <span className="text-xs text-muted-foreground italic flex items-center">{t.calendar.invitedGuest}</span>
           )}
           <div className="flex gap-2">
             {!event.isGuest && (
@@ -143,14 +145,14 @@ export default function EventDetailDialog({
                 className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg border border-border hover:bg-muted transition-colors"
               >
                 <Pencil size={13} />
-                Edytuj
+                {t.calendar.editEvent}
               </button>
             )}
             <button
               onClick={onClose}
               className="px-4 py-1.5 text-sm rounded-lg border border-border hover:bg-muted transition-colors"
             >
-              Zamknij
+              {t.calendar.close}
             </button>
           </div>
         </div>

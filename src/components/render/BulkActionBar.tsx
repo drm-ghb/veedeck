@@ -1,6 +1,7 @@
 "use client";
 
 import { Archive, FolderInput, Loader2, Trash2, X } from "@/components/ui/icons";
+import { useT, useLang } from "@/lib/i18n";
 
 interface BulkActionBarProps {
   count: number;
@@ -12,10 +13,16 @@ interface BulkActionBarProps {
 }
 
 export default function BulkActionBar({ count, loading, onArchive, onMove, onDelete, onCancel }: BulkActionBarProps) {
+  const t = useT();
+  const lang = useLang();
+  const fileLabel = lang === "pl"
+    ? `${count} ${count === 1 ? t.render.fileSingular : count < 5 ? t.render.fileFew : t.render.fileMany}`
+    : `${count} ${count === 1 ? t.render.fileSingular : t.render.fileMany}`;
+
   return (
     <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-gray-900 text-white rounded-2xl shadow-2xl px-4 py-2.5 text-sm">
       <span className="font-medium pr-2 border-r border-white/20 mr-1">
-        {count} {count === 1 ? "plik" : count < 5 ? "pliki" : "plików"}
+        {fileLabel}
       </span>
       <button
         onClick={onArchive}
@@ -23,7 +30,7 @@ export default function BulkActionBar({ count, loading, onArchive, onMove, onDel
         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-colors disabled:opacity-50"
       >
         {loading ? <Loader2 size={14} className="animate-spin" /> : <Archive size={14} />}
-        Archiwizuj
+        {t.common.archive}
       </button>
       <button
         onClick={onMove}
@@ -31,7 +38,7 @@ export default function BulkActionBar({ count, loading, onArchive, onMove, onDel
         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-colors disabled:opacity-50"
       >
         <FolderInput size={14} />
-        Przenieś
+        {t.render.move}
       </button>
       <button
         onClick={onDelete}
@@ -39,7 +46,7 @@ export default function BulkActionBar({ count, loading, onArchive, onMove, onDel
         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-red-500/30 text-red-300 transition-colors disabled:opacity-50"
       >
         <Trash2 size={14} />
-        Usuń
+        {t.common.delete}
       </button>
       <button
         onClick={onCancel}

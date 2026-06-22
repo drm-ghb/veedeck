@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { FileText, Download, MessageSquare, Pin } from "@/components/ui/icons";
 import ContractorFileCommentPanel from "./ContractorFileCommentPanel";
+import { useT } from "@/lib/i18n";
 
 interface FileItem {
   id: string;
@@ -34,6 +35,7 @@ export default function ContractorFilesGrid({
   initialUnreadCounts = {},
   initialUnreadPinCounts = {},
 }: Props) {
+  const t = useT();
   const [commentFileId, setCommentFileId] = useState<string | null>(null);
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>(initialUnreadCounts);
   const [unreadPinCounts, setUnreadPinCounts] = useState<Record<string, number>>(initialUnreadPinCounts);
@@ -58,7 +60,7 @@ export default function ContractorFilesGrid({
     return (
       <div className="py-16 text-center text-muted-foreground">
         <FileText size={40} className="mx-auto mb-3 opacity-40" />
-        <p>Brak plików w tym folderze</p>
+        <p>{t.wykonawcy.noFilesInFolder}</p>
       </div>
     );
   }
@@ -105,7 +107,7 @@ export default function ContractorFilesGrid({
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-medium truncate">{file.name}</p>
                   <p className="text-xs text-muted-foreground">
-                    {new Date(file.createdAt).toLocaleDateString("pl-PL")}
+                    {new Date(file.createdAt).toLocaleDateString()}
                   </p>
                 </div>
                 <div className="flex items-center gap-0.5 shrink-0">
@@ -117,7 +119,7 @@ export default function ContractorFilesGrid({
                           ? "text-violet-600 dark:text-violet-400"
                           : "text-muted-foreground"
                       }`}
-                      title="Piny"
+                      title={t.wykonawcy.pinsBtn}
                     >
                       <Pin size={13} />
                       <span className="text-[10px] font-medium">
@@ -130,7 +132,7 @@ export default function ContractorFilesGrid({
                     <button
                       onClick={(e) => openComments(e, file.id)}
                       className="flex items-center gap-0.5 p-1 rounded-lg text-violet-600 dark:text-violet-400 hover:bg-muted transition-colors"
-                      title="Komentarze"
+                      title={t.wykonawcy.commentsBtn}
                     >
                       <MessageSquare size={13} />
                       <span className="text-[10px] font-medium">{unread}</span>
@@ -139,7 +141,7 @@ export default function ContractorFilesGrid({
                     <button
                       onClick={(e) => openComments(e, file.id)}
                       className="flex items-center gap-0.5 p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                      title="Komentarze"
+                      title={t.wykonawcy.commentsBtn}
                     >
                       <MessageSquare size={13} />
                       {(file.totalComments ?? 0) > 0 && (
@@ -158,7 +160,7 @@ export default function ContractorFilesGrid({
                   rel="noopener noreferrer"
                   onClick={(e) => e.stopPropagation()}
                   className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/50 text-white opacity-0 group-hover:opacity-100 hover:bg-black/70 transition-all"
-                  title="Pobierz / Otwórz"
+                  title={t.wykonawcy.downloadOpen}
                 >
                   <Download size={14} />
                 </a>

@@ -2,12 +2,14 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useT } from "@/lib/i18n";
 
 interface Props {
   trialEndsAt: string; // ISO string
 }
 
 export default function TrialBadge({ trialEndsAt }: Props) {
+  const t = useT();
   const [daysLeft, setDaysLeft] = useState<number | null>(null);
 
   useEffect(() => {
@@ -31,7 +33,7 @@ export default function TrialBadge({ trialEndsAt }: Props) {
       }`}
     >
       <span className={`w-1.5 h-1.5 rounded-full ${urgent ? "bg-red-500" : "bg-amber-500"} animate-pulse`} />
-      {daysLeft === 0 ? "Trial wygasa dziś" : `Trial: ${daysLeft} ${daysLeft === 1 ? "dzień" : "dni"}`}
+      {daysLeft === 0 ? t.common.trialExpiresToday : `Trial: ${daysLeft} ${daysLeft === 1 ? t.common.daySg : t.common.dayPl}`}
     </Link>
   );
 }

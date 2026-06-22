@@ -4,10 +4,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useUploadThing } from "@/lib/uploadthing-client";
 import { Upload, Loader2, AlertCircle, Download, Sparkles } from "@/components/ui/icons";
 import { toast } from "sonner";
+import { useT } from "@/lib/i18n";
 
 type Phase = "idle" | "uploading" | "processing" | "done" | "error";
 
 export default function RenderBoosterView() {
+  const t = useT();
   const [phase, setPhase] = useState<Phase>("idle");
   const [progress, setProgress] = useState(0);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -44,14 +46,14 @@ export default function RenderBoosterView() {
     pollingRef.current = setInterval(async () => {
       try {
         const res = await fetch(`/api/veezard/renderbooster/status/${id}`);
-        if (!res.ok) throw new Error("Błąd serwera");
+        if (!res.ok) throw new Error(t.veezard.serverError);
         const data = await res.json();
         setProgress(data.progress ?? 0);
 
         if (data.status === "SUCCEEDED") {
           stopPolling();
           if (!data.outputUrl) {
-            setErrorMsg("Brak wyniku z serwera");
+            setErrorMsg(t.veezard.noResult);
             setPhase("error");
             return;
           }
@@ -59,12 +61,12 @@ export default function RenderBoosterView() {
           setPhase("done");
         } else if (data.status === "FAILED") {
           stopPolling();
-          setErrorMsg(data.errorMessage ?? "Ulepszanie nie powiodło się");
+          setErrorMsg(data.errorMessage ?? t.veezard.boostFailed);
           setPhase("error");
         }
       } catch {
         stopPolling();
-        setErrorMsg("Błąd podczas sprawdzania statusu");
+        setErrorMsg(t.veezard.statusError);
         setPhase("error");
       }
     }, 4000);
@@ -72,7 +74,7 @@ export default function RenderBoosterView() {
 
   async function processFile(file: File) {
     if (!file.type.startsWith("image/")) {
-      toast.error("Dozwolone są tylko pliki graficzne");
+      toast.error(t.veezard.imageOnly);
       return;
     }
 
@@ -84,7 +86,7 @@ export default function RenderBoosterView() {
     setPhase("uploading");
     try {
       const results = await startUpload([file]);
-      if (!results?.[0]) throw new Error("Przesyłanie nie powiodło się");
+      if (!results?.[0]) throw new Error(t.veezard.uploadFailed);
 
       const imageUrl = results[0].url;
 
@@ -96,14 +98,14 @@ export default function RenderBoosterView() {
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error ?? "Błąd serwera");
+        throw new Error(data.error ?? t.veezard.serverError);
       }
 
       const data = await res.json();
       setPhase("processing");
       startPolling(data.predictionId);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Nieznany błąd";
+      const msg = err instanceof Error ? err.message : t.veezard.unknownError;
       setErrorMsg(msg);
       setPhase("error");
       toast.error(msg);
@@ -157,7 +159,7 @@ export default function RenderBoosterView() {
             <Upload size={28} />
           </div>
           <div className="text-center">
-            <p className="font-semibold text-foreground">Wrzuć wizualizację do ulepszenia</p>
+            <p className="font-semibold text-foreground">{t.veezard.dropVisualization}</p>
             <p className="text-sm text-muted-foreground mt-1">JPG, PNG, WebP · maks. 16 MB</p>
           </div>
           <input
@@ -170,11 +172,7 @@ export default function RenderBoosterView() {
         </div>
 
         <div className="flex flex-col sm:flex-row gap-3 text-sm text-muted-foreground max-w-lg w-full">
-          {[
-            "Najlepiej działa z renderami wnętrz",
-            "Podnosi jakość 4× i wyostrza detale",
-            "Przetwarzanie zajmuje zwykle 30–60 sekund",
-          ].map((tip) => (
+          {[t.veezard.boostTip1, t.veezard.boostTip2, t.veezard.boostTip3].map((tip) => (
             <div key={tip} className="flex items-start gap-2 flex-1">
               <Sparkles size={13} className="text-primary mt-0.5 shrink-0" />
               <span>{tip}</span>
@@ -191,7 +189,7 @@ export default function RenderBoosterView() {
     return (
       <div className="flex flex-col items-center justify-center h-full gap-4 text-muted-foreground">
         <Loader2 size={36} className="animate-spin text-primary" />
-        <p className="font-medium text-foreground">Przesyłanie pliku…</p>
+        <p className="font-medium text-foreground">{t.veezard.uploading}</p>
       </div>
     );
   }
@@ -204,12 +202,12 @@ export default function RenderBoosterView() {
         {previewImage && (
           <div className="w-full max-w-sm rounded-xl overflow-hidden border border-border">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={previewImage} alt="Oryginał" className="w-full object-contain max-h-64" />
+            <img src={previewImage} alt={t.veezard.original} className="w-full object-contain max-h-64" />
           </div>
         )}
         <div className="w-full max-w-sm flex flex-col gap-2">
           <div className="flex items-center justify-between text-sm">
-            <span className="font-medium text-foreground">Ulepszanie wizualizacji…</span>
+            <span className="font-medium text-foreground">{t.veezard.enhancing}</span>
             {progress > 0 && (
               <span className="text-muted-foreground tabular-nums">{progress}%</span>
             )}
@@ -221,7 +219,7 @@ export default function RenderBoosterView() {
             />
           </div>
           {progress === 0 && (
-            <p className="text-xs text-muted-foreground">Oczekiwanie na start…</p>
+            <p className="text-xs text-muted-foreground">{t.veezard.waitingStart}</p>
           )}
         </div>
       </div>
@@ -235,19 +233,19 @@ export default function RenderBoosterView() {
       <div className="flex flex-col items-center h-full px-6 py-8 gap-6 overflow-auto">
         <div className="grid grid-cols-2 gap-4 w-full max-w-2xl">
           <div className="flex flex-col gap-2">
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider text-center">Oryginał</span>
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider text-center">{t.veezard.original}</span>
             <div className="rounded-xl overflow-hidden border border-border bg-muted">
               {previewImage && (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={previewImage} alt="Oryginał" className="w-full object-contain" />
+                <img src={previewImage} alt={t.veezard.original} className="w-full object-contain" />
               )}
             </div>
           </div>
           <div className="flex flex-col gap-2">
-            <span className="text-xs font-semibold text-primary uppercase tracking-wider text-center">Ulepszony</span>
+            <span className="text-xs font-semibold text-primary uppercase tracking-wider text-center">{t.veezard.enhanced}</span>
             <div className="rounded-xl overflow-hidden border border-primary/30 bg-muted">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={outputUrl} alt="Ulepszony" className="w-full object-contain" />
+              <img src={outputUrl} alt={t.veezard.enhanced} className="w-full object-contain" />
             </div>
           </div>
         </div>
@@ -259,13 +257,13 @@ export default function RenderBoosterView() {
             className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
           >
             <Download size={15} />
-            Pobierz ulepszony
+            {t.veezard.downloadEnhanced}
           </a>
           <button
             onClick={reset}
             className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
           >
-            Ulepsz kolejny
+            {t.veezard.enhanceAnother}
           </button>
         </div>
       </div>
@@ -278,14 +276,14 @@ export default function RenderBoosterView() {
     <div className="flex flex-col items-center justify-center h-full gap-4 text-muted-foreground">
       <AlertCircle size={36} className="text-red-400" />
       <div className="text-center">
-        <p className="font-medium text-foreground">Coś poszło nie tak</p>
+        <p className="font-medium text-foreground">{t.veezard.somethingWrong}</p>
         {errorMsg && <p className="text-sm mt-1">{errorMsg}</p>}
       </div>
       <button
         onClick={reset}
         className="px-4 py-2 rounded-lg border border-border text-sm font-medium hover:bg-muted transition-colors"
       >
-        Spróbuj ponownie
+        {t.veezard.tryAgain}
       </button>
     </div>
   );

@@ -2,11 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getWorkspaceUserId } from "@/lib/workspace";
+import { checkTeamPermission } from "@/lib/permissions";
 
 export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (!await checkTeamPermission(session, "pfCanUpload")) {
+    return NextResponse.json({ error: "Brak uprawnień do przesyłania plików" }, { status: 403 });
   }
   const userId = getWorkspaceUserId(session);
 

@@ -2,6 +2,7 @@
 
 import { useRef, useCallback, useEffect, useState } from "react";
 import { X, Check, Pencil, Eraser, Trash2, Minus, Circle } from "@/components/ui/icons";
+import { useT } from "@/lib/i18n";
 
 interface DrawingCanvasProps {
   onSave: (blob: Blob, filename: string) => void;
@@ -12,6 +13,7 @@ const COLORS = ["#000000", "#ef4444", "#3b82f6", "#22c55e", "#f59e0b", "#8b5cf6"
 const SIZES = [2, 5, 10, 20];
 
 export function DrawingCanvas({ onSave, onClose }: DrawingCanvasProps) {
+  const t = useT();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const isDrawing = useRef(false);
   const lastPoint = useRef<{ x: number; y: number } | null>(null);
@@ -170,7 +172,7 @@ export function DrawingCanvas({ onSave, onClose }: DrawingCanvasProps) {
     <div className="fixed inset-0 z-50 flex flex-col bg-background" style={{ touchAction: "none" }}>
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-border shrink-0 bg-card gap-2">
-        <span className="text-sm font-medium text-foreground shrink-0">Szkicownik</span>
+        <span className="text-sm font-medium text-foreground shrink-0">{t.notatnik.drawingTitle}</span>
 
         {/* Narzędzia */}
         <div className="flex items-center gap-1">
@@ -178,14 +180,14 @@ export function DrawingCanvas({ onSave, onClose }: DrawingCanvasProps) {
           <button
             onClick={() => setTool("pen")}
             className={`p-2 rounded-md transition-colors ${tool === "pen" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}
-            title="Pióro"
+            title={t.notatnik.drawingPen}
           >
             <Pencil size={16} />
           </button>
           <button
             onClick={() => setTool("eraser")}
             className={`p-2 rounded-md transition-colors ${tool === "eraser" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}
-            title="Gumka"
+            title={t.notatnik.drawingEraser}
           >
             <Eraser size={16} />
           </button>
@@ -230,7 +232,7 @@ export function DrawingCanvas({ onSave, onClose }: DrawingCanvasProps) {
           <button
             onClick={clearCanvas}
             className="p-2 ml-1 rounded-md text-muted-foreground hover:text-destructive hover:bg-muted transition-colors"
-            title="Wyczyść"
+            title={t.notatnik.drawingClear}
           >
             <Trash2 size={16} />
           </button>
@@ -243,7 +245,7 @@ export function DrawingCanvas({ onSave, onClose }: DrawingCanvasProps) {
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors"
           >
             <X size={14} />
-            Anuluj
+            {t.common.cancel}
           </button>
           <button
             onClick={handleSave}
@@ -251,7 +253,7 @@ export function DrawingCanvas({ onSave, onClose }: DrawingCanvasProps) {
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-primary text-primary-foreground rounded-md hover:opacity-90 transition-opacity disabled:opacity-40"
           >
             <Check size={14} />
-            Wstaw do notatki
+            {t.notatnik.drawingInsert}
           </button>
         </div>
       </div>
@@ -265,7 +267,7 @@ export function DrawingCanvas({ onSave, onClose }: DrawingCanvasProps) {
         />
         {isEmpty && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <p className="text-sm text-gray-300 select-none">Zacznij rysować...</p>
+            <p className="text-sm text-gray-300 select-none">{t.notatnik.drawingPlaceholder}</p>
           </div>
         )}
       </div>

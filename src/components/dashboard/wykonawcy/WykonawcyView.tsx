@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
 import { useViewPreference } from "@/hooks/useViewPreference";
+import { useT } from "@/lib/i18n";
 import { LayoutGrid, List, Search, ArrowDownUp, Engineering, Plus, Edit2, Trash2 } from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +23,7 @@ interface Contractor {
 type SortOption = "newest" | "oldest" | "az" | "za";
 
 export default function WykonawcyView({ contractors, unreadPerContractor = {} }: { contractors: Contractor[]; unreadPerContractor?: Record<string, number> }) {
+  const t = useT();
   const router = useRouter();
   const [addOpen, setAddOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -51,16 +53,16 @@ export default function WykonawcyView({ contractors, unreadPerContractor = {} }:
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-4 gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Wykonawcy</h1>
+          <h1 className="text-2xl font-bold">{t.wykonawcy.title}</h1>
           <p className="text-gray-500 mt-1">
             {contractors.length === 0
-              ? "Brak wykonawców"
-              : `${contractors.length} wykonawc${contractors.length === 1 ? "a" : contractors.length < 5 ? "ów" : "ów"}`}
+              ? t.wykonawcy.noContractors
+              : `${contractors.length} ${contractors.length === 1 ? t.wykonawcy.contractorCountUnit : contractors.length < 5 ? t.wykonawcy.contractorCountUnitFew : t.wykonawcy.contractorCountUnitMany}`}
           </p>
         </div>
         <Button onClick={() => setAddOpen(true)} className="gap-2 sm:self-start">
           <Plus size={16} />
-          Dodaj wykonawcę
+          {t.wykonawcy.addBtn}
         </Button>
       </div>
 
@@ -70,7 +72,7 @@ export default function WykonawcyView({ contractors, unreadPerContractor = {} }:
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
           <input
             type="text"
-            placeholder="Szukaj wykonawcy…"
+            placeholder={t.wykonawcy.searchPlaceholder}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-9 pr-4 py-2 border border-border rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-transparent"
@@ -86,8 +88,8 @@ export default function WykonawcyView({ contractors, unreadPerContractor = {} }:
                 className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
                 aria-label="Sortuj"
               >
-                <option value="newest">Najnowsze</option>
-                <option value="oldest">Najstarsze</option>
+                <option value="newest">{t.common.newest}</option>
+                <option value="oldest">{t.common.oldest}</option>
                 <option value="az">A–Z</option>
                 <option value="za">Z–A</option>
               </select>
@@ -97,8 +99,8 @@ export default function WykonawcyView({ contractors, unreadPerContractor = {} }:
               onChange={(e) => setSort(e.target.value as SortOption)}
               className="hidden sm:block flex-shrink-0 text-xs border border-gray-200 dark:border-gray-700 rounded-md px-2 py-2 bg-white dark:bg-card text-gray-600 dark:text-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-300"
             >
-              <option value="newest">Najnowsze</option>
-              <option value="oldest">Najstarsze</option>
+              <option value="newest">{t.common.newest}</option>
+              <option value="oldest">{t.common.oldest}</option>
               <option value="az">A–Z</option>
               <option value="za">Z–A</option>
             </select>
@@ -126,13 +128,13 @@ export default function WykonawcyView({ contractors, unreadPerContractor = {} }:
           <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
             <Engineering size={28} className="text-primary" />
           </div>
-          <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-1">Brak wykonawców</h2>
-          <p className="text-sm text-gray-400 max-w-xs">Dodaj pierwszego wykonawcę, aby przypisać go do projektów.</p>
+          <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-1">{t.wykonawcy.noContractors}</h2>
+          <p className="text-sm text-gray-400 max-w-xs">{t.wykonawcy.noContractorsHint}</p>
         </div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-16 text-gray-400">
           <p className="text-4xl mb-4">🔍</p>
-          <p className="text-lg">Brak wykonawców pasujących do &quot;{search}&quot;</p>
+          <p className="text-lg">{t.wykonawcy.noSearchResults} &quot;{search}&quot;</p>
         </div>
       ) : view === "grid" ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -162,27 +164,28 @@ export default function WykonawcyView({ contractors, unreadPerContractor = {} }:
 }
 
 function ContractorListView({ contractors, unreadPerContractor = {}, onDeleted }: { contractors: Contractor[]; unreadPerContractor?: Record<string, number>; onDeleted: () => void }) {
+  const t = useT();
   const router = useRouter();
 
   async function handleDelete(id: string, name: string) {
-    if (!confirm(`Usunąć wykonawcę "${name}"? Spowoduje to usunięcie wszystkich przypisań i plików.`)) return;
+    if (!confirm(`${t.common.delete} "${name}"? ${t.wykonawcy.deleteConfirmMsg}`)) return;
     const res = await fetch(`/api/contractors/${id}`, { method: "DELETE" });
     if (res.ok) {
-      toast.success("Wykonawca usunięty");
+      toast.success(t.wykonawcy.deletedOk);
       onDeleted();
     } else {
-      toast.error("Błąd podczas usuwania wykonawcy");
+      toast.error(t.wykonawcy.deleteError);
     }
   }
 
   return (
     <div className="bg-card border border-border rounded-xl overflow-hidden">
       <div className="hidden sm:grid grid-cols-[1fr_180px_160px_140px_80px] gap-4 px-5 py-3 bg-muted/50 border-b border-border text-xs font-medium text-muted-foreground uppercase tracking-wide">
-        <span>Firma / Wykonawca</span>
+        <span>{t.wykonawcy.colCompanyContractor}</span>
         <span></span>
-        <span>Specjalizacja</span>
-        <span>Projekty</span>
-        <span className="text-right">Akcje</span>
+        <span>{t.wykonawcy.colSpecialization}</span>
+        <span>{t.wykonawcy.colProjects}</span>
+        <span className="text-right">{t.wykonawcy.colActions}</span>
       </div>
       {contractors.map((c, i) => (
         <div
@@ -201,7 +204,7 @@ function ContractorListView({ contractors, unreadPerContractor = {}, onDeleted }
           <div className="hidden sm:block">
             {(unreadPerContractor[c.id] ?? 0) > 0 && (
               <Badge variant="default" className="text-xs whitespace-nowrap">
-                Nieprzeczytane: {unreadPerContractor[c.id]}
+                {t.wykonawcy.unread} {unreadPerContractor[c.id]}
               </Badge>
             )}
           </div>
@@ -214,10 +217,10 @@ function ContractorListView({ contractors, unreadPerContractor = {}, onDeleted }
           <div className="hidden sm:block">
             <Badge variant="secondary" className="text-xs">
               {c._count.assignments === 1
-                ? "1 projekt"
+                ? t.wykonawcy.project1
                 : (c._count.assignments % 10 >= 2 && c._count.assignments % 10 <= 4 && !(c._count.assignments % 100 >= 12 && c._count.assignments % 100 <= 14))
-                ? `${c._count.assignments} projekty`
-                : `${c._count.assignments} projektów`}
+                ? `${c._count.assignments} ${t.wykonawcy.projectFew}`
+                : `${c._count.assignments} ${t.wykonawcy.projectMany}`}
             </Badge>
           </div>
           <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>

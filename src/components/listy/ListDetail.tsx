@@ -41,7 +41,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 
 import { getUnreadSet, syncListUnread } from "@/lib/list-unread-store";
 import { generateListPDF, type PdfTemplate } from "@/lib/pdf-templates";
-import { useLang } from "@/lib/i18n";
+import { useLang, useT } from "@/lib/i18n";
 
 const BUILT_IN_CATEGORIES = [
   { value: "OSWIETLENIE", label: "Oświetlenie" },
@@ -52,12 +52,6 @@ const BUILT_IN_CATEGORIES = [
   { value: "PODLOGA", label: "Podłoga" },
 ];
 
-const SORT_OPTIONS = [
-  { value: "manual", label: "Ręcznie" },
-  { value: "category", label: "Kategoria" },
-  { value: "name", label: "Nazwa" },
-  { value: "price", label: "Cena" },
-];
 
 function getCategoryLabel(value: string | null | undefined, allCategories: { value: string; label: string }[] = BUILT_IN_CATEGORIES): string {
   if (!value) return "";
@@ -187,12 +181,13 @@ function MoveSectionDialog({ open, onOpenChange, sections, currentSectionId, pro
   open: boolean; onOpenChange: (v: boolean) => void; sections: Section[];
   currentSectionId: string; productName: string; onMove: (targetSectionId: string) => void;
 }) {
+  const t = useT();
   const targets = sections.filter((s) => s.id !== currentSectionId);
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm">
         <DialogHeader>
-          <DialogTitle>Przenieś produkt</DialogTitle>
+          <DialogTitle>{t.listy.moveProduct}</DialogTitle>
           <DialogDescription className="truncate">„{productName}"</DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-1 mt-2">
@@ -202,7 +197,7 @@ function MoveSectionDialog({ open, onOpenChange, sections, currentSectionId, pro
               {s.name}
             </button>
           ))}
-          {targets.length === 0 && <p className="text-sm text-muted-foreground px-4 py-3">Brak innych sekcji.</p>}
+          {targets.length === 0 && <p className="text-sm text-muted-foreground px-4 py-3">{t.listy.noOtherSections}</p>}
         </div>
       </DialogContent>
     </Dialog>
@@ -213,12 +208,13 @@ function CopySectionDialog({ open, onOpenChange, sections, currentSectionId, pro
   open: boolean; onOpenChange: (v: boolean) => void; sections: Section[];
   currentSectionId: string; productName: string; onCopy: (targetSectionId: string) => void;
 }) {
+  const t = useT();
   const targets = sections.filter((s) => s.id !== currentSectionId);
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm">
         <DialogHeader>
-          <DialogTitle>Skopiuj do sekcji</DialogTitle>
+          <DialogTitle>{t.listy.copyToSection}</DialogTitle>
           <DialogDescription className="truncate">„{productName}"</DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-1 mt-2">
@@ -228,7 +224,7 @@ function CopySectionDialog({ open, onOpenChange, sections, currentSectionId, pro
               {s.name}
             </button>
           ))}
-          {targets.length === 0 && <p className="text-sm text-muted-foreground px-4 py-3">Brak innych sekcji.</p>}
+          {targets.length === 0 && <p className="text-sm text-muted-foreground px-4 py-3">{t.listy.noOtherSections}</p>}
         </div>
       </DialogContent>
     </Dialog>
@@ -297,6 +293,7 @@ function ProductRow({
   const [moveMenuPos, setMoveMenuPos] = useState({ top: 0, left: 0 });
   const [editingField, setEditingField] = useState<string | null>(null);
   const [editingValue, setEditingValue] = useState("");
+  const t = useT();
   const [collapsed, setCollapsed] = useState(false);
   const isCollapsed = collapsed && product.hidden;
 
@@ -312,7 +309,7 @@ function ProductRow({
       setQty(next);
       onQuantityChange(product.id, next);
     } catch {
-      toast.error("Błąd aktualizacji ilości");
+      toast.error(t.listy.qtyUpdateError);
     } finally {
       setSaving(false);
     }
@@ -349,44 +346,44 @@ function ProductRow({
       <DropdownMenuContent align="end" className="w-52">
         <DropdownMenuItem onClick={onEdit}>
           <Pencil size={13} className="mr-2" />
-          Edytuj
+          {t.common.edit}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         {approval !== "accepted" && (
           <DropdownMenuItem onClick={() => onApprovalChange("accepted")}>
             <Check size={13} className="mr-2 text-green-600" />
-            Zaakceptuj
+            {t.render.acceptBtn}
           </DropdownMenuItem>
         )}
         {approval !== "rejected" && (
           <DropdownMenuItem onClick={() => onApprovalChange("rejected")}>
             <X size={13} className="mr-2 text-red-500" />
-            Odrzuć
+            {t.listy.rejectBtn}
           </DropdownMenuItem>
         )}
         {approval !== null && (
           <DropdownMenuItem onClick={() => onApprovalChange(null)}>
             <RotateCcw size={13} className="mr-2" />
-            Resetuj status
+            {t.listy.resetStatus}
           </DropdownMenuItem>
         )}
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={onToggleHidden}>
           {product.hidden ? <Eye size={13} className="mr-2" /> : <EyeOff size={13} className="mr-2" />}
-          {product.hidden ? "Pokaż klientowi" : "Ukryj przed klientem"}
+          {product.hidden ? t.render.showToClient : t.render.hideFromClient}
         </DropdownMenuItem>
         <DropdownMenuItem onClick={onOpenMoveDialog}>
           <FolderInput size={13} className="mr-2" />
-          Przenieś do sekcji
+          {t.listy.moveToSection}
         </DropdownMenuItem>
         <DropdownMenuItem onClick={onOpenCopyDialog}>
           <Copy size={13} className="mr-2" />
-          Skopiuj do sekcji
+          {t.listy.copyToSection}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={onDelete} className="text-destructive focus:text-destructive">
           <Trash2 size={13} className="mr-2" />
-          Usuń produkt
+          {t.render.deleteProduct}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -434,7 +431,7 @@ function ProductRow({
     <>
       <div className="fixed inset-0 z-[200]" onClick={() => setMoveMenuOpen(false)} />
       <div className="fixed z-[201] bg-popover border border-border rounded-lg shadow-lg py-1 min-w-[180px]" style={{ top: moveMenuPos.top, left: moveMenuPos.left }}>
-        <p className="px-3 py-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Przenieś do sekcji</p>
+        <p className="px-3 py-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">{t.listy.moveToSection}</p>
         {sectionTargets.map((s) => (
           <button
             key={s.id}
@@ -445,7 +442,7 @@ function ProductRow({
           </button>
         ))}
         {sectionTargets.length === 0 && (
-          <p className="px-3 py-1.5 text-xs text-muted-foreground">Brak innych sekcji.</p>
+          <p className="px-3 py-1.5 text-xs text-muted-foreground">{t.listy.noOtherSections}</p>
         )}
       </div>
     </>,
@@ -457,7 +454,7 @@ function ProductRow({
     <>
       <div className="fixed inset-0 z-[200]" onClick={() => setCopyMenuOpen(false)} />
       <div className="fixed z-[201] bg-popover border border-border rounded-lg shadow-lg py-1 min-w-[180px]" style={{ top: copyMenuPos.top, left: copyMenuPos.left }}>
-        <p className="px-3 py-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Skopiuj do sekcji</p>
+        <p className="px-3 py-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">{t.listy.copyToSection}</p>
         {copyTargets.map((s) => (
           <button
             key={s.id}
@@ -468,7 +465,7 @@ function ProductRow({
           </button>
         ))}
         {copyTargets.length === 0 && (
-          <p className="px-3 py-1.5 text-xs text-muted-foreground">Brak innych sekcji.</p>
+          <p className="px-3 py-1.5 text-xs text-muted-foreground">{t.listy.noOtherSections}</p>
         )}
       </div>
     </>,
@@ -483,7 +480,7 @@ function ProductRow({
           onClick={() => { onFieldUpdate(product.id, "category", null); setCategoryMenuOpen(false); }}
           className={`w-full text-left px-3 py-1.5 text-xs hover:bg-muted transition-colors ${!product.category ? "text-primary font-medium" : "text-muted-foreground"}`}
         >
-          Brak kategorii
+          {t.products.noCategory}
         </button>
         {allCategories.map((cat) => (
           <button
@@ -512,22 +509,22 @@ function ProductRow({
       <div className="hidden md:flex items-center gap-2 px-4 py-4">
         <div className="opacity-100 flex flex-col items-center gap-1 self-stretch justify-center shrink-0">
           {product.hidden && (
-            <button onClick={() => setCollapsed((c) => !c)} className="w-4 h-5 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors" title={isCollapsed ? "Rozwiń" : "Zwiń"}>
+            <button onClick={() => setCollapsed((c) => !c)} className="w-4 h-5 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors" title={isCollapsed ? t.listy.expand : t.listy.collapse}>
               {isCollapsed ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
             </button>
           )}
           {dragHandle ?? <span className="w-4 shrink-0" />}
         </div>
         <div className={`flex flex-col justify-between shrink-0 opacity-100 ${isCollapsed ? "self-center" : "h-32"}`}>
-          <button onClick={onToggleHidden} className="w-5 h-5 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors" title={product.hidden ? "Pokaż klientowi" : "Ukryj przed klientem"}>
+          <button onClick={onToggleHidden} className="w-5 h-5 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors" title={product.hidden ? t.render.showToClient : t.render.hideFromClient}>
             {product.hidden ? <EyeOff size={14} /> : <Eye size={14} />}
           </button>
           {!isCollapsed && (
             <>
-              <button onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); setCopyMenuPos({ top: r.top, left: r.right + 6 }); setCopyMenuOpen(true); }} className="w-5 h-5 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors" title="Skopiuj do sekcji">
+              <button onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); setCopyMenuPos({ top: r.top, left: r.right + 6 }); setCopyMenuOpen(true); }} className="w-5 h-5 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors" title={t.listy.copyToSection}>
                 <Copy size={14} />
               </button>
-              <button onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); setMoveMenuPos({ top: r.top, left: r.right + 6 }); setMoveMenuOpen(true); }} className="w-5 h-5 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors" title="Przenieś do innej sekcji">
+              <button onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); setMoveMenuPos({ top: r.top, left: r.right + 6 }); setMoveMenuOpen(true); }} className="w-5 h-5 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors" title={t.listy.moveToSection}>
                 <FolderInput size={14} />
               </button>
             </>
@@ -564,15 +561,15 @@ function ProductRow({
             <button
               onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); const estH = (allCategories.length + 1) * 28 + 8; const top = (window.innerHeight - r.bottom) >= estH + 8 ? r.bottom + 4 : Math.max(4, r.top - estH - 4); setCategoryMenuPos({ top, left: r.left }); setCategoryMenuOpen((v) => !v); }}
               className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors shrink-0 ${product.category ? "bg-primary/8 text-primary dark:bg-primary/20 hover:bg-primary/15" : "border border-dashed border-border text-muted-foreground hover:border-primary/40 hover:text-primary"}`}
-              title="Zmień kategorię"
+              title={t.listy.changeCategoryTitle}
             >
-              {product.category ? getCategoryLabel(product.category, allCategories) : "+ kategoria"}
+              {product.category ? getCategoryLabel(product.category, allCategories) : t.listy.addCategory}
             </button>
           </div>
           {/* 2-column attribute grid */}
           <div className="grid grid-cols-2 gap-x-4 mt-1">
             {(["manufacturer", "supplier", "color", "deliveryTime", "dimensions", "catalogNumber"] as const).map((field) => {
-              const labels: Record<string, string> = { manufacturer: "Producent", supplier: "Dostawca", color: "Kolor", dimensions: "Wymiar", deliveryTime: "Dostawa", catalogNumber: "Nr kat." };
+              const labels: Record<string, string> = { manufacturer: t.listy.fieldManufacturer, supplier: t.listy.fieldSupplier, color: t.listy.fieldColor, dimensions: t.listy.fieldDimensions, deliveryTime: t.listy.fieldDelivery, catalogNumber: t.listy.fieldCatalogNumber };
               const val = product[field] as string | null;
               if (editingField === field) {
                 return (
@@ -618,7 +615,7 @@ function ProductRow({
           {/* Note field */}
           {editingField === "note" ? (
             <div className="flex items-start gap-1 mt-1">
-              <span className="text-xs text-muted-foreground shrink-0 mt-0.5">Notatka:</span>
+              <span className="text-xs text-muted-foreground shrink-0 mt-0.5">{t.listy.noteLabel}</span>
               <textarea
                 autoFocus
                 value={editingValue}
@@ -635,7 +632,7 @@ function ProductRow({
               <button
                 onClick={() => startFieldEdit("note", product.note)}
                 className="opacity-0 group-hover/note:opacity-100 transition-opacity text-muted-foreground hover:text-foreground shrink-0"
-                title="Edytuj notatkę"
+                title={t.listy.noteLabel}
               >
                 <Pencil size={10} />
               </button>
@@ -645,13 +642,13 @@ function ProductRow({
               onClick={() => startFieldEdit("note", null)}
               className="text-xs text-muted-foreground/30 hover:text-muted-foreground transition-colors mt-1 block"
             >
-              + Notatka
+              {t.listy.addNote}
             </button>
           )}
         </div>
         <div className="flex items-center gap-3 shrink-0">
-          {approval === "accepted" && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 shrink-0">Zaakceptowane</span>}
-          {approval === "rejected" && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 shrink-0">Odrzucone</span>}
+          {approval === "accepted" && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 shrink-0">{t.listy.accepted}</span>}
+          {approval === "rejected" && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 shrink-0">{t.listy.rejected}</span>}
           <div className="flex items-center gap-1">
             <button onClick={() => updateQty(qty - 1)} disabled={qty <= 1 || saving} className="w-6 h-6 rounded flex items-center justify-center border border-border text-muted-foreground hover:text-foreground hover:border-foreground/30 disabled:opacity-30 transition-colors"><Minus size={11} /></button>
             <span className="w-6 text-center text-sm font-medium tabular-nums">{qty}</span>
@@ -673,7 +670,7 @@ function ProductRow({
                   <button
                     onClick={() => startFieldEdit("price", product.price)}
                     className="text-sm font-semibold text-foreground tabular-nums hover:text-primary transition-colors"
-                    title="Edytuj cenę"
+                    title={t.listy.editPriceTitle}
                   >
                     {formatPriceNum(totalPrice)} {currency}
                   </button>
@@ -681,7 +678,7 @@ function ProductRow({
                     <div className="relative group">
                       <AlertCircle size={15} className="text-red-500 cursor-default shrink-0" />
                       <div className="absolute bottom-full right-0 mb-1.5 px-2 py-1 bg-popover text-popover-foreground text-xs rounded shadow-md whitespace-nowrap border border-border opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-                        Sprawdź aktualną cenę produktu!
+                        {t.listy.checkPriceWarning}
                       </div>
                     </div>
                   )}
@@ -692,14 +689,14 @@ function ProductRow({
               <button
                 onClick={() => startFieldEdit("price", null)}
                 className="text-xs text-muted-foreground/40 hover:text-muted-foreground transition-colors"
-                title="Dodaj cenę"
+                title={t.listy.addPriceTitle}
               >
-                + Cena
+                {t.listy.addPriceBtn}
               </button>
             )}
           </div>
           {product.url ? (
-            <a href={product.url} target="_blank" rel="noopener noreferrer" className="w-7 h-7 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors" title="Otwórz produkt"><ExternalLink size={14} /></a>
+            <a href={product.url} target="_blank" rel="noopener noreferrer" className="w-7 h-7 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors" title={t.listy.openProductTitle}><ExternalLink size={14} /></a>
           ) : <span className="w-7" />}
           <button onClick={onOpenComments} className="relative flex items-center justify-center w-7 h-7 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors" title="Komentarze">
             <Comment size={15} className={`transition-colors ${unread ? "text-blue-500" : ""}`} />
@@ -732,12 +729,12 @@ function ProductRow({
               ) : (
                 <p className="font-medium text-sm text-foreground leading-tight truncate">{product.name}</p>
               )}
-              {product.manufacturer && <p className="text-xs text-muted-foreground truncate">Producent: {product.manufacturer}</p>}
-              {product.supplier && <p className="text-xs text-muted-foreground truncate">Dostawca: {product.supplier}</p>}
-              {product.color && <p className="text-xs text-muted-foreground truncate">Kolor: {product.color}</p>}
-              {product.deliveryTime && <p className="text-xs text-muted-foreground truncate">Dostawa: {product.deliveryTime}</p>}
-              {product.dimensions && <p className="text-xs text-muted-foreground truncate">Wymiar: {product.dimensions}</p>}
-              {product.catalogNumber && <p className="text-xs text-muted-foreground truncate">Nr kat.: {product.catalogNumber}</p>}
+              {product.manufacturer && <p className="text-xs text-muted-foreground truncate">{t.listy.fieldManufacturer}: {product.manufacturer}</p>}
+              {product.supplier && <p className="text-xs text-muted-foreground truncate">{t.listy.fieldSupplier}: {product.supplier}</p>}
+              {product.color && <p className="text-xs text-muted-foreground truncate">{t.listy.fieldColor}: {product.color}</p>}
+              {product.deliveryTime && <p className="text-xs text-muted-foreground truncate">{t.listy.fieldDelivery}: {product.deliveryTime}</p>}
+              {product.dimensions && <p className="text-xs text-muted-foreground truncate">{t.listy.fieldDimensions}: {product.dimensions}</p>}
+              {product.catalogNumber && <p className="text-xs text-muted-foreground truncate">{t.listy.fieldCatalogNumber}: {product.catalogNumber}</p>}
               {editingField === "note" ? (
                 <textarea
                   autoFocus
@@ -746,7 +743,7 @@ function ProductRow({
                   onBlur={saveFieldEdit}
                   onKeyDown={(e) => { if (e.key === "Enter" && e.ctrlKey) saveFieldEdit(); if (e.key === "Escape") setEditingField(null); }}
                   rows={2}
-                  placeholder="Wpisz notatkę…"
+                  placeholder={t.listy.notePlaceholder}
                   className="text-xs bg-transparent border border-primary/40 rounded px-1 focus:outline-none focus:border-primary w-full resize-none mt-0.5"
                 />
               ) : (
@@ -771,7 +768,7 @@ function ProductRow({
                 <button
                   onClick={() => startFieldEdit("price", product.price)}
                   className="text-sm font-semibold text-foreground tabular-nums hover:text-primary transition-colors"
-                  title="Edytuj cenę"
+                  title={t.listy.editPriceTitle}
                 >
                   {formatPriceNum(totalPrice)} {currency}
                 </button>
@@ -779,7 +776,7 @@ function ProductRow({
                   <div className="relative group">
                     <AlertCircle size={14} className="text-red-500 cursor-default shrink-0" />
                     <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-popover text-popover-foreground text-xs rounded shadow-md whitespace-nowrap border border-border opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-                      Sprawdź aktualną cenę produktu!
+                      {t.listy.checkPriceWarning}
                     </div>
                   </div>
                 )}
@@ -788,19 +785,19 @@ function ProductRow({
               <button
                 onClick={() => startFieldEdit("price", null)}
                 className="text-xs text-muted-foreground/40 hover:text-muted-foreground transition-colors"
-                title="Dodaj cenę"
+                title={t.listy.addPriceTitle}
               >
-                + Cena
+                {t.listy.addPriceBtn}
               </button>
             )}
             <button
               onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); const estH = (allCategories.length + 1) * 28 + 8; const top = (window.innerHeight - r.bottom) >= estH + 8 ? r.bottom + 4 : Math.max(4, r.top - estH - 4); setCategoryMenuPos({ top, left: r.left }); setCategoryMenuOpen((v) => !v); }}
               className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors shrink-0 ${product.category ? "bg-primary/8 text-primary dark:bg-primary/20" : "border border-dashed border-border text-muted-foreground"}`}
             >
-              {product.category ? getCategoryLabel(product.category, allCategories) : "+ kat."}
+              {product.category ? getCategoryLabel(product.category, allCategories) : t.listy.addCategoryShort}
             </button>
-            {approval === "accepted" && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">Zaakceptowane</span>}
-            {approval === "rejected" && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">Odrzucone</span>}
+            {approval === "accepted" && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">{t.listy.accepted}</span>}
+            {approval === "rejected" && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">{t.listy.rejected}</span>}
           </div>
           {/* Row 3: qty + link + comments */}
           <div className="flex items-center justify-between mt-1.5">
@@ -911,6 +908,7 @@ function sortProducts(products: Product[], sortBy: string, categoryOrder: string
 
 export default function ListDetail({ list, designerName, designerEmail, designerLogoUrl, initialOpenProductId, categoryOrder, customCategories, pdfTemplate }: ListDetailProps & { designerName?: string; designerEmail?: string; designerLogoUrl?: string; initialOpenProductId?: string }) {
   const { lang } = useLang();
+  const t = useT();
   const [currentPdfTemplate, setCurrentPdfTemplate] = useState<import("@/lib/pdf-templates").PdfTemplate>(pdfTemplate ?? "violet");
   useEffect(() => {
     fetch("/api/ustawienia/lists")
@@ -918,6 +916,21 @@ export default function ListDetail({ list, designerName, designerEmail, designer
       .then((data) => { if (data.pdfListTemplate) setCurrentPdfTemplate(data.pdfListTemplate); })
       .catch(() => {});
   }, []);
+  const SORT_OPTIONS = [
+    { value: "manual", label: t.render.sortManual },
+    { value: "category", label: t.listy.sortCategory },
+    { value: "name", label: t.render.sortName },
+    { value: "price", label: t.listy.sortPrice },
+  ];
+  const translatedCategories = [
+    { value: "OSWIETLENIE", label: t.products.catLampy },
+    { value: "AKCESORIA", label: t.products.catAkcesoria },
+    { value: "MEBLE", label: t.products.catMeble },
+    { value: "ARMATURA", label: t.products.catArmatura },
+    { value: "OKLADZINY_SCIENNE", label: t.products.catOkladziny },
+    { value: "PODLOGA", label: t.products.catPodloga },
+  ];
+
   const [sections, setSections] = useState<Section[]>(list.sections);
 
   // Sync sections from server props after router.refresh() (e.g. product added via extension)
@@ -927,7 +940,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
   }, [list.sections]);
   const [budget, setBudget] = useState<number | null>(list.budget);
   const [hidePrices, setHidePrices] = useState(list.hidePrices);
-  const allCategories = [...BUILT_IN_CATEGORIES, ...customCategories.map((c) => ({ value: c, label: c }))];
+  const allCategories = [...translatedCategories, ...customCategories.map((c) => ({ value: c, label: c }))];
   const [sectionBudgets, setSectionBudgets] = useState<Record<string, number | null>>(() =>
     Object.fromEntries(list.sections.map((s) => [s.id, s.budget ?? null]))
   );
@@ -1023,14 +1036,14 @@ export default function ListDetail({ list, designerName, designerEmail, designer
 
 
   async function handleDeleteSection(sectionId: string) {
-    if (!confirm("Usunąć sekcję wraz ze wszystkimi produktami?")) return;
+    if (!confirm(t.listy.confirmDeleteSection)) return;
     setSections((prev) => prev.filter((s) => s.id !== sectionId));
     try {
       const res = await fetch(`/api/lists/${list.id}/sections/${sectionId}`, { method: "DELETE" });
       if (!res.ok) throw new Error();
-      toast.success("Sekcja usunięta");
+      toast.success(t.listy.sectionDeleted);
     } catch {
-      toast.error("Błąd usuwania sekcji");
+      toast.error(t.listy.sectionDeleteError);
       router.refresh();
     }
   }
@@ -1044,10 +1057,10 @@ export default function ListDetail({ list, designerName, designerEmail, designer
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ hidePrices: next }),
       });
-      toast.success(next ? "Ceny ukryte dla klienta" : "Ceny widoczne dla klienta");
+      toast.success(next ? t.listy.pricesHiddenForClient : t.listy.pricesVisibleForClient);
     } catch {
       setHidePrices(!next);
-      toast.error("Błąd zapisu ustawienia");
+      toast.error(t.listy.saveSettingError);
     }
   }
 
@@ -1069,7 +1082,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
       });
       if (!res.ok) throw new Error();
     } catch {
-      toast.error("Błąd zapisu");
+      toast.error(t.listy.saveError);
       router.refresh();
     }
   }
@@ -1084,11 +1097,11 @@ export default function ListDetail({ list, designerName, designerEmail, designer
         body: JSON.stringify({ sortBy }),
       });
     } catch {
-      toast.error("Błąd zapisu sortowania sekcji");
+      toast.error(t.listy.saveSortError);
     }
   }
 
-  const authorName = designerName || "Projektant";
+  const authorName = designerName || t.listy.defaultDesigner;
 
   const commentsPanelProductIdRef = useRef<string | null>(null);
   useEffect(() => {
@@ -1193,7 +1206,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
           body: JSON.stringify({ order: reordered.map((s) => s.id) }),
         });
       } catch {
-        toast.error("Błąd zapisu kolejności sekcji");
+        toast.error(t.listy.saveSectionOrderError);
       }
       return;
     }
@@ -1230,7 +1243,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
               : Promise.resolve(),
           ]);
         } catch {
-          toast.error("Błąd zapisu kolejności produktów");
+          toast.error(t.listy.saveProductOrderError);
         }
       } else {
         // Cross-section move
@@ -1268,7 +1281,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ order: newTgtProducts.map((p) => p.id) }),
           });
-          toast.success("Produkt przeniesiony");
+          toast.success(t.listy.productMoved);
         } catch {
           setSections((prev) =>
             prev.map((s) => {
@@ -1277,7 +1290,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
               return s;
             })
           );
-          toast.error("Błąd przenoszenia produktu");
+          toast.error(t.listy.moveProductError);
         }
       }
     }
@@ -1303,20 +1316,20 @@ export default function ListDetail({ list, designerName, designerEmail, designer
         body: JSON.stringify({ name }),
       });
     } catch {
-      toast.error("Błąd zapisu nazwy sekcji");
+      toast.error(t.listy.saveSectionNameError);
     }
   }
 
   async function saveBudget() {
     const parsedList = budgetInput.trim() === "" ? null : parseFloat(budgetInput.replace(",", "."));
     if (budgetInput.trim() !== "" && (isNaN(parsedList!) || parsedList! < 0)) {
-      toast.error("Nieprawidłowa wartość budżetu listy");
+      toast.error(t.listy.invalidListBudget);
       return;
     }
     for (const [sid, val] of Object.entries(sectionBudgetInputs)) {
       if (val.trim() !== "") {
         const p = parseFloat(val.replace(",", "."));
-        if (isNaN(p) || p < 0) { toast.error("Nieprawidłowa wartość budżetu sekcji"); return; }
+        if (isNaN(p) || p < 0) { toast.error(t.listy.invalidSectionBudget); return; }
       }
     }
     setSavingBudget(true);
@@ -1347,9 +1360,9 @@ export default function ListDetail({ list, designerName, designerEmail, designer
         })
       ));
       setBudgetModalOpen(false);
-      toast.success("Budżet zapisany");
+      toast.success(t.listy.budgetSaved);
     } catch {
-      toast.error("Błąd zapisu budżetu");
+      toast.error(t.listy.saveBudgetError);
     } finally {
       setSavingBudget(false);
     }
@@ -1378,7 +1391,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
       setNewSectionName("");
       setAddingSection(false);
     } catch {
-      toast.error("Błąd tworzenia sekcji");
+      toast.error(t.listy.sectionCreateError);
     } finally {
       setSavingSection(false);
     }
@@ -1440,7 +1453,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
         body: JSON.stringify({ sectionId: targetSectionId }),
       });
       if (!res.ok) throw new Error();
-      toast.success("Produkt przeniesiony");
+      toast.success(t.listy.productMoved);
     } catch {
       setSections((prev) =>
         prev.map((s) => {
@@ -1449,7 +1462,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
           return s;
         })
       );
-      toast.error("Błąd przenoszenia produktu");
+      toast.error(t.listy.moveProductError);
     }
   }
 
@@ -1483,9 +1496,9 @@ export default function ListDetail({ list, designerName, designerEmail, designer
           s.id === targetSectionId ? { ...s, products: [...s.products, newProduct] } : s
         )
       );
-      toast.success("Produkt skopiowany");
+      toast.success(t.listy.productCopied);
     } catch {
-      toast.error("Błąd kopiowania produktu");
+      toast.error(t.listy.copyProductError);
     }
   }
 
@@ -1518,7 +1531,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
               : s
           )
         );
-        toast.error("Błąd zmiany widoczności produktu");
+        toast.error(t.listy.toggleVisibilityError);
       }
     } catch {
       // rollback
@@ -1529,7 +1542,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
             : s
         )
       );
-      toast.error("Błąd zmiany widoczności produktu");
+      toast.error(t.listy.toggleVisibilityError);
     }
   }
 
@@ -1545,7 +1558,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
       if (!res.ok) throw new Error();
     } catch {
       setApprovals((a) => ({ ...a, [productId]: prev }));
-      toast.error("Błąd zmiany statusu akceptacji");
+      toast.error(t.listy.approvalChangeError);
     }
   }
 
@@ -1563,9 +1576,9 @@ export default function ListDetail({ list, designerName, designerEmail, designer
             : s
         )
       );
-      toast.success("Produkt usunięty");
+      toast.success(t.products.productDeleted);
     } catch {
-      toast.error("Błąd usuwania produktu");
+      toast.error(t.products.productDeleteError);
     } finally {
       setDeletingId(null);
     }
@@ -1686,7 +1699,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
     const wsData: unknown[][] = [];
 
     wsData.push([list.name]);
-    wsData.push([`Projekt: ${list.project?.title ?? "—"}`, "", "", "", "", "", "", `Wygenerowano: ${new Date().toLocaleDateString("pl-PL")}`]);
+    wsData.push([`${t.listy.xlsxProjectLabel}: ${list.project?.title ?? "—"}`, "", "", "", "", "", "", `${t.listy.xlsxGeneratedLabel}: ${new Date().toLocaleDateString()}`]);
     wsData.push([]);
 
     let globalIdx = 1;
@@ -1696,7 +1709,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
       if (visibleProducts.length === 0) continue;
 
       wsData.push([section.name]);
-      wsData.push(["Lp.", "Nazwa", "Producent", "Kolor", "Wymiar", "Czas dostawy", "Szt.", "Cena jedn.", "Cena łączna"]);
+      wsData.push([t.listy.xlsxColLp, t.listy.xlsxColName, t.listy.xlsxColManufacturer, t.listy.xlsxColColor, t.listy.xlsxColDimensions, t.listy.xlsxColDelivery, t.listy.xlsxColQty, t.listy.xlsxColUnitPrice, t.listy.xlsxColTotalPrice]);
 
       for (const p of visibleProducts) {
         const unit = parsePrice(p.price);
@@ -1721,13 +1734,13 @@ export default function ListDetail({ list, designerName, designerEmail, designer
       }, 0);
       const sectionCur = getCurrency(visibleProducts.find((p) => getCurrency(p.price))?.price ?? null);
       if (sectionTotal > 0) {
-        wsData.push(["", "", "", "", "", "", "", "Suma sekcji:", `${sectionTotal.toLocaleString("pl-PL")} ${sectionCur}`]);
+        wsData.push(["", "", "", "", "", "", "", t.listy.xlsxSectionTotal, `${sectionTotal.toLocaleString()} ${sectionCur}`]);
       }
       wsData.push([]);
     }
 
     if (hasTotal) {
-      wsData.push(["", "", "", "", "", "", "", "SUMA CAŁKOWITA:", `${grandTotal.toLocaleString("pl-PL")} ${grandCurrency}`]);
+      wsData.push(["", "", "", "", "", "", "", t.listy.xlsxGrandTotal, `${grandTotal.toLocaleString()} ${grandCurrency}`]);
     }
 
     const ws = XLSX.utils.aoa_to_sheet(wsData);
@@ -1747,7 +1760,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
             className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors shrink-0"
           >
             <ChevronLeft size={16} />
-            <span className="hidden sm:inline">Listy</span>
+            <span className="hidden sm:inline">{t.listy.backToLists}</span>
           </Link>
           <span className="text-muted-foreground hidden sm:inline">/</span>
           <h1 className="text-lg sm:text-xl font-bold truncate">{list.name}</h1>
@@ -1769,9 +1782,9 @@ export default function ListDetail({ list, designerName, designerEmail, designer
         <div className="mb-4 flex items-start gap-2 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 px-3 py-2.5 text-sm text-amber-800 dark:text-amber-300">
           <AlertTriangle size={15} className="flex-shrink-0 mt-0.5" />
           <span className="flex-1">
-            Klient <strong>{list.project.clientName}</strong> nie ma konta —{" "}
+            {t.listy.clientLabel} <strong>{list.project.clientName}</strong> {t.listy.noAccountNote}{" "}
             <Link href={`/klienci/${list.project.id}`} className="underline hover:no-underline">
-              nadaj hasło w module Klientów
+              {t.listy.noAccountPassword}
             </Link>
           </span>
         </div>
@@ -1784,8 +1797,8 @@ export default function ListDetail({ list, designerName, designerEmail, designer
         <div className="flex items-center gap-1.5 flex-wrap">
           <Button onClick={openAddSection} className="flex items-center gap-1.5 h-8 px-3 text-xs">
             <Plus size={13} />
-            <span className="hidden xs:inline">Dodaj sekcję</span>
-            <span className="xs:hidden">Sekcja</span>
+            <span className="hidden xs:inline">{t.listy.addSection}</span>
+            <span className="xs:hidden">{t.listy.sectionLabel}</span>
           </Button>
           <Button
             variant="outline"
@@ -1793,48 +1806,48 @@ export default function ListDetail({ list, designerName, designerEmail, designer
             className="flex items-center gap-1.5 h-8 px-3 text-xs"
           >
             <Plus size={13} />
-            Produkt
+            {t.products.addProduct}
           </Button>
           <div className="w-px h-5 bg-border mx-0.5 hidden sm:block" />
           <DropdownMenu>
             <DropdownMenuTrigger render={
               <button className="flex items-center gap-1 h-8 px-2 sm:px-3 text-xs rounded-lg border border-border bg-background hover:bg-muted transition-colors text-foreground">
                 <FileDown size={13} />
-                <span className="hidden sm:inline">Eksportuj</span>
+                <span className="hidden sm:inline">{t.listy.exportBtn}</span>
               </button>
             } />
             <DropdownMenuContent align="end" className="w-40">
               <DropdownMenuItem onClick={openExportPdfDialog}>
                 <FileDown size={13} className="mr-2" />
-                Eksport PDF
+                {t.listy.exportPDF}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={exportToXLSX}>
                 <Sheet size={13} className="mr-2" />
-                Eksport XLSX
+                {t.listy.exportXLSX}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
           <button
             onClick={() => { setBudgetInput(budget != null ? String(budget) : ""); setBudgetModalOpen(true); }}
             className="flex items-center gap-1 h-8 px-2 sm:px-3 text-xs rounded-lg border border-border bg-background hover:bg-muted transition-colors text-foreground"
-            title="Ustaw budżet"
+            title={t.listy.setBudget}
           >
             <Wallet size={13} />
-            <span className="hidden sm:inline">{budget != null ? "Budżet" : "Ustaw budżet"}</span>
+            <span className="hidden sm:inline">{budget != null ? t.listy.budget : t.listy.setBudget}</span>
           </button>
           <button
             onClick={toggleHidePrices}
             className={`flex items-center gap-1 h-8 px-2 sm:px-3 text-xs rounded-lg border transition-colors ${hidePrices ? "border-amber-400 bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-700" : "border-border bg-background hover:bg-muted text-foreground"}`}
-            title={hidePrices ? "Ceny ukryte dla klienta — kliknij aby pokazać" : "Ukryj ceny dla klienta"}
+            title={hidePrices ? t.listy.pricesHiddenTitle : t.listy.hidePricesTitle}
           >
             <DollarSign size={13} />
-            <span className="hidden sm:inline">{hidePrices ? "Ceny ukryte" : "Ukryj ceny"}</span>
+            <span className="hidden sm:inline">{hidePrices ? t.listy.pricesHiddenBtn : t.listy.hidePricesBtn}</span>
           </button>
         </div>
         {hasTotal && (
           <div className="flex flex-col items-end gap-1 shrink-0 pr-1 min-w-0">
             <div className="flex items-center gap-1.5 text-sm">
-              <span className="text-muted-foreground text-xs">Suma:</span>
+              <span className="text-muted-foreground text-xs">{t.listy.sumLabel}</span>
               <span className={`font-semibold tabular-nums ${budget != null && budget > 0 && grandTotal > budget ? "text-red-500" : ""}`}>
                 {formatPriceNum(grandTotal)} {grandCurrency}
               </span>
@@ -1874,14 +1887,14 @@ export default function ListDetail({ list, designerName, designerEmail, designer
             value={newSectionName}
             onChange={(e) => setNewSectionName(e.target.value)}
             onKeyDown={(e) => e.key === "Escape" && setAddingSection(false)}
-            placeholder="Nazwa sekcji, np. Salon"
+            placeholder={t.listy.sectionNamePlaceholder}
             className="flex-1 px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40"
           />
           <Button type="submit" disabled={savingSection || !newSectionName.trim()}>
-            {savingSection ? "Tworzenie..." : "Utwórz"}
+            {savingSection ? t.listy.creating : t.listy.createBtn}
           </Button>
           <Button type="button" variant="outline" onClick={() => setAddingSection(false)}>
-            Anuluj
+            {t.common.cancel}
           </Button>
         </form>
       )}
@@ -1892,9 +1905,9 @@ export default function ListDetail({ list, designerName, designerEmail, designer
           <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
             <Plus size={28} className="text-primary" />
           </div>
-          <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-1">Brak sekcji</h2>
+          <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-1">{t.listy.noSections}</h2>
           <p className="text-sm text-gray-400 max-w-xs">
-            Kliknij „Dodaj sekcję" aby stworzyć pierwszą sekcję, np. Salon lub Kuchnia.
+            {t.listy.noSectionsHint}
           </p>
         </div>
       )}
@@ -1908,7 +1921,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
           if (!unsortedSection || unsortedSection.products.length === 0) return null;
           return (
             <div className="mb-8">
-              <h2 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide">Produkty poza sekcją</h2>
+              <h2 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide">{t.listy.productsOutsideSection}</h2>
               <div className="bg-card border border-border rounded-xl overflow-hidden">
                 <SortableContext items={unsortedSection.products.map((p) => p.id)} strategy={verticalListSortingStrategy}>
                   {unsortedSection.products.map((product, i) => (
@@ -1966,7 +1979,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                             return next;
                           })}
                           className="w-6 h-6 flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
-                          title={collapsedSections.has(section.id) ? "Rozwiń sekcję" : "Zwiń sekcję"}
+                          title={collapsedSections.has(section.id) ? t.listy.expandSection : t.listy.collapseSection}
                         >
                           {collapsedSections.has(section.id) ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
                         </button>
@@ -1986,7 +1999,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                           <h2
                             className="text-base font-semibold text-foreground cursor-pointer hover:text-primary transition-colors"
                             onClick={() => startEditSection(section)}
-                            title="Kliknij aby edytować"
+                            title={t.listy.clickToEdit}
                           >
                             {section.name}
                           </h2>
@@ -1994,10 +2007,10 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                         <button
                           onClick={() => setDialogState({ open: true, sectionId: section.id })}
                           className="hidden sm:flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground border border-border hover:border-foreground/30 rounded-md px-2 py-0.5 transition-colors shrink-0"
-                          title="Dodaj produkt"
+                          title={t.products.addProduct}
                         >
                           <Plus size={13} />
-                          Dodaj produkt
+                          {t.products.addProduct}
                         </button>
                       </div>
                       <div className="flex items-center gap-3">
@@ -2010,11 +2023,11 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                                 ? "border-primary/40 bg-primary/5 text-primary dark:text-[#A5B4FC]"
                                 : "border-border text-muted-foreground hover:text-foreground hover:border-foreground/30"
                             }`}
-                            title="Sortuj sekcję"
+                            title={t.listy.sortSectionTitle}
                           >
                             <ArrowDownUp size={11} />
                             <span className="hidden sm:inline">
-                              {SORT_OPTIONS.find((o) => o.value === getSortBy(section.sortBy))?.label ?? "Ręcznie"}
+                              {SORT_OPTIONS.find((o) => o.value === getSortBy(section.sortBy))?.label ?? t.render.sortManual}
                             </span>
                           </button>
                           {sortDropdownOpen === section.id && (
@@ -2042,7 +2055,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                         <button
                           onClick={() => handleDeleteSection(section.id)}
                           className="w-7 h-7 flex items-center justify-center rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-                          title="Usuń sekcję"
+                          title={t.listy.deleteSectionTitle}
                         >
                           <Trash2 size={13} />
                         </button>
@@ -2055,7 +2068,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                         onClick={() => setDialogState({ open: true, sectionId: section.id })}
                       >
                         <Plus size={20} className="mx-auto mb-2 text-muted-foreground" />
-                        <p className="text-sm text-muted-foreground">Dodaj pierwszy produkt</p>
+                        <p className="text-sm text-muted-foreground">{t.listy.addFirstProduct}</p>
                       </div>
                     ) : !isDraggingSection ? (
                       <div className="bg-card border border-border rounded-xl overflow-hidden">
@@ -2101,7 +2114,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                           className="w-full flex items-center gap-1.5 px-4 py-2.5 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/30 border-t border-border transition-colors"
                         >
                           <Plus size={13} />
-                          Dodaj produkt
+                          {t.products.addProduct}
                         </button>
                       </div>
                     ) : null}
@@ -2226,7 +2239,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-              <h2 className="text-sm font-semibold">Ustawienia eksportu PDF</h2>
+              <h2 className="text-sm font-semibold">{t.listy.pdfExportSettings}</h2>
               <button
                 onClick={() => setExportDialogOpen(false)}
                 className="w-7 h-7 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
@@ -2238,7 +2251,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
             <div className="p-4 space-y-4 overflow-y-auto max-h-[60vh]">
               {/* Sekcje */}
               <div className="space-y-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Sekcje</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t.listy.sectionsLabel}</p>
                 {sections.filter((s) => !s.unsorted).map((s) => (
                   <label key={s.id} className="flex items-center gap-2.5 cursor-pointer select-none">
                     <input
@@ -2253,7 +2266,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                       className="w-4 h-4 rounded accent-primary"
                     />
                     <span className="text-sm">{s.name}</span>
-                    <span className="text-xs text-muted-foreground ml-auto">{s.products.filter((p) => !p.hidden).length} prod.</span>
+                    <span className="text-xs text-muted-foreground ml-auto">{s.products.filter((p) => !p.hidden).length} {t.listy.prodCountSuffix}</span>
                   </label>
                 ))}
               </div>
@@ -2264,8 +2277,8 @@ export default function ListDetail({ list, designerName, designerEmail, designer
               {/* Ukryj ceny */}
               <label className="flex items-center justify-between gap-3 cursor-pointer select-none">
                 <div>
-                  <p className="text-sm font-medium">Ukryj ceny</p>
-                  <p className="text-xs text-muted-foreground">Ceny produktów nie będą widoczne w PDF</p>
+                  <p className="text-sm font-medium">{t.listy.hidePricesPDF}</p>
+                  <p className="text-xs text-muted-foreground">{t.listy.hidePricesPDFDesc}</p>
                 </div>
                 <button
                   role="switch"
@@ -2283,7 +2296,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                 onClick={() => setExportDialogOpen(false)}
                 className="px-3 py-1.5 text-sm rounded-lg border border-border hover:bg-muted transition-colors"
               >
-                Anuluj
+                {t.common.cancel}
               </button>
               <button
                 disabled={exportSelectedSections.size === 0}
@@ -2293,7 +2306,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                 }}
                 className="px-3 py-1.5 text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Generuj PDF
+                {t.listy.generatePDF}
               </button>
             </div>
           </div>
@@ -2307,7 +2320,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-2">
                 <Wallet size={18} className="text-muted-foreground" />
-                <h2 className="text-base font-semibold">Budżet listy</h2>
+                <h2 className="text-base font-semibold">{t.listy.budgetModal}</h2>
               </div>
               <button onClick={() => setBudgetModalOpen(false)} className="text-muted-foreground hover:text-foreground transition-colors">
                 <X size={18} />
@@ -2317,7 +2330,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
             <div className="overflow-y-auto flex-1 space-y-5 pr-1">
               {/* Overall budget */}
               <div className="space-y-2">
-                <p className="text-sm font-semibold">Cała lista</p>
+                <p className="text-sm font-semibold">{t.listy.wholeList}</p>
                 <div className="flex items-center gap-2">
                   <div className="relative flex-1">
                     <input
@@ -2346,7 +2359,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
               {/* Section budgets */}
               {sections.filter((s) => !s.unsorted).length > 0 && (
                 <div className="space-y-3">
-                  <p className="text-sm font-semibold">Sekcje</p>
+                  <p className="text-sm font-semibold">{t.listy.sectionsLabel}</p>
                   {sections.filter((s) => !s.unsorted).map((s) => (
                     <div key={s.id} className="space-y-1">
                       <label className="text-xs text-muted-foreground">{s.name}</label>
@@ -2377,7 +2390,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                 </div>
               )}
 
-              <p className="text-xs text-muted-foreground">Zostaw pole puste, aby usunąć budżet dla danej pozycji.</p>
+              <p className="text-xs text-muted-foreground">{t.listy.budgetLeaveEmpty}</p>
             </div>
 
             <div className="flex gap-2 mt-5 pt-4 border-t border-border">
@@ -2385,14 +2398,14 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                 onClick={() => setBudgetModalOpen(false)}
                 className="px-3 py-2 text-sm text-muted-foreground hover:bg-muted rounded-lg transition-colors"
               >
-                Anuluj
+                {t.common.cancel}
               </button>
               <button
                 onClick={saveBudget}
                 disabled={savingBudget}
                 className="ml-auto px-4 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity disabled:opacity-40"
               >
-                {savingBudget ? "Zapisuję..." : "Zapisz"}
+                {savingBudget ? t.listy.savingBudget : t.common.save}
               </button>
             </div>
           </div>

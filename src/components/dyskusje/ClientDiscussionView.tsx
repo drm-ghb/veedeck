@@ -9,6 +9,7 @@ import { convertHeicFiles } from "@/lib/convert-heic";
 import ImageAnnotationModal from "./ImageAnnotationModal";
 import { SwipeableMessage } from "@/components/ui/swipeable-message";
 import { playMessageSound } from "@/lib/notification-sound";
+import { useT } from "@/lib/i18n";
 
 interface MessageReaction {
   userId: string;
@@ -57,6 +58,7 @@ function ClientChatSearchResults({ messages, query, onImageClick }: {
   query: string;
   onImageClick: (url: string) => void;
 }) {
+  const t = useT();
   const q = query.toLowerCase();
   const textMatches = messages.filter(
     (m) => m.content && m.content.toLowerCase().includes(q)
@@ -71,18 +73,18 @@ function ClientChatSearchResults({ messages, query, onImageClick }: {
   return (
     <div className="flex-1 overflow-y-auto px-5 py-4">
       <p className="text-xs text-muted-foreground mb-3 font-medium uppercase tracking-wide">
-        {total === 0 ? "Brak wyników" : `${total} ${total === 1 ? "wynik" : total < 5 ? "wyniki" : "wyników"}`}
+        {total === 0 ? t.common.noResults : `${total} ${total === 1 ? t.dyskusje.resultSingular : total < 5 ? t.dyskusje.resultFew : t.dyskusje.resultMany}`}
       </p>
       {total === 0 ? (
         <div className="flex flex-col items-center justify-center h-40 gap-2 text-muted-foreground">
           <Search size={32} className="opacity-30" />
-          <p className="text-sm">Brak wiadomości ani plików pasujących do wyszukiwania</p>
+          <p className="text-sm">{t.dyskusje.noSearchResults}</p>
         </div>
       ) : (
         <div className="space-y-4">
           {textMatches.length > 0 && (
             <div>
-              <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">Wiadomości ({textMatches.length})</p>
+              <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">{t.dyskusje.messagesLabel} ({textMatches.length})</p>
               <div className="space-y-2">
                 {textMatches.map((m) => {
                   const idx = m.content!.toLowerCase().indexOf(q);
@@ -110,7 +112,7 @@ function ClientChatSearchResults({ messages, query, onImageClick }: {
           )}
           {fileMatches.length > 0 && (
             <div>
-              <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">Pliki ({fileMatches.length})</p>
+              <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">{t.dyskusje.filesLabel} ({fileMatches.length})</p>
               <div className="space-y-2">
                 {fileMatches.map((m) => (
                   <div key={m.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-border bg-background">
@@ -226,6 +228,7 @@ function dayLabel(iso: string) {
 const REACTION_EMOJIS = ["❤️", "😂", "😮", "😢", "😡", "👍"];
 
 export default function ClientDiscussionView({ token, discussionId, discussionTitle, apiBasePath, initialAuthorName, currentUserId, currentUserAvatarUrl }: Props) {
+  const t = useT();
   const msgApiBase = apiBasePath ?? `/api/share/${token}/discussions/${discussionId}`;
   const [messages, setMessages] = useState<DiscussionMessage[]>([]);
   const [receipts, setReceipts] = useState<ReadReceipt[]>([]);
@@ -372,7 +375,7 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
       });
       setPendingAttachments((prev) => [...prev, ...newAttachments]);
     } catch {
-      toast.error("Nie udało się przesłać pliku");
+      toast.error(t.dyskusje.uploadFileError);
     } finally {
       setUploading(false);
     }
@@ -439,7 +442,7 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
           if (!result?.[0]) throw new Error();
           setPendingAttachments((prev) => [...prev, { url: result[0].url, name: audioFile.name, type: "audio" }]);
         } catch {
-          toast.error("Nie udało się przesłać nagrania");
+          toast.error(t.dyskusje.uploadRecordingError);
         } finally {
           setUploading(false);
         }
@@ -450,7 +453,7 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
       setRecordingSeconds(0);
       recordingTimerRef.current = setInterval(() => setRecordingSeconds((s) => s + 1), 1000);
     } catch {
-      toast.error("Brak dostępu do mikrofonu");
+      toast.error(t.render.micAccessDenied);
     }
   }, [startUpload]);
 
@@ -470,12 +473,12 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
       setMessages((prev) => prev.map((m) => m.id === msgId ? { ...m, content, editedAt: new Date().toISOString() } : m));
       setEditingMsgId(null);
     } else {
-      toast.error("Nie udało się edytować wiadomości");
+      toast.error(t.dyskusje.editMessageError);
     }
   }, [msgApiBase, apiBasePath, authorName]);
 
   const handleDeleteMsg = useCallback(async (msgId: string) => {
-    if (!confirm("Usunąć tę wiadomość?")) return;
+    if (!confirm(t.dyskusje.deleteConfirm)) return;
     const body: Record<string, string> = {};
     if (!apiBasePath) body.authorName = authorName ?? "";
     const res = await fetch(`${msgApiBase}/messages/${msgId}`, {
@@ -486,7 +489,7 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
     if (res.ok) {
       setMessages((prev) => prev.filter((m) => m.id !== msgId));
     } else {
-      toast.error("Nie udało się usunąć wiadomości");
+      toast.error(t.dyskusje.deleteError);
     }
   }, [msgApiBase, apiBasePath, authorName]);
 
@@ -497,7 +500,7 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
       const existing = m.reactions?.find((r) => r.userId === currentUserId && r.emoji === emoji);
       const reactions = existing
         ? (m.reactions || []).filter((r) => !(r.userId === currentUserId && r.emoji === emoji))
-        : [...(m.reactions || []), { userId: currentUserId, userName: initialAuthorName || authorName || "Gość", emoji }];
+        : [...(m.reactions || []), { userId: currentUserId, userName: initialAuthorName || authorName || t.dyskusje.guestName, emoji }];
       return { ...m, reactions };
     }));
     const res = await fetch(`${msgApiBase}/messages/${msgId}/reactions`, {
@@ -558,7 +561,7 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
       setPendingAttachments([]);
       setReplyingToMsg(null);
     } catch {
-      toast.error("Nie udało się wysłać wiadomości");
+      toast.error(t.dyskusje.sendError);
     } finally {
       setSending(false);
     }
@@ -587,7 +590,7 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
       if (!res.ok) throw new Error();
       setAnnotatingImage(null);
     } catch {
-      toast.error("Nie udało się wysłać zaznaczonego zdjęcia");
+      toast.error(t.dyskusje.sendImageError);
     } finally {
       setSendingAnnotation(false);
     }
@@ -619,12 +622,12 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
         {/* Thread list sidebar */}
         <div className="hidden md:flex w-72 flex-shrink-0 flex-col border-r border-border bg-muted/30">
           <div className="px-4 pt-4 pb-3 border-b border-border">
-            <h2 className="font-semibold text-base">Dyskusje</h2>
+            <h2 className="font-semibold text-base">{t.nav.discussions}</h2>
           </div>
           <div className="flex-1 overflow-y-auto">
             <div className="w-full text-left px-4 py-3 border-b border-border/50 bg-primary/10 border-l-2 border-l-primary">
               <span className="text-sm font-medium truncate block text-primary">{discussionTitle}</span>
-              <span className="text-xs text-muted-foreground">Dyskusja projektowa</span>
+              <span className="text-xs text-muted-foreground">{t.dyskusje.projectDiscussion}</span>
             </div>
           </div>
         </div>
@@ -643,8 +646,8 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
                 <div className="w-14 h-14 rounded-full bg-primary/15 flex items-center justify-center">
                   <Paperclip size={28} className="text-primary" />
                 </div>
-                <p className="text-base font-semibold text-primary">Upuść pliki, aby dodać do dyskusji</p>
-                <p className="text-xs text-muted-foreground">Obrazy, PDF, dokumenty</p>
+                <p className="text-base font-semibold text-primary">{t.dyskusje.dropFilesDesc}</p>
+                <p className="text-xs text-muted-foreground">{t.dyskusje.fileTypesDesc}</p>
               </div>
             </div>
           )}
@@ -652,12 +655,12 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
           <div className="px-5 py-3 border-b border-border flex-shrink-0 flex items-center gap-2">
             <div className="md:hidden flex-1 min-w-0">
               <h2 className="font-semibold text-sm">{discussionTitle}</h2>
-              <p className="text-xs text-muted-foreground">Dyskusja projektowa</p>
+              <p className="text-xs text-muted-foreground">{t.dyskusje.projectDiscussion}</p>
             </div>
             <div className="flex items-center gap-1 ml-auto">
               <button
                 onClick={() => { setChatSearchOpen((v) => !v); setChatSearch(""); }}
-                title="Szukaj w wiadomościach"
+                title={t.dyskusje.searchTitle}
                 className={`p-1.5 rounded-lg transition-colors ${chatSearchOpen ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
               >
                 <Search size={14} />
@@ -670,7 +673,7 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
                     className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs transition-colors ${showResources ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
                   >
                     <FolderOpen size={13} />
-                    Pliki{fileCount > 0 && <span className="font-semibold">{fileCount}</span>}
+                    {t.dyskusje.filesLabel}{fileCount > 0 && <span className="font-semibold">{fileCount}</span>}
                   </button>
                 );
               })()}
@@ -687,7 +690,7 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
                   type="text"
                   value={chatSearch}
                   onChange={(e) => setChatSearch(e.target.value)}
-                  placeholder="Szukaj wiadomości i plików..."
+                  placeholder={t.dyskusje.searchPlaceholder}
                   className="w-full pl-7 pr-7 py-1.5 text-sm bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
                 />
                 {chatSearch && (
@@ -711,10 +714,10 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
               {/* Tabs */}
               <div className="flex gap-0 border-b border-border px-5 flex-shrink-0">
                 {([
-                  { key: "all", label: "Wszystkie" },
-                  { key: "images", label: "Zdjęcia" },
-                  { key: "docs", label: "Dokumenty" },
-                  { key: "sheets", label: "Arkusze" },
+                  { key: "all", label: t.dyskusje.allTab },
+                  { key: "images", label: t.dyskusje.photosTab },
+                  { key: "docs", label: t.dyskusje.docsTab },
+                  { key: "sheets", label: t.dyskusje.sheetsTab },
                 ] as const).map((tab) => (
                   <button
                     key={tab.key}
@@ -742,7 +745,7 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
                   if (filtered.length === 0) return (
                     <div className="flex flex-col items-center justify-center h-40 gap-2 text-muted-foreground">
                       <FolderOpen size={32} className="opacity-30" />
-                      <p className="text-sm">Brak plików</p>
+                      <p className="text-sm">{t.render.noFiles}</p>
                     </div>
                   );
                   return (
@@ -782,12 +785,12 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
           ) : (
             <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3 relative">
               {loading ? (
-                <div className="flex items-center justify-center h-full text-muted-foreground text-sm">Ładowanie...</div>
+                <div className="flex items-center justify-center h-full text-muted-foreground text-sm">{t.common.loading}</div>
               ) : messages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full gap-2 text-muted-foreground">
                   <ChatBubble size={32} className="opacity-30" />
-                  <p className="text-sm">Brak wiadomości</p>
-                  <p className="text-xs text-center">Zacznij pisać aby rozpocząć dyskusję z projektantem</p>
+                  <p className="text-sm">{t.dyskusje.noMessages}</p>
+                  <p className="text-xs text-center">{t.dyskusje.startTypingDesc}</p>
                 </div>
               ) : (
                 messageGroups.map(group => (
@@ -807,8 +810,8 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
                   const actionBar = editingMsgId !== msg.id && (
                     <div className={`absolute top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 ${isOwn ? "right-full pr-1 flex-row-reverse" : "left-full pl-1"}`}>
                       <button
-                        onClick={() => setReplyingToMsg({ id: msg.id, content: msg.content || "[załącznik]", author: msg.authorName })}
-                        title="Odpowiedz"
+                        onClick={() => setReplyingToMsg({ id: msg.id, content: msg.content || t.dyskusje.attachmentLabel, author: msg.authorName })}
+                        title={t.share.reply}
                         className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                       >
                         <CornerDownLeft size={14} />
@@ -817,7 +820,7 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
                         <div className="relative hidden md:block">
                           <button
                             onClick={() => setOpenEmojiPickerId(openEmojiPickerId === msg.id ? null : msg.id)}
-                            title="Reaguj"
+                            title={t.dyskusje.reactBtn}
                             className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                           >
                             <AddReaction size={14} />
@@ -855,7 +858,7 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
                                   onClick={() => { setEditingMsgContent(msg.content); setEditingMsgId(msg.id); setOpenMenuId(null); }}
                                   className="w-full text-left px-3 py-2 text-sm hover:bg-muted flex items-center gap-2 transition-colors"
                                 >
-                                  <Edit2 size={13} className="text-muted-foreground" /> Edytuj
+                                  <Edit2 size={13} className="text-muted-foreground" /> {t.common.edit}
                                 </button>
                               )}
                               {canDelete && (
@@ -863,7 +866,7 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
                                   onClick={() => { handleDeleteMsg(msg.id); setOpenMenuId(null); }}
                                   className="w-full text-left px-3 py-2 text-sm text-destructive hover:bg-destructive/10 flex items-center gap-2 transition-colors"
                                 >
-                                  <Trash2 size={13} /> Usuń
+                                  <Trash2 size={13} /> {t.common.delete}
                                 </button>
                               )}
                             </div>
@@ -879,7 +882,7 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
                       <div className="max-w-[75%]">
                       <SwipeableMessage
                         isOwn={isOwn}
-                        onReply={() => setReplyingToMsg({ id: msg.id, content: msg.content || "[załącznik]", author: msg.authorName })}
+                        onReply={() => setReplyingToMsg({ id: msg.id, content: msg.content || t.dyskusje.attachmentLabel, author: msg.authorName })}
                         onLongPress={() => setShowMobileActionsId(msg.id)}
                       >
                       <div className={`flex flex-col gap-0.5 ${isOwn ? "items-end" : "items-start"}`}>
@@ -903,8 +906,8 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
                               rows={2}
                             />
                             <div className="flex gap-1 justify-end">
-                              <button onClick={() => setEditingMsgId(null)} className="px-2 py-1 text-xs text-muted-foreground hover:text-foreground transition-colors">Anuluj</button>
-                              <button onClick={() => handleEditMsg(msg.id, editingMsgContent)} className="px-2 py-1 text-xs bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity">Zapisz</button>
+                              <button onClick={() => setEditingMsgId(null)} className="px-2 py-1 text-xs text-muted-foreground hover:text-foreground transition-colors">{t.common.cancel}</button>
+                              <button onClick={() => handleEditMsg(msg.id, editingMsgContent)} className="px-2 py-1 text-xs bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity">{t.common.save}</button>
                             </div>
                           </div>
                         ) : (
@@ -921,11 +924,11 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
                               {msg.content && (
                                 <div className={`rounded-2xl px-3 py-2 text-sm ${isOwn ? "bg-primary text-primary-foreground" : "bg-background border border-border"}`}>
                                   {renderWithLinks(msg.content, isOwn)}
-                                  {msg.editedAt && <span className="text-[10px] opacity-50 ml-1.5">(edytowano)</span>}
+                                  {msg.editedAt && <span className="text-[10px] opacity-50 ml-1.5">{t.dyskusje.editedLabel}</span>}
                                   {!msg.attachmentType && (
                                     <div className={`flex justify-end items-center gap-1 mt-1 -mb-0.5 ${isOwn ? "text-primary-foreground/50" : "text-muted-foreground/60"}`}>
                                       {isOwn && receipts.filter((r) => r.lastMessageId === msg.id && r.readerName !== authorName).map((r) => (
-                                        <span key={r.readerId} title={`${r.readerName} przeczytał(a)`} className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[8px] font-bold leading-none flex-shrink-0 ${isOwn ? "bg-white/60 text-primary" : "bg-primary/30 text-primary"}`}>
+                                        <span key={r.readerId} title={t.dyskusje.readBy.replace("{name}", r.readerName)} className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[8px] font-bold leading-none flex-shrink-0 ${isOwn ? "bg-white/60 text-primary" : "bg-primary/30 text-primary"}`}>
                                           {r.readerName.charAt(0).toUpperCase()}
                                         </span>
                                       ))}
@@ -939,7 +942,7 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
                                   <button
                                     onClick={() => setAnnotatingImage(msg.attachmentUrl!)}
                                     className="block rounded-2xl overflow-hidden border border-border hover:opacity-90 transition-opacity focus:outline-none focus:ring-2 focus:ring-primary/40"
-                                    title="Kliknij aby zaznaczyć"
+                                    title={t.dyskusje.clickToAnnotate}
                                   >
                                     <img
                                       src={msg.attachmentUrl}
@@ -961,7 +964,7 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
                                     className="flex items-center gap-2 px-3 py-2 rounded-2xl border border-border text-sm text-muted-foreground hover:text-foreground"
                                   >
                                     <FileIcon size={16} className="flex-shrink-0" />
-                                    <span className="truncate max-w-[220px]">{msg.attachmentName || "Zdjęcie"}</span>
+                                    <span className="truncate max-w-[220px]">{msg.attachmentName || t.dyskusje.imageLabel}</span>
                                     <ExternalLink size={12} className="flex-shrink-0" />
                                   </a>
                                 </div>
@@ -975,7 +978,7 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
                                     className="flex items-center gap-2 px-3 py-2 bg-muted/60 hover:bg-muted transition-colors border-b border-border"
                                   >
                                     <FileText size={15} className="text-red-500 flex-shrink-0" />
-                                    <span className="text-xs font-medium truncate flex-1">{msg.attachmentName || "Dokument PDF"}</span>
+                                    <span className="text-xs font-medium truncate flex-1">{msg.attachmentName || t.dyskusje.pdfLabel}</span>
                                     <ExternalLink size={11} className="text-muted-foreground flex-shrink-0" />
                                   </a>
                                   <iframe
@@ -1004,7 +1007,7 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
                               {msg.attachmentType && (
                                 <div className={`flex justify-end items-center gap-1 mt-0.5 ${isOwn ? "text-foreground/50" : "text-muted-foreground/60"}`}>
                                   {isOwn && receipts.filter((r) => r.lastMessageId === msg.id && r.readerName !== authorName).map((r) => (
-                                    <span key={r.readerId} title={`${r.readerName} przeczytał(a)`} className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[8px] font-bold leading-none flex-shrink-0 ${isOwn ? "bg-white/60 text-primary" : "bg-primary/30 text-primary"}`}>
+                                    <span key={r.readerId} title={t.dyskusje.readBy.replace("{name}", r.readerName)} className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[8px] font-bold leading-none flex-shrink-0 ${isOwn ? "bg-white/60 text-primary" : "bg-primary/30 text-primary"}`}>
                                       {r.readerName.charAt(0).toUpperCase()}
                                     </span>
                                   ))}
@@ -1061,7 +1064,7 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
                                     onClick={() => { setEditingMsgContent(msg.content); setEditingMsgId(msg.id); setShowMobileActionsId(null); }}
                                     className="w-full text-left px-4 py-3 text-sm hover:bg-muted flex items-center gap-3 rounded-xl transition-colors"
                                   >
-                                    <Edit2 size={16} className="text-muted-foreground" /> Edytuj
+                                    <Edit2 size={16} className="text-muted-foreground" /> {t.common.edit}
                                   </button>
                                 )}
                                 {canDelete && (
@@ -1069,12 +1072,12 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
                                     onClick={() => { handleDeleteMsg(msg.id); setShowMobileActionsId(null); }}
                                     className="w-full text-left px-4 py-3 text-sm text-destructive hover:bg-destructive/10 flex items-center gap-3 rounded-xl transition-colors"
                                   >
-                                    <Trash2 size={16} /> Usuń
+                                    <Trash2 size={16} /> {t.common.delete}
                                   </button>
                                 )}
                               </div>
                             )}
-                            <button onClick={() => setShowMobileActionsId(null)} className="w-full py-2 text-sm text-muted-foreground text-center">Anuluj</button>
+                            <button onClick={() => setShowMobileActionsId(null)} className="w-full py-2 text-sm text-muted-foreground text-center">{t.common.cancel}</button>
                           </div>
                         </div>
                       )}
@@ -1129,7 +1132,7 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
             {isRecording && (
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-destructive/10 border border-destructive/20 text-sm text-destructive">
                 <span className="w-2 h-2 rounded-full bg-destructive animate-pulse flex-shrink-0" />
-                <span className="flex-1 text-xs font-medium">Nagrywanie... {recordingSeconds}s</span>
+                <span className="flex-1 text-xs font-medium">{t.dyskusje.recordingTime.replace("{n}", String(recordingSeconds))}</span>
               </div>
             )}
             <div className="flex items-end gap-2">
@@ -1145,7 +1148,7 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading || isRecording}
                 className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-primary text-white transition-colors disabled:opacity-40 hover:opacity-90"
-                title="Załącz pliki"
+                title={t.dyskusje.attachFiles}
               >
                 {uploading ? <Loader2 size={16} className="animate-spin" /> : <Paperclip size={16} />}
               </button>
@@ -1159,7 +1162,7 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
                   e.target.style.overflowY = e.target.scrollHeight > 160 ? "auto" : "hidden";
                 }}
                 onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
-                placeholder="Napisz wiadomość..."
+                placeholder={t.dyskusje.messagePlaceholder}
                 rows={1}
                 style={{ height: "40px", overflowY: "hidden" }}
                 className="flex-1 min-h-10 max-h-40 px-3 py-2 text-sm resize-none rounded-2xl bg-muted focus:outline-none"

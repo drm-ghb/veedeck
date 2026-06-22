@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { useT } from "@/lib/i18n";
 import {
   DndContext,
   DragOverlay,
@@ -77,12 +78,6 @@ type GroupBy = "none" | "project" | "status" | "priority";
 type SortField = "createdAt" | "dueDate" | "priority" | "status" | "title";
 type SortDir = "asc" | "desc";
 
-const PRIORITY_OPTIONS: TaskSelectOption[] = [
-  { value: "LOW", label: "Niski", dot: "bg-gray-400" },
-  { value: "MEDIUM", label: "Średni", dot: "bg-yellow-400" },
-  { value: "HIGH", label: "Wysoki", dot: "bg-red-500" },
-];
-const PRIORITY_LABELS: Record<string, string> = { LOW: "Niski", MEDIUM: "Średni", HIGH: "Wysoki" };
 const PRIORITY_ORDER: Record<string, number> = { HIGH: 0, MEDIUM: 1, LOW: 2 };
 
 function userDisplayName(u: User | null) {
@@ -98,6 +93,12 @@ function userInitials(u: User | null) {
 
 
 function PriorityBadge({ priority }: { priority: string }) {
+  const t = useT();
+  const labels: Record<string, string> = {
+    LOW: t.tasks.priorityLow,
+    MEDIUM: t.tasks.priorityMedium,
+    HIGH: t.tasks.priorityHigh,
+  };
   const cls =
     priority === "HIGH"
       ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
@@ -106,7 +107,7 @@ function PriorityBadge({ priority }: { priority: string }) {
       : "bg-muted text-muted-foreground";
   return (
     <span className={`px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap ${cls}`}>
-      {PRIORITY_LABELS[priority] ?? priority}
+      {labels[priority] ?? priority}
     </span>
   );
 }
@@ -221,7 +222,20 @@ function DroppableKanbanColumn({
 }
 
 export default function TasksView() {
+  const t = useT();
   const router = useRouter();
+
+  const PRIORITY_OPTIONS: TaskSelectOption[] = [
+    { value: "LOW",    label: t.tasks.priorityLow,    dot: "bg-gray-400" },
+    { value: "MEDIUM", label: t.tasks.priorityMedium, dot: "bg-yellow-400" },
+    { value: "HIGH",   label: t.tasks.priorityHigh,   dot: "bg-red-500" },
+  ];
+
+  const PRIORITY_LABELS: Record<string, string> = {
+    LOW: t.tasks.priorityLow,
+    MEDIUM: t.tasks.priorityMedium,
+    HIGH: t.tasks.priorityHigh,
+  };
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -255,7 +269,7 @@ export default function TasksView() {
       // Auto-expand all parent tasks
       setExpanded(new Set(data.filter((t: Task) => t.subTasks.length > 0).map((t: Task) => t.id)));
     } catch {
-      toast.error("Błąd ładowania zadań");
+      toast.error(t.tasks.loadError);
     } finally {
       setLoading(false);
     }
@@ -294,19 +308,19 @@ export default function TasksView() {
   }, []);
 
   const assigneeOptions = useMemo<TaskSelectOption[]>(() => [
-    { value: "", label: "Nieprzypisane" },
+    { value: "", label: t.tasks.unassigned },
     ...members.map((m) => ({
       value: m.id,
-      label: m.isSelf ? `${userDisplayName(m)} (Ty)` : userDisplayName(m),
+      label: m.isSelf ? `${userDisplayName(m)} ${t.tasks.selfSuffix}` : userDisplayName(m),
       avatarUrl: m.avatarUrl ?? null,
       initials: userInitials(m),
     })),
   ], [members]);
 
   const projectOptions = useMemo<TaskSelectOption[]>(() => [
-    { value: "", label: "Brak" },
+    { value: "", label: t.tasks.noProject },
     ...projects.map((p) => ({ value: p.id, label: p.title })),
-  ], [projects]);
+  ], [projects, t]);
 
   function handleColumnSort(field: SortField) {
     if (sortColumn === field) {
@@ -389,11 +403,11 @@ export default function TasksView() {
     try {
       const res = await fetch(`/api/tasks/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error();
-      toast.success("Zadanie usunięte");
+      toast.success(t.tasks.taskDeleted);
       if (selectedTask?.id === id) setSelectedTask(null);
       fetchTasks();
     } catch {
-      toast.error("Błąd usuwania zadania");
+      toast.error(t.tasks.deleteTaskError);
     } finally {
       setDeletingId(null);
     }
@@ -418,7 +432,7 @@ export default function TasksView() {
       });
       if (!res.ok) throw new Error();
     } catch {
-      toast.error("Błąd zapisu");
+      toast.error(t.tasks.saveError);
       fetchTasks();
     }
   }
@@ -452,17 +466,17 @@ export default function TasksView() {
     if (groupBy === "priority") {
       return ["HIGH", "MEDIUM", "LOW"].map((p) => ({
         key: p,
-        label: PRIORITY_LABELS[p],
+        label: PRIORITY_LABELS[p] ?? p,
         tasks: sorted.filter((t) => t.priority === p),
       }));
     }
     if (groupBy === "project") {
       const projectMap = new Map<string, { label: string; tasks: Task[] }>();
-      sorted.forEach((t) => {
-        const key = t.project?.id ?? "__none__";
-        const label = t.project?.title ?? "Bez klienta";
+      sorted.forEach((task) => {
+        const key = task.project?.id ?? "__none__";
+        const label = task.project?.title ?? t.tasks.noClientGroup;
         if (!projectMap.has(key)) projectMap.set(key, { label, tasks: [] });
-        projectMap.get(key)!.tasks.push(t);
+        projectMap.get(key)!.tasks.push(task);
       });
       return Array.from(projectMap.entries()).map(([key, val]) => ({ key, ...val }));
     }
@@ -510,7 +524,7 @@ export default function TasksView() {
                   borderColor: task.status === "DONE" ? "var(--color-primary)" : "var(--color-border)",
                   backgroundColor: task.status === "DONE" ? "var(--color-primary)" : "transparent",
                 }}
-                title={task.status === "DONE" ? "Oznacz jako niewykonane" : "Oznacz jako gotowe"}
+                title={task.status === "DONE" ? t.tasks.markUndone : t.tasks.markDone}
               >
                 {task.status === "DONE" && (
                   <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
@@ -693,7 +707,7 @@ export default function TasksView() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64 text-muted-foreground text-sm">
-        Ładowanie zadań...
+        {t.tasks.loadingTasks}
       </div>
     );
   }
@@ -703,14 +717,14 @@ export default function TasksView() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold">Zadania</h1>
-          <p className="text-sm text-muted-foreground">{tasks.length} zadań</p>
+          <h1 className="text-xl font-semibold">{t.tasks.tasksTitle}</h1>
+          <p className="text-sm text-muted-foreground">{tasks.length} {t.tasks.tasksTitle.toLowerCase()}</p>
         </div>
         <AddTaskDialog
           trigger={
             <button className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity">
               <Plus size={16} />
-              Dodaj zadanie
+              {t.tasks.addTask}
             </button>
           }
           statusOptions={statusOptions}
@@ -726,7 +740,7 @@ export default function TasksView() {
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Szukaj zadania..."
+            placeholder={t.tasks.searchPlaceholder}
             className="w-full pl-9 pr-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
           />
         </div>
@@ -734,28 +748,28 @@ export default function TasksView() {
         {/* Grupuj po (tylko lista) / Filtr klienta (tylko kanban) */}
         {viewMode === "list" ? (
           <div className="flex items-center gap-1.5">
-            <label className="text-sm text-muted-foreground whitespace-nowrap">Grupuj:</label>
+            <label className="text-sm text-muted-foreground whitespace-nowrap">{t.tasks.groupByLabel}</label>
             <TaskSelectField
               inline
               value={groupBy}
               onChange={(v) => setGroupBy(v as GroupBy)}
               options={[
-                { value: "none", label: "Brak" },
-                { value: "project", label: "Klient" },
-                { value: "status", label: "Status" },
-                { value: "priority", label: "Priorytet" },
+                { value: "none",     label: t.tasks.groupNone     },
+                { value: "project",  label: t.tasks.groupClient   },
+                { value: "status",   label: t.tasks.groupStatus   },
+                { value: "priority", label: t.tasks.groupPriority },
               ]}
             />
           </div>
         ) : (
           <div className="flex items-center gap-1.5">
-            <label className="text-sm text-muted-foreground whitespace-nowrap">Klient:</label>
+            <label className="text-sm text-muted-foreground whitespace-nowrap">{t.tasks.clientFilterLabel}</label>
             <TaskSelectField
               inline
               value={kanbanProjectFilter}
               onChange={setKanbanProjectFilter}
               options={[
-                { value: "", label: "Wszyscy" },
+                { value: "", label: t.tasks.allClients },
                 ...projects.map((p) => ({ value: p.id, label: p.title })),
               ]}
             />
@@ -764,23 +778,23 @@ export default function TasksView() {
 
         {/* Sortuj po */}
         <div className="flex items-center gap-1.5">
-          <label className="text-sm text-muted-foreground whitespace-nowrap">Sortuj:</label>
+          <label className="text-sm text-muted-foreground whitespace-nowrap">{t.tasks.sortByLabel}</label>
           <TaskSelectField
             inline
             value={sortField}
             onChange={(v) => { setSortField(v as SortField); setSortColumn(null); }}
             options={[
-              { value: "createdAt", label: "Data utworzenia" },
-              { value: "dueDate", label: "Termin" },
-              { value: "priority", label: "Priorytet" },
-              { value: "status", label: "Status" },
-              { value: "title", label: "Tytuł" },
+              { value: "createdAt", label: t.tasks.sortCreatedAt  },
+              { value: "dueDate",   label: t.tasks.sortDueDate   },
+              { value: "priority",  label: t.tasks.groupPriority },
+              { value: "status",    label: t.tasks.groupStatus   },
+              { value: "title",     label: t.tasks.sortTitle     },
             ]}
           />
           <button
             onClick={() => setSortDir((d) => d === "asc" ? "desc" : "asc")}
             className="h-8 px-2 border border-input rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
-            title={sortDir === "asc" ? "Rosnąco" : "Malejąco"}
+            title={sortDir === "asc" ? t.tasks.ascending : t.tasks.descending}
           >
             {sortDir === "asc" ? <ArrowUp size={14} /> : <ArrowDown size={14} />}
           </button>
@@ -791,14 +805,14 @@ export default function TasksView() {
           <button
             onClick={() => setViewMode("list")}
             className={`p-1.5 rounded transition-colors ${viewMode === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
-            title="Widok listy"
+            title={t.tasks.listView}
           >
             <List size={16} />
           </button>
           <button
             onClick={() => setViewMode("kanban")}
             className={`p-1.5 rounded transition-colors ${viewMode === "kanban" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
-            title="Widok kolumn"
+            title={t.tasks.kanbanView}
           >
             <Columns3 size={16} />
           </button>
@@ -813,15 +827,15 @@ export default function TasksView() {
               <tr>
                 {(
                   [
-                    { label: "Nazwa", field: "title" as SortField },
-                    { label: "Klient", field: null },
-                    { label: "Priorytet", field: "priority" as SortField },
-                    { label: "Status", field: "status" as SortField },
-                    { label: "Przypisane do", field: null },
-                    { label: "Termin", field: "dueDate" as SortField },
-                    { label: "Utworzone", field: "createdAt" as SortField },
-                    { label: "", field: null },
-                  ] as const
+                    { label: t.tasks.colName,      field: "title" as SortField },
+                    { label: t.tasks.clientLabel,  field: null },
+                    { label: t.tasks.priorityLabel,field: "priority" as SortField },
+                    { label: t.tasks.statusLabel,  field: "status" as SortField },
+                    { label: t.tasks.colAssignee,  field: null },
+                    { label: t.tasks.dueDateLabel, field: "dueDate" as SortField },
+                    { label: t.tasks.colCreated,   field: "createdAt" as SortField },
+                    { label: "",                   field: null },
+                  ]
                 ).map(({ label, field }, i) => (
                   <th
                     key={i}
@@ -852,7 +866,7 @@ export default function TasksView() {
               {sorted.length === 0 && (
                 <tr>
                   <td colSpan={8} className="px-4 py-12 text-center text-muted-foreground text-sm">
-                    {search ? "Nie znaleziono zadań." : "Brak zadań. Dodaj pierwsze zadanie."}
+                    {search ? t.tasks.noTasksSearch : t.tasks.noTasks}
                   </td>
                 </tr>
               )}
@@ -896,7 +910,7 @@ export default function TasksView() {
                       />
                     ))}
                     {colTasks.length === 0 && (
-                      <p className="text-xs text-muted-foreground text-center py-6">Brak zadań</p>
+                      <p className="text-xs text-muted-foreground text-center py-6">{t.tasks.kanbanNoTasks}</p>
                     )}
                   </DroppableKanbanColumn>
                 </div>

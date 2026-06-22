@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import MoveRenderDialog from "./MoveRenderDialog";
+import { useT } from "@/lib/i18n";
 
 interface RenderMenuProps {
   render: { id: string; name: string; pinned?: boolean };
@@ -36,6 +37,7 @@ function handleDownload(renderId: string) {
 
 export default function RenderMenu({ render, projectId, currentRoomId, currentFolderId = null }: RenderMenuProps) {
   const router = useRouter();
+  const t = useT();
   const [editOpen, setEditOpen] = useState(false);
   const [editName, setEditName] = useState("");
   const [saving, setSaving] = useState(false);
@@ -48,10 +50,10 @@ export default function RenderMenu({ render, projectId, currentRoomId, currentFo
       body: JSON.stringify({ pinned: !render.pinned }),
     });
     if (res.ok) {
-      toast.success(render.pinned ? "Odpięto render" : "Render przypięty");
+      toast.success(render.pinned ? t.render.renderUnpinned : t.render.renderPinned);
       router.refresh();
     } else {
-      toast.error("Błąd operacji");
+      toast.error(t.render.operationError);
     }
   }
 
@@ -62,23 +64,23 @@ export default function RenderMenu({ render, projectId, currentRoomId, currentFo
       body: JSON.stringify({ archived: true }),
     });
     if (res.ok) {
-      toast.success("Render zarchiwizowany");
+      toast.success(t.render.renderArchived);
       window.dispatchEvent(new CustomEvent("renderflow:render-removed", { detail: { id: render.id } }));
       router.refresh();
     } else {
-      toast.error("Błąd archiwizacji");
+      toast.error(t.render.archiveError);
     }
   }
 
   async function handleDelete() {
-    if (!confirm(`Usunąć render "${render.name}"?`)) return;
+    if (!confirm(`${t.render.renderDeleted} "${render.name}"?`)) return;
     const res = await fetch(`/api/renders/${render.id}`, { method: "DELETE" });
     if (res.ok) {
-      toast.success("Render usunięty");
+      toast.success(t.render.renderDeleted);
       window.dispatchEvent(new CustomEvent("renderflow:render-removed", { detail: { id: render.id } }));
       router.refresh();
     } else {
-      toast.error("Błąd usuwania");
+      toast.error(t.render.deleteError);
     }
   }
 
@@ -92,11 +94,11 @@ export default function RenderMenu({ render, projectId, currentRoomId, currentFo
     });
     setSaving(false);
     if (res.ok) {
-      toast.success("Tytuł zaktualizowany");
+      toast.success(t.render.titleUpdated);
       setEditOpen(false);
       router.refresh();
     } else {
-      toast.error("Błąd zapisu");
+      toast.error(t.common.saving);
     }
   }
 
@@ -112,11 +114,11 @@ export default function RenderMenu({ render, projectId, currentRoomId, currentFo
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={(e) => { e.preventDefault(); handlePin(); }}>
             {render.pinned ? <PinOff size={14} /> : <Pin size={14} />}
-            {render.pinned ? "Odepnij" : "Przypnij"}
+            {render.pinned ? t.common.unpin : t.common.pin}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={(e) => { e.preventDefault(); handleDownload(render.id); }}>
             <Download size={14} />
-            Pobierz
+            {t.render.download}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
@@ -127,20 +129,20 @@ export default function RenderMenu({ render, projectId, currentRoomId, currentFo
             }}
           >
             <Pencil size={14} />
-            Edytuj tytuł
+            {t.render.editTitle}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={(e) => { e.preventDefault(); setMoveOpen(true); }}>
             <FolderInput size={14} />
-            Przenieś
+            {t.render.move}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={handleArchive}>
             <Archive size={14} />
-            Archiwizuj
+            {t.common.archive}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem variant="destructive" onClick={handleDelete}>
             <Trash2 size={14} />
-            Usuń
+            {t.common.delete}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -148,10 +150,10 @@ export default function RenderMenu({ render, projectId, currentRoomId, currentFo
       <Dialog open={editOpen} onOpenChange={(o) => { if (!saving) setEditOpen(o); }}>
         <DialogContent className="sm:max-w-sm" onClick={(e) => e.stopPropagation()}>
           <DialogHeader>
-            <DialogTitle>Edytuj tytuł pliku</DialogTitle>
+            <DialogTitle>{t.render.editFileTitle}</DialogTitle>
           </DialogHeader>
           <div className="space-y-1.5 py-1">
-            <Label htmlFor="edit-render-name">Tytuł</Label>
+            <Label htmlFor="edit-render-name">{t.render.titleLabel}</Label>
             <Input
               id="edit-render-name"
               value={editName}
@@ -166,7 +168,7 @@ export default function RenderMenu({ render, projectId, currentRoomId, currentFo
           </div>
           <DialogFooter showCloseButton>
             <Button onClick={handleSaveName} disabled={saving || !editName.trim()}>
-              {saving ? "Zapisywanie..." : "Zapisz"}
+              {saving ? t.common.saving : t.common.save}
             </Button>
           </DialogFooter>
         </DialogContent>

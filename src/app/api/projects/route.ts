@@ -5,6 +5,7 @@ import { uniqueSlug } from "@/lib/slug";
 import { getWorkspaceUserId } from "@/lib/workspace";
 import bcrypt from "bcryptjs";
 import { generateClientLogin } from "@/lib/client-login";
+import { checkTeamPermission, checkProjectAccess } from "@/lib/permissions";
 
 export async function GET() {
   const session = await auth();
@@ -26,6 +27,9 @@ export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (!await checkTeamPermission(session, "projCanCreate")) {
+    return NextResponse.json({ error: "Brak uprawnień do tworzenia projektów" }, { status: 403 });
   }
   const userId = getWorkspaceUserId(session);
 

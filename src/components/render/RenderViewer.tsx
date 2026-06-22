@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useT } from "@/lib/i18n";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -245,6 +246,7 @@ export default function RenderViewer({
   initialProductPins,
   authorAvatarUrl,
 }: RenderViewerProps) {
+  const t = useT();
   const isPdf = fileType === "pdf";
 
   const [comments, setComments] = useState<Comment[]>(initialComments);
@@ -321,6 +323,7 @@ export default function RenderViewer({
   const [sendingChatMessage, setSendingChatMessage] = useState(false);
   const [localAiSummaries, setLocalAiSummaries] = useState<Comment[]>([]);
   const [generatingSummary, setGeneratingSummary] = useState(false);
+  const [aiSummaryMarkdown, setAiSummaryMarkdown] = useState<string | null>(null);
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const [chatUnreadCount, setChatUnreadCount] = useState(() => {
     if (typeof window === "undefined") return 0;
@@ -502,7 +505,7 @@ export default function RenderViewer({
         setUploadingVoice(false);
       },
       onUploadError: () => {
-        toast.error("Błąd przesyłania nagrania głosowego");
+        toast.error(t.render.voiceUploadError);
         setUploadingVoice(false);
       },
     }
@@ -518,7 +521,7 @@ export default function RenderViewer({
         setChatUploadingVoice(false);
       },
       onUploadError: () => {
-        toast.error("Błąd przesyłania nagrania głosowego");
+        toast.error(t.render.voiceUploadError);
         setChatUploadingVoice(false);
       },
     }
@@ -534,7 +537,7 @@ export default function RenderViewer({
         setReplyUploadingVoice(false);
       },
       onUploadError: () => {
-        toast.error("Błąd przesyłania nagrania głosowego");
+        toast.error(t.render.voiceUploadError);
         setReplyUploadingVoice(false);
       },
     }
@@ -550,7 +553,7 @@ export default function RenderViewer({
         setChatUploadingImage(false);
       },
       onUploadError: () => {
-        toast.error("Błąd przesyłania zdjęcia");
+        toast.error(t.render.chatImageUploadError);
         setChatUploadingImage(false);
       },
     }
@@ -566,17 +569,17 @@ export default function RenderViewer({
         body: JSON.stringify({ fileUrl: file.url, fileKey: file.key, label: pendingVersionLabelRef.current }),
       });
       if (resp.ok) {
-        toast.success("Nowa wersja została dodana");
+        toast.success(t.render.versionAdded);
         setComments([]);
         setSelectedId(null);
         setPending(null);
         router.refresh();
       } else {
         const data = await resp.json().catch(() => ({}));
-        toast.error(data.error || "Błąd dodawania wersji");
+        toast.error(data.error || t.render.versionAddError);
       }
     },
-    onUploadError: () => { toast.error("Błąd przesyłania pliku"); },
+    onUploadError: () => { toast.error(t.render.fileUploadError); },
   });
 
   const { startUpload: startSidebarUpload } = useUploadThing("renderUploader", {
@@ -604,7 +607,7 @@ export default function RenderViewer({
     },
     onUploadError: () => {
       setSidebarUploading(false);
-      toast.error("Błąd przesyłania pliku");
+      toast.error(t.render.fileUploadError);
     },
   });
 
@@ -662,7 +665,7 @@ export default function RenderViewer({
       if (data.renderId === renderId) {
         setRenderStatus(data.status);
         if (!isDesigner) {
-          toast(data.status === "ACCEPTED" ? "Render został zaakceptowany przez projektanta" : "Projektant zmienił status na: Do weryfikacji", { duration: 6000 });
+          toast(data.status === "ACCEPTED" ? t.render.renderAcceptedNotif : t.render.renderReviewNotif, { duration: 6000 });
         }
       }
     });
@@ -675,7 +678,7 @@ export default function RenderViewer({
         })
       );
       if (!isDesigner && data.reply.author !== authorName) {
-        toast(`Odpowiedź od ${data.reply.author}`, { duration: 5000 });
+        toast(`${t.render.replyFromAuthor} ${data.reply.author}`, { duration: 5000 });
       }
     });
 
@@ -699,10 +702,10 @@ export default function RenderViewer({
       const res = await fetch(`/api/renders/${renderId}`, { method: "DELETE" });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        toast.error(data.error || "Błąd usuwania pliku");
+        toast.error(data.error || t.render.fileDeleteError);
         return;
       }
-      toast.success("Plik został usunięty");
+      toast.success(t.render.fileDeleted);
       if (roomId && projectId) {
         router.push(`/projects/${projectId}/rooms/${roomId}`);
       } else if (projectId) {
@@ -711,7 +714,7 @@ export default function RenderViewer({
         router.back();
       }
     } catch {
-      toast.error("Błąd usuwania pliku");
+      toast.error(t.render.fileDeleteError);
     } finally {
       setDeleting(false);
       setShowDeleteConfirm(false);
@@ -730,7 +733,7 @@ export default function RenderViewer({
       a.click();
       URL.revokeObjectURL(url);
     } catch {
-      toast.error("Błąd pobierania pliku");
+      toast.error(t.render.fileDownloadError);
     }
   }
 
@@ -794,7 +797,7 @@ export default function RenderViewer({
         1000
       );
     } catch {
-      toast.error("Brak dostępu do mikrofonu");
+      toast.error(t.render.micAccessDenied);
     }
   }
 
@@ -836,7 +839,7 @@ export default function RenderViewer({
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        toast.error(data.error || "Błąd dodawania komentarza");
+        toast.error(data.error || t.render.commentAddError);
         return;
       }
       const created: Comment = await res.json();
@@ -848,7 +851,7 @@ export default function RenderViewer({
       cancelPending();
       toast.success("Komentarz dodany");
     } catch {
-      toast.error("Błąd dodawania komentarza");
+      toast.error(t.render.commentAddError);
     } finally {
       setAdding(false);
     }
@@ -933,14 +936,14 @@ export default function RenderViewer({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ posX: pos.x, posY: pos.y }),
         });
-        if (!res.ok) toast.error("Nie udało się zapisać pozycji pinu");
+        if (!res.ok) toast.error(t.render.pinPositionError);
       } else {
         const res = await fetch(`/api/renders/${renderId}/product-pins/${pinId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ posX: pos.x, posY: pos.y }),
         });
-        if (!res.ok) toast.error("Nie udało się zapisać pozycji pinu");
+        if (!res.ok) toast.error(t.render.pinPositionError);
       }
     }
 
@@ -983,7 +986,7 @@ export default function RenderViewer({
         1000
       );
     } catch {
-      toast.error("Brak dostępu do mikrofonu");
+      toast.error(t.render.micAccessDenied);
     }
   }
 
@@ -1024,7 +1027,7 @@ export default function RenderViewer({
         1000
       );
     } catch {
-      toast.error("Brak dostępu do mikrofonu");
+      toast.error(t.render.micAccessDenied);
     }
   }
 
@@ -1056,7 +1059,7 @@ export default function RenderViewer({
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        toast.error(data.error || "Błąd wysyłania wiadomości");
+        toast.error(data.error || t.render.chatSendError);
         return;
       }
       setChatMessage("");
@@ -1065,7 +1068,7 @@ export default function RenderViewer({
       setReplyingToMsg(null);
       if (chatTextareaRef.current) { chatTextareaRef.current.style.height = "40px"; }
     } catch {
-      toast.error("Błąd wysyłania wiadomości");
+      toast.error(t.render.chatSendError);
     } finally {
       setSendingChatMessage(false);
     }
@@ -1078,9 +1081,11 @@ export default function RenderViewer({
         const res = await fetch(`/api/renders/${renderId}/ai-summary`, { method: "POST" });
         if (!res.ok) {
           const data = await res.json().catch(() => ({}));
-          toast.error(data.error || "Błąd generowania podsumowania");
+          toast.error(data.error || t.render.summaryGenerateError);
           return;
         }
+        const resData = await res.json();
+        if (resData.markdown) setAiSummaryMarkdown(resData.markdown);
         // Pusher (new-comment) automatically adds to comments state — no manual setComments needed
       } else {
         const res = await fetch(`/api/share/${shareToken}/renders/${renderId}/ai-summary`, {
@@ -1090,10 +1095,11 @@ export default function RenderViewer({
         });
         if (!res.ok) {
           const data = await res.json().catch(() => ({}));
-          toast.error(data.error || "Błąd generowania podsumowania");
+          toast.error(data.error || t.render.summaryGenerateError);
           return;
         }
-        const { summary } = await res.json();
+        const { summary, markdown } = await res.json();
+        if (markdown) setAiSummaryMarkdown(markdown);
         const localSummary: Comment = {
           id: `local-ai-${Date.now()}`,
           content: summary,
@@ -1109,7 +1115,7 @@ export default function RenderViewer({
         setLocalAiSummaries(prev => [...prev, localSummary]);
       }
     } catch {
-      toast.error("Błąd generowania podsumowania");
+      toast.error(t.render.summaryGenerateError);
     } finally {
       setGeneratingSummary(false);
     }
@@ -1136,7 +1142,7 @@ export default function RenderViewer({
       setReplyPendingVoiceUrl(null);
       setReplyingToMsg(null);
     } catch {
-      toast.error("Błąd dodawania odpowiedzi");
+      toast.error(t.render.replyAddError);
     } finally {
       setReplying(false);
     }
@@ -1157,7 +1163,7 @@ export default function RenderViewer({
       setRenderStatus(status);
       toast.success(status === "ACCEPTED" ? "Plik zaakceptowany" : "Status zmieniony na: Do weryfikacji");
     } catch {
-      toast.error("Błąd zmiany statusu");
+      toast.error(t.render.statusChangeError);
     }
   }
 
@@ -1212,7 +1218,7 @@ export default function RenderViewer({
       (f) => f.type.startsWith("image/") || f.type === "application/pdf"
     );
     if (!files.length) {
-      toast.error("Akceptowane są tylko obrazy i PDF");
+      toast.error(t.render.onlyImagesAndPdf);
       return;
     }
     setSidebarUploading(true);
@@ -1231,7 +1237,7 @@ export default function RenderViewer({
       setLightboxComments((prev) => prev.map((c) => c.id === id ? { ...c, title: updated.title } : c));
       setEditingTitleMode(false);
     } else {
-      toast.error("Nie udało się edytować tytułu");
+      toast.error(t.render.editTitleError);
     }
   }
 
@@ -1245,7 +1251,7 @@ export default function RenderViewer({
       setComments((prev) => prev.map((c) => c.id === id ? { ...c, content } : c));
       setEditingCommentMode(false);
     } else {
-      toast.error("Nie udało się edytować komentarza");
+      toast.error(t.render.editCommentError);
     }
   }
 
@@ -1263,7 +1269,7 @@ export default function RenderViewer({
       );
       setEditingReplyId(null);
     } else {
-      toast.error("Nie udało się edytować odpowiedzi");
+      toast.error(t.render.editReplyError);
     }
   }
 
@@ -1274,7 +1280,7 @@ export default function RenderViewer({
       body: JSON.stringify({ authorName }),
     });
     setSelectedId(null);
-    toast.success("Komentarz usunięty");
+    toast.success(t.render.commentDeleted);
   }
 
   async function deleteReply(commentId: string, replyId: string) {
@@ -1291,17 +1297,17 @@ export default function RenderViewer({
           body: JSON.stringify({ versionId }),
         });
         if (!res.ok) throw new Error();
-        toast.success("Wersja przywrócona");
+        toast.success(t.render.versionRestored);
         router.refresh();
       } else if (onVersionRestore) {
         await onVersionRestore(versionId);
-        toast.success("Wersja przywrócona");
+        toast.success(t.render.versionRestored);
       } else if (onVersionRestoreRequest) {
         await onVersionRestoreRequest(versionId);
-        toast.success("Prośba o przywrócenie wysłana do projektanta");
+        toast.success(t.render.versionRestoreRequested);
       }
     } catch {
-      toast.error("Błąd przywracania wersji");
+      toast.error(t.render.versionRestoreError);
     } finally {
       setRestoringVersionId(null);
     }
@@ -1350,7 +1356,7 @@ export default function RenderViewer({
     });
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      toast.error(data.error || "Błąd dodawania produktu");
+      toast.error(data.error || t.render.productAddPinError);
       return;
     }
     const pin: ProductPin = await res.json();
@@ -1363,7 +1369,7 @@ export default function RenderViewer({
 
   async function deleteProductPin(pinId: string, targetRenderId: string) {
     const res = await fetch(`/api/renders/${targetRenderId}/product-pins/${pinId}`, { method: "DELETE" });
-    if (!res.ok) { toast.error("Błąd usuwania produktu"); return; }
+    if (!res.ok) { toast.error(t.render.productDeletePinError); return; }
     setHoveredProductPinId(null);
     if (targetRenderId === renderId) {
       setProductPins((prev) => prev.filter((p) => p.id !== pinId));
@@ -1667,13 +1673,13 @@ export default function RenderViewer({
             <div className="w-px h-4 bg-gray-200 dark:bg-gray-700 mx-1" />
 
             {/* Zone 2: View controls — icon only */}
-            <button onClick={() => setHidePins((v) => !v)} title={hidePins ? "Pokaż piny" : "Ukryj piny"} className={`flex items-center justify-center w-8 h-8 rounded-md border transition-colors ${hidePins ? "bg-primary text-primary-foreground border-primary" : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted"}`}>
+            <button onClick={() => setHidePins((v) => !v)} title={hidePins ? t.render.showPins : t.render.hidePins} className={`flex items-center justify-center w-8 h-8 rounded-md border transition-colors ${hidePins ? "bg-primary text-primary-foreground border-primary" : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted"}`}>
               <svg viewBox="0 0 24 24" className="w-[15px] h-[15px]" fill="currentColor"><path d="M16 9V4h1c.55 0 1-.45 1-1s-.45-1-1-1H7c-.55 0-1 .45-1 1s.45 1 1 1h1v5c0 1.66-1.34 3-3 3h10c-1.66 0-3-1.34-3-3zm-3 12v-6h-2v6c0 .55.45 1 1 1s1-.45 1-1z"/><path d="M3.51 3.51c-.39.39-.39 1.02 0 1.41l15.56 15.57c.39.39 1.02.39 1.41 0s.39-1.02 0-1.41L4.93 3.51c-.39-.39-1.02-.39-1.42 0z"/></svg>
             </button>
-            <button onClick={openLightbox} title="Podgląd pełnoekranowy" className={`flex items-center justify-center w-8 h-8 rounded-md border transition-colors ${lightboxOpen ? "bg-primary text-primary-foreground border-primary" : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted"}`}>
+            <button onClick={openLightbox} title={t.render.fullscreen} className={`flex items-center justify-center w-8 h-8 rounded-md border transition-colors ${lightboxOpen ? "bg-primary text-primary-foreground border-primary" : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted"}`}>
               <Maximize2 size={15} />
             </button>
-            <button onClick={() => setShowComparePanel(true)} title="Porównaj" className={`flex items-center justify-center w-8 h-8 rounded-md border transition-colors ${showComparePanel ? "bg-primary text-primary-foreground border-primary" : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted"}`}>
+            <button onClick={() => setShowComparePanel(true)} title={t.render.compare} className={`flex items-center justify-center w-8 h-8 rounded-md border transition-colors ${showComparePanel ? "bg-primary text-primary-foreground border-primary" : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted"}`}>
               <SplitSquareHorizontal size={15} />
             </button>
             {isDesigner && (
@@ -1688,7 +1694,7 @@ export default function RenderViewer({
               <Download size={15} />
             </button>
             {isDesigner && (
-              <button onClick={() => setShowDeleteConfirm(true)} title="Usuń plik" className="flex items-center justify-center w-8 h-8 rounded-md border border-transparent text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors">
+              <button onClick={() => setShowDeleteConfirm(true)} title={t.render.deleteFile} className="flex items-center justify-center w-8 h-8 rounded-md border border-transparent text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors">
                 <Trash2 size={15} />
               </button>
             )}
@@ -1716,9 +1722,9 @@ export default function RenderViewer({
               <div className="flex items-center gap-2">
                 <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-green-100 text-green-700">Zaakceptowany</span>
                 {allowDirectStatusChange ? (
-                  <button onClick={() => updateRenderStatus("REVIEW")} className="text-xs text-gray-400 hover:text-gray-600 underline transition-colors">Cofnij akceptację</button>
+                  <button onClick={() => updateRenderStatus("REVIEW")} className="text-xs text-gray-400 hover:text-gray-600 underline transition-colors">{t.render.undoAcceptance}</button>
                 ) : onStatusRequest ? (
-                  <button onClick={onStatusRequest} className="text-xs text-gray-400 hover:text-gray-600 underline transition-colors">Poproś o zmianę</button>
+                  <button onClick={onStatusRequest} className="text-xs text-gray-400 hover:text-gray-600 underline transition-colors">{t.render.requestChange}</button>
                 ) : null}
               </div>
             ) : allowClientAcceptance ? (
@@ -1765,13 +1771,13 @@ export default function RenderViewer({
               <div className="w-px h-5 bg-gray-200 dark:bg-gray-700 mx-0.5 flex-shrink-0" />
 
               {/* Zone 2: View controls — icon only */}
-              <button onClick={() => setHidePins((v) => !v)} title={hidePins ? "Pokaż piny" : "Ukryj piny"} className={`flex items-center justify-center w-8 h-8 rounded-md border transition-colors flex-shrink-0 ${hidePins ? "bg-primary text-primary-foreground border-primary" : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted"}`}>
+              <button onClick={() => setHidePins((v) => !v)} title={hidePins ? t.render.showPins : t.render.hidePins} className={`flex items-center justify-center w-8 h-8 rounded-md border transition-colors flex-shrink-0 ${hidePins ? "bg-primary text-primary-foreground border-primary" : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted"}`}>
                 <svg viewBox="0 0 24 24" className="w-[15px] h-[15px]" fill="currentColor"><path d="M16 9V4h1c.55 0 1-.45 1-1s-.45-1-1-1H7c-.55 0-1 .45-1 1s.45 1 1 1h1v5c0 1.66-1.34 3-3 3h10c-1.66 0-3-1.34-3-3zm-3 12v-6h-2v6c0 .55.45 1 1 1s1-.45 1-1z"/><path d="M3.51 3.51c-.39.39-.39 1.02 0 1.41l15.56 15.57c.39.39 1.02.39 1.41 0s.39-1.02 0-1.41L4.93 3.51c-.39-.39-1.02-.39-1.42 0z"/></svg>
               </button>
-              <button onClick={openLightbox} title="Podgląd pełnoekranowy" className={`flex items-center justify-center w-8 h-8 rounded-md border transition-colors flex-shrink-0 ${lightboxOpen ? "bg-primary text-primary-foreground border-primary" : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted"}`}>
+              <button onClick={openLightbox} title={t.render.fullscreen} className={`flex items-center justify-center w-8 h-8 rounded-md border transition-colors flex-shrink-0 ${lightboxOpen ? "bg-primary text-primary-foreground border-primary" : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted"}`}>
                 <Maximize2 size={15} />
               </button>
-              <button onClick={() => setShowComparePanel(true)} title="Porównaj" className={`flex items-center justify-center w-8 h-8 rounded-md border transition-colors flex-shrink-0 ${showComparePanel ? "bg-primary text-primary-foreground border-primary" : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted"}`}>
+              <button onClick={() => setShowComparePanel(true)} title={t.render.compare} className={`flex items-center justify-center w-8 h-8 rounded-md border transition-colors flex-shrink-0 ${showComparePanel ? "bg-primary text-primary-foreground border-primary" : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted"}`}>
                 <SplitSquareHorizontal size={15} />
               </button>
               {isDesigner && (
@@ -1786,7 +1792,7 @@ export default function RenderViewer({
                 <Download size={15} />
               </button>
               {isDesigner && (
-                <button onClick={() => setShowDeleteConfirm(true)} title="Usuń plik" className="flex items-center justify-center w-8 h-8 rounded-md border border-transparent text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors flex-shrink-0">
+                <button onClick={() => setShowDeleteConfirm(true)} title={t.render.deleteFile} className="flex items-center justify-center w-8 h-8 rounded-md border border-transparent text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors flex-shrink-0">
                   <Trash2 size={15} />
                 </button>
               )}
@@ -1814,17 +1820,17 @@ export default function RenderViewer({
                 </DropdownMenu>
               ) : renderStatus === "ACCEPTED" ? (
                 <>
-                  <span className="text-xs font-semibold px-2 py-1.5 rounded-md bg-green-100 text-green-700">Zaakceptowany</span>
+                  <span className="text-xs font-semibold px-2 py-1.5 rounded-md bg-green-100 text-green-700">{t.render.statusAccepted}</span>
                   {allowDirectStatusChange ? (
-                    <button onClick={() => updateRenderStatus("REVIEW")} className="text-xs text-gray-400 underline">Cofnij</button>
+                    <button onClick={() => updateRenderStatus("REVIEW")} className="text-xs text-gray-400 underline">{t.render.undoShort}</button>
                   ) : onStatusRequest ? (
-                    <button onClick={onStatusRequest} className="text-xs text-gray-400 underline">Zmień</button>
+                    <button onClick={onStatusRequest} className="text-xs text-gray-400 underline">{t.render.changeAction}</button>
                   ) : null}
                 </>
               ) : allowClientAcceptance ? (
-                <button onClick={() => updateRenderStatus("ACCEPTED")} className="text-xs font-semibold px-2 py-1.5 rounded-md bg-green-500 text-white">Zaakceptuj</button>
+                <button onClick={() => updateRenderStatus("ACCEPTED")} className="text-xs font-semibold px-2 py-1.5 rounded-md bg-green-500 text-white">{t.render.acceptBtn}</button>
               ) : (
-                <span className="text-xs font-semibold px-2 py-1.5 rounded-md bg-blue-100 text-blue-700">Do weryfikacji</span>
+                <span className="text-xs font-semibold px-2 py-1.5 rounded-md bg-blue-100 text-blue-700">{t.render.statusReview}</span>
               )}
             </div>
 
@@ -1860,14 +1866,14 @@ export default function RenderViewer({
             {isDragOverSidebar && (
               <div className="absolute inset-0 z-20 bg-blue-500/10 border-2 border-dashed border-blue-400 rounded flex flex-col items-center justify-center gap-1 pointer-events-none">
                 <Upload size={20} className="text-blue-500" />
-                <span className="text-xs text-blue-600 font-medium text-center px-2">Upuść pliki tutaj</span>
+                <span className="text-xs text-blue-600 font-medium text-center px-2">{t.render.dropFilesHere}</span>
               </div>
             )}
             {/* Upload in progress overlay */}
             {sidebarUploading && !isDragOverSidebar && (
               <div className="absolute inset-0 z-20 bg-card/80 flex flex-col items-center justify-center gap-1 pointer-events-none">
                 <Loader2 size={20} className="text-blue-500 animate-spin" />
-                <span className="text-xs text-gray-500">Przesyłanie…</span>
+                <span className="text-xs text-gray-500">{t.render.uploadingFilesShort}</span>
               </div>
             )}
             <div className="px-3 py-2.5 border-b flex-shrink-0 flex items-center justify-between gap-2">
@@ -1957,7 +1963,7 @@ export default function RenderViewer({
           {/* Pin mode hint */}
           {(mode === "pin" || productPinMode) && !pending && !pendingProductPos && (
             <div className="absolute top-3 left-1/2 -translate-x-1/2 z-10 bg-primary/90 text-primary-foreground text-xs px-3 py-1.5 rounded-full shadow pointer-events-none select-none">
-              Kliknij na zdjęcie, aby dodać pin
+              {t.render.clickToAddPinImage}
             </div>
           )}
 
@@ -2034,7 +2040,7 @@ export default function RenderViewer({
                       cancelPending();
                       setReplyContent("");
                     }}
-                    title={c.isInternal ? "Notatka wewnętrzna — niewidoczna dla klienta" : undefined}
+                    title={c.isInternal ? t.render.internalNoteTooltip : undefined}
                   >
                     {i + 1}
                     {c.isInternal && (
@@ -2055,7 +2061,7 @@ export default function RenderViewer({
                       </p>
                       {c.replies.length > 0 && (
                         <p className="text-xs text-muted-foreground mt-1.5">
-                          {c.replies.length} {c.replies.length === 1 ? "odpowiedź" : c.replies.length < 5 ? "odpowiedzi" : "odpowiedzi"}
+                          {c.replies.length} {c.replies.length === 1 ? t.render.replySingular : t.render.replyPlural}
                         </p>
                       )}
                     </div>
@@ -2111,7 +2117,7 @@ export default function RenderViewer({
                         <button
                           onClick={() => deleteProductPin(pin.id, renderId)}
                           className="ml-auto text-muted-foreground hover:text-red-500 transition-colors"
-                          title="Usuń produkt"
+                          title={t.render.deleteProduct}
                         >
                           <Trash2 size={13} />
                         </button>
@@ -2154,7 +2160,7 @@ export default function RenderViewer({
                 <Input
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
-                  placeholder="Tytuł (opcjonalnie)"
+                  placeholder={t.render.titleOptional}
                   className="mb-2 text-sm"
                   onKeyDown={(e) => { if (e.key === "Escape") cancelPending(); }}
                 />
@@ -2169,7 +2175,7 @@ export default function RenderViewer({
                     }`}
                   >
                     <Lock size={11} />
-                    {newPinInternal ? "Notatka wewnętrzna" : "Widoczny dla klienta"}
+                    {newPinInternal ? t.render.internalNoteLabel : t.render.visibleToClient}
                   </button>
                 )}
                 {pendingVoiceUrl && (
@@ -2193,7 +2199,7 @@ export default function RenderViewer({
                       className="flex items-center gap-1.5 text-xs text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-200 transition-colors"
                     >
                       <StopCircle size={16} />
-                      <span>Zatrzymaj</span>
+                      <span>{t.render.stopRecording}</span>
                     </button>
                   </div>
                 ) : (
@@ -2221,7 +2227,7 @@ export default function RenderViewer({
                       title={
                         newContent.trim() || pendingVoiceUrl
                           ? "Dodaj pin"
-                          : "Nagraj wiadomość głosową"
+                          : t.render.recordVoice
                       }
                       className="absolute right-2 bottom-2 z-10 flex items-center justify-center w-8 h-8 rounded-md transition-colors text-muted-foreground hover:text-foreground disabled:opacity-40"
                     >
@@ -2262,7 +2268,7 @@ export default function RenderViewer({
                         value={editingTitleText}
                         onChange={(e) => setEditingTitleText(e.target.value)}
                         onKeyDown={(e) => { if (e.key === "Enter") handleEditTitle(selectedComment.id, editingTitleText); if (e.key === "Escape") setEditingTitleMode(false); }}
-                        placeholder="Tytuł pinu..."
+                        placeholder={t.render.pinTitlePlaceholder}
                         className="flex-1 h-7 text-sm min-w-0"
                       />
                       <button onClick={() => setEditingTitleMode(false)} className="text-xs text-gray-400 hover:text-gray-700 flex-shrink-0 transition-colors">Anuluj</button>
@@ -2277,7 +2283,7 @@ export default function RenderViewer({
                         <button
                           onClick={handleToggleInternal}
                           className="text-gray-400 hover:text-gray-700 flex-shrink-0 transition-colors"
-                          title={selectedComment.isInternal ? "Pokaż klientowi" : "Ukryj przed klientem"}
+                          title={selectedComment.isInternal ? t.render.showToClient : t.render.hideFromClient}
                         >
                           {selectedComment.isInternal ? <LockOpen size={13} /> : <Lock size={13} />}
                         </button>
@@ -2296,13 +2302,13 @@ export default function RenderViewer({
                                 onClick={() => { setEditingTitleText(selectedComment.title ?? ""); setEditingTitleMode(true); setOpenPinMenu(false); }}
                                 className="w-full text-left px-3 py-2 text-xs hover:bg-muted flex items-center gap-2 transition-colors"
                               >
-                                <Edit2 size={12} className="text-muted-foreground" /> Edytuj tytuł
+                                <Edit2 size={12} className="text-muted-foreground" /> {t.render.editTitle}
                               </button>
                               <button
                                 onClick={() => { deleteComment(selectedComment.id); setOpenPinMenu(false); }}
                                 className="w-full text-left px-3 py-2 text-xs text-destructive hover:bg-destructive/10 flex items-center gap-2 transition-colors"
                               >
-                                <Trash2 size={12} /> Usuń pin
+                                <Trash2 size={12} /> {t.render.deletePin}
                               </button>
                             </div>
                           )}
@@ -2376,7 +2382,7 @@ export default function RenderViewer({
                           {!isDesigner && selectedComment.author === authorName && (
                             <button
                               onClick={() => deleteComment(selectedComment.id)}
-                              title="Usuń"
+                              title={t.common.delete}
                               className="p-1 rounded-lg text-gray-400 hover:text-destructive hover:bg-destructive/10 transition-colors"
                             >
                               <Trash2 size={13} />
@@ -2450,7 +2456,7 @@ export default function RenderViewer({
                             {(isDesigner || r.author === authorName) && (
                               <button
                                 onClick={() => deleteReply(selectedComment.id, r.id)}
-                                title="Usuń"
+                                title={t.common.delete}
                                 className="p-1 rounded-lg text-gray-400 hover:text-destructive hover:bg-destructive/10 transition-colors"
                               >
                                 <Trash2 size={13} />
@@ -2522,7 +2528,7 @@ export default function RenderViewer({
                         className="flex items-center gap-1.5 text-xs text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-200 transition-colors"
                       >
                         <StopCircle size={16} />
-                        <span>Zatrzymaj</span>
+                        <span>{t.render.stopRecording}</span>
                       </button>
                     </div>
                   ) : (
@@ -2530,7 +2536,7 @@ export default function RenderViewer({
                       <Textarea
                         value={replyContent}
                         onChange={(e) => setReplyContent(e.target.value)}
-                        placeholder="Dodaj odpowiedź..."
+                        placeholder={t.render.addReplyPlaceholder}
                         className="text-sm resize-none pr-10"
                         rows={2}
                         onKeyDown={(e) => {
@@ -2542,7 +2548,7 @@ export default function RenderViewer({
                         type="button"
                         disabled={replyUploadingVoice || replying}
                         onClick={replyContent.trim() || replyPendingVoiceUrl ? submitReply : startReplyRecording}
-                        title={replyContent.trim() || replyPendingVoiceUrl ? "Wyślij" : "Nagraj wiadomość głosową"}
+                        title={replyContent.trim() || replyPendingVoiceUrl ? t.render.send : t.render.recordVoice}
                         className="absolute right-2 bottom-2 z-10 flex items-center justify-center w-6 h-6 rounded-md transition-colors text-muted-foreground hover:text-foreground disabled:opacity-40"
                       >
                         {replyUploadingVoice || replying ? <Loader2 size={15} className="animate-spin" /> : replyContent.trim() || replyPendingVoiceUrl ? <Send size={15} /> : <Mic size={15} />}
@@ -2569,7 +2575,7 @@ export default function RenderViewer({
             <button
               onClick={() => setSidebarExpanded(v => !v)}
               className="hidden md:flex items-center justify-center w-5 h-12 bg-card border border-r-0 border-border rounded-l-md shadow-md text-muted-foreground hover:text-foreground transition-colors absolute left-0 bottom-0 -translate-x-full z-10"
-              title={sidebarExpanded ? "Zwiń panel" : "Rozwiń panel"}
+              title={sidebarExpanded ? t.render.collapsePanel : t.render.expandPanel}
             >
               {sidebarExpanded ? <ChevronRight size={13} /> : <ChevronLeft size={13} />}
             </button>
@@ -2643,7 +2649,7 @@ export default function RenderViewer({
 
                 <div className="flex-1 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-800">
                   {pinFilter === "all" && loadingAllComments ? (
-                    <p className="text-xs text-gray-400 text-center py-8">Ładowanie pinów...</p>
+                    <p className="text-xs text-gray-400 text-center py-8">{t.render.loadingPins}</p>
                   ) : (() => {
                     const listItems: CommentWithMeta[] = pinFilter === "all"
                       ? allComments.filter(c => c.posX !== null)
@@ -2652,7 +2658,7 @@ export default function RenderViewer({
                     if (listItems.length === 0) {
                       return (
                         <p className="text-xs text-gray-400 text-center py-8">
-                          {mode === "pin" ? "Kliknij na obraz aby dodać pin" : "Brak pinów"}
+                          {mode === "pin" ? t.render.clickToAddPin : t.render.noPins}
                         </p>
                       );
                     }
@@ -2696,13 +2702,13 @@ export default function RenderViewer({
                               {c.voiceUrl && (
                                 <span className="inline-flex items-center gap-0.5 text-[10px] text-blue-500 mt-0.5">
                                   <Mic size={9} />
-                                  wiadomość głosowa
+                                  {t.render.voiceMessage}
                                 </span>
                               )}
                               <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                                 {c.author} · {formatDate(c.createdAt)}
                                 {totalReplies > 0 && (
-                                  <span className="ml-1 text-blue-500">{totalReplies} {totalReplies === 1 ? "odpowiedź" : "odpowiedzi"}</span>
+                                  <span className="ml-1 text-blue-500">{totalReplies} {totalReplies === 1 ? t.render.replySingular : t.render.replyPlural}</span>
                                 )}
                               </p>
                               {isFromOtherRender && (
@@ -2738,20 +2744,38 @@ export default function RenderViewer({
               return (
                 <>
                   {/* AI Summary button */}
-                  <div className="px-3 py-2 border-b flex-shrink-0">
+                  <div className="px-3 py-2 border-b flex-shrink-0 flex gap-1.5">
                     <button
                       onClick={generateAiSummary}
                       disabled={generatingSummary || comments.filter(c => !c.isInternal || isDesigner).filter(c => !c.isAiSummary).length === 0}
-                      className="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 text-xs font-medium rounded-lg bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300 hover:bg-violet-100 dark:hover:bg-violet-900/30 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                      className="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 text-xs font-medium rounded-lg bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300 hover:bg-violet-100 dark:hover:bg-violet-900/30 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                     >
                       <Sparkles size={12} />
                       {generatingSummary ? "Generowanie…" : "Podsumowanie AI"}
                     </button>
+                    {aiSummaryMarkdown && (
+                      <button
+                        onClick={() => {
+                          const blob = new Blob([aiSummaryMarkdown], { type: "text/markdown" });
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement("a");
+                          a.href = url;
+                          a.download = `konwersacja-${renderId}.md`;
+                          a.click();
+                          URL.revokeObjectURL(url);
+                        }}
+                        title="Pobierz .md"
+                        className="flex items-center justify-center gap-1 py-1.5 px-2.5 text-xs font-medium rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                      >
+                        <Download size={12} />
+                        .md
+                      </button>
+                    )}
                   </div>
 
                   <div className="flex-1 overflow-y-auto px-3 py-3 space-y-1">
                     {chatItems.length === 0 && (
-                      <p className="text-xs text-gray-400 text-center py-8">Brak wiadomości — napisz pierwszą!</p>
+                      <p className="text-xs text-gray-400 text-center py-8">{t.render.noMessages}</p>
                     )}
                     {groups.map(group => (
                       <div key={group.label}>
@@ -2781,7 +2805,7 @@ export default function RenderViewer({
                                         }
                                       }}
                                       className="text-violet-300 hover:text-violet-600 dark:hover:text-violet-200 transition-colors flex-shrink-0"
-                                      title="Usuń podsumowanie"
+                                      title={t.render.deleteSummary}
                                     >
                                       <X size={11} />
                                     </button>
@@ -2879,7 +2903,7 @@ export default function RenderViewer({
                                       )}
                                       {item.imageUrl && (
                                         // eslint-disable-next-line @next/next/no-img-element
-                                        <img src={item.imageUrl} alt="zdjęcie" className="mt-1 max-w-[200px] max-h-[200px] rounded-lg object-cover cursor-pointer" onClick={() => window.open(item.imageUrl!, "_blank")} />
+                                        <img src={item.imageUrl} alt={t.share.photoAlt} className="mt-1 max-w-[200px] max-h-[200px] rounded-lg object-cover cursor-pointer" onClick={() => window.open(item.imageUrl!, "_blank")} />
                                       )}
                                     </div>
                                     <div className={`absolute top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 ${isOwn ? "right-full pr-1 flex-row-reverse" : "left-full pl-1"}`}>
@@ -2912,7 +2936,7 @@ export default function RenderViewer({
                                                 onClick={() => { deleteComment(item.id); setChatOpenMenuId(null); }}
                                                 className="w-full text-left px-3 py-2 text-xs text-destructive hover:bg-destructive/10 flex items-center gap-2 transition-colors"
                                               >
-                                                <Trash2 size={12} /> Usuń
+                                                <Trash2 size={12} /> {t.common.delete}
                                               </button>
                                             </div>
                                           )}
@@ -2967,7 +2991,7 @@ export default function RenderViewer({
                         <div className="flex items-start gap-2 mb-2">
                           <div className="relative">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={chatPendingImageUrl} alt="podgląd" className="h-20 w-20 rounded-lg object-cover border" />
+                            <img src={chatPendingImageUrl} alt={t.share.previewAlt} className="h-20 w-20 rounded-lg object-cover border" />
                             <button
                               onClick={() => setChatPendingImageUrl(null)}
                               className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-gray-800 text-white flex items-center justify-center hover:bg-red-500 transition-colors"
@@ -2992,7 +3016,7 @@ export default function RenderViewer({
                             className="flex items-center gap-1.5 text-xs text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-200 transition-colors"
                           >
                             <StopCircle size={16} />
-                            <span>Zatrzymaj</span>
+                            <span>{t.render.stopRecording}</span>
                           </button>
                         </div>
                       ) : (
@@ -3018,7 +3042,7 @@ export default function RenderViewer({
                             type="button"
                             disabled={chatUploadingImage || sendingChatMessage}
                             onClick={() => chatImageInputRef.current?.click()}
-                            title="Dodaj zdjęcie"
+                            title={t.render.addPhoto}
                             className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-primary text-white transition-colors disabled:opacity-40 hover:opacity-90"
                           >
                             {chatUploadingImage ? (
@@ -3037,7 +3061,7 @@ export default function RenderViewer({
                               e.target.style.height = Math.min(e.target.scrollHeight, 160) + "px";
                               e.target.style.overflowY = e.target.scrollHeight > 160 ? "auto" : "hidden";
                             }}
-                            placeholder="Napisz wiadomość…"
+                            placeholder={t.render.chatPlaceholder}
                             className="text-sm resize-none flex-1 min-h-10 max-h-40 rounded-2xl"
                             rows={1}
                             style={{ height: "40px", overflowY: "hidden" }}
@@ -3058,8 +3082,8 @@ export default function RenderViewer({
                             }
                             title={
                               chatMessage.trim() || chatPendingVoiceUrl || chatPendingImageUrl
-                                ? "Wyślij"
-                                : "Nagraj wiadomość głosową"
+                                ? t.render.send
+                                : t.render.recordVoice
                             }
                             className="flex-shrink-0 flex items-center justify-center w-8 h-8 text-primary transition-colors disabled:opacity-40 hover:opacity-90"
                           >
@@ -3139,7 +3163,7 @@ export default function RenderViewer({
               )}
               <button
                 onClick={() => setHidePins((v) => !v)}
-                title={hidePins ? "Pokaż piny" : "Ukryj piny"}
+                title={hidePins ? t.render.showPins : t.render.hidePins}
                 className={`p-2 rounded-md transition-colors ${hidePins ? "bg-white/20 text-white" : "text-white/60 hover:text-white hover:bg-white/10"}`}
               >
                 <Pin size={18} />
@@ -3338,7 +3362,7 @@ export default function RenderViewer({
                           <button
                             onClick={() => deleteProductPin(pin.id, lightboxRender.id)}
                             className="ml-auto text-muted-foreground hover:text-red-500 transition-colors"
-                            title="Usuń produkt"
+                            title={t.render.deleteProduct}
                           >
                             <Trash2 size={13} />
                           </button>
@@ -3390,7 +3414,7 @@ export default function RenderViewer({
                         </p>
                         {c.replies.length > 0 && (
                           <p className="text-xs text-muted-foreground mt-1.5">
-                            {c.replies.length} {c.replies.length === 1 ? "odpowiedź" : "odpowiedzi"}
+                            {c.replies.length} {c.replies.length === 1 ? t.render.replySingular : t.render.replyPlural}
                           </p>
                         )}
                       </div>
@@ -3430,7 +3454,7 @@ export default function RenderViewer({
                   <Input
                     value={newTitle}
                     onChange={(e) => setNewTitle(e.target.value)}
-                    placeholder="Tytuł (opcjonalnie)"
+                    placeholder={t.render.titleOptional}
                     className="mb-2 text-sm"
                     onKeyDown={(e) => { if (e.key === "Escape") cancelPending(); }}
                   />
@@ -3455,7 +3479,7 @@ export default function RenderViewer({
                         className="flex items-center gap-1.5 text-xs text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-200 transition-colors"
                       >
                         <StopCircle size={16} />
-                        <span>Zatrzymaj</span>
+                        <span>{t.render.stopRecording}</span>
                       </button>
                     </div>
                   ) : (
@@ -3483,7 +3507,7 @@ export default function RenderViewer({
                         title={
                           newContent.trim() || pendingVoiceUrl
                             ? "Dodaj pin"
-                            : "Nagraj wiadomość głosową"
+                            : t.render.recordVoice
                         }
                         className="absolute right-2 bottom-2 z-10 flex items-center justify-center w-8 h-8 rounded-md transition-colors text-muted-foreground hover:text-foreground disabled:opacity-40"
                       >
@@ -3521,7 +3545,7 @@ export default function RenderViewer({
                           value={editingTitleText}
                           onChange={(e) => setEditingTitleText(e.target.value)}
                           onKeyDown={(e) => { if (e.key === "Enter") handleEditTitle(selectedComment.id, editingTitleText); if (e.key === "Escape") setEditingTitleMode(false); }}
-                          placeholder="Tytuł pinu..."
+                          placeholder={t.render.pinTitlePlaceholder}
                           className="flex-1 h-7 text-sm min-w-0"
                         />
                         <button onClick={() => setEditingTitleMode(false)} className="text-xs text-gray-400 hover:text-gray-700 flex-shrink-0 transition-colors">Anuluj</button>
@@ -3546,13 +3570,13 @@ export default function RenderViewer({
                                   onClick={() => { setEditingTitleText(selectedComment.title ?? ""); setEditingTitleMode(true); setOpenPinMenu(false); }}
                                   className="w-full text-left px-3 py-2 text-xs hover:bg-muted flex items-center gap-2 transition-colors"
                                 >
-                                  <Edit2 size={12} className="text-muted-foreground" /> Edytuj tytuł
+                                  <Edit2 size={12} className="text-muted-foreground" /> {t.render.editTitle}
                                 </button>
                                 <button
                                   onClick={() => { deleteComment(selectedComment.id); setOpenPinMenu(false); }}
                                   className="w-full text-left px-3 py-2 text-xs text-destructive hover:bg-destructive/10 flex items-center gap-2 transition-colors"
                                 >
-                                  <Trash2 size={12} /> Usuń pin
+                                  <Trash2 size={12} /> {t.render.deletePin}
                                 </button>
                               </div>
                             )}
@@ -3618,7 +3642,7 @@ export default function RenderViewer({
                             {!isDesigner && selectedComment.author === authorName && (
                               <button
                                 onClick={() => deleteComment(selectedComment.id)}
-                                title="Usuń"
+                                title={t.common.delete}
                                 className="p-1 rounded-lg text-gray-400 hover:text-destructive hover:bg-destructive/10 transition-colors"
                               >
                                 <Trash2 size={13} />
@@ -3686,7 +3710,7 @@ export default function RenderViewer({
                               {(isDesigner || r.author === authorName) && (
                                 <button
                                   onClick={() => deleteReply(selectedComment.id, r.id)}
-                                  title="Usuń"
+                                  title={t.common.delete}
                                   className="p-1 rounded-lg text-gray-400 hover:text-destructive hover:bg-destructive/10 transition-colors"
                                 >
                                   <Trash2 size={13} />
@@ -3756,7 +3780,7 @@ export default function RenderViewer({
                           className="flex items-center gap-1.5 text-xs text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-200 transition-colors"
                         >
                           <StopCircle size={16} />
-                          <span>Zatrzymaj</span>
+                          <span>{t.render.stopRecording}</span>
                         </button>
                       </div>
                     ) : (
@@ -3764,7 +3788,7 @@ export default function RenderViewer({
                         <Textarea
                           value={replyContent}
                           onChange={(e) => setReplyContent(e.target.value)}
-                          placeholder="Dodaj odpowiedź..."
+                          placeholder={t.render.addReplyPlaceholder}
                           className="text-sm resize-none pr-10"
                           rows={2}
                           onKeyDown={(e) => {
@@ -3776,7 +3800,7 @@ export default function RenderViewer({
                           type="button"
                           disabled={replyUploadingVoice || replying}
                           onClick={replyContent.trim() || replyPendingVoiceUrl ? submitReply : startReplyRecording}
-                          title={replyContent.trim() || replyPendingVoiceUrl ? "Wyślij" : "Nagraj wiadomość głosową"}
+                          title={replyContent.trim() || replyPendingVoiceUrl ? t.render.send : t.render.recordVoice}
                           className="absolute right-2 bottom-2 z-10 flex items-center justify-center w-6 h-6 rounded-md transition-colors text-muted-foreground hover:text-foreground disabled:opacity-40"
                         >
                           {replyUploadingVoice || replying ? <Loader2 size={15} className="animate-spin" /> : replyContent.trim() || replyPendingVoiceUrl ? <Send size={15} /> : <Mic size={15} />}
@@ -3833,7 +3857,7 @@ export default function RenderViewer({
         <div className="fixed inset-0 bg-black flex flex-col" style={{ zIndex: 9999 }}>
           <div className="flex items-center justify-between px-5 py-3 border-b border-white/10 flex-shrink-0">
             <div>
-              <span className="text-white font-semibold text-sm">Porównanie wersji</span>
+              <span className="text-white font-semibold text-sm">{t.render.compareVersions}</span>
               {renderName && <span className="text-white/40 text-sm ml-2">— {renderName}</span>}
             </div>
             <button
@@ -3895,12 +3919,12 @@ export default function RenderViewer({
       {pendingVersionFile && createPortal(
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4" style={{ zIndex: 9999 }} onClick={() => setPendingVersionFile(null)}>
           <div className="bg-card rounded-xl shadow-xl border border-border w-full max-w-sm p-6" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-1">Nazwa wersji</h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Podaj nazwę dla tej wersji, np. &quot;Po poprawkach klienta&quot; lub &quot;Wersja finalna&quot;.</p>
+            <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-1">{t.render.versionLabelTitle}</h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">{t.render.versionNameDesc}</p>
             <input
               type="text"
               autoFocus
-              placeholder="np. Po poprawkach klienta"
+              placeholder={t.render.versionLabelPlaceholder}
               value={versionLabelInput}
               onChange={(e) => { setVersionLabelInput(e.target.value); setVersionLabelError(false); }}
               onKeyDown={(e) => {
@@ -3914,11 +3938,11 @@ export default function RenderViewer({
               }}
               className={`w-full px-3 py-2 text-sm rounded-lg border ${versionLabelError ? "border-red-400 focus:ring-red-400" : "border-border focus:ring-primary"} bg-background focus:outline-none focus:ring-2 mb-1`}
             />
-            {versionLabelError && <p className="text-xs text-red-500 mb-3">Nazwa wersji jest wymagana.</p>}
+            {versionLabelError && <p className="text-xs text-red-500 mb-3">{t.render.versionLabelRequired}</p>}
             {!versionLabelError && <div className="mb-3" />}
             <div className="flex gap-2 justify-end">
               <button onClick={() => setPendingVersionFile(null)} className="px-4 py-2 text-sm rounded-lg border border-border hover:bg-muted transition-colors">
-                Anuluj
+                {t.common.cancel}
               </button>
               <button
                 onClick={() => {
@@ -3930,7 +3954,7 @@ export default function RenderViewer({
                 }}
                 className="px-4 py-2 text-sm rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors"
               >
-                Wgraj wersję
+                {t.render.uploadVersion}
               </button>
             </div>
           </div>
@@ -3940,17 +3964,17 @@ export default function RenderViewer({
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" onClick={() => setShowDeleteConfirm(false)}>
           <div className="bg-card rounded-xl shadow-xl border border-border w-full max-w-sm p-6" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-1">Usuń plik</h2>
+            <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-1">{t.render.deleteFile}</h2>
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-              Czy na pewno chcesz usunąć <span className="font-medium text-gray-700 dark:text-gray-200">{renderName}</span>? Tej operacji nie można cofnąć.
+              {t.render.confirmDeleteFileMsg} <span className="font-medium text-gray-700 dark:text-gray-200">{renderName}</span>? {t.render.irreversible}
             </p>
             <div className="flex gap-2 justify-end">
               <button onClick={() => setShowDeleteConfirm(false)} disabled={deleting} className="px-4 py-2 text-sm rounded-lg border border-border hover:bg-muted transition-colors">
-                Anuluj
+                {t.common.cancel}
               </button>
               <button onClick={deleteRender} disabled={deleting} className="px-4 py-2 text-sm rounded-lg bg-red-500 hover:bg-red-600 text-white font-medium transition-colors disabled:opacity-60 flex items-center gap-2">
                 {deleting && <Loader2 size={14} className="animate-spin" />}
-                Usuń
+                {t.common.delete}
               </button>
             </div>
           </div>
@@ -3998,7 +4022,7 @@ export default function RenderViewer({
                       className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md bg-muted text-gray-700 dark:text-gray-300 hover:bg-muted/80 transition-colors disabled:opacity-50"
                     >
                       <Upload size={14} />
-                      {isVersionUploading ? "Wgrywanie..." : "Dodaj wersję"}
+                      {isVersionUploading ? t.render.uploadingVersion : t.render.addVersion}
                     </button>
                   </>
                 )}
@@ -4015,17 +4039,17 @@ export default function RenderViewer({
               {versions.length === 0 && (
                 <div className="flex flex-col items-center justify-center py-12 text-gray-400">
                   <History size={32} className="mb-3 opacity-30" />
-                  <p className="text-sm font-medium">Brak wersji</p>
+                  <p className="text-sm font-medium">{t.render.noVersions}</p>
                   <p className="text-xs mt-1 text-center text-gray-300 max-w-xs">
                     {isDesigner
-                      ? "Wgraj nowy plik używając przycisku \"Dodaj wersję\", aby zapisać historię zmian"
-                      : "Tu znajdziesz poprzednie wersje tego pliku dodane przez projektanta. Na razie nie ma żadnych wersji do wyświetlenia."}
+                      ? t.render.versionHistoryEmptyDesigner
+                      : t.render.versionHistoryEmptyClient}
                   </p>
                 </div>
               )}
               {[...versions].sort((a, b) => b.versionNumber - a.versionNumber).map((v) => {
                 const date = new Date(v.archivedAt);
-                const formatted = date.toLocaleDateString("pl-PL", {
+                const formatted = date.toLocaleDateString(undefined, {
                   day: "2-digit",
                   month: "2-digit",
                   year: "numeric",
@@ -4037,7 +4061,7 @@ export default function RenderViewer({
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex-shrink-0 w-48 h-32 rounded-lg overflow-hidden border border-border bg-muted hover:opacity-80 transition-opacity flex items-center justify-center"
-                      title="Otwórz pełny rozmiar"
+                      title={t.render.openFullSize}
                     >
                       {isPdf ? (
                         <FileText size={22} className="text-red-400" />
@@ -4055,7 +4079,7 @@ export default function RenderViewer({
                         {v.label || `Wersja ${v.versionNumber}`}
                       </p>
                       <p className="text-xs text-gray-400 mt-0.5">
-                        Zastąpiono: {formatted}
+                        {t.render.replacedOn} {formatted}
                       </p>
                     </div>
                     <div className="flex flex-col gap-1.5 flex-shrink-0">
@@ -4067,10 +4091,10 @@ export default function RenderViewer({
                             setShowVersionHistory(false);
                           }}
                           className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md border border-border text-gray-600 dark:text-gray-300 hover:bg-muted transition-colors"
-                          title="Porównaj z aktualną wersją"
+                          title={t.render.compareWithCurrent}
                         >
                           <SplitSquareHorizontal size={12} />
-                          Porównaj
+                          {t.render.compare}
                         </button>
                       )}
                       {(isDesigner || onVersionRestore || onVersionRestoreRequest) && (
@@ -4080,16 +4104,16 @@ export default function RenderViewer({
                           className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md border border-border text-gray-600 dark:text-gray-300 hover:bg-muted transition-colors disabled:opacity-50"
                           title={
                             !isDesigner && !allowClientVersionRestore
-                              ? "Wyślij prośbę o przywrócenie do projektanta"
-                              : "Przywróć tę wersję"
+                              ? t.render.requestRestoreDesc
+                              : t.render.restoreThisVersion
                           }
                         >
                           <RotateCcw size={12} />
                           {restoringVersionId === v.id
                             ? "..."
                             : !isDesigner && !allowClientVersionRestore
-                            ? "Poproś o przywrócenie"
-                            : "Przywróć"}
+                            ? t.render.requestRestore
+                            : t.render.restore}
                         </button>
                       )}
                     </div>
@@ -4111,7 +4135,7 @@ export default function RenderViewer({
           onClose={() => setShowComparePanel(false)}
           onCompare={(fileUrl, label) => {
             setCompareVersion({ id: "compare", fileUrl, label: label ?? null, versionNumber: 0, archivedAt: "" });
-            setCompareRightLabel("Oryginał");
+            setCompareRightLabel(t.render.original);
             setSliderPos(50);
           }}
         />

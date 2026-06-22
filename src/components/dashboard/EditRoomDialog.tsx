@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { ICON_OPTIONS, getRoomIcon } from "@/lib/roomIcons";
+import { useT } from "@/lib/i18n";
 
 interface EditRoomDialogProps {
   room: {
@@ -30,6 +31,7 @@ export default function EditRoomDialog({
   open,
   onOpenChange,
 }: EditRoomDialogProps) {
+  const t = useT();
   const [name, setName] = useState(room.name);
   const [icon, setIcon] = useState<string>(room.icon || room.type);
   const [loading, setLoading] = useState(false);
@@ -57,11 +59,11 @@ export default function EditRoomDialog({
 
       if (!res.ok) throw new Error();
 
-      toast.success("Pomieszczenie zaktualizowane");
+      toast.success(t.projekty.roomUpdated);
       onOpenChange(false);
       router.refresh();
     } catch {
-      toast.error("Błąd zapisu");
+      toast.error(t.projekty.roomUpdateError);
     } finally {
       setLoading(false);
     }
@@ -71,7 +73,7 @@ export default function EditRoomDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Edytuj pomieszczenie</DialogTitle>
+          <DialogTitle>{t.projekty.editRoom}</DialogTitle>
         </DialogHeader>
         <div className="space-y-5">
           {/* Icon preview */}
@@ -82,7 +84,7 @@ export default function EditRoomDialog({
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="edit-roomName">Nazwa *</Label>
+            <Label htmlFor="edit-roomName">{t.projekty.roomName}</Label>
             <Input
               id="edit-roomName"
               value={name}
@@ -93,7 +95,7 @@ export default function EditRoomDialog({
           </div>
 
           <div className="space-y-1.5">
-            <Label>Ikona</Label>
+            <Label>{t.projekty.roomIcon}</Label>
             <div className="grid grid-cols-4 gap-2">
               {ICON_OPTIONS.map(({ key, label, icon: Icon }) => (
                 <button
@@ -116,10 +118,10 @@ export default function EditRoomDialog({
 
           <div className="flex gap-2 justify-end pt-1">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Anuluj
+              {t.common.cancel}
             </Button>
             <Button onClick={handleSubmit} disabled={loading || !name.trim()}>
-              {loading ? "Zapisywanie..." : "Zapisz"}
+              {loading ? t.common.saving : t.common.save}
             </Button>
           </div>
         </div>

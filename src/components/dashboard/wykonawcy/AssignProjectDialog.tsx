@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Check } from "@/components/ui/icons";
+import { useT } from "@/lib/i18n";
 
 interface ClientOption {
   id: string;
@@ -32,6 +33,7 @@ interface Props {
 }
 
 export default function AssignProjectDialog({ open, onOpenChange, contractorId, onAssigned }: Props) {
+  const t = useT();
   const [designer, setDesigner] = useState<DesignerInfo | null>(null);
   const [clients, setClients] = useState<ClientOption[]>([]);
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
@@ -102,7 +104,7 @@ export default function AssignProjectDialog({ open, onOpenChange, contractorId, 
 
   async function handleSubmit() {
     if (!projectId) {
-      toast.error("Wybierz projekt");
+      toast.error(t.wykonawcy.selectProjectError);
       return;
     }
     setLoading(true);
@@ -125,10 +127,10 @@ export default function AssignProjectDialog({ open, onOpenChange, contractorId, 
       });
       if (!res.ok) {
         const data = await res.json();
-        toast.error(data.error ?? "Błąd podczas przypisywania projektu");
+        toast.error(data.error ?? t.wykonawcy.assignError);
         return;
       }
-      toast.success("Projekt przypisany");
+      toast.success(t.wykonawcy.assignedOk);
       onOpenChange(false);
       reset();
       onAssigned();
@@ -141,20 +143,20 @@ export default function AssignProjectDialog({ open, onOpenChange, contractorId, 
     <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (!v) reset(); }}>
       <DialogContent className="max-h-[90vh] max-w-lg flex flex-col">
         <DialogHeader>
-          <DialogTitle>Przypisz projekt do wykonawcy</DialogTitle>
+          <DialogTitle>{t.wykonawcy.assignTitle}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 overflow-y-auto flex-1 pr-1">
           {/* Krok 1: klient */}
           <div className="space-y-2">
-            <Label>1. Wybierz klienta</Label>
+            <Label>{t.wykonawcy.selectClientStep}</Label>
             {loadingClients ? (
               <div className="h-24 flex items-center justify-center text-sm text-muted-foreground border border-border rounded-lg">
-                Ładowanie…
+                {t.common.loading}
               </div>
             ) : clients.length === 0 ? (
               <div className="h-16 flex items-center justify-center text-sm text-muted-foreground border border-border rounded-lg">
-                Brak klientów
+                {t.wykonawcy.noClients}
               </div>
             ) : (
               <div className="border border-border rounded-lg overflow-hidden divide-y divide-border max-h-48 overflow-y-auto">
@@ -182,7 +184,7 @@ export default function AssignProjectDialog({ open, onOpenChange, contractorId, 
           {/* Krok 2: projekt */}
           {selectedClientId && (
             <div className="space-y-2">
-              <Label>2. Wybierz projekt</Label>
+              <Label>{t.wykonawcy.selectProjectStep}</Label>
               <div className="border border-border rounded-lg overflow-hidden divide-y divide-border max-h-40 overflow-y-auto">
                 {clientProjects.map((p) => (
                   <button
@@ -208,70 +210,70 @@ export default function AssignProjectDialog({ open, onOpenChange, contractorId, 
           {/* Krok 3: informacje o projekcie */}
           {projectId && (
             <div className="space-y-4 border-t border-border pt-4">
-              <Label>3. Informacje o projekcie</Label>
+              <Label>{t.wykonawcy.projectInfoStep}</Label>
 
               <div className="space-y-3">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Adres inwestycji</p>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t.wykonawcy.investmentAddress}</p>
                 <div className="space-y-2">
                   <Input
                     value={investmentStreet}
                     onChange={(e) => setInvestmentStreet(e.target.value)}
-                    placeholder="Ulica i numer"
+                    placeholder={t.wykonawcy.streetPlaceholder}
                   />
                   <div className="grid grid-cols-2 gap-2">
                     <Input
                       value={investmentPostalCode}
                       onChange={(e) => setInvestmentPostalCode(e.target.value)}
-                      placeholder="Kod pocztowy"
+                      placeholder={t.wykonawcy.postalCode}
                     />
                     <Input
                       value={investmentCity}
                       onChange={(e) => setInvestmentCity(e.target.value)}
-                      placeholder="Miasto"
+                      placeholder={t.wykonawcy.city}
                     />
                   </div>
                   <Input
                     value={investmentCountry}
                     onChange={(e) => setInvestmentCountry(e.target.value)}
-                    placeholder="Kraj"
+                    placeholder={t.wykonawcy.country}
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Kontakt do projektanta</p>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t.wykonawcy.designerContact}</p>
                 <Input
                   value={designerContactName}
                   onChange={(e) => setDesignerContactName(e.target.value)}
-                  placeholder="Imię i nazwisko"
+                  placeholder={t.wykonawcy.labelName}
                 />
                 <Input
                   value={designerContactPhone}
                   onChange={(e) => setDesignerContactPhone(e.target.value)}
-                  placeholder="Nr telefonu"
+                  placeholder={t.wykonawcy.phoneNumber}
                 />
               </div>
 
               <div className="space-y-2">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Kontakt do inwestora</p>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t.wykonawcy.investorContact}</p>
                 <Input
                   value={investorContactName}
                   onChange={(e) => setInvestorContactName(e.target.value)}
-                  placeholder="Imię i nazwisko"
+                  placeholder={t.wykonawcy.labelName}
                 />
                 <Input
                   value={investorContactPhone}
                   onChange={(e) => setInvestorContactPhone(e.target.value)}
-                  placeholder="Nr telefonu"
+                  placeholder={t.wykonawcy.phoneNumber}
                 />
               </div>
 
               <div className="space-y-2">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Opis (opcjonalne)</p>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t.wykonawcy.descOptional}</p>
                 <textarea
                   value={projectNotes}
                   onChange={(e) => setProjectNotes(e.target.value)}
-                  placeholder="Dodatkowe informacje dla wykonawcy…"
+                  placeholder={t.wykonawcy.notesPlaceholder}
                   rows={3}
                   className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
                 />
@@ -282,10 +284,10 @@ export default function AssignProjectDialog({ open, onOpenChange, contractorId, 
 
         <DialogFooter>
           <Button variant="outline" onClick={() => { onOpenChange(false); reset(); }}>
-            Anuluj
+            {t.common.cancel}
           </Button>
           <Button onClick={handleSubmit} disabled={loading || !projectId}>
-            {loading ? "Przypisywanie…" : "Przypisz"}
+            {loading ? t.wykonawcy.assigning : t.wykonawcy.assignBtn}
           </Button>
         </DialogFooter>
       </DialogContent>

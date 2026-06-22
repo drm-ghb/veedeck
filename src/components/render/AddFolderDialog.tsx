@@ -14,9 +14,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { useT } from "@/lib/i18n";
 
 export default function AddFolderDialog({ roomId }: { roomId: string }) {
   const router = useRouter();
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
@@ -33,12 +35,12 @@ export default function AddFolderDialog({ roomId }: { roomId: string }) {
     if (res.ok) {
       const folder = await res.json();
       window.dispatchEvent(new CustomEvent("renderflow:folder-created", { detail: folder }));
-      toast.success("Folder utworzony");
+      toast.success(t.render.folderCreated);
       setName("");
       setOpen(false);
       router.refresh();
     } else {
-      toast.error("Błąd tworzenia folderu");
+      toast.error(t.render.folderCreateError);
     }
   }
 
@@ -46,27 +48,27 @@ export default function AddFolderDialog({ roomId }: { roomId: string }) {
     <Dialog open={open} onOpenChange={(v) => { if (!loading) { setOpen(v); if (!v) setName(""); } }}>
       <DialogTrigger render={<Button variant="outline" />}>
         <FolderPlus size={15} />
-        Nowy folder
+        {t.render.newFolder}
       </DialogTrigger>
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle>Nowy folder</DialogTitle>
+          <DialogTitle>{t.render.newFolder}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 pt-1">
           <div className="space-y-1.5">
-            <Label htmlFor="folder-name">Nazwa folderu</Label>
+            <Label htmlFor="folder-name">{t.render.folderName}</Label>
             <Input
               id="folder-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Np. Wersja 1"
+              placeholder={t.render.folderNamePlaceholder}
               disabled={loading}
               onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleSave(); } }}
               autoFocus
             />
           </div>
           <Button onClick={handleSave} disabled={loading || !name.trim()} className="w-full">
-            {loading ? "Tworzenie..." : "Utwórz folder"}
+            {loading ? t.render.creating : t.render.createFolder}
           </Button>
         </div>
       </DialogContent>

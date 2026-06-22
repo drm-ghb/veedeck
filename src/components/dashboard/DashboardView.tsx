@@ -177,6 +177,7 @@ interface DashboardViewProps {
 }
 
 function MobileDiscussionsBubble() {
+  const t = useT();
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
@@ -201,7 +202,7 @@ function MobileDiscussionsBubble() {
       </div>
       <div className="min-w-0 flex-1">
         <p className="text-sm text-violet-500/70 dark:text-violet-400/60 leading-tight">
-          {hasUnread ? <span className="font-semibold text-violet-600 dark:text-violet-400">Nieprzeczytane w Dyskusjach</span> : "Brak nowych wiadomości"}
+          {hasUnread ? <span className="font-semibold text-violet-600 dark:text-violet-400">{t.home.unreadDiscussions}</span> : t.home.noNewMessages}
         </p>
       </div>
       {hasUnread && (
@@ -215,11 +216,12 @@ function MobileDiscussionsBubble() {
 }
 
 function InfoTooltip({ items }: { items: string[] }) {
+  const t = useT();
   return (
     <div className="relative group/tip inline-flex items-center">
       <HelpCircle size={13} className="text-muted-foreground/50 hover:text-muted-foreground cursor-help transition-colors" />
       <div className="pointer-events-none absolute top-full right-0 mt-1.5 z-50 hidden group-hover/tip:block w-68 rounded-lg border border-border bg-popover px-3 py-2 text-xs text-popover-foreground shadow-md">
-        <p className="font-medium mb-1">W tej sekcji wyświetlają się:</p>
+        <p className="font-medium mb-1">{t.home.tooltipSection}</p>
         <ul className="space-y-0.5">
           {items.map((item, i) => (
             <li key={i} className="flex gap-1.5"><span className="shrink-0">–</span>{item}</li>
@@ -230,16 +232,16 @@ function InfoTooltip({ items }: { items: string[] }) {
   );
 }
 
-function timeAgo(dateStr: string): string {
+function timeAgo(dateStr: string, t: ReturnType<typeof useT>): string {
   const diff = Date.now() - new Date(dateStr).getTime();
   const days = Math.floor(diff / 86400000);
   const hours = Math.floor(diff / 3600000);
   const minutes = Math.floor(diff / 60000);
   if (days >= 7) return new Date(dateStr).toLocaleDateString("pl-PL", { day: "numeric", month: "short" });
-  if (days > 0) return `${days} ${days === 1 ? "dzień" : "dni"} temu`;
-  if (hours > 0) return `${hours} godz. temu`;
-  if (minutes > 0) return `${minutes} min. temu`;
-  return "Przed chwilą";
+  if (days > 0) return `${days} ${days === 1 ? t.home.dayAgo : t.home.daysAgo}`;
+  if (hours > 0) return `${hours} ${t.home.hoursAgo}`;
+  if (minutes > 0) return `${minutes} ${t.home.minutesAgo}`;
+  return t.home.justNow;
 }
 
 const EVENT_TYPE_COLORS: Record<string, { bar: string; bg: string; text: string }> = {
@@ -440,7 +442,7 @@ export default function DashboardView({
               </div>
               <div className="min-w-0">
                 <p className="text-xl font-bold leading-none">{stats.clients}</p>
-                <p className="text-xs text-muted-foreground mt-0.5 truncate">Klientów</p>
+                <p className="text-xs text-muted-foreground mt-0.5 truncate">{t.home.statsClients}</p>
               </div>
             </Link>
 
@@ -454,7 +456,7 @@ export default function DashboardView({
                 </div>
                 <div className="min-w-0">
                   <p className="text-xl font-bold leading-none">{stats.renderflowProjects}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5 truncate">Projektów ProjectFlow</p>
+                  <p className="text-xs text-muted-foreground mt-0.5 truncate">{t.home.statsProjects}</p>
                 </div>
               </Link>
             )}
@@ -469,7 +471,7 @@ export default function DashboardView({
                 </div>
                 <div className="min-w-0">
                   <p className="text-xl font-bold leading-none">{stats.lists}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5 truncate">List zakupowych</p>
+                  <p className="text-xs text-muted-foreground mt-0.5 truncate">{t.home.statsLists}</p>
                 </div>
               </Link>
             )}
@@ -489,7 +491,7 @@ export default function DashboardView({
               </div>
               <div className="min-w-0">
                 <p className="text-xl font-bold leading-none">{notifCount}</p>
-                <p className="text-xs text-muted-foreground mt-0.5 truncate">Powiadomień</p>
+                <p className="text-xs text-muted-foreground mt-0.5 truncate">{t.home.statsNotifications}</p>
               </div>
             </Link>
           </div>
@@ -498,15 +500,15 @@ export default function DashboardView({
         {/* Projekty */}
         <div className="order-6 space-y-3">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-foreground">Ostatnie projekty ProjectFlow</h2>
+              <h2 className="text-sm font-semibold text-foreground">{t.home.recentProjectsTitle}</h2>
               <Link href="/projectflow" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-0.5 transition-colors">
-                Wszystkie <ChevronRight size={13} />
+                {t.home.allLabel} <ChevronRight size={13} />
               </Link>
             </div>
             {recentProjects.length === 0 ? (
               <div className="rounded-xl border border-dashed border-border bg-card p-8 text-center">
                 <Layers size={32} className="mx-auto mb-3 text-muted-foreground/40" />
-                <p className="text-sm text-muted-foreground mb-3">Nie masz jeszcze żadnych projektów</p>
+                <p className="text-sm text-muted-foreground mb-3">{t.home.noProjectsYet}</p>
                 <NewProjectDialog module="renderflow" />
               </div>
             ) : (
@@ -534,10 +536,10 @@ export default function DashboardView({
                         {project.pinned && <Pin size={11} className="text-red-500 fill-red-500 shrink-0" />}
                         {project.title}
                       </p>
-                      {project.clientName && <p className="text-xs text-muted-foreground truncate mt-0.5">Klient: {project.clientName}</p>}
+                      {project.clientName && <p className="text-xs text-muted-foreground truncate mt-0.5">{t.home.clientPrefix} {project.clientName}</p>}
                       <div className="flex items-center justify-between mt-2">
                         <span className="text-xs text-muted-foreground">
-                          {project.renderCount > 0 ? `${project.renderCount} render${project.renderCount === 1 ? "" : "y"}` : "Brak renderów"}
+                          {project.renderCount > 0 ? `${project.renderCount} ${project.renderCount === 1 ? t.home.renderSg : t.home.renderPl}` : t.home.noRenders}
                         </span>
                         <div className="flex items-center gap-1.5">
                           {project.unreadPins > 0 && (
@@ -553,7 +555,7 @@ export default function DashboardView({
                             </span>
                           )}
                           {project.unreadPins === 0 && project.unreadChat === 0 && (
-                            <span className="text-xs text-muted-foreground">{timeAgo(project.updatedAt)}</span>
+                            <span className="text-xs text-muted-foreground">{timeAgo(project.updatedAt, t)}</span>
                           )}
                         </div>
                       </div>
@@ -567,15 +569,15 @@ export default function DashboardView({
         {/* Listy */}
         <div className="order-5 space-y-3">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-foreground">Ostatnie listy zakupowe</h2>
+              <h2 className="text-sm font-semibold text-foreground">{t.home.recentListsTitle}</h2>
               <Link href="/listy" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-0.5 transition-colors">
-                Wszystkie <ChevronRight size={13} />
+                {t.home.allLabel} <ChevronRight size={13} />
               </Link>
             </div>
             {recentLists.length === 0 ? (
               <div className="rounded-xl border border-dashed border-border bg-card p-8 text-center">
                 <LocalMall size={32} className="mx-auto mb-3 text-muted-foreground/40" />
-                <p className="text-sm text-muted-foreground mb-3">Nie masz jeszcze żadnych list zakupowych</p>
+                <p className="text-sm text-muted-foreground mb-3">{t.home.noListsYet}</p>
                 <NewListDialog />
               </div>
             ) : (
@@ -591,10 +593,10 @@ export default function DashboardView({
                         {list.name}
                       </p>
                       <p className="text-xs text-muted-foreground truncate">
-                        {list.clientName ? `Klient: ${list.clientName}` : list.projectTitle ?? (list.sectionCount > 0 ? `${list.sectionCount} sekcj${list.sectionCount === 1 ? "a" : list.sectionCount < 5 ? "e" : "i"}` : "Brak sekcji")}
+                        {list.clientName ? `${t.home.clientPrefix} ${list.clientName}` : list.projectTitle ?? (list.sectionCount > 0 ? `${list.sectionCount} ${list.sectionCount === 1 ? t.home.sectionSg : list.sectionCount < 5 ? t.home.sectionFw : t.home.sectionPl}` : t.home.noSections)}
                       </p>
                     </div>
-                    <span className="shrink-0 text-xs text-muted-foreground">{timeAgo(list.updatedAt)}</span>
+                    <span className="shrink-0 text-xs text-muted-foreground">{timeAgo(list.updatedAt, t)}</span>
                   </Link>
                 ))}
               </div>
@@ -609,9 +611,9 @@ export default function DashboardView({
         {/* Kalendarz dziś */}
         <div className="order-2 space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-foreground">Kalendarz — dziś</h2>
+            <h2 className="text-sm font-semibold text-foreground">{t.home.calendarTitle}</h2>
             <Link href="/kalendarz" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-0.5 transition-colors">
-              Otwórz <ChevronRight size={13} />
+              {t.home.openLabel} <ChevronRight size={13} />
             </Link>
           </div>
           <div className="rounded-xl border border-border bg-card overflow-hidden">
@@ -633,8 +635,8 @@ export default function DashboardView({
             {localTodayEvents.length === 0 ? (
               <div className="px-4 py-5 flex flex-col items-center gap-1.5 text-center">
                 <CalendarDays size={24} className="text-muted-foreground/30" />
-                <p className="text-sm text-muted-foreground">Brak wydarzeń na dziś</p>
-                <Link href="/kalendarz" className="text-xs text-primary hover:underline">Zaplanuj spotkanie →</Link>
+                <p className="text-sm text-muted-foreground">{t.home.noEvents}</p>
+                <Link href="/kalendarz" className="text-xs text-primary hover:underline">{t.home.scheduleEvent}</Link>
               </div>
             ) : (
               <div className="divide-y divide-border">
@@ -649,7 +651,7 @@ export default function DashboardView({
                         <p className="text-xs text-muted-foreground">{timeStr}</p>
                       </div>
                       <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-md ${c.bg} ${c.text} shrink-0`}>
-                        {ev.type === "WYDARZENIE" ? "Wydarzenie" : ev.type === "ZADANIE" ? "Zadanie" : "Przyp."}
+                        {ev.type === "WYDARZENIE" ? t.home.eventTypeEvent : ev.type === "ZADANIE" ? t.home.eventTypeTask : t.home.eventTypeReminder}
                       </span>
                     </div>
                   );
@@ -662,8 +664,8 @@ export default function DashboardView({
         {/* Nieprzeczytane */}
         <div className="order-3 space-y-3">
             <div className="flex items-center gap-1.5">
-              <h2 className="text-sm font-semibold text-foreground">Nieprzeczytane wiadomości</h2>
-              <InfoTooltip items={["Nieprzeczytane wiadomości z dyskusji w projektach ProjectFlow", "Nieprzeczytane komentarze na listach zakupowych"]} />
+              <h2 className="text-sm font-semibold text-foreground">{t.home.unreadMessages}</h2>
+              <InfoTooltip items={[t.home.unreadTip1, t.home.unreadTip2]} />
             </div>
 
             {(() => {
@@ -685,8 +687,8 @@ export default function DashboardView({
               if (msgs.length === 0) return (
                 <div className="rounded-xl border border-border bg-card p-6 text-center">
                   <CheckCircle2 size={28} className="mx-auto mb-2 text-green-500" />
-                  <p className="text-sm font-medium text-foreground">Jesteś na bieżąco!</p>
-                  <p className="text-xs text-muted-foreground mt-1">Brak nieprzeczytanych wiadomości</p>
+                  <p className="text-sm font-medium text-foreground">{t.home.upToDate}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{t.home.noUnread}</p>
                 </div>
               );
               return (
@@ -703,9 +705,9 @@ export default function DashboardView({
                                 <p className="text-sm font-medium truncate">{d.content}</p>
                                 <p className="text-xs text-muted-foreground truncate">{d.author} · {d.renderName} · {d.projectTitle}</p>
                               </div>
-                              <span className="shrink-0 text-xs text-muted-foreground mr-2">{timeAgo(d.createdAt)}</span>
+                              <span className="shrink-0 text-xs text-muted-foreground mr-2">{timeAgo(d.createdAt, t)}</span>
                             </Link>
-                            <button onClick={() => markDiscussionViewed(d.id)} title="Oznacz jako przeczytane" className="shrink-0 mr-3 p-1 rounded-md text-muted-foreground/40 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-950/30 transition-colors"><CheckCircle2 size={16} /></button>
+                            <button onClick={() => markDiscussionViewed(d.id)} title={t.home.markAsRead} className="shrink-0 mr-3 p-1 rounded-md text-muted-foreground/40 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-950/30 transition-colors"><CheckCircle2 size={16} /></button>
                           </div>
                         );
                       }
@@ -719,9 +721,9 @@ export default function DashboardView({
                                 <p className="text-sm font-medium truncate">{r.content}</p>
                                 <p className="text-xs text-muted-foreground truncate">{r.author} · {r.productName} · {r.listName}</p>
                               </div>
-                              <span className="shrink-0 text-xs text-muted-foreground mr-2">{timeAgo(r.createdAt)}</span>
+                              <span className="shrink-0 text-xs text-muted-foreground mr-2">{timeAgo(r.createdAt, t)}</span>
                             </Link>
-                            <button onClick={() => markListReplyViewed(r)} title="Oznacz jako przeczytane" className="shrink-0 mr-3 p-1 rounded-md text-muted-foreground/40 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-950/30 transition-colors"><CheckCircle2 size={16} /></button>
+                            <button onClick={() => markListReplyViewed(r)} title={t.home.markAsRead} className="shrink-0 mr-3 p-1 rounded-md text-muted-foreground/40 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-950/30 transition-colors"><CheckCircle2 size={16} /></button>
                           </div>
                         );
                       }
@@ -735,9 +737,9 @@ export default function DashboardView({
                                 <p className="text-sm font-medium truncate">{r.content}</p>
                                 <p className="text-xs text-muted-foreground truncate">{r.author} · {r.renderName} · {r.projectTitle}</p>
                               </div>
-                              <span className="shrink-0 text-xs text-muted-foreground mr-2">{timeAgo(r.createdAt)}</span>
+                              <span className="shrink-0 text-xs text-muted-foreground mr-2">{timeAgo(r.createdAt, t)}</span>
                             </Link>
-                            <button onClick={() => markRenderReplyViewed(r)} title="Oznacz jako przeczytane" className="shrink-0 mr-3 p-1 rounded-md text-muted-foreground/40 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-950/30 transition-colors"><CheckCircle2 size={16} /></button>
+                            <button onClick={() => markRenderReplyViewed(r)} title={t.home.markAsRead} className="shrink-0 mr-3 p-1 rounded-md text-muted-foreground/40 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-950/30 transition-colors"><CheckCircle2 size={16} /></button>
                           </div>
                         );
                       }
@@ -750,9 +752,9 @@ export default function DashboardView({
                               <p className="text-sm font-medium truncate">{m.content}</p>
                               <p className="text-xs text-muted-foreground truncate">{m.author} · {m.productName} · {m.listName}</p>
                             </div>
-                            <span className="shrink-0 text-xs text-muted-foreground mr-2">{timeAgo(m.createdAt)}</span>
+                            <span className="shrink-0 text-xs text-muted-foreground mr-2">{timeAgo(m.createdAt, t)}</span>
                           </Link>
-                          <button onClick={() => markListMessageViewed(m.id)} title="Oznacz jako przeczytane" className="shrink-0 mr-3 p-1 rounded-md text-muted-foreground/40 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-950/30 transition-colors"><CheckCircle2 size={16} /></button>
+                          <button onClick={() => markListMessageViewed(m.id)} title={t.home.markAsRead} className="shrink-0 mr-3 p-1 rounded-md text-muted-foreground/40 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-950/30 transition-colors"><CheckCircle2 size={16} /></button>
                         </div>
                       );
                     })}
@@ -765,20 +767,15 @@ export default function DashboardView({
         {/* Do zrobienia */}
         <div className="order-4 space-y-3">
             <div className="flex items-center gap-1.5">
-              <h2 className="text-sm font-semibold text-foreground">Do zrobienia</h2>
-              <InfoTooltip items={[
-                "Zadania z terminem do dzisiaj (i zaległe)",
-                "Niewyświetlone piny od klientów",
-                "Prośby o zmianę statusu renderu",
-                "Prośby o przywrócenie wersji pliku",
-              ]} />
+              <h2 className="text-sm font-semibold text-foreground">{t.home.todoTitle}</h2>
+              <InfoTooltip items={[t.home.todoTip1, t.home.todoTip2, t.home.todoTip3, t.home.todoTip4]} />
             </div>
 
           {todoCount === 0 ? (
             <div className="rounded-xl border border-border bg-card p-6 text-center">
               <CheckCircle2 size={28} className="mx-auto mb-2 text-green-500" />
-              <p className="text-sm font-medium text-foreground">Jesteś na bieżąco!</p>
-              <p className="text-xs text-muted-foreground mt-1">Brak oczekujących działań</p>
+              <p className="text-sm font-medium text-foreground">{t.home.upToDate}</p>
+              <p className="text-xs text-muted-foreground mt-1">{t.home.noTodo}</p>
             </div>
           ) : (
             <div className="rounded-xl border border-border bg-card overflow-hidden">
@@ -807,7 +804,7 @@ export default function DashboardView({
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium truncate">{task.title}</p>
                         <p className="text-xs text-muted-foreground truncate">
-                          {task.projectTitle ? `${task.projectTitle} · ` : ""}Zadanie
+                          {task.projectTitle ? `${task.projectTitle} · ` : ""}{t.home.todoTaskLabel}
                         </p>
                       </div>
                       {(isToday || isOverdue) && (
@@ -837,11 +834,11 @@ export default function DashboardView({
                             {pin.author} · {pin.renderName}
                           </p>
                         </div>
-                        <span className="shrink-0 text-xs text-muted-foreground mr-2">{timeAgo(pin.createdAt)}</span>
+                        <span className="shrink-0 text-xs text-muted-foreground mr-2">{timeAgo(pin.createdAt, t)}</span>
                       </Link>
                       <button
                         onClick={() => markPinViewed(pin.id)}
-                        title="Oznacz jako przejrzane"
+                        title={t.home.markAsViewed}
                         className="shrink-0 mr-3 p-1 rounded-md text-muted-foreground/40 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-950/30 transition-colors"
                       >
                         <CheckCircle2 size={16} />
@@ -860,7 +857,7 @@ export default function DashboardView({
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium truncate">{req.renderName}</p>
                         <p className="text-xs text-muted-foreground truncate">
-                          {req.clientName ? `${req.clientName} · ` : ""}Zmiana statusu · {req.projectTitle}
+                          {req.clientName ? `${req.clientName} · ` : ""}{t.home.statusChangeLabel} · {req.projectTitle}
                         </p>
                         <div className="flex gap-1.5 mt-2">
                           <button
@@ -869,7 +866,7 @@ export default function DashboardView({
                             className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium bg-green-600 hover:bg-green-700 text-white disabled:opacity-50 transition-colors"
                           >
                             <Check size={11} />
-                            Potwierdź
+                            {t.common.confirm}
                           </button>
                           <button
                             onClick={() => handleRequest(req.id, "status", "reject")}
@@ -877,15 +874,15 @@ export default function DashboardView({
                             className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium border border-red-200 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 disabled:opacity-50 transition-colors"
                           >
                             <X size={11} />
-                            Odrzuć
+                            {t.home.rejectBtn}
                           </button>
                         </div>
                       </div>
                       <div className="flex flex-col items-end gap-1 shrink-0">
-                        <span className="text-xs text-muted-foreground">{timeAgo(req.createdAt)}</span>
+                        <span className="text-xs text-muted-foreground">{timeAgo(req.createdAt, t)}</span>
                         <button
                           onClick={() => setResolvedIds((prev) => new Set([...prev, req.id]))}
-                          title="Usuń z listy"
+                          title={t.home.removeFromList}
                           className="p-1 rounded-md text-muted-foreground/40 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-950/30 transition-colors"
                         >
                           <CheckCircle2 size={16} />
@@ -904,7 +901,7 @@ export default function DashboardView({
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium truncate">{req.renderName}</p>
                       <p className="text-xs text-muted-foreground truncate">
-                        {req.clientName ? `${req.clientName} · ` : ""}Przywrócenie wersji · {req.projectTitle}
+                        {req.clientName ? `${req.clientName} · ` : ""}{t.home.versionRestoreLabel} · {req.projectTitle}
                       </p>
                       <div className="flex gap-1.5 mt-2">
                         <button
@@ -913,7 +910,7 @@ export default function DashboardView({
                           className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium bg-green-600 hover:bg-green-700 text-white disabled:opacity-50 transition-colors"
                         >
                           <Check size={11} />
-                          Przywróć
+                          {t.common.restore}
                         </button>
                         <button
                           onClick={() => handleRequest(req.id, "version", "reject")}
@@ -921,15 +918,15 @@ export default function DashboardView({
                           className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium border border-red-200 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 disabled:opacity-50 transition-colors"
                         >
                           <X size={11} />
-                          Odrzuć
+                          {t.home.rejectBtn}
                         </button>
                       </div>
                     </div>
                     <div className="flex flex-col items-end gap-1 shrink-0">
-                      <span className="text-xs text-muted-foreground">{timeAgo(req.createdAt)}</span>
+                      <span className="text-xs text-muted-foreground">{timeAgo(req.createdAt, t)}</span>
                       <button
                         onClick={() => setResolvedIds((prev) => new Set([...prev, req.id]))}
-                        title="Usuń z listy"
+                        title={t.home.removeFromList}
                         className="p-1 rounded-md text-muted-foreground/40 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-950/30 transition-colors"
                       >
                         <CheckCircle2 size={16} />

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Upload, Image, Check, FileText, FolderPlus, ChevronRight, ChevronDown } from "@/components/ui/icons";
+import { useT } from "@/lib/i18n";
 
 interface RenderItem {
   id: string;
@@ -72,6 +73,7 @@ function RenderThumbnail({ render, selected, onToggle }: { render: RenderItem; s
 export default function AddContractorFileDialog({
   open, onOpenChange, contractorId, assignmentId, folderId, projectId, rooms, onAdded,
 }: Props) {
+  const t = useT();
   const [tab, setTab] = useState<"upload" | "renderflow">("renderflow");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [selectedRenderIds, setSelectedRenderIds] = useState<string[]>([]);
@@ -125,7 +127,7 @@ export default function AddContractorFileDialog({
 
   async function addFolderFromProjectFolder(name: string, renders: RenderItem[]) {
     if (renders.length === 0) {
-      toast.error("Ten folder nie ma plików");
+      toast.error(t.wykonawcy.folderNoFiles);
       return;
     }
     setLoading(true);
@@ -142,10 +144,10 @@ export default function AddContractorFileDialog({
         }
       );
       if (!res.ok) {
-        toast.error("Błąd podczas tworzenia folderu");
+        toast.error(t.wykonawcy.folderCreateError);
         return;
       }
-      toast.success(`Folder "${name}" dodany`);
+      toast.success(`${t.wykonawcy.folder1} "${name}" ${t.wykonawcy.fileAdded}`);
       onOpenChange(false);
       reset();
       onAdded();
@@ -158,7 +160,7 @@ export default function AddContractorFileDialog({
     // Create one subfolder per ProjectFlow folder in the room
     const foldersToCreate = room.folders.filter((f) => f.renders.length > 0);
     if (foldersToCreate.length === 0 && room.renders.length === 0) {
-      toast.error("Ten pokój nie ma żadnych plików");
+      toast.error(t.wykonawcy.roomNoFiles);
       return;
     }
     setLoading(true);
@@ -192,7 +194,7 @@ export default function AddContractorFileDialog({
         );
       }
       const total = foldersToCreate.length + (room.renders.length > 0 ? 1 : 0);
-      toast.success(`Dodano ${total} ${total === 1 ? "folder" : "foldery"}`);
+      toast.success(`${t.wykonawcy.added} ${total} ${total === 1 ? t.wykonawcy.folder1 : t.wykonawcy.folderFew}`);
       onOpenChange(false);
       reset();
       onAdded();
@@ -203,14 +205,14 @@ export default function AddContractorFileDialog({
 
   async function handleUpload() {
     if (!selectedFile) {
-      toast.error("Wybierz plik do przesłania");
+      toast.error(t.wykonawcy.selectFileError);
       return;
     }
     setLoading(true);
     try {
       const uploaded = await startUpload([selectedFile]);
       if (!uploaded?.[0]) {
-        toast.error("Błąd podczas przesyłania pliku");
+        toast.error(t.wykonawcy.uploadError);
         return;
       }
       const { url, key, name } = uploaded[0] as { url: string; key: string; name: string };
@@ -223,10 +225,10 @@ export default function AddContractorFileDialog({
         body: JSON.stringify({ name, fileUrl: url, fileKey: key, fileType }),
       });
       if (!res.ok) {
-        toast.error("Błąd podczas dodawania pliku");
+        toast.error(t.wykonawcy.addFileError);
         return;
       }
-      toast.success("Plik dodany");
+      toast.success(t.wykonawcy.fileAdded);
       onOpenChange(false);
       reset();
       onAdded();
@@ -237,7 +239,7 @@ export default function AddContractorFileDialog({
 
   async function handleRenderflowAdd() {
     if (selectedRenderIds.length === 0) {
-      toast.error("Wybierz co najmniej jeden render");
+      toast.error(t.wykonawcy.selectRenderError);
       return;
     }
     setLoading(true);
@@ -254,7 +256,7 @@ export default function AddContractorFileDialog({
           });
         })
       );
-      toast.success(`Dodano ${selectedRenderIds.length} ${selectedRenderIds.length === 1 ? "render" : "renderów"}`);
+      toast.success(`${t.wykonawcy.added} ${selectedRenderIds.length} ${selectedRenderIds.length === 1 ? t.wykonawcy.render1 : t.wykonawcy.renderFew}`);
       onOpenChange(false);
       reset();
       onAdded();
@@ -267,7 +269,7 @@ export default function AddContractorFileDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[64rem] sm:max-w-[64rem]">
         <DialogHeader>
-          <DialogTitle>Dodaj plik</DialogTitle>
+          <DialogTitle>{t.wykonawcy.addFileTitle}</DialogTitle>
         </DialogHeader>
 
         <div className="flex gap-1 border border-border rounded-lg p-1 mb-2">
@@ -275,13 +277,13 @@ export default function AddContractorFileDialog({
             onClick={() => switchTab("upload")}
             className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-colors ${tab === "upload" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
           >
-            Prześlij plik
+            {t.wykonawcy.uploadTab}
           </button>
           <button
             onClick={() => switchTab("renderflow")}
             className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-colors ${tab === "renderflow" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
           >
-            Wybierz z ProjectFlow
+            {t.wykonawcy.projectFlowTab}
           </button>
         </div>
 
@@ -305,7 +307,7 @@ export default function AddContractorFileDialog({
               {selectedFile ? (
                 <span className="text-sm text-foreground font-medium">{selectedFile.name}</span>
               ) : (
-                <span className="text-sm text-muted-foreground">{isDragging ? "Upuść plik tutaj" : "Kliknij lub przeciągnij plik tutaj"}</span>
+                <span className="text-sm text-muted-foreground">{isDragging ? t.wykonawcy.dropHere : t.wykonawcy.clickOrDrag}</span>
               )}
               <input
                 id="contractor-file-input"
@@ -318,7 +320,7 @@ export default function AddContractorFileDialog({
         ) : (
           <div className="space-y-2 flex-1 overflow-y-auto">
             {rooms.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">Brak pomieszczeń w tym projekcie</p>
+              <p className="text-sm text-muted-foreground text-center py-4">{t.wykonawcy.noRooms}</p>
             ) : (
               rooms.map((room) => {
                 const roomRenders = allRendersInRoom(room);
@@ -334,21 +336,21 @@ export default function AddContractorFileDialog({
                       >
                         {expandedRoom === room.id ? <ChevronDown size={15} className="flex-shrink-0" /> : <ChevronRight size={15} className="flex-shrink-0" />}
                         <span>{room.name}</span>
-                        <span className="text-xs text-muted-foreground font-normal">{totalCount} plików</span>
+                        <span className="text-xs text-muted-foreground font-normal">{totalCount} {t.wykonawcy.filesPlural}</span>
                       </button>
                       <button
                         onClick={(e) => { e.stopPropagation(); addFolderFromRoom(room); }}
                         className="flex items-center gap-1 text-xs border border-border rounded px-2 py-0.5 hover:bg-muted transition-colors shrink-0"
-                        title="Dodaj cały pokój jako folder"
+                        title={t.wykonawcy.addFolderBtn}
                       >
                         <FolderPlus size={12} />
-                        Dodaj folder
+                        {t.wykonawcy.addFolderBtn}
                       </button>
                       <button
                         onClick={(e) => { e.stopPropagation(); const ids = roomRenders.map((r) => r.id); const allSel = ids.every((id) => selectedRenderIds.includes(id)); setSelectedRenderIds(allSel ? selectedRenderIds.filter((id) => !ids.includes(id)) : [...new Set([...selectedRenderIds, ...ids])]); }}
                         className="text-xs border border-border rounded px-2 py-0.5 hover:bg-muted transition-colors shrink-0"
                       >
-                        {roomRenders.every((r) => selectedRenderIds.includes(r.id)) ? "Odznacz" : "Zaznacz wszystkie"}
+                        {roomRenders.every((r) => selectedRenderIds.includes(r.id)) ? t.wykonawcy.deselectAll : t.wykonawcy.selectAll}
                       </button>
                     </div>
 
@@ -364,21 +366,21 @@ export default function AddContractorFileDialog({
                               >
                                 {expandedFolder === folder.id ? <ChevronDown size={14} className="flex-shrink-0" /> : <ChevronRight size={14} className="flex-shrink-0" />}
                                 <span>{folder.name}</span>
-                                <span className="text-xs text-muted-foreground font-normal">{folder.renders.length} plików</span>
+                                <span className="text-xs text-muted-foreground font-normal">{folder.renders.length} {t.wykonawcy.filesPlural}</span>
                               </button>
                               <button
                                 onClick={(e) => { e.stopPropagation(); addFolderFromProjectFolder(folder.name, folder.renders); }}
                                 className="flex items-center gap-1 text-xs border border-border rounded px-2 py-0.5 hover:bg-muted transition-colors shrink-0"
-                                title="Dodaj cały folder"
+                                title={t.wykonawcy.addFolderBtn}
                               >
                                 <FolderPlus size={12} />
-                                Dodaj folder
+                                {t.wykonawcy.addFolderBtn}
                               </button>
                               <button
                                 onClick={(e) => { e.stopPropagation(); toggleAllInFolder(folder); }}
                                 className="text-xs border border-border rounded px-2 py-0.5 hover:bg-muted transition-colors shrink-0"
                               >
-                                {folder.renders.every((r) => selectedRenderIds.includes(r.id)) ? "Odznacz" : "Zaznacz wszystkie"}
+                                {folder.renders.every((r) => selectedRenderIds.includes(r.id)) ? t.wykonawcy.deselectAll : t.wykonawcy.selectAll}
                               </button>
                             </div>
                             {expandedFolder === folder.id && (
@@ -419,12 +421,12 @@ export default function AddContractorFileDialog({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => { onOpenChange(false); reset(); }}>Anuluj</Button>
+          <Button variant="outline" onClick={() => { onOpenChange(false); reset(); }}>{t.common.cancel}</Button>
           <Button
             onClick={tab === "upload" ? handleUpload : handleRenderflowAdd}
             disabled={loading || isUploading || (tab === "upload" ? !selectedFile : selectedRenderIds.length === 0)}
           >
-            {loading || isUploading ? "Dodawanie…" : tab === "renderflow" && selectedRenderIds.length > 0 ? `Dodaj zaznaczone (${selectedRenderIds.length})` : "Dodaj"}
+            {loading || isUploading ? t.wykonawcy.adding : tab === "renderflow" && selectedRenderIds.length > 0 ? `${t.common.add} (${selectedRenderIds.length})` : t.common.add}
           </Button>
         </DialogFooter>
       </DialogContent>

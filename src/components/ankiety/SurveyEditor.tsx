@@ -28,6 +28,8 @@ import {
   ArrowLeft, Edit2, X, ChevronDown, Copy, Share2, Settings,
 } from "@/components/ui/icons";
 import SurveyTemplateDialog from "./SurveyTemplateDialog";
+import { useT } from "@/lib/i18n";
+import type { TranslationKeys } from "@/lib/translations/pl";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -68,26 +70,28 @@ interface Survey {
 
 interface Props { survey: Survey; }
 
-const QUESTION_TYPES: { value: QuestionType; label: string }[] = [
-  { value: "short_text", label: "Krótka odpowiedź" },
-  { value: "long_text", label: "Długa odpowiedź" },
-  { value: "single_choice", label: "Jeden wybór" },
-  { value: "multiple_choice", label: "Wielokrotny wybór" },
-  { value: "rating", label: "Ocena" },
-  { value: "yes_no", label: "Tak / Nie" },
-  { value: "budget_range", label: "Budżet / Zakres" },
+const QUESTION_TYPE_VALUES: QuestionType[] = [
+  "short_text", "long_text", "single_choice", "multiple_choice", "rating", "yes_no", "budget_range",
 ];
 
-const STATUS_LABELS: Record<string, string> = {
-  DRAFT: "Szkic",
-  ACTIVE: "Aktywna",
-  CLOSED: "Zamknięta",
-};
+function getTypeLabel(type: QuestionType, t: TranslationKeys): string {
+  const map: Record<QuestionType, string> = {
+    short_text: t.ankiety.typeShortText,
+    long_text: t.ankiety.typeLongText,
+    single_choice: t.ankiety.typeSingleChoice,
+    multiple_choice: t.ankiety.typeMultipleChoice,
+    rating: t.ankiety.typeRating,
+    yes_no: t.ankiety.typeYesNo,
+    budget_range: t.ankiety.typeBudgetRange,
+  };
+  return map[type] ?? type;
+}
 
 // ── Main component ─────────────────────────────────────────────────────────
 
 export default function SurveyEditor({ survey: initial }: Props) {
   const router = useRouter();
+  const t = useT();
   const [survey, setSurvey] = useState(initial);
   const [questions, setQuestions] = useState<SurveyQuestion[]>(initial.questions);
   const [sections, setSections] = useState<SurveySection[]>(initial.sections);
@@ -128,9 +132,9 @@ export default function SurveyEditor({ survey: initial }: Props) {
       body: JSON.stringify({ status }),
     });
     setStatusSaving(false);
-    if (!res.ok) { toast.error("Błąd zmiany statusu"); return; }
+    if (!res.ok) { toast.error(t.ankiety.statusChangeError); return; }
     setSurvey((s) => ({ ...s, status }));
-    toast.success(`Status: ${STATUS_LABELS[status]}`);
+    toast.success(`Status: ${status === "DRAFT" ? t.ankiety.statusDraft : status === "ACTIVE" ? t.ankiety.statusActive : t.ankiety.statusClosed}`);
   }
 
   // ── Save as template ───────────────────────────────────────────────────
@@ -149,9 +153,9 @@ export default function SurveyEditor({ survey: initial }: Props) {
       body: JSON.stringify({ name: templateName.trim() }),
     });
     setSavingTemplate(false);
-    if (!res.ok) { toast.error("Błąd zapisywania szablonu"); return; }
+    if (!res.ok) { toast.error(t.ankiety.saveTemplateError); return; }
     setSaveTemplateOpen(false);
-    toast.success("Szablon zapisany");
+    toast.success(t.ankiety.templateSaved);
   }
 
   function getShareLink(): string {
@@ -177,10 +181,10 @@ export default function SurveyEditor({ survey: initial }: Props) {
       method: "PATCH", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: editNameValue.trim() }),
     });
-    if (!res.ok) { toast.error("Błąd zapisu nazwy"); return; }
+    if (!res.ok) { toast.error(t.ankiety.saveNameError); return; }
     setSurvey((s) => ({ ...s, name: editNameValue.trim() }));
     setEditNameOpen(false);
-    toast.success("Nazwa zaktualizowana");
+    toast.success(t.ankiety.surveyNameUpdated);
   }
 
   // ── Add question ───────────────────────────────────────────────────────
@@ -192,7 +196,7 @@ export default function SurveyEditor({ survey: initial }: Props) {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ label: "Nowe pytanie", type, sectionId }),
     });
-    if (!res.ok) { toast.error("Błąd dodawania pytania"); return; }
+    if (!res.ok) { toast.error(t.ankiety.addQuestionError); return; }
     const q: SurveyQuestion = await res.json();
     setQuestions((prev) => [...prev, q]);
     setSelectedId(q.id);
@@ -209,7 +213,7 @@ export default function SurveyEditor({ survey: initial }: Props) {
       method: "PATCH", headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
-    if (!res.ok) { toast.error("Błąd zapisu pytania"); return; }
+    if (!res.ok) { toast.error(t.ankiety.saveQuestionError); return; }
     const updated: SurveyQuestion = await res.json();
     setQuestions((prev) => prev.map((q) => q.id === id ? updated : q));
   }, [survey.id]);
@@ -227,7 +231,7 @@ export default function SurveyEditor({ survey: initial }: Props) {
         sectionId: q.sectionId, order: q.order,
       }),
     });
-    if (!res.ok) { toast.error("Błąd duplikowania pytania"); return; }
+    if (!res.ok) { toast.error(t.ankiety.duplicateQuestionError); return; }
     const newQ: SurveyQuestion = await res.json();
     const srcIdx = questions.findIndex((q) => q.id === id);
     const inserted = [...questions];
@@ -238,17 +242,17 @@ export default function SurveyEditor({ survey: initial }: Props) {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ questions: reordered.map((q) => ({ id: q.id, order: q.order })) }),
     });
-    toast.success("Pytanie zduplikowane");
+    toast.success(t.ankiety.questionDuplicated);
   }
 
   // ── Delete question ────────────────────────────────────────────────────
 
   async function handleDeleteQuestion(id: string) {
     const res = await fetch(`/api/surveys/${survey.id}/questions/${id}`, { method: "DELETE" });
-    if (!res.ok) { toast.error("Błąd usuwania pytania"); return; }
+    if (!res.ok) { toast.error(t.ankiety.deleteQuestionError); return; }
     setQuestions((prev) => prev.filter((q) => q.id !== id));
     if (selectedId === id) setSelectedId(null);
-    toast.success("Pytanie usunięte");
+    toast.success(t.ankiety.questionDeleted);
   }
 
   // ── Drag handlers (unified — supports cross-section) ─────────────────
@@ -383,12 +387,12 @@ export default function SurveyEditor({ survey: initial }: Props) {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: newSectionName.trim() }),
     });
-    if (!res.ok) { toast.error("Błąd dodawania sekcji"); return; }
+    if (!res.ok) { toast.error(t.ankiety.addSectionError); return; }
     const section: SurveySection = await res.json();
     setSections((prev) => [...prev, section]);
     setNewSectionName("");
     setAddSectionOpen(false);
-    toast.success("Sekcja dodana");
+    toast.success(t.ankiety.sectionAdded);
   }
 
   // ── Rename section ─────────────────────────────────────────────────────
@@ -398,19 +402,19 @@ export default function SurveyEditor({ survey: initial }: Props) {
       method: "PATCH", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name }),
     });
-    if (!res.ok) { toast.error("Błąd zapisu nazwy sekcji"); return; }
+    if (!res.ok) { toast.error(t.ankiety.saveSectionNameError); return; }
     setSections((prev) => prev.map((s) => s.id === sectionId ? { ...s, name } : s));
   }
 
   // ── Delete section ─────────────────────────────────────────────────────
 
   async function handleDeleteSection(sectionId: string) {
-    if (!confirm("Usunąć sekcję? Pytania zostaną odłączone od sekcji.")) return;
+    if (!confirm(t.ankiety.deleteSectionConfirm)) return;
     const res = await fetch(`/api/surveys/${survey.id}/sections/${sectionId}`, { method: "DELETE" });
-    if (!res.ok) { toast.error("Błąd usuwania sekcji"); return; }
+    if (!res.ok) { toast.error(t.ankiety.deleteSectionError); return; }
     setSections((prev) => prev.filter((s) => s.id !== sectionId));
     setQuestions((prev) => prev.map((q) => q.sectionId === sectionId ? { ...q, sectionId: null } : q));
-    toast.success("Sekcja usunięta");
+    toast.success(t.ankiety.sectionDeleted);
   }
 
   // ── Template applied ───────────────────────────────────────────────────
@@ -419,7 +423,7 @@ export default function SurveyEditor({ survey: initial }: Props) {
     setSections(data.sections);
     setQuestions(data.questions);
     setTemplateOpen(false);
-    toast.success("Szablon zastosowany");
+    toast.success(t.ankiety.templateApplied);
   }
 
   // Visual state during drag: move dragged question to target section for animation
@@ -472,28 +476,28 @@ export default function SurveyEditor({ survey: initial }: Props) {
           <StatusDropdown value={survey.status} onChange={handleStatusChange} disabled={statusSaving} open={statusDropdownOpen} onOpenChange={setStatusDropdownOpen} />
           <button
             onClick={openSaveTemplate}
-            title="Zapisz jako szablon"
+            title={t.ankiety.saveAsTemplate}
             className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 text-xs font-medium border border-border rounded-lg hover:bg-muted transition-colors"
           >
             <Copy size={14} />
-            <span className="hidden sm:inline">Zapisz jako szablon</span>
+            <span className="hidden sm:inline">{t.ankiety.saveAsTemplate}</span>
           </button>
           <button
             onClick={() => setShareModalOpen(true)}
-            title="Udostępnij"
+            title={t.ankiety.share}
             className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 text-xs font-medium border border-border rounded-lg hover:bg-muted transition-colors"
           >
             <Share2 size={14} />
-            <span className="hidden sm:inline">Udostępnij</span>
+            <span className="hidden sm:inline">{t.ankiety.share}</span>
           </button>
           <a
             href={`/ankiety/${survey.id}/podglad`}
             target="_blank" rel="noopener noreferrer"
-            title="Podgląd"
+            title={t.ankiety.preview}
             className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 text-xs font-medium border border-border rounded-lg hover:bg-muted transition-colors"
           >
             <Eye size={14} />
-            <span className="hidden sm:inline">Podgląd</span>
+            <span className="hidden sm:inline">{t.ankiety.preview}</span>
           </a>
         </div>
       </div>
@@ -513,17 +517,17 @@ export default function SurveyEditor({ survey: initial }: Props) {
                   className="flex items-center gap-1.5 h-8 px-3 text-xs font-medium rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
                 >
                   <Plus size={13} />
-                  Sekcja
+                  {t.ankiety.newSection}
                 </button>
                 <div className="w-px h-5 bg-border mx-0.5" />
-                {QUESTION_TYPES.map((qt) => (
+                {QUESTION_TYPE_VALUES.map((type) => (
                   <button
-                    key={qt.value}
-                    onClick={() => handleAddQuestion(qt.value)}
+                    key={type}
+                    onClick={() => handleAddQuestion(type)}
                     className="flex items-center gap-1.5 h-8 px-3 text-xs rounded-lg border border-border bg-background hover:bg-muted transition-colors"
                   >
                     <Plus size={13} />
-                    {qt.label}
+                    {getTypeLabel(type, t)}
                   </button>
                 ))}
               </div>
@@ -534,12 +538,12 @@ export default function SurveyEditor({ survey: initial }: Props) {
                     value={newSectionName}
                     onChange={(e) => setNewSectionName(e.target.value)}
                     onKeyDown={(e) => { if (e.key === "Enter") handleAddSection(); if (e.key === "Escape") setAddSectionOpen(false); }}
-                    placeholder="Nazwa sekcji..."
+                    placeholder={t.ankiety.sectionNamePlaceholder}
                     className="flex-1 px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40"
                     autoFocus
                   />
-                  <button onClick={handleAddSection} className="h-9 px-4 text-xs font-medium bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity">Utwórz</button>
-                  <button onClick={() => setAddSectionOpen(false)} className="h-9 px-3 text-xs border border-border rounded-lg hover:bg-muted transition-colors">Anuluj</button>
+                  <button onClick={handleAddSection} className="h-9 px-4 text-xs font-medium bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity">{t.ankiety.createSection}</button>
+                  <button onClick={() => setAddSectionOpen(false)} className="h-9 px-3 text-xs border border-border rounded-lg hover:bg-muted transition-colors">{t.common.cancel}</button>
                 </div>
               )}
             </div>
@@ -557,12 +561,12 @@ export default function SurveyEditor({ survey: initial }: Props) {
 
             {isEmpty && (
               <div className="flex flex-col items-center justify-center py-16 gap-4 text-center bg-card border border-dashed border-border rounded-xl">
-                <p className="text-sm text-muted-foreground">Ankieta nie ma jeszcze pytań.</p>
+                <p className="text-sm text-muted-foreground">{t.ankiety.noQuestions}</p>
                 <button
                   onClick={() => setTemplateOpen(true)}
                   className="px-4 py-2 text-sm font-medium bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors"
                 >
-                  Zacznij od szablonu
+                  {t.ankiety.startFromTemplate}
                 </button>
               </div>
             )}
@@ -627,7 +631,7 @@ export default function SurveyEditor({ survey: initial }: Props) {
                 {activeItem?.type === "question" && (() => {
                   const q = questions.find((q) => q.id === activeItem.id);
                   if (!q) return null;
-                  const typeLabel = QUESTION_TYPES.find((t) => t.value === q.type)?.label ?? q.type;
+                  const typeLabel = getTypeLabel(q.type, t);
                   return (
                     <div className="bg-card border border-primary/40 rounded-xl px-5 py-3 flex items-center gap-3 shadow-lg">
                       <GripVertical size={16} className="text-muted-foreground/40 flex-shrink-0" />
@@ -641,7 +645,7 @@ export default function SurveyEditor({ survey: initial }: Props) {
                   if (!s) return null;
                   return (
                     <div className="bg-card border border-primary/50 rounded-xl px-5 py-4 shadow-lg opacity-90">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-0.5">Sekcja</p>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-0.5">{t.ankiety.sectionLabel}</p>
                       <p className="text-sm font-medium">{s.name}</p>
                     </div>
                   );
@@ -656,7 +660,7 @@ export default function SurveyEditor({ survey: initial }: Props) {
         {/* Right sliding config panel */}
         <div className={`absolute top-0 right-0 h-full w-72 z-30 bg-card border-l border-border shadow-xl flex flex-col transform transition-transform duration-200 ${selectedId ? "translate-x-0" : "translate-x-full"}`}>
           <div className="flex items-center justify-between px-4 py-3 border-b border-border flex-shrink-0">
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Ustawienia pytania</span>
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t.ankiety.questionSettings}</span>
             <button onClick={() => setSelectedId(null)} className="p-1.5 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
               <X size={16} />
             </button>
@@ -678,7 +682,7 @@ export default function SurveyEditor({ survey: initial }: Props) {
                 className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg transition-colors"
               >
                 <Trash2 size={14} />
-                Usuń pytanie
+                {t.ankiety.deleteQuestion}
               </button>
             </div>
           )}
@@ -696,13 +700,13 @@ export default function SurveyEditor({ survey: initial }: Props) {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" onClick={() => setSaveTemplateOpen(false)}>
           <div className="bg-card border border-border rounded-2xl shadow-xl w-full max-w-sm p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-semibold">Zapisz jako szablon</h2>
+              <h2 className="text-base font-semibold">{t.ankiety.saveAsTemplate}</h2>
               <button onClick={() => setSaveTemplateOpen(false)} className="text-muted-foreground hover:text-foreground transition-colors">
                 <X size={18} />
               </button>
             </div>
             <div className="space-y-1">
-              <label className="text-sm font-medium">Nazwa szablonu</label>
+              <label className="text-sm font-medium">{t.ankiety.templateNameLabel}</label>
               <input
                 type="text"
                 value={templateName}
@@ -717,14 +721,14 @@ export default function SurveyEditor({ survey: initial }: Props) {
                 onClick={() => setSaveTemplateOpen(false)}
                 className="flex-1 py-2 text-sm border border-border rounded-lg hover:bg-muted transition-colors"
               >
-                Anuluj
+                {t.common.cancel}
               </button>
               <button
                 onClick={handleSaveAsTemplate}
                 disabled={savingTemplate || !templateName.trim()}
                 className="flex-1 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity disabled:opacity-40"
               >
-                {savingTemplate ? "Zapisywanie..." : "Zapisz"}
+                {savingTemplate ? t.common.saving : t.common.save}
               </button>
             </div>
           </div>
@@ -737,23 +741,23 @@ export default function SurveyEditor({ survey: initial }: Props) {
           <>
             <div className="fixed inset-0" onClick={() => setFabOpen(false)} />
             <div className="absolute bottom-16 right-0 bg-popover border border-border rounded-2xl shadow-xl overflow-hidden min-w-[200px]">
-              <p className="text-[11px] font-medium text-muted-foreground px-4 pt-3 pb-1.5 uppercase tracking-wide">Dodaj element</p>
+              <p className="text-[11px] font-medium text-muted-foreground px-4 pt-3 pb-1.5 uppercase tracking-wide">{t.ankiety.addElement}</p>
               <button
                 onClick={() => { setFabOpen(false); setAddSectionOpen(true); }}
                 className="w-full text-left px-4 py-2.5 text-sm font-medium text-primary hover:bg-muted transition-colors flex items-center gap-2"
               >
                 <Plus size={14} />
-                Sekcja
+                {t.ankiety.newSection}
               </button>
               <div className="border-t border-border mx-3 my-1" />
-              {QUESTION_TYPES.map((qt) => (
+              {QUESTION_TYPE_VALUES.map((type) => (
                 <button
-                  key={qt.value}
-                  onClick={() => { setFabOpen(false); handleAddQuestion(qt.value); }}
+                  key={type}
+                  onClick={() => { setFabOpen(false); handleAddQuestion(type); }}
                   className="w-full text-left px-4 py-2.5 text-sm hover:bg-muted transition-colors flex items-center gap-2"
                 >
                   <Plus size={14} className="text-muted-foreground" />
-                  {qt.label}
+                  {getTypeLabel(type, t)}
                 </button>
               ))}
             </div>
@@ -763,19 +767,19 @@ export default function SurveyEditor({ survey: initial }: Props) {
           <>
             <div className="fixed inset-0" onClick={() => setAddSectionOpen(false)} />
             <div className="absolute bottom-16 right-0 bg-popover border border-border rounded-2xl shadow-xl p-3 min-w-[240px] space-y-2">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide px-1">Nowa sekcja</p>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide px-1">{t.ankiety.newSection}</p>
               <input
                 type="text"
                 value={newSectionName}
                 onChange={(e) => setNewSectionName(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter") handleAddSection(); if (e.key === "Escape") setAddSectionOpen(false); }}
-                placeholder="Nazwa sekcji..."
+                placeholder={t.ankiety.sectionNamePlaceholder}
                 className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
                 autoFocus
               />
               <div className="flex gap-2">
-                <button onClick={() => setAddSectionOpen(false)} className="flex-1 py-1.5 text-xs border border-border rounded-lg hover:bg-muted transition-colors">Anuluj</button>
-                <button onClick={handleAddSection} className="flex-1 py-1.5 text-xs font-medium bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity">Utwórz</button>
+                <button onClick={() => setAddSectionOpen(false)} className="flex-1 py-1.5 text-xs border border-border rounded-lg hover:bg-muted transition-colors">{t.common.cancel}</button>
+                <button onClick={handleAddSection} className="flex-1 py-1.5 text-xs font-medium bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity">{t.ankiety.createSection}</button>
               </div>
             </div>
           </>
@@ -795,18 +799,18 @@ export default function SurveyEditor({ survey: initial }: Props) {
         >
           <div className="bg-card border border-border rounded-2xl shadow-xl w-full max-w-md p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-semibold">Udostępnij ankietę</h2>
+              <h2 className="text-base font-semibold">{t.ankiety.shareTitle}</h2>
               <button onClick={() => setShareModalOpen(false)} className="text-muted-foreground hover:text-foreground transition-colors">
                 <X size={18} />
               </button>
             </div>
             {survey.assignedClientId && survey.assignedClient ? (
               <p className="text-sm text-muted-foreground">
-                Klient <span className="font-medium text-foreground">{survey.assignedClient.name}</span> zobaczy ankietę w swoim panelu po zalogowaniu.
+                <span className="font-medium text-foreground">{survey.assignedClient.name}</span> {t.ankiety.shareClientPanel}
               </p>
             ) : (
               <p className="text-sm text-muted-foreground">
-                Klient poda adres e-mail przed wypełnieniem ankiety.
+                {t.ankiety.shareClientEmail}
               </p>
             )}
             <div className="flex items-center gap-2">
@@ -823,7 +827,7 @@ export default function SurveyEditor({ survey: initial }: Props) {
                 }`}
               >
                 {shareLinkCopied ? <Check size={14} /> : <Copy size={14} />}
-                {shareLinkCopied ? "Skopiowano" : "Kopiuj"}
+                {shareLinkCopied ? t.ankiety.copied : t.ankiety.copy}
               </button>
             </div>
           </div>
@@ -858,6 +862,7 @@ function SortableSectionBlock({
     id: section.id,
     data: { type: "section" },
   });
+  const t = useT();
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -882,7 +887,7 @@ function SortableSectionBlock({
           <GripVertical size={16} />
         </span>
         <div className="flex-1 min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-0.5">Sekcja</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-0.5">{t.ankiety.sectionLabel}</p>
           <SectionNameInput section={section} onRename={onRename} />
         </div>
         <button
@@ -897,7 +902,7 @@ function SortableSectionBlock({
       {!isCollapsed && (
         <>
           {sectionQs.length === 0 ? (
-            <p className="text-xs text-muted-foreground text-center py-2">Brak pytań w tej sekcji</p>
+            <p className="text-xs text-muted-foreground text-center py-2">{t.ankiety.noQuestionsInSection}</p>
           ) : (
             <SortableContext items={sectionQs.map((q) => q.id)} strategy={verticalListSortingStrategy}>
               {sectionQs.map((q) => (
@@ -994,8 +999,9 @@ function PreviewCard({
   dragHandleProps?: Record<string, any>;
   isCollapsed?: boolean;
 }) {
+  const t = useT();
   const [label, setLabel] = useState(question.label);
-  const typeLabel = QUESTION_TYPES.find((t) => t.value === question.type)?.label ?? question.type;
+  const typeLabel = getTypeLabel(question.type, t);
 
   if (isCollapsed) {
     return (
@@ -1042,7 +1048,7 @@ function PreviewCard({
           <button
             onClick={(e) => { e.stopPropagation(); onDuplicate(); }}
             className="opacity-0 group-hover:opacity-100 p-1 rounded text-muted-foreground hover:text-foreground transition-all"
-            title="Duplikuj pytanie"
+            title={t.ankiety.duplicateQuestionTitle}
           >
             <Copy size={13} />
           </button>
@@ -1064,7 +1070,7 @@ function PreviewCard({
           onFocus={onSelect}
           onBlur={() => { if (label.trim() && label.trim() !== question.label) onUpdate({ label: label.trim() }); }}
           onClick={(e) => e.stopPropagation()}
-          placeholder="Treść pytania"
+          placeholder={t.ankiety.questionContentPlaceholder}
           className="w-full font-medium text-sm bg-transparent border-0 border-b border-transparent hover:border-border focus:border-primary focus:outline-none transition-colors py-0.5"
         />
         {question.description && (
@@ -1079,6 +1085,7 @@ function PreviewCard({
 // ── Preview Form Control ───────────────────────────────────────────────────
 
 function PreviewFormControl({ question, onUpdate }: { question: SurveyQuestion; onUpdate: (data: any) => void }) {
+  const t = useT();
   const [opts, setOpts] = useState<string[]>(question.options ?? ["Opcja 1", "Opcja 2"]);
   const [newOpt, setNewOpt] = useState("");
   const cfg = question.config ?? {};
@@ -1097,12 +1104,12 @@ function PreviewFormControl({ question, onUpdate }: { question: SurveyQuestion; 
   switch (question.type) {
     case "short_text":
       return (
-        <input type="text" disabled placeholder="Krótka odpowiedź"
+        <input type="text" disabled placeholder={t.ankiety.shortAnswerPlaceholder}
           className="w-full border-0 border-b border-border bg-transparent text-sm py-1 text-muted-foreground placeholder:text-muted-foreground/50 focus:outline-none cursor-default" />
       );
     case "long_text":
       return (
-        <textarea disabled placeholder="Długa odpowiedź" rows={2}
+        <textarea disabled placeholder={t.ankiety.longAnswerPlaceholder} rows={2}
           className="w-full border-0 border-b border-border bg-transparent text-sm py-1 text-muted-foreground placeholder:text-muted-foreground/50 focus:outline-none resize-none cursor-default" />
       );
     case "single_choice":
@@ -1137,7 +1144,7 @@ function PreviewFormControl({ question, onUpdate }: { question: SurveyQuestion; 
               onKeyDown={(e) => { if (e.key === "Enter") { e.stopPropagation(); addOption(); } }}
               onBlur={() => { if (newOpt.trim()) addOption(); }}
               onClick={(e) => e.stopPropagation()}
-              placeholder="Dodaj opcję..."
+              placeholder={t.ankiety.addOptionPlaceholder}
               className="flex-1 text-sm text-muted-foreground bg-transparent border-0 border-b border-transparent hover:border-border focus:border-primary focus:outline-none focus:text-foreground transition-colors py-0.5 placeholder:text-muted-foreground/50"
             />
           </div>
@@ -1155,8 +1162,8 @@ function PreviewFormControl({ question, onUpdate }: { question: SurveyQuestion; 
     case "yes_no":
       return (
         <div className="flex gap-2">
-          <div className="px-5 py-2 rounded-lg border border-border text-sm text-muted-foreground">Tak</div>
-          <div className="px-5 py-2 rounded-lg border border-border text-sm text-muted-foreground">Nie</div>
+          <div className="px-5 py-2 rounded-lg border border-border text-sm text-muted-foreground">{t.ankiety.yesLabel}</div>
+          <div className="px-5 py-2 rounded-lg border border-border text-sm text-muted-foreground">{t.ankiety.noLabel}</div>
         </div>
       );
     case "budget_range": {
@@ -1179,10 +1186,10 @@ function PreviewFormControl({ question, onUpdate }: { question: SurveyQuestion; 
 
 // ── Status Dropdown ────────────────────────────────────────────────────────
 
-const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }> = {
-  DRAFT:  { bg: "bg-gray-100 dark:bg-gray-800",      text: "text-gray-600 dark:text-gray-400",    label: "Szkic" },
-  ACTIVE: { bg: "bg-blue-100 dark:bg-blue-900/30",   text: "text-blue-700 dark:text-blue-400",    label: "Aktywna" },
-  CLOSED: { bg: "bg-green-100 dark:bg-green-900/30", text: "text-green-700 dark:text-green-400",  label: "Zamknięta" },
+const STATUS_STYLES: Record<string, { bg: string; text: string }> = {
+  DRAFT:  { bg: "bg-gray-100 dark:bg-gray-800",      text: "text-gray-600 dark:text-gray-400" },
+  ACTIVE: { bg: "bg-blue-100 dark:bg-blue-900/30",   text: "text-blue-700 dark:text-blue-400" },
+  CLOSED: { bg: "bg-green-100 dark:bg-green-900/30", text: "text-green-700 dark:text-green-400" },
 };
 
 function StatusDropdown({
@@ -1194,6 +1201,12 @@ function StatusDropdown({
   open: boolean;
   onOpenChange: (v: boolean) => void;
 }) {
+  const t = useT();
+  const statusLabels: Record<string, string> = {
+    DRAFT: t.ankiety.statusDraft,
+    ACTIVE: t.ankiety.statusActive,
+    CLOSED: t.ankiety.statusClosed,
+  };
   const s = STATUS_STYLES[value] ?? STATUS_STYLES.DRAFT;
   return (
     <div className="relative">
@@ -1202,7 +1215,7 @@ function StatusDropdown({
         disabled={disabled}
         className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${s.bg} ${s.text}`}
       >
-        {s.label}
+        {statusLabels[value] ?? value}
         <ChevronDown size={12} />
       </button>
       {open && (
@@ -1216,7 +1229,7 @@ function StatusDropdown({
                 className={`w-full flex items-center px-3 py-2 text-xs transition-colors hover:bg-muted ${v === value ? "opacity-100" : "opacity-70"}`}
               >
                 <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${style.bg} ${style.text}`}>
-                  {style.label}
+                  {statusLabels[v] ?? v}
                 </span>
               </button>
             ))}
@@ -1236,10 +1249,14 @@ function QuestionConfigPanel({
   onUpdate: (data: any) => void;
   sections: SurveySection[];
 }) {
+  const t = useT();
   const [label, setLabel] = useState(question.label);
   const [description, setDescription] = useState(question.description ?? "");
   const [required, setRequired] = useState(question.required);
   const [allowAttachments, setAllowAttachments] = useState(!!(question.config?.allowAttachments));
+  const [maxAttachments, setMaxAttachments] = useState<string>(
+    question.config?.maxAttachments ? String(question.config.maxAttachments) : ""
+  );
   const [options, setOptions] = useState<string[]>(question.options ?? ["Opcja 1", "Opcja 2"]);
   const [newOption, setNewOption] = useState("");
   const [config, setConfig] = useState<Record<string, number>>(
@@ -1252,23 +1269,23 @@ function QuestionConfigPanel({
 
   return (
     <div className="space-y-4">
-      <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Konfiguracja pytania</h2>
+      <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t.ankiety.questionSettings}</h2>
 
       <div className="space-y-1">
-        <label className="text-xs font-medium text-muted-foreground">Typ pytania</label>
+        <label className="text-xs font-medium text-muted-foreground">{t.ankiety.questionType}</label>
         <select
           defaultValue={question.type}
           onChange={(e) => onUpdate({ type: e.target.value })}
           className="w-full px-2.5 py-1.5 text-sm border border-border rounded-lg bg-background focus:outline-none"
         >
-          {QUESTION_TYPES.map((qt) => (
-            <option key={qt.value} value={qt.value}>{qt.label}</option>
+          {QUESTION_TYPE_VALUES.map((type) => (
+            <option key={type} value={type}>{getTypeLabel(type, t)}</option>
           ))}
         </select>
       </div>
 
       <div className="space-y-1">
-        <label className="text-xs font-medium text-muted-foreground">Treść pytania</label>
+        <label className="text-xs font-medium text-muted-foreground">{t.ankiety.questionContentLabel}</label>
         <input
           type="text" value={label}
           onChange={(e) => setLabel(e.target.value)}
@@ -1278,25 +1295,25 @@ function QuestionConfigPanel({
       </div>
 
       <div className="space-y-1">
-        <label className="text-xs font-medium text-muted-foreground">Opis pomocniczy</label>
+        <label className="text-xs font-medium text-muted-foreground">{t.ankiety.descriptionHelper}</label>
         <input
           type="text" value={description}
           onChange={(e) => setDescription(e.target.value)}
           onBlur={() => onUpdate({ description: description || null })}
-          placeholder="Opcjonalne wyjaśnienie..."
+          placeholder={t.ankiety.explanationPlaceholder}
           className="w-full px-2.5 py-1.5 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
         />
       </div>
 
       {sections.length > 0 && (
         <div className="space-y-1">
-          <label className="text-xs font-medium text-muted-foreground">Sekcja</label>
+          <label className="text-xs font-medium text-muted-foreground">{t.ankiety.sectionLabel}</label>
           <select
             defaultValue={question.sectionId ?? ""}
             onChange={(e) => onUpdate({ sectionId: e.target.value || null })}
             className="w-full px-2.5 py-1.5 text-sm border border-border rounded-lg bg-background focus:outline-none"
           >
-            <option value="">— bez sekcji —</option>
+            <option value="">{t.ankiety.noSection}</option>
             {sections.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
         </div>
@@ -1309,7 +1326,7 @@ function QuestionConfigPanel({
         >
           <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${required ? "left-4" : "left-0.5"}`} />
         </div>
-        <span className="text-sm font-medium">Wymagane</span>
+        <span className="text-sm font-medium">{t.ankiety.required}</span>
       </label>
 
       <label className="flex items-center gap-3 cursor-pointer">
@@ -1323,12 +1340,40 @@ function QuestionConfigPanel({
         >
           <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${allowAttachments ? "left-4" : "left-0.5"}`} />
         </div>
-        <span className="text-sm font-medium">Zezwól na załączniki</span>
+        <span className="text-sm font-medium">{t.ankiety.allowAttachments}</span>
       </label>
+
+      {allowAttachments && (
+        <div className="space-y-1 pl-12">
+          <label className="text-xs font-medium text-muted-foreground">{t.ankiety.maxFiles}</label>
+          <input
+            type="number"
+            min={1}
+            max={20}
+            value={maxAttachments}
+            onChange={(e) => setMaxAttachments(e.target.value)}
+            onBlur={() => {
+              const n = parseInt(maxAttachments, 10);
+              const val = !isNaN(n) && n >= 1 ? n : null;
+              if (val !== null) {
+                setMaxAttachments(String(val));
+                onUpdate({ config: { ...config, allowAttachments: true, maxAttachments: val } });
+              } else {
+                setMaxAttachments("");
+                const { maxAttachments: _removed, ...rest } = { ...config, allowAttachments: true } as Record<string, unknown>;
+                onUpdate({ config: rest });
+              }
+            }}
+            placeholder="Bez limitu"
+            className="w-28 px-2.5 py-1.5 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
+          />
+          <p className="text-[11px] text-muted-foreground">{t.ankiety.noLimitHint}</p>
+        </div>
+      )}
 
       {showOptions && (
         <div className="space-y-2">
-          <label className="text-xs font-medium text-muted-foreground">Opcje odpowiedzi</label>
+          <label className="text-xs font-medium text-muted-foreground">{t.ankiety.answerOptions}</label>
           <div className="space-y-1.5">
             {options.map((opt, i) => (
               <div key={i} className="flex items-center gap-1.5">
@@ -1372,7 +1417,7 @@ function QuestionConfigPanel({
 
       {showRatingConfig && (
         <div className="space-y-2">
-          <label className="text-xs font-medium text-muted-foreground">Skala oceny</label>
+          <label className="text-xs font-medium text-muted-foreground">{t.ankiety.ratingScale}</label>
           <div className="flex items-center gap-3">
             {[{ key: "min", label: "Min", min: 1, max: 9 }, { key: "max", label: "Max", min: 2, max: 10 }].map(({ key, label, min, max }) => (
               <div key={key} className="space-y-1 flex-1">
@@ -1393,7 +1438,7 @@ function QuestionConfigPanel({
 
       {showBudgetConfig && (
         <div className="space-y-2">
-          <label className="text-xs font-medium text-muted-foreground">Zakres budżetu (PLN)</label>
+          <label className="text-xs font-medium text-muted-foreground">{t.ankiety.budgetRangeLabel}</label>
           {[{ key: "min", label: "Min" }, { key: "max", label: "Max" }, { key: "step", label: "Krok" }].map(({ key, label }) => (
             <div key={key} className="space-y-1">
               <label className="text-xs text-muted-foreground">{label}</label>
