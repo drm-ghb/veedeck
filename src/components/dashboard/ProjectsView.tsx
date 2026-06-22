@@ -275,6 +275,7 @@ export default function ProjectsView({ projects, archivedProjects }: ProjectsVie
 
 function ProjectListView({ projects }: { projects: Project[] }) {
   const t = useT();
+  const router = useRouter();
   const [warningLink, setWarningLink] = useState<string | null>(null);
 
   function handleCopyLink(p: Project) {

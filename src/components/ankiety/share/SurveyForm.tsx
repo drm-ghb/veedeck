@@ -543,7 +543,7 @@ function QuestionInput({
       )}
 
       {config.allowAttachments && !readOnly && (() => {
-        const maxFiles = typeof config.maxAttachments === "number" ? config.maxAttachments : null;
+        const maxFiles = typeof (config as Record<string, unknown>).maxAttachments === "number" ? (config as Record<string, unknown>).maxAttachments as number : null;
         const atLimit = maxFiles !== null && attachments.length >= maxFiles;
         return (
           <div className="space-y-2 pt-1">

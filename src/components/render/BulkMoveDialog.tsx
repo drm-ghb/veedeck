@@ -34,7 +34,7 @@ type Target =
 export default function BulkMoveDialog({ open, onOpenChange, ids, projectId, onSuccess }: BulkMoveDialogProps) {
   const router = useRouter();
   const t = useT();
-  const lang = useLang();
+  const { lang } = useLang();
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);

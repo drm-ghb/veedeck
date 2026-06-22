@@ -71,7 +71,7 @@ export async function POST(
           required: q.required,
           description: q.description ?? null,
           options: q.options ?? undefined,
-          config: q.config ?? undefined,
+          config: q.config ? (q.config as object) : undefined,
           sectionId: null,
           surveyId: id,
           order: globalOrder++,

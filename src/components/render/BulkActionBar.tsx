@@ -14,7 +14,7 @@ interface BulkActionBarProps {
 
 export default function BulkActionBar({ count, loading, onArchive, onMove, onDelete, onCancel }: BulkActionBarProps) {
   const t = useT();
-  const lang = useLang();
+  const { lang } = useLang();
   const fileLabel = lang === "pl"
     ? `${count} ${count === 1 ? t.render.fileSingular : count < 5 ? t.render.fileFew : t.render.fileMany}`
     : `${count} ${count === 1 ? t.render.fileSingular : t.render.fileMany}`;
