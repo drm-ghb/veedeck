@@ -15,7 +15,7 @@ import {
   GripVertical,
   Check,
   Mail,
-  Image,
+  PushPin,
   LocalMall,
 } from "@/components/ui/icons";
 import {
@@ -694,7 +694,7 @@ export default function ClientDetailView({ client: initialClient }: Props) {
               <div className="border border-border rounded-xl p-4 space-y-3">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center flex-shrink-0">
-                    <Image size={20} className="text-primary-foreground" />
+                    <PushPin size={20} className="text-primary-foreground" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
