@@ -26,17 +26,15 @@ export default async function VeedeckLayout({
   });
 
   const ownerId = dbUser?.ownerId;
-  const ownerSettings = ownerId
-    ? await prisma.user.findUnique({
-        where: { id: ownerId },
-        select: { globalHiddenModules: true, clientLogoUrl: true },
-      })
-    : null;
+  const [ownerSettings, memberPerms] = await Promise.all([
+    ownerId ? prisma.user.findUnique({ where: { id: ownerId }, select: { globalHiddenModules: true, clientLogoUrl: true } }) : null,
+    ownerId ? prisma.teamMemberPermission.findUnique({ where: { memberId: session.user.id! }, select: { hiddenModules: true } }) : null,
+  ]);
 
   const fullName = dbUser?.fullName ?? null;
   const firstName = (fullName || dbUser?.name)?.split(" ")[0] ?? dbUser?.email ?? null;
   const avatarUrl = dbUser?.avatarUrl ?? null;
-  const hiddenModules = (ownerSettings ?? dbUser)?.globalHiddenModules ?? [];
+  const hiddenModules = [...new Set([...((ownerSettings ?? dbUser)?.globalHiddenModules ?? []), ...(memberPerms?.hiddenModules ?? [])])];
   const colorTheme = (dbUser?.colorTheme ?? "champagne") as ColorTheme;
   const viewPrefs = (dbUser?.viewPreferences ?? {}) as Record<string, unknown>;
   const sidebarOrder = (viewPrefs.sidebarOrder as string[]) ?? [];

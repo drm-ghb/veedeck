@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { uniqueSlug } from "@/lib/slug";
 import { getWorkspaceUserId } from "@/lib/workspace";
-import { checkTeamPermission } from "@/lib/permissions";
+import { checkTeamPermission, getAllowedClientIds } from "@/lib/permissions";
 
 export async function GET() {
   const session = await auth();
@@ -11,9 +11,13 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const userId = getWorkspaceUserId(session);
+  const allowedIds = await getAllowedClientIds(session);
 
   const lists = await prisma.shoppingList.findMany({
-    where: { userId },
+    where: {
+      userId,
+      ...(allowedIds ? { project: { clientId: { in: allowedIds } } } : {}),
+    },
     include: { project: { select: { id: true, title: true } } },
     orderBy: { createdAt: "desc" },
   });

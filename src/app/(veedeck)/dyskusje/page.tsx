@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getWorkspaceUserId } from "@/lib/workspace";
+import { getAllowedClientIds } from "@/lib/permissions";
 import { redirect } from "next/navigation";
 import DyskusjeView from "@/components/dyskusje/DyskusjeView";
 
@@ -8,6 +9,7 @@ export default async function DyskusjePage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
   const userId = getWorkspaceUserId(session);
+  const allowedIds = await getAllowedClientIds(session);
 
   const dbUser = await prisma.user.findUnique({
     where: { id: userId },
@@ -22,7 +24,10 @@ export default async function DyskusjePage() {
 
   const discussionsWhere = isTeamMember
     ? { participants: { some: { userId } } }
-    : { ownerId: userId };
+    : {
+        ownerId: userId,
+        ...(allowedIds ? { project: { clientId: { in: allowedIds } } } : {}),
+      };
 
   const [discussions, projects, teamMembers] = await Promise.all([
     prisma.discussion.findMany({

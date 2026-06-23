@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getWorkspaceUserId } from "@/lib/workspace";
+import { getAllowedClientIds } from "@/lib/permissions";
 import ListyView from "@/components/listy/ListyView";
 
 export default async function ListyPage() {
@@ -9,14 +10,19 @@ export default async function ListyPage() {
   if (!session?.user?.id) redirect("/login");
 
   const userId = getWorkspaceUserId(session);
+  const allowedIds = await getAllowedClientIds(session);
 
   const lists = await prisma.shoppingList.findMany({
-    where: { userId },
+    where: {
+      userId,
+      ...(allowedIds ? { project: { clientId: { in: allowedIds } } } : {}),
+    },
     include: {
       project: {
         select: {
           id: true, title: true, hiddenModules: true, slug: true,
           clientName: true,
+          client: { select: { name: true } },
           clients: { where: { isMainContact: true }, select: { userId: true }, take: 1 },
         },
       },
@@ -38,7 +44,7 @@ export default async function ListyPage() {
         project: l.project ? {
           id: l.project.id,
           title: l.project.title,
-          clientName: l.project.clientName ?? null,
+          clientName: l.project.client?.name ?? l.project.clientName ?? null,
           hiddenModules: l.project.hiddenModules,
           clientHasNoAccount: !!(l.project.clientName) && !(l.project.clients[0]?.userId),
         } : null,

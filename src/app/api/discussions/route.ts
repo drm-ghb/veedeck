@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getWorkspaceUserId } from "@/lib/workspace";
 import { pusherServer } from "@/lib/pusher";
+import { getAllowedClientIds } from "@/lib/permissions";
 
 export async function GET() {
   const session = await auth();
@@ -10,6 +11,7 @@ export async function GET() {
   const userId = getWorkspaceUserId(session);
   // Use raw session ID for per-user read tracking (team members have independent read positions)
   const sessionUserId = session.user.id!;
+  const allowedIds = await getAllowedClientIds(session);
 
   // Detect if team member (has ownerId)
   const dbUser = await prisma.user.findUnique({ where: { id: userId }, select: { ownerId: true } });
@@ -17,7 +19,10 @@ export async function GET() {
 
   const where = isTeamMember
     ? { participants: { some: { userId } } }
-    : { ownerId: userId };
+    : {
+        ownerId: userId,
+        ...(allowedIds ? { project: { clientId: { in: allowedIds } } } : {}),
+      };
 
   const discussions = await prisma.discussion.findMany({
     where,

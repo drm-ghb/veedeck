@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Card, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -41,6 +42,7 @@ export default function ProjectCard({
   clientHasNoAccount = false,
 }: ProjectCardProps) {
   const t = useT();
+  const router = useRouter();
   const [warningOpen, setWarningOpen] = useState(false);
 
   function getShareUrl() {
@@ -101,12 +103,15 @@ export default function ProjectCard({
             {t.common.copyLink}
           </Button>
           {clientHasNoAccount && clientName && (
-            <Link href={`/klienci/${id}?tab=contacts`} onClick={(e) => e.stopPropagation()}>
-              <Button size="sm" variant="ghost" className="gap-1.5 text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/30">
-                <KeyRound size={13} />
-                {t.projekty.noAccount}
-              </Button>
-            </Link>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="gap-1.5 text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/30"
+              onClick={(e) => { e.stopPropagation(); router.push(`/klienci/${id}?tab=contacts`); }}
+            >
+              <KeyRound size={13} />
+              {t.projekty.noAccount}
+            </Button>
           )}
         </CardFooter>
       </Card>

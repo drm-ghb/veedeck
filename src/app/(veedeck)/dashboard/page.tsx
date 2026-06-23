@@ -3,12 +3,16 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import DashboardView from "@/components/dashboard/DashboardView";
 import { getWorkspaceUserId } from "@/lib/workspace";
+import { getAllowedClientIds } from "@/lib/permissions";
 
 export default async function DashboardPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
   const userId = getWorkspaceUserId(session);
+  const allowedIds = await getAllowedClientIds(session);
+  const clientFilter = allowedIds ? { clientId: { in: allowedIds } } : {};
+  const listClientFilter = allowedIds ? { project: { clientId: { in: allowedIds } } } : {};
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -20,7 +24,7 @@ export default async function DashboardPage() {
 
   // Fetch all active projects (for stats + recent + requests)
   const allProjects = await prisma.project.findMany({
-    where: { userId, archived: false },
+    where: { userId, archived: false, ...clientFilter },
     select: {
       id: true,
       slug: true,
@@ -43,12 +47,13 @@ export default async function DashboardPage() {
   const projectMap = new Map(allProjects.map((p) => [p.id, p]));
 
   const [recentProjectsCandidates, recentLists] = await Promise.all([prisma.project.findMany({
-    where: { userId, archived: false, modules: { has: "renderflow" } },
+    where: { userId, archived: false, modules: { has: "renderflow" }, ...clientFilter },
     select: {
       id: true,
       slug: true,
       title: true,
       clientName: true,
+      client: { select: { name: true } },
       pinned: true,
       updatedAt: true,
       renders: {
@@ -63,14 +68,14 @@ export default async function DashboardPage() {
   }),
 
   prisma.shoppingList.findMany({
-    where: { userId, archived: false },
+    where: { userId, archived: false, ...listClientFilter },
     select: {
       id: true,
       slug: true,
       name: true,
       pinned: true,
       updatedAt: true,
-      project: { select: { title: true, clientName: true } },
+      project: { select: { title: true, clientName: true, client: { select: { name: true } } } },
       _count: { select: { sections: true } },
     },
     orderBy: [{ pinned: "desc" }, { updatedAt: "desc" }],
@@ -91,9 +96,9 @@ export default async function DashboardPage() {
 
   const [clientCount, renderflowProjectCount, listCount, notificationCount, todayEvents, pins, statusRequests, versionRequests, renderDiscussions, listMessages, renderReplies, listReplies, dueTasks] =
     await Promise.all([
-      prisma.client.count({ where: { designerId: userId } }),
-      prisma.project.count({ where: { userId, archived: false, modules: { has: "renderflow" } } }),
-      prisma.shoppingList.count({ where: { userId, archived: false } }),
+      prisma.client.count({ where: { designerId: userId, ...(allowedIds ? { id: { in: allowedIds } } : {}) } }),
+      prisma.project.count({ where: { userId, archived: false, modules: { has: "renderflow" }, ...clientFilter } }),
+      prisma.shoppingList.count({ where: { userId, archived: false, ...listClientFilter } }),
       prisma.notification.count({ where: { userId, read: false } }),
 
       // Today's calendar events
@@ -113,7 +118,7 @@ export default async function DashboardPage() {
           status: "NEW",
           isInternal: false,
           viewedByDesigner: false,
-          render: { project: { userId }, archived: false },
+          render: { project: { userId, ...clientFilter }, archived: false },
         },
         select: {
           id: true,
@@ -159,7 +164,7 @@ export default async function DashboardPage() {
           isInternal: false,
           isAiSummary: false,
           viewedByDesigner: false,
-          render: { project: { userId }, archived: false },
+          render: { project: { userId, ...clientFilter }, archived: false },
         },
         select: {
           id: true,
@@ -183,7 +188,7 @@ export default async function DashboardPage() {
       prisma.listProductComment.findMany({
         where: {
           viewedByDesigner: false,
-          product: { section: { list: { userId } } },
+          product: { section: { list: { userId, ...listClientFilter } } },
         },
         select: {
           id: true,
@@ -212,7 +217,7 @@ export default async function DashboardPage() {
           viewedByDesigner: false,
           comment: {
             isInternal: false,
-            render: { project: { userId }, archived: false },
+            render: { project: { userId, ...clientFilter }, archived: false },
           },
         },
         select: {
@@ -242,7 +247,7 @@ export default async function DashboardPage() {
         where: {
           viewedByDesigner: false,
           comment: {
-            product: { section: { list: { userId } } },
+            product: { section: { list: { userId, ...listClientFilter } } },
           },
         },
         select: {
@@ -278,6 +283,7 @@ export default async function DashboardPage() {
           status: { not: "DONE" },
           dueDate: { lte: endOfToday },
           parentId: null,
+          ...(allowedIds ? { OR: [{ projectId: null }, { project: { clientId: { in: allowedIds } } }] } : {}),
         },
         select: {
           id: true,
@@ -341,7 +347,7 @@ export default async function DashboardPage() {
         id: p.id,
         slug: p.slug,
         title: p.title,
-        clientName: p.clientName,
+        clientName: p.client?.name ?? p.clientName,
         pinned: p.pinned,
         renderCount: p._count.renders,
         lastRenderUrl: p.renders[0]?.fileUrl ?? null,
@@ -386,7 +392,7 @@ export default async function DashboardPage() {
         name: l.name,
         pinned: l.pinned,
         projectTitle: l.project?.title ?? null,
-        clientName: l.project?.clientName ?? null,
+        clientName: l.project?.client?.name ?? l.project?.clientName ?? null,
         sectionCount: l._count.sections,
         updatedAt: l.updatedAt.toISOString(),
       }))}

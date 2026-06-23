@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { uniqueSlug } from "@/lib/slug";
 import { getWorkspaceUserId } from "@/lib/workspace";
 import bcrypt from "bcryptjs";
-import { checkTeamPermission } from "@/lib/permissions";
+import { checkTeamPermission, getAllowedClientIds } from "@/lib/permissions";
 
 export async function GET(
   _req: NextRequest,
@@ -15,6 +15,7 @@ export async function GET(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const userId = getWorkspaceUserId(session);
+  const allowedIds = await getAllowedClientIds(session);
 
   const { id } = await params;
   const project = await prisma.project.findFirst({
@@ -29,6 +30,10 @@ export async function GET(
 
   if (!project) {
     return NextResponse.json({ error: "Nie znaleziono" }, { status: 404 });
+  }
+
+  if (allowedIds && !allowedIds.includes(project.clientId ?? "")) {
+    return NextResponse.json({ error: "Brak dostępu" }, { status: 403 });
   }
 
   return NextResponse.json(project);

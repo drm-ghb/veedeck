@@ -4,14 +4,20 @@ import { prisma } from "@/lib/prisma";
 import { getWorkspaceUserId } from "@/lib/workspace";
 import { generateClientLogin } from "@/lib/client-login";
 import bcrypt from "bcryptjs";
+import { getAllowedClientIds } from "@/lib/permissions";
 
 export async function GET() {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const designerId = getWorkspaceUserId(session);
+  const allowedIds = await getAllowedClientIds(session);
 
   const clients = await prisma.client.findMany({
-    where: { designerId, archived: false },
+    where: {
+      designerId,
+      archived: false,
+      ...(allowedIds ? { id: { in: allowedIds } } : {}),
+    },
     include: {
       _count: { select: { projects: true } },
       projects: {

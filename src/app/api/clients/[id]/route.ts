@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getWorkspaceUserId } from "@/lib/workspace";
+import { getAllowedClientIds } from "@/lib/permissions";
 
 async function getClient(id: string, designerId: string) {
   return prisma.client.findFirst({ where: { id, designerId } });
@@ -14,7 +15,12 @@ export async function GET(
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const designerId = getWorkspaceUserId(session);
+  const allowedIds = await getAllowedClientIds(session);
   const { id } = await params;
+
+  if (allowedIds && !allowedIds.includes(id)) {
+    return NextResponse.json({ error: "Brak dostępu" }, { status: 403 });
+  }
 
   const client = await prisma.client.findFirst({
     where: { id, designerId },

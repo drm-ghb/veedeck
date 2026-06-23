@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useId } from "react";
 import { useViewPreference } from "@/hooks/useViewPreference";
 import {
   DndContext,
@@ -70,6 +70,8 @@ export default function ListyView({ lists: initialLists }: ListyViewProps) {
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<SortOption>("newest");
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+  const dndIdGrid = useId();
+  const dndIdList = useId();
   const [editingList, setEditingList] = useState<ShoppingList | null>(null);
   const [warningLink, setWarningLink] = useState<string | null>(null);
   const [unreadListCounts, setUnreadListCounts] = useState<Record<string, number>>({});
@@ -367,7 +369,7 @@ export default function ListyView({ lists: initialLists }: ListyViewProps) {
 
       {/* Grid view */}
       {filtered.length > 0 && view === "grid" && (
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={tab === "active" ? handleDragEnd : undefined}>
+        <DndContext id={dndIdGrid} sensors={sensors} collisionDetection={closestCenter} onDragEnd={tab === "active" ? handleDragEnd : undefined}>
         <SortableContext items={filtered.map((l) => l.id)} strategy={rectSortingStrategy}>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4">
           {filtered.map((list) => (
@@ -379,7 +381,7 @@ export default function ListyView({ lists: initialLists }: ListyViewProps) {
       )}
       {/* List view */}
       {filtered.length > 0 && view === "list" && (
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={tab === "active" ? handleDragEnd : undefined}>
+        <DndContext id={dndIdList} sensors={sensors} collisionDetection={closestCenter} onDragEnd={tab === "active" ? handleDragEnd : undefined}>
         <SortableContext items={filtered.map((l) => l.id)} strategy={rectSortingStrategy}>
         <div className="bg-card border border-border rounded-xl overflow-hidden">
           {filtered.map((list, i) => (

@@ -167,7 +167,7 @@ export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userI
     { label: t.nav.calendar, href: "/kalendarz", icon: <CalendarDays size={18} />, slug: null, badge: 0, matchPrefixes: [] as string[] },
     { label: t.nav.notes, href: "/notatnik", icon: <NotebookText size={18} />, slug: null, badge: 0, matchPrefixes: [] as string[] },
     { label: t.nav.discussions, href: "/dyskusje", icon: <ChatBubble size={18} />, slug: null, badge: discussionUnread, matchPrefixes: [] as string[] },
-    { label: t.nav.veezard, href: "/veezard", icon: <VeezardIcon size={18} />, slug: null, badge: 0, matchPrefixes: [] as string[], soon: true },
+    { label: t.nav.veezard, href: "/veezard", icon: <VeezardIcon size={18} />, slug: "veezard", badge: 0, matchPrefixes: [] as string[], soon: true },
   ];
 
   function toggle() {
