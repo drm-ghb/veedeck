@@ -202,7 +202,11 @@ interface Props {
 function dedupeReceipts(recs: ReadReceipt[]): ReadReceipt[] {
   const seen = new Map<string, ReadReceipt>();
   for (const r of recs) {
-    seen.set(r.readerName.toLowerCase(), r);
+    const key = r.readerName.toLowerCase();
+    const existing = seen.get(key);
+    if (!existing || (r.lastMessageId ?? "") > (existing.lastMessageId ?? "")) {
+      seen.set(key, r);
+    }
   }
   return Array.from(seen.values());
 }

@@ -71,7 +71,7 @@ export default async function ShareDyskusjePage({ params }: { params: Promise<{ 
             token={token}
             discussionId={project.discussion.id}
             discussionTitle={project.discussion.title}
-            initialAuthorName={session?.user?.name ?? undefined}
+            initialAuthorName={session?.user ? (session.user.name || session.user.email?.split('@')[0] || "Klient") : undefined}
             currentUserAvatarUrl={clientAvatarUrl}
           />
         </main>
