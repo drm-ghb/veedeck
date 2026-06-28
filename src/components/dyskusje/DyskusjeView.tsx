@@ -212,6 +212,9 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
   const inputTextareaRef = useRef<HTMLTextAreaElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const firstUnreadRef = useRef<HTMLDivElement>(null);
+  const firstUnreadIdRef = useRef<string | null>(null);
+  const isInitialScrollDoneRef = useRef(false);
   const pusherRef = useRef<Pusher | null>(null);
   const pusherUnreadRef = useRef<Pusher | null>(null);
   const selectedIdRef = useRef<string | null>(null);
@@ -346,12 +349,25 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
 
   useEffect(() => {
     if (!selectedId) return;
+    // Reset scroll state when switching threads
+    isInitialScrollDoneRef.current = false;
+    firstUnreadIdRef.current = null;
     setLoadingMessages(true);
     fetch(`/api/discussions/${selectedId}/messages`)
       .then((r) => r.json())
       .then((data) => {
         const msgs: DiscussionMessage[] = Array.isArray(data) ? data : (data.messages ?? []);
         const recs: ReadReceipt[] = data.receipts ?? [];
+        // Compute first unread message ID before rendering
+        const myReceipt = recs.find((r) => r.readerId === currentUserId);
+        if (myReceipt?.lastMessageId) {
+          const readIdx = msgs.findIndex((m) => m.id === myReceipt.lastMessageId);
+          firstUnreadIdRef.current = (readIdx !== -1 && readIdx < msgs.length - 1)
+            ? msgs[readIdx + 1].id
+            : null;
+        } else {
+          firstUnreadIdRef.current = null;
+        }
         setMessages(msgs);
         setReceipts(dedupeReceipts(recs));
         setLoadingMessages(false);
@@ -368,10 +384,20 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
   }, [selectedId]);
 
   useEffect(() => {
-    if (!showResources) {
+    if (showResources || loadingMessages) return;
+    if (!isInitialScrollDoneRef.current) {
+      // Initial load: scroll to first unread or bottom
+      if (firstUnreadRef.current) {
+        firstUnreadRef.current.scrollIntoView({ behavior: "instant", block: "start" });
+      } else {
+        bottomRef.current?.scrollIntoView({ behavior: "instant" });
+      }
+      isInitialScrollDoneRef.current = true;
+    } else {
+      // New message arrived via Pusher
       bottomRef.current?.scrollIntoView({ behavior: "instant" });
     }
-  }, [messages, showResources]);
+  }, [messages, showResources, loadingMessages]);
 
   useEffect(() => {
     if (!selectedId) return;
@@ -1423,7 +1449,9 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                       </div>
                       {group.msgs.map((msg) => {
                         const isOwn = msg.userId === currentUserId;
+                        const isFirstUnread = msg.id === firstUnreadIdRef.current;
                         return (
+                          <div key={msg.id} ref={isFirstUnread ? firstUnreadRef : undefined}>
                           <MessageBubble
                             key={msg.id}
                             msg={msg}
@@ -1439,6 +1467,7 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                             onReply={() => setReplyingToMsg({ id: msg.id, content: msg.content || t.dyskusje.attachmentLabel, author: msg.authorName })}
                             onReact={(emoji) => handleToggleReaction(msg.id, emoji)}
                           />
+                          </div>
                         );
                       })}
                     </div>

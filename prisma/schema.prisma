@@ -42,6 +42,7 @@ model User {
   showProfileName            Boolean                 @default(false)
   showClientLogo             Boolean                 @default(false)
   colorTheme                 String                  @default("champagne")
+  customTheme                Json?
   extensionKey               String?                 @unique
   customCategories           String[]                @default([])
   login                      String?                 @unique

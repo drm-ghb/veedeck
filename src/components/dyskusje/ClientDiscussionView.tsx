@@ -261,6 +261,9 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
   const fileInputRef = useRef<HTMLInputElement>(null);
   const inputTextareaRef = useRef<HTMLTextAreaElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const firstUnreadRef = useRef<HTMLDivElement>(null);
+  const firstUnreadIdRef = useRef<string | null>(null);
+  const isInitialScrollDoneRef = useRef(false);
   const pusherRef = useRef<Pusher | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -285,6 +288,18 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
       .then((data) => {
         const msgs: DiscussionMessage[] = Array.isArray(data) ? data : (data.messages ?? []);
         const recs: ReadReceipt[] = data.receipts ?? [];
+        // Compute first unread message ID before rendering
+        const myReceipt = currentUserId
+          ? recs.find((r) => r.readerId === currentUserId)
+          : null;
+        if (myReceipt?.lastMessageId) {
+          const readIdx = msgs.findIndex((m) => m.id === myReceipt.lastMessageId);
+          firstUnreadIdRef.current = (readIdx !== -1 && readIdx < msgs.length - 1)
+            ? msgs[readIdx + 1].id
+            : null;
+        } else {
+          firstUnreadIdRef.current = null;
+        }
         setMessages(msgs);
         setReceipts(dedupeReceipts(recs));
         setLoading(false);
@@ -303,10 +318,18 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
   }, [token, discussionId, msgApiBase, initialAuthorName]);
 
   useEffect(() => {
-    if (!showResources) {
+    if (showResources || loading) return;
+    if (!isInitialScrollDoneRef.current) {
+      if (firstUnreadRef.current) {
+        firstUnreadRef.current.scrollIntoView({ behavior: "instant", block: "start" });
+      } else {
+        bottomRef.current?.scrollIntoView({ behavior: "instant" });
+      }
+      isInitialScrollDoneRef.current = true;
+    } else {
       bottomRef.current?.scrollIntoView({ behavior: "instant" });
     }
-  }, [messages, showResources]);
+  }, [messages, showResources, loading]);
 
   useEffect(() => {
     if (!pusherRef.current) {
@@ -880,8 +903,9 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
                     </div>
                   );
 
+                  const isFirstUnread = msg.id === firstUnreadIdRef.current;
                   return (
-                    <div key={msg.id} className={`flex items-end gap-2 ${isOwn ? "justify-end" : "justify-start"} group ${msg.reactions && msg.reactions.length > 0 ? "mb-6" : "mb-1.5"}`} onClick={() => { if (openMenuId) setOpenMenuId(null); }}>
+                    <div key={msg.id} ref={isFirstUnread ? firstUnreadRef : undefined} className={`flex items-end gap-2 ${isOwn ? "justify-end" : "justify-start"} group ${msg.reactions && msg.reactions.length > 0 ? "mb-6" : "mb-1.5"}`} onClick={() => { if (openMenuId) setOpenMenuId(null); }}>
                       {!isOwn && <Avatar name={msg.authorName} />}
                       <div className="max-w-[75%]">
                       <SwipeableMessage

@@ -59,9 +59,16 @@ export async function PATCH(req: NextRequest) {
   ] as const;
   const stringFields = ["clientWelcomeMessage", "clientLogoUrl", "accentColor", "defaultRenderOrder", "defaultRenderStatus", "navMode", "avatarUrl", "fullName", "phone", "phonePrefix", "contactEmail"] as const;
 
-  const VALID_COLOR_THEMES = ["violet", "champagne", "obsidian", "navy", "plum", "mono"] as const;
+  const VALID_COLOR_THEMES = ["violet", "champagne", "obsidian", "navy", "plum", "mono", "custom"] as const;
   if (body.colorTheme !== undefined && !VALID_COLOR_THEMES.includes(body.colorTheme)) {
     return NextResponse.json({ error: "Nieprawidłowy motyw kolorystyczny" }, { status: 400 });
+  }
+  if (body.customTheme !== undefined && body.customTheme !== null) {
+    const ct = body.customTheme as Record<string, unknown>;
+    const hexRe = /^#[0-9A-Fa-f]{6}$/;
+    if (typeof ct !== "object" || !hexRe.test(ct.primary as string) || !hexRe.test(ct.background as string) || !hexRe.test(ct.sidebar as string)) {
+      return NextResponse.json({ error: "Nieprawidłowe kolory motywu" }, { status: 400 });
+    }
   }
 
   const VALID_PDF_TEMPLATES = ["violet", "editorial", "atelier", "architect", "linen"] as const;
@@ -78,6 +85,7 @@ export async function PATCH(req: NextRequest) {
   if (body.globalHiddenModules !== undefined) data.globalHiddenModules = body.globalHiddenModules;
   if (body.emailNotifModules !== undefined) data.emailNotifModules = body.emailNotifModules;
   if (body.colorTheme !== undefined) data.colorTheme = body.colorTheme;
+  if (body.customTheme !== undefined) data.customTheme = body.customTheme ?? null;
   if (body.pdfListTemplate !== undefined) data.pdfListTemplate = body.pdfListTemplate;
   if (body.mergeViewPreferences !== undefined) {
     const current = await prisma.user.findUnique({ where: { id: session.user.id }, select: { viewPreferences: true } });

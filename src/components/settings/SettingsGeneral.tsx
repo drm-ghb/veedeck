@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { User, Mail, Lock, Info, Sun, Moon, Monitor, Palette, Image as ImageIcon, Layers, LocalMall, Package, Globe, PushPin, Pencil, X, Eye, EyeOff, Phone, UserCircle, Trash2, GripVertical, LayoutDashboard, Users, CheckSquare, CalendarDays, NotebookText, ChatBubble, VeezardIcon, Engineering, ClipboardList, ChevronDown } from "@/components/ui/icons";
-import { useTheme, type Theme, type ColorTheme } from "@/lib/theme";
+import { useTheme, type Theme, type ColorTheme, type CustomThemeColors } from "@/lib/theme";
 import { useT, useLang } from "@/lib/i18n";
 import Cropper from "react-easy-crop";
 import type { Area } from "react-easy-crop";
@@ -32,6 +32,7 @@ interface Props {
   initialClientLogoUrl: string | null;
   initialClientWelcomeMessage: string | null;
   initialColorTheme: ColorTheme;
+  initialCustomTheme: CustomThemeColors | null;
   initialEmailNotifEnabled: boolean;
   initialEmailNotifModules: string[];
   initialSidebarOrder: string[];
@@ -93,12 +94,18 @@ export function SettingsGeneral({
   initialClientLogoUrl,
   initialClientWelcomeMessage,
   initialColorTheme,
+  initialCustomTheme,
   initialEmailNotifEnabled,
   initialEmailNotifModules,
   initialSidebarOrder,
 }: Props) {
   const router = useRouter();
-  const { theme, setTheme, colorTheme, setColorTheme } = useTheme();
+  const { theme, setTheme, colorTheme, setColorTheme, setCustomTheme } = useTheme();
+
+  const DEFAULT_CUSTOM: CustomThemeColors = { primary: "#4F46E5", background: "#FFFFFF", sidebar: "#EDEEF2" };
+  const [customColors, setCustomColors] = useState<CustomThemeColors>(initialCustomTheme ?? DEFAULT_CUSTOM);
+  const [showCustomEditor, setShowCustomEditor] = useState(false);
+  const [savingCustomTheme, setSavingCustomTheme] = useState(false);
   const t = useT();
   const { lang, setLang } = useLang();
 
@@ -414,6 +421,16 @@ const COLOR_THEMES: {
     setColorTheme(slug);
     const res = await patchUser({ colorTheme: slug });
     if (res.ok) toast.success(t.settings.saved);
+    else toast.error(t.settings.saveError);
+  }
+
+  async function handleSaveCustomTheme() {
+    setSavingCustomTheme(true);
+    setCustomTheme(customColors);
+    setColorTheme("custom");
+    const res = await patchUser({ colorTheme: "custom", customTheme: customColors });
+    setSavingCustomTheme(false);
+    if (res.ok) { toast.success(t.settings.saved); setShowCustomEditor(false); }
     else toast.error(t.settings.saveError);
   }
 
@@ -841,7 +858,81 @@ const COLOR_THEMES: {
               </button>
             );
           })}
+
+          {/* Karta: Własny motyw */}
+          {(() => {
+            const active = colorTheme === "custom";
+            return (
+              <button
+                type="button"
+                aria-pressed={active}
+                onClick={() => setShowCustomEditor((v) => !v)}
+                className={`flex flex-col items-start p-3 rounded-2xl border text-left transition-all ${
+                  active
+                    ? "border-primary ring-2 ring-primary bg-primary/5"
+                    : "border-border hover:border-gray-300 dark:hover:border-gray-600 hover:bg-muted"
+                }`}
+              >
+                {/* Miniatura podglądu */}
+                <div className="w-full h-12 rounded-lg overflow-hidden flex mb-3">
+                  <div className="w-1/3 h-full" style={{ background: customColors.sidebar }} />
+                  <div className="flex-1 h-full flex flex-col p-1.5 gap-1" style={{ background: customColors.background }}>
+                    <div className="h-2 w-3/4 rounded-sm" style={{ background: customColors.primary }} />
+                    <div className="h-1.5 w-1/2 rounded-sm opacity-50" style={{ background: customColors.primary }} />
+                  </div>
+                </div>
+                <p className={`text-sm font-semibold leading-tight ${active ? "text-primary" : "text-foreground"}`}>Własny motyw</p>
+                <p className="text-xs text-muted-foreground mt-0.5 leading-tight">Dostosuj do swojego brandu</p>
+              </button>
+            );
+          })()}
         </div>
+
+        {/* Panel edycji custom theme */}
+        {showCustomEditor && (
+          <div className="bg-card border border-border rounded-2xl p-5 space-y-4">
+            <p className="text-sm font-semibold text-foreground">Dostosuj kolory motywu</p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {([
+                { key: "primary", label: "Kolor główny", desc: "Przyciski, linki, aktywne elementy" },
+                { key: "background", label: "Tło aplikacji", desc: "Główna powierzchnia treści" },
+                { key: "sidebar", label: "Sidebar", desc: "Tło paska bocznego" },
+              ] as { key: keyof CustomThemeColors; label: string; desc: string }[]).map(({ key, label, desc }) => (
+                <label key={key} className="flex flex-col gap-1.5 cursor-pointer">
+                  <span className="text-sm font-medium text-foreground">{label}</span>
+                  <span className="text-xs text-muted-foreground">{desc}</span>
+                  <div className="flex items-center gap-2 mt-1">
+                    <div className="relative w-9 h-9 rounded-xl border-2 border-border overflow-hidden shrink-0 cursor-pointer">
+                      <input
+                        type="color"
+                        value={customColors[key]}
+                        onChange={(e) => setCustomColors((prev) => ({ ...prev, [key]: e.target.value }))}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      />
+                      <div className="w-full h-full rounded-[10px]" style={{ background: customColors[key] }} />
+                    </div>
+                    <input
+                      type="text"
+                      value={customColors[key]}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        if (/^#[0-9A-Fa-f]{0,6}$/.test(v)) setCustomColors((prev) => ({ ...prev, [key]: v }));
+                      }}
+                      maxLength={7}
+                      className="flex-1 h-9 px-2.5 rounded-xl border border-border bg-background text-sm font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                    />
+                  </div>
+                </label>
+              ))}
+            </div>
+            <div className="flex gap-2 pt-1">
+              <Button onClick={handleSaveCustomTheme} disabled={savingCustomTheme} size="sm">
+                {savingCustomTheme ? "Zapisywanie…" : "Zapisz i aktywuj"}
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setShowCustomEditor(false)}>Anuluj</Button>
+            </div>
+          </div>
+        )}
       </section>
 
       {/* ── Ustawienia interfejsu ── */}

@@ -22,7 +22,7 @@ export default async function VeedeckLayout({
 
   const dbUser = await prisma.user.findUnique({
     where: { id: session.user.id! },
-    select: { name: true, fullName: true, email: true, globalHiddenModules: true, clientLogoUrl: true, avatarUrl: true, ownerId: true, colorTheme: true, trialEndsAt: true, isFree: true, viewPreferences: true, subscription: { select: { status: true, cancelAt: true } } },
+    select: { name: true, fullName: true, email: true, globalHiddenModules: true, clientLogoUrl: true, avatarUrl: true, ownerId: true, colorTheme: true, customTheme: true, trialEndsAt: true, isFree: true, viewPreferences: true, subscription: { select: { status: true, cancelAt: true } } },
   });
 
   const ownerId = dbUser?.ownerId;
@@ -43,7 +43,7 @@ export default async function VeedeckLayout({
 
   return (
     <div className="h-dvh flex flex-col bg-muted/60">
-      <ColorThemeSync dbTheme={colorTheme} />
+      <ColorThemeSync dbTheme={colorTheme} dbCustomTheme={dbUser?.customTheme as import("@/lib/theme").CustomThemeColors | null} />
       <AppNavbar
         firstName={firstName}
         avatarUrl={avatarUrl}
