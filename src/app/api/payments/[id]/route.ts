@@ -4,7 +4,15 @@ import { prisma } from "@/lib/prisma";
 
 async function getPaymentAndVerify(id: string, userId: string) {
   return prisma.payment.findFirst({
-    where: { id, client: { project: { userId } } },
+    where: {
+      id,
+      client: {
+        OR: [
+          { project: { userId } },
+          { client: { designerId: userId } },
+        ],
+      },
+    },
   });
 }
 
@@ -23,7 +31,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     data: {
       ...(body.name !== undefined && { name: body.name }),
       ...(body.amount !== undefined && { amount: parseFloat(body.amount) }),
-      ...(body.status !== undefined && { status: body.status }),
+      ...(body.status !== undefined && {
+        status: body.status,
+        paidAt: body.status === "paid" ? new Date() : null,
+      }),
       ...(body.groupId !== undefined && { groupId: body.groupId }),
       ...(body.attachmentUrl !== undefined && { attachmentUrl: body.attachmentUrl }),
       ...(body.attachmentName !== undefined && { attachmentName: body.attachmentName }),

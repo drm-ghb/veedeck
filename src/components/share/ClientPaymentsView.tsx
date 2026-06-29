@@ -24,11 +24,16 @@ interface Payment {
   name: string;
   amount: number;
   status: "pending" | "paid";
+  paidAt: string | null;
   order: number;
 }
 
 function formatPLN(amount: number) {
   return new Intl.NumberFormat("pl-PL", { style: "currency", currency: "PLN" }).format(amount);
+}
+
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString("pl-PL", { day: "2-digit", month: "2-digit", year: "numeric" });
 }
 
 function PaymentRow({ payment }: { payment: Payment }) {
@@ -42,9 +47,14 @@ function PaymentRow({ payment }: { payment: Payment }) {
       }`}>
         {payment.status === "paid" && <Check size={10} />}
       </div>
-      <span className={`flex-1 text-sm ${payment.status === "paid" ? "line-through text-muted-foreground" : ""}`}>
-        {payment.name}
-      </span>
+      <div className="flex-1 min-w-0">
+        <span className={`text-sm ${payment.status === "paid" ? "line-through text-muted-foreground" : ""}`}>
+          {payment.name}
+        </span>
+        {payment.status === "paid" && payment.paidAt && (
+          <p className="text-[11px] text-muted-foreground mt-0.5">Data płatności: {formatDate(payment.paidAt)}</p>
+        )}
+      </div>
       <span className="text-sm font-medium tabular-nums">{formatPLN(payment.amount)}</span>
       <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${
         payment.status === "paid"

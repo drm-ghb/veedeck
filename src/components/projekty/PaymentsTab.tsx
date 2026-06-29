@@ -83,6 +83,7 @@ interface Payment {
   name: string;
   amount: number;
   status: "pending" | "paid";
+  paidAt: string | null;
   attachmentUrl: string | null;
   attachmentName: string | null;
   order: number;
@@ -348,6 +349,11 @@ interface PaymentRowProps {
   onSaveAmountInline: (amount: string) => void;
 }
 
+function formatDate(iso: string) {
+  const d = new Date(iso);
+  return d.toLocaleDateString("pl-PL", { day: "2-digit", month: "2-digit", year: "numeric" });
+}
+
 function PaymentRow({
   payment, depth, isEditing, editingName, editingAmount,
   onStartEdit, onSaveEdit, onCancelEdit, onEditNameChange, onEditAmountChange,
@@ -368,9 +374,10 @@ function PaymentRow({
     <div
       ref={setNodeRef}
       style={{ ...sortableStyle, paddingLeft: `${12 + indent}px` }}
-      className="flex items-center gap-2 py-1.5 pr-3 rounded-lg hover:bg-muted/40 group"
+      className="pr-3 rounded-lg hover:bg-muted/40 group"
       data-edit-row
     >
+    <div className="flex items-center gap-2 py-1.5">
       <div
         {...attributes}
         {...listeners}
@@ -415,12 +422,11 @@ function PaymentRow({
         </>
       ) : (
         <>
-          <span
-            className={`flex-1 text-sm cursor-pointer hover:text-primary transition-colors ${payment.status === "paid" ? "line-through text-muted-foreground" : ""}`}
-            onClick={onStartEdit}
-          >
-            {payment.name}
-          </span>
+          <div className="flex-1 min-w-0 cursor-pointer" onClick={onStartEdit}>
+            <span className={`text-sm hover:text-primary transition-colors ${payment.status === "paid" ? "line-through text-muted-foreground" : ""}`}>
+              {payment.name}
+            </span>
+          </div>
           {inlineAmountEdit ? (
             <Input
               autoFocus
@@ -462,6 +468,12 @@ function PaymentRow({
             <button onClick={onDelete} className="p-1 rounded text-muted-foreground hover:text-destructive"><Trash2 size={12} /></button>
           </div>
         </>
+      )}
+    </div>
+      {!isEditing && payment.status === "paid" && payment.paidAt && (
+        <p className="text-[11px] text-muted-foreground pb-1 pl-[50px]">
+          Data płatności: {formatDate(payment.paidAt)}
+        </p>
       )}
     </div>
   );
@@ -743,14 +755,15 @@ export function PaymentsTab({ clientId, projectId, paymentsSharedWithClient: ini
 
   async function handleToggleStatus(payment: Payment) {
     const newStatus = payment.status === "paid" ? "pending" : "paid";
-    setPayments((prev) => prev.map((p) => p.id === payment.id ? { ...p, status: newStatus } : p));
+    const newPaidAt = newStatus === "paid" ? new Date().toISOString() : null;
+    setPayments((prev) => prev.map((p) => p.id === payment.id ? { ...p, status: newStatus, paidAt: newPaidAt } : p));
     const res = await fetch(`/api/payments/${payment.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status: newStatus }),
     });
     if (!res.ok) {
-      setPayments((prev) => prev.map((p) => p.id === payment.id ? { ...p, status: payment.status } : p));
+      setPayments((prev) => prev.map((p) => p.id === payment.id ? { ...p, status: payment.status, paidAt: payment.paidAt } : p));
       toast.error(t.payments.statusError);
     }
   }
@@ -912,14 +925,16 @@ export function PaymentsTab({ clientId, projectId, paymentsSharedWithClient: ini
     const key = groupId ?? sectionKey ?? "root";
     if (addingPayment !== key) return null;
     return (
-      <div className="flex items-center gap-2 mt-2 ml-4">
+      <div className="flex flex-wrap items-center gap-2 mt-2 ml-2 sm:ml-4">
         <Input autoFocus placeholder={t.payments.paymentNamePlaceholder} value={newPaymentName} onChange={(e) => setNewPaymentName(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter") handleAddPayment(groupId, rfProjectId); if (e.key === "Escape") { setAddingPayment(null); setNewPaymentName(""); setNewPaymentAmount(""); } }}
-          className="h-7 text-sm flex-1" />
-        <Input placeholder={t.payments.amountPlaceholder} value={newPaymentAmount} onChange={(e) => setNewPaymentAmount(e.target.value)}
-          onKeyDown={(e) => { if (e.key === "Enter") handleAddPayment(groupId, rfProjectId); }} className="h-7 text-sm w-28" />
-        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleAddPayment(groupId, rfProjectId)}><Check size={14} /></Button>
-        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => { setAddingPayment(null); setNewPaymentName(""); setNewPaymentAmount(""); }}><X size={14} /></Button>
+          className="h-7 text-sm flex-1 min-w-[120px]" />
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <Input placeholder={t.payments.amountPlaceholder} value={newPaymentAmount} onChange={(e) => setNewPaymentAmount(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") handleAddPayment(groupId, rfProjectId); }} className="h-7 text-sm w-24" />
+          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleAddPayment(groupId, rfProjectId)}><Check size={14} /></Button>
+          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => { setAddingPayment(null); setNewPaymentName(""); setNewPaymentAmount(""); }}><X size={14} /></Button>
+        </div>
       </div>
     );
   }

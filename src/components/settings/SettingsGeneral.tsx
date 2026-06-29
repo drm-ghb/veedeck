@@ -830,6 +830,10 @@ const COLOR_THEMES: {
       <section className="space-y-4">
         <SectionHeader title={t.settings.colorTheme} />
 
+        <p className="text-sm text-muted-foreground -mt-1">
+          Wybrany motyw obowiązuje w całej aplikacji — Twoi klienci widzą panel w tym samym motywie co Ty.
+        </p>
+
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           {COLOR_THEMES.map(({ slug, name, subtitle, sidebar, background, primary, accent }) => {
             const active = colorTheme === slug;

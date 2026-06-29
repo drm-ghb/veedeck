@@ -12,9 +12,11 @@ export function ColorThemeSync({ dbTheme, dbCustomTheme }: { dbTheme: ColorTheme
       // New device — sync everything from DB
       setColorTheme(dbTheme);
       if (dbCustomTheme) setCustomTheme(dbCustomTheme);
-    } else if (local === "custom" && !localStorage.getItem("custom-theme") && dbCustomTheme) {
-      // Has custom selected but no colors locally — pull from DB
-      setCustomTheme(dbCustomTheme);
+    } else {
+      if (local === "custom" && !localStorage.getItem("custom-theme") && dbCustomTheme) {
+        // Has custom selected but no colors locally — pull from DB
+        setCustomTheme(dbCustomTheme);
+      }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

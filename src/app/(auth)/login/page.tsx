@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useLayoutEffect } from "react";
 import { signIn, signOut, getSession } from "next-auth/react";
 import { Eye, EyeOff } from "@/components/ui/icons";
 import { Separator } from "@/components/ui/separator";
@@ -17,6 +17,15 @@ type Mode = "login" | "register";
 
 export default function LoginPage() {
   const t = useT();
+
+  useLayoutEffect(() => {
+    const prev = document.documentElement.dataset.theme;
+    document.documentElement.dataset.theme = "violet";
+    return () => {
+      if (prev) document.documentElement.dataset.theme = prev;
+    };
+  }, []);
+
   const [mode, setMode] = useState<Mode>("login");
   const [fullName, setFullName] = useState("");
   const [companyName, setCompanyName] = useState("");

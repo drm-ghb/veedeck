@@ -627,24 +627,26 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
       )}
 
       {/* Tabs */}
-      <div className="flex gap-1 border-b border-border mb-6 overflow-x-auto scrollbar-none">
-        {(["info", "contacts", "payments", "schedule", "documents"] as const).map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px whitespace-nowrap flex-shrink-0 ${
-              activeTab === tab
-                ? "border-primary text-foreground"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            {tab === "info" && t.projekty.tabInfo}
-            {tab === "contacts" && t.projekty.clients}
-            {tab === "payments" && t.projekty.tabPayments}
-            {tab === "schedule" && t.projekty.tabSchedule}
-            {tab === "documents" && t.projekty.tabDocuments}
-          </button>
-        ))}
+      <div className="border-b border-border mb-6 overflow-hidden">
+        <div className="flex gap-1 overflow-x-auto [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
+          {(["info", "contacts", "payments", "schedule", "documents"] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px whitespace-nowrap flex-shrink-0 ${
+                activeTab === tab
+                  ? "border-primary text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {tab === "info" && t.projekty.tabInfo}
+              {tab === "contacts" && t.projekty.clients}
+              {tab === "payments" && t.projekty.tabPayments}
+              {tab === "schedule" && t.projekty.tabSchedule}
+              {tab === "documents" && t.projekty.tabDocuments}
+            </button>
+          ))}
+        </div>
       </div>
 
       {activeTab === "contacts" && (
