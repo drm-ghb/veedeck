@@ -373,7 +373,7 @@ function ProductRow({
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={onToggleOptional}>
           {product.optional
-            ? <CheckCircle size={13} className="mr-2 text-primary/70" />
+            ? <CheckCircle size={13} className="mr-2 text-muted-foreground" />
             : <RadioButtonUnchecked size={13} className="mr-2" />}
           {product.optional ? "Oznacz jako podstawowy" : "Oznacz jako opcjonalny"}
         </DropdownMenuItem>
@@ -531,7 +531,7 @@ function ProductRow({
           {!isCollapsed && (
             <>
               <button onClick={onToggleOptional} className="w-5 h-5 flex items-center justify-center transition-colors" title={product.optional ? "Produkt opcjonalny (kliknij, by oznaczyć jako podstawowy)" : "Produkt podstawowy (kliknij, by oznaczyć jako opcjonalny)"}>
-                {product.optional ? <RadioButtonUnchecked size={14} className="text-muted-foreground hover:text-foreground" /> : <CheckCircle size={14} className="text-primary/70 hover:text-muted-foreground" />}
+                {product.optional ? <RadioButtonUnchecked size={14} className="text-muted-foreground hover:text-foreground" /> : <CheckCircle size={14} className="text-muted-foreground hover:text-foreground" />}
               </button>
               <button onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); setCopyMenuPos({ top: r.top, left: r.right + 6 }); setCopyMenuOpen(true); }} className="w-5 h-5 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors" title={t.listy.copyToSection}>
                 <Copy size={14} />
