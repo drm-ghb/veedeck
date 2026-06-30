@@ -59,6 +59,7 @@ export async function GET(
         commentCount: p._count.comments,
         approval: p.approval,
         note: p.note,
+        optional: p.optional,
       })),
     })),
   });

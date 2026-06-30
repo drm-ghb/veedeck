@@ -70,12 +70,13 @@ export default async function PublicListPage({ params }: { params: Promise<{ tok
   }
 
   const allProducts = list.sections.flatMap((s) => s.products);
-  const grandTotal = allProducts.reduce((sum, p) => {
+  const countedProducts = allProducts.filter((p) => !p.optional);
+  const grandTotal = countedProducts.reduce((sum, p) => {
     const n = parsePrice(p.price);
     return n !== null ? sum + n * p.quantity : sum;
   }, 0);
-  const grandCurrency = getCurrency(allProducts.find((p) => getCurrency(p.price))?.price ?? null);
-  const hasTotal = allProducts.some((p) => parsePrice(p.price) !== null);
+  const grandCurrency = getCurrency(countedProducts.find((p) => getCurrency(p.price))?.price ?? null);
+  const hasTotal = countedProducts.some((p) => parsePrice(p.price) !== null);
 
   const projectToken = list.project?.shareToken;
   const showProjectFlow = !list.project?.hiddenModules.includes("renderflow");
@@ -139,6 +140,7 @@ export default async function PublicListPage({ params }: { params: Promise<{ tok
     commentCount: p._count.comments,
     approval: p.approval,
     note: p.note,
+    optional: p.optional,
   });
 
   // Separate unsorted products — they will be shown as "Pozostałe" at the bottom

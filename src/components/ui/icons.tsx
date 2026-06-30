@@ -159,7 +159,8 @@ export const CheckCircle2     = icon("check_circle");
 export const AlertTriangle    = icon("warning");
 export const AlertCircle      = icon("error");
 export const Info             = icon("info");
-export const Circle           = icon("circle");
+export const Circle                = icon("circle");
+export const RadioButtonUnchecked  = icon("radio_button_unchecked");
 export const Bell             = icon("notifications");
 
 // ── Files / Folders ───────────────────────────────────────────────────────

@@ -414,6 +414,7 @@ model ListProduct {
   sectionId     String
   quantity      Int                  @default(1)
   hidden        Boolean              @default(false)
+  optional      Boolean              @default(false)
   approval      String?
   productId     String?
   catalogNumber String?

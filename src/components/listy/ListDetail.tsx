@@ -4,7 +4,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, ChevronDown, ChevronUp, Plus, ExternalLink, Minus, MoreHorizontal, Pencil, Trash2, GripVertical, FileDown, Sheet, ArrowDownUp, Eye, EyeOff, Check, X, RotateCcw, FolderInput, Wallet, AlertCircle, AlertTriangle, DollarSign, Copy, Comment } from "@/components/ui/icons";
+import { ChevronLeft, ChevronDown, ChevronUp, Plus, ExternalLink, Minus, MoreHorizontal, Pencil, Trash2, GripVertical, FileDown, Sheet, ArrowDownUp, Eye, EyeOff, Check, X, RotateCcw, FolderInput, Wallet, AlertCircle, AlertTriangle, DollarSign, Copy, Comment, CheckCircle, RadioButtonUnchecked } from "@/components/ui/icons";
 import ProductCommentPanel from "./ProductCommentPanel";
 import ListSectionNav from "./ListSectionNav";
 import { pusherClient } from "@/lib/pusher";
@@ -78,6 +78,7 @@ interface Product {
   quantity: number;
   order: number;
   hidden: boolean;
+  optional: boolean;
   category: string | null;
   approval: string | null;
   productId: string | null;
@@ -151,7 +152,7 @@ function SectionTotal({ products, budget }: { products: Product[]; budget?: numb
   let currency = "";
   let hasAny = false;
 
-  for (const p of products.filter((p) => !p.hidden)) {
+  for (const p of products.filter((p) => !p.hidden && !p.optional)) {
     const n = parsePrice(p.price);
     if (n !== null) {
       total += n * p.quantity;
@@ -242,6 +243,7 @@ function ProductRow({
   onDelete,
   onOpenComments,
   onToggleHidden,
+  onToggleOptional,
   onMove,
   onCopy,
   onOpenMoveDialog,
@@ -267,6 +269,7 @@ function ProductRow({
   onDelete: () => void;
   onOpenComments: () => void;
   onToggleHidden: () => void;
+  onToggleOptional: () => void;
   onMove: (targetSectionId: string) => void;
   onCopy: (targetSectionId: string) => void;
   onOpenMoveDialog: () => void;
@@ -368,6 +371,12 @@ function ProductRow({
           </DropdownMenuItem>
         )}
         <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={onToggleOptional}>
+          {product.optional
+            ? <CheckCircle size={13} className="mr-2 text-primary/70" />
+            : <RadioButtonUnchecked size={13} className="mr-2" />}
+          {product.optional ? "Oznacz jako podstawowy" : "Oznacz jako opcjonalny"}
+        </DropdownMenuItem>
         <DropdownMenuItem onClick={onToggleHidden}>
           {product.hidden ? <Eye size={13} className="mr-2" /> : <EyeOff size={13} className="mr-2" />}
           {product.hidden ? t.render.showToClient : t.render.hideFromClient}
@@ -521,6 +530,9 @@ function ProductRow({
           </button>
           {!isCollapsed && (
             <>
+              <button onClick={onToggleOptional} className="w-5 h-5 flex items-center justify-center transition-colors" title={product.optional ? "Produkt opcjonalny (kliknij, by oznaczyć jako podstawowy)" : "Produkt podstawowy (kliknij, by oznaczyć jako opcjonalny)"}>
+                {product.optional ? <RadioButtonUnchecked size={14} className="text-muted-foreground hover:text-foreground" /> : <CheckCircle size={14} className="text-primary/70 hover:text-muted-foreground" />}
+              </button>
               <button onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); setCopyMenuPos({ top: r.top, left: r.right + 6 }); setCopyMenuOpen(true); }} className="w-5 h-5 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors" title={t.listy.copyToSection}>
                 <Copy size={14} />
               </button>
@@ -1546,6 +1558,46 @@ export default function ListDetail({ list, designerName, designerEmail, designer
     }
   }
 
+  async function handleToggleOptional(sectionId: string, productId: string) {
+    const section = sections.find((s) => s.id === sectionId);
+    const product = section?.products.find((p) => p.id === productId);
+    if (!product) return;
+    const optional = !product.optional;
+    setSections((prev) =>
+      prev.map((s) =>
+        s.id === sectionId
+          ? { ...s, products: s.products.map((p) => p.id === productId ? { ...p, optional } : p) }
+          : s
+      )
+    );
+    try {
+      const res = await fetch(`/api/lists/${list.id}/sections/${sectionId}/products/${productId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ optional }),
+      });
+      if (!res.ok) {
+        setSections((prev) =>
+          prev.map((s) =>
+            s.id === sectionId
+              ? { ...s, products: s.products.map((p) => p.id === productId ? { ...p, optional: !optional } : p) }
+              : s
+          )
+        );
+        toast.error("Nie udało się zmienić statusu produktu");
+      }
+    } catch {
+      setSections((prev) =>
+        prev.map((s) =>
+          s.id === sectionId
+            ? { ...s, products: s.products.map((p) => p.id === productId ? { ...p, optional: !optional } : p) }
+            : s
+        )
+      );
+      toast.error("Nie udało się zmienić statusu produktu");
+    }
+  }
+
   async function handleApprovalChange(sectionId: string, productId: string, value: string | null) {
     const prev = approvals[productId];
     setApprovals((a) => ({ ...a, [productId]: value }));
@@ -1584,8 +1636,8 @@ export default function ListDetail({ list, designerName, designerEmail, designer
     }
   }
 
-  // Grand total across all sections (excluding hidden products)
-  const allProducts = sections.flatMap((s) => s.products.filter((p) => !p.hidden));
+  // Grand total across all sections (excluding hidden and optional products)
+  const allProducts = sections.flatMap((s) => s.products.filter((p) => !p.hidden && !p.optional));
   const grandTotal = allProducts.reduce((sum, p) => {
     const n = parsePrice(p.price);
     return n !== null ? sum + n * p.quantity : sum;
@@ -1728,7 +1780,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
         ]);
       }
 
-      const sectionTotal = visibleProducts.reduce((s, p) => {
+      const sectionTotal = visibleProducts.filter((p) => !p.optional).reduce((s, p) => {
         const n = parsePrice(p.price);
         return n !== null ? s + n * p.quantity : s;
       }, 0);
@@ -1938,6 +1990,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                           onDelete={() => handleDeleteProduct(unsortedSection.id, product.id)}
                           onOpenComments={() => openCommentsPanel(product.id)}
                           onToggleHidden={() => handleToggleHidden(unsortedSection.id, product.id)}
+                          onToggleOptional={() => handleToggleOptional(unsortedSection.id, product.id)}
                           onMove={(targetSectionId) => handleMoveProduct(unsortedSection.id, product.id, targetSectionId)}
                           onCopy={(targetSectionId) => handleCopyProduct(unsortedSection.id, product, targetSectionId)}
                           onOpenMoveDialog={() => setMoveState({ product, sectionId: unsortedSection.id })}
@@ -2090,6 +2143,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                                     onDelete={() => handleDeleteProduct(section.id, product.id)}
                                     onOpenComments={() => openCommentsPanel(product.id)}
                                     onToggleHidden={() => handleToggleHidden(section.id, product.id)}
+                                    onToggleOptional={() => handleToggleOptional(section.id, product.id)}
                                     onMove={(targetSectionId) => handleMoveProduct(section.id, product.id, targetSectionId)}
                                     onCopy={(targetSectionId) => handleCopyProduct(section.id, product, targetSectionId)}
                                     onOpenMoveDialog={() => setMoveState({ product, sectionId: section.id })}

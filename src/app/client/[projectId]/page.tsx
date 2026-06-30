@@ -35,7 +35,7 @@ interface ListProduct {
   id: string; name: string; url: string | null; imageUrl: string | null;
   price: string | null; manufacturer: string | null; color: string | null;
   dimensions: string | null; description: string | null; deliveryTime: string | null;
-  quantity: number; order: number; commentCount: number; approval: string | null; note: string | null;
+  quantity: number; order: number; commentCount: number; approval: string | null; note: string | null; optional: boolean;
 }
 interface ListSection { id: string; name: string; order: number; unsorted: boolean; products: ListProduct[]; }
 interface ListData {
@@ -1004,9 +1004,10 @@ export default function ClientProjectPage() {
               return price.replace(/[\d.,\s]/g, "").trim();
             };
             const allProducts = selectedListData.sections.flatMap((s) => s.products);
-            const grandTotal = allProducts.reduce((sum, p) => { const n = parsePrice(p.price); return n !== null ? sum + n * p.quantity : sum; }, 0);
-            const grandCurrency = getCurrency(allProducts.find((p) => p.price)?.price ?? null);
-            const hasTotal = allProducts.some((p) => parsePrice(p.price) !== null);
+            const countedProducts = allProducts.filter((p) => !p.optional);
+            const grandTotal = countedProducts.reduce((sum, p) => { const n = parsePrice(p.price); return n !== null ? sum + n * p.quantity : sum; }, 0);
+            const grandCurrency = getCurrency(countedProducts.find((p) => p.price)?.price ?? null);
+            const hasTotal = countedProducts.some((p) => parsePrice(p.price) !== null);
             const unsortedProducts = selectedListData.sections.filter((s) => s.unsorted).flatMap((s) => s.products);
             const regularSections = selectedListData.sections.filter((s) => !s.unsorted).map((s) => ({ id: s.id, name: s.name, order: s.order, products: s.products }));
             const sections = [...regularSections, ...(unsortedProducts.length > 0 ? [{ id: "__unsorted__", name: "Pozostałe", order: 9999, products: unsortedProducts }] : [])];

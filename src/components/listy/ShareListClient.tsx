@@ -50,6 +50,7 @@ interface Product {
   commentCount: number;
   approval: string | null;
   note: string | null;
+  optional: boolean;
 }
 
 interface Section {
@@ -258,7 +259,7 @@ export default function ShareListClient({
             </div>
             {(() => {
               let total = 0; let cur = ""; let has = false;
-              for (const p of section.products) { const n = parsePrice(p.price); if (n !== null) { total += n * p.quantity; if (!cur) cur = getCurrency(p.price); has = true; } }
+              for (const p of section.products.filter((p) => !p.optional)) { const n = parsePrice(p.price); if (n !== null) { total += n * p.quantity; if (!cur) cur = getCurrency(p.price); has = true; } }
               return has && !hidePrices ? <span className="text-sm font-semibold">{formatPriceNum(total)} {cur}</span> : null;
             })()}
           </div>
@@ -314,8 +315,7 @@ export default function ShareListClient({
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <p className="font-medium text-sm truncate">{product.name}</p>
-                          {approval === "accepted" && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 shrink-0">{t.listy.accepted}</span>}
-                          {approval === "rejected" && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 shrink-0">{t.listy.rejected}</span>}
+                          {product.optional && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium border border-dashed border-muted-foreground/40 text-muted-foreground shrink-0 cursor-default" title="Produkt jest opcjonalny, jego cena nie jest wliczona do sumy kosztów">Opcjonalny</span>}
                         </div>
                         {product.manufacturer && <p className="text-xs text-muted-foreground mt-0.5">{product.manufacturer}</p>}
                         <div className="flex flex-col gap-y-0.5 mt-1">
@@ -367,8 +367,7 @@ export default function ShareListClient({
                         {/* Row 2: price + approval badge */}
                         <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                           {totalPrice !== null && !hidePrices && <span className="text-sm font-semibold text-foreground tabular-nums">{formatPriceNum(totalPrice)} {currency}</span>}
-                          {approval === "accepted" && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">{t.listy.accepted}</span>}
-                          {approval === "rejected" && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">{t.listy.rejected}</span>}
+                          {product.optional && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium border border-dashed border-muted-foreground/40 text-muted-foreground cursor-default" title="Produkt jest opcjonalny, jego cena nie jest wliczona do sumy kosztów">Opcjonalny</span>}
                         </div>
                         {/* Row 3: qty + link | comments */}
                         <div className="flex items-center justify-between mt-1.5">

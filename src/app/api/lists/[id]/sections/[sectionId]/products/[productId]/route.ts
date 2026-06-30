@@ -54,6 +54,17 @@ export async function PATCH(
       return NextResponse.json(updated);
     }
 
+    if (body.optional !== undefined) {
+      if (typeof body.optional !== "boolean") {
+        return NextResponse.json({ error: "Nieprawidłowa wartość" }, { status: 400 });
+      }
+      const updated = await prisma.listProduct.update({
+        where: { id: productId },
+        data: { optional: body.optional },
+      });
+      return NextResponse.json(updated);
+    }
+
     if (body.quantity !== undefined) {
       if (typeof body.quantity !== "number" || body.quantity < 1) {
         return NextResponse.json({ error: "Nieprawidłowa ilość" }, { status: 400 });
