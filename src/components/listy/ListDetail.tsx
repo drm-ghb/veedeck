@@ -4,7 +4,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, ChevronDown, ChevronUp, Plus, ExternalLink, Minus, MoreHorizontal, Pencil, Trash2, GripVertical, FileDown, Sheet, ArrowDownUp, Eye, EyeOff, Check, X, RotateCcw, FolderInput, Wallet, AlertCircle, AlertTriangle, DollarSign, Copy, Comment, CheckCircle, RadioButtonUnchecked } from "@/components/ui/icons";
+import { ChevronLeft, ChevronDown, ChevronUp, Plus, ExternalLink, Minus, MoreHorizontal, Pencil, Trash2, GripVertical, FileDown, Sheet, ArrowDownUp, Eye, EyeOff, Check, X, RotateCcw, FolderInput, Wallet, AlertCircle, AlertTriangle, DollarSign, Copy, Comment, CheckCircle, RadioButtonUnchecked, Search } from "@/components/ui/icons";
 import ProductCommentPanel from "./ProductCommentPanel";
 import ListSectionNav from "./ListSectionNav";
 import { pusherClient } from "@/lib/pusher";
@@ -952,6 +952,9 @@ export default function ListDetail({ list, designerName, designerEmail, designer
   }, [list.sections]);
   const [budget, setBudget] = useState<number | null>(list.budget);
   const [hidePrices, setHidePrices] = useState(list.hidePrices);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const allCategories = [...translatedCategories, ...customCategories.map((c) => ({ value: c, label: c }))];
   const [sectionBudgets, setSectionBudgets] = useState<Record<string, number | null>>(() =>
     Object.fromEntries(list.sections.map((s) => [s.id, s.budget ?? null]))
@@ -1636,6 +1639,19 @@ export default function ListDetail({ list, designerName, designerEmail, designer
     }
   }
 
+  // Search filter
+  const searchLower = searchQuery.toLowerCase().trim();
+  const displaySections = searchLower
+    ? sections.map((s) => ({
+        ...s,
+        products: s.products.filter((p) =>
+          p.name.toLowerCase().includes(searchLower) ||
+          (p.manufacturer ?? "").toLowerCase().includes(searchLower) ||
+          (p.supplier ?? "").toLowerCase().includes(searchLower)
+        ),
+      })).filter((s) => s.unsorted || s.products.length > 0)
+    : sections;
+
   // Grand total across all sections (excluding hidden and optional products)
   const allProducts = sections.flatMap((s) => s.products.filter((p) => !p.hidden && !p.optional));
   const grandTotal = allProducts.reduce((sum, p) => {
@@ -1895,6 +1911,36 @@ export default function ListDetail({ list, designerName, designerEmail, designer
             <DollarSign size={13} />
             <span className="hidden sm:inline">{hidePrices ? t.listy.pricesHiddenBtn : t.listy.hidePricesBtn}</span>
           </button>
+          <div className="w-px h-5 bg-border mx-0.5 hidden sm:block" />
+          <div className="relative">
+            <button
+              onClick={() => { setSearchOpen((v) => { if (v) { setSearchQuery(""); } else { setTimeout(() => searchInputRef.current?.focus(), 50); } return !v; }); }}
+              className={`w-8 h-8 flex items-center justify-center rounded-lg border transition-colors ${searchOpen ? "border-primary/60 bg-primary/8 text-primary" : "border-border bg-background hover:bg-muted text-muted-foreground hover:text-foreground"}`}
+              title="Szukaj produktu na liście"
+            >
+              <Search size={13} />
+            </button>
+            {searchOpen && (
+              <div className="absolute right-9 top-0 flex items-center">
+                <Search size={13} className="absolute left-2.5 text-muted-foreground pointer-events-none" />
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Escape") { setSearchQuery(""); setSearchOpen(false); } }}
+                  placeholder="Szukaj produktu…"
+                  className="h-8 pl-7 pr-6 text-xs rounded-lg border border-border bg-background focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/60 transition-colors w-40 placeholder:text-muted-foreground shadow-sm"
+                  autoFocus
+                />
+                {searchQuery && (
+                  <button onClick={() => setSearchQuery("")} className="absolute right-1.5 text-muted-foreground hover:text-foreground transition-colors">
+                    <X size={11} />
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
         </div>
         {hasTotal && (
           <div className="flex flex-col items-end gap-1 shrink-0 pr-1 min-w-0">
@@ -1921,11 +1967,11 @@ export default function ListDetail({ list, designerName, designerEmail, designer
       </div>
 
       <div className="md:max-w-[75%] md:mx-auto">
-      {sections.filter((s) => !s.unsorted).length > 1 && (
+      {displaySections.filter((s) => !s.unsorted).length > 1 && (
         <div className="hidden md:block h-0 overflow-visible sticky top-[76px] z-30">
           <div className="absolute right-full top-0 pr-4 w-36">
             <ListSectionNav
-              sections={sections.filter((s) => !s.unsorted).map((s) => ({ id: s.id, name: s.name }))}
+              sections={displaySections.filter((s) => !s.unsorted).map((s) => ({ id: s.id, name: s.name }))}
               scrollOffset={80}
             />
           </div>
@@ -1952,7 +1998,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
       )}
 
       {/* Empty state */}
-      {sections.filter((s) => !s.unsorted).length === 0 && !addingSection && (
+      {sections.filter((s) => !s.unsorted).length === 0 && !addingSection && !searchLower && (
         <div className="flex flex-col items-center justify-center py-24 text-center">
           <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
             <Plus size={28} className="text-primary" />
@@ -1969,7 +2015,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
 
         {/* Unsorted products */}
         {(() => {
-          const unsortedSection = sections.find((s) => s.unsorted);
+          const unsortedSection = displaySections.find((s) => s.unsorted);
           if (!unsortedSection || unsortedSection.products.length === 0) return null;
           return (
             <div className="mb-8">
@@ -2017,7 +2063,13 @@ export default function ListDetail({ list, designerName, designerEmail, designer
 
         <SortableContext items={sections.filter((s) => !s.unsorted).map((s) => s.id)} strategy={verticalListSortingStrategy}>
           <div className="space-y-8">
-            {sections.filter((s) => !s.unsorted).map((section) => (
+            {searchLower && displaySections.filter((s) => !s.unsorted).length === 0 && (
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <Search size={28} className="text-muted-foreground/30 mb-3" />
+                <p className="text-sm text-muted-foreground">Brak wyników dla „{searchQuery}"</p>
+              </div>
+            )}
+            {displaySections.filter((s) => !s.unsorted).map((section) => (
               <SortableSection key={section.id} id={section.id}>
                 {(dragHandle) => (
                   <div id={`section-nav-${section.id}`}>
