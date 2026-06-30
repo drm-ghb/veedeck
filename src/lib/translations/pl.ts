@@ -154,7 +154,7 @@ export const pl = {
     statsProjects: "Projektów ProjectFlow",
     statsLists: "List zakupowych",
     statsNotifications: "Powiadomień",
-    recentProjectsTitle: "Ostatnie projekty ProjectFlow",
+    recentProjectsTitle: "Ostatnie projekty",
     allLabel: "Wszystkie",
     noProjectsYet: "Nie masz jeszcze żadnych projektów",
     clientPrefix: "Klient:",

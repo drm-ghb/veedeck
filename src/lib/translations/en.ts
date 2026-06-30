@@ -156,7 +156,7 @@ export const en: TranslationKeys = {
     statsProjects: "ProjectFlow projects",
     statsLists: "Shopping lists",
     statsNotifications: "Notifications",
-    recentProjectsTitle: "Recent ProjectFlow projects",
+    recentProjectsTitle: "Recent projects",
     allLabel: "All",
     noProjectsYet: "No projects yet",
     clientPrefix: "Client:",
