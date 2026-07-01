@@ -41,6 +41,7 @@ export default function AdminUsersClient({
 }) {
   const t = useT();
   const [list, setList] = useState(initialUsers);
+  const [roleFilter, setRoleFilter] = useState<"all" | "designer" | "client" | "contractor">("all");
   const [passwordModal, setPasswordModal] = useState<{ id: string; name: string | null } | null>(null);
   const [newPassword, setNewPassword] = useState("");
   const [savingPassword, setSavingPassword] = useState(false);
@@ -173,8 +174,38 @@ export default function AdminUsersClient({
     return { text: `${t.admin.trialDaysLabel2} ${days}d`, color: days <= 5 ? "text-amber-400" : "text-white/50" };
   }
 
+  const FILTERS: { key: typeof roleFilter; label: string }[] = [
+    { key: "all", label: "Wszyscy" },
+    { key: "designer", label: "Projektant" },
+    { key: "client", label: "Klient" },
+    { key: "contractor", label: "Wykonawca" },
+  ];
+
+  const filtered = roleFilter === "all" ? list : list.filter((u) => u.role === roleFilter);
+
   return (
     <>
+      {/* Role filter tabs */}
+      <div className="flex gap-1 mb-4">
+        {FILTERS.map(({ key, label }) => {
+          const count = key === "all" ? list.length : list.filter((u) => u.role === key).length;
+          return (
+            <button
+              key={key}
+              onClick={() => setRoleFilter(key)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                roleFilter === key
+                  ? "bg-white/12 text-white"
+                  : "text-white/40 hover:text-white/70 hover:bg-white/5"
+              }`}
+            >
+              {label}
+              <span className={`ml-1.5 text-[10px] ${roleFilter === key ? "text-white/50" : "text-white/20"}`}>{count}</span>
+            </button>
+          );
+        })}
+      </div>
+
       <div className="bg-white/3 border border-white/8 rounded-xl overflow-hidden">
         <div className="grid grid-cols-[1fr_140px_100px_60px_120px] gap-4 px-5 py-3 bg-white/3 border-b border-white/8 text-xs font-medium text-white/30 uppercase tracking-wide">
           <span>{t.admin.usersNav}</span>
@@ -184,17 +215,17 @@ export default function AdminUsersClient({
           <span></span>
         </div>
 
-        {list.length === 0 && (
+        {filtered.length === 0 && (
           <p className="text-center text-white/30 py-12 text-sm">{t.admin.noUsers}</p>
         )}
 
-        {list.map((user, i) => {
+        {filtered.map((user, i) => {
           const { text: trialText, color: trialColor } = trialLabel(user);
           return (
             <div
               key={user.id}
               className={`grid grid-cols-[1fr_140px_100px_60px_120px] gap-4 px-5 py-4 items-center ${
-                i !== list.length - 1 ? "border-b border-white/5" : ""
+                i !== filtered.length - 1 ? "border-b border-white/5" : ""
               } ${user.id === currentUserId ? "bg-blue-500/5" : ""}`}
             >
               {/* Name + email — link to detail page */}
@@ -206,9 +237,11 @@ export default function AdminUsersClient({
                   <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0 ${
                     user.role === "client"
                       ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/20"
+                      : user.role === "contractor"
+                      ? "bg-orange-500/15 text-orange-400 border border-orange-500/20"
                       : "bg-violet-500/15 text-violet-400 border border-violet-500/20"
                   }`}>
-                    {user.role === "client" ? t.admin.clientRole : t.admin.designerRole}
+                    {user.role === "client" ? t.admin.clientRole : user.role === "contractor" ? "Wykonawca" : t.admin.designerRole}
                   </span>
                   {user.isAdmin && (
                     <span className="flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-blue-500/15 text-blue-400 border border-blue-500/20 flex-shrink-0">

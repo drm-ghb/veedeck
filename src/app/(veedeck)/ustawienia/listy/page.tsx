@@ -48,7 +48,7 @@ export default function SettingsListyPage() {
   const [newCatName, setNewCatName] = useState("");
 
   useEffect(() => {
-    fetch("/api/ustawienia/lists")
+    fetch("/api/settings/lists")
       .then((r) => r.json())
       .then((data) => {
         const custom: string[] = Array.isArray(data.customCategories) ? data.customCategories : [];
@@ -65,7 +65,7 @@ export default function SettingsListyPage() {
     try {
       const customCategories = categories.filter((c) => c.custom).map((c) => c.value);
       const listsCategoryOrder = categories.map((c) => c.value);
-      const res = await fetch("/api/ustawienia/lists", {
+      const res = await fetch("/api/settings/lists", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ listsCategoryOrder, customCategories }),

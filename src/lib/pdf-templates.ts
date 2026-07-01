@@ -633,14 +633,16 @@ async function renderEditorial(
   doc.text(s.preparedBy.toUpperCase(), ML, ly);
   ly += 5.5;
 
+  let editorialNameX = ML;
   if (logoDataUrl) {
     try {
-      doc.addImage(logoDataUrl, "JPEG", ML, ly, 8, 8);
+      doc.addImage(logoDataUrl, "JPEG", ML, ly, 12, 12);
+      editorialNameX = ML + 14;
       doc.setFont(FONT, "bold");
       doc.setFontSize(11.5);
       doc.setTextColor(...BLACK);
-      doc.text(opts.designerName ?? "Projektant", ML + 10, ly + 5.5);
-      ly += 11;
+      doc.text(opts.designerName ?? "Projektant", ML + 14, ly + 7);
+      ly += 14;
     } catch {
       doc.setFont(FONT, "bold");
       doc.setFontSize(11.5);
@@ -660,7 +662,7 @@ async function renderEditorial(
     doc.setFont(FONT, "normal");
     doc.setFontSize(8.5);
     doc.setTextColor(...MUTED);
-    doc.text(opts.designerEmail, ML, ly);
+    doc.text(opts.designerEmail, editorialNameX, ly);
     ly += 5;
   }
 
@@ -947,13 +949,15 @@ async function renderAtelier(
   doc.text(s.preparedBy, ML, ly);
   ly += 5.5;
 
+  let atelierNameX = ML;
   if (logoDataUrl) {
     try {
-      doc.addImage(logoDataUrl, "JPEG", ML, ly, 9, 9);
+      doc.addImage(logoDataUrl, "JPEG", ML, ly, 12, 12);
+      atelierNameX = ML + 14;
       doc.setFont(FONT, "bold");
       doc.setFontSize(12);
       doc.setTextColor(...DARK);
-      doc.text(opts.designerName ?? "Projektant", ML + 11.5, ly + 6);
+      doc.text(opts.designerName ?? "Projektant", ML + 14, ly + 7);
       ly += 14;
     } catch {
       doc.setFont(FONT, "bold");
@@ -974,7 +978,7 @@ async function renderAtelier(
     doc.setFont(FONT, "normal");
     doc.setFontSize(8.5);
     doc.setTextColor(...MUTED);
-    doc.text(opts.designerEmail, ML, ly);
+    doc.text(opts.designerEmail, atelierNameX, ly);
   }
 
   // Right: date + client
@@ -1294,14 +1298,16 @@ async function renderArchitect(
   doc.text("FROM / STUDIO", ML, ly);
   ly += 5.5;
 
+  let architectNameX = ML;
   if (logoDataUrl) {
     try {
-      doc.addImage(logoDataUrl, "JPEG", ML, ly, 8, 8);
+      doc.addImage(logoDataUrl, "JPEG", ML, ly, 12, 12);
+      architectNameX = ML + 14;
       doc.setFont(FONT, "bold");
       doc.setFontSize(11);
       doc.setTextColor(...BLACK);
-      doc.text(opts.designerName ?? "Projektant", ML + 10, ly + 5.5);
-      ly += 9.5;
+      doc.text(opts.designerName ?? "Projektant", ML + 14, ly + 7);
+      ly += 14;
     } catch {
       doc.setFont(FONT, "bold");
       doc.setFontSize(11);
@@ -1321,7 +1327,7 @@ async function renderArchitect(
     doc.setFont(FONT, "normal");
     doc.setFontSize(8);
     doc.setTextColor(...DARK_MUTED);
-    doc.text(opts.designerEmail, ML, ly);
+    doc.text(opts.designerEmail, architectNameX, ly);
   }
 
   let ry = y + 8;
@@ -1336,8 +1342,9 @@ async function renderArchitect(
     doc.setFont(FONT, "bold");
     doc.setFontSize(11);
     doc.setTextColor(...BLACK);
-    doc.text(opts.list.project.clientName, rx, ry + 5.5, { maxWidth: COL_W });
-    ry += 7.5;
+    const clientNameLines = doc.splitTextToSize(opts.list.project.clientName, COL_W) as string[];
+    doc.text(clientNameLines, rx, ry + 5.5);
+    ry += 5.5 + clientNameLines.length * 5.5 + 2;
   }
 
   if (addressLines.length > 0) {
@@ -1634,15 +1641,19 @@ async function renderLinen(
   doc.text(today, pillX + 5, y + 4.2);
 
   // Designer name / logo (left)
-  if (logoDataUrl) {
-    try {
-      doc.addImage(logoDataUrl, "JPEG", ML, y, 7, 7);
-    } catch { /* skip */ }
-  }
   doc.setFont(FONT, "bold");
   doc.setFontSize(11);
   doc.setTextColor(...DARK);
-  doc.text(opts.designerName ?? "Studio", ML, y + 5);
+  if (logoDataUrl) {
+    try {
+      doc.addImage(logoDataUrl, "JPEG", ML, y, 12, 12);
+      doc.text(opts.designerName ?? "Studio", ML + 14, y + 7);
+    } catch {
+      doc.text(opts.designerName ?? "Studio", ML, y + 5);
+    }
+  } else {
+    doc.text(opts.designerName ?? "Studio", ML, y + 5);
+  }
 
   y += 12;
 
@@ -1687,8 +1698,9 @@ async function renderLinen(
     doc.setFont(FONT, "bold");
     doc.setFontSize(11);
     doc.setTextColor(...DARK);
-    doc.text(opts.list.project.clientName, cardRX, cardRY + 4, { maxWidth: COL_W });
-    cardRY += 6.5;
+    const clientNameLines = doc.splitTextToSize(opts.list.project.clientName, COL_W) as string[];
+    doc.text(clientNameLines, cardRX, cardRY + 4);
+    cardRY += 4 + clientNameLines.length * 5.5 + 2;
   }
   if (addressLines.length > 0) {
     doc.setFont(FONT, "normal");

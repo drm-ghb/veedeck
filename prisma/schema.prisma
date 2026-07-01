@@ -87,6 +87,7 @@ model User {
   teamMembers                User[]                  @relation("TeamMembers")
   memberPermission           TeamMemberPermission?   @relation("MemberPermissions")
   ownedMemberPermissions     TeamMemberPermission[]  @relation("OwnedPermissions")
+  helpRequests               HelpRequest[]
 }
 
 model TeamMemberPermission {
@@ -1022,6 +1023,21 @@ model ContractorFileComment {
   title              String?
   file               ContractorFile        @relation(fields: [fileId], references: [id], onDelete: Cascade)
   replies            ContractorFileReply[]
+}
+
+model HelpRequest {
+  id             String   @id @default(cuid())
+  userId         String?
+  userEmail      String
+  userName       String?
+  category       String?
+  subject        String
+  message        String
+  attachmentUrl  String?
+  attachmentName String?
+  status         String   @default("open")
+  createdAt      DateTime @default(now())
+  user           User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
 }
 
 model ContractorFileReply {

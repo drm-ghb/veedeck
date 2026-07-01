@@ -189,6 +189,15 @@ export const ourFileRouter = {
     .onUploadComplete(async ({ file }) => {
       return { url: file.url, key: file.key, name: file.name };
     }),
+  helpAttachmentUploader: f({ blob: { maxFileSize: "16MB", maxFileCount: 1 } })
+    .middleware(async () => {
+      const session = await auth();
+      if (!session?.user?.id) throw new Error("Unauthorized");
+      return { userId: session.user.id };
+    })
+    .onUploadComplete(async ({ file }) => {
+      return { url: file.url, key: file.key, name: file.name };
+    }),
   clientChatImageUploader: f({ image: { maxFileSize: "8MB", maxFileCount: 1 } })
     .middleware(async ({ req }) => {
       const token = req.headers.get("x-share-token");

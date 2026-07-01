@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { Users, Activity, ShieldCheck, LogOut } from "lucide-react";
+import { Users, Activity, ShieldCheck, LogOut, Inbox } from "lucide-react";
 import { useT } from "@/lib/i18n";
 
 export default function AdminSidebar({
@@ -17,6 +17,7 @@ export default function AdminSidebar({
   const pathname = usePathname();
   const items = [
     { href: "/admin/users", label: t.admin.usersNav, icon: <Users size={15} /> },
+    { href: "/admin/tickets", label: "Zgłoszenia", icon: <Inbox size={15} /> },
     { href: "/admin/logs", label: t.admin.logsNav, icon: <Activity size={15} /> },
   ];
 
