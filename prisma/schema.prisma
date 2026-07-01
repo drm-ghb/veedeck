@@ -985,8 +985,9 @@ model ContractorFolder {
   visible      Boolean              @default(true)
   order        Int                  @default(0)
   createdAt    DateTime             @default(now())
-  parentId     String?
-  files        ContractorFile[]
+  parentId       String?
+  sourceFolderId String?
+  files          ContractorFile[]
   assignment   ContractorAssignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
   parent       ContractorFolder?    @relation("SubFolders", fields: [parentId], references: [id], onDelete: Cascade)
   subfolders   ContractorFolder[]   @relation("SubFolders")

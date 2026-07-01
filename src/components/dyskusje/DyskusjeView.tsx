@@ -215,6 +215,7 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
   const firstUnreadRef = useRef<HTMLDivElement>(null);
   const firstUnreadIdRef = useRef<string | null>(null);
   const isInitialScrollDoneRef = useRef(false);
+  const prevMessageCountRef = useRef(0);
   const pusherRef = useRef<Pusher | null>(null);
   const pusherUnreadRef = useRef<Pusher | null>(null);
   const selectedIdRef = useRef<string | null>(null);
@@ -393,9 +394,14 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
         bottomRef.current?.scrollIntoView({ behavior: "instant" });
       }
       isInitialScrollDoneRef.current = true;
-    } else {
-      // New message arrived via Pusher
+      prevMessageCountRef.current = messages.length;
+    } else if (messages.length > prevMessageCountRef.current) {
+      // New message arrived via Pusher — scroll to bottom
       bottomRef.current?.scrollIntoView({ behavior: "instant" });
+      prevMessageCountRef.current = messages.length;
+    } else {
+      // Existing message updated (reaction, edit) — don't scroll
+      prevMessageCountRef.current = messages.length;
     }
   }, [messages, showResources, loadingMessages]);
 

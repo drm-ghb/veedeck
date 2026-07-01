@@ -26,6 +26,5 @@
       "resources": ["icons/*.png"],
       "matches": ["<all_urls>"]
     }
-  ],
-  "content_scripts": []
+  ]
 }

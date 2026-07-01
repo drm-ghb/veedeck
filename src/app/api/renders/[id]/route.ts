@@ -136,6 +136,8 @@ export async function DELETE(
     return NextResponse.json({ error: "Brak dostępu" }, { status: 403 });
   }
 
+  // Remove synced contractor files before deleting render
+  await prisma.contractorFile.deleteMany({ where: { renderId: id } });
   await prisma.render.delete({ where: { id } });
   return NextResponse.json({ success: true });
 }

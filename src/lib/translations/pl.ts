@@ -1616,7 +1616,7 @@ export const pl = {
     uploadTab: "Prześlij plik",
     projectFlowTab: "Wybierz z ProjectFlow",
     noRooms: "Brak pomieszczeń w tym projekcie",
-    addFolderBtn: "Dodaj folder",
+    addFolderBtn: "Wgraj folder",
     selectAll: "Zaznacz wszystkie",
     deselectAll: "Odznacz",
     dropHere: "Upuść plik tutaj",

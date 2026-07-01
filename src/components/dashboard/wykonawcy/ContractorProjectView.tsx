@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
-import { Eye, EyeOff, Plus, FileText, Image, Ruler, Trash2, ChevronLeft, ChevronDown, ChevronRight, Download, FolderPlus, Pencil, Check, X, CheckSquare, GripVertical, Info, MessageSquare, MoreHorizontal, Pin } from "@/components/ui/icons";
+import { Eye, EyeOff, Plus, FileText, Image, Ruler, Trash2, ChevronLeft, ChevronDown, ChevronRight, Download, FolderPlus, Pencil, Check, X, CheckSquare, GripVertical, Info, MessageSquare, MoreHorizontal, Pin, RefreshCw } from "@/components/ui/icons";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, arrayMove, useSortable } from "@dnd-kit/sortable";
@@ -27,6 +27,7 @@ interface ContractorFile {
 interface ContractorSubfolder {
   id: string;
   name: string;
+  sourceFolderName?: string | null;
   _count: { files: number };
   files: ContractorFile[];
 }
@@ -521,6 +522,12 @@ export default function ContractorProjectView({
                             className="flex-1 flex items-center gap-2 text-sm font-medium text-left min-w-0"
                           >
                             <span className="truncate">{sub.name}</span>
+                            {sub.sourceFolderName && (
+                              <span className="flex items-center gap-1 text-xs text-primary shrink-0 font-normal" title={`Zsynchronizowany z: ${sub.sourceFolderName}`}>
+                                <RefreshCw size={11} />
+                                <span className="max-w-[100px] truncate">{sub.sourceFolderName}</span>
+                              </span>
+                            )}
                             <span className="text-xs text-muted-foreground font-normal shrink-0">{sub._count.files} {t.wykonawcy.filesPlural}</span>
                           </button>
                           {(() => { const u = subfolderUnreadTotal(sub, unreadCounts, unreadPinCounts); return u > 0 ? <span className="shrink-0 min-w-[18px] h-[18px] px-1 bg-primary text-primary-foreground text-[10px] font-bold rounded-full flex items-center justify-center leading-none">{u > 9 ? "9+" : u}</span> : null; })()}
@@ -588,6 +595,7 @@ export default function ContractorProjectView({
                         folderId={sub.id}
                         projectId={projectId}
                         rooms={rooms}
+                        isSubfolder={true}
                         onAdded={() => { setAddFileSubfolder(null); router.refresh(); }}
                       />
                     )}

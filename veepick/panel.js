@@ -24,6 +24,7 @@
   const styleEl = document.createElement("style");
   styleEl.id = "veepick-panel-styles";
   styleEl.textContent = `
+    @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@300&display=swap');
     #veepick-panel {
       all: initial;
       position: fixed !important;
@@ -46,7 +47,7 @@
     #veepick-panel * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
     #veepick-panel .vp-header { display: flex; align-items: center; gap: 8px; padding: 12px 14px; border-bottom: 1px solid #f0f0f0; flex-shrink: 0; }
     #veepick-panel .vp-header img { width: 24px; height: 24px; border-radius: 4px; object-fit: contain; }
-    #veepick-panel .vp-header h1 { font-size: 15px; font-weight: 700; letter-spacing: -0.3px; flex: 1; margin: 0; }
+    #veepick-panel .vp-header h1 { font-size: 15px; font-weight: 300; font-family: 'Nunito', sans-serif; letter-spacing: -0.05em; flex: 1; margin: 0; }
     #veepick-panel .vp-icon-btn { background: none; border: none; cursor: pointer; color: #999; padding: 4px; border-radius: 4px; font-size: 16px; line-height: 1; display: flex; align-items: center; justify-content: center; }
     #veepick-panel .vp-icon-btn:hover { color: #333; background: #f4f4f4; }
     #veepick-panel.vp-collapsed { width: 44px !important; }

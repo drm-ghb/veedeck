@@ -25,6 +25,7 @@ export async function POST(req: NextRequest) {
   if (action === "archive") {
     await prisma.render.updateMany({ where: { id: { in: ids } }, data: { archived: true } });
   } else if (action === "delete") {
+    await prisma.contractorFile.deleteMany({ where: { renderId: { in: ids } } });
     await prisma.render.deleteMany({ where: { id: { in: ids } } });
   } else if (action === "move") {
     const data: Record<string, unknown> = {};

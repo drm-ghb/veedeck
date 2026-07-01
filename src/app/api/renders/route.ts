@@ -79,5 +79,24 @@ export async function POST(req: NextRequest) {
     },
   });
 
+  // Sync to linked contractor folders
+  if (folderId) {
+    const linkedFolders = await prisma.contractorFolder.findMany({
+      where: { sourceFolderId: folderId },
+      select: { id: true },
+    });
+    if (linkedFolders.length > 0) {
+      await prisma.contractorFile.createMany({
+        data: linkedFolders.map((cf) => ({
+          folderId: cf.id,
+          renderId: render.id,
+          name: render.name,
+          fileType: render.fileType,
+          uploadedById: userId,
+        })),
+      });
+    }
+  }
+
   return NextResponse.json(render, { status: 201 });
 }

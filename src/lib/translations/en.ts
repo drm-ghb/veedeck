@@ -1614,7 +1614,7 @@ export const en: TranslationKeys = {
     uploadTab: "Upload file",
     projectFlowTab: "Choose from ProjectFlow",
     noRooms: "No rooms in this project",
-    addFolderBtn: "Add folder",
+    addFolderBtn: "Upload folder",
     selectAll: "Select all",
     deselectAll: "Deselect",
     dropHere: "Drop file here",

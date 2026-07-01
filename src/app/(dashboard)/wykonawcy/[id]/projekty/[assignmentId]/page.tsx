@@ -110,6 +110,16 @@ export default async function ContractorProjectPage({ params, searchParams }: Pr
     orderBy: { order: "asc" },
   });
 
+  // Lookup source folder names for synced subfolders
+  const sourceFolderIds = assignment.folders
+    .flatMap((f) => f.subfolders)
+    .map((s) => (s as any).sourceFolderId)
+    .filter(Boolean) as string[];
+  const sourceFoldersData = sourceFolderIds.length > 0
+    ? await prisma.folder.findMany({ where: { id: { in: sourceFolderIds } }, select: { id: true, name: true } })
+    : [];
+  const sourceFolderNameMap: Record<string, string> = Object.fromEntries(sourceFoldersData.map((f) => [f.id, f.name]));
+
   const serializedFolders = assignment.folders.map((f) => ({
     ...f,
     files: f.files.map((file) => ({
@@ -118,6 +128,7 @@ export default async function ContractorProjectPage({ params, searchParams }: Pr
     })),
     subfolders: f.subfolders.map((sub) => ({
       ...sub,
+      sourceFolderName: (sub as any).sourceFolderId ? (sourceFolderNameMap[(sub as any).sourceFolderId] ?? null) : null,
       files: sub.files.map((file) => ({
         ...file,
         createdAt: file.createdAt.toISOString(),

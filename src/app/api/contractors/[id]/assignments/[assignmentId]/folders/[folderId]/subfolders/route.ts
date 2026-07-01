@@ -26,7 +26,7 @@ export async function POST(
     return NextResponse.json({ error: "Nie znaleziono folderu" }, { status: 404 });
   }
 
-  const { name, renders } = await req.json();
+  const { name, renders, sourceFolderId } = await req.json();
   if (!name) {
     return NextResponse.json({ error: "Nazwa podfolderu jest wymagana" }, { status: 400 });
   }
@@ -38,6 +38,7 @@ export async function POST(
       parentId: folderId,
       name,
       type: parentFolder.type,
+      sourceFolderId: sourceFolderId || null,
       files: renders?.length
         ? {
             create: renders.map((r: { renderId: string; name: string; fileType: string }) => ({

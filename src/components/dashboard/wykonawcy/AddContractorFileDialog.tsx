@@ -39,6 +39,7 @@ interface Props {
   projectId: string;
   rooms: Room[];
   onAdded: () => void;
+  isSubfolder?: boolean;
 }
 
 function RenderThumbnail({ render, selected, onToggle }: { render: RenderItem; selected: boolean; onToggle: (id: string) => void }) {
@@ -71,7 +72,7 @@ function RenderThumbnail({ render, selected, onToggle }: { render: RenderItem; s
 }
 
 export default function AddContractorFileDialog({
-  open, onOpenChange, contractorId, assignmentId, folderId, projectId, rooms, onAdded,
+  open, onOpenChange, contractorId, assignmentId, folderId, projectId, rooms, onAdded, isSubfolder = false,
 }: Props) {
   const t = useT();
   const [tab, setTab] = useState<"upload" | "renderflow">("renderflow");
@@ -125,7 +126,7 @@ export default function AddContractorFileDialog({
     }
   }
 
-  async function addFolderFromProjectFolder(name: string, renders: RenderItem[]) {
+  async function addFolderFromProjectFolder(name: string, renders: RenderItem[], sourceFolderId?: string) {
     if (renders.length === 0) {
       toast.error(t.wykonawcy.folderNoFiles);
       return;
@@ -140,6 +141,7 @@ export default function AddContractorFileDialog({
           body: JSON.stringify({
             name,
             renders: renders.map((r) => ({ renderId: r.id, name: r.name, fileType: r.fileType })),
+            sourceFolderId: sourceFolderId || null,
           }),
         }
       );
@@ -175,11 +177,12 @@ export default function AddContractorFileDialog({
             body: JSON.stringify({
               name: f.name,
               renders: f.renders.map((r) => ({ renderId: r.id, name: r.name, fileType: r.fileType })),
+              sourceFolderId: f.id,
             }),
           }
         );
       }
-      // Direct renders on room (no folder) → one subfolder named after the room
+      // Direct renders on room (no folder) → one subfolder named after the room (no sync link)
       if (room.renders.length > 0) {
         await fetch(
           `/api/contractors/${contractorId}/assignments/${assignmentId}/folders/${folderId}/subfolders`,
@@ -338,14 +341,16 @@ export default function AddContractorFileDialog({
                         <span>{room.name}</span>
                         <span className="text-xs text-muted-foreground font-normal">{totalCount} {t.wykonawcy.filesPlural}</span>
                       </button>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); addFolderFromRoom(room); }}
-                        className="flex items-center gap-1 text-xs border border-border rounded px-2 py-0.5 hover:bg-muted transition-colors shrink-0"
-                        title={t.wykonawcy.addFolderBtn}
-                      >
-                        <FolderPlus size={12} />
-                        {t.wykonawcy.addFolderBtn}
-                      </button>
+                      {!isSubfolder && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); addFolderFromRoom(room); }}
+                          className="flex items-center gap-1 text-xs border border-border rounded px-2 py-0.5 hover:bg-muted transition-colors shrink-0"
+                          title={t.wykonawcy.addFolderBtn}
+                        >
+                          <FolderPlus size={12} />
+                          {t.wykonawcy.addFolderBtn}
+                        </button>
+                      )}
                       <button
                         onClick={(e) => { e.stopPropagation(); const ids = roomRenders.map((r) => r.id); const allSel = ids.every((id) => selectedRenderIds.includes(id)); setSelectedRenderIds(allSel ? selectedRenderIds.filter((id) => !ids.includes(id)) : [...new Set([...selectedRenderIds, ...ids])]); }}
                         className="text-xs border border-border rounded px-2 py-0.5 hover:bg-muted transition-colors shrink-0"
@@ -368,14 +373,16 @@ export default function AddContractorFileDialog({
                                 <span>{folder.name}</span>
                                 <span className="text-xs text-muted-foreground font-normal">{folder.renders.length} {t.wykonawcy.filesPlural}</span>
                               </button>
-                              <button
-                                onClick={(e) => { e.stopPropagation(); addFolderFromProjectFolder(folder.name, folder.renders); }}
-                                className="flex items-center gap-1 text-xs border border-border rounded px-2 py-0.5 hover:bg-muted transition-colors shrink-0"
-                                title={t.wykonawcy.addFolderBtn}
-                              >
-                                <FolderPlus size={12} />
-                                {t.wykonawcy.addFolderBtn}
-                              </button>
+                              {!isSubfolder && (
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); addFolderFromProjectFolder(folder.name, folder.renders, folder.id); }}
+                                  className="flex items-center gap-1 text-xs border border-border rounded px-2 py-0.5 hover:bg-muted transition-colors shrink-0"
+                                  title={t.wykonawcy.addFolderBtn}
+                                >
+                                  <FolderPlus size={12} />
+                                  {t.wykonawcy.addFolderBtn}
+                                </button>
+                              )}
                               <button
                                 onClick={(e) => { e.stopPropagation(); toggleAllInFolder(folder); }}
                                 className="text-xs border border-border rounded px-2 py-0.5 hover:bg-muted transition-colors shrink-0"
