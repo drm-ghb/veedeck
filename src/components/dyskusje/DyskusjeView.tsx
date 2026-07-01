@@ -157,6 +157,11 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
   const [newIsContractorChat, setNewIsContractorChat] = useState(false);
   const [newType, setNewType] = useState<"internal" | "project" | "contractor">("internal");
   const [newParticipantIds, setNewParticipantIds] = useState<string[]>([]);
+  const [newContractorId, setNewContractorId] = useState<string | null>(null);
+  const [newContractorAssignmentId, setNewContractorAssignmentId] = useState<string | null>(null);
+  const [contractorOptions, setContractorOptions] = useState<{ id: string; name: string | null; company: string | null }[]>([]);
+  const [contractorAssignmentOptions, setContractorAssignmentOptions] = useState<{ id: string; projectTitle: string }[]>([]);
+  const [loadingContractorAssignments, setLoadingContractorAssignments] = useState(false);
   const [showMembers, setShowMembers] = useState(false);
   const [membersData, setMembersData] = useState<{
     owner: { id: string; name: string | null; fullName: string | null; avatarUrl: string | null; role: string } | null;
@@ -286,6 +291,10 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
     const userChannel = pusher.subscribe(`user-${currentUserId}`);
     userChannel.bind("added-to-discussion", (data: { discussionId: string; title: string; addedBy: string }) => {
       toast.info(t.dyskusje.addedToDiscussion.replace("{by}", data.addedBy).replace("{title}", data.title));
+      router.refresh();
+    });
+    // Listen for new contractor-initiated discussion (first message from contractor)
+    userChannel.bind("new-discussion", () => {
       router.refresh();
     });
 
@@ -729,18 +738,13 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
 
   async function createDiscussion() {
     if (!newTitle.trim()) return;
-    const selectedProject = projects.find((p) => p.id === newProjectId);
-    const contractorAssignmentId =
-      newType === "contractor" && selectedProject?.contractorAssignmentId
-        ? selectedProject.contractorAssignmentId
-        : null;
 
     const body: Record<string, unknown> = {
       title: newTitle.trim(),
       type: newType,
       participantIds: newParticipantIds,
-      ...(contractorAssignmentId
-        ? { contractorAssignmentId }
+      ...(newType === "contractor"
+        ? (newContractorAssignmentId ? { contractorAssignmentId: newContractorAssignmentId } : {})
         : newProjectId
         ? { projectId: newProjectId }
         : {}),
@@ -771,6 +775,10 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
       setNewIsContractorChat(false);
       setNewType("internal");
       setNewParticipantIds([]);
+      setNewContractorId(null);
+      setNewContractorAssignmentId(null);
+      setContractorOptions([]);
+      setContractorAssignmentOptions([]);
       setShowNewModal(false);
       setSelectedId(d.id);
       router.refresh();
@@ -933,7 +941,19 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                   {(["internal", "project", "contractor"] as const).map((typ) => (
                     <button
                       key={typ}
-                      onClick={() => { setNewType(typ); if (typ === "internal") setNewProjectId(null); }}
+                      onClick={() => {
+                        setNewType(typ);
+                        setNewProjectId(null);
+                        setNewContractorId(null);
+                        setNewContractorAssignmentId(null);
+                        setContractorAssignmentOptions([]);
+                        if (typ === "contractor" && contractorOptions.length === 0) {
+                          fetch("/api/contractors")
+                            .then((r) => r.json())
+                            .then((data) => setContractorOptions(data))
+                            .catch(() => {});
+                        }
+                      }}
                       className={`flex-1 px-3 py-2 rounded-xl text-xs font-medium border transition-colors ${newType === typ ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:text-foreground hover:bg-muted"}`}
                     >
                       {typ === "internal" ? t.dyskusje.typeInternal : typ === "project" ? t.dyskusje.typeProject : t.dyskusje.typeContractor}
@@ -942,8 +962,8 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                 </div>
               </div>
 
-              {/* Project selector */}
-              {newType !== "internal" && (
+              {/* Project selector — type: project */}
+              {newType === "project" && (
                 <div className="space-y-1.5">
                   <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{t.dyskusje.projectLabel}</label>
                   <select
@@ -952,11 +972,62 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                     className="w-full text-sm px-3 py-2 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
                   >
                     <option value="">{t.dyskusje.noAssignment}</option>
-                    {projects
-                      .filter((p) => newType !== "contractor" || !!p.contractorAssignmentId)
-                      .map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}
+                    {projects.map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}
                   </select>
                 </div>
+              )}
+
+              {/* Contractor + assignment selectors — type: contractor */}
+              {newType === "contractor" && (
+                <>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{t.dyskusje.contractorLabel}</label>
+                    <select
+                      value={newContractorId ?? ""}
+                      onChange={(e) => {
+                        const cid = e.target.value || null;
+                        setNewContractorId(cid);
+                        setNewContractorAssignmentId(null);
+                        setContractorAssignmentOptions([]);
+                        if (cid) {
+                          setLoadingContractorAssignments(true);
+                          fetch(`/api/contractors/${cid}/assignments`)
+                            .then((r) => r.json())
+                            .then((data) => setContractorAssignmentOptions(
+                              data.map((a: { id: string; project?: { title: string } | null }) => ({
+                                id: a.id,
+                                projectTitle: a.project?.title ?? a.id,
+                              }))
+                            ))
+                            .catch(() => {})
+                            .finally(() => setLoadingContractorAssignments(false));
+                        }
+                      }}
+                      className="w-full text-sm px-3 py-2 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    >
+                      <option value="">{t.dyskusje.noContractorSelected}</option>
+                      {contractorOptions.map((c) => (
+                        <option key={c.id} value={c.id}>{c.company || c.name || c.id}</option>
+                      ))}
+                    </select>
+                  </div>
+                  {newContractorId && contractorAssignmentOptions.length > 0 && (
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{t.dyskusje.contractorAssignmentLabel}</label>
+                      <select
+                        value={newContractorAssignmentId ?? ""}
+                        onChange={(e) => setNewContractorAssignmentId(e.target.value || null)}
+                        className="w-full text-sm px-3 py-2 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
+                        disabled={loadingContractorAssignments}
+                      >
+                        <option value="">{t.dyskusje.noContractorAssignment}</option>
+                        {contractorAssignmentOptions.map((a) => (
+                          <option key={a.id} value={a.id}>{a.projectTitle}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                </>
               )}
 
               {/* Team members */}
@@ -2028,7 +2099,7 @@ function MessageBubble({ msg, isOwn, currentUserId, ownAvatarUrl, onImageClick, 
   }
 
   const actionBar = !isEditing && (
-    <div className={`absolute top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 ${isOwn ? "right-full pr-1 flex-row-reverse" : "left-full pl-1"}`}>
+    <div className={`absolute top-3 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 ${isOwn ? "right-full pr-1 flex-row-reverse" : "left-full pl-1"}`}>
       {/* Emoji reaction picker — desktop only */}
       <div className="hidden md:block relative" ref={emojiPickerRef}>
         <button
