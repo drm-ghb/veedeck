@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   ChevronDown, ChevronRight, Plus, Trash2, Pencil, Check, X,
-  GripVertical, Eye, EyeOff, Loader2, Users, Download,
+  GripVertical, Eye, EyeOff, Loader2, Users, Download, MoreVertical,
 } from "@/components/ui/icons";
 import DatePicker from "@/components/ui/DatePicker";
 import {
@@ -185,6 +185,7 @@ function SortableItemRow({
   const [editDates, setEditDates] = useState(false);
   const [startDate, setStartDate] = useState(toDateStr(item.startDate));
   const [endDate, setEndDate] = useState(toDateStr(item.endDate));
+  const [showMenu, setShowMenu] = useState(false);
 
   function saveName() {
     if (!nameVal.trim()) { setNameVal(item.name); setEditingName(false); return; }
@@ -228,13 +229,26 @@ function SortableItemRow({
             <DateBadge startDate={sectionDateRange.startDate} endDate={sectionDateRange.endDate} done={false} variant="plain" />
           </span>
         )}
-        <div className="w-24 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button onClick={() => onUpdate(item.id, { hidden: !item.hidden })} className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors" title={item.hidden ? t.schedule.showClient : t.schedule.hideClient}>
-            {item.hidden ? <EyeOff size={12} /> : <Eye size={12} />}
+        <div className="relative flex-shrink-0">
+          <button onClick={() => setShowMenu((v) => !v)} className="p-1 rounded text-muted-foreground hover:text-foreground">
+            <MoreVertical size={14} />
           </button>
-          <button onClick={() => onDelete(item.id)} className="p-1 rounded text-muted-foreground hover:text-red-500 hover:bg-muted transition-colors" title={t.schedule.deleteItem}>
-            <Trash2 size={12} />
-          </button>
+          {showMenu && (
+            <>
+              <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
+              <div className="absolute right-0 top-full mt-1 z-50 bg-popover border border-border rounded-xl shadow-lg py-1 min-w-[160px]">
+                <button onClick={() => { setShowMenu(false); onUpdate(item.id, { hidden: !item.hidden }); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted whitespace-nowrap">
+                  {item.hidden ? <Eye size={14} className="flex-shrink-0" /> : <EyeOff size={14} className="flex-shrink-0" />}
+                  {item.hidden ? t.schedule.showClient : t.schedule.hideClient}
+                </button>
+                <div className="border-t border-border my-1" />
+                <button onClick={() => { setShowMenu(false); onDelete(item.id); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-destructive hover:bg-destructive/10 whitespace-nowrap">
+                  <Trash2 size={14} className="flex-shrink-0" />
+                  {t.common.delete}
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
     );
@@ -320,27 +334,38 @@ function SortableItemRow({
       )}
 
       {/* Actions */}
-      <div className="w-24 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-        {!editDates && !item.startDate && !item.endDate && (
-          <button onClick={() => setEditDates(true)} className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors" title={t.schedule.setDates}>
-            <Pencil size={12} />
-          </button>
-        )}
-        {!showDesc && !item.description && (
-          <button onClick={() => setShowDesc(true)} className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors" title={t.schedule.addDescription}>
-            <Plus size={12} />
-          </button>
-        )}
-        <button
-          onClick={() => onUpdate(item.id, { hidden: !item.hidden })}
-          className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-          title={item.hidden ? t.schedule.showClient : t.schedule.hideClient}
-        >
-          {item.hidden ? <EyeOff size={12} /> : <Eye size={12} />}
+      <div className="relative flex-shrink-0">
+        <button onClick={() => setShowMenu((v) => !v)} className="p-1 rounded text-muted-foreground hover:text-foreground">
+          <MoreVertical size={14} />
         </button>
-        <button onClick={() => onDelete(item.id)} className="p-1 rounded text-muted-foreground hover:text-red-500 hover:bg-muted transition-colors" title={t.common.delete}>
-          <Trash2 size={12} />
-        </button>
+        {showMenu && (
+          <>
+            <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
+            <div className="absolute right-0 top-full mt-1 z-50 bg-popover border border-border rounded-xl shadow-lg py-1 min-w-[170px]">
+              {(!item.startDate && !item.endDate) && (
+                <button onClick={() => { setShowMenu(false); setEditDates(true); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted whitespace-nowrap">
+                  <Pencil size={14} className="flex-shrink-0" />
+                  {t.schedule.setDates}
+                </button>
+              )}
+              {!item.description && (
+                <button onClick={() => { setShowMenu(false); setShowDesc(true); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted whitespace-nowrap">
+                  <Plus size={14} className="flex-shrink-0" />
+                  {t.schedule.addDescription}
+                </button>
+              )}
+              <button onClick={() => { setShowMenu(false); onUpdate(item.id, { hidden: !item.hidden }); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted whitespace-nowrap">
+                {item.hidden ? <Eye size={14} className="flex-shrink-0" /> : <EyeOff size={14} className="flex-shrink-0" />}
+                {item.hidden ? t.schedule.showClient : t.schedule.hideClient}
+              </button>
+              <div className="border-t border-border my-1" />
+              <button onClick={() => { setShowMenu(false); onDelete(item.id); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-destructive hover:bg-destructive/10 whitespace-nowrap">
+                <Trash2 size={14} className="flex-shrink-0" />
+                {t.common.delete}
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

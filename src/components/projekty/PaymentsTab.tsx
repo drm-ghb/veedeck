@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   ChevronDown, ChevronRight, Plus, Pencil, Trash2,
-  Paperclip, Check, X, Download, Loader2, GripVertical, Users, Eye, EyeOff,
+  Paperclip, Check, X, Download, Loader2, GripVertical, Users, Eye, EyeOff, MoreVertical, ExternalLink, Layers, CirclePlus,
 } from "@/components/ui/icons";
 import { useUploadThing } from "@/lib/uploadthing-client";
 import { useT } from "@/lib/i18n";
@@ -30,7 +30,7 @@ import { CSS } from "@dnd-kit/utilities";
 
 // ── Upload button ────────────────────────────────────────────────────────────
 
-function AttachmentUploadButton({ onUploaded }: { onUploaded: (url: string, name: string) => void }) {
+function AttachmentUploadButton({ onUploaded, asMenuItem, onClose }: { onUploaded: (url: string, name: string) => void; asMenuItem?: boolean; onClose?: () => void }) {
   const t = useT();
   const [uploading, setUploading] = useState(false);
   const { startUpload } = useUploadThing("paymentAttachmentUploader");
@@ -39,6 +39,7 @@ function AttachmentUploadButton({ onUploaded }: { onUploaded: (url: string, name
     const f = e.target.files?.[0];
     if (!f) return;
     setUploading(true);
+    onClose?.();
     try {
       const uploaded = await startUpload([f]);
       if (uploaded?.[0]) onUploaded(uploaded[0].ufsUrl, f.name);
@@ -47,6 +48,16 @@ function AttachmentUploadButton({ onUploaded }: { onUploaded: (url: string, name
     } finally {
       setUploading(false);
     }
+  }
+
+  if (asMenuItem) {
+    return (
+      <label className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted whitespace-nowrap cursor-pointer">
+        {uploading ? <Loader2 size={14} className="animate-spin flex-shrink-0" /> : <Paperclip size={14} className="flex-shrink-0" />}
+        {t.payments.attachment}
+        <input type="file" className="hidden" accept="image/*,.pdf" onChange={handleChange} />
+      </label>
+    );
   }
 
   return (
@@ -261,6 +272,7 @@ function GroupRow({
   onDelete, onAddSubgroup, onAddPayment,
 }: GroupRowProps) {
   const t = useT();
+  const [showMenu, setShowMenu] = useState(false);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging, isOver } = useSortable({
     id: group.id,
     data: { type: "group", parentId: group.parentId },
@@ -309,11 +321,49 @@ function GroupRow({
               <span className="text-xs text-primary font-medium flex-shrink-0 mr-1">{t.payments.dropHere}</span>
             )}
             <span className="text-sm font-medium tabular-nums text-muted-foreground">{formatPLN(groupTotal)}</span>
-            <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity ml-1">
-              <button onClick={(e) => { e.stopPropagation(); onAddSubgroup(); }} className="p-1 rounded text-muted-foreground hover:text-foreground" title={t.payments.addSubgroup}><Plus size={12} /></button>
-              <button onClick={(e) => { e.stopPropagation(); onAddPayment(); }} className="p-1 rounded text-muted-foreground hover:text-foreground" title={t.payments.addPaymentTitle}><Plus size={12} className="opacity-60" /></button>
-              <button onClick={(e) => { e.stopPropagation(); onStartEdit(); }} className="p-1 rounded text-muted-foreground hover:text-foreground"><Pencil size={12} /></button>
-              <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="p-1 rounded text-muted-foreground hover:text-destructive"><Trash2 size={12} /></button>
+            <div className="relative flex-shrink-0">
+              <button
+                onClick={(e) => { e.stopPropagation(); setShowMenu((v) => !v); }}
+                className="p-1 rounded text-muted-foreground hover:text-foreground"
+              >
+                <MoreVertical size={14} />
+              </button>
+              {showMenu && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
+                  <div className="absolute right-0 top-full mt-1 z-50 bg-popover border border-border rounded-xl shadow-lg py-1 min-w-[170px]">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setShowMenu(false); onAddPayment(); }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted whitespace-nowrap"
+                    >
+                      <CirclePlus size={14} className="flex-shrink-0" />
+                      {t.payments.addPaymentTitle}
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setShowMenu(false); onAddSubgroup(); }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted whitespace-nowrap"
+                    >
+                      <Layers size={14} className="flex-shrink-0" />
+                      {t.payments.addSubgroup}
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setShowMenu(false); onStartEdit(); }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted whitespace-nowrap"
+                    >
+                      <Pencil size={14} className="flex-shrink-0" />
+                      {t.common.edit}
+                    </button>
+                    <div className="border-t border-border my-1" />
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setShowMenu(false); onDelete(); }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-destructive hover:bg-destructive/10 whitespace-nowrap"
+                    >
+                      <Trash2 size={14} className="flex-shrink-0" />
+                      {t.common.delete}
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </>
         )}
@@ -362,6 +412,7 @@ function PaymentRow({
   const t = useT();
   const [inlineAmountEdit, setInlineAmountEdit] = useState(false);
   const [inlineAmountValue, setInlineAmountValue] = useState("");
+  const [showMenu, setShowMenu] = useState(false);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: payment.id,
     data: { type: "payment", groupId: payment.groupId },
@@ -423,7 +474,7 @@ function PaymentRow({
       ) : (
         <>
           <div className="flex-1 min-w-0 cursor-pointer" onClick={onStartEdit}>
-            <span className={`text-sm hover:text-primary transition-colors ${payment.status === "paid" ? "line-through text-muted-foreground" : ""}`}>
+            <span className={`block truncate text-sm hover:text-primary transition-colors ${payment.status === "paid" ? "line-through text-muted-foreground" : ""}`}>
               {payment.name}
             </span>
           </div>
@@ -441,7 +492,7 @@ function PaymentRow({
             />
           ) : (
             <span
-              className={`text-sm font-medium tabular-nums cursor-default ${payment.status === "paid" ? "text-muted-foreground" : ""}`}
+              className={`text-sm font-medium tabular-nums whitespace-nowrap flex-shrink-0 cursor-default ${payment.status === "paid" ? "text-muted-foreground" : ""}`}
               onClick={() => { setInlineAmountValue(String(payment.amount)); setInlineAmountEdit(true); }}
             >
               {formatPLN(payment.amount)}
@@ -454,18 +505,49 @@ function PaymentRow({
           }`}>
             {payment.status === "paid" ? t.payments.paid : t.payments.pending}
           </span>
-          <div className="flex-shrink-0">
-            {payment.attachmentUrl ? (
-              <a href={payment.attachmentUrl} target="_blank" rel="noopener noreferrer" title={payment.attachmentName ?? t.payments.attachment} className="text-muted-foreground hover:text-foreground transition-colors">
-                <Paperclip size={13} />
-              </a>
-            ) : (
-              <AttachmentUploadButton onUploaded={onUploadComplete} />
+          <div className="relative flex-shrink-0">
+            <button
+              onClick={() => setShowMenu((v) => !v)}
+              className="p-1 rounded text-muted-foreground hover:text-foreground"
+            >
+              <MoreVertical size={14} />
+            </button>
+            {showMenu && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
+                <div className="absolute right-0 top-full mt-1 z-50 bg-popover border border-border rounded-xl shadow-lg py-1 min-w-[160px]">
+                  <button
+                    onClick={() => { setShowMenu(false); onStartEdit(); }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted whitespace-nowrap"
+                  >
+                    <Pencil size={14} className="flex-shrink-0" />
+                    {t.common.edit}
+                  </button>
+                  {payment.attachmentUrl ? (
+                    <a
+                      href={payment.attachmentUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => setShowMenu(false)}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted whitespace-nowrap"
+                    >
+                      <ExternalLink size={14} className="flex-shrink-0" />
+                      {payment.attachmentName ?? t.payments.attachment}
+                    </a>
+                  ) : (
+                    <AttachmentUploadButton onUploaded={onUploadComplete} asMenuItem onClose={() => setShowMenu(false)} />
+                  )}
+                  <div className="border-t border-border my-1" />
+                  <button
+                    onClick={() => { setShowMenu(false); onDelete(); }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-destructive hover:bg-destructive/10 whitespace-nowrap"
+                  >
+                    <Trash2 size={14} className="flex-shrink-0" />
+                    {t.common.delete}
+                  </button>
+                </div>
+              </>
             )}
-          </div>
-          <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button onClick={onStartEdit} className="p-1 rounded text-muted-foreground hover:text-foreground"><Pencil size={12} /></button>
-            <button onClick={onDelete} className="p-1 rounded text-muted-foreground hover:text-destructive"><Trash2 size={12} /></button>
           </div>
         </>
       )}

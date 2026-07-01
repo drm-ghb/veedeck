@@ -106,6 +106,7 @@ export const MapPin           = icon("location_on");
 
 // ── Actions ───────────────────────────────────────────────────────────────
 export const Plus             = icon("add");
+export const CirclePlus       = icon("add_circle");
 export const Minus            = icon("remove");
 export const X                = icon("close");
 export const Check            = icon("check");
