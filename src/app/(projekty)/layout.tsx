@@ -42,7 +42,7 @@ export default async function ProjektyLayout({
         notificationUserId={dbUser?.ownerId ?? session.user.id!}
         sidebarCollapsed={sidebarCollapsed}
       />
-      <div className="flex flex-1 min-h-0">
+      <div className="flex flex-1 min-h-0" style={{ backgroundColor: 'var(--sidebar)' }}>
         <NavSidebar hiddenModules={hiddenModules} sidebarOrder={sidebarOrder} userId={session.user.id!} initialCollapsed={sidebarCollapsed} />
         <main className="flex-1 px-6 py-6 overflow-y-auto overflow-x-hidden bg-background rounded-tl-2xl">
           {children}

@@ -216,7 +216,7 @@ export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userI
 
   return (
     <>
-    <aside className={`hidden md:flex flex-col flex-shrink-0 h-full transition-all duration-200 ${isCollapsed ? "w-14" : "w-52"}`}>
+    <aside className={`hidden md:flex flex-col flex-shrink-0 h-full transition-all duration-200 ${isCollapsed ? "w-14" : "w-52"}`} style={{ backgroundColor: 'var(--sidebar)', color: 'var(--sidebar-foreground)' }}>
       <nav className="flex-1 p-2 space-y-0.5 overflow-y-auto">
         {visible.map((item) => {
           const active = pathname === item.href || pathname.startsWith(item.href + "/") || item.matchPrefixes.some((p) => pathname.startsWith(p));
@@ -229,7 +229,7 @@ export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userI
               className={`flex items-center gap-3 px-2.5 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                 active
                   ? "bg-primary/10 text-primary"
-                  : "text-gray-600 dark:text-gray-400 hover:bg-muted hover:text-foreground"
+                  : "opacity-70 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5"
               }`}
             >
               <span className="flex-shrink-0 w-5 flex items-center justify-center relative">
@@ -287,17 +287,17 @@ export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userI
           <button
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
             title={theme === "dark" ? t.nav.switchLight : t.nav.switchDark}
-            className="flex items-center justify-center w-full py-2 px-2.5 rounded-lg text-gray-400 hover:bg-muted hover:text-foreground transition-colors"
+            className="flex items-center justify-center w-full py-2 px-2.5 rounded-lg opacity-60 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
           >
             {theme === "dark" ? <Moon size={18} /> : <Sun size={18} />}
           </button>
         ) : (
           <div className="flex items-center justify-between px-2.5 py-2.5 rounded-lg">
             <div className="flex items-center gap-3">
-              <span className="flex-shrink-0 w-5 flex items-center justify-center text-gray-400">
+              <span className="flex-shrink-0 w-5 flex items-center justify-center opacity-60">
                 {theme === "dark" ? <Moon size={18} /> : <Sun size={18} />}
               </span>
-              <span className="text-sm font-medium text-gray-400">
+              <span className="text-sm font-medium opacity-60">
                 {theme === "dark" ? t.nav.dark : t.nav.light}
               </span>
             </div>
@@ -315,7 +315,7 @@ export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userI
         <button
           onClick={() => { setHelpOpen(true); setHelpSent(false); setHelpCategory(""); setHelpSubject(""); setHelpDesc(""); setHelpAttachment(null); }}
           title={isCollapsed ? t.nav.help : undefined}
-          className="flex items-center gap-3 px-2.5 py-2.5 rounded-lg text-sm font-medium transition-colors w-full text-gray-400 hover:bg-muted hover:text-foreground"
+          className="flex items-center gap-3 px-2.5 py-2.5 rounded-lg text-sm font-medium transition-colors w-full opacity-60 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5"
         >
           <span className="flex-shrink-0 w-5 flex items-center justify-center">
             <HelpCircle size={18} />
@@ -330,7 +330,7 @@ export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userI
             className={`flex items-center gap-3 px-2.5 py-2.5 rounded-lg text-sm font-medium transition-colors ${
               pathname.startsWith("/ustawienia/instrukcja")
                 ? "bg-primary/10 text-primary"
-                : "text-gray-400 hover:bg-muted hover:text-foreground"
+                : "opacity-60 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5"
             }`}
           >
             <span className="flex-shrink-0 w-5 flex items-center justify-center">
@@ -345,7 +345,7 @@ export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userI
           className={`flex items-center gap-3 px-2.5 py-2.5 rounded-lg text-sm font-medium transition-colors ${
             pathname.startsWith("/ustawienia") && pathname !== "/ustawienia/instrukcja"
               ? "bg-primary/10 text-primary"
-              : "text-gray-400 hover:bg-muted hover:text-foreground"
+              : "opacity-60 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5"
           }`}
         >
           <span className="flex-shrink-0 w-5 flex items-center justify-center">
@@ -356,7 +356,7 @@ export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userI
         <button
           onClick={toggle}
           title={isCollapsed ? t.nav.expand : t.nav.collapse}
-          className="flex items-center justify-center w-full py-2 px-2.5 rounded-lg text-gray-400 hover:bg-muted hover:text-foreground transition-colors"
+          className="flex items-center justify-center w-full py-2 px-2.5 rounded-lg opacity-60 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
         >
           {isCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
         </button>

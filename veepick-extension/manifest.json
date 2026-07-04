@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Veepick",
+  "name": "veepick",
   "version": "2.1.0",
-  "description": "Dodawaj produkty ze sklepów bezpośrednio do list zakupowych veedeck.",
+  "description": "Dodawaj produkty z każdego sklepu internetowego do list zakupowych w veedeck — bez kopiowania, wklejania i przełączania zakładek.",
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",

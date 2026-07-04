@@ -17,7 +17,7 @@ export function LogoBrand({ initialCollapsed = false }: { initialCollapsed?: boo
   }, []);
 
   const showWordmark = !sidebarCollapsed;
-  const iconSrc = colorTheme === "violet" ? "/logo_violet.png" : "/veedeck_ikona.png";
+  const iconSrc = colorTheme === "violet" ? "/logo_violet.png" : "/veedeck_ikona_vsg.svg";
 
   return (
     <Link href="/dashboard" className="flex items-center gap-2 shrink-0">

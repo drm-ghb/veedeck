@@ -68,7 +68,7 @@ export default async function ContractorLayout({ children }: { children: React.R
         <div className="flex-1">{children}</div>
         <div className="pt-10 pb-2 flex items-center justify-center gap-1.5 opacity-40 select-none">
           <span className="text-xs text-muted-foreground">Powered by</span>
-          <Image src="/veedeck_ikona.png" alt="veedeck" width={16} height={16} className="object-contain" />
+          <Image src="/veedeck_ikona_vsg.svg" alt="veedeck" width={16} height={16} className="object-contain" />
           <span className="text-xs text-muted-foreground">veedeck</span>
         </div>
       </main>

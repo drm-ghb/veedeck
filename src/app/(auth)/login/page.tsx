@@ -116,7 +116,7 @@ export default function LoginPage() {
       <div className="hidden lg:flex flex-col justify-center px-16 w-1/2 bg-[#0f0f0f]">
         <div className="flex items-center gap-3 mb-6">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/veedeck_ikona.png" alt="veedeck" className="h-10 w-10 shrink-0 object-contain" />
+          <img src="/veedeck_ikona_vsg.svg" alt="veedeck" className="h-10 w-10 shrink-0 object-contain" />
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/veedeckicon.png" alt="veedeck" className="shrink-0" style={{ height: "22px", width: "auto" }} />
         </div>
@@ -138,7 +138,7 @@ export default function LoginPage() {
         <div className="lg:hidden text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-2">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/veedeck_ikona.png" alt="veedeck" className="h-7 w-7 shrink-0 object-contain" />
+            <img src="/veedeck_ikona_vsg.svg" alt="veedeck" className="h-7 w-7 shrink-0 object-contain" />
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/vee_black.png" alt="veedeck" className="dark:hidden shrink-0" style={{ height: "17px", width: "auto" }} />
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -159,7 +159,7 @@ export default function LoginPage() {
           <CardHeader className="pb-4">
             <div className="flex items-center justify-center gap-2 mb-1">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/veedeck_ikona.png" alt="veedeck" className="h-7 w-7 shrink-0 object-contain" />
+              <img src="/veedeck_ikona_vsg.svg" alt="veedeck" className="h-7 w-7 shrink-0 object-contain" />
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/vee_black.png" alt="veedeck" className="dark:hidden shrink-0" style={{ height: "17px", width: "auto" }} />
               {/* eslint-disable-next-line @next/next/no-img-element */}

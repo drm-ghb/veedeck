@@ -50,6 +50,7 @@ export async function getClientProject(session: Session, projectId: string) {
           showClientLogo: true,
           navMode: true,
           colorTheme: true,
+          customTheme: true,
         },
       },
     },

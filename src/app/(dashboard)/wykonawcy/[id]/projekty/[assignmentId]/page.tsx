@@ -6,7 +6,7 @@ import ContractorProjectView from "@/components/dashboard/wykonawcy/ContractorPr
 
 interface Props {
   params: Promise<{ id: string; assignmentId: string }>;
-  searchParams: Promise<{ fileId?: string; folderId?: string }>;
+  searchParams: Promise<{ fileId?: string; folderId?: string; subFolderId?: string }>;
 }
 
 export default async function ContractorProjectPage({ params, searchParams }: Props) {
@@ -15,7 +15,7 @@ export default async function ContractorProjectPage({ params, searchParams }: Pr
 
   const designerId = getWorkspaceUserId(session as any);
   const { id, assignmentId } = await params;
-  const { fileId: autoOpenFileId, folderId: autoOpenFolderId } = await searchParams;
+  const { fileId: autoOpenFileId, folderId: autoOpenFolderId, subFolderId: autoOpenSubFolderId } = await searchParams;
 
   // Redirect old notification links (?fileId=&folderId=) to the new route format
   if (autoOpenFileId && autoOpenFolderId) {
@@ -150,6 +150,8 @@ export default async function ContractorProjectPage({ params, searchParams }: Pr
       unreadPinsPerFile={unreadPinsPerFile}
       totalPinsPerFile={totalPinsPerFile}
       designerName={designerName}
+      initialFolderId={autoOpenFolderId && !autoOpenFileId ? autoOpenFolderId : undefined}
+      initialSubFolderId={autoOpenSubFolderId && !autoOpenFileId ? autoOpenSubFolderId : undefined}
       info={{
         investmentStreet: assignment.investmentStreet,
         investmentCity: assignment.investmentCity,

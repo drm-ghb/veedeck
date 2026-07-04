@@ -2566,10 +2566,10 @@ export default function RenderViewer({
         {showComments && <>
           {/* Mobile backdrop */}
           <div
-            className="fixed inset-0 z-20 bg-black/30 md:hidden"
+            className="fixed inset-x-0 top-[57px] bottom-0 z-20 bg-black/30 md:hidden"
             onClick={() => { setShowComments(false); sessionStorage.setItem("renderflow_showComments", "false"); }}
           />
-          <div className={`fixed md:relative inset-y-0 right-0 left-0 md:left-auto z-30 md:z-auto md:flex-shrink-0 transition-[width] duration-200 ${sidebarExpanded ? "md:w-[576px]" : "md:w-72"}`}>
+          <div className={`fixed md:relative top-[57px] bottom-0 md:top-0 right-0 left-0 md:left-auto z-30 md:z-auto md:flex-shrink-0 transition-[width] duration-200 ${sidebarExpanded ? "md:w-[576px]" : "md:w-72"}`}>
 
             {/* Expand handle — absolutely positioned outside the panel, bottom-left */}
             <button

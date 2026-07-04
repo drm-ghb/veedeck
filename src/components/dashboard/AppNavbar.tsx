@@ -33,7 +33,7 @@ export default function AppNavbar({
   extraRight,
 }: AppNavbarProps) {
   return (
-    <nav className="relative z-50">
+    <nav className="relative z-50" style={{ backgroundColor: 'var(--sidebar)', color: 'var(--sidebar-foreground)' }}>
       <div className="px-4 flex items-center gap-2 py-3">
         {/* Left: logo */}
         <div className="shrink-0 sm:flex-1 flex items-center gap-2">
@@ -68,7 +68,7 @@ export default function AppNavbar({
                   : firstName[0].toUpperCase()
                 }
               </div>
-              <span className="text-sm font-medium text-foreground">{firstName}</span>
+              <span className="text-sm font-medium">{firstName}</span>
             </a>
           )}
           <div className="hidden md:block"><SignOutButton /></div>

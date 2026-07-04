@@ -104,7 +104,7 @@ export default function NotificationBell({ userId, viewAllHref = "/notifications
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen((o) => !o)}
-        className="relative flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-muted"
+        className="relative flex items-center justify-center opacity-60 hover:opacity-100 transition-opacity p-1.5 rounded-md hover:bg-black/5 dark:hover:bg-white/10"
       >
         <Bell size={18} />
         {unread > 0 && (

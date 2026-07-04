@@ -1,16 +1,26 @@
 "use client";
 
 import { useEffect } from "react";
+import { buildCustomThemeCSS, type CustomThemeColors } from "@/lib/theme";
 
-export default function ClientThemeApplier({ colorTheme }: { colorTheme: string }) {
+export default function ClientThemeApplier({ colorTheme, customTheme }: { colorTheme: string; customTheme?: CustomThemeColors | null }) {
   useEffect(() => {
     const root = document.documentElement;
     root.dataset.theme = colorTheme;
 
+    // Inject custom theme CSS if needed
+    if (colorTheme === "custom" && customTheme) {
+      let el = document.getElementById("custom-theme-style") as HTMLStyleElement | null;
+      if (!el) {
+        el = document.createElement("style");
+        el.id = "custom-theme-style";
+        document.head.appendChild(el);
+      }
+      el.textContent = buildCustomThemeCSS(customTheme);
+    }
+
     // Watch for any external changes to data-theme (e.g. ThemeProvider reading
     // localStorage) and immediately reset to the project theme.
-    // MutationObserver callbacks are microtasks — they run before the browser
-    // paints, so there is no visible flash.
     const observer = new MutationObserver(() => {
       if (root.dataset.theme !== colorTheme) {
         root.dataset.theme = colorTheme;
@@ -24,7 +34,7 @@ export default function ClientThemeApplier({ colorTheme }: { colorTheme: string 
       const saved = localStorage.getItem("color-theme");
       if (saved) root.dataset.theme = saved;
     };
-  }, [colorTheme]);
+  }, [colorTheme, customTheme]);
 
   return null;
 }

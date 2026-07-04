@@ -106,7 +106,7 @@ export default function ClientNameGate({ token, requireClientEmail, clientLogoUr
         <div className="flex items-center justify-center gap-1.5 mt-5 opacity-60">
           <span className="text-xs text-muted-foreground">Powered by</span>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/veedeck_ikona.png" alt="veedeck" className="h-4 w-4 shrink-0 object-contain" />
+          <img src="/veedeck_ikona_vsg.svg" alt="veedeck" className="h-4 w-4 shrink-0 object-contain" />
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/vee_black.png" alt="veedeck" className="dark:hidden shrink-0" style={{ height: "11px", width: "auto" }} />
           {/* eslint-disable-next-line @next/next/no-img-element */}

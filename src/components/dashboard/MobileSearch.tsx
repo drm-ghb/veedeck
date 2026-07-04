@@ -79,7 +79,7 @@ export default function MobileSearch() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="p-1.5 rounded-md text-gray-500 dark:text-gray-400 hover:bg-muted transition-colors"
+        className="p-1.5 rounded-md opacity-60 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/10 transition-opacity"
         aria-label="Szukaj"
       >
         <Search size={20} />

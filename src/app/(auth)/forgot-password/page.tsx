@@ -31,7 +31,7 @@ export default function ForgotPasswordPage() {
         <CardHeader className="pb-4">
           <div className="flex items-center justify-center gap-2 mb-1">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/veedeck_ikona.png" alt="veedeck" className="h-7 w-7 shrink-0 object-contain" />
+            <img src="/veedeck_ikona_vsg.svg" alt="veedeck" className="h-7 w-7 shrink-0 object-contain" />
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/vee_black.png" alt="veedeck" className="dark:hidden shrink-0" style={{ height: "17px", width: "auto" }} />
             {/* eslint-disable-next-line @next/next/no-img-element */}

@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 
 export type Theme = "light" | "dark" | "system";
 export type ColorTheme = "violet" | "champagne" | "obsidian" | "navy" | "plum" | "mono" | "custom";
@@ -9,6 +10,8 @@ export interface CustomThemeColors {
   primary: string;
   background: string;
   sidebar: string;
+  sidebarText?: string;
+  contentText?: string;
 }
 
 // ── Color math helpers ──────────────────────────────────────────────────────
@@ -51,18 +54,20 @@ function sidebarAccent(hex: string) { return getLuminance(hex) > 0.5 ? darken(he
 
 export function buildCustomThemeCSS(c: CustomThemeColors): string {
   const primaryAccent = lighten(c.primary, 0.5);
+  const fg = c.contentText ?? getFg(c.background);
+  const sidebarFg = c.sidebarText ?? getFg(c.sidebar);
   return `
 :root[data-theme="custom"] {
   --background: ${c.background};
-  --foreground: ${getFg(c.background)};
+  --foreground: ${fg};
   --card: ${c.background};
-  --card-foreground: ${getFg(c.background)};
+  --card-foreground: ${fg};
   --popover: ${c.background};
-  --popover-foreground: ${getFg(c.background)};
+  --popover-foreground: ${fg};
   --primary: ${c.primary};
   --primary-foreground: ${getFg(c.primary)};
   --secondary: ${muted(c.background)};
-  --secondary-foreground: ${getFg(c.background)};
+  --secondary-foreground: ${fg};
   --muted: ${muted(c.background)};
   --muted-foreground: ${mutedFg(c.background)};
   --accent: ${primaryAccent};
@@ -73,11 +78,11 @@ export function buildCustomThemeCSS(c: CustomThemeColors): string {
   --ring: ${c.primary};
   --radius: 0.625rem;
   --sidebar: ${c.sidebar};
-  --sidebar-foreground: ${getFg(c.sidebar)};
+  --sidebar-foreground: ${sidebarFg};
   --sidebar-primary: ${c.primary};
   --sidebar-primary-foreground: ${getFg(c.primary)};
   --sidebar-accent: ${sidebarAccent(c.sidebar)};
-  --sidebar-accent-foreground: ${getFg(c.sidebar)};
+  --sidebar-accent-foreground: ${sidebarFg};
   --sidebar-border: ${border(c.sidebar)};
   --sidebar-ring: ${c.primary};
 }`.trim();
@@ -98,7 +103,11 @@ const ThemeContext = createContext<{
   customTheme: null, setCustomTheme: () => {},
 });
 
+const AUTH_PATHS = ["/login", "/forgot-password", "/complete-profile", "/register"];
+
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const isAuthPage = AUTH_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/"));
   const [theme, setThemeState] = useState<Theme>("light");
   const [colorTheme, setColorThemeState] = useState<ColorTheme>("violet");
   const [customTheme, setCustomThemeState] = useState<CustomThemeColors | null>(null);
@@ -147,6 +156,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, [theme]);
 
   useEffect(() => {
+    if (isAuthPage) {
+      document.documentElement.dataset.theme = "violet";
+      const el = document.getElementById("custom-theme-style");
+      if (el) el.textContent = "";
+      return;
+    }
+
     document.documentElement.dataset.theme = colorTheme;
     localStorage.setItem("color-theme", colorTheme);
     document.cookie = `color-theme=${colorTheme}; path=/; max-age=31536000; SameSite=Lax`;
@@ -160,7 +176,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       }
       el.textContent = buildCustomThemeCSS(customTheme);
     }
-  }, [colorTheme, customTheme]);
+  }, [colorTheme, customTheme, isAuthPage]);
 
   function setCustomTheme(c: CustomThemeColors) {
     setCustomThemeState(c);

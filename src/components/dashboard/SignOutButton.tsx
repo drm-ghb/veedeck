@@ -10,7 +10,7 @@ export function SignOutButton() {
     <button
       onClick={() => signOut({ callbackUrl: "/login" })}
       title={t.nav.logout}
-      className="text-gray-400 hover:text-gray-700 transition-colors p-1.5 rounded-md hover:bg-gray-100"
+      className="opacity-60 hover:opacity-100 transition-opacity p-1.5 rounded-md hover:bg-black/5 dark:hover:bg-white/10"
     >
       <LogOut size={18} />
     </button>

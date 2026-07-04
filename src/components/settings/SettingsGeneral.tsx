@@ -102,8 +102,8 @@ export function SettingsGeneral({
   const router = useRouter();
   const { theme, setTheme, colorTheme, setColorTheme, setCustomTheme } = useTheme();
 
-  const DEFAULT_CUSTOM: CustomThemeColors = { primary: "#4F46E5", background: "#FFFFFF", sidebar: "#EDEEF2" };
-  const [customColors, setCustomColors] = useState<CustomThemeColors>(initialCustomTheme ?? DEFAULT_CUSTOM);
+  const DEFAULT_CUSTOM: CustomThemeColors = { primary: "#4F46E5", background: "#FFFFFF", sidebar: "#EDEEF2", sidebarText: "#111111", contentText: "#111111" };
+  const [customColors, setCustomColors] = useState<CustomThemeColors>({ ...DEFAULT_CUSTOM, ...(initialCustomTheme ?? {}) });
   const [showCustomEditor, setShowCustomEditor] = useState(false);
   const [savingCustomTheme, setSavingCustomTheme] = useState(false);
   const t = useT();
@@ -866,28 +866,46 @@ const COLOR_THEMES: {
           {/* Karta: Własny motyw */}
           {(() => {
             const active = colorTheme === "custom";
+            const hasSaved = !!initialCustomTheme;
             return (
-              <button
-                type="button"
-                aria-pressed={active}
-                onClick={() => setShowCustomEditor((v) => !v)}
-                className={`flex flex-col items-start p-3 rounded-2xl border text-left transition-all ${
-                  active
-                    ? "border-primary ring-2 ring-primary bg-primary/5"
-                    : "border-border hover:border-gray-300 dark:hover:border-gray-600 hover:bg-muted"
-                }`}
-              >
-                {/* Miniatura podglądu */}
-                <div className="w-full h-12 rounded-lg overflow-hidden flex mb-3">
-                  <div className="w-1/3 h-full" style={{ background: customColors.sidebar }} />
-                  <div className="flex-1 h-full flex flex-col p-1.5 gap-1" style={{ background: customColors.background }}>
-                    <div className="h-2 w-3/4 rounded-sm" style={{ background: customColors.primary }} />
-                    <div className="h-1.5 w-1/2 rounded-sm opacity-50" style={{ background: customColors.primary }} />
+              <div className="relative">
+                <button
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => {
+                    if (active) return;
+                    if (hasSaved) {
+                      handleColorThemeChange("custom");
+                    } else {
+                      setShowCustomEditor(true);
+                    }
+                  }}
+                  className={`w-full flex flex-col items-start p-3 rounded-2xl border text-left transition-all ${
+                    active
+                      ? "border-primary ring-2 ring-primary bg-primary/5"
+                      : "border-border hover:border-gray-300 dark:hover:border-gray-600 hover:bg-muted"
+                  }`}
+                >
+                  {/* Miniatura podglądu */}
+                  <div className="w-full h-12 rounded-lg overflow-hidden flex mb-3">
+                    <div className="w-1/3 h-full" style={{ background: customColors.sidebar }} />
+                    <div className="flex-1 h-full flex flex-col p-1.5 gap-1" style={{ background: customColors.background }}>
+                      <div className="h-2 w-3/4 rounded-sm" style={{ background: customColors.primary }} />
+                      <div className="h-1.5 w-1/2 rounded-sm opacity-50" style={{ background: customColors.primary }} />
+                    </div>
                   </div>
-                </div>
-                <p className={`text-sm font-semibold leading-tight ${active ? "text-primary" : "text-foreground"}`}>Własny motyw</p>
-                <p className="text-xs text-muted-foreground mt-0.5 leading-tight">Dostosuj do swojego brandu</p>
-              </button>
+                  <p className={`text-sm font-semibold leading-tight ${active ? "text-primary" : "text-foreground"}`}>Własny motyw</p>
+                  <p className="text-xs text-muted-foreground mt-0.5 leading-tight">Dostosuj do swojego brandu</p>
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); setShowCustomEditor(true); }}
+                  className="absolute top-2 right-2 p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
+                  title="Edytuj motyw"
+                >
+                  <Pencil size={13} />
+                </button>
+              </div>
             );
           })()}
         </div>
@@ -896,39 +914,47 @@ const COLOR_THEMES: {
         {showCustomEditor && (
           <div className="bg-card border border-border rounded-2xl p-5 space-y-4">
             <p className="text-sm font-semibold text-foreground">Dostosuj kolory motywu</p>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {([
+            {([
+              [
                 { key: "primary", label: "Kolor główny", desc: "Przyciski, linki, aktywne elementy" },
                 { key: "background", label: "Tło aplikacji", desc: "Główna powierzchnia treści" },
-                { key: "sidebar", label: "Sidebar", desc: "Tło paska bocznego" },
-              ] as { key: keyof CustomThemeColors; label: string; desc: string }[]).map(({ key, label, desc }) => (
-                <label key={key} className="flex flex-col gap-1.5 cursor-pointer">
-                  <span className="text-sm font-medium text-foreground">{label}</span>
-                  <span className="text-xs text-muted-foreground">{desc}</span>
-                  <div className="flex items-center gap-2 mt-1">
-                    <div className="relative w-9 h-9 rounded-xl border-2 border-border overflow-hidden shrink-0 cursor-pointer">
+                { key: "sidebar", label: "Sidebar", desc: "Tło paska bocznego i navbaru" },
+              ],
+              [
+                { key: "contentText", label: "Tekst główny", desc: "Kolor tekstu w ekranie wewnętrznym" },
+                { key: "sidebarText", label: "Tekst sidebar", desc: "Kolor tekstu w sidebar i navbarze" },
+              ],
+            ] as { key: keyof CustomThemeColors; label: string; desc: string }[][]).map((row, rowIdx) => (
+              <div key={rowIdx} className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                {row.map(({ key, label, desc }) => (
+                  <label key={key} className="flex flex-col gap-1.5 cursor-pointer">
+                    <span className="text-sm font-medium text-foreground">{label}</span>
+                    <span className="text-xs text-muted-foreground">{desc}</span>
+                    <div className="flex items-center gap-2 mt-1">
+                      <div className="relative w-9 h-9 rounded-xl border-2 border-border overflow-hidden shrink-0 cursor-pointer">
+                        <input
+                          type="color"
+                          value={customColors[key] ?? "#111111"}
+                          onChange={(e) => setCustomColors((prev) => ({ ...prev, [key]: e.target.value }))}
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        />
+                        <div className="w-full h-full rounded-[10px]" style={{ background: customColors[key] ?? "#111111" }} />
+                      </div>
                       <input
-                        type="color"
-                        value={customColors[key]}
-                        onChange={(e) => setCustomColors((prev) => ({ ...prev, [key]: e.target.value }))}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        type="text"
+                        value={customColors[key] ?? "#111111"}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          if (/^#[0-9A-Fa-f]{0,6}$/.test(v)) setCustomColors((prev) => ({ ...prev, [key]: v }));
+                        }}
+                        maxLength={7}
+                        className="flex-1 h-9 px-2.5 rounded-xl border border-border bg-background text-sm font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
                       />
-                      <div className="w-full h-full rounded-[10px]" style={{ background: customColors[key] }} />
                     </div>
-                    <input
-                      type="text"
-                      value={customColors[key]}
-                      onChange={(e) => {
-                        const v = e.target.value;
-                        if (/^#[0-9A-Fa-f]{0,6}$/.test(v)) setCustomColors((prev) => ({ ...prev, [key]: v }));
-                      }}
-                      maxLength={7}
-                      className="flex-1 h-9 px-2.5 rounded-xl border border-border bg-background text-sm font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-                    />
-                  </div>
-                </label>
-              ))}
-            </div>
+                  </label>
+                ))}
+              </div>
+            ))}
             <div className="flex gap-2 pt-1">
               <Button onClick={handleSaveCustomTheme} disabled={savingCustomTheme} size="sm">
                 {savingCustomTheme ? "Zapisywanie…" : "Zapisz i aktywuj"}

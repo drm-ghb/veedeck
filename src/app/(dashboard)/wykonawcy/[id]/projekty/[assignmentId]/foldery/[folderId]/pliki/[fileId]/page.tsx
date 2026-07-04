@@ -32,6 +32,7 @@ export default async function DesignerContractorFileViewPage({ params }: Props) 
     where: { id: folderId, assignmentId },
     select: {
       name: true,
+      parentId: true,
       files: {
         select: {
           id: true,
@@ -84,7 +85,9 @@ export default async function DesignerContractorFileViewPage({ params }: Props) 
     data: { read: true },
   });
 
-  const backHref = `/wykonawcy/${id}/projekty/${assignmentId}`;
+  const backHref = folder.parentId
+    ? `/wykonawcy/${id}/projekty/${assignmentId}?folderId=${folder.parentId}&subFolderId=${folderId}`
+    : `/wykonawcy/${id}/projekty/${assignmentId}?folderId=${folderId}`;
   const fileRouteBase = `/wykonawcy/${id}/projekty/${assignmentId}/foldery/${folderId}/pliki`;
 
   return (

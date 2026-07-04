@@ -57,7 +57,7 @@ interface Project {
   clientWelcomeMessage: string | null; clientLogoUrl: string | null; accentColor: string | null;
   designerName: string | null; navMode: string; hiddenModules: string[];
   shoppingLists: { id: string; name: string; shareToken: string }[];
-  hasDiscussion: boolean; discussionId: string | null; colorTheme: string;
+  hasDiscussion: boolean; discussionId: string | null; colorTheme: string; customTheme?: { primary: string; background: string; sidebar: string } | null;
   paymentsSharedWithClient: boolean;
   scheduleSharedWithClient: boolean;
   hasSurveys: boolean;
@@ -526,7 +526,7 @@ export default function ClientProjectPage() {
     );
   }
 
-  const themeApplier = <ClientThemeApplier colorTheme={project.colorTheme} />;
+  const themeApplier = <ClientThemeApplier colorTheme={project.colorTheme} customTheme={project.customTheme} />;
 
   const sidebarProps = {
     token: "",
@@ -1392,7 +1392,7 @@ export default function ClientProjectPage() {
           <div className="flex-1">{pageContent}</div>
           <div className="pt-10 pb-2 flex items-center justify-center gap-1.5 opacity-40 select-none">
             <span className="text-xs text-muted-foreground">Powered by</span>
-            <Image src="/veedeck_ikona.png" alt="veedeck" width={16} height={16} className="object-contain" />
+            <Image src="/veedeck_ikona_vsg.svg" alt="veedeck" width={16} height={16} className="object-contain" />
             <span className="text-xs text-muted-foreground">veedeck</span>
           </div>
         </main>

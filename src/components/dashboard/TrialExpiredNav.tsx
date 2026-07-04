@@ -18,7 +18,7 @@ export function TrialExpiredNav() {
     >
       <Link href="/dashboard" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none" }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/veedeck_ikona.png" alt="veedeck" style={{ height: 28, width: 28, objectFit: "contain" }} />
+        <img src="/veedeck_ikona_vsg.svg" alt="veedeck" style={{ height: 28, width: 28, objectFit: "contain" }} />
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/vee_black.png" alt="" style={{ height: 17, width: "auto", display: "block" }} />
       </Link>
