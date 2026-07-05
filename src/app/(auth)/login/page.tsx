@@ -240,7 +240,7 @@ function PasswordInput({ id, value, onChange, placeholder, autoComplete }: {
         type={show ? "text" : "password"}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder ?? "••••••••"}
+        placeholder=""
         autoComplete={autoComplete}
         required
       />
@@ -404,7 +404,7 @@ export default function LoginPage() {
                     <form className="vd-form-stack" onSubmit={handleLogin} autoComplete="on">
                       <div className="vd-field">
                         <label className="vd-label" htmlFor="login-email">E-mail lub login</label>
-                        <input className="vd-input" id="login-email" type="text" placeholder="anna@studio.pl" required autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} />
+                        <input className="vd-input" id="login-email" type="text" required autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} />
                       </div>
                       <div className="vd-field">
                         <div className="vd-label">
@@ -469,15 +469,15 @@ export default function LoginPage() {
                       <form className="vd-form-stack" onSubmit={handleRegister} autoComplete="on">
                         <div className="vd-field">
                           <label className="vd-label" htmlFor="reg-fullname">Imię i nazwisko</label>
-                          <input className="vd-input" id="reg-fullname" type="text" placeholder="np. Anna Kowalska" required value={fullName} onChange={(e) => setFullName(e.target.value)} />
+                          <input className="vd-input" id="reg-fullname" type="text" required value={fullName} onChange={(e) => setFullName(e.target.value)} />
                         </div>
                         <div className="vd-field">
                           <label className="vd-label" htmlFor="reg-company">Nazwa firmy <span className="opt">(opcjonalne)</span></label>
-                          <input className="vd-input" id="reg-company" type="text" placeholder="np. Studio Wnętrz Kowalski" value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
+                          <input className="vd-input" id="reg-company" type="text"  value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
                         </div>
                         <div className="vd-field">
                           <label className="vd-label" htmlFor="reg-email">E-mail</label>
-                          <input className="vd-input" id="reg-email" type="email" placeholder="anna@studio.pl" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+                          <input className="vd-input" id="reg-email" type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
                         </div>
                         <div className="vd-field">
                           <label className="vd-label" htmlFor="reg-password">Hasło</label>
@@ -555,7 +555,7 @@ export default function LoginPage() {
                     <form className="vd-form-stack" onSubmit={handleForgot} autoComplete="on">
                       <div className="vd-field">
                         <label className="vd-label" htmlFor="forgot-email">E-mail</label>
-                        <input className="vd-input" id="forgot-email" type="email" placeholder="anna@studio.pl" required autoComplete="email" value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)} />
+                        <input className="vd-input" id="forgot-email" type="email" required autoComplete="email" value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)} />
                       </div>
                       <button type="submit" className="vd-btn w-full" data-variant="primary" disabled={loading} style={{ marginTop: 4 }}>
                         <span>{loading ? "Wysyłamy link..." : "Wyślij link do resetu"}</span>
