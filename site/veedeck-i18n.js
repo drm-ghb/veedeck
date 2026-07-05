@@ -1171,13 +1171,37 @@ window.VEEDECK_I18N_TITLES = {
   "veedeck — Kontakt": "veedeck — Contact",
   "veedeck — O nas": "veedeck — About",
   "veedeck — Zaloguj się": "veedeck — Log in",
-  "veedeck — Moduły": "veedeck — Modules"
+  "veedeck — Moduły": "veedeck — Modules",
+  "veedeck — platforma do zarządzania projektami dla projektantów wnętrz": "veedeck — project management platform for interior designers",
+  "Cennik veedeck — oprogramowanie dla biura projektowego": "veedeck Pricing — software for design studios",
+  "O nas — veedeck · narzędzia dla projektantów i architektów wnętrz": "About — veedeck · tools for interior designers and architects",
+  "Moduły veedeck — wszystkie narzędzia dla projektanta wnętrz w jednym miejscu": "veedeck Modules — all tools for interior designers in one place",
+  "veepick — wtyczka do przeglądarki dla projektantów wnętrz | veedeck": "veepick — browser extension for interior designers | veedeck",
+  "Kontakt — veedeck · demo i wsparcie dla projektantów wnętrz": "Contact — veedeck · demo and support for interior designers"
+};
+
+/* Opisy stron <meta name="description"> — tłumaczone per-strona (klucz = polski opis). */
+window.VEEDECK_I18N_DESCRIPTIONS = {
+  "Zbieraj feedback klientów, zarządzaj renderami, listami zakupowymi i wykonawcami w jednym miejscu. Bezpłatne demo przez 14 dni.":
+    "Collect client feedback, manage renders, shopping lists and contractors in one place. Free demo for 14 days.",
+  "Sprawdź plany veedeck: od solo do pracowni. Bez limitu klientów i projektów. 14 dni za darmo, bez karty kredytowej.":
+    "Check veedeck plans: from solo to studio. No limit on clients or projects. 14 days free, no credit card required.",
+  "Poznaj zespół veedeck. Tworzymy platformę razem z projektantami wnętrz, którzy na co dzień testują każdy moduł.":
+    "Meet the veedeck team. We build the platform together with interior designers who test every module daily.",
+  "ProjectFlow, listy zakupowe, wykonawcy, ankiety — 11 modułów do zarządzania całym projektem wnętrzarskim.":
+    "ProjectFlow, shopping lists, contractors, surveys — 11 modules to manage your entire interior design project.",
+  "Dodawaj produkty do list zakupowych jednym kliknięciem, przeglądając sklepy meblowe. Działa z Chrome, Edge i Firefox.":
+    "Add products to shopping lists in one click while browsing furniture stores. Works with Chrome, Edge and Firefox.",
+  "Umów prezentację lub zadaj pytanie. Odpisujemy w 24h. Testerzy bety mają bezpośredni kontakt z zespołem.":
+    "Schedule a demo or ask a question. We reply within 24h. Beta testers have direct access to the team."
 };
 
 (function () {
   var DICT = window.VEEDECK_I18N;
   var TITLES = window.VEEDECK_I18N_TITLES || {};
+  var DESCRIPTIONS = window.VEEDECK_I18N_DESCRIPTIONS || {};
   var origTitle = document.title;
+  var origDesc = (function () { var m = document.querySelector('meta[name="description"]'); return m ? m.getAttribute('content') : null; })();
   var entries = [];
   var phEntries = [];
   var built = false;
@@ -1399,6 +1423,10 @@ window.VEEDECK_I18N_TITLES = {
       pe.el.setAttribute('placeholder', lang === 'en' ? pe.en : pe.pl);
     }
     document.title = (lang === 'en') ? (TITLES[origTitle] || origTitle) : origTitle;
+    if (origDesc !== null) {
+      var descEl = document.querySelector('meta[name="description"]');
+      if (descEl) descEl.setAttribute('content', (lang === 'en') ? (DESCRIPTIONS[origDesc] || origDesc) : origDesc);
+    }
     document.documentElement.lang = lang;
 
     document.querySelectorAll('.lang-switch').forEach(function (sw) {

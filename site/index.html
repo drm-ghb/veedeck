@@ -4,12 +4,16 @@
 
 
 <meta charset="utf-8">
-<title>veedeck — Visualize, Design, Deliver</title>
+<title>veedeck — platforma do zarządzania projektami dla projektantów wnętrz</title>
 <script>
   /* Zalogowany użytkownik (z „Nie wylogowuj mnie") → prosto do aplikacji */
   try { if (localStorage.getItem('veedeck_keep_logged_in') === '1') { location.replace('dashboard.html'); } } catch (e) {}
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Zbieraj feedback klientów, zarządzaj renderami, listami zakupowymi i wykonawcami w jednym miejscu. Bezpłatne demo przez 14 dni.">
+<link rel="alternate" hreflang="pl" href="https://veedeck.com/">
+<link rel="alternate" hreflang="en" href="https://veedeck.com/">
+<link rel="alternate" hreflang="x-default" href="https://veedeck.com/">
 <link rel="icon" href="veedeck_ikona.svg" type="image/svg+xml"><link rel="icon" href="veedeck_ikona.png" type="image/png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
@@ -1509,6 +1513,52 @@
     font-size: 12px;
   }
 </style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "veedeck",
+  "applicationCategory": "BusinessApplication",
+  "operatingSystem": "Web",
+  "description": "Platforma do zarządzania projektami wnętrzarskimi — rendery, feedback klienta, listy zakupowe, wykonawcy i ankiety w jednym miejscu.",
+  "url": "https://veedeck.com",
+  "screenshot": "https://veedeck.com/hero-render.png",
+  "featureList": [
+    "ProjectFlow — rendery i feedback klienta z pinezkami",
+    "Listy zakupowe z linkami do produktów",
+    "Moduł wykonawców z folderami plików",
+    "Ankiety dla klientów",
+    "Dyskusje i czat projektant–klient"
+  ],
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "PLN",
+    "description": "14 dni bezpłatnego okresu próbnego, bez karty kredytowej"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "veedeck",
+    "url": "https://veedeck.com"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "veedeck",
+  "url": "https://veedeck.com",
+  "logo": "https://veedeck.com/veedeck_ikona.png",
+  "contactPoint": {
+    "@type": "ContactPoint",
+    "email": "hello@veedeck.com",
+    "contactType": "customer support",
+    "availableLanguage": ["Polish", "English"]
+  },
+  "sameAs": []
+}
+</script>
 </head>
 <body data-new-gr-c-s-check-loaded="14.1286.0" data-gr-ext-installed="" data-cc-id="cc-1" style="cursor: crosshair;" data-new-gr-c-s-loaded="14.1286.0">
 
@@ -1597,7 +1647,7 @@
         <span class="badge-dot"></span>
         Już dostępny!
       </div>
-      <h1>Visualize,<br>Design, <em>Deliver.</em></h1>
+      <h1>Twoje studio projektowania wnętrz<br><em>w jednej zakładce.</em></h1>
       <p class="tagline">
         Mniej chaosu, więcej kreatywności. Twoje biuro projektowe
         w jednej zakładce — od wizualizacji przez listy zakupowe po feedback klienta i współpracę z wykonawcą.
@@ -2064,7 +2114,7 @@
             <!-- Okno wtyczki veepick -->
             <div class="vp-floating vp-sidebar">
               <div class="vp-head">
-                <img class="vp-ic" src="veepic.png" alt="">veepick
+                <img class="vp-ic" src="veepic.png" alt="veepick">veepick
                 <span class="vp-acts">⚙ ↻ ›</span>
               </div>
               <div class="vp-tabs">
@@ -2072,7 +2122,7 @@
                 <div class="vp-t">Ostatnio<span class="vp-pill">7</span></div>
               </div>
               <div class="vp-body">
-                <div class="vp-img"><img src="sofa-seria-7r.png" alt=""></div>
+                <div class="vp-img"><img src="sofa-seria-7r.png" alt="Podgląd produktu w wtyczce veepick"></div>
                 <div class="vp-hint">Najedź na zdjęcie na stronie aby wybrać inne</div>
                 <div>
                   <div class="vp-lab">Lista zakupowa</div>
