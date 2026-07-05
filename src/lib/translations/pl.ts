@@ -1540,7 +1540,7 @@ export const pl = {
     tradeElectrician: "Elektryk",
     tradeFinishing: "Firma wykończeniowa",
     tradeOther: "Inne",
-    selectSpecialty: "Wybierz specjalność",
+    selectSpecialty: "Wybierz specjalizację",
     selectSpecialization: "Wybierz specjalizację",
     // Add contractor dialog
     addTitle: "Dodaj wykonawcę",
