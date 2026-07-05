@@ -1,0 +1,2723 @@
+<!DOCTYPE html><html data-src-ver="59cc55f7" lang="pl"><head>
+
+
+
+
+<meta charset="utf-8">
+<title>veedeck — Visualize, Design, Deliver</title>
+<script>
+  /* Zalogowany użytkownik (z „Nie wylogowuj mnie") → prosto do aplikacji */
+  try { if (localStorage.getItem('veedeck_keep_logged_in') === '1') { location.replace('dashboard.html'); } } catch (e) {}
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="veedeck_ikona.svg" type="image/svg+xml"><link rel="icon" href="veedeck_ikona.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&amp;family=Inter:wght@400;500;600;700;800&amp;family=Nunito:wght@300;400;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+<style>
+  :root {
+    /* Violet theme — z src/app/globals.css */
+    --background: #FFFFFF;
+    --foreground: #24252B;
+    --card: #FFFFFF;
+    --card-foreground: #24252B;
+    --primary: #4F46E5;
+    --primary-foreground: #FFFFFF;
+    --secondary: #F2F3F7;
+    --muted: #F2F3F7;
+    --muted-foreground: #6B6F80;
+    --accent: #A5B4FC;
+    --accent-foreground: #1E1B4B;
+    --border: #E5E7EB;
+    --ring: #4F46E5;
+    --sidebar: #EDEEF2;
+    --sidebar-accent: #E0E1F0;
+    --indigo-50: #EEF2FF;
+    --indigo-950: #1E1B4B;
+
+    --radius: 0.625rem;
+    --radius-lg: 14px;
+    --radius-xl: 18px;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+    background: var(--background);
+    color: var(--foreground);
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.5;
+  }
+  h1, h2, h3, h4 {
+    font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+    font-weight: 600;
+    letter-spacing: -0.022em;
+    margin: 0;
+  }
+  p { margin: 0; }
+  a { color: inherit; text-decoration: none; }
+
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 32px;
+  }
+
+  /* ───────── NAV ───────── */
+  nav.top {
+    position: sticky; top: 0; z-index: 40;
+    background: rgba(255,255,255,0.82);
+    backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-inner {
+    display: flex; align-items: center; justify-content: space-between;
+    height: 68px;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand img.brand-icon {
+    height: 28px; width: 28px; display: block;
+  }
+  .brand img.wordmark-img {
+    height: 22px; width: auto; display: block;
+  }
+  .nav-links {
+    display: flex; gap: 32px; font-size: 14px;
+    color: var(--muted-foreground); font-weight: 500;
+  }
+  .nav-links a { transition: color .15s; }
+  .nav-links a:hover { color: var(--foreground); }
+  @media (max-width: 900px) {
+    .nav-links { display: none; }
+    .nav-cta { display: none !important; }
+  }
+  @media (max-width: 900px) {
+    nav.top .nav-burger { display: inline-flex; }
+  }
+
+  /* HAMBURGER + MOBILE SIDEBAR */
+  .nav-burger {
+    display: none;
+    align-items: center; justify-content: center;
+    width: 42px; height: 42px;
+    background: transparent;
+    border: none;
+    border-radius: 10px;
+    color: var(--foreground);
+    cursor: pointer;
+    padding: 0;
+    transition: background 120ms ease;
+    position: relative; z-index: 80;
+  }
+  .nav-burger:hover { background: var(--secondary); }
+  .nav-burger svg { width: 22px; height: 22px; }
+  .nav-burger .icon-close { display: none; }
+  nav.top.open .nav-burger .icon-open { display: none; }
+  nav.top.open .nav-burger .icon-close { display: block; }
+
+  .mobile-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(15, 15, 20, 0.45);
+    opacity: 0; pointer-events: none;
+    transition: opacity 240ms ease;
+    z-index: 60;
+  }
+  nav.top.open + .mobile-backdrop { opacity: 1; pointer-events: auto; }
+  /* Po otwarciu menu nav musi być nad backdropem (menu jest dzieckiem nav,
+     więc dziedziczy jego kontekst stackingu) — inaczej szary overlay nachodzi
+     na menu i przechwytuje kliknięcia w linki. */
+  nav.top.open { z-index: 70; }
+
+  .mobile-menu {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100dvh;
+    background: #fff;
+    transform: translateX(100%);
+    transition: transform 320ms cubic-bezier(0.22, 0.61, 0.36, 1);
+    z-index: 1000;
+    display: flex; flex-direction: column;
+    overflow-y: auto;
+  }
+  body.menu-locked .mobile-menu { transform: translateX(0); }
+  .mobile-menu-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 22px;
+    border-bottom: 1px solid var(--border);
+  }
+  .mobile-menu-header .brand { display: inline-flex; align-items: center; gap: 9px; }
+  .mobile-menu-header .brand-icon { height: 26px; width: auto; }
+  .mobile-menu-header .wordmark-img { height: 17px; width: auto; }
+  .mobile-menu-close {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 40px; height: 40px;
+    background: transparent; border: none; cursor: pointer;
+    color: var(--foreground);
+    border-radius: 10px;
+    padding: 0;
+  }
+  .mobile-menu-close:hover { background: var(--secondary); }
+  .mobile-menu-close svg { width: 20px; height: 20px; }
+  .mobile-menu-inner { display: flex; flex-direction: column; gap: 2px; padding: 14px 28px 40px; flex: 1; max-width: 520px; width: 100%; margin: 0 auto; }
+  .mobile-menu a.menu-link {
+    display: block; padding: 16px 4px;
+    font-size: 17px; font-weight: 500;
+    color: var(--foreground);
+    border-bottom: 1px solid var(--border);
+    transition: color 120ms ease;
+  }
+  .mobile-menu a.menu-link:last-of-type { border-bottom: none; }
+  .mobile-menu a.menu-link:hover, .mobile-menu a.menu-link.active { color: var(--primary); }
+  .mobile-menu .mobile-cta { display: flex; flex-direction: column; gap: 10px; margin-top: 28px; }
+  .mobile-menu .mobile-cta .btn { width: 100%; justify-content: center; }
+
+  body.menu-locked { overflow: hidden; }
+
+  @media (min-width: 761px) {
+    .mobile-menu { display: none; }
+    .mobile-backdrop { display: none; }
+  }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 10px 18px; border-radius: 10px;
+    font-size: 13.5px; font-weight: 600;
+    border: 1px solid transparent;
+    cursor: pointer; transition: all .15s;
+    font-family: inherit; white-space: nowrap;
+  }
+  .btn-primary {
+    background: var(--primary); color: var(--primary-foreground);
+    box-shadow: 0 1px 2px rgba(79,70,229,0.15), 0 4px 12px -2px rgba(79,70,229,0.28);
+  }
+  .btn-primary:hover { background: #4338CA; transform: translateY(-1px); }
+  .btn-ghost {
+    background: transparent; color: var(--foreground);
+    border-color: var(--border);
+  }
+  .btn-ghost:hover { background: var(--secondary); }
+  .btn-lg { padding: 13px 24px; font-size: 15px; border-radius: 12px; }
+
+  /* ───────── HERO ───────── */
+  .hero {
+    padding: 72px 0 48px;
+    position: relative; overflow: hidden;
+  }
+  .hero::before {
+    content: "";
+    position: absolute; top: -240px; left: 50%;
+    width: 1200px; height: 600px;
+    transform: translateX(-50%);
+    background:
+      radial-gradient(closest-side, rgba(165,180,252,0.38), transparent 70%),
+      radial-gradient(closest-side at 35% 60%, rgba(79,70,229,0.18), transparent 70%);
+    filter: blur(30px);
+    z-index: -1;
+  }
+  .hero-inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+    gap: 56px;
+    align-items: stretch;
+    text-align: left;
+  }
+  .hero-inner > * { min-width: 0; }
+  .hero-inner-legacy-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 48px;
+    text-align: center;
+  }
+  .hero-copy { max-width: 560px; align-self: center; }
+  .hero-copy .tagline { margin-left: 0; margin-right: 0; }
+  .hero-copy .cta-row { justify-content: flex-start; }
+  .hero-copy .meta { justify-content: flex-start; }
+  .hero-stage-wrap { width: 100%; position: relative; }
+  /* Znak wodny — koncentryczne pierścienie wychodzące z prawej krawędzi (opcja B) */
+  img.hero-wm {
+    position: absolute; top: 50%; right: -240px;
+    width: 900px; max-width: none; height: auto;
+    transform: translateY(-50%);
+    z-index: 0; opacity: 0.7;
+    pointer-events: none; user-select: none;
+  }
+  .hero-stage-wrap .render-stage { position: relative; z-index: 1; }
+  @media (max-width: 1024px) {
+    img.hero-wm { width: 640px; right: -160px; opacity: 0.5; }
+  }
+  @media (max-width: 1024px) {
+    .hero-inner { grid-template-columns: 1fr; gap: 40px; text-align: center; }
+    .hero-copy { max-width: 720px; margin: 0 auto; }
+    .hero-copy .tagline { margin-left: auto; margin-right: auto; }
+    .hero-copy .cta-row { justify-content: center; }
+    .hero-copy .meta { justify-content: center; }
+  }
+
+  .badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 14px 6px 10px; border-radius: 999px;
+    background: var(--indigo-50);
+    color: var(--primary);
+    font-size: 12.5px; font-weight: 600;
+    letter-spacing: 0.01em;
+    border: 1px solid color-mix(in srgb, var(--primary) 14%, transparent);
+    margin-bottom: 24px;
+  }
+  .badge-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--primary);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 22%, transparent);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 22%, transparent); }
+    50%      { box-shadow: 0 0 0 7px color-mix(in srgb, var(--primary) 8%, transparent); }
+  }
+
+  .hero h1 {
+    font-size: clamp(36px, 4.4vw, 56px);
+    line-height: 1.03;
+    letter-spacing: -0.035em;
+    font-weight: 700;
+  }
+  .hero h1 em {
+    font-style: italic;
+    font-weight: 500;
+    background: linear-gradient(120deg, var(--primary), #7C74F3);
+    -webkit-background-clip: text; background-clip: text;
+    color: transparent;
+  }
+  .hero .tagline {
+    font-size: 18px; line-height: 1.55;
+    color: var(--muted-foreground);
+    margin: 24px 0 32px;
+    max-width: 520px;
+  }
+  .hero .cta-row {
+    display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+  }
+  .hero .meta {
+    margin-top: 28px;
+    display: flex; gap: 24px; align-items: center; flex-wrap: wrap;
+    font-size: 13px; color: var(--muted-foreground);
+  }
+  .hero .meta-item { display: flex; align-items: center; gap: 7px; white-space: nowrap; }
+  .hero .meta { flex-wrap: nowrap; gap: 18px; }
+  @media (max-width: 1024px) { .hero .meta { flex-wrap: wrap; } }
+  .hero .meta svg { color: var(--primary); }
+
+  /* Hero — animowany render z pinami (ProjectFlow demo) */
+  .render-stage {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 560px;
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.9) inset,
+      0 30px 80px -30px rgba(30, 27, 75, 0.45),
+      0 14px 32px -14px rgba(79, 70, 229, 0.25);
+    background: #000;
+  }
+  .render-stage img.bg {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%; object-fit: cover; display: block;
+  }
+
+  /* Cursor */
+  .rs-cursor {
+    position: absolute;
+    width: 22px; height: 22px;
+    pointer-events: none;
+    z-index: 30;
+    opacity: 0;
+    transform: translate(-50%, -50%);
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
+  }
+  .rs-cursor svg { width: 100%; height: 100%; }
+
+  /* Ripple */
+  .rs-ripple {
+    position: absolute;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    border: 2px solid #4F46E5;
+    transform: translate(-50%, -50%) scale(1);
+    pointer-events: none;
+    opacity: 0;
+    z-index: 20;
+  }
+
+  /* Pin marker — solid niebieski z białym ringiem */
+  .rs-pin {
+    position: absolute;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: #2D7BF4;
+    border: 3px solid #fff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    transform: translate(-50%, -50%) scale(0);
+    pointer-events: none;
+    z-index: 25;
+  }
+
+  /* Pin marker B — ciemna kropka z ikoną produktu (mebla) */
+  .rs-pin.rs-pin-b {
+    width: 32px; height: 32px;
+    background: #2A2520;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .rs-pin.rs-pin-b .material-symbols-rounded {
+    font-family: 'Material Symbols Rounded';
+    font-size: 18px;
+    line-height: 1;
+    color: #fff;
+    font-variation-settings: 'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 24;
+  }
+
+  /* Comment panel (Nowy pin · Lampa) — 1:1 z mockupem */
+  .rs-panel {
+    position: absolute;
+    width: 208px;
+    text-align: left;
+    background: #fff;
+    border-radius: 11px;
+    box-shadow: 0 16px 40px rgba(0,0,0,0.18), 0 2px 6px rgba(0,0,0,0.08);
+    padding: 12px 13px 13px;
+    font-size: 12px;
+    color: #111827;
+    z-index: 28;
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+    transform-origin: top left;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  .rs-panel-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .rs-panel-head .ttl { font-weight: 700; font-size: 12.5px; color: #0f172a; letter-spacing: -0.01em; }
+  .rs-panel-head .x { color: #9ca3af; font-size: 15px; line-height: 1; font-weight: 300; }
+  .rs-field {
+    border: 1px solid #E5E7EB;
+    border-radius: 7px;
+    padding: 7px 9px;
+    margin-bottom: 7px;
+    font-size: 12px;
+    color: #111827;
+    background: #fff;
+  }
+  .rs-meta-row {
+    display: inline-flex; align-items: center; gap: 5px;
+    color: #9ca3af; font-size: 10.5px;
+    background: #F3F4F6;
+    border-radius: 999px;
+    padding: 5px 10px;
+    margin: 0 0 8px;
+  }
+  .rs-meta-row svg { width: 11px; height: 11px; }
+  .rs-comment {
+    border: 1px solid #E5E7EB;
+    border-radius: 7px;
+    padding: 8px 10px 8px;
+    position: relative;
+    min-height: 54px;
+    font-size: 12px;
+    color: #111827;
+    line-height: 1.4;
+  }
+  .rs-comment .send-icon {
+    position: absolute;
+    right: 9px; bottom: 8px;
+    width: 14px; height: 14px;
+    color: #6B7280;
+  }
+  .rs-comment .send-icon svg { width: 100%; height: 100%; display: block; }
+
+  /* Product card (sofa) — 1:1 z mockupem */
+  .rs-product {
+    position: absolute;
+    width: 168px;
+    text-align: left;
+    transform-origin: top left;
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 16px 40px rgba(0,0,0,0.18), 0 2px 6px rgba(0,0,0,0.08);
+    padding: 12px 12px 10px;
+    z-index: 27;
+    opacity: 0;
+    transform: translate(8px, -8px) scale(0.94);
+    transform-origin: bottom right;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  .rs-product-img {
+    aspect-ratio: 16/9;
+    border-radius: 6px;
+    background: #fff;
+    margin-bottom: 10px;
+    position: relative;
+    overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .rs-product-img img { width: 100%; height: 100%; object-fit: contain; display: block; }
+  .rs-product-name {
+    font-size: 12px; font-weight: 500;
+    color: #111;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    margin: 0 0 8px;
+    letter-spacing: -0.005em;
+  }
+  .rs-product-foot {
+    display: flex; align-items: center; gap: 10px;
+    padding-top: 8px;
+    border-top: 1px solid #EEF0F3;
+  }
+  .rs-product-foot .pico { color: #9CA3AF; }
+  .rs-product-foot .pico svg { width: 14px; height: 14px; }
+  .rs-product-foot .shop {
+    display: inline-flex; align-items: center; gap: 5px;
+    color: #2D7BF4; font-size: 12px; font-weight: 500;
+  }
+  .rs-product-foot .shop svg { width: 11px; height: 11px; }
+  .rs-product-foot .trash {
+    margin-left: auto;
+    color: #9CA3AF;
+  }
+  .rs-product-foot .trash svg { width: 14px; height: 14px; }
+
+  /* Hint label (bottom) */
+  .rs-hint {
+    position: absolute;
+    bottom: 16px; left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255,255,255,0.94);
+    backdrop-filter: blur(8px);
+    border-radius: 999px;
+    padding: 6px 14px;
+    font-size: 11px;
+    font-weight: 500;
+    color: #4F46E5;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+    display: flex; align-items: center; gap: 6px;
+    white-space: nowrap;
+    z-index: 35;
+    opacity: 0.92;
+  }
+  .rs-hint .dot-live {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #4F46E5;
+    animation: rs-blink 1.4s infinite;
+  }
+  @keyframes rs-blink {
+    0%, 60%, 100% { opacity: 1; }
+    30% { opacity: 0.25; }
+  }
+
+  /* Animations */
+  @keyframes rs-cursor-1 {
+    0%, 4%   { left: 90%; top: 110%; opacity: 0; }
+    8%       { left: 90%; top: 95%;  opacity: 1; }
+    18%      { left: 64%; top: 17%;  opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    22%      { left: 64%; top: 17%;  opacity: 1; transform: translate(-50%, -50%) scale(0.85); }
+    26%      { left: 64%; top: 17%;  opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    44%      { left: 64%; top: 17%;  opacity: 1; }
+    52%      { left: 50%; top: 62%;  opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    56%      { left: 50%; top: 62%;  opacity: 1; transform: translate(-50%, -50%) scale(0.85); }
+    60%      { left: 50%; top: 62%;  opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    78%      { left: 50%; top: 62%;  opacity: 1; }
+    84%, 100% { left: 50%; top: 110%; opacity: 0; }
+  }
+  @keyframes rs-ripple-1 {
+    0%, 22%   { opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
+    23%       { opacity: 0.9; transform: translate(-50%, -50%) scale(0.6); }
+    32%       { opacity: 0; transform: translate(-50%, -50%) scale(3.2); }
+    100%      { opacity: 0; }
+  }
+  @keyframes rs-ripple-2 {
+    0%, 56%   { opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
+    57%       { opacity: 0.9; transform: translate(-50%, -50%) scale(0.6); }
+    66%       { opacity: 0; transform: translate(-50%, -50%) scale(3.2); }
+    100%      { opacity: 0; }
+  }
+  @keyframes rs-pin-1 {
+    0%, 24%  { opacity: 0; transform: translate(-50%, -50%) scale(0); }
+    28%      { opacity: 1; transform: translate(-50%, -50%) scale(1.25); }
+    32%, 100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  }
+  @keyframes rs-pin-2 {
+    0%, 58%  { opacity: 0; transform: translate(-50%, -50%) scale(0); }
+    62%      { opacity: 1; transform: translate(-50%, -50%) scale(1.25); }
+    66%      { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    88%      { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    96%, 100% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+  }
+  @keyframes rs-panel-1 {
+    0%, 30%  { opacity: 0; transform: translateY(8px) scale(0.94); }
+    36%      { opacity: 1; transform: translateY(0) scale(1); }
+    46%      { opacity: 1; transform: translateY(0) scale(1); }
+    50%, 100% { opacity: 0; transform: translateY(4px) scale(0.96); }
+  }
+  @keyframes rs-product-1 {
+    0%, 64%  { opacity: 0; transform: translate(8px, -8px) scale(0.94); }
+    70%      { opacity: 1; transform: translate(0, 0) scale(1); }
+    86%      { opacity: 1; transform: translate(0, 0) scale(1); }
+    94%, 100% { opacity: 0; transform: translate(4px, -4px) scale(0.96); }
+  }
+
+  .rs-cursor   { animation: rs-cursor-1 6s ease-in-out infinite; }
+  .rs-ripple-a { animation: rs-ripple-1 6s linear infinite; }
+  .rs-ripple-b { animation: rs-ripple-2 6s linear infinite; }
+  .rs-pin-a    { animation: rs-pin-1 6s ease-out infinite; }
+  .rs-pin-b    { animation: rs-pin-2 6s ease-out infinite; }
+  .rs-panel-a  { animation: rs-panel-1 6s ease-out infinite; }
+  .rs-product-a { animation: rs-product-1 6s ease-out infinite; }
+
+  /* Hero preview — makiet dashboardu Violet (legacy, nieużywany w hero) */
+  .preview {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.9) inset,
+      0 24px 68px -28px rgba(30, 27, 75, 0.35),
+      0 12px 28px -14px rgba(79, 70, 229, 0.20);
+    overflow: hidden;
+    transform: perspective(1400px) rotateY(-2deg) rotateX(3deg);
+    transform-origin: center;
+  }
+  .preview-bar {
+    display: flex; align-items: center; gap: 8px;
+    padding: 12px 16px;
+    background: #FAFAFB;
+    border-bottom: 1px solid var(--border);
+  }
+  .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .dot.r { background: #EF6F6C; }
+  .dot.y { background: #F2C94C; }
+  .dot.g { background: #6FCF97; }
+  .preview-body { display: grid; grid-template-columns: 172px 1fr; min-height: 380px; }
+
+  .preview-side {
+    background: var(--sidebar);
+    border-right: 1px solid var(--border);
+    padding: 14px 10px;
+  }
+  .side-brand {
+    display: flex; align-items: center; gap: 8px; padding: 6px 8px 14px;
+    border-bottom: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+    margin-bottom: 10px;
+  }
+  .side-brand img { height: 18px; }
+  .side-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 7px 9px; border-radius: 8px;
+    font-size: 12.5px; color: #4B5563; font-weight: 500;
+    margin-bottom: 2px;
+  }
+  .side-item.active {
+    background: var(--sidebar-accent);
+    color: var(--primary); font-weight: 600;
+  }
+  .side-item svg { width: 15px; height: 15px; }
+
+  .preview-main { padding: 22px 22px; }
+  .preview-main h3 {
+    font-size: 15px; margin-bottom: 14px;
+  }
+  .kpi-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+    margin-bottom: 16px;
+  }
+  .kpi {
+    padding: 12px; border: 1px solid var(--border); border-radius: 10px;
+    background: var(--background);
+  }
+  .kpi-num { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; color: var(--foreground); }
+  .kpi-trend {
+    font-size: 10.5px; font-weight: 600;
+    color: #16A34A; margin-top: 1px;
+  }
+  .kpi-lbl { font-size: 11px; color: var(--muted-foreground); margin-top: 2px; }
+  .proj-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+  }
+  .proj {
+    border: 1px solid var(--border); border-radius: 10px;
+    background: var(--background); overflow: hidden;
+  }
+  .proj-img {
+    aspect-ratio: 4/3;
+    background:
+      linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 55%, #C7D2FE 100%);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--primary);
+  }
+  .proj-img svg { width: 22px; height: 22px; opacity: 0.85; }
+  .proj-meta { padding: 8px 10px; }
+  .proj-title { font-size: 11.5px; font-weight: 600; margin-bottom: 2px; color: var(--foreground); }
+  .proj-sub   { font-size: 10.5px; color: var(--muted-foreground); }
+
+  /* ───────── SECTION shell ───────── */
+  section.pad { padding: 96px 0; }
+  section.pad-sm { padding: 72px 0; }
+  .eyebrow {
+    display: inline-block;
+    font-size: 12px; font-weight: 700; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--primary);
+    margin-bottom: 14px;
+  }
+  .section-head {
+    max-width: 680px; margin-bottom: 48px;
+  }
+  .section-head h2 {
+    font-size: clamp(30px, 3.8vw, 42px);
+    line-height: 1.1; letter-spacing: -0.025em;
+  }
+  .section-head p {
+    font-size: 17px; color: var(--muted-foreground);
+    margin-top: 16px; line-height: 1.6;
+  }
+
+  /* ───────── VALUES ───────── */
+  .values {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
+  }
+  @media (max-width: 860px) { .values { grid-template-columns: 1fr; } }
+  .value-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    transition: all .18s;
+  }
+  .value-card:hover {
+    border-color: color-mix(in srgb, var(--primary) 30%, var(--border));
+    box-shadow: 0 1px 2px rgba(79,70,229,0.05), 0 12px 32px -16px rgba(79,70,229,0.22);
+    transform: translateY(-2px);
+  }
+  .value-icon {
+    width: 46px; height: 46px; border-radius: 12px;
+    background: var(--indigo-50);
+    color: var(--primary);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 20px;
+  }
+  .value-icon svg { width: 22px; height: 22px; }
+  .value-card h3 { font-size: 19px; margin-bottom: 10px; letter-spacing: -0.015em; }
+  .value-card p {
+    font-size: 14.5px; color: var(--muted-foreground); line-height: 1.6;
+  }
+
+  /* ───────── DEVICES ───────── */
+  section.devices {
+    background: linear-gradient(180deg, #FAFAFB 0%, #F4F4F7 100%);
+    border-block: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .devices-stage {
+    position: relative;
+    margin-top: 56px;
+    height: 520px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  @media (max-width: 960px) {
+    .devices-stage { height: auto; display: grid; gap: 40px; justify-items: center; }
+  }
+
+  /* laptop */
+  .device-laptop {
+    position: relative;
+    width: 720px;
+    z-index: 1;
+  }
+  @media (max-width: 960px) { .device-laptop { width: 100%; max-width: 560px; } }
+  .laptop-screen {
+    background: #111;
+    border-radius: 16px 16px 6px 6px;
+    padding: 14px 14px 16px;
+    box-shadow:
+      0 2px 0 rgba(0,0,0,0.08) inset,
+      0 30px 60px -20px rgba(17, 17, 17, 0.35),
+      0 0 0 1px rgba(0,0,0,0.06);
+  }
+  .laptop-screen .laptop-cam {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #2a2a2a; margin: 0 auto 8px;
+  }
+  .laptop-bezel {
+    background: var(--background);
+    border-radius: 4px;
+    aspect-ratio: 16/10;
+    overflow: hidden;
+    position: relative;
+  }
+  .laptop-base {
+    height: 14px;
+    background: linear-gradient(180deg, #d8d8dc 0%, #b5b5bb 100%);
+    border-radius: 0 0 18px 18px;
+    margin: 0 -22px;
+    position: relative;
+  }
+  .laptop-base::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 110px; height: 5px;
+    background: #9999a0;
+    border-radius: 0 0 8px 8px;
+  }
+
+  /* tablet */
+  .device-tablet {
+    position: absolute;
+    left: calc(50% - 470px);
+    bottom: 10px;
+    width: 260px;
+    z-index: 2;
+    transform: rotate(-4deg);
+  }
+  @media (max-width: 960px) {
+    .device-tablet { position: static; transform: none; width: 280px; }
+  }
+  .tablet-body {
+    background: #0d0d10;
+    border-radius: 22px;
+    padding: 10px;
+    box-shadow:
+      0 24px 50px -18px rgba(17, 17, 17, 0.45),
+      0 0 0 1px rgba(0,0,0,0.06);
+  }
+  .tablet-screen {
+    background: var(--background);
+    border-radius: 14px;
+    aspect-ratio: 3/4;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* phone */
+  .device-phone {
+    position: absolute;
+    right: calc(50% - 450px);
+    bottom: 10px;
+    width: 170px;
+    z-index: 3;
+    transform: rotate(5deg);
+  }
+  @media (max-width: 960px) {
+    .device-phone { position: static; transform: none; width: 200px; }
+  }
+  .phone-body {
+    background: #0d0d10;
+    border-radius: 28px;
+    padding: 8px;
+    box-shadow:
+      0 22px 44px -16px rgba(17, 17, 17, 0.5),
+      0 0 0 1px rgba(0,0,0,0.08);
+  }
+  .phone-screen {
+    background: var(--background);
+    border-radius: 22px;
+    aspect-ratio: 9/19;
+    overflow: hidden;
+    position: relative;
+  }
+  .phone-notch {
+    position: absolute;
+    top: 6px; left: 50%;
+    transform: translateX(-50%);
+    width: 54px; height: 14px;
+    background: #0d0d10;
+    border-radius: 8px;
+    z-index: 5;
+  }
+
+  /* generic mini-ui inside devices */
+  .mini-ui { font-size: 9px; color: var(--foreground); line-height: 1.3; }
+  .mini-ui * { box-sizing: border-box; }
+
+  /* laptop mock content — dashboard */
+  .lap-shell { display: grid; grid-template-columns: 92px 1fr; height: 100%; }
+  .lap-side {
+    background: var(--card, #fff);
+    border-right: 1px solid var(--border);
+    padding: 10px 8px;
+  }
+  .lap-brand {
+    display: flex; align-items: center; gap: 5px;
+    padding-bottom: 8px; margin-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .lap-brand img { height: 11px; width: auto; }
+  .lap-brand-icon {
+    width: 12px; height: 12px; border-radius: 2.5px;
+    background: var(--primary);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff;
+  }
+  .lap-nav-item {
+    display: flex; align-items: center; gap: 5px;
+    padding: 4px 5px; border-radius: 4px;
+    font-size: 8px; color: var(--muted-foreground);
+    margin-bottom: 2px;
+  }
+  .lap-nav-item.active {
+    background: color-mix(in srgb, var(--primary) 10%, transparent);
+    color: var(--primary);
+  }
+  .lap-nav-item svg { width: 9px; height: 9px; flex-shrink: 0; }
+  .lap-main { padding: 12px 14px; overflow: hidden; background: #FAFAFB; }
+  .lap-topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 10px;
+  }
+  .lap-title { font-size: 11px; font-weight: 700; letter-spacing: -0.01em; }
+  .lap-search {
+    background: var(--background); border: 1px solid var(--border);
+    border-radius: 4px; padding: 2px 6px; font-size: 7px;
+    color: var(--muted-foreground); width: 90px;
+  }
+  .lap-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 10px; }
+  .lap-kpi {
+    background: var(--background); border: 1px solid var(--border);
+    border-radius: 5px; padding: 6px 7px;
+  }
+  .lap-kpi-n { font-size: 11px; font-weight: 700; color: var(--foreground); }
+  .lap-kpi-l { font-size: 7px; color: var(--muted-foreground); }
+  .lap-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .lap-card {
+    background: var(--background); border: 1px solid var(--border);
+    border-radius: 5px; overflow: hidden;
+  }
+  .lap-card-img {
+    aspect-ratio: 4/3;
+    background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 60%, #C7D2FE 100%);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--primary);
+  }
+  .lap-card-img svg { width: 13px; height: 13px; opacity: 0.8; }
+  .lap-card-meta { padding: 4px 6px 5px; }
+  .lap-card-t { font-size: 7.5px; font-weight: 600; }
+  .lap-card-s { font-size: 6.5px; color: var(--muted-foreground); margin-top: 1px; }
+
+  /* tablet content — shopping list */
+  .tab-shell { height: 100%; display: flex; flex-direction: column; background: var(--background); }
+  .tab-top {
+    padding: 12px 12px 8px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .tab-icon {
+    width: 18px; height: 18px; border-radius: 4px;
+    background: color-mix(in srgb, var(--primary) 14%, transparent);
+    color: var(--primary);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .tab-icon svg { width: 11px; height: 11px; }
+  .tab-tname { font-size: 10px; font-weight: 700; }
+  .tab-tsub { font-size: 7.5px; color: var(--muted-foreground); margin-top: 1px; }
+  .tab-body { padding: 10px 12px; overflow: hidden; flex: 1; }
+  .tab-sec {
+    font-size: 8px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--muted-foreground);
+    margin-bottom: 6px;
+  }
+  .tab-row {
+    display: grid; grid-template-columns: 24px 1fr auto; gap: 8px;
+    align-items: center;
+    padding: 6px 0; border-bottom: 1px solid var(--border);
+  }
+  .tab-row:last-child { border-bottom: 0; }
+  .tab-thumb {
+    width: 24px; height: 24px; border-radius: 4px;
+    background: linear-gradient(135deg, #F4F4F7, #E4E4EA);
+  }
+  .tab-name { font-size: 8.5px; font-weight: 600; color: var(--foreground); }
+  .tab-brand { font-size: 7px; color: var(--muted-foreground); margin-top: 1px; }
+  .tab-price { font-size: 8.5px; font-weight: 700; color: var(--primary); }
+  .tab-check {
+    width: 11px; height: 11px; border-radius: 50%;
+    background: #16A34A;
+    display: inline-flex; align-items: center; justify-content: center;
+    color: #fff; margin-left: 4px; flex-shrink: 0;
+  }
+  .tab-check svg { width: 7px; height: 7px; }
+
+  /* phone content — render review */
+  .phn-shell { height: 100%; display: flex; flex-direction: column; background: var(--background); }
+  .phn-top {
+    padding: 28px 12px 10px; display: flex; align-items: center; gap: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .phn-back {
+    width: 16px; height: 16px; display: flex; align-items: center; justify-content: center;
+    color: var(--muted-foreground);
+  }
+  .phn-title { font-size: 9px; font-weight: 700; flex: 1; }
+  .phn-sub { font-size: 7px; color: var(--muted-foreground); }
+  .phn-img {
+    aspect-ratio: 4/3;
+    background:
+      radial-gradient(circle at 70% 30%, rgba(255,255,255,0.6), transparent 40%),
+      linear-gradient(135deg, #E0E7FF 0%, #C7D2FE 55%, #A5B4FC 100%);
+    position: relative;
+    flex-shrink: 0;
+  }
+  .phn-pin {
+    position: absolute;
+    width: 14px; height: 14px; border-radius: 50%;
+    background: var(--primary); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 7px; font-weight: 700;
+    box-shadow: 0 2px 6px rgba(79,70,229,0.4);
+    border: 2px solid #fff;
+  }
+  .phn-pin.p1 { top: 28%; left: 30%; }
+  .phn-pin.p2 { top: 55%; left: 62%; }
+  .phn-pin.p3 { top: 70%; left: 22%; }
+  .phn-cmt {
+    padding: 10px 12px; display: flex; gap: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .phn-ava {
+    width: 18px; height: 18px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), #6B63F0);
+    color: #fff; display: flex; align-items: center; justify-content: center;
+    font-size: 8px; font-weight: 700; flex-shrink: 0;
+  }
+  .phn-cmt-body { flex: 1; min-width: 0; }
+  .phn-cmt-author { font-size: 8px; font-weight: 700; }
+  .phn-cmt-text { font-size: 7.5px; color: var(--muted-foreground); margin-top: 2px; line-height: 1.4; }
+  .phn-cta {
+    margin: 10px 12px 0;
+    background: var(--primary);
+    color: #fff;
+    border-radius: 6px;
+    padding: 8px;
+    text-align: center;
+    font-size: 8.5px;
+    font-weight: 700;
+  }
+
+  /* ───────── MODULES ───────── */
+  section.modules { background: #FAFAFB; border-block: 1px solid var(--border); }
+
+  /* Dual marquee */
+  .modules-marquee {
+    position: relative;
+    width: 100%;
+    margin-top: 8px;
+    overflow: hidden;
+    /* fade edges */
+    -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 8%, #000 92%, transparent 100%);
+            mask-image: linear-gradient(90deg, transparent 0, #000 8%, #000 92%, transparent 100%);
+  }
+  .marquee-row { display: flex; gap: 14px; padding: 10px 0; }
+  .marquee-row + .marquee-row { margin-top: 12px; }
+  .marquee-track {
+    flex-shrink: 0;
+    display: flex;
+    gap: 14px;
+    padding-right: 14px;
+    will-change: transform;
+  }
+  .marquee-row--top    .marquee-track { animation: mq-left  60s linear infinite; }
+  .marquee-row--bottom .marquee-track { animation: mq-right 70s linear infinite; }
+  .modules-marquee:hover .marquee-track { animation-play-state: paused; }
+  @keyframes mq-left {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
+  @keyframes mq-right {
+    from { transform: translateX(-50%); }
+    to   { transform: translateX(0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .marquee-track { animation: none !important; }
+  }
+
+  .marquee-pill {
+    flex-shrink: 0;
+    display: flex; align-items: center; gap: 14px;
+    width: 340px;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px 20px 16px 16px;
+    transition: transform 200ms ease, border-color 200ms ease, box-shadow 200ms ease;
+  }
+  .marquee-pill:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--primary) 35%, var(--border));
+    box-shadow: 0 12px 28px -16px rgba(79, 70, 229, 0.22);
+  }
+  .marquee-pill .pill-icon {
+    width: 44px; height: 44px; border-radius: 12px;
+    flex-shrink: 0;
+    background: linear-gradient(140deg, var(--primary), #6B63F0);
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .marquee-pill .pill-icon .material-symbols-rounded {
+    font-family: 'Material Symbols Rounded';
+    font-size: 22px; line-height: 1;
+    font-variation-settings: 'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 24;
+  }
+  .marquee-pill .pill-icon .renderflow-svg { width: 22px; height: 22px; color: #fff; }
+  .marquee-pill .pill-body { min-width: 0; }
+  .marquee-pill .pill-name {
+    font-family: "Inter", sans-serif;
+    font-size: 15px; font-weight: 700; letter-spacing: -0.01em;
+    color: var(--foreground);
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 3px;
+  }
+  .marquee-pill .pill-desc {
+    font-size: 13px; line-height: 1.45;
+    color: var(--muted-foreground);
+    overflow: hidden; text-overflow: ellipsis;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  }
+  .marquee-pill .pill-soon {
+    display: inline-block;
+    font-family: "DM Sans", sans-serif;
+    font-size: 10px; font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--primary);
+    background: var(--indigo-50);
+    border-radius: 999px;
+    padding: 2px 8px;
+    line-height: 1.4;
+  }
+
+  .modules-cta-row {
+    display: flex; justify-content: center;
+    margin-top: 36px;
+  }
+  .modules-cta {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 12px 22px;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 14px; font-weight: 600;
+    color: var(--foreground);
+    transition: border-color 150ms ease, color 150ms ease, transform 150ms ease;
+  }
+  .modules-cta:hover {
+    border-color: color-mix(in srgb, var(--primary) 45%, var(--border));
+    color: var(--primary);
+    transform: translateY(-1px);
+  }
+  .modules-cta svg { width: 14px; height: 14px; }
+
+  @media (max-width: 700px) {
+    .marquee-pill { width: 280px; padding: 14px 16px 14px 14px; }
+    .marquee-pill .pill-icon { width: 38px; height: 38px; }
+    .marquee-pill .pill-name { font-size: 14px; }
+    .marquee-pill .pill-desc { font-size: 12.5px; }
+  }
+
+  /* legacy grid kept for backward-compat (used elsewhere) */
+  .modules-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+  }
+  @media (max-width: 860px) { .modules-grid { grid-template-columns: 1fr; } }
+  .module-more {
+    background: linear-gradient(150deg, #EEF2FF 0%, #FAFAFB 100%);
+    border-style: dashed;
+  }
+  .module-more .module-icon {
+    background: linear-gradient(140deg, #A5B4FC, var(--primary));
+  }
+  .module {
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    transition: all .18s;
+  }
+  .module:hover {
+    border-color: color-mix(in srgb, var(--primary) 35%, var(--border));
+    transform: translateY(-2px);
+    box-shadow: 0 12px 28px -16px rgba(79,70,229,0.22);
+  }
+  .module-head {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 14px;
+  }
+  .module-icon {
+    width: 42px; height: 42px; border-radius: 11px;
+    background: linear-gradient(140deg, var(--primary), #6B63F0);
+    color: var(--primary-foreground);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .module-icon svg { width: 20px; height: 20px; }
+  .module-icon .material-symbols-rounded {
+    font-family: 'Material Symbols Rounded';
+    font-size: 24px;
+    color: #fff;
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    line-height: 1;
+  }
+  .module-icon .renderflow-mask {
+    width: 24px; height: 24px;
+    background-color: #fff;
+    -webkit-mask: url('renderflow-icon.png') center / contain no-repeat;
+    mask: url('renderflow-icon.png') center / contain no-repeat;
+  }
+  .module-icon .renderflow-svg {
+    width: 22px; height: 22px;
+    color: #fff;
+    flex-shrink: 0;
+  }
+  .module-name {
+    font-size: 16px; font-weight: 700; letter-spacing: -0.01em;
+  }
+  .module-soon {
+    display: inline-block;
+    margin-left: 8px;
+    font-size: 9px; font-weight: 700; letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 3px 7px;
+    border-radius: 999px;
+    background: color-mix(in oklch, var(--primary) 15%, transparent);
+    color: var(--primary);
+    vertical-align: middle;
+    line-height: 1;
+  }
+  .module p {
+    font-size: 13.5px; color: var(--muted-foreground); line-height: 1.6;
+  }
+
+  /* ───────── WORKFLOW ───────── */
+  .workflow {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
+    position: relative;
+  }
+  @media (max-width: 860px) { .workflow { grid-template-columns: 1fr; } }
+  .step {
+    padding: 30px 26px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    position: relative;
+  }
+  .step-num {
+    position: absolute; top: 22px; right: 26px;
+    font-family: "Inter", sans-serif;
+    font-weight: 700;
+    font-size: 42px;
+    color: color-mix(in srgb, var(--primary) 15%, transparent);
+    letter-spacing: -0.04em; line-height: 1;
+  }
+  .step h3 { font-size: 19px; margin-bottom: 10px; max-width: 70%; }
+  .step p {
+    font-size: 14px; color: var(--muted-foreground); line-height: 1.6;
+  }
+
+  /* ───────── AUDIENCE / quote ───────── */
+  .audience {
+    background:
+      radial-gradient(circle at 85% 15%, rgba(165,180,252,0.35) 0%, transparent 55%),
+      linear-gradient(135deg, #3C33C9 0%, #4F46E5 55%, #6B63F0 100%);
+    color: var(--primary-foreground);
+    border-radius: 22px;
+    padding: 60px 52px;
+    display: grid; grid-template-columns: 1.2fr 1fr; gap: 48px;
+    align-items: center;
+    position: relative; overflow: hidden;
+    box-shadow: 0 24px 68px -28px rgba(30, 27, 75, 0.6);
+  }
+  .audience > * { min-width: 0; }
+  @media (max-width: 1024px) {
+    .audience { grid-template-columns: 1fr; padding: 44px 40px; }
+  }
+  .stats-row > * { min-width: 0; }
+  @media (max-width: 520px) {
+    .audience { padding: 34px 24px; }
+  }
+  .audience .eyebrow {
+    color: #C7D2FE;
+  }
+  .audience h2 {
+    font-size: clamp(28px, 3.2vw, 40px);
+    line-height: 1.1;
+    color: inherit;
+  }
+  .audience p {
+    font-size: 16px; line-height: 1.65;
+    color: rgba(255,255,255,0.82);
+    margin-top: 20px;
+  }
+  .stats-row {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
+  }
+  .stat-big {
+    font-family: "Inter", sans-serif;
+    font-weight: 700; letter-spacing: -0.03em;
+    font-size: 46px; line-height: 1;
+    color: #FFFFFF;
+  }
+  .stat-lbl {
+    font-size: 11.5px;
+    color: rgba(199, 210, 254, 0.85);
+    margin-top: 8px; letter-spacing: 0.08em; text-transform: uppercase;
+    font-weight: 600;
+  }
+  @media (max-width: 520px) {
+    .stats-row { gap: 12px; }
+    .stat-big { font-size: 30px; }
+    .stat-lbl { font-size: 10px; letter-spacing: 0.04em; margin-top: 6px; }
+  }
+
+  /* ───────── DEMO FORM ───────── */
+  .demo-wrap {
+    display: grid; grid-template-columns: 1fr 1.15fr; gap: 56px;
+    align-items: start;
+  }
+  @media (max-width: 860px) { .demo-wrap { grid-template-columns: 1fr; gap: 32px; } }
+  .demo-left h2 {
+    font-size: clamp(32px, 4vw, 46px); line-height: 1.05;
+  }
+  .demo-left > p {
+    font-size: 17px; color: var(--muted-foreground);
+    margin-top: 20px; line-height: 1.6;
+  }
+  .demo-list { margin-top: 28px; display: grid; gap: 12px; }
+  .demo-list-item {
+    display: flex; gap: 12px; align-items: flex-start;
+    font-size: 14.5px; color: var(--foreground);
+  }
+  .demo-list-item .tick {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--indigo-50);
+    color: var(--primary);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; margin-top: 1px;
+  }
+  .demo-list-item .tick svg { width: 13px; height: 13px; }
+
+  form.demo {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 34px 34px 28px;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.9) inset,
+      0 20px 48px -28px rgba(30, 27, 75, 0.18);
+  }
+  form.demo .form-title {
+    font-family: "Inter", sans-serif;
+    font-size: 21px; font-weight: 700; letter-spacing: -0.015em;
+    margin-bottom: 6px;
+  }
+  form.demo .form-sub {
+    font-size: 13.5px; color: var(--muted-foreground);
+    margin-bottom: 26px;
+  }
+  .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+  .field label {
+    font-size: 12.5px; font-weight: 600;
+    color: var(--foreground);
+  }
+  .field input, .field select, .field textarea {
+    font-family: inherit; font-size: 14px;
+    padding: 11px 14px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--background);
+    color: var(--foreground);
+    transition: border-color .15s, box-shadow .15s;
+    outline: none;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 22%, transparent);
+  }
+  .checkbox-row {
+    display: flex; gap: 10px; align-items: flex-start;
+    font-size: 12.5px; color: var(--muted-foreground);
+    margin-top: 6px; margin-bottom: 20px;
+    line-height: 1.5;
+  }
+  .checkbox-row input { accent-color: var(--primary); margin-top: 2px; }
+  form.demo .btn-primary {
+    width: 100%; padding: 13px; font-size: 15px;
+    border-radius: 11px; justify-content: center;
+  }
+  .form-foot {
+    font-size: 11.5px; color: var(--muted-foreground);
+    text-align: center; margin-top: 14px;
+  }
+
+  /* ───────── CONTACT ───────── */
+  section.contact {
+    padding: 96px 0;
+    background: linear-gradient(180deg, #FAFAFB 0%, #FFFFFF 100%);
+    border-top: 1px solid var(--border);
+  }
+  .contact-inner {
+    display: grid;
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+    gap: 56px;
+    align-items: start;
+  }
+  @media (max-width: 920px) {
+    .contact-inner { grid-template-columns: 1fr; gap: 40px; }
+  }
+  .contact-copy h2 {
+    font-size: clamp(28px, 3.4vw, 40px);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    font-weight: 700;
+    margin: 14px 0 16px;
+  }
+  .contact-copy p {
+    color: var(--muted-foreground);
+    line-height: 1.65;
+    font-size: 15.5px;
+  }
+  .contact-channels {
+    margin-top: 28px;
+    display: grid;
+    gap: 14px;
+  }
+  .contact-channel {
+    display: flex; gap: 14px; align-items: center;
+    padding: 14px 16px;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+  }
+  .contact-channel .ic {
+    width: 38px; height: 38px; border-radius: 10px;
+    background: linear-gradient(140deg, #EEF2FF, #E0E7FF);
+    color: var(--primary);
+    display: grid; place-items: center;
+    flex-shrink: 0;
+  }
+  .contact-channel .ic .material-symbols-rounded {
+    font-family: 'Material Symbols Rounded';
+    font-size: 20px; line-height: 1;
+    font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 24;
+    color: var(--primary);
+  }
+  .contact-channel .lab { font-size: 12px; color: var(--muted-foreground); margin-bottom: 2px; }
+  .contact-channel .val { font-size: 14.5px; font-weight: 600; color: var(--foreground); }
+  .contact-form-card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    padding: 32px;
+    box-shadow: 0 24px 60px -32px rgba(15, 23, 42, 0.18);
+  }
+  .contact-form-card h3 {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin-bottom: 6px;
+  }
+  .contact-form-card .form-sub {
+    font-size: 13.5px;
+    color: var(--muted-foreground);
+    margin-bottom: 22px;
+  }
+  .contact-form { display: grid; gap: 16px; }
+  .contact-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 540px) { .contact-row { grid-template-columns: 1fr; } }
+  .field { display: grid; gap: 6px; }
+  .field label {
+    font-size: 12px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--muted-foreground);
+  }
+  .field input,
+  .field textarea,
+  .field select {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-family: inherit; font-size: 14.5px;
+    background: #fff; color: var(--foreground);
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .field textarea { resize: vertical; min-height: 110px; line-height: 1.55; }
+  .field input:focus,
+  .field textarea:focus,
+  .field select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+  }
+  .field-checkbox { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; color: var(--muted-foreground); line-height: 1.5; }
+  .field-checkbox input { width: 16px; height: 16px; margin-top: 2px; flex-shrink: 0; accent-color: var(--primary); }
+  .contact-submit {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--primary); color: #fff;
+    padding: 14px 22px; border-radius: 12px;
+    font-weight: 600; font-size: 14.5px;
+    border: none; cursor: pointer;
+    justify-self: start;
+    transition: background .15s, transform .15s;
+  }
+  .contact-submit:hover { background: #4338CA; transform: translateY(-1px); }
+  .form-confirm {
+    background: #ECFDF5;
+    border: 1px solid #A7F3D0;
+    color: #065F46;
+    padding: 14px 16px;
+    border-radius: 12px;
+    font-size: 14px;
+    display: none;
+  }
+  .form-confirm.show { display: block; }
+
+  /* ───────── FOOTER ───────── */
+  footer.site {
+    border-top: 1px solid var(--border);
+    padding: 56px 0 32px;
+    color: var(--muted-foreground);
+    font-size: 13.5px;
+  }
+  .footer-inner {
+    display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 40px;
+  }
+  @media (max-width: 860px) { .footer-inner { grid-template-columns: 1fr 1fr; } }
+  .footer-brand { max-width: 300px; }
+  .footer-brand p { font-size: 13px; margin-top: 14px; line-height: 1.55; }
+  .footer-col h4 {
+    font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--foreground); margin-bottom: 14px; font-weight: 700;
+    font-family: "Inter", sans-serif;
+  }
+  .footer-col ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+  .footer-col a:hover { color: var(--foreground); }
+  .footer-bottom {
+    margin-top: 44px; padding-top: 24px;
+    border-top: 1px solid var(--border);
+    display: flex; justify-content: space-between; flex-wrap: wrap; gap: 16px;
+    font-size: 12px;
+  }
+</style>
+</head>
+<body data-new-gr-c-s-check-loaded="14.1286.0" data-gr-ext-installed="" data-cc-id="cc-1" style="cursor: crosshair;" data-new-gr-c-s-loaded="14.1286.0">
+
+<!-- NAV -->
+<nav class="top" data-cc-id="cc-64" id="siteNav">
+  <div class="container nav-inner" data-cc-id="cc-30">
+    <a class="brand" href="#">
+      <img class="brand-icon" src="vee-icon.png" alt="">
+      <img class="wordmark-img" src="vee_black.png" alt="veedeck">
+    </a>
+    <div class="nav-links" data-cc-id="cc-27">
+      <a href="veedeck-moduly.html">Moduły</a>
+      <a href="wtyczka.html">Wtyczka</a>
+      <a href="cennik.html">Cennik</a>
+      <a href="demo.html">Demo</a>
+      <a href="o-nas.html">O nas</a>
+      <a href="kontakt.html">Kontakt</a>
+    </div>
+    <div class="nav-cta" style="display:flex; gap:10px; align-items:center;">
+      <a href="login.html" class="btn btn-ghost" style="border: 1px solid #CBD1DC;">Zaloguj się</a>
+      <a href="demo.html" class="btn btn-primary">Bezpłatne demo<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"></path></svg></a>
+    </div>
+    <button class="nav-burger" aria-label="Otwórz menu" aria-expanded="false" aria-controls="mobileMenu" onclick="toggleMobileMenu(this)">
+      <svg class="icon-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="3" y1="7" x2="21" y2="7"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="17" x2="21" y2="17"></line></svg>
+      <svg class="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="6" y1="6" x2="18" y2="18"></line><line x1="6" y1="18" x2="18" y2="6"></line></svg>
+    </button>
+  </div>
+</nav>
+<div class="mobile-backdrop" id="mobileBackdrop" onclick="closeMobileMenu()" aria-hidden="true"></div>
+<aside class="mobile-menu" id="mobileMenu" aria-label="Menu mobilne">
+  <div class="mobile-menu-header">
+    <a class="brand" href="index.html">
+      <img class="brand-icon" src="vee-icon.png" alt="">
+      <img class="wordmark-img" src="vee_black.png" alt="veedeck">
+    </a>
+    <button class="mobile-menu-close" aria-label="Zamknij menu" onclick="closeMobileMenu()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="6" y1="6" x2="18" y2="18"></line><line x1="6" y1="18" x2="18" y2="6"></line></svg>
+    </button>
+  </div>
+  <div class="mobile-menu-inner">
+    <a class="menu-link" href="veedeck-moduly.html">Moduły</a>
+    <a class="menu-link" href="wtyczka.html">Wtyczka</a>
+    <a class="menu-link" href="cennik.html">Cennik</a>
+    <a class="menu-link" href="demo.html">Demo</a>
+    <a class="menu-link" href="o-nas.html">O nas</a>
+    <a class="menu-link" href="kontakt.html">Kontakt</a>
+    <div class="mobile-cta">
+      <a href="login.html" class="btn btn-ghost">Zaloguj się</a>
+      <a href="demo.html" class="btn btn-primary">Bezpłatne demo
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"></path></svg>
+      </a>
+    </div>
+  </div>
+</aside>
+
+<script>
+  function setMobileMenu(open) {
+    var nav = document.getElementById('siteNav');
+    var btn = nav.querySelector('.nav-burger');
+    nav.classList.toggle('open', open);
+    document.body.classList.toggle('menu-locked', open);
+    if (btn) {
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      btn.setAttribute('aria-label', open ? 'Zamknij menu' : 'Otwórz menu');
+    }
+  }
+  function toggleMobileMenu(btn) {
+    var nav = document.getElementById('siteNav');
+    setMobileMenu(!nav.classList.contains('open'));
+  }
+  function closeMobileMenu() { setMobileMenu(false); }
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') closeMobileMenu();
+  });
+  document.addEventListener('click', function (e) {
+    var link = e.target.closest('.mobile-menu a');
+    if (link) closeMobileMenu();
+  });
+</script>
+
+<!-- HERO -->
+<section class="hero" data-cc-id="cc-9">
+  <div class="container hero-inner" data-cc-id="cc-5">
+    <div class="hero-copy" data-cc-id="cc-7">
+      <div class="badge">
+        <span class="badge-dot"></span>
+        Już dostępny!
+      </div>
+      <h1>Visualize,<br>Design, <em>Deliver.</em></h1>
+      <p class="tagline">
+        Mniej chaosu, więcej kreatywności. Twoje biuro projektowe
+        w jednej zakładce — od wizualizacji przez listy zakupowe po feedback klienta i współpracę z wykonawcą.
+      </p>
+      <div class="cta-row">
+        <a href="login.html#register" class="btn btn-primary btn-lg">Wypróbuj 14 dni za darmo</a>
+        <a href="veedeck-moduly.html" class="btn btn-ghost btn-lg">Zobacz moduły</a>
+      </div>
+      <div class="meta" data-cc-id="cc-4">
+        <div class="meta-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
+          14 dni totalnie za darmo
+        </div>
+        <div class="meta-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
+          Bez karty kredytowej
+        </div>
+      </div>
+    </div>
+
+    <!-- RENDER STAGE — animowany pin & komentarz -->
+    <div class="hero-stage-wrap">
+      <img class="hero-wm" src="hero-watermark-b.svg" alt="" aria-hidden="true">
+      <div class="render-stage">
+      <img src="hero-render.png" alt="Render wnętrza z pinami komentarzy" class="bg">
+
+      <!-- Cykl 1: pin „Lampa" przy lampie (góra-środek), okno otwiera się po lewej -->
+      <div class="rs-ripple rs-ripple-a" style="left: 64%; top: 17%;"></div>
+      <div class="rs-pin rs-pin-a"      style="left: 64%; top: 17%;"></div>
+      <div class="rs-panel rs-panel-a"  style="left: 28%; top: 16%;">
+        <div class="rs-panel-head">
+          <div class="ttl">Nowy pin</div>
+          <div class="x">×</div>
+        </div>
+        <div class="rs-field">Lampa</div>
+        <div class="rs-meta-row">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+          Widoczny dla klienta
+        </div>
+        <div class="rs-comment">
+          <span>Ta lampa jest świetna!</span>
+          <span class="send-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"></path><path d="m21.854 2.147-10.94 10.939"></path></svg>
+          </span>
+        </div>
+      </div>
+
+      <!-- Cykl 2: pin nad sofą (środek-dół), karta produktu wyświetla się powyżej -->
+      <div class="rs-ripple rs-ripple-b" style="left: 50%; top: 60%;"></div>
+      <div class="rs-pin rs-pin-b"       style="left: 50%; top: 60%;"><span class="material-symbols-rounded">chair</span></div>
+      <div class="rs-product rs-product-a" style="left: 20%; top: 30%;">
+        <div class="rs-product-img"><img src="sofa-seria-7r.png" alt="Sofa Chesterfield"></div>
+        <div class="rs-product-name">Market Set Screen XL sofa…</div>
+        <div class="rs-product-foot">
+          <span class="pico">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="13" x="3" y="6" rx="2"></rect><path d="M7 10h10"></path><path d="M9 14h6"></path></svg>
+          </span>
+          <span class="shop">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg>
+            Sklep
+          </span>
+          <span class="trash">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+          </span>
+        </div>
+      </div>
+
+      <!-- Cursor (płynnie przemieszcza się między oboma pinami) -->
+      <div class="rs-cursor">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M5.5 3.2 L5.5 18.5 L9.4 14.6 L11.7 19.4 L13.6 18.5 L11.3 13.7 L17 13.7 Z"
+                fill="#fff" stroke="#1a1a1a" stroke-width="1.4" stroke-linejoin="round"/>
+        </svg>
+      </div>
+
+      <!-- Hint -->
+      <div class="rs-hint">
+        <span class="dot-live"></span>
+        Komentarze klienta na żywo
+      </div>
+    </div>
+    </div>
+  </div>
+</section>
+
+<!-- VALUES -->
+<section class="pad" id="dlaczego" data-cc-id="cc-41">
+  <div class="container" data-cc-id="cc-38">
+    <div class="section-head">
+      <div class="eyebrow" data-cc-id="cc-43" style="">Dlaczego veedeck?</div>
+      <h2 data-cc-id="cc-39" style="">Projektujesz — nie zarządzasz chaosem.</h2>
+      <p data-cc-id="cc-40" style="color: rgb(107, 111, 128);">
+        Projektanci wnętrz spędzają więcej czasu na przesyłaniu plików, odpowiadaniu na maile
+        i porządkowaniu uwag, niż na projektowaniu. veedeck zmienia tę proporcję.
+      </p>
+    </div>
+
+    <div class="values">
+      <div class="value-card">
+        <div class="value-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path></svg>
+        </div>
+        <h3>Jedno miejsce zamiast ośmiu</h3>
+        <p data-cc-id="cc-45" style="">
+          Rendery, listy zakupowe, kalendarz, notatki, dyskusje z klientem —
+          wszystko w jednej zakładce. Koniec przeskakiwania między Dyskiem Google, Excelem i mailem.
+        </p>
+      </div>
+
+      <div class="value-card">
+        <div class="value-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-cc-id="cc-42"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+        </div>
+        <h3>Uwagi klienta na obrazku</h3>
+        <p data-cc-id="cc-44" style="">
+          Klient umieszcza komentarze bezpośrednio na wizualizacji za pomocą pinezki — zamiast pisać „ta lampa obok okna,
+          ta druga z lewej". Widzisz dokładnie co i gdzie zmienić.&nbsp;</p>
+      </div>
+
+      <div class="value-card">
+        <div class="value-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
+        </div>
+        <h3>Akceptacje zostają na piśmie</h3>
+        <p data-cc-id="cc-10" style="">
+          Klient akceptuje render jednym kliknięciem — z datą, godziną i historią wersji.
+          Koniec z nieporozumieniami typu: „ale nie tak się umawialiśmy". Ty oszczędzasz czas, my Twoje nerwy!</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PANELS — jeden projekt, trzy panele -->
+<section class="pad" id="panele">
+  <div class="container">
+    <div class="section-head" style="max-width:720px;">
+      <div class="eyebrow">Czego nie ma konkurencja</div>
+      <h2>Jeden projekt. Trzy panele.</h2>
+      <p>
+        Projektant, klient i wykonawca pracują w tym samym projekcie — ale każdy widzi
+        własny, dopasowany widok. To Ty decydujesz, co komu udostępniasz.
+      </p>
+    </div>
+
+    <div class="panels-grid">
+      <!-- Panel Projektanta -->
+      <article class="panel-card is-owner">
+        <div class="panel-top">
+          <span class="panel-ic"><span class="material-symbols-rounded">design_services</span></span>
+          <span class="panel-role">Pełna kontrola</span>
+        </div>
+        <h3>Panel Projektanta</h3>
+        <p class="panel-who">Twoje centrum dowodzenia — tworzysz, organizujesz i decydujesz, kto co widzi.</p>
+        <ul class="panel-list">
+          <li><span class="tk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span>Tworzysz projekty, foldery, listy zakupowe i bazę produktów</li>
+          <li><span class="tk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span>Wgrywasz rendery, rysunki techniczne i dokumenty</li>
+          <li><span class="tk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span>Ustawiasz, co widzi klient, a co wykonawca</li>
+          <li><span class="tk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span>Zbierasz wszystkie uwagi, piny i akceptacje w jednym miejscu</li>
+        </ul>
+        <div class="panel-scope">
+          <span class="material-symbols-rounded">visibility</span>
+          <span>Widzisz cały projekt — to Ty zarządzasz dostępem każdego panelu.</span>
+        </div>
+      </article>
+
+      <!-- Panel Klienta -->
+      <article class="panel-card">
+        <div class="panel-top">
+          <span class="panel-ic"><span class="material-symbols-rounded">reviews</span></span>
+          <span class="panel-role">Przegląda i akceptuje</span>
+        </div>
+        <h3>Panel Klienta</h3>
+        <p class="panel-who">Lekki widok do oglądania renderów i zatwierdzania — konto zakłada mu projektant.</p>
+        <ul class="panel-list">
+          <li><span class="tk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span>Ogląda rendery w przeglądarce, na każdym urządzeniu</li>
+          <li><span class="tk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span>Pinuje uwagi bezpośrednio na wizualizacji</li>
+          <li><span class="tk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span>Sprawdza i zatwierdza listę zakupową</li>
+          <li><span class="tk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span>Akceptuje wersje — z datą i historią zmian</li>
+        </ul>
+        <div class="panel-scope">
+          <span class="material-symbols-rounded">visibility_off</span>
+          <span>Nie widzi cen zakupu, marży ani danych innych projektów.</span>
+        </div>
+      </article>
+
+      <!-- Panel Wykonawcy -->
+      <article class="panel-card">
+        <div class="panel-top">
+          <span class="panel-ic"><span class="material-symbols-rounded">engineering</span></span>
+          <span class="panel-role">Realizuje projekt</span>
+        </div>
+        <h3>Panel Wykonawcy</h3>
+        <p class="panel-who">Dla stolarza, montera czy ekipy wykończeniowej — tylko dokumenty do wykonania.</p>
+        <ul class="panel-list">
+          <li><span class="tk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span>Foldery z rysunkami technicznymi i dokumentami</li>
+          <li><span class="tk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span>Podgląd obrazów i PDF z powiększeniem</li>
+          <li><span class="tk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span>Piny i komentarze z pytaniem w konkretnym miejscu pliku</li>
+          <li><span class="tk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span>Czat z projektantem w kontekście danego projektu</li>
+        </ul>
+        <div class="panel-scope">
+          <span class="material-symbols-rounded">visibility_off</span>
+          <span>Nie widzi listy zakupowej, cen ani danych innych klientów.</span>
+        </div>
+      </article>
+    </div>
+
+    <p class="panels-foot">
+<strong>Jeden projekt, trzy perspektywy</strong> — bez chaosu i bez przypadkowych przecieków.<br>
+      Każdy panel pokazuje wyłącznie to, co udostępnisz.
+    </p>
+  </div>
+</section>
+
+<!-- MODULES -->
+<section class="pad modules" id="moduly">
+  <div class="container">
+    <div class="section-head">
+      <div class="eyebrow">JEDENAŚCIE MODUŁÓW · JEDNA PLATFORMA</div>
+      <h2>Wszystko, czego potrzebujesz<br>w&nbsp;jednej zakładce.</h2>
+      <p>
+        Włącz tylko te moduły, których używasz. Ukryj nieużywane. Każdy klient
+        dostaje tylko to, co ma widzieć.
+      </p>
+    </div>
+
+    <div class="modules-marquee">
+      <!-- Row 1 — przewija się w lewo -->
+      <div class="marquee-row marquee-row--top">
+        <div class="marquee-track" aria-hidden="false">
+          <!-- set 1 -->
+          <div class="marquee-pill">
+            <div class="pill-icon">
+              <svg class="renderflow-svg" viewBox="-22 -22 228 229" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M121.728 122.988L162.007 82.6681C166.445 78.2248 163.239 70.6362 156.959 70.7215L146.549 70.8628L119.786 71.2261C119.236 71.2336 118.707 71.014 118.324 70.6191L86.1743 37.4878L58.6215 8.66333C55.9075 5.82403 51.389 5.77308 48.6117 8.55045L8.55019 48.6119C5.84554 51.3166 5.81265 55.6914 8.47633 58.4364L36.4243 87.2378L68.6112 120.408C68.9724 120.78 69.1749 121.278 69.1759 121.796L69.2485 158.623C69.2607 164.855 76.7967 167.965 81.2007 163.557L121.728 122.988ZM121.728 122.988L177.228 178.488" stroke="currentColor" stroke-width="13" stroke-linecap="round"></path>
+              </svg>
+            </div>
+            <div class="pill-body">
+              <div class="pill-name">ProjectFlow</div>
+              <div class="pill-desc">Rendery z pinami komentarzy klienta — wersjonowanie i historia uwag w jednym miejscu.</div>
+            </div>
+          </div>
+          <div class="marquee-pill">
+            <div class="pill-icon"><span class="material-symbols-rounded">local_mall</span></div>
+            <div class="pill-body">
+              <div class="pill-name">Listy zakupowe</div>
+              <div class="pill-desc">Produkty pogrupowane w sekcje, z cenami i linkami. Klient zatwierdza, Ty zamawiasz.</div>
+            </div>
+          </div>
+          <div class="marquee-pill">
+            <div class="pill-icon"><span class="material-symbols-rounded">package_2</span></div>
+            <div class="pill-body">
+              <div class="pill-name">Baza produktów</div>
+              <div class="pill-desc">Twoja prywatna kartoteka mebli i materiałów — gotowa do wstawienia w każdy projekt.</div>
+            </div>
+          </div>
+          <div class="marquee-pill">
+            <div class="pill-icon"><span class="material-symbols-rounded">group</span></div>
+            <div class="pill-body">
+              <div class="pill-name">Klienci</div>
+              <div class="pill-desc">Centralne zarządzanie klientami, projektami, płatnościami i rozliczeniami.</div>
+            </div>
+          </div>
+          <div class="marquee-pill">
+            <div class="pill-icon"><span class="material-symbols-rounded">assignment</span></div>
+            <div class="pill-body">
+              <div class="pill-name">Ankiety</div>
+              <div class="pill-desc">Wysyłasz klientowi ankietę lub brief, a odpowiedzi wracają uporządkowane w jednym miejscu.</div>
+            </div>
+          </div>
+          <div class="marquee-pill">
+            <div class="pill-icon"><span class="material-symbols-rounded">check_box</span></div>
+            <div class="pill-body">
+              <div class="pill-name">Zadania</div>
+              <div class="pill-desc">Lista do zrobienia z deadline'ami, którą widzisz na dashboardzie w sekcji „Dziś".</div>
+            </div>
+          </div>
+          <!-- set 2 (duplikat — pętla bezszwowa) -->
+          <div class="marquee-pill" aria-hidden="true">
+            <div class="pill-icon">
+              <svg class="renderflow-svg" viewBox="-22 -22 228 229" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M121.728 122.988L162.007 82.6681C166.445 78.2248 163.239 70.6362 156.959 70.7215L146.549 70.8628L119.786 71.2261C119.236 71.2336 118.707 71.014 118.324 70.6191L86.1743 37.4878L58.6215 8.66333C55.9075 5.82403 51.389 5.77308 48.6117 8.55045L8.55019 48.6119C5.84554 51.3166 5.81265 55.6914 8.47633 58.4364L36.4243 87.2378L68.6112 120.408C68.9724 120.78 69.1749 121.278 69.1759 121.796L69.2485 158.623C69.2607 164.855 76.7967 167.965 81.2007 163.557L121.728 122.988ZM121.728 122.988L177.228 178.488" stroke="currentColor" stroke-width="13" stroke-linecap="round"></path>
+              </svg>
+            </div>
+            <div class="pill-body">
+              <div class="pill-name">ProjectFlow</div>
+              <div class="pill-desc">Rendery z pinami komentarzy klienta — wersjonowanie i historia uwag w jednym miejscu.</div>
+            </div>
+          </div>
+          <div class="marquee-pill" aria-hidden="true">
+            <div class="pill-icon"><span class="material-symbols-rounded">local_mall</span></div>
+            <div class="pill-body">
+              <div class="pill-name">Listy zakupowe</div>
+              <div class="pill-desc">Produkty pogrupowane w sekcje, z cenami i linkami. Klient zatwierdza, Ty zamawiasz.</div>
+            </div>
+          </div>
+          <div class="marquee-pill" aria-hidden="true">
+            <div class="pill-icon"><span class="material-symbols-rounded">package_2</span></div>
+            <div class="pill-body">
+              <div class="pill-name">Baza produktów</div>
+              <div class="pill-desc">Twoja prywatna kartoteka mebli i materiałów — gotowa do wstawienia w każdy projekt.</div>
+            </div>
+          </div>
+          <div class="marquee-pill" aria-hidden="true">
+            <div class="pill-icon"><span class="material-symbols-rounded">group</span></div>
+            <div class="pill-body">
+              <div class="pill-name">Klienci</div>
+              <div class="pill-desc">Centralne zarządzanie klientami, projektami, płatnościami i rozliczeniami.</div>
+            </div>
+          </div>
+          <div class="marquee-pill" aria-hidden="true">
+            <div class="pill-icon"><span class="material-symbols-rounded">assignment</span></div>
+            <div class="pill-body">
+              <div class="pill-name">Ankiety</div>
+              <div class="pill-desc">Wysyłasz klientowi ankietę lub brief, a odpowiedzi wracają uporządkowane w jednym miejscu.</div>
+            </div>
+          </div>
+          <div class="marquee-pill" aria-hidden="true">
+            <div class="pill-icon"><span class="material-symbols-rounded">check_box</span></div>
+            <div class="pill-body">
+              <div class="pill-name">Zadania</div>
+              <div class="pill-desc">Lista do zrobienia z deadline'ami, którą widzisz na dashboardzie w sekcji „Dziś".</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 2 — przewija się w prawo -->
+      <div class="marquee-row marquee-row--bottom">
+        <div class="marquee-track" aria-hidden="false">
+          <!-- set 1 -->
+          <div class="marquee-pill">
+            <div class="pill-icon"><span class="material-symbols-rounded">calendar_month</span></div>
+            <div class="pill-body">
+              <div class="pill-name">Kalendarz</div>
+              <div class="pill-desc">Spotkania, terminy dostaw, deadline'y projektowe — wszystko w jednym widoku.</div>
+            </div>
+          </div>
+          <div class="marquee-pill">
+            <div class="pill-icon"><span class="material-symbols-rounded">note_stack</span></div>
+            <div class="pill-body">
+              <div class="pill-name">Notatnik</div>
+              <div class="pill-desc">Szybkie notatki i szkice — żeby spontaniczne myśli z spotkania z klientem nie umknęły.</div>
+            </div>
+          </div>
+          <div class="marquee-pill">
+            <div class="pill-icon"><span class="material-symbols-rounded">chat_bubble</span></div>
+            <div class="pill-body">
+              <div class="pill-name">Dyskusje</div>
+              <div class="pill-desc">Komentowanie renderów i pozycji z klientem — bez maili, bez zrzutów z Whatsappa.</div>
+            </div>
+          </div>
+          <div class="marquee-pill">
+            <div class="pill-icon"><span class="material-symbols-rounded">engineering</span></div>
+            <div class="pill-body">
+              <div class="pill-name">Wykonawcy</div>
+              <div class="pill-desc">Udostępniasz wykonawcom rysunki techniczne i dokumenty — z pinami, komentarzami i czatem.</div>
+            </div>
+          </div>
+          <div class="marquee-pill">
+            <div class="pill-icon"><span class="material-symbols-rounded">wand_stars</span></div>
+            <div class="pill-body">
+              <div class="pill-name">Veezard <span class="pill-soon">Wkrótce</span></div>
+              <div class="pill-desc">Szybka wizualizacja przestrzeni z poziomu listy materiałów — bez wychodzenia z veedeck.</div>
+            </div>
+          </div>
+          <!-- set 2 (duplikat) -->
+          <div class="marquee-pill" aria-hidden="true">
+            <div class="pill-icon"><span class="material-symbols-rounded">calendar_month</span></div>
+            <div class="pill-body">
+              <div class="pill-name">Kalendarz</div>
+              <div class="pill-desc">Spotkania, terminy dostaw, deadline'y projektowe — wszystko w jednym widoku.</div>
+            </div>
+          </div>
+          <div class="marquee-pill" aria-hidden="true">
+            <div class="pill-icon"><span class="material-symbols-rounded">note_stack</span></div>
+            <div class="pill-body">
+              <div class="pill-name">Notatnik</div>
+              <div class="pill-desc">Szybkie notatki i szkice — żeby spontaniczne myśli z spotkania z klientem nie umknęły.</div>
+            </div>
+          </div>
+          <div class="marquee-pill" aria-hidden="true">
+            <div class="pill-icon"><span class="material-symbols-rounded">chat_bubble</span></div>
+            <div class="pill-body">
+              <div class="pill-name">Dyskusje</div>
+              <div class="pill-desc">Komentowanie renderów i pozycji z klientem — bez maili, bez zrzutów z Whatsappa.</div>
+            </div>
+          </div>
+          <div class="marquee-pill" aria-hidden="true">
+            <div class="pill-icon"><span class="material-symbols-rounded">engineering</span></div>
+            <div class="pill-body">
+              <div class="pill-name">Wykonawcy</div>
+              <div class="pill-desc">Udostępniasz wykonawcom rysunki techniczne i dokumenty — z pinami, komentarzami i czatem.</div>
+            </div>
+          </div>
+          <div class="marquee-pill" aria-hidden="true">
+            <div class="pill-icon"><span class="material-symbols-rounded">wand_stars</span></div>
+            <div class="pill-body">
+              <div class="pill-name">Veezard <span class="pill-soon">Wkrótce</span></div>
+              <div class="pill-desc">Szybka wizualizacja przestrzeni z poziomu listy materiałów — bez wychodzenia z veedeck.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modules-cta-row">
+      <a href="veedeck-moduly.html" class="modules-cta">
+        Poznaj wszystkie moduły
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"></path></svg>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- PLUGIN TEASER (veepick) -->
+<section class="pad plugin" id="wtyczka">
+  <div class="container">
+    <div class="plugin-wrap">
+      <div class="plugin-copy">
+        <div class="eyebrow">Wtyczka do przeglądarki</div>
+        <div class="plugin-name"><span class="vp-word">veepick</span><br><em>Lista zakupowa gotowa w kilka kliknięć.</em></div>
+        <div class="plugin-browsers">Chrome · Edge · Firefox</div>
+        <p class="plugin-lead">
+          Surfujesz po sklepach z meblami, oświetleniem i materiałami — klikasz veepick
+          i produkt ląduje na liście zakupowej klienta. Bez przepisywania, bez zrzutów ekranu.
+        </p>
+        <div class="plugin-points">
+          <div class="plugin-point">
+            <span class="pc"><span class="material-symbols-rounded">ads_click</span></span>
+            <span><strong>Jeden klik zamiast przepisywania</strong><span class="pt">Zaznaczasz produkt w dowolnym sklepie i dodajesz go do projektu w sekundę.</span></span>
+          </div>
+          <div class="plugin-point">
+            <span class="pc"><span class="material-symbols-rounded">auto_awesome</span></span>
+            <span><strong>Pięć pól zaciąganych automatycznie</strong><span class="pt">Nazwa, cena, zdjęcie, producent i link do sklepu — czytane wprost z karty produktu.</span></span>
+          </div>
+          <div class="plugin-point">
+            <span class="pc"><span class="material-symbols-rounded">lock</span></span>
+            <span><strong>Czyta tylko stronę sklepu</strong><span class="pt">Lekka wtyczka (~2 MB), aktywna dopiero po kliknięciu ikony. Nic więcej.</span></span>
+          </div>
+        </div>
+        <div class="plugin-cta-row">
+          <a href="wtyczka.html" class="btn btn-primary">Poznaj veepick
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"></path></svg>
+          </a>
+          <a href="wtyczka.html#download" class="btn btn-ghost">Dodaj do przeglądarki</a>
+        </div>
+      </div>
+
+      <div class="plugin-visual">
+        <div class="vp-stage">
+          <div class="vp-canvas">
+            <div class="vp-flow"></div>
+
+            <!-- Karta produktu w sklepie -->
+            <div class="vp-floating vp-shop">
+              <span class="vp-tag">SKLEP INTERNETOWY</span>
+              <div class="vp-photo"><img src="sofa-seria-7r.png" alt="Kanapa Seria 7R"></div>
+              <div>
+                <div class="vp-name">Kanapa Seria 7R Zielony</div>
+                <div class="vp-meta">KrzeslaPL · 2 158 zł</div>
+              </div>
+            </div>
+
+            <!-- Okno wtyczki veepick -->
+            <div class="vp-floating vp-sidebar">
+              <div class="vp-head">
+                <img class="vp-ic" src="veepic.png" alt="">veepick
+                <span class="vp-acts">⚙ ↻ ›</span>
+              </div>
+              <div class="vp-tabs">
+                <div class="vp-t on">Dodaj produkt</div>
+                <div class="vp-t">Ostatnio<span class="vp-pill">7</span></div>
+              </div>
+              <div class="vp-body">
+                <div class="vp-img"><img src="sofa-seria-7r.png" alt=""></div>
+                <div class="vp-hint">Najedź na zdjęcie na stronie aby wybrać inne</div>
+                <div>
+                  <div class="vp-lab">Lista zakupowa</div>
+                  <div class="vp-input"><span>Podwale · Salon</span><span class="vp-caret">⌄</span></div>
+                </div>
+                <div>
+                  <div class="vp-lab">Nazwa</div>
+                  <div class="vp-input"><span>Kanapa Seria 7R Zielony</span></div>
+                </div>
+                <div class="vp-grid3">
+                  <div>
+                    <div class="vp-lab">Cena</div>
+                    <div class="vp-input">2 158 zł</div>
+                  </div>
+                  <div>
+                    <div class="vp-lab">Ilość</div>
+                    <div class="vp-input">1</div>
+                  </div>
+                  <div>
+                    <div class="vp-lab">Wymiar</div>
+                    <div class="vp-input">82×46</div>
+                  </div>
+                </div>
+              </div>
+              <div class="vp-cta"><button>+ Dodaj do listy</button></div>
+              <div class="vp-foot">Zalogowany: MiejsceDesign</div>
+            </div>
+
+            <!-- Pływające dane -->
+            <div class="vp-chip c1"><span class="vp-k">Cena</span><span>2 158 zł</span></div>
+            <div class="vp-chip c2"><span class="vp-k">Producent</span><span>Soffa</span></div>
+            <div class="vp-chip c3"><span class="vp-k">Wymiar</span><span>210 × 96 × 110 cm</span></div>
+            <div class="vp-chip c4"><span class="vp-k">Kolor</span><span>Zielony</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WORKFLOW -->
+<section class="pad" id="jak" data-cc-id="cc-34">
+  <div class="container" data-cc-id="cc-36">
+    <div class="section-head" data-cc-id="cc-70">
+      <div class="eyebrow" data-cc-id="cc-69">Jak to działa</div>
+      <h2 data-cc-id="cc-35" style="">Cztery proste kroki.</h2>
+    </div>
+
+    <div class="workflow" data-cc-id="cc-78">
+      <div class="step" data-cc-id="cc-77">
+        <div class="step-num">01</div>
+        <div class="step-role"><span class="material-symbols-rounded">design_services</span>Panel Projektanta</div>
+        <h3>Projektujesz</h3>
+        <p data-cc-id="cc-31" style="">
+          Dodajesz nowego klienta, dodajesz pomieszczenia w ProjectFlow i wrzucasz rendery
+          z 3ds Max, V-Ray, Corona lub SketchUp. Każdy folder, każda wersja —
+          porządek i organizacja od samego startu.<br></p>
+      </div>
+
+      <div class="step" data-cc-id="cc-79">
+        <div class="step-num">02</div>
+        <div class="step-role"><span class="material-symbols-rounded">reviews</span>Panel Klienta</div>
+        <h3>Prezentujesz klientowi</h3>
+        <p data-cc-id="cc-32" style="">
+          Zakładasz klientowi konto i wysyłasz mu link z hasłem. Klient otwiera panel w przeglądarce,
+          przegląda rendery, pinuje uwagi bezpośrednio na obrazku, sprawdza listę
+          zakupową — na każdym urządzeniu!</p>
+      </div>
+
+      <div class="step" data-cc-id="cc-80">
+        <div class="step-num" data-cc-id="cc-33" style="">03</div>
+        <div class="step-role"><span class="material-symbols-rounded">design_services</span>Panel Projektanta</div>
+        <h3>Odbierasz feedback</h3>
+        <p data-cc-id="cc-2" style="">
+          Widzisz komentarze na dashboardzie, akceptujesz zmiany wersji, zamykasz piny.
+          Każda akceptacja zapisuje się w historii — masz ślad na piśmie, nie w mailach. Koniec z&nbsp; poszukiwaniami na e-mailu.</p>
+      </div>
+
+      <div class="step">
+        <div class="step-num">04</div>
+        <div class="step-role"><span class="material-symbols-rounded">engineering</span>Panel Wykonawcy</div>
+        <h3>Przekazujesz wykonawcy</h3>
+        <p>
+          Udostępniasz wykonawcy rysunki techniczne i dokumenty do realizacji. Stolarz, monter
+          czy ekipa wykończeniowa zadają pytania pinem wprost na pliku — bez maili i telefonów,
+          w kontekście projektu.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- AUDIENCE -->
+<section class="pad-sm" data-cc-id="cc-81">
+  <div class="container">
+    <div class="audience" data-cc-id="cc-82">
+      <div>
+        <div class="eyebrow">Dla projektantów wnętrz</div>
+        <h2>Mniej chaosu, więcej kreatywności.<br>Twoje biuro w jednej zakładce.</h2>
+        <p data-cc-id="cc-11" style="">
+          Niezależnie czy prowadzisz studio samodzielnie, czy z trzyosobowym zespołem —
+          veedeck zabiera cały administracyjny narzut, żebyś mógł robić to, w czym jesteś najlepszy.
+        </p>
+      </div>
+      <div class="stats-row">
+        <div>
+          <div class="stat-big">6×</div>
+          <div class="stat-lbl">szybszy feedback</div>
+        </div>
+        <div>
+          <div class="stat-big">−80%</div>
+          <div class="stat-lbl">maili do klienta</div>
+        </div>
+        <div>
+          <div class="stat-big">0</div>
+          <div class="stat-lbl">zagubionych uwag</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section class="pad testimonials">
+  <div class="container">
+    <div class="section-head" style="max-width:720px">
+      <div class="eyebrow">Mówią projektanci</div>
+      <h2>Narzędzie, które wraca Ci czas.</h2>
+      <p>Tak veedeck zmienia codzienną pracę studiów projektowych wnętrz.</p>
+    </div>
+
+    <div class="tcards" style="grid-template-columns: 1fr; max-width: 620px; margin: 0 auto;">
+      <div class="tcard">
+        <div class="stars" aria-label="5 na 5">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg>
+        </div>
+        <blockquote>„veedeck połączył całą moją pracownię w jednym miejscu — rendery, feedback klienta, listy zakupowe i kontakt z wykonawcą. Zamiast żonglować mailami, czatami i plikami, wszystko mam pod ręką. Oszczędzam dzięki temu kilka godzin każdego tygodnia. Do tego dopasowuję panel do identyfikacji mojego studia — klient po zalogowaniu widzi moje logo i kolory, a nie generyczny interfejs.”</blockquote>
+        <div class="who">
+          <img class="ava" src="tomasz-ziolkowski.jpg" alt="Tomasz Ziółkowski" style="object-fit:cover;">
+          <span><span class="n">Tomasz Ziółkowski</span><a class="s ig" href="https://www.instagram.com/t.ziolkowski.design/" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"></rect><circle cx="12" cy="12" r="4"></circle><circle cx="17.5" cy="6.5" r="0.6" fill="currentColor" stroke="none"></circle></svg>t.ziolkowski.design</a></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="pad" id="faq">
+  <div class="container">
+    <div class="section-head" style="max-width:720px; text-align:center; margin-left:auto; margin-right:auto;">
+      <div class="eyebrow">Najczęstsze pytania</div>
+      <h2>Dobrze wiedzieć, zanim zaczniesz.</h2>
+    </div>
+
+    <div class="faq-list">
+      <details class="faq-item">
+        <summary>Czy mój klient musi zakładać konto?
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg>
+        </summary>
+        <div class="faq-a">Nie musi zakładać konta samodzielnie — to Ty, jako projektant, tworzysz konto klienta. Klient loguje się do platformy dokładnie tak samo jak Ty, z tą różnicą, że zamiast panelu projektanta widzi swój panel klienta. Dostęp ma na dowolnym urządzeniu (komputerze, tablecie i smartfonie), gdzie przegląda rendery, pinuje uwagi i sprawdza listę zakupową swojego projektu.</div>
+      </details>
+
+      <details class="faq-item">
+        <summary>Czym jest Panel Wykonawcy?
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg>
+        </summary>
+        <div class="faq-a">To trzeci, osobny widok — obok panelu projektanta i panelu klienta. Udostępniasz w nim firmie lub osobie realizującej projekt (stolarzowi, monterowi, ekipie wykończeniowej) wyłącznie wybrane foldery z rysunkami technicznymi, wizualizacjami referencyjnymi i dokumentami. Wykonawca przegląda pliki, powiększa PDF-y, zostawia piny z pytaniem w konkretnym miejscu rysunku i pisze z Tobą na czacie w kontekście projektu. Nie widzi listy zakupowej, cen, marży ani danych innych klientów — i nie ma żadnych funkcji zarządczych.</div>
+      </details>
+
+      <details class="faq-item">
+        <summary>Jakie formaty renderów obsługujecie?
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg>
+        </summary>
+        <div class="faq-a">Wgrywasz gotowe obrazy (JPG/PNG) z 3ds Max, V-Ray, Corony, SketchUp czy dowolnego innego silnika. veedeck organizuje je w foldery i wersje — nie musisz niczego konwertować.</div>
+      </details>
+
+      <details class="faq-item">
+        <summary>Czy moje projekty i dane są bezpieczne?
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg>
+        </summary>
+        <div class="faq-a">Tak. Twoje materiały są prywatne, a każdy klient widzi wyłącznie to, co sam mu udostępnisz. Możesz włączać i ukrywać moduły dla poszczególnych projektów.</div>
+      </details>
+
+      <details class="faq-item">
+        <summary>Czy muszę instalować wtyczkę veepick?
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg>
+        </summary>
+        <div class="faq-a">Nie jest wymagana. veepick po prostu przyspiesza dodawanie produktów do list zakupowych — możesz też dodawać je ręcznie z poziomu platformy, kiedy tylko chcesz.</div>
+      </details>
+
+      <details class="faq-item">
+        <summary>Ile kosztuje veedeck po okresie próbnym?
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg>
+        </summary>
+        <div class="faq-a">Zaczynasz od 14 dni za darmo, bez karty kredytowej. Pełną ofertę planów i cen znajdziesz na <a href="cennik.html" style="color:var(--primary);font-weight:600;">stronie cennika</a>.</div>
+      </details>
+
+      <details class="faq-item">
+        <summary>Czy klient otworzy panel na telefonie?
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg>
+        </summary>
+        <div class="faq-a">Tak. veedeck działa w przeglądarce, więc render z pinami, lista zakupowa i akceptacje wyglądają tak samo dobrze na telefonie, tablecie i komputerze klienta.</div>
+      </details>
+    </div>
+
+    <div class="faq-foot">Nie znalazłeś odpowiedzi? <a href="kontakt.html">Napisz do nas →</a></div>
+  </div>
+</section>
+
+<!-- CONTACT FORM -->
+<section class="pad" id="demo" style="background:#FAFAFB; border-block:1px solid var(--border);">
+  <div class="container">
+    <div class="demo-wrap">
+      <div class="demo-left">
+        <div class="eyebrow">Porozmawiajmy</div>
+        <h2>Masz pytanie? Napisz do nas.</h2>
+        <p>
+          Niezależnie czy chcesz umówić prezentację platformy, zaproponować nową funkcję,
+          która ułatwi Ci pracę, czy porozmawiać o współpracy — odpisujemy w ciągu 24 godzin
+          w dni robocze.
+        </p>
+
+        <div class="demo-list">
+          <div class="demo-list-item">
+            <span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span>
+            <div><strong>Umów spotkanie prezentacyjne</strong> — pokażemy Ci platformę na żywo i odpowiemy na wszystkie pytania</div>
+          </div>
+          <div class="demo-list-item">
+            <span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span>
+            <div><strong>Zaproponuj nową funkcję</strong> — słuchamy projektantów i rozwijamy narzędzie pod realne potrzeby</div>
+          </div>
+          <div class="demo-list-item">
+            <span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span>
+            <div><strong>Współpraca / partnerstwo</strong> — jesteśmy otwarci na rozmowy o integracjach i partnerstwie</div>
+          </div>
+          <div class="demo-list-item">
+            <span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span>
+            <div><strong>Bezpośredni kontakt</strong> z zespołem rozwijającym platformę — bez supportu pierwszej linii</div>
+          </div>
+        </div>
+      </div>
+
+      <form class="demo" onsubmit="event.preventDefault(); this.querySelector('.form-title').innerText='Dzięki! Odezwiemy się w ciągu 24h.'; this.querySelector('.form-sub').innerText='Sprawdzaj skrzynkę — odpowiedź przyjdzie z adresu contact@veedeck.com.'; this.querySelectorAll('.field, .checkbox-row, button').forEach(el=>el.style.display='none');">
+        <div class="form-title">Napisz do nas</div>
+        <div class="form-sub">Wypełnij formularz — wrócimy z odpowiedzią najszybciej jak to możliwe.</div>
+
+        <div class="field">
+          <label for="cf-name">Imię i nazwisko</label>
+          <input id="cf-name" type="text" placeholder="np. Anna Kowalska" required="">
+        </div>
+
+        <div class="field">
+          <label for="cf-email">Email</label>
+          <input id="cf-email" type="email" placeholder="twoj@email.com" required="">
+        </div>
+
+        <div class="field">
+          <label for="cf-studio">Nazwa studia (opcjonalnie)</label>
+          <input id="cf-studio" type="text" placeholder="np. Studio Wnętrz 12">
+        </div>
+
+        <div class="field">
+          <label for="cf-topic">Temat</label>
+          <select id="cf-topic">
+            <option>Chcę umówić prezentację platformy</option>
+            <option>Mam propozycję nowej funkcji</option>
+            <option>Współpraca / partnerstwo</option>
+            <option>Pytanie o funkcjonalność</option>
+            <option>Inne</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="cf-msg">Wiadomość</label>
+          <textarea id="cf-msg" rows="3" placeholder="Opowiedz krótko o swoim studiu i czego potrzebujesz…" required=""></textarea>
+        </div>
+
+        <label class="checkbox-row">
+          <input type="checkbox" required="">
+          <span>Wyrażam zgodę na przetwarzanie moich danych w celu kontaktu zwrotnego, zgodnie z <a href="polityka-prywatnosci.html" style="color: var(--primary); text-decoration: underline;">polityką prywatności</a>.</span>
+        </label>
+
+        <button type="submit" class="btn btn-primary">
+          Wyślij wiadomość
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"></path></svg>
+        </button>
+        <div class="form-foot">Odpowiadamy w ciągu 24 godzin roboczych.</div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section class="pad-sm">
+  <div class="container">
+    <div class="final-cta-band">
+      <h2>Gotowy uporządkować swoje studio?</h2>
+      <p>Zacznij 14-dniowy okres próbny z pełnym dostępem do wszystkich modułów. Pierwszy projekt skonfigurujesz w kilka minut.</p>
+      <div class="cta-row">
+        <a href="login.html#register" class="btn btn-lg btn-white">Wypróbuj 14 dni za darmo</a>
+        <a href="cennik.html" class="btn btn-lg btn-outline">Zobacz cennik</a>
+      </div>
+      <div class="micro">
+        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>Bez karty kredytowej</span>
+        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>Pełen dostęp do modułów</span>
+        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>Rezygnacja w każdej chwili</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="site" data-cc-id="cc-93">
+  <div class="container">
+    <div class="footer-inner" data-cc-id="cc-94">
+      <div class="footer-brand" data-cc-id="cc-95">
+        <a class="brand" href="#" data-cc-id="cc-97">
+          <img class="brand-icon" src="vee-icon.png" alt="" style="height:28px;width:28px">
+          <img class="wordmark-img" src="vee_black.png" alt="veedeck" style="height:22px">
+        </a>
+        <p data-cc-id="cc-96" style="">Visualize, Design, Deliver.&nbsp;</p><div>Platforma dla projektantów wnętrz.</div><p></p>
+      </div>
+      <div class="footer-col">
+        <h4>Produkt</h4>
+        <ul>
+          <li><a href="veedeck-moduly.html">Moduły</a></li>
+          <li><a href="wtyczka.html">Wtyczka veepick</a></li>
+          <li><a href="cennik.html">Cennik</a></li>
+          <li><a href="#jak">Jak to działa</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Firma</h4>
+        <ul>
+          <li><a href="o-nas.html">O nas</a></li>
+          <li><a href="demo.html">Demo</a></li>
+          <li><a href="kontakt.html">Kontakt</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Legal</h4>
+        <ul>
+          <li><a href="polityka-prywatnosci.html">Polityka prywatności</a></li>
+          <li><a href="polityka-prywatnosci-veepick.html">Polityka prywatności veepick</a></li>
+          <li><a href="polityka-cookies.html">Polityka cookies</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div>© 2026 veedeck. Wszelkie prawa zastrzeżone.</div>
+      <div>support@veedeck.com</div>
+    </div>
+  </div>
+</footer>
+
+
+
+<grammarly-desktop-integration data-grammarly-shadow-root="true"></grammarly-desktop-integration>
+<style>
+/* ═════════ NOWE SEKCJE (teaser veepick · opinie · FAQ · domykający CTA) ═════════ */
+
+/* ───────── PLUGIN TEASER (veepick) ───────── */
+section.plugin { border-block: 1px solid var(--border); }
+.plugin-wrap {
+  display: grid; grid-template-columns: 1fr 1.05fr; gap: 60px; align-items: center;
+}
+@media (max-width: 920px) { .plugin-wrap { grid-template-columns: 1fr; gap: 44px; } }
+.plugin-name {
+  font-family: "Inter", sans-serif; font-weight: 700; letter-spacing: -0.03em;
+  font-size: clamp(34px, 4vw, 46px); line-height: 1.04; margin: 6px 0 0;
+}
+.plugin-name em { font-style: italic; font-weight: 500; color: var(--primary); }
+.plugin-name .vp-word { font-family: "Nunito", sans-serif; font-weight: 300; letter-spacing: -0.05em; }
+.plugin-browsers {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--primary); background: var(--indigo-50);
+  padding: 6px 12px; border-radius: 999px; margin-top: 16px;
+}
+.plugin-lead { font-size: 16.5px; color: var(--muted-foreground); line-height: 1.6; margin-top: 20px; max-width: 480px; }
+.plugin-points { margin-top: 24px; display: grid; gap: 14px; }
+.plugin-point { display: flex; gap: 12px; align-items: flex-start; }
+.plugin-point .pc {
+  width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0;
+  background: var(--indigo-50); color: var(--primary); display: grid; place-items: center;
+}
+.plugin-point .pc .material-symbols-rounded { font-family: 'Material Symbols Rounded'; font-size: 20px; line-height: 1; }
+.plugin-point strong { display: block; color: var(--foreground); font-weight: 600; font-size: 14.5px; margin-bottom: 2px; }
+.plugin-point span.pt { color: var(--muted-foreground); font-size: 13.5px; line-height: 1.55; }
+.plugin-cta-row { margin-top: 28px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+
+/* plugin visual — pływająca makieta veepick (spójna z hero podstrony Wtyczka) */
+.plugin-visual { position: relative; }
+.vp-stage { position: relative; width: 100%; aspect-ratio: 1 / 0.95; max-width: 560px; margin-left: auto; display: grid; place-items: center; container-type: inline-size; }
+.vp-stage::before { content: ""; position: absolute; inset: -40px; background: radial-gradient(420px 320px at 30% 60%, rgba(165,180,252,0.40), transparent 70%), radial-gradient(380px 280px at 75% 40%, rgba(199,210,254,0.50), transparent 70%); pointer-events: none; z-index: 0; }
+.vp-canvas { position: relative; width: 100%; height: 100%; z-index: 1; }
+.vp-floating { position: absolute; background: #fff; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 30px 60px -28px rgba(15,23,42,0.32), 0 6px 20px -8px rgba(15,23,42,0.12); }
+.vp-shop { width: 42%; aspect-ratio: 0.85; left: 0; top: 22%; padding: 2.86cqw; display: flex; flex-direction: column; gap: 2.14cqw; transform: rotate(-5deg); animation: vpFloatA 6s ease-in-out infinite; }
+.vp-shop .vp-tag { position: absolute; top: -1.79cqw; left: 2.86cqw; background: var(--foreground); color: #fff; font-size: 1.7cqw; font-weight: 700; letter-spacing: 0.14em; padding: 0.71cqw 1.61cqw; border-radius: 999px; text-transform: uppercase; white-space: nowrap; }
+.vp-shop .vp-photo { aspect-ratio: 1; background: #F6F4F0; border-radius: 1.8cqw; display: grid; place-items: center; overflow: hidden; }
+.vp-shop .vp-photo img { width: 78%; object-fit: contain; }
+.vp-shop .vp-name { font-family: "Inter", sans-serif; font-weight: 700; font-size: 2.5cqw; letter-spacing: -0.012em; line-height: 1.2; }
+.vp-shop .vp-meta { font-size: 2.05cqw; color: var(--muted-foreground); margin-top: 0.71cqw; }
+.vp-sidebar { width: 48%; height: auto; right: 0; top: 50%; overflow: hidden; display: flex; flex-direction: column; transform: translateY(-50%) rotate(3deg); animation: vpFloatB 6.5s ease-in-out infinite; }
+.vp-sidebar .vp-head { padding: 1.79cqw 2.5cqw; display: flex; align-items: center; gap: 1.43cqw; border-bottom: 1px solid var(--border); font-family: "Inter", sans-serif; font-weight: 700; font-size: 2.5cqw; }
+.vp-sidebar .vp-head .vp-ic { width: 3.57cqw; height: 3.57cqw; object-fit: contain; flex-shrink: 0; }
+.vp-sidebar .vp-head .vp-acts { margin-left: auto; color: var(--muted-foreground); font-size: 1.96cqw; letter-spacing: 0.22em; }
+.vp-sidebar .vp-tabs { padding: 0 2.5cqw; border-bottom: 1px solid var(--border); display: grid; grid-template-columns: 1fr 1fr; font-size: 2.05cqw; }
+.vp-sidebar .vp-tabs .vp-t { padding: 1.61cqw 0; text-align: center; color: var(--muted-foreground); font-weight: 600; position: relative; white-space: nowrap; }
+.vp-sidebar .vp-tabs .vp-t.on { color: var(--primary); }
+.vp-sidebar .vp-tabs .vp-t.on::after { content: ""; position: absolute; bottom: -1px; left: 8px; right: 8px; height: 2px; background: var(--primary); border-radius: 2px; }
+.vp-sidebar .vp-tabs .vp-t .vp-pill { display: inline-block; background: #EDEEF2; color: var(--muted-foreground); border-radius: 999px; padding: 0.18cqw 1.07cqw; font-size: 1.79cqw; margin-left: 0.71cqw; }
+.vp-sidebar .vp-body { padding: 2.14cqw 2.5cqw; display: flex; flex-direction: column; gap: 1.79cqw; flex: 1; font-size: 2.05cqw; }
+.vp-sidebar .vp-img { aspect-ratio: 5 / 2.6; background: #F6F4F0; border-radius: 1.43cqw; display: grid; place-items: center; overflow: hidden; }
+.vp-sidebar .vp-img img { width: 50%; object-fit: contain; }
+.vp-sidebar .vp-hint { font-size: 1.79cqw; color: var(--muted-foreground); text-align: center; }
+.vp-sidebar .vp-lab { font-size: 1.88cqw; font-weight: 600; color: var(--foreground); }
+.vp-sidebar .vp-input { height: 4.64cqw; border: 1px solid var(--border); border-radius: 1.07cqw; padding: 0 1.43cqw; font-size: 1.96cqw; color: var(--foreground); display: flex; align-items: center; justify-content: space-between; gap: 0.71cqw; background: #fff; white-space: nowrap; overflow: hidden; }
+.vp-sidebar .vp-input span:first-child { overflow: hidden; text-overflow: ellipsis; }
+.vp-sidebar .vp-input .vp-caret { color: var(--muted-foreground); flex-shrink: 0; }
+.vp-sidebar .vp-grid3 { display: grid; grid-template-columns: 1.2fr 0.7fr 1fr; gap: 1.07cqw; }
+.vp-sidebar .vp-cta { padding: 2.14cqw 2.5cqw; border-top: 1px solid var(--border); }
+.vp-sidebar .vp-cta button { width: 100%; height: 6.07cqw; background: var(--primary); color: #fff; border: 0; border-radius: 1.43cqw; font-family: "DM Sans", sans-serif; font-weight: 600; font-size: 2.14cqw; cursor: pointer; box-shadow: 0 6px 18px -8px rgba(79,70,229,0.45); white-space: nowrap; }
+.vp-sidebar .vp-foot { padding: 1.07cqw 2.5cqw 1.43cqw; font-size: 1.7cqw; color: var(--muted-foreground); text-align: center; }
+.vp-flow { position: absolute; top: 50%; left: 38%; right: 44%; height: 2px; background: repeating-linear-gradient(90deg, var(--primary) 0 6px, transparent 6px 12px); opacity: 0.5; z-index: 0; }
+.vp-chip { position: absolute; display: inline-flex; align-items: center; gap: 1.25cqw; background: #fff; border: 1px solid var(--border); border-radius: 999px; padding: 1.25cqw 2.14cqw; font-size: 2.05cqw; font-weight: 600; color: var(--foreground); box-shadow: 0 6px 18px -8px rgba(15,23,42,0.18); z-index: 2; white-space: nowrap; }
+.vp-chip .vp-k { color: var(--muted-foreground); font-weight: 500; font-size: 1.79cqw; letter-spacing: 0.04em; text-transform: uppercase; }
+.vp-chip.c1 { top: 2%; left: 30%; animation: vpChip 3.6s ease-in-out infinite 0s; }
+.vp-chip.c2 { top: 18%; right: -2%; animation: vpChip 3.6s ease-in-out infinite 0.5s; }
+.vp-chip.c3 { bottom: 22%; left: -3%; animation: vpChip 3.6s ease-in-out infinite 1s; }
+.vp-chip.c4 { bottom: 4%; left: 40%; animation: vpChip 3.6s ease-in-out infinite 1.5s; }
+@keyframes vpFloatA { 0%,100% { transform: rotate(-5deg) translateY(0); } 50% { transform: rotate(-5deg) translateY(-6px); } }
+@keyframes vpFloatB { 0%,100% { transform: translateY(-50%) rotate(3deg); } 50% { transform: translateY(calc(-50% - 8px)) rotate(3deg); } }
+@keyframes vpChip { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+
+/* ───────── TESTIMONIALS ───────── */
+section.testimonials { background: linear-gradient(180deg, #FFFFFF 0%, #FAFAFB 100%); border-top: 1px solid var(--border); }
+.tcards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+@media (max-width: 920px) { .tcards { grid-template-columns: 1fr; } }
+.tcard {
+  background: #fff; border: 1px solid var(--border); border-radius: 16px; padding: 28px;
+  display: flex; flex-direction: column; gap: 18px; transition: box-shadow .18s, transform .18s, border-color .18s;
+}
+.tcard:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--primary) 25%, var(--border)); box-shadow: 0 12px 32px -18px rgba(79,70,229,0.22); }
+.tcard .stars { display: flex; gap: 2px; color: #F5A623; }
+.tcard .stars svg { width: 16px; height: 16px; }
+.tcard blockquote { margin: 0; font-size: 15.5px; line-height: 1.62; color: var(--foreground); flex: 1; }
+.tcard .who { display: flex; align-items: center; gap: 12px; padding-top: 4px; }
+.tcard .ava { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-weight: 700; font-family: "Inter", sans-serif; font-size: 15px; flex-shrink: 0; }
+.tcard .who .n { display: block; font-weight: 600; font-size: 14px; color: var(--foreground); }
+.tcard .who .s { display: block; font-size: 12.5px; color: var(--muted-foreground); margin-top: 1px; }
+.tcard .who .s.ig { display: inline-flex; align-items: center; gap: 5px; margin-top: 3px; transition: color .15s; }
+.tcard .who .s.ig:hover { color: var(--primary); }
+.tcard .who img.ava { object-fit: cover; }
+
+/* ───────── FAQ ───────── */
+.faq-list { max-width: 840px; margin: 0 auto; display: grid; gap: 12px; }
+.faq-item { border: 1px solid var(--border); border-radius: 14px; background: #fff; overflow: hidden; transition: border-color .15s, box-shadow .15s; }
+.faq-item[open] { border-color: color-mix(in srgb, var(--primary) 30%, var(--border)); box-shadow: 0 10px 28px -20px rgba(79,70,229,0.22); }
+.faq-item summary {
+  list-style: none; cursor: pointer; padding: 20px 24px;
+  display: flex; align-items: center; justify-content: space-between; gap: 18px;
+  font-family: "Inter", sans-serif; font-weight: 600; font-size: 16px; color: var(--foreground);
+}
+.faq-item summary::-webkit-details-marker { display: none; }
+.faq-item summary .chev { width: 22px; height: 22px; flex-shrink: 0; color: var(--primary); transition: transform .22s ease; }
+.faq-item[open] summary .chev { transform: rotate(180deg); }
+.faq-item .faq-a { padding: 0 24px 22px; color: var(--muted-foreground); font-size: 14.5px; line-height: 1.62; max-width: 92%; }
+.faq-foot { text-align: center; margin-top: 32px; font-size: 14.5px; color: var(--muted-foreground); }
+.faq-foot a { color: var(--primary); font-weight: 600; }
+
+/* ───────── FINAL CTA BAND ───────── */
+.final-cta-band {
+  position: relative; overflow: hidden; text-align: center; color: #fff;
+  border-radius: 24px; padding: 68px 52px;
+  background:
+    radial-gradient(circle at 85% 12%, rgba(165,180,252,0.40) 0%, transparent 52%),
+    radial-gradient(circle at 12% 100%, rgba(124,116,243,0.45) 0%, transparent 55%),
+    linear-gradient(135deg, #3C33C9 0%, #4F46E5 55%, #6B63F0 100%);
+  box-shadow: 0 24px 68px -28px rgba(30,27,75,0.6);
+}
+@media (max-width: 600px) { .final-cta-band { padding: 48px 26px; } }
+.final-cta-band h2 { font-size: clamp(30px, 4vw, 46px); line-height: 1.08; letter-spacing: -0.025em; color: inherit; }
+.final-cta-band p { color: rgba(255,255,255,0.86); margin: 16px auto 0; font-size: 17px; line-height: 1.6; max-width: 560px; }
+.final-cta-band .cta-row { margin-top: 30px; display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+.final-cta-band .btn-white { background: #fff; color: var(--primary); box-shadow: 0 6px 20px -8px rgba(0,0,0,0.25); }
+.final-cta-band .btn-white:hover { transform: translateY(-1px); background: #F4F4FF; }
+.final-cta-band .btn-outline { background: rgba(255,255,255,0.10); color: #fff; border: 1px solid rgba(255,255,255,0.45); }
+.final-cta-band .btn-outline:hover { background: rgba(255,255,255,0.18); transform: translateY(-1px); }
+.final-cta-band .micro {
+  margin-top: 22px; display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;
+  font-size: 13px; color: rgba(255,255,255,0.78);
+}
+.final-cta-band .micro span { display: inline-flex; align-items: center; gap: 6px; }
+.final-cta-band .micro svg { width: 14px; height: 14px; }
+
+/* ───────── PANELS (jeden projekt · trzy panele) ───────── */
+.panels-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; align-items: stretch; }
+@media (max-width: 920px) { .panels-grid { grid-template-columns: 1fr; } }
+.panel-card {
+  background: #fff; border: 1px solid var(--border); border-radius: 18px;
+  padding: 28px 26px; display: flex; flex-direction: column;
+  transition: transform .18s, box-shadow .18s, border-color .18s;
+}
+.panel-card:hover {
+  transform: translateY(-3px);
+  border-color: color-mix(in srgb, var(--primary) 25%, var(--border));
+  box-shadow: 0 18px 40px -22px rgba(79,70,229,0.25);
+}
+.panel-card.is-owner {
+  background:
+    radial-gradient(circle at 85% 8%, rgba(165,180,252,0.30) 0%, transparent 55%),
+    linear-gradient(150deg, #3C33C9 0%, #4F46E5 60%, #6B63F0 100%);
+  border-color: transparent; color: #fff;
+  box-shadow: 0 24px 60px -30px rgba(30,27,75,0.6);
+}
+.panel-card.is-owner:hover { box-shadow: 0 28px 64px -28px rgba(30,27,75,0.7); }
+.panel-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
+.panel-ic { width: 48px; height: 48px; border-radius: 13px; background: var(--indigo-50); color: var(--primary); display: grid; place-items: center; flex-shrink: 0; }
+.panel-ic .material-symbols-rounded { font-family: 'Material Symbols Rounded'; font-size: 25px; line-height: 1; font-variation-settings: 'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 24; }
+.is-owner .panel-ic { background: rgba(255,255,255,0.16); color: #fff; }
+.panel-role { font-family: "DM Sans", sans-serif; font-size: 10.5px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--primary); background: var(--indigo-50); border-radius: 999px; padding: 5px 11px; white-space: nowrap; }
+.is-owner .panel-role { color: #fff; background: rgba(255,255,255,0.18); }
+.panel-card h3 { font-size: 21px; letter-spacing: -0.02em; margin-bottom: 6px; color: inherit; }
+.panel-who { font-size: 14px; line-height: 1.55; color: var(--muted-foreground); margin-bottom: 20px; }
+.is-owner .panel-who { color: rgba(255,255,255,0.84); }
+.panel-list { list-style: none; padding: 0; margin: 0 0 18px; display: grid; gap: 11px; flex: 1; }
+.panel-list li { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; line-height: 1.45; color: var(--foreground); }
+.is-owner .panel-list li { color: rgba(255,255,255,0.94); }
+.panel-list .tk { width: 20px; height: 20px; border-radius: 50%; background: var(--indigo-50); color: var(--primary); display: grid; place-items: center; flex-shrink: 0; margin-top: 1px; }
+.panel-list .tk svg { width: 12px; height: 12px; }
+.is-owner .panel-list .tk { background: rgba(255,255,255,0.20); color: #fff; }
+.panel-scope { font-size: 12.5px; line-height: 1.5; color: var(--muted-foreground); padding-top: 14px; border-top: 1px solid var(--border); display: flex; gap: 8px; align-items: flex-start; }
+.panel-scope .material-symbols-rounded { font-family: 'Material Symbols Rounded'; font-size: 16px; line-height: 1.35; color: var(--muted-foreground); flex-shrink: 0; }
+.is-owner .panel-scope { color: rgba(255,255,255,0.84); border-top-color: rgba(255,255,255,0.22); }
+.is-owner .panel-scope .material-symbols-rounded { color: rgba(255,255,255,0.84); }
+.panels-foot { text-align: center; margin-top: 34px; font-size: 14.5px; color: var(--muted-foreground); max-width: 700px; margin-left: auto; margin-right: auto; line-height: 1.6; }
+.panels-foot strong { color: var(--foreground); font-weight: 600; }
+
+/* ───────── WORKFLOW — 4 kroki + etykiety ról ───────── */
+.workflow { grid-template-columns: repeat(4, 1fr); }
+@media (max-width: 1080px) { .workflow { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 560px)  { .workflow { grid-template-columns: 1fr; } }
+.step .step-role {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: "DM Sans", sans-serif;
+  font-size: 10.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--primary); background: var(--indigo-50);
+  border-radius: 999px; padding: 5px 11px; margin-bottom: 16px;
+}
+.step .step-role .material-symbols-rounded {
+  font-family: 'Material Symbols Rounded'; font-size: 14px; line-height: 1;
+  font-variation-settings: 'FILL' 1, 'wght' 600, 'GRAD' 0, 'opsz' 24;
+}
+.step h3 { max-width: 100%; }
+.step-num { font-size: 36px; }
+</style>
+
+<!-- ───────── SCROLL REVEAL — styl „Subtelne unoszenie" ───────── -->
+<style id="scroll-reveal">
+  @media (prefers-reduced-motion: no-preference) {
+    .reveal {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity .6s cubic-bezier(.22,.61,.36,1),
+                  transform .6s cubic-bezier(.22,.61,.36,1);
+      will-change: opacity, transform;
+    }
+    .reveal.in { opacity: 1; transform: none; }
+  }
+</style>
+<script>
+  /* Auto-tagowanie treści strony głównej do reveal-on-scroll.
+     Elementy są domyślnie widoczne — ukrywa je dopiero klasa .reveal pod
+     @media (prefers-reduced-motion: no-preference). Jeśli JS lub ruch są
+     wyłączone, treść po prostu pokazuje się od razu. */
+  (function () {
+    // Kontenery, których dzieci wjeżdżają kaskadowo (jedno po drugim)
+    var staggerGroups = [
+      '.section-head',
+      '.values',
+      '.panels-grid',
+      '.workflow',
+      '.tcards',
+      '.faq-list',
+      '.stats-row',
+      '.audience > div:first-child',
+      '.final-cta-band',
+      '.plugin-copy',
+      '.demo-left'
+    ];
+    // Elementy reweal'owane jako całość (bez kaskady)
+    var soloGroups = [
+      '.panels-foot',
+      '.modules-marquee',
+      '.modules-cta-row',
+      '.plugin-visual',
+      'form.demo',
+      '.faq-foot'
+    ];
+
+    var marked = [];
+    function mark(el, i) {
+      if (!el || el.classList.contains('reveal')) return;
+      el.classList.add('reveal');
+      if (i) el.style.transitionDelay = (Math.min(i, 6) * 70) + 'ms';
+      marked.push(el);
+    }
+
+    staggerGroups.forEach(function (sel) {
+      document.querySelectorAll(sel).forEach(function (container) {
+        var kids = container.children;
+        for (var i = 0; i < kids.length; i++) mark(kids[i], i);
+      });
+    });
+    soloGroups.forEach(function (sel) {
+      document.querySelectorAll(sel).forEach(function (el) { mark(el, 0); });
+    });
+
+    if (!('IntersectionObserver' in window)) {
+      marked.forEach(function (el) { el.classList.add('in'); });
+      return;
+    }
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) {
+          e.target.classList.add('in');
+          io.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -6% 0px' });
+
+    marked.forEach(function (el) { io.observe(el); });
+  })();
+</script>
+
+<!-- Przełącznik języka PL/EN -->
+<script src="veedeck-i18n.js"></script>
+<script src="veedeck-megamenu.js"></script>
+
+<style>
+/* MFIX: off-canvas menu nie rozpycha strony w bok */
+@media (max-width: 900px) { html, body { overflow-x: clip; } }
+</style>
+</body></html>

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>veedeck — Aplikacja</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="veedeck_ikona.svg" type="image/svg+xml"><link rel="icon" href="veedeck_ikona.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&amp;family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+  :root {
+    --background: #FFFFFF;
+    --foreground: #24252B;
+    --primary: #4F46E5;
+    --primary-foreground: #FFFFFF;
+    --secondary: #F2F3F7;
+    --muted-foreground: #6B6F80;
+    --accent: #A5B4FC;
+    --border: #E5E7EB;
+    --indigo-50: #EEF2FF;
+    --indigo-100: #E0E7FF;
+    --indigo-950: #1E1B4B;
+    --card: #FFFFFF;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; }
+  body {
+    font-family: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+    color: var(--foreground);
+    background: var(--background);
+    -webkit-font-smoothing: antialiased;
+  }
+  #app { height: 100vh; width: 100%; overflow: hidden; }
+  @media (max-width: 1100px) {
+    #app { overflow: auto; }
+    #app > div { min-width: 1180px; }
+  }
+  /* Logout (czyści „Nie wylogowuj mnie") */
+  .logout-fab {
+    position: fixed; top: 12px; right: 16px; z-index: 50;
+    display: inline-flex; align-items: center; gap: 7px;
+    height: 34px; padding: 0 14px; border-radius: 8px;
+    background: var(--card); color: var(--muted-foreground);
+    border: 1px solid var(--border); cursor: pointer;
+    font-family: "DM Sans", sans-serif; font-size: 13px; font-weight: 600;
+    box-shadow: 0 4px 14px -8px rgba(15,23,42,0.3);
+    transition: color .15s, border-color .15s;
+  }
+  .logout-fab:hover { color: var(--primary); border-color: color-mix(in srgb, var(--primary) 40%, var(--border)); }
+  .logout-fab svg { width: 15px; height: 15px; }
+</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+<button class="logout-fab" onclick="veedeckLogout()" aria-label="Wyloguj się">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+  Wyloguj
+</button>
+<div id="app"></div>
+<script>
+  // Wyjście z aplikacji — czyści „Nie wylogowuj mnie" i wraca na stronę główną.
+  function veedeckLogout() {
+    try { localStorage.removeItem('veedeck_keep_logged_in'); } catch (e) {}
+    window.location.href = 'index.html';
+  }
+</script>
+<script type="text/babel" src="dashboard.jsx"></script>
+<script type="text/babel">
+  ReactDOM.createRoot(document.getElementById('app')).render(<DashboardMock userName="Anna" />);
+</script>
+</body>
+</html>

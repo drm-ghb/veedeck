@@ -1,0 +1,9 @@
+# EN slug → PL file (200 = rewrite, URL stays as EN slug)
+/modules                    /veedeck-moduly.html                 200
+/plugin                     /wtyczka.html                        200
+/pricing                    /cennik.html                         200
+/about                      /o-nas.html                          200
+/contact                    /kontakt.html                        200
+/privacy-policy             /polityka-prywatnosci.html           200
+/privacy-policy-veepick     /polityka-prywatnosci-veepick.html   200
+/cookie-policy              /polityka-cookies.html               200

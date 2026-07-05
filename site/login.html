@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>veedeck — Zaloguj się</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="veedeck_ikona.svg" type="image/svg+xml"><link rel="icon" href="veedeck_ikona.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&amp;family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<script>
+  /* „Nie wylogowuj mnie" — auto-wejście do aplikacji przy ponownym otwarciu logowania */
+  try { if (localStorage.getItem('veedeck_keep_logged_in') === '1') { location.replace('dashboard.html'); } } catch (e) {}
+</script>
+<style>
+  :root {
+    --background: #FFFFFF;
+    --foreground: #24252B;
+    --primary: #4F46E5;
+    --primary-foreground: #FFFFFF;
+    --secondary: #F2F3F7;
+    --muted-foreground: #6B6F80;
+    --accent: #A5B4FC;
+    --border: #E5E7EB;
+    --indigo-50: #EEF2FF;
+    --indigo-100: #E0E7FF;
+    --indigo-950: #1E1B4B;
+    --destructive: #DC2626;
+    --success: #059669;
+    --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+    --font-heading: "Inter", ui-sans-serif, system-ui, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: var(--font-sans);
+    color: var(--foreground);
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.5;
+    min-height: 100vh;
+    background:
+      radial-gradient(1100px 480px at 80% -10%, rgba(165, 180, 252, 0.32), transparent 60%),
+      radial-gradient(800px 380px at 8% 0%, rgba(79, 70, 229, 0.12), transparent 65%),
+      radial-gradient(700px 380px at 50% 110%, rgba(199, 210, 254, 0.35), transparent 60%),
+      var(--background);
+    background-attachment: fixed;
+  }
+  h1, h2, h3 { font-family: var(--font-heading); font-weight: 700; letter-spacing: -0.028em; margin: 0; }
+  p { margin: 0; line-height: 1.55; }
+  a { color: inherit; text-decoration: none; }
+  img { display: block; max-width: 100%; }
+  em.accent { font-style: italic; font-family: var(--font-heading); color: var(--primary); font-weight: 500; }
+
+  /* ── Layout ───────────────────────────────────────────────── */
+  .page {
+    min-height: 100vh;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    padding: 28px 32px;
+  }
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    max-width: 1200px; width: 100%; margin: 0 auto;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand img.ico { height: 28px; width: 28px; object-fit: contain; }
+  .brand img.word { height: 20px; }
+  .back-link {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 13.5px; color: var(--muted-foreground); font-weight: 500;
+    padding: 8px 12px; border-radius: 10px;
+    transition: background 140ms, color 140ms;
+  }
+  .back-link:hover { background: rgba(255,255,255,0.65); color: var(--foreground); }
+  .back-link svg { width: 14px; height: 14px; }
+
+  .stage { display: grid; place-items: center; padding: 32px 0; }
+  .panel {
+    width: 100%; max-width: 460px;
+    position: relative;
+  }
+
+  /* Mode views — only one visible at a time */
+  .view { display: none; flex-direction: column; gap: 22px; }
+  .view.active { display: flex; animation: viewIn 280ms cubic-bezier(0.22, 0.61, 0.36, 1); }
+  @keyframes viewIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .panel-head { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 14px; }
+  .panel-head h1 {
+    font-size: clamp(30px, 4vw, 38px);
+    line-height: 1.05;
+    letter-spacing: -0.028em;
+  }
+  .panel-head .sub {
+    color: var(--muted-foreground);
+    font-size: 15px;
+    max-width: 380px;
+  }
+  .panel-head .sub b { color: var(--foreground); font-weight: 600; }
+
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 12px; font-weight: 700;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--primary);
+  }
+  .eyebrow .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--primary);
+    animation: pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+  /* ── Card ─────────────────────────────────────────────────── */
+  .card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    padding: 28px 28px 26px;
+    box-shadow: 0 30px 60px -30px rgba(15, 23, 42, 0.18), 0 4px 16px -6px rgba(15, 23, 42, 0.06);
+    display: flex; flex-direction: column; gap: 16px;
+  }
+  .card-success {
+    text-align: center;
+    align-items: center;
+    gap: 18px;
+    padding: 36px 28px 28px;
+  }
+  .card-success .success-icon {
+    width: 68px; height: 68px; border-radius: 50%;
+    background: var(--indigo-50);
+    color: var(--primary);
+    display: grid; place-items: center;
+    box-shadow: 0 0 0 8px rgba(165, 180, 252, 0.18);
+  }
+  .card-success .success-icon svg { width: 30px; height: 30px; }
+  .card-success h2 {
+    font-size: 24px;
+    line-height: 1.15;
+    letter-spacing: -0.022em;
+  }
+  .card-success .body-text {
+    font-size: 14.5px; color: var(--muted-foreground); line-height: 1.6;
+    max-width: 340px;
+  }
+  .card-success .body-text b { color: var(--foreground); font-weight: 600; }
+  .card-success .meta-note {
+    font-size: 13px; color: var(--muted-foreground);
+    background: var(--secondary);
+    padding: 10px 14px; border-radius: 10px;
+    width: 100%;
+    text-align: center;
+  }
+  .card-success .actions { width: 100%; display: flex; flex-direction: column; gap: 10px; padding-top: 4px; }
+
+  /* ── Buttons ──────────────────────────────────────────────── */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    height: 48px; padding: 0 22px;
+    border-radius: 12px;
+    font-family: var(--font-sans);
+    font-size: 14.5px; font-weight: 600;
+    cursor: pointer; border: 1px solid transparent;
+    transition: transform 120ms ease, background 140ms ease, box-shadow 140ms ease, border-color 140ms ease, opacity 140ms ease, color 140ms ease;
+    outline: none;
+  }
+  .btn:focus-visible { box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.25); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn.w-full { width: 100%; }
+  .btn[data-variant="primary"] { background: var(--primary); color: #fff; box-shadow: 0 8px 22px -10px rgba(79, 70, 229, 0.55); }
+  .btn[data-variant="primary"]:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 12px 28px -10px rgba(79, 70, 229, 0.65); }
+  .btn[data-variant="outline"] { background: #fff; color: var(--foreground); border-color: var(--border); }
+  .btn[data-variant="outline"]:hover:not(:disabled) { background: var(--secondary); border-color: #cdd0db; }
+  .btn[data-variant="ghost"] { background: transparent; color: var(--muted-foreground); }
+  .btn[data-variant="ghost"]:hover:not(:disabled) { background: var(--secondary); color: var(--foreground); }
+  .btn svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+  /* ── Form atoms ───────────────────────────────────────────── */
+  .form-stack { display: flex; flex-direction: column; gap: 14px; }
+  .field { display: flex; flex-direction: column; gap: 8px; }
+  .label {
+    font-size: 13px; font-weight: 600;
+    color: var(--foreground);
+    letter-spacing: -0.005em;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .label .opt { color: var(--muted-foreground); font-weight: 400; }
+  .input {
+    height: 48px; width: 100%;
+    border: 1px solid var(--border);
+    background: #fff;
+    border-radius: 12px;
+    padding: 0 14px;
+    font-family: var(--font-sans);
+    font-size: 14.5px;
+    color: var(--foreground);
+    transition: border-color 140ms, box-shadow 140ms;
+    outline: none;
+  }
+  .input::placeholder { color: #9aa0b0; }
+  .input:focus-visible { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.12); }
+  .input.has-trailing { padding-right: 44px; }
+
+  .password-wrap { position: relative; }
+  .password-toggle {
+    position: absolute;
+    right: 12px; top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: 0;
+    padding: 6px;
+    cursor: pointer;
+    color: #9aa0b0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: color 120ms, background 120ms;
+  }
+  .password-toggle:hover { color: var(--foreground); background: var(--secondary); }
+  .password-toggle svg { width: 16px; height: 16px; display: block; }
+
+  .divider-or {
+    position: relative;
+    display: flex; align-items: center;
+    margin: 4px 0;
+  }
+  .divider-or::before, .divider-or::after {
+    content: ""; flex: 1; height: 1px; background: var(--border);
+  }
+  .divider-or span {
+    padding: 0 12px;
+    font-size: 12px; color: var(--muted-foreground);
+    font-weight: 500;
+  }
+
+  .helper-text { font-size: 12px; color: var(--muted-foreground); }
+  .error-text { font-size: 12px; color: var(--destructive); }
+
+  .privacy {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding-top: 4px;
+  }
+  .privacy input[type="checkbox"] {
+    margin: 3px 0 0;
+    height: 16px; width: 16px;
+    border-radius: 4px;
+    accent-color: var(--primary);
+    flex-shrink: 0;
+    cursor: pointer;
+  }
+  .remember {
+    display: flex; align-items: center; gap: 9px;
+    cursor: pointer; user-select: none;
+    font-size: 13.5px; color: var(--muted-foreground);
+    margin-top: 2px;
+  }
+  .remember input[type="checkbox"] {
+    width: 16px; height: 16px; margin: 0;
+    border-radius: 4px; accent-color: var(--primary);
+    flex-shrink: 0; cursor: pointer;
+  }
+  .remember:hover span { color: var(--foreground); }
+  .privacy label {
+    font-size: 12.5px;
+    color: var(--muted-foreground);
+    line-height: 1.55;
+    cursor: pointer;
+  }
+  .privacy label a { color: var(--foreground); text-decoration: underline; text-decoration-color: transparent; transition: text-decoration-color 140ms; }
+  .privacy label a:hover { text-decoration-color: var(--foreground); }
+
+  .meta-link {
+    font-size: 13.5px; color: var(--muted-foreground); font-weight: 500;
+    transition: color 140ms;
+  }
+  .meta-link:hover { color: var(--primary); text-decoration: underline; }
+  .meta-link.strong { color: var(--foreground); font-weight: 600; }
+  .meta-link.strong:hover { color: var(--primary); }
+
+  .switch-row {
+    text-align: center;
+    font-size: 14px;
+    color: var(--muted-foreground);
+  }
+
+  /* ── Footer ───────────────────────────────────────────────── */
+  .footer {
+    text-align: center;
+    padding: 16px 0 8px;
+    color: var(--muted-foreground);
+    font-size: 12.5px;
+  }
+  .footer a {
+    color: var(--muted-foreground);
+    text-decoration: underline;
+    text-decoration-color: transparent;
+    transition: text-decoration-color 140ms;
+  }
+  .footer a:hover { text-decoration-color: var(--muted-foreground); }
+
+  .hidden { display: none !important; }
+
+  /* ── Blokada rejestracji (testy) ─────────────────────────── */
+  .reg-lock { position: relative; }
+  .reg-lock .card.reg-disabled {
+    filter: blur(2.5px) grayscale(0.85);
+    opacity: 0.5;
+    pointer-events: none;
+    user-select: none;
+  }
+  .reg-overlay {
+    position: absolute; inset: 0; z-index: 3;
+    display: flex; align-items: flex-start; justify-content: center;
+    padding: 40px 24px;
+    border-radius: var(--radius-xl, 18px);
+    background: rgba(255,255,255,0.55);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+  }
+  .reg-overlay-inner {
+    max-width: 340px; text-align: center;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 26px 24px;
+    box-shadow: 0 24px 60px -28px rgba(36,37,43,0.4), 0 4px 14px -8px rgba(36,37,43,0.18);
+  }
+  .reg-overlay-inner .lock-ic {
+    width: 46px; height: 46px; margin: 0 auto 14px;
+    display: grid; place-items: center;
+    border-radius: 13px;
+    background: var(--indigo-50, #EEF2FF);
+    color: var(--primary, #4F46E5);
+  }
+  .reg-overlay-inner .lock-ic svg { width: 24px; height: 24px; }
+  .reg-overlay-inner h3 {
+    font-family: "Inter", sans-serif; font-weight: 700;
+    font-size: 18px; letter-spacing: -0.02em;
+    color: var(--foreground, #24252B);
+    margin: 0 0 8px;
+  }
+  .reg-overlay-inner p {
+    font-size: 14px; color: var(--muted-foreground, #6B6F80);
+    line-height: 1.5; margin: 0 0 16px;
+  }
+  .reg-mail {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--primary, #4F46E5); color: #fff;
+    font-family: "Inter", sans-serif; font-weight: 600; font-size: 14.5px;
+    padding: 10px 18px; border-radius: 11px; text-decoration: none;
+    transition: background .15s, transform .15s;
+  }
+  .reg-mail:hover { background: var(--primary-600, #4338CA); transform: translateY(-1px); }
+  .reg-mail svg { width: 17px; height: 17px; }
+
+  /* ── Responsive ───────────────────────────────────────────── */
+  @media (max-width: 520px) {
+    .page { padding: 20px 16px; }
+    .card { padding: 22px 20px 20px; border-radius: 18px; }
+    .card-success { padding: 28px 20px 22px; }
+    .panel-head h1 { font-size: 28px; }
+    .back-link { padding: 6px 10px; }
+    .back-link span { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+  <header class="topbar">
+    <a class="brand" href="index.html">
+      <img class="ico" src="vee-icon.png" alt="">
+      <img class="word" src="vee_black.png" alt="veedeck">
+    </a>
+    <a class="back-link" href="index.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"></path></svg>
+      <span>Wróć na stronę</span>
+    </a>
+  </header>
+
+  <main class="stage">
+    <div class="panel">
+
+      <!-- ════════════ LOGIN ════════════ -->
+      <section class="view view-login active" data-view="login">
+        <div class="panel-head">
+          <div class="eyebrow"><span class="dot"></span>Konto veedeck</div>
+          <h1>Witaj ponownie.<br><em class="accent">Zaloguj się.</em></h1>
+          <p class="sub">Wszystko, co zostawiłaś wczoraj wieczorem — czeka tam, gdzie było.</p>
+        </div>
+
+        <div class="card">
+          <button type="button" class="btn w-full" data-variant="outline" onclick="onGoogle()">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"></path>
+              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"></path>
+              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"></path>
+              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"></path>
+            </svg>
+            Kontynuuj z Google
+          </button>
+          <button type="button" class="btn w-full" data-variant="outline" onclick="onFacebook()">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#1877F2" d="M24 12.07C24 5.4 18.63 0 12 0S0 5.4 0 12.07C0 18.1 4.39 23.1 10.13 24v-8.44H7.08v-3.49h3.05V9.41c0-3.02 1.79-4.69 4.53-4.69 1.31 0 2.69.24 2.69.24v2.97h-1.51c-1.49 0-1.96.93-1.96 1.89v2.25h3.33l-.53 3.49h-2.8V24C19.61 23.1 24 18.1 24 12.07z"></path></svg>
+            Kontynuuj z Facebookiem
+          </button>
+
+          <div class="divider-or"><span>lub e-mailem</span></div>
+
+          <form id="loginForm" class="form-stack" autocomplete="on">
+            <div class="field">
+              <label class="label" for="login-email">E-mail lub login</label>
+              <input class="input" id="login-email" name="email" type="text" placeholder="anna@studio.pl" required autocomplete="username">
+            </div>
+            <div class="field">
+              <label class="label" for="login-password">
+                <span>Hasło</span>
+                <a class="meta-link" href="#" onclick="setMode('forgot'); return false;" style="font-weight: 500;">Nie pamiętam</a>
+              </label>
+              <div class="password-wrap">
+                <input class="input has-trailing" id="login-password" name="password" type="password" placeholder="••••••••" required autocomplete="current-password">
+                <button type="button" class="password-toggle" aria-label="Pokaż / ukryj hasło" onclick="togglePassword(this)">
+                  <svg class="eye-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                  <svg class="eye-off hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"></path><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"></path><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"></path><line x1="2" y1="2" x2="22" y2="22"></line></svg>
+                </button>
+              </div>
+            </div>
+            <label class="remember" for="keepLoggedIn">
+              <input type="checkbox" id="keepLoggedIn" name="keepLoggedIn">
+              <span>Nie wylogowuj mnie</span>
+            </label>
+            <button type="submit" class="btn w-full" data-variant="primary" id="loginSubmit" style="margin-top: 6px;">
+              <span>Zaloguj się</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"></path></svg>
+            </button>
+          </form>
+        </div>
+
+        <p class="switch-row">
+          Nie masz jeszcze konta?
+          <a class="meta-link strong" href="#" onclick="setMode('register'); return false;">Załóż za darmo →</a>
+        </p>
+      </section>
+
+      <!-- ════════════ REGISTER ════════════ -->
+      <section class="view view-register" data-view="register">
+        <div class="panel-head">
+          <div class="eyebrow"><span class="dot"></span>Załóż konto</div>
+          <h1>Zacznij za darmo.<br><em class="accent">14 dni bez karty.</em></h1>
+          <p class="sub">Bez limitu klientów i projektów. Anuluj w każdej chwili.</p>
+        </div>
+
+        <div class="reg-lock">
+        <div class="reg-overlay">
+          <div class="reg-overlay-inner">
+            <div class="lock-ic">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            </div>
+            <h3>Jesteśmy w trakcie testów</h3>
+            <p>Jeżeli chcesz wziąć udział, napisz na:</p>
+            <a class="reg-mail" id="regMail" href="#">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="m3 7 9 6 9-6"></path></svg>
+              <span id="regMailText">napisz do nas</span>
+            </a>
+          </div>
+        </div>
+        <div class="card reg-disabled" aria-hidden="true">
+          <button type="button" class="btn w-full" data-variant="outline" onclick="onGoogle()">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"></path>
+              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"></path>
+              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"></path>
+              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"></path>
+            </svg>
+            Załóż konto przez Google
+          </button>
+          <button type="button" class="btn w-full" data-variant="outline" onclick="onFacebook()">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#1877F2" d="M24 12.07C24 5.4 18.63 0 12 0S0 5.4 0 12.07C0 18.1 4.39 23.1 10.13 24v-8.44H7.08v-3.49h3.05V9.41c0-3.02 1.79-4.69 4.53-4.69 1.31 0 2.69.24 2.69.24v2.97h-1.51c-1.49 0-1.96.93-1.96 1.89v2.25h3.33l-.53 3.49h-2.8V24C19.61 23.1 24 18.1 24 12.07z"></path></svg>
+            Załóż konto przez Facebook
+          </button>
+
+          <div class="divider-or"><span>lub e-mailem</span></div>
+
+          <form id="registerForm" class="form-stack" autocomplete="on">
+            <div class="field">
+              <label class="label" for="reg-fullname">Imię i nazwisko</label>
+              <input class="input" id="reg-fullname" name="fullName" type="text" placeholder="np. Anna Kowalska" required>
+            </div>
+            <div class="field">
+              <label class="label" for="reg-company">Nazwa firmy <span class="opt">(opcjonalne)</span></label>
+              <input class="input" id="reg-company" name="companyName" type="text" placeholder="np. Studio Wnętrz Kowalski">
+            </div>
+            <div class="field">
+              <label class="label" for="reg-email">E-mail</label>
+              <input class="input" id="reg-email" name="email" type="email" placeholder="anna@studio.pl" required autocomplete="email">
+            </div>
+            <div class="field">
+              <label class="label" for="reg-password">Hasło</label>
+              <div class="password-wrap">
+                <input class="input has-trailing" id="reg-password" name="password" type="password" placeholder="••••••••" required autocomplete="new-password">
+                <button type="button" class="password-toggle" aria-label="Pokaż / ukryj hasło" onclick="togglePassword(this)">
+                  <svg class="eye-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                  <svg class="eye-off hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"></path><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"></path><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"></path><line x1="2" y1="2" x2="22" y2="22"></line></svg>
+                </button>
+              </div>
+              <p class="helper-text">Min. 8 znaków, mała litera, wielka litera i cyfra.</p>
+              <p class="error-text hidden" id="pwError">Hasło nie spełnia wymagań bezpieczeństwa.</p>
+            </div>
+            <div class="privacy">
+              <input type="checkbox" id="privacy" name="privacy">
+              <label for="privacy">Potwierdzam, że zapoznałam się z <a href="polityka-prywatnosci.html">Polityką prywatności</a> i <a href="#">Regulaminem</a>.</label>
+            </div>
+            <button type="submit" class="btn w-full" data-variant="primary" id="registerSubmit" disabled style="margin-top: 4px;">
+              <span>Załóż konto</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"></path></svg>
+            </button>
+          </form>
+        </div>
+        </div>
+
+        <p class="switch-row">
+          Masz już konto?
+          <a class="meta-link strong" href="#" onclick="setMode('login'); return false;">Zaloguj się →</a>
+        </p>
+      </section>
+
+      <!-- ════════════ REGISTERED (success) ════════════ -->
+      <section class="view view-registered" data-view="registered">
+        <div class="panel-head">
+          <div class="eyebrow"><span class="dot"></span>Prawie gotowe</div>
+          <h1>Sprawdź skrzynkę.<br><em class="accent">Wysłaliśmy link.</em></h1>
+        </div>
+
+        <div class="card card-success">
+          <div class="success-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+              <polyline points="22,6 12,13 2,6"></polyline>
+            </svg>
+          </div>
+          <h2>Wysłaliśmy link aktywacyjny</h2>
+          <p class="body-text">
+            Na adres <b id="registeredEmail">Twój e-mail</b> poszedł link, który aktywuje Twoje konto. Kliknij go, aby przejść dalej i zacząć pracę w veedeck.
+          </p>
+          <div class="meta-note">
+            Nie widzisz wiadomości? Sprawdź folder <b>Spam</b> lub <b>Oferty</b>.
+          </div>
+          <div class="actions">
+            <button type="button" class="btn w-full" data-variant="outline" id="resendBtn" onclick="resendActivation(this)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
+              <span>Wyślij link ponownie</span>
+            </button>
+            <a class="btn w-full" data-variant="ghost" href="#" onclick="setMode('login'); return false;">Wróć do logowania</a>
+          </div>
+        </div>
+
+        <p class="switch-row">
+          Wpisałaś zły e-mail?
+          <a class="meta-link strong" href="#" onclick="setMode('register'); return false;">Załóż konto ponownie →</a>
+        </p>
+      </section>
+
+      <!-- ════════════ FORGOT ════════════ -->
+      <section class="view view-forgot" data-view="forgot">
+        <div class="panel-head">
+          <div class="eyebrow"><span class="dot"></span>Reset hasła</div>
+          <h1>Zapomniałaś hasła?<br><em class="accent">Pomożemy.</em></h1>
+          <p class="sub">Podaj e-mail przypisany do konta — wyślemy link do ustawienia nowego hasła.</p>
+        </div>
+
+        <div class="card">
+          <form id="forgotForm" class="form-stack" autocomplete="on">
+            <div class="field">
+              <label class="label" for="forgot-email">E-mail</label>
+              <input class="input" id="forgot-email" name="email" type="email" placeholder="anna@studio.pl" required autocomplete="email">
+            </div>
+            <button type="submit" class="btn w-full" data-variant="primary" id="forgotSubmit" style="margin-top: 4px;">
+              <span>Wyślij link do resetu</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"></path></svg>
+            </button>
+          </form>
+        </div>
+
+        <p class="switch-row">
+          Pamiętasz hasło?
+          <a class="meta-link strong" href="#" onclick="setMode('login'); return false;">Wróć do logowania →</a>
+        </p>
+      </section>
+
+      <!-- ════════════ FORGOT SENT (success) ════════════ -->
+      <section class="view view-forgot-sent" data-view="forgot-sent">
+        <div class="panel-head">
+          <div class="eyebrow"><span class="dot"></span>Link w drodze</div>
+          <h1>Sprawdź skrzynkę.<br><em class="accent">Reset hasła czeka.</em></h1>
+        </div>
+
+        <div class="card card-success">
+          <div class="success-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+              <polyline points="22,6 12,13 2,6"></polyline>
+            </svg>
+          </div>
+          <h2>Wysłaliśmy link do resetu</h2>
+          <p class="body-text">
+            Jeśli konto z e-mailem <b id="forgotEmail">Twój e-mail</b> istnieje, wysłaliśmy link do ustawienia nowego hasła. Sprawdź też folder Spam.
+          </p>
+          <div class="meta-note">
+            Link jest ważny przez <b>60 minut</b>.
+          </div>
+          <div class="actions">
+            <a class="btn w-full" data-variant="primary" href="#" onclick="setMode('login'); return false;">
+              <span>Wróć do logowania</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"></path></svg>
+            </a>
+            <button type="button" class="btn w-full" data-variant="ghost" onclick="setMode('forgot')">Spróbuj z innym e-mailem</button>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <footer class="footer">
+    © 2026 veedeck · <a href="polityka-prywatnosci.html">Polityka prywatności</a> · <a href="kontakt.html">Pomoc</a>
+  </footer>
+</div>
+
+<script>
+  // ── Mode switching ────────────────────────────────────────────
+  function setMode(mode) {
+    var views = document.querySelectorAll('.view');
+    views.forEach(function (v) {
+      v.classList.toggle('active', v.dataset.view === mode);
+    });
+    // Reset transient state on every switch
+    if (mode === 'register') {
+      document.getElementById('registerForm').reset();
+      document.getElementById('registerSubmit').disabled = true;
+      document.getElementById('pwError').classList.add('hidden');
+      var btn = document.getElementById('registerSubmit');
+      btn.querySelector('span').textContent = 'Załóż konto';
+    } else if (mode === 'login') {
+      var lbtn = document.getElementById('loginSubmit');
+      lbtn.disabled = false;
+      lbtn.querySelector('span').textContent = 'Zaloguj się';
+    } else if (mode === 'forgot') {
+      document.getElementById('forgotForm').reset();
+      var fbtn = document.getElementById('forgotSubmit');
+      fbtn.disabled = false;
+      fbtn.querySelector('span').textContent = 'Wyślij link do resetu';
+    }
+    // Reset eye toggles on any switch
+    document.querySelectorAll('.password-wrap').forEach(function (wrap) {
+      var input = wrap.querySelector('input');
+      if (input) input.type = 'password';
+      var on = wrap.querySelector('.eye-on');
+      var off = wrap.querySelector('.eye-off');
+      if (on) on.classList.remove('hidden');
+      if (off) off.classList.add('hidden');
+    });
+    // Focus first input in the new mode
+    setTimeout(function () {
+      var active = document.querySelector('.view.active');
+      var first = active && active.querySelector('input:not([type=checkbox])');
+      if (first) first.focus({ preventScroll: true });
+    }, 100);
+    // Scroll to top of panel for tall mobile views
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ── Otwórz właściwy widok na podstawie #hash (np. login.html#register) ──
+  (function () {
+    var m = (location.hash || '').replace('#', '');
+    if (['register', 'login', 'forgot'].indexOf(m) !== -1) setMode(m);
+  })();
+
+  // ── Blokada rejestracji (okres testów) ─────────────────────────
+  (function () {
+    var user = 'contact', domain = 'veedeck' + '.com';
+    var addr = user + '@' + domain;
+    var subject = encodeURIComponent('Chcę wziąć udział w testach veedeck');
+    var body = encodeURIComponent('Cześć! Chcę dołączyć do testów veedeck.');
+    var a = document.getElementById('regMail');
+    if (a) {
+      a.href = 'mailto:' + addr + '?subject=' + subject + '&body=' + body;
+      document.getElementById('regMailText').textContent = addr;
+    }
+    // Twarde wyłączenie formularza rejestracji — także dla klawiatury
+    var rf = document.getElementById('registerForm');
+    if (rf) {
+      rf.addEventListener('submit', function (e) { e.preventDefault(); e.stopPropagation(); }, true);
+      rf.querySelectorAll('input, button, a').forEach(function (el) {
+        el.tabIndex = -1;
+        if (el.tagName === 'INPUT' || el.tagName === 'BUTTON') el.disabled = true;
+      });
+    }
+  })();
+
+  // ── Password show/hide ───────────────────────────────────────
+  function togglePassword(btn) {
+    var wrap = btn.parentElement;
+    var input = wrap.querySelector('input');
+    var on = btn.querySelector('.eye-on');
+    var off = btn.querySelector('.eye-off');
+    if (input.type === 'password') {
+      input.type = 'text';
+      on.classList.add('hidden');
+      off.classList.remove('hidden');
+    } else {
+      input.type = 'password';
+      on.classList.remove('hidden');
+      off.classList.add('hidden');
+    }
+  }
+
+  // ── Register form validation ────────────────────────────────
+  function validatePassword(pwd) {
+    return pwd.length >= 8 && /[a-z]/.test(pwd) && /[A-Z]/.test(pwd) && /[0-9]/.test(pwd);
+  }
+
+  var regForm = document.getElementById('registerForm');
+  var regSubmit = document.getElementById('registerSubmit');
+  var pwError = document.getElementById('pwError');
+
+  function refreshRegisterButton() {
+    var pw = document.getElementById('reg-password').value;
+    var pwOk = validatePassword(pw);
+    var hasName = document.getElementById('reg-fullname').value.trim().length > 0;
+    var hasEmail = document.getElementById('reg-email').value.trim().length > 0;
+    var privacyOk = document.getElementById('privacy').checked;
+    regSubmit.disabled = !(pwOk && hasName && hasEmail && privacyOk);
+    pwError.classList.toggle('hidden', !pw || pwOk);
+  }
+  regForm.addEventListener('input', refreshRegisterButton);
+  regForm.addEventListener('change', refreshRegisterButton);
+
+  // ── Submit handlers (frontend-only stubs) ───────────────────
+  document.getElementById('loginForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var btn = document.getElementById('loginSubmit');
+    var keep = document.getElementById('keepLoggedIn');
+    try {
+      if (keep && keep.checked) localStorage.setItem('veedeck_keep_logged_in', '1');
+      else localStorage.removeItem('veedeck_keep_logged_in');
+    } catch (err) {}
+    btn.disabled = true;
+    btn.querySelector('span').textContent = 'Logowanie...';
+    // backend: signIn("credentials", …) → /dashboard
+    setTimeout(function () { window.location.href = 'dashboard.html'; }, 650);
+  });
+
+  regForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    regSubmit.disabled = true;
+    regSubmit.querySelector('span').textContent = 'Wysyłamy link...';
+    var email = document.getElementById('reg-email').value.trim();
+    // Stub: w produkcji wywołaj /api/auth/register; po sukcesie przekieruj tu.
+    setTimeout(function () {
+      document.getElementById('registeredEmail').textContent = email || 'Twój e-mail';
+      setMode('registered');
+    }, 600);
+  });
+
+  document.getElementById('forgotForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var btn = document.getElementById('forgotSubmit');
+    btn.disabled = true;
+    btn.querySelector('span').textContent = 'Wysyłamy link...';
+    var email = document.getElementById('forgot-email').value.trim();
+    // Stub: w produkcji /api/auth/forgot-password
+    setTimeout(function () {
+      document.getElementById('forgotEmail').textContent = email || 'Twój e-mail';
+      setMode('forgot-sent');
+    }, 600);
+  });
+
+  function resendActivation(btn) {
+    btn.disabled = true;
+    var span = btn.querySelector('span');
+    var original = span.textContent;
+    span.textContent = 'Wysyłamy ponownie...';
+    setTimeout(function () {
+      span.textContent = 'Link wysłany ✓';
+      setTimeout(function () {
+        span.textContent = original;
+        btn.disabled = false;
+      }, 2400);
+    }, 600);
+  }
+
+  function onGoogle() {
+    // Demo: wejście do aplikacji (w produkcji: signIn("google", { callbackUrl: "/dashboard" }))
+    var keep = document.getElementById('keepLoggedIn');
+    try { if (keep && keep.checked) localStorage.setItem('veedeck_keep_logged_in', '1'); } catch (e) {}
+    window.location.href = 'dashboard.html';
+  }
+
+  function onFacebook() {
+    // Demo: wejście do aplikacji (w produkcji: signIn("facebook", { callbackUrl: "/dashboard" }))
+    var keep = document.getElementById('keepLoggedIn');
+    try { if (keep && keep.checked) localStorage.setItem('veedeck_keep_logged_in', '1'); } catch (e) {}
+    window.location.href = 'dashboard.html';
+  }
+</script>
+
+
+<!-- Przełącznik języka PL/EN -->
+<script src="veedeck-i18n.js"></script>
+
+<style>
+/* MFIX: off-canvas menu nie rozpycha strony w bok */
+@media (max-width: 900px) { html, body { overflow-x: clip; } }
+</style>
+</body>
+</html>

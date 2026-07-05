@@ -1,0 +1,2801 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>veedeck — Moduły</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="veedeck_ikona.svg" type="image/svg+xml"><link rel="icon" href="veedeck_ikona.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&amp;family=Inter:wght@400;500;600;700;800&amp;family=Caveat:wght@500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&amp;display=block" rel="stylesheet">
+<style>
+  :root {
+    --background: #FFFFFF;
+    --foreground: #24252B;
+    --card: #FFFFFF;
+    --primary: #4F46E5;
+    --primary-foreground: #FFFFFF;
+    --secondary: #F2F3F7;
+    --muted: #F2F3F7;
+    --muted-foreground: #6B6F80;
+    --accent: #A5B4FC;
+    --accent-foreground: #1E1B4B;
+    --border: #E5E7EB;
+    --ring: #4F46E5;
+    --indigo-50: #EEF2FF;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+    background: var(--background);
+    color: var(--foreground);
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.5;
+  }
+  h1, h2, h3, h4 { font-family: "Inter", sans-serif; font-weight: 600; letter-spacing: -0.022em; margin: 0; }
+  p { margin: 0; }
+  a { color: inherit; text-decoration: none; }
+
+  /* Material Symbols Rounded — explicit base to ensure ligatures render */
+  .material-symbols-rounded {
+    font-family: 'Material Symbols Rounded';
+    font-weight: normal;
+    font-style: normal;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-feature-settings: 'liga';
+    font-feature-settings: 'liga';
+    -webkit-font-smoothing: antialiased;
+  }
+  .container { max-width: 1200px; margin: 0 auto; padding: 0 32px; }
+
+  /* NAV */
+  nav.top {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: saturate(180%) blur(14px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-inner { display: flex; align-items: center; justify-content: space-between; height: 68px; }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand-icon { height: 28px; width: 28px; }
+  .wordmark-img { height: 22px; }
+  .nav-links { display: flex; align-items: center; gap: 28px; font-size: 14.5px; color: var(--muted-foreground); font-weight: 500; }
+  .nav-links a:hover { color: var(--foreground); }
+  .nav-links a.active { color: var(--primary); }
+  .nav-cta { display: flex; gap: 10px; align-items: center; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    height: 40px; padding: 0 18px; border-radius: 12px;
+    font-weight: 600; font-size: 14px; cursor: pointer;
+    border: 1px solid transparent; font-family: inherit;
+    transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
+  }
+  .btn-primary { background: var(--primary); color: var(--primary-foreground); box-shadow: 0 6px 20px -8px rgba(79, 70, 229, 0.45); }
+  .btn-primary:hover { transform: translateY(-1px); }
+  .btn-ghost { background: #fff; color: var(--foreground); border: 1px solid var(--border); }
+  .btn-ghost:hover { background: var(--secondary); }
+  .btn-lg { height: 52px; padding: 0 26px; font-size: 15.5px; border-radius: 14px; }
+
+  /* HERO */
+  .page-hero {
+    position: relative; padding: 80px 0 64px;
+    background:
+      radial-gradient(1100px 400px at 80% -10%, rgba(165, 180, 252, 0.28), transparent 60%),
+      radial-gradient(700px 320px at 8% 0%, rgba(79, 70, 229, 0.10), transparent 65%),
+      var(--background);
+    border-bottom: 1px solid var(--border);
+  }
+  .page-hero .eyebrow { display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--primary); margin-bottom: 14px; }
+  .page-hero h1 { font-size: clamp(40px, 6vw, 64px); line-height: 1.05; letter-spacing: -0.03em; font-weight: 700; margin-bottom: 18px; max-width: 880px; }
+  .page-hero h1 em { font-style: italic; font-family: "Inter", serif; color: var(--primary); font-weight: 500; }
+  .page-hero .lead { font-size: 18px; color: var(--muted-foreground); max-width: 720px; line-height: 1.6; }
+
+  /* MODULE NAV STRIP — jump links */
+  .module-strip {
+    background: #FAFAFB;
+    border-bottom: 1px solid var(--border);
+    padding: 18px 0;
+    position: sticky; top: 68px; z-index: 30;
+    backdrop-filter: blur(8px);
+    background: rgba(250, 250, 251, 0.92);
+  }
+  .module-strip-inner {
+    display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
+  }
+  .module-chip {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 8px 14px; border-radius: 999px;
+    font-size: 13px; font-weight: 500;
+    background: #fff;
+    border: 1px solid var(--border);
+    color: var(--muted-foreground);
+    transition: all .15s;
+  }
+  .module-chip:hover { color: var(--primary); border-color: var(--accent); background: var(--indigo-50); }
+  .module-chip .material-symbols-rounded { font-size: 16px; color: var(--primary); }
+  .module-chip .renderflow-pin {
+    width: 14px; height: 14px; color: var(--primary); flex-shrink: 0;
+  }
+  .module-chip .soon-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--primary);
+    margin-left: 2px;
+  }
+  @media (max-width: 760px) { .module-strip { display: none; } }
+
+  /* MODULE SECTIONS */
+  .module-section {
+    padding: 104px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .module-section:nth-child(even) {
+    background: linear-gradient(180deg, #FAFAFB 0%, #FFFFFF 100%);
+  }
+  .module-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+    gap: 72px;
+    align-items: center;
+  }
+  /* ProjectFlow — wider visual to showcase the actual UI */
+  #projectflow .container { max-width: 1320px; }
+  #projectflow .module-row {
+    grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.45fr);
+    gap: 56px;
+  }
+  .module-row.reverse .module-text { order: 2; }
+  .module-row.reverse .module-shot { order: 1; }
+  @media (max-width: 920px) {
+    .module-row { grid-template-columns: 1fr; gap: 40px; }
+    .module-row.reverse .module-text { order: 1; }
+    .module-row.reverse .module-shot { order: 2; }
+    .module-section { padding: 72px 0; }
+  }
+
+  .module-eyebrow {
+    display: flex; align-items: center; gap: 12px;
+    font-size: 12px; font-weight: 700; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--primary);
+    margin-bottom: 22px;
+  }
+  .module-eyebrow .num {
+    font-family: "Inter", sans-serif;
+    font-size: 13px;
+  }
+  .module-eyebrow::after {
+    content: "";
+    flex: 0 0 auto;
+    width: 40px; height: 1px;
+    background: var(--accent);
+  }
+  .module-eyebrow .badge-soon {
+    margin-left: auto;
+    font-size: 10px; padding: 4px 9px; border-radius: 999px;
+    background: color-mix(in oklch, var(--primary) 15%, transparent);
+    color: var(--primary);
+    letter-spacing: 0.08em;
+  }
+  .module-head-row { display: flex; align-items: center; gap: 18px; margin-bottom: 18px; }
+  .module-glyph {
+    width: 54px; height: 54px; border-radius: 14px;
+    background: linear-gradient(140deg, var(--primary), #6B63F0);
+    color: #fff;
+    display: grid; place-items: center;
+    box-shadow: 0 10px 28px -12px rgba(79,70,229,0.5);
+    flex-shrink: 0;
+  }
+  .module-glyph .material-symbols-rounded {
+    font-family: 'Material Symbols Rounded';
+    font-size: 28px;
+    font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 24;
+  }
+  .module-glyph svg.renderflow-pin {
+    width: 28px; height: 28px; color: #fff;
+  }
+  .module-title {
+    font-size: clamp(32px, 4.2vw, 44px);
+    line-height: 1.05;
+    letter-spacing: -0.025em;
+    font-weight: 700;
+  }
+  .module-tagline {
+    font-size: 18px; color: var(--muted-foreground);
+    line-height: 1.6; margin: 18px 0 28px;
+    max-width: 520px;
+  }
+  .module-features {
+    list-style: none; padding: 0; margin: 0;
+    display: flex; flex-direction: column; gap: 14px;
+  }
+  .module-features li {
+    display: flex; align-items: flex-start; gap: 12px;
+    font-size: 15px; line-height: 1.55; color: var(--foreground);
+  }
+  .module-features .tick {
+    flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%;
+    background: var(--indigo-50);
+    color: var(--primary);
+    display: grid; place-items: center;
+    margin-top: 2px;
+  }
+  .module-features .tick svg { width: 12px; height: 12px; }
+  .module-features li strong { font-weight: 600; }
+
+  /* KALENDARZ STAGE — moduł 06 (widok tygodnia) */
+  #kalendarz .container { max-width: 1320px; }
+  #kalendarz .module-row {
+    grid-template-columns: minmax(0, 1.45fr) minmax(0, 0.82fr);
+    gap: 56px;
+  }
+  .kal-stage { position: relative; width: 100%; max-width: 820px; }
+  .kal-card {
+    background: #fff; border: 1px solid var(--border); border-radius: 16px; overflow: hidden;
+    box-shadow:
+      0 1px 2px rgba(36,37,43,.04),
+      0 24px 60px -28px rgba(79,70,229,.22),
+      0 12px 32px -20px rgba(36,37,43,.12);
+  }
+  .kal-bar { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 16px; border-bottom:1px solid var(--border); }
+  .kal-bar-l { display:flex; align-items:center; gap:12px; }
+  .kal-nav { display:flex; align-items:center; gap:3px; }
+  .kal-today { font-weight:600; font-size:12px; border:1px solid var(--border); border-radius:8px; padding:6px 12px; background:#fff; color:var(--foreground); }
+  .kal-arrow { width:28px; height:28px; border-radius:7px; display:grid; place-items:center; color:var(--muted-foreground); }
+  .kal-arrow .material-symbols-rounded { font-size:18px; }
+  .kal-range { font-weight:700; font-size:15px; letter-spacing:-.01em; }
+  .kal-bar-r { display:flex; align-items:center; gap:10px; }
+  .kal-seg { display:inline-flex; background:#F2F3F7; border-radius:9px; padding:3px; gap:2px; }
+  .kal-seg span { font-weight:600; font-size:11.5px; color:var(--muted-foreground); padding:6px 12px; border-radius:7px; }
+  .kal-seg span.active { background:#fff; color:var(--foreground); box-shadow:0 2px 6px rgba(15,23,42,.08); }
+  .kal-add { display:inline-flex; align-items:center; gap:5px; background:var(--primary); color:#fff; font-weight:600; font-size:12px; border-radius:9px; padding:8px 13px; }
+  .kal-add .material-symbols-rounded { font-size:16px; }
+  .kal-wkhead { display:grid; grid-template-columns:46px repeat(7,1fr); border-bottom:1px solid var(--border); }
+  .kal-cnr { border-right:1px solid var(--border); }
+  .kal-dh { padding:9px 4px; text-align:center; border-right:1px solid var(--border); }
+  .kal-dh:last-child { border-right:0; }
+  .kal-dh .dn { font-size:10px; color:var(--muted-foreground); font-weight:600; }
+  .kal-dh .dd { font-weight:700; font-size:15px; margin-top:2px; }
+  .kal-dh.today { background:#F7F7FE; }
+  .kal-dh.today .dd { width:26px; height:26px; border-radius:50%; background:var(--primary); color:#fff; display:inline-grid; place-items:center; }
+  .kal-wkbody { display:grid; grid-template-columns:46px repeat(7,1fr); position:relative; height:312px; }
+  .kal-times { border-right:1px solid var(--border); position:relative; }
+  .kal-times .t { position:absolute; right:6px; font-size:9.5px; color:var(--muted-foreground); transform:translateY(-50%); }
+  .kal-col { border-right:1px solid var(--border); position:relative; background-image:repeating-linear-gradient(to bottom,#F0F1F4 0,#F0F1F4 1px,transparent 1px,transparent 49px); background-position:0 18px; }
+  .kal-col:last-child { border-right:0; }
+  .kal-col.today { background-color:#FAFAFE; }
+  .kal-ev { position:absolute; left:4px; right:4px; border-radius:7px; padding:5px 7px; font-size:10.5px; line-height:1.25; overflow:hidden; border-left:3px solid; }
+  .kal-ev .et { font-weight:700; color:var(--foreground); }
+  .kal-ev .es { font-weight:600; font-size:9.5px; margin-top:2px; }
+  .kal-ev.is-ev { background:var(--indigo-50); border-color:var(--primary); }
+  .kal-ev.is-ev .es { color:var(--primary); }
+  .kal-ev.is-task { background:#FFFBEB; border-color:#D97706; }
+  .kal-ev.is-task .es { color:#D97706; }
+  .kal-ev.is-rem { background:#ECFDF5; border-color:#1F8A5B; }
+  .kal-ev.is-rem .es { color:#1F8A5B; }
+  @media (max-width: 920px) {
+    #kalendarz .module-row { grid-template-columns: 1fr; }
+    .kal-stage { max-width: 100%; }
+    .kal-wkbody { height: 312px; }
+  }
+
+  /* NOTATNIK STAGE — moduł 07 (tablet + telefon) */
+  #notatnik .container { max-width: 1320px; }
+  #notatnik .module-row {
+    grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.45fr);
+    gap: 56px;
+  }
+  #notatnik .nt-frame {
+    position: relative; border-radius: 18px; overflow: hidden; background: #fff;
+    border: 1px solid var(--border);
+    box-shadow:
+      0 1px 2px rgba(36,37,43,.04),
+      0 24px 60px -28px rgba(79,70,229,.22),
+      0 12px 32px -20px rgba(36,37,43,.12);
+  }
+  #notatnik .sketch-svg{width:100%;max-width:420px;height:auto;display:block;}
+  #notatnik .ink{fill:none;stroke:var(--ink);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;}
+  #notatnik .ink-thin{fill:none;stroke:var(--ink);stroke-width:1.6;stroke-linecap:round;}
+  #notatnik .dim{fill:none;stroke:var(--marker);stroke-width:2;stroke-linecap:round;}
+  #notatnik .dim-lbl{fill:var(--marker);font-family:"Caveat",cursive;font-weight:700;font-size:23px;}
+  #notatnik .lbl{fill:var(--ink);font-family:"Caveat",cursive;font-weight:600;font-size:26px;}
+  #notatnik .sk-tool{width:32px;height:32px;border-radius:8px;display:grid;place-items:center;color:var(--muted-foreground);}
+  #notatnik .sk-tool .material-symbols-rounded{font-size:19px;}
+  #notatnik .sk-tool.active{background:var(--indigo-50);color:var(--primary);}
+  #notatnik .sw{width:18px;height:18px;border-radius:50%;box-shadow:0 0 0 1px var(--border);}
+  #notatnik .sw.active{box-shadow:0 0 0 2px #fff,0 0 0 4px var(--primary);}
+  #notatnik .tab-scene{--ink:#2A2A2E;--marker:#E2843A;padding:40px 30px;display:flex;align-items:center;justify-content:center;position:relative;background:linear-gradient(160deg,#EEF0F8 0%,#F4F2F6 100%);}
+  #notatnik .tablet{position:relative;width:680px;max-width:100%;background:#202329;border-radius:28px;padding:15px;box-shadow:0 34px 70px -26px rgba(20,24,40,.55);}
+  #notatnik .tablet::before{content:"";position:absolute;left:7px;top:50%;transform:translateY(-50%);width:6px;height:6px;border-radius:50%;background:#3c3f49;}
+  #notatnik .tablet-screen{background:#fff;border-radius:15px;overflow:hidden;height:436px;display:grid;grid-template-columns:188px 1fr;}
+  #notatnik .tb-rail{border-right:1px solid var(--border);display:flex;flex-direction:column;min-width:0;}
+  #notatnik .tb-rail .rh{display:flex;align-items:center;justify-content:space-between;padding:15px 14px 10px;}
+  #notatnik .tb-rail .rh h4{font-family:"Inter",sans-serif;font-weight:700;font-size:15px;margin:0;}
+  #notatnik .tb-rail .rh .material-symbols-rounded{font-size:17px;color:var(--primary);}
+  #notatnik .tb-search{margin:0 12px 10px;border:1px solid var(--border);border-radius:9px;padding:7px 10px;font-size:11.5px;color:#9AA0AE;display:flex;align-items:center;gap:6px;}
+  #notatnik .tb-search .material-symbols-rounded{font-size:14px;}
+  #notatnik .tb-item{padding:10px 14px;border-bottom:1px solid var(--border);border-left:3px solid transparent;}
+  #notatnik .tb-item.active{background:#F6F6FE;border-left-color:var(--primary);}
+  #notatnik .tb-item .nm{font-family:"Inter",sans-serif;font-weight:600;font-size:12px;color:var(--foreground);}
+  #notatnik .tb-item.active .nm{color:var(--primary);}
+  #notatnik .tb-item .pv{font-size:10.5px;color:var(--muted-foreground);margin-top:2px;display:inline-flex;align-items:center;gap:4px;}
+  #notatnik .tb-item .pv .material-symbols-rounded{font-size:12px;color:var(--marker);}
+  #notatnik .tb-canvas{position:relative;background:radial-gradient(circle,#E6E6EE 1px,transparent 1px) 0 0/22px 22px,#FCFCFB;display:flex;align-items:center;justify-content:center;}
+  #notatnik .tb-mini-tools{position:absolute;top:14px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:4px;background:#fff;border:1px solid var(--border);border-radius:10px;padding:5px 8px;box-shadow:0 6px 18px -8px rgba(15,23,42,.2);}
+  #notatnik .tb-mini-tools .sk-tool{width:26px;height:26px;}
+  #notatnik .tb-mini-tools .sk-tool .material-symbols-rounded{font-size:16px;}
+  #notatnik .tb-mini-tools .sw{width:14px;height:14px;}
+  #notatnik .stylus{position:absolute;width:128px;height:14px;border-radius:8px;background:linear-gradient(90deg,#4F46E5,#6B63F0);right:60px;bottom:78px;transform:rotate(32deg);transform-origin:right center;box-shadow:0 8px 18px -6px rgba(79,70,229,.6);}
+  #notatnik .stylus::after{content:"";position:absolute;left:-12px;top:50%;transform:translateY(-50%);border-top:7px solid transparent;border-bottom:7px solid transparent;border-right:13px solid #2A2A2E;}
+  #notatnik .stylus::before{content:"";position:absolute;right:8px;top:3px;width:34px;height:8px;border-radius:6px;background:rgba(255,255,255,.25);}
+  #notatnik .phone{position:absolute;right:34px;bottom:14px;width:152px;background:#202329;border-radius:24px;padding:7px;box-shadow:0 26px 50px -18px rgba(20,24,40,.55);}
+  #notatnik .phone::before{content:"";position:absolute;top:13px;left:50%;transform:translateX(-50%);width:42px;height:5px;border-radius:4px;background:#3c3f49;}
+  #notatnik .phone-screen{background:#fff;border-radius:18px;overflow:hidden;height:352px;}
+  #notatnik .ph-top{display:flex;align-items:center;justify-content:space-between;padding:16px 12px 8px;border-bottom:1px solid var(--border);}
+  #notatnik .ph-top .material-symbols-rounded{font-size:16px;color:var(--muted-foreground);}
+  #notatnik .ph-top .pen{color:var(--primary);}
+  #notatnik .ph-top-t{font-family:"Inter",sans-serif;font-weight:600;font-size:11px;color:var(--muted-foreground);}
+  #notatnik .ph-note{padding:11px 13px;}
+  #notatnik .ph-note h5{font-family:"Inter",sans-serif;font-weight:700;font-size:12.5px;margin:0;letter-spacing:-.01em;}
+  #notatnik .ph-date{font-size:8.5px;color:#9AA0AE;margin:2px 0 9px;}
+  #notatnik .ph-note p{font-size:9.5px;color:#34353B;line-height:1.5;margin:0 0 9px;}
+  #notatnik .ph-li{margin-bottom:7px;}
+  #notatnik .ph-li b{display:block;font-family:"Inter",sans-serif;font-weight:600;font-size:9.5px;color:var(--foreground);}
+  #notatnik .ph-li span{display:block;font-size:9px;color:#5a5b62;line-height:1.45;margin-top:1px;}
+  #notatnik .tab-cap{position:absolute;left:30px;bottom:18px;font-family:"Inter",sans-serif;font-weight:600;font-size:12.5px;color:var(--muted-foreground);display:inline-flex;align-items:center;gap:7px;}
+  #notatnik .tab-cap .material-symbols-rounded{font-size:17px;color:var(--primary);}
+  @media (max-width: 920px) {
+    #notatnik .module-row { grid-template-columns: 1fr; }
+    #notatnik .tablet { width: 100%; }
+    #notatnik .phone { display: none; }
+    #notatnik .tab-cap { position: static; margin-top: 14px; }
+  }
+
+  /* DYSKUSJE STAGE — moduł 08 (lista · czat · pliki) */
+  #dyskusje .container { max-width: 1320px; }
+  #dyskusje .module-row {
+    grid-template-columns: minmax(0, 1.45fr) minmax(0, 0.82fr);
+    gap: 56px;
+  }
+  #dyskusje .dy-frame {
+    position: relative; border-radius: 18px; overflow: hidden; background: #fff;
+    border: 1px solid var(--border);
+    box-shadow:
+      0 1px 2px rgba(36,37,43,.04),
+      0 24px 60px -28px rgba(79,70,229,.22),
+      0 12px 32px -20px rgba(36,37,43,.12);
+  }
+  #dyskusje .dy{--in:#F1F2F5;--pdf:#E0524A;--sheet:#1F8A5B;--indigo-100:#E0E7FF;font-family:"DM Sans",sans-serif;display:flex;height:548px;background:#fff;position:relative;}
+  #dyskusje .dy-rail{width:200px;border-right:1px solid var(--border);display:flex;flex-direction:column;min-width:0;}
+  #dyskusje .dy-rail-head{display:flex;align-items:center;justify-content:space-between;padding:15px 14px 10px;}
+  #dyskusje .dy-rail-head h2{font-family:"Inter",sans-serif;font-weight:700;font-size:17px;margin:0;letter-spacing:-.02em;}
+  #dyskusje .dy-plus{width:27px;height:27px;border-radius:8px;background:var(--indigo-50);color:var(--primary);display:grid;place-items:center;}
+  #dyskusje .dy-plus .material-symbols-rounded{font-size:17px;}
+  #dyskusje .dy-search{margin:0 12px 9px;display:flex;align-items:center;gap:6px;border:1px solid var(--border);border-radius:9px;padding:7px 10px;color:#9AA0AE;font-size:11.5px;}
+  #dyskusje .dy-search .material-symbols-rounded{font-size:15px;}
+  #dyskusje .dy-filters{display:flex;gap:6px;padding:0 12px 10px;border-bottom:1px solid var(--border);}
+  #dyskusje .dy-fl{flex:1;display:inline-flex;align-items:center;justify-content:space-between;font-family:"Inter",sans-serif;font-weight:600;font-size:11px;color:var(--muted-foreground);border:1px solid var(--border);border-radius:8px;padding:5px 8px;}
+  #dyskusje .dy-fl .material-symbols-rounded{font-size:14px;}
+  #dyskusje .dy-convs{flex:1;overflow:hidden;}
+  #dyskusje .dy-conv{padding:11px 14px;border-bottom:1px solid var(--border);border-left:3px solid transparent;}
+  #dyskusje .dy-conv .r1{display:flex;align-items:baseline;justify-content:space-between;gap:8px;}
+  #dyskusje .dy-conv .nm{font-family:"Inter",sans-serif;font-weight:600;font-size:12.5px;color:var(--foreground);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  #dyskusje .dy-conv .dt{font-size:10px;color:#9AA0AE;flex-shrink:0;}
+  #dyskusje .dy-conv .pv{font-size:11px;color:var(--muted-foreground);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  #dyskusje .dy-conv.active{background:#F6F6FE;border-left-color:var(--primary);}
+  #dyskusje .dy-conv.active .nm{color:var(--primary);}
+  #dyskusje .dy-chat{flex:1;display:flex;flex-direction:column;min-width:0;}
+  #dyskusje .dy-chat-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:14px 16px;border-bottom:1px solid var(--border);}
+  #dyskusje .dy-chat-head>div:first-child{min-width:0;}
+  #dyskusje .dy-chat-head h3{font-family:"Inter",sans-serif;font-weight:700;font-size:14.5px;margin:0;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  #dyskusje .dy-chat-head .sub{font-size:11px;color:var(--primary);margin-top:2px;display:inline-flex;align-items:center;gap:4px;max-width:100%;overflow:hidden;white-space:nowrap;}
+  #dyskusje .dy-chat-head .sub .material-symbols-rounded{font-size:12px;}
+  #dyskusje .dy-actions{display:flex;align-items:center;gap:5px;color:var(--muted-foreground);}
+  #dyskusje .dy-actions .ic{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;}
+  #dyskusje .dy-actions .ic .material-symbols-rounded{font-size:17px;}
+  #dyskusje .dy-pliki{display:inline-flex;align-items:center;gap:5px;font-family:"Inter",sans-serif;font-weight:600;font-size:11.5px;border:1px solid var(--border);border-radius:8px;padding:6px 9px;color:var(--foreground);white-space:nowrap;}
+  #dyskusje .dy-pliki .material-symbols-rounded{font-size:15px;color:var(--muted-foreground);}
+  #dyskusje .dy-pliki .cnt{background:var(--indigo-50);color:var(--primary);font-size:10px;font-weight:700;border-radius:6px;padding:1px 6px;}
+  #dyskusje .dy-pliki.active{background:var(--indigo-50);border-color:var(--indigo-100);color:var(--primary);}
+  #dyskusje .dy-pliki.active .material-symbols-rounded{color:var(--primary);}
+  #dyskusje .dy-pliki.active .cnt{background:var(--primary);color:#fff;}
+  #dyskusje .dy-msgs{flex:1;overflow:hidden;padding:14px 16px;background:#FCFCFD;}
+  #dyskusje .dy-date{text-align:center;font-size:10px;color:#9AA0AE;margin:2px 0 12px;}
+  #dyskusje .dy-row{display:flex;align-items:flex-end;gap:7px;margin-bottom:11px;}
+  #dyskusje .dy-row.me{flex-direction:row-reverse;}
+  #dyskusje .dy-av{width:25px;height:25px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;font-family:"Inter",sans-serif;font-weight:700;font-size:9.5px;}
+  #dyskusje .dy-av.k{background:var(--indigo-100);color:var(--primary);}
+  #dyskusje .dy-av.me{background:linear-gradient(135deg,#C7D2FE,#4F46E5);color:#fff;}
+  #dyskusje .dy-bub{max-width:74%;padding:8px 12px;border-radius:13px;font-size:12px;line-height:1.45;}
+  #dyskusje .dy-bub.in{background:var(--in);color:#2A2A2E;border-bottom-left-radius:5px;}
+  #dyskusje .dy-bub.out{background:var(--primary);color:#fff;border-bottom-right-radius:5px;}
+  #dyskusje .dy-time{font-size:9px;color:#A9AAB3;align-self:flex-end;margin:0 2px 1px;}
+  #dyskusje .dy-file-msg{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--border);border-radius:10px;padding:7px 10px;}
+  #dyskusje .dy-file-msg .fi{width:25px;height:25px;border-radius:7px;background:#FCE9E7;color:var(--pdf);display:grid;place-items:center;}
+  #dyskusje .dy-file-msg .fi .material-symbols-rounded{font-size:15px;}
+  #dyskusje .dy-file-msg .fn{font-family:"Inter",sans-serif;font-weight:600;font-size:11px;color:var(--foreground);}
+  #dyskusje .dy-file-msg .material-symbols-rounded.ext{font-size:13px;color:var(--muted-foreground);}
+  #dyskusje .dy-composer{display:flex;align-items:center;gap:10px;padding:12px 16px;border-top:1px solid var(--border);}
+  #dyskusje .dy-attach{width:32px;height:32px;border-radius:50%;background:var(--primary);color:#fff;display:grid;place-items:center;flex-shrink:0;}
+  #dyskusje .dy-attach .material-symbols-rounded{font-size:17px;}
+  #dyskusje .dy-input{flex:1;background:#F2F3F7;border-radius:10px;padding:10px 13px;color:#9AA0AE;font-size:12px;}
+  #dyskusje .dy-composer .mic{color:var(--muted-foreground);}
+  #dyskusje .dy-composer .mic .material-symbols-rounded{font-size:19px;}
+  #dyskusje .dy-files{width:220px;border-left:1px solid var(--border);display:flex;flex-direction:column;background:#fff;min-width:0;}
+  #dyskusje .dy-files-head{display:flex;align-items:center;justify-content:space-between;padding:14px 14px 0;}
+  #dyskusje .dy-files-head h4{font-family:"Inter",sans-serif;font-weight:700;font-size:13.5px;margin:0;display:inline-flex;align-items:center;gap:6px;}
+  #dyskusje .dy-files-head h4 .material-symbols-rounded{font-size:16px;color:var(--primary);}
+  #dyskusje .dy-tabs{display:flex;gap:12px;padding:10px 14px 0;border-bottom:1px solid var(--border);}
+  #dyskusje .dy-tab{font-family:"Inter",sans-serif;font-weight:600;font-size:11.5px;color:var(--muted-foreground);padding-bottom:8px;position:relative;}
+  #dyskusje .dy-tab.active{color:var(--primary);}
+  #dyskusje .dy-tab.active::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--primary);border-radius:2px;}
+  #dyskusje .dy-flist{flex:1;overflow:hidden;padding:11px;display:flex;flex-direction:column;gap:8px;}
+  #dyskusje .dy-f{display:flex;align-items:center;gap:10px;border:1px solid var(--border);border-radius:10px;padding:9px 11px;}
+  #dyskusje .dy-f .ic{width:32px;height:32px;border-radius:8px;display:grid;place-items:center;flex-shrink:0;}
+  #dyskusje .dy-f .ic .material-symbols-rounded{font-size:17px;}
+  #dyskusje .dy-f .ic.pdf{background:#FCE9E7;color:var(--pdf);}
+  #dyskusje .dy-f .ic.sheet{background:#E7F6EE;color:var(--sheet);}
+  #dyskusje .dy-thumb{width:32px;height:32px;border-radius:8px;flex-shrink:0;background:linear-gradient(135deg,#C7D2FE,#A5B4FC);display:grid;place-items:center;color:#fff;overflow:hidden;}
+  #dyskusje .dy-thumb.b{background:linear-gradient(135deg,#FBCFE8,#F0A6C4);}
+  #dyskusje .dy-thumb .material-symbols-rounded{font-size:15px;opacity:.85;}
+  #dyskusje .dy-f .meta{min-width:0;}
+  #dyskusje .dy-f .fn{font-family:"Inter",sans-serif;font-weight:600;font-size:11.5px;color:var(--foreground);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  #dyskusje .dy-f .by{font-size:10px;color:var(--muted-foreground);margin-top:1px;}
+  @media (max-width: 920px) {
+    #dyskusje .module-row { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 720px) {
+    #dyskusje .dy-rail { display: none; }
+  }
+  @media (max-width: 520px) {
+    #dyskusje .dy-files { display: none; }
+  }
+
+  /* SCREENSHOT PLACEHOLDER */
+  .module-shot {
+    position: relative;
+  }
+  .shot-frame {
+    position: relative;
+    border-radius: 18px;
+    overflow: hidden;
+    background: #fff;
+    border: 1px solid var(--border);
+    box-shadow:
+      0 1px 2px rgba(36, 37, 43, 0.04),
+      0 24px 60px -28px rgba(79, 70, 229, 0.22),
+      0 12px 32px -20px rgba(36, 37, 43, 0.12);
+    aspect-ratio: 16 / 10;
+  }
+  .shot-frame::before {
+    content: "";
+    position: absolute; inset: 0;
+    background:
+      repeating-linear-gradient(135deg,
+        rgba(165, 180, 252, 0.10) 0,
+        rgba(165, 180, 252, 0.10) 8px,
+        rgba(165, 180, 252, 0.18) 8px,
+        rgba(165, 180, 252, 0.18) 16px);
+  }
+  .shot-frame::after {
+    content: "";
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, transparent 0%, rgba(255,255,255,0.4) 100%);
+  }
+  .shot-label {
+    position: absolute; inset: 0;
+    display: grid; place-items: center;
+    z-index: 2;
+    text-align: center;
+  }
+  .shot-label-inner {
+    display: inline-flex; flex-direction: column; align-items: center; gap: 14px;
+    padding: 18px 26px;
+    background: rgba(255,255,255,0.92);
+    border: 1px dashed var(--accent);
+    border-radius: 14px;
+    backdrop-filter: blur(4px);
+  }
+  .shot-label-inner .material-symbols-rounded {
+    font-size: 32px; color: var(--primary);
+  }
+  .shot-label-inner .shot-name {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    color: var(--muted-foreground);
+    text-transform: uppercase;
+  }
+  .shot-label-inner .shot-hint {
+    font-size: 13px;
+    color: var(--foreground);
+    font-weight: 500;
+    max-width: 240px;
+    line-height: 1.45;
+  }
+
+  /* RENDERFLOW STAGE — interaktywna grafika modułu 01 */
+  .rf-stage { position: relative; display: flex; flex-direction: column; gap: 16px; }
+  .rf-tabs {
+    display: inline-flex; align-self: flex-start;
+    background: var(--secondary);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 4px;
+    position: relative;
+  }
+  .rf-tabs button {
+    appearance: none; border: 0; background: transparent;
+    font-family: inherit; font-size: 12.5px; font-weight: 600;
+    color: var(--muted-foreground);
+    padding: 8px 16px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: color 180ms ease;
+    display: inline-flex; align-items: center; gap: 6px;
+    line-height: 1;
+    position: relative; z-index: 2;
+  }
+  .rf-tabs button .material-symbols-rounded { font-size: 14px; }
+  .rf-tabs button.active { color: var(--foreground); }
+  .rf-tabs .rf-tab-thumb {
+    position: absolute; top: 4px; bottom: 4px;
+    border-radius: 999px;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(15, 23, 42, 0.04);
+    transition: left 260ms cubic-bezier(0.22, 0.61, 0.36, 1), width 260ms cubic-bezier(0.22, 0.61, 0.36, 1);
+    z-index: 1;
+  }
+  .rf-canvas {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1911 / 944;
+    border-radius: 18px; overflow: hidden;
+    box-shadow: 0 30px 60px -28px rgba(15, 23, 42, 0.30), 0 6px 20px -8px rgba(15, 23, 42, 0.10);
+    background: #1a1a1a;
+  }
+  .rf-canvas > img.rf-render {
+    width: 100%; height: 100%;
+    object-fit: cover; display: block;
+  }
+  .rf-pin {
+    position: absolute;
+    width: 24px; height: 24px; border-radius: 50%;
+    background: #E11D48; color: #fff;
+    display: grid; place-items: center;
+    font-family: "Inter", sans-serif; font-weight: 700; font-size: 11px;
+    box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.28), 0 4px 10px rgba(225, 29, 72, 0.5);
+    cursor: pointer;
+    z-index: 2;
+    transform: translate(-50%, -50%);
+  }
+  .rf-pin::after {
+    content: ""; position: absolute; inset: -6px;
+    border-radius: 50%; border: 2px solid #E11D48;
+    opacity: 0.5;
+    animation: rfPinPulse 1.8s ease-out infinite;
+  }
+  @keyframes rfPinPulse {
+    0% { transform: scale(0.85); opacity: 0.55; }
+    100% { transform: scale(1.5); opacity: 0; }
+  }
+  /* Persistent overlays */
+  .rf-status-chip {
+    position: absolute; top: 14px; right: 14px;
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(255,255,255,0.94);
+    backdrop-filter: blur(8px);
+    color: #D97706;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 11.5px; font-weight: 700;
+    letter-spacing: 0.04em;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.18);
+    z-index: 3;
+  }
+  .rf-status-chip::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #D97706; }
+  .rf-toolbar {
+    position: absolute; bottom: 14px; left: 14px;
+    display: inline-flex; align-items: center; gap: 4px;
+    background: rgba(255,255,255,0.94);
+    backdrop-filter: blur(8px);
+    padding: 5px;
+    border-radius: 999px;
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.20);
+    z-index: 3;
+  }
+  .rf-toolbar .tb-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 12px; font-weight: 600;
+    color: var(--foreground);
+  }
+  .rf-toolbar .tb-btn.primary { background: var(--primary); color: #fff; }
+  .rf-toolbar .tb-btn .material-symbols-rounded { font-size: 14px; }
+  /* View overlays — fade between */
+  .rf-view {
+    position: absolute; inset: 0;
+    opacity: 0; pointer-events: none;
+    transition: opacity 260ms ease;
+    z-index: 4;
+  }
+  .rf-view.active { opacity: 1; pointer-events: auto; }
+  /* View 1: annotation card */
+  .rf-annot {
+    position: absolute;
+    top: 49%; left: 32%;
+    width: 240px;
+    background: #fff;
+    border-radius: 12px;
+    padding: 12px 14px;
+    box-shadow: 0 20px 40px -10px rgba(15, 23, 42, 0.35), 0 4px 12px rgba(15, 23, 42, 0.18);
+  }
+  .rf-annot::before {
+    content: "";
+    position: absolute; top: 50%; left: -6px;
+    width: 12px; height: 12px;
+    background: #fff;
+    transform: rotate(45deg) translateY(-50%);
+    box-shadow: -2px 2px 4px rgba(15,23,42,0.06);
+  }
+  .rf-annot .meta {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 11px; color: var(--muted-foreground);
+    margin-bottom: 6px;
+  }
+  .rf-annot .avatar {
+    width: 18px; height: 18px; border-radius: 50%;
+    background: linear-gradient(135deg, #C7D2FE, #4F46E5);
+    color: #fff; display: grid; place-items: center;
+    font-size: 9px; font-weight: 700;
+  }
+  .rf-annot .meta .author { color: var(--foreground); font-weight: 600; }
+  .rf-annot .meta .time { margin-left: auto; }
+  .rf-annot .body { font-size: 13px; color: var(--foreground); line-height: 1.45; }
+  .rf-annot .body .badge {
+    display: inline-block;
+    background: #FFFBEB; color: #D97706;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.08em;
+    padding: 2px 6px; border-radius: 4px; text-transform: uppercase;
+    margin-right: 6px;
+  }
+  /* View 2: bubbles */
+  .rf-bubble {
+    position: absolute;
+    background: #fff;
+    border-radius: 12px;
+    padding: 10px 12px;
+    box-shadow: 0 16px 32px -10px rgba(15, 23, 42, 0.30);
+    font-size: 12px;
+    display: flex; align-items: center; gap: 8px;
+    max-width: 220px;
+  }
+  .rf-bubble .avatar {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: linear-gradient(135deg, #A5B4FC, #4F46E5);
+    color: #fff; display: grid; place-items: center;
+    font-size: 10px; font-weight: 700; flex-shrink: 0;
+  }
+  .rf-bubble.accepted .avatar { background: linear-gradient(135deg, #6EE7B7, #059669); }
+  .rf-bubble .text { line-height: 1.4; }
+  .rf-bubble .text strong { color: var(--foreground); font-weight: 700; }
+  .rf-bubble .badge {
+    background: #ECFDF5; color: #059669;
+    font-size: 9.5px; font-weight: 700; letter-spacing: 0.06em;
+    padding: 2px 6px; border-radius: 4px; text-transform: uppercase;
+  }
+  .rf-bubble.b1 { top: 14px; left: 14px; }
+  .rf-bubble.b2 { bottom: 60px; right: 14px; }
+  /* Version timeline (under canvas, only shown in view 2) */
+  .rf-timeline {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px 18px;
+    box-shadow: 0 10px 24px -10px rgba(15, 23, 42, 0.10);
+    display: none;
+    align-items: center; gap: 16px;
+  }
+  .rf-timeline.active { display: flex; }
+  .rf-timeline .tl-title {
+    font-family: "Inter", sans-serif; font-weight: 700; font-size: 12px;
+    color: var(--foreground); letter-spacing: -0.005em;
+  }
+  .rf-timeline .tl-strip {
+    display: flex; align-items: center; gap: 10px; flex: 1;
+  }
+  .rf-timeline .v {
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+  }
+  .rf-timeline .v .dot {
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #fff; border: 2px solid var(--border);
+    display: grid; place-items: center;
+    color: #fff; font-size: 9px; line-height: 1;
+  }
+  .rf-timeline .v.done .dot { border-color: #059669; background: #059669; }
+  .rf-timeline .v.active .dot { border-color: var(--primary); background: var(--primary); }
+  .rf-timeline .v .lab {
+    font-size: 9.5px; font-weight: 700; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--muted-foreground);
+  }
+  .rf-timeline .v.done .lab { color: #059669; }
+  .rf-timeline .v.active .lab { color: var(--primary); }
+  .rf-timeline .line {
+    flex: 1; height: 2px; background: var(--border);
+    margin-bottom: 16px;
+  }
+  .rf-timeline .line.done { background: #059669; }
+
+  /* KLIENCI DECK — 4 pochylone karty (Info · Kontakty · Płatności · Dokumenty) */
+  #klienci .container { max-width: 1320px; }
+  #klienci .module-row {
+    grid-template-columns: minmax(0, 1.45fr) minmax(0, 0.82fr);
+    gap: 56px;
+  }
+  .kl-deck {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1.45 / 1;
+    max-width: 760px;
+  }
+  .kl-card {
+    position: absolute;
+    background: #fff;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    box-shadow: 0 30px 60px -28px rgba(15, 23, 42, 0.32), 0 6px 20px -8px rgba(15, 23, 42, 0.12);
+    width: 46%; height: 50%;
+    padding: 16px 18px;
+    display: flex; flex-direction: column; gap: 9px;
+    transition: transform 280ms cubic-bezier(0.22, 0.61, 0.36, 1), box-shadow 280ms;
+  }
+  .kl-card:hover {
+    transform: translateY(-4px) rotate(0deg) !important;
+    z-index: 10;
+    box-shadow: 0 40px 80px -30px rgba(30, 27, 75, 0.4), 0 12px 30px -10px rgba(79, 70, 229, 0.2);
+  }
+  .kl-card .kl-tab {
+    position: absolute; top: -10px; left: 16px;
+    background: var(--foreground); color: #fff;
+    font-size: 9.5px; font-weight: 700; letter-spacing: 0.12em;
+    padding: 4px 10px; border-radius: 999px;
+    text-transform: uppercase;
+  }
+  .kl-card .kl-title {
+    font-family: "Inter", sans-serif; font-weight: 700; font-size: 15px;
+    letter-spacing: -0.01em;
+    margin-bottom: 2px;
+  }
+  /* d1: Info */
+  .kl-card.d1 { left: 0; top: 8px; transform: rotate(-3deg); z-index: 1; }
+  .kl-card.d1 .field { display: flex; flex-direction: column; gap: 3px; }
+  .kl-card.d1 .field .lab { font-size: 9px; font-weight: 700; color: var(--muted-foreground); letter-spacing: 0.08em; text-transform: uppercase; }
+  .kl-card.d1 .field .val { font-size: 11.5px; padding: 6px 10px; background: #FAFAFB; border: 1px solid var(--border); border-radius: 7px; }
+  .kl-card.d1 .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  /* d2: Kontakty */
+  .kl-card.d2 { right: 0; top: 0; transform: rotate(2.5deg); z-index: 2; }
+  .kl-card.d2 .kl-contact {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 10px; border-radius: 7px;
+    font-size: 11.5px;
+  }
+  .kl-card.d2 .kl-contact.main { background: var(--indigo-50); }
+  .kl-card.d2 .kl-contact .av {
+    width: 20px; height: 20px; border-radius: 50%;
+    background: linear-gradient(135deg, #C7D2FE, #4F46E5);
+    color: #fff; display: grid; place-items: center;
+    font-size: 8.5px; font-weight: 700; flex-shrink: 0;
+  }
+  .kl-card.d2 .kl-contact .av.b { background: linear-gradient(135deg, #FCA5A5, #DC2626); }
+  .kl-card.d2 .kl-contact .av.c { background: linear-gradient(135deg, #FCD34D, #D97706); }
+  .kl-card.d2 .kl-contact .av.d { background: linear-gradient(135deg, #6EE7B7, #059669); }
+  .kl-card.d2 .kl-contact .nm { font-weight: 600; }
+  .kl-card.d2 .kl-contact .badge {
+    background: var(--primary); color: #fff;
+    font-size: 8px; font-weight: 700; padding: 2px 5px;
+    border-radius: 3px; letter-spacing: 0.05em;
+    margin-left: 4px;
+  }
+  /* d3: Płatności */
+  .kl-card.d3 { left: 32px; bottom: 0; transform: rotate(2.5deg); z-index: 3; height: auto; min-height: 50%; }
+  .kl-card.d3 .pay-grp-head {
+    display: flex; justify-content: space-between;
+    font-size: 11px; font-weight: 700;
+    padding: 3px 0; border-bottom: 1px solid var(--border);
+  }
+  .kl-card.d3 .pay-row {
+    display: flex; align-items: center; gap: 7px;
+    padding: 4px 0; font-size: 10.5px;
+  }
+  .kl-card.d3 .pay-row .ind {
+    width: 11px; height: 11px; border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .kl-card.d3 .pay-row .ind.paid {
+    background: var(--success); color: #fff;
+    display: grid; place-items: center; font-size: 7.5px; line-height: 1;
+  }
+  .kl-card.d3 .pay-row .ind.open {
+    background: #fff; border: 1.5px solid var(--border);
+  }
+  .kl-card.d3 .pay-row .nm { flex: 1; }
+  .kl-card.d3 .pay-row .nm.strike { text-decoration: line-through; color: var(--muted-foreground); }
+  .kl-card.d3 .pay-row .amt { font-weight: 600; }
+  .kl-card.d3 .pay-row .st {
+    font-size: 8.5px; font-weight: 700;
+    padding: 2px 5px; border-radius: 4px;
+    letter-spacing: 0.05em; text-transform: uppercase;
+  }
+  .kl-card.d3 .pay-row .st.paid { background: var(--success-50, #ECFDF5); color: var(--success); }
+  .kl-card.d3 .pay-row .st.due { background: #FFFBEB; color: #D97706; }
+  .kl-card.d3 .total {
+    display: flex; justify-content: space-between;
+    padding-top: 5px; border-top: 1px solid var(--border);
+    font-size: 11.5px; font-weight: 700;
+    margin-top: 3px;
+  }
+  /* d4: Harmonogram */
+  .kl-card.d4 { right: 24px; bottom: 30px; transform: rotate(-2deg); z-index: 4; }
+  .kl-card.d4 .gantt { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+  .kl-card.d4 .gantt-head,
+  .kl-card.d4 .gantt-row { display: grid; grid-template-columns: 74px 1fr; align-items: center; gap: 8px; }
+  .kl-card.d4 .gantt-head .months {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    font-size: 8px; font-weight: 700; letter-spacing: 0.07em;
+    color: var(--muted-foreground);
+    border-bottom: 1px solid var(--border); padding-bottom: 4px;
+  }
+  .kl-card.d4 .gantt-head .months span { text-align: center; }
+  .kl-card.d4 .gantt-row .gl {
+    display: flex; align-items: center; gap: 5px;
+    font-size: 10.5px; font-weight: 600; color: var(--foreground);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .kl-card.d4 .gantt-row .gdot {
+    width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+    background: #fff; border: 1.5px solid var(--border);
+  }
+  .kl-card.d4 .gantt-row .gdot.done { background: var(--success); border-color: var(--success); }
+  .kl-card.d4 .gantt-row .gdot.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.18); }
+  .kl-card.d4 .gantt-row .track { position: relative; height: 11px; background: #FAFAFB; border: 1px solid var(--border); border-radius: 6px; }
+  .kl-card.d4 .gantt-row .bar { position: absolute; top: 1px; bottom: 1px; border-radius: 5px; box-shadow: 0 1px 2px rgba(30, 27, 75, 0.12); }
+  .kl-card.d4 .gantt-row .bar.a { background: linear-gradient(90deg, #6EE7B7, #059669); }
+  .kl-card.d4 .gantt-row .bar.b { background: linear-gradient(90deg, #A5B4FC, #4F46E5); }
+  .kl-card.d4 .gantt-row .bar.c { background: linear-gradient(90deg, #FCD34D, #D97706); }
+  .kl-card.d4 .gantt-row .bar.d { background: linear-gradient(90deg, #C7D2FE, #6366F1); }
+  @media (max-width: 920px) {
+    #klienci .module-row { grid-template-columns: 1fr; }
+    .kl-deck { max-width: 100%; }
+  }
+
+  /* LISTY ZAKUPOWE — lista produktów + dokowany czat */
+  #listy .container { max-width: 1320px; }
+  #listy .module-row {
+    grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.45fr);
+    gap: 56px;
+  }
+  .lz-card {
+    position: relative;
+    width: 100%; max-width: 820px;
+    background: #fff;
+    border-radius: 18px;
+    border: 1px solid var(--border);
+    box-shadow: 0 30px 60px -28px rgba(15, 23, 42, 0.30), 0 6px 20px -8px rgba(15, 23, 42, 0.10);
+    overflow: hidden;
+    display: grid; grid-template-columns: 1.55fr 1fr;
+  }
+  .lz-card .lz-list { min-width: 0; display: flex; flex-direction: column; }
+  .lz-list .lz-head {
+    padding: 14px 18px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .lz-list .lz-head .crumb { font-size: 11px; color: var(--muted-foreground); }
+  .lz-list .lz-head .name { font-family: "Inter", sans-serif; font-weight: 700; font-size: 15px; margin-top: 2px; letter-spacing: -0.012em; }
+  .lz-list .lz-head .share {
+    font-size: 11px; padding: 6px 11px;
+    border: 1px solid var(--border); border-radius: 8px;
+    font-weight: 600; color: var(--foreground);
+    display: inline-flex; align-items: center; gap: 5px; cursor: pointer;
+  }
+  .lz-list .lz-head .share .material-symbols-rounded { font-size: 13px; }
+  .lz-list .lz-toolbar {
+    padding: 10px 18px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 6px;
+    flex-wrap: wrap;
+  }
+  .lz-list .lz-toolbar .tb {
+    font-size: 11px; padding: 5px 10px;
+    border-radius: 7px; font-weight: 600;
+    border: 1px solid var(--border);
+    background: #fff; color: var(--foreground);
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .lz-list .lz-toolbar .tb.primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .lz-list .lz-toolbar .tb .material-symbols-rounded { font-size: 12px; }
+  .lz-list .lz-toolbar .budget { margin-left: auto; font-size: 11px; font-weight: 700; color: var(--foreground); }
+  .lz-list .lz-toolbar .budget .pct { color: #059669; }
+  .lz-list .lz-section {
+    padding: 9px 18px;
+    background: #FAFAFB;
+    font-family: "Inter", sans-serif; font-weight: 700; font-size: 12.5px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center;
+  }
+  .lz-list .lz-section .total { margin-left: auto; font-size: 11px; color: var(--muted-foreground); font-weight: 600; }
+  .lz-list .lz-product {
+    display: grid; grid-template-columns: 46px 1fr auto auto; gap: 11px;
+    padding: 10px 18px;
+    border-bottom: 1px solid var(--border);
+    align-items: center;
+  }
+  .lz-list .lz-product:last-child { border-bottom: 0; }
+  .lz-list .lz-product.selected {
+    background: linear-gradient(90deg, rgba(79,70,229,0.07), transparent);
+    box-shadow: inset 3px 0 0 var(--primary);
+  }
+  .lz-list .lz-product .thumb {
+    width: 46px; height: 46px; border-radius: 8px;
+    background: #F6F4F0;
+    display: grid; place-items: center;
+  }
+  .lz-list .lz-product .thumb .material-symbols-rounded { color: var(--muted-foreground); font-size: 22px; }
+  .lz-list .lz-product .thumb.pk,
+  .lz-card .lz-chat .ch-head .pt.pk {
+    background-size: cover; background-position: center; background-repeat: no-repeat;
+  }
+  .lz-card .lz-chat .ch-head .pt.pk .material-symbols-rounded { display: none; }
+  .lz-list .lz-product .info { min-width: 0; }
+  .lz-list .lz-product .nm {
+    font-size: 12px; font-weight: 600;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .lz-list .lz-product .meta { font-size: 10px; color: var(--muted-foreground); margin-top: 2px; }
+  .lz-list .lz-product .st {
+    font-size: 9.5px; font-weight: 700;
+    padding: 2px 7px; border-radius: 4px;
+    letter-spacing: 0.04em; text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .lz-list .lz-product .st.ok { background: #ECFDF5; color: #059669; }
+  .lz-list .lz-product .st.no { background: #FEE2E2; color: #DC2626; }
+  .lz-list .lz-product .st.wait { background: #FFFBEB; color: #D97706; }
+  .lz-list .lz-product .price {
+    font-family: "Inter", sans-serif; font-weight: 700; font-size: 12px;
+    text-align: right;
+  }
+  .lz-list .lz-product .price .qty { font-size: 10px; color: var(--muted-foreground); font-weight: 500; }
+
+  .lz-card .lz-chat {
+    border-left: 1px solid var(--border);
+    background: #FAFAFB;
+    display: flex; flex-direction: column;
+    min-width: 0;
+  }
+  .lz-chat .ch-head {
+    padding: 13px 14px;
+    border-bottom: 1px solid var(--border);
+    background: #fff;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .lz-chat .ch-head .pt {
+    width: 34px; height: 34px; border-radius: 7px;
+    background: #F6F4F0;
+    flex-shrink: 0;
+    display: grid; place-items: center;
+  }
+  .lz-chat .ch-head .pt .material-symbols-rounded { color: var(--muted-foreground); font-size: 19px; }
+  .lz-chat .ch-head .info { min-width: 0; }
+  .lz-chat .ch-head .lab { font-size: 9.5px; color: var(--muted-foreground); letter-spacing: 0.06em; text-transform: uppercase; font-weight: 700; }
+  .lz-chat .ch-head .nm {
+    font-size: 11.5px; font-weight: 700; line-height: 1.3;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    margin-top: 1px;
+  }
+  .lz-chat .ch-body {
+    flex: 1; padding: 14px;
+    display: flex; flex-direction: column; gap: 11px;
+    overflow: hidden;
+  }
+  .lz-chat .time {
+    text-align: center; font-size: 10px; color: var(--muted-foreground);
+  }
+  .lz-chat .msg { display: flex; align-items: flex-end; gap: 6px; max-width: 88%; }
+  .lz-chat .msg .av {
+    width: 24px; height: 24px; border-radius: 50%;
+    color: #fff; display: grid; place-items: center;
+    font-size: 9.5px; font-weight: 700;
+    flex-shrink: 0;
+  }
+  .lz-chat .msg.client .av { background: linear-gradient(135deg, #FCA5A5, #DC2626); }
+  .lz-chat .msg.me .av { background: linear-gradient(135deg, #C7D2FE, #4F46E5); }
+  .lz-chat .msg .bubble {
+    background: #fff; border: 1px solid var(--border);
+    padding: 8px 12px; border-radius: 12px;
+    font-size: 11.5px; line-height: 1.4;
+  }
+  .lz-chat .msg.me { align-self: flex-end; flex-direction: row-reverse; }
+  .lz-chat .msg.me .bubble { background: var(--primary); color: #fff; border-color: var(--primary); border-bottom-right-radius: 4px; }
+  .lz-chat .msg.client .bubble { border-bottom-left-radius: 4px; }
+  .lz-chat .ch-input {
+    margin: 0 14px 14px;
+    height: 34px; background: #fff;
+    border: 1px solid var(--border); border-radius: 999px;
+    padding: 0 14px 0 42px;
+    font-size: 11.5px; color: var(--muted-foreground);
+    display: flex; align-items: center;
+    position: relative;
+  }
+  .lz-chat .ch-input::before {
+    content: ""; position: absolute; left: 4px; top: 50%;
+    width: 26px; height: 26px;
+    background: var(--primary); border-radius: 50%;
+    transform: translateY(-50%);
+  }
+  .lz-chat .ch-input .clip {
+    position: absolute; left: 12px; top: 50%;
+    transform: translateY(-50%);
+    color: #fff; font-size: 12px;
+  }
+  @media (max-width: 920px) {
+    #listy .module-row { grid-template-columns: 1fr; }
+    .lz-card { grid-template-columns: 1fr; max-width: 100%; }
+    .lz-card .lz-chat { border-left: 0; border-top: 1px solid var(--border); }
+  }
+
+  /* ZADANIA — tabela zadań + modal "Nowe zadanie" */
+  #zadania .container { max-width: 1320px; }
+  #zadania .module-row {
+    grid-template-columns: minmax(0, 1.45fr) minmax(0, 0.82fr);
+    gap: 56px;
+  }
+  .zd-stage {
+    position: relative;
+    width: 100%; max-width: 820px;
+    height: 460px;
+  }
+  .zd-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 10px; font-weight: 700;
+    padding: 3px 8px; border-radius: 999px;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
+  .zd-badge .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .pri-high { background: #FEE2E2; color: #DC2626; }
+  .pri-high .dot { background: #DC2626; }
+  .pri-med { background: #FFFBEB; color: #D97706; }
+  .pri-med .dot { background: #D97706; }
+  .pri-low { background: var(--indigo-50); color: var(--primary); }
+  .pri-low .dot { background: var(--primary); }
+  .st-todo { background: #F3F4F6; color: #4B5563; }
+  .st-todo .dot { background: #9CA3AF; }
+  .st-prog { background: var(--indigo-50); color: var(--primary); }
+  .st-prog .dot { background: var(--primary); }
+  .st-done { background: #ECFDF5; color: #059669; }
+  .st-done .dot { background: #059669; }
+  .zd-avatar {
+    width: 22px; height: 22px; border-radius: 50%;
+    color: #fff; display: grid; place-items: center;
+    font-size: 9.5px; font-weight: 700;
+    flex-shrink: 0;
+    background: linear-gradient(135deg, #C7D2FE, #4F46E5);
+  }
+  /* Table */
+  .zd-table {
+    position: absolute;
+    width: 78%;
+    left: 0; top: 0;
+    background: #fff;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    box-shadow: 0 30px 60px -28px rgba(15, 23, 42, 0.30), 0 6px 20px -8px rgba(15, 23, 42, 0.10);
+    transform: rotate(-1.5deg);
+    z-index: 1;
+  }
+  .zd-table .t-head {
+    padding: 14px 18px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+  }
+  .zd-table .t-head .nm { font-family: "Inter", sans-serif; font-weight: 700; font-size: 15px; }
+  .zd-table .t-head .sub { font-size: 11px; color: var(--muted-foreground); margin-top: 2px; }
+  .zd-table .t-head .new {
+    background: var(--primary); color: #fff;
+    font-size: 11px; font-weight: 600;
+    padding: 6px 11px; border-radius: 7px;
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .zd-table .t-head .new .material-symbols-rounded { font-size: 13px; }
+  .zd-table .t-toolbar {
+    padding: 9px 18px;
+    display: flex; gap: 14px; align-items: center;
+    border-bottom: 1px solid var(--border);
+    background: #FAFAFB;
+  }
+  .zd-table .t-toolbar .ctrl {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: #fff; border: 1px solid var(--border);
+    padding: 4px 9px; border-radius: 6px;
+    font-size: 11px; font-weight: 600;
+  }
+  .zd-table .t-toolbar .ctrl .lab { color: var(--muted-foreground); font-weight: 500; }
+  .zd-table .cols {
+    padding: 8px 18px;
+    display: grid; grid-template-columns: 1.7fr 1.2fr 0.8fr 0.95fr 1fr 0.75fr;
+    gap: 10px;
+    font-size: 9.5px; font-weight: 700;
+    color: var(--muted-foreground); letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+    background: #FAFAFB;
+  }
+  .zd-table .cols > div { padding-left: 8px; }
+  .zd-table .task .nm:not(.indent),
+  .zd-table .task .person,
+  .zd-table .task .due { padding-left: 8px; }
+  .zd-table .task {
+    padding: 10px 18px;
+    display: grid; grid-template-columns: 1.7fr 1.2fr 0.8fr 0.95fr 1fr 0.75fr;
+    gap: 10px;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    font-size: 11.5px;
+    min-height: 48px;
+  }
+  .zd-table .task > div { display: flex; align-items: center; min-height: 22px; }
+  .zd-table .task:last-child { border-bottom: 0; }
+  .zd-table .task .nm { font-weight: 600; display: flex; align-items: center; gap: 5px; }
+  .zd-table .task .nm .caret { color: var(--muted-foreground); font-size: 11px; }
+  .zd-table .task .nm.indent { padding-left: 20px; color: var(--muted-foreground); font-weight: 500; }
+  .zd-table .task .nm.indent .check {
+    width: 14px; height: 14px; border-radius: 50%;
+    background: var(--indigo-50); color: var(--primary);
+    display: grid; place-items: center; flex-shrink: 0;
+  }
+  .zd-table .task .nm.indent .check .material-symbols-rounded { font-size: 9px; }
+  .zd-table .task .client-pill {
+    background: #F3F4F6; color: var(--foreground);
+    padding: 3px 9px; border-radius: 999px;
+    font-size: 10px; font-weight: 600;
+    display: inline-block; max-width: max-content;
+  }
+  .zd-table .task .person { display: flex; align-items: center; gap: 6px; font-size: 10.5px; }
+  .zd-table .task .due { font-size: 11px; font-weight: 600; }
+  .zd-table .task .due.late { color: #DC2626; }
+
+  /* Modal */
+  .zd-modal {
+    position: absolute;
+    width: 280px; height: 380px;
+    right: 0; bottom: 0;
+    background: #fff;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    box-shadow: 0 30px 60px -20px rgba(15, 23, 42, 0.32), 0 6px 18px -6px rgba(79, 70, 229, 0.18);
+    overflow: hidden;
+    transform: rotate(3deg);
+    z-index: 3;
+    display: flex; flex-direction: column;
+  }
+  .zd-modal .m-head {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .zd-modal .m-head .nm { font-family: "Inter", sans-serif; font-weight: 700; font-size: 13px; }
+  .zd-modal .m-head .x { color: var(--muted-foreground); font-size: 15px; }
+  .zd-modal .m-body {
+    padding: 12px 14px;
+    display: flex; flex-direction: column; gap: 9px;
+    flex: 1;
+  }
+  .zd-modal .field { display: flex; flex-direction: column; gap: 3px; }
+  .zd-modal .field .lab {
+    font-size: 8.5px; font-weight: 700;
+    color: var(--muted-foreground);
+    letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  .zd-modal .field .val {
+    font-size: 11px; padding: 6px 9px;
+    background: #fff; border: 1px solid var(--border); border-radius: 6px;
+    color: var(--foreground);
+  }
+  .zd-modal .field .val.editor {
+    min-height: 38px; line-height: 1.4;
+  }
+  .zd-modal .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+  .zd-modal .val-pill {
+    display: inline-flex; align-items: center; gap: 5px;
+  }
+  .zd-modal .val-pill .d { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .zd-modal .m-actions {
+    padding: 10px 14px;
+    border-top: 1px solid var(--border);
+    display: flex; gap: 8px; justify-content: flex-end;
+    background: #FAFAFB;
+  }
+  .zd-modal .m-actions .btn {
+    font-size: 10.5px; padding: 7px 13px;
+    border-radius: 7px; font-weight: 600;
+    border: 1px solid var(--border); background: #fff;
+    color: var(--foreground);
+  }
+  .zd-modal .m-actions .btn.primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+  @media (max-width: 920px) {
+    #zadania .module-row { grid-template-columns: 1fr; }
+    .zd-stage { max-width: 100%; height: auto; }
+    .zd-table { position: relative; width: 100%; transform: none; }
+    .zd-modal { position: relative; width: 100%; height: auto; transform: none; margin-top: 16px; right: auto; bottom: auto; }
+  }
+
+  /* PRODUKTY — showcase gallery + chipy ze statystykami */
+  #produkty .container { max-width: 1320px; }
+  #produkty .module-row {
+    grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.45fr);
+    gap: 56px;
+  }
+  .pr-stage {
+    position: relative;
+    width: 100%; max-width: 820px;
+    height: 480px;
+  }
+  .pr-stage::before {
+    content: ""; position: absolute; inset: 20px;
+    background:
+      radial-gradient(380px 280px at 30% 50%, rgba(165, 180, 252, 0.30), transparent 65%),
+      radial-gradient(380px 280px at 80% 40%, rgba(199, 210, 254, 0.40), transparent 65%);
+    pointer-events: none;
+  }
+  .pr-gallery {
+    position: relative; z-index: 1;
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    width: 80%;
+    margin: 0 auto;
+    top: 50%; transform: translateY(-50%);
+  }
+  .pr-card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 11px;
+    box-shadow: 0 20px 40px -22px rgba(15, 23, 42, 0.22);
+    display: flex; flex-direction: column; gap: 7px;
+    transition: transform 220ms ease, box-shadow 220ms ease;
+  }
+  .pr-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 30px 50px -22px rgba(15, 23, 42, 0.30);
+  }
+  .pr-card .pr-img {
+    aspect-ratio: 1;
+    border-radius: 9px;
+    overflow: hidden;
+    background-color: #F3F1EC;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+  .pr-img.bed { background-image: url("produkty/bed.png"); }
+  .pr-img.bath { background-image: url("produkty/bath.png"); }
+  .pr-img.kitchen { background-image: url("produkty/kitchen.png"); }
+  .pr-img.toilet { background-image: url("produkty/toilet.png"); }
+  .pr-img.shower { background-image: url("produkty/shower.png"); }
+  .pr-img.vase { background-image: url("produkty/vase.png"); }
+  .pr-img.lamp { background-image: url("produkty/lamp.png"); }
+  .pr-img.rug { background-image: url("produkty/rug.png"); }
+  .pr-card .pr-nm {
+    font-size: 11px; font-weight: 600; line-height: 1.3;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    min-height: 28px;
+  }
+  .pr-card .pr-meta { font-size: 9.5px; color: var(--muted-foreground); }
+  .pr-card .pr-price {
+    font-family: "Inter", sans-serif;
+    font-weight: 700; font-size: 11.5px;
+    margin-top: auto;
+  }
+  .pr-chip {
+    position: absolute;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 8px 13px;
+    display: flex; align-items: center; gap: 9px;
+    box-shadow: 0 16px 32px -14px rgba(15, 23, 42, 0.22);
+    z-index: 4;
+    animation: prFloat 4s ease-in-out infinite;
+  }
+  .pr-chip .ic {
+    width: 28px; height: 28px; border-radius: 7px;
+    display: grid; place-items: center; flex-shrink: 0;
+  }
+  .pr-chip .ic.b1 { background: var(--indigo-50); color: var(--primary); }
+  .pr-chip .ic.b2 { background: #ECFDF5; color: #059669; }
+  .pr-chip .ic.b3 { background: #ECFEFF; color: #0E7490; }
+  .pr-chip .ic.b4 { background: #FFFBEB; color: #D97706; }
+  .pr-chip .ic .material-symbols-rounded { font-size: 15px; }
+  .pr-chip .v { font-family: "Inter", sans-serif; font-weight: 700; font-size: 12px; }
+  .pr-chip .k { font-size: 9.5px; color: var(--muted-foreground); }
+  .pr-chip.c1 { top: 2%; left: 4%; animation-delay: 0s; }
+  .pr-chip.c2 { top: 4%; right: 6%; animation-delay: 0.4s; }
+  .pr-chip.c3 { bottom: 4%; left: 6%; animation-delay: 0.8s; }
+  .pr-chip.c4 { bottom: 2%; right: 4%; animation-delay: 1.2s; }
+  @keyframes prFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+  }
+  @media (max-width: 920px) {
+    #produkty .module-row { grid-template-columns: 1fr; }
+    .pr-stage { max-width: 100%; height: auto; }
+    .pr-gallery { width: 100%; top: auto; transform: none; padding: 12px 0; grid-template-columns: repeat(2, 1fr); }
+    .pr-chip { position: relative; display: inline-flex; }
+  }
+
+  /* Image variant — when actual image is provided */
+  .shot-frame.has-image::before,
+  .shot-frame.has-image::after { display: none; }
+  .shot-frame.has-image .shot-label { display: none; }
+  .shot-frame img {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+  }
+
+  /* COMING SOON BAND */
+  .coming-soon {
+    padding: 80px 0;
+    background:
+      radial-gradient(800px 280px at 50% 0%, rgba(165, 180, 252, 0.16), transparent 70%),
+      #FAFAFB;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .cs-inner {
+    max-width: 720px; margin: 0 auto; text-align: center;
+    display: flex; flex-direction: column; align-items: center; gap: 22px;
+  }
+  .cs-eyebrow {
+    display: inline-flex; align-items: center; gap: 12px;
+    font-size: 12px; font-weight: 700; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--primary);
+  }
+  .cs-num { font-family: "Inter", sans-serif; }
+  .cs-head {
+    display: flex; align-items: center; gap: 20px;
+  }
+  .cs-title {
+    font-size: clamp(32px, 4.2vw, 44px);
+    line-height: 1.05;
+    letter-spacing: -0.025em;
+    font-weight: 700;
+    margin: 0;
+  }
+  .cs-desc {
+    max-width: 540px;
+    margin: 0;
+    font-size: 18px;
+    line-height: 1.55;
+    color: var(--text-muted, #6b6b72);
+    text-wrap: pretty;
+  }
+
+  /* CLOSER */
+  .closer {
+    padding: 88px 0;
+    background: linear-gradient(180deg, #FAFAFB 0%, #FFFFFF 100%);
+  }
+  .closer-inner {
+    max-width: 720px; margin: 0 auto; text-align: center;
+  }
+  .closer h2 { font-size: clamp(32px, 4vw, 44px); font-weight: 700; letter-spacing: -0.025em; margin-bottom: 16px; line-height: 1.1; }
+  .closer p { color: var(--muted-foreground); font-size: 17px; line-height: 1.6; margin-bottom: 28px; }
+  .closer .cta-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+  /* FOOTER */
+  footer.site { padding: 56px 0 32px; background: #fff; border-top: 1px solid var(--border); }
+  .footer-inner { display: grid; grid-template-columns: 1.4fr 1fr 1fr 1fr; gap: 48px; padding-bottom: 32px; border-bottom: 1px solid var(--border); }
+  .footer-brand p, .footer-brand div { color: var(--muted-foreground); font-size: 14px; margin-top: 12px; max-width: 280px; line-height: 1.55; }
+  .footer-col h4 { font-size: 12px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted-foreground); margin-bottom: 14px; }
+  .footer-col ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+  .footer-col a { color: var(--foreground); font-size: 14.5px; font-weight: 500; }
+  .footer-col a:hover { color: var(--primary); }
+  .footer-bottom { padding-top: 24px; display: flex; justify-content: space-between; color: var(--muted-foreground); font-size: 13px; }
+
+  @media (max-width: 900px) {
+    .nav-links { display: none; }
+    .nav-cta { display: none !important; }
+    .footer-inner { grid-template-columns: 1fr 1fr; gap: 32px; }
+  }
+  @media (max-width: 900px) {
+    nav.top .nav-burger { display: inline-flex; }
+  }
+
+  /* HAMBURGER + MOBILE SIDEBAR */
+  .nav-burger {
+    display: none;
+    align-items: center; justify-content: center;
+    width: 42px; height: 42px;
+    background: transparent;
+    border: none;
+    border-radius: 10px;
+    color: var(--foreground);
+    cursor: pointer;
+    padding: 0;
+    transition: background 120ms ease;
+    position: relative; z-index: 80;
+  }
+  .nav-burger:hover { background: var(--secondary); }
+  .nav-burger svg { width: 22px; height: 22px; }
+  .nav-burger .icon-close { display: none; }
+  nav.top.open .nav-burger .icon-open { display: none; }
+  nav.top.open .nav-burger .icon-close { display: block; }
+
+  .mobile-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(15, 15, 20, 0.45);
+    opacity: 0; pointer-events: none;
+    transition: opacity 240ms ease;
+    z-index: 60;
+  }
+  nav.top.open + .mobile-backdrop { opacity: 1; pointer-events: auto; }
+  nav.top.open { z-index: 70; }
+
+  .mobile-menu {
+    position: fixed;
+    top: 0; right: 0;
+    width: 100%; left: 0;
+    height: 100dvh;
+    background: #fff;
+    box-shadow: -16px 0 40px rgba(15,15,20,0.12);
+    transform: translateX(100%);
+    transition: transform 280ms cubic-bezier(0.22, 0.61, 0.36, 1);
+    z-index: 70;
+    display: flex; flex-direction: column;
+    overflow-y: auto;
+  }
+  body.menu-locked .mobile-menu { transform: translateX(0); }
+  .mobile-menu-header {
+    display: flex; align-items: center; justify-content: flex-end;
+    padding: 18px 20px;
+  }
+  .mobile-menu-close {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 40px; height: 40px;
+    background: transparent; border: none; cursor: pointer;
+    color: var(--foreground);
+    border-radius: 10px;
+    padding: 0;
+  }
+  .mobile-menu-close:hover { background: var(--secondary); }
+  .mobile-menu-close svg { width: 20px; height: 20px; }
+  .mobile-menu-inner { display: flex; flex-direction: column; gap: 2px; padding: 8px 28px 32px; flex: 1; }
+  .mobile-menu a.menu-link {
+    display: block; padding: 16px 4px;
+    font-size: 17px; font-weight: 500;
+    color: var(--foreground);
+    border-bottom: 1px solid var(--border);
+    transition: color 120ms ease;
+  }
+  .mobile-menu a.menu-link:last-of-type { border-bottom: none; }
+  .mobile-menu a.menu-link:hover, .mobile-menu a.menu-link.active { color: var(--primary); }
+  .mobile-menu .mobile-cta { display: flex; flex-direction: column; gap: 10px; margin-top: 28px; }
+  .mobile-menu .mobile-cta .btn { width: 100%; justify-content: center; }
+
+  body.menu-locked { overflow: hidden; }
+
+  @media (min-width: 901px) {
+    .mobile-menu { display: none; }
+    .mobile-backdrop { display: none; }
+  }
+
+  html { scroll-behavior: smooth; scroll-padding-top: 140px; }
+
+  /* WYKONAWCY STAGE — moduł 09 (podgląd pliku z pinami) */
+  #wykonawcy .container { max-width: 1320px; }
+  #wykonawcy .module-row { grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.45fr); gap: 56px; }
+  .wk-frame {
+    position: relative; background: #fff; border: 1px solid var(--border);
+    border-radius: 16px; overflow: hidden; display: grid; grid-template-columns: 172px 1fr;
+    box-shadow: 0 1px 2px rgba(36,37,43,.04), 0 24px 60px -28px rgba(79,70,229,.22), 0 12px 32px -20px rgba(36,37,43,.12);
+  }
+  .wk-rail { border-right: 1px solid var(--border); background: #FAFAFB; padding: 14px 12px; min-width: 0; }
+  .wk-rail h4 { font-family: "Inter", sans-serif; font-size: 12px; font-weight: 700; margin: 0 0 12px; padding: 0 4px; color: var(--foreground); }
+  .wk-folder { display: flex; align-items: center; gap: 9px; padding: 9px 10px; border-radius: 9px; font-size: 12.5px; color: var(--muted-foreground); margin-bottom: 3px; }
+  .wk-folder .material-symbols-rounded { font-size: 18px; color: var(--primary); }
+  .wk-folder .cnt { margin-left: auto; font-size: 10.5px; background: #ECEDF2; border-radius: 999px; padding: 1px 7px; color: var(--muted-foreground); }
+  .wk-folder.active { background: #fff; color: var(--primary); border: 1px solid var(--border); font-weight: 600; box-shadow: 0 2px 8px -4px rgba(79,70,229,.3); }
+  .wk-folder.active .cnt { background: var(--indigo-50); color: var(--primary); }
+  .wk-view { position: relative; display: flex; flex-direction: column; min-width: 0; }
+  .wk-vtop { display: flex; align-items: center; gap: 10px; padding: 11px 14px; border-bottom: 1px solid var(--border); }
+  .wk-vtop .fn { font-family: "Inter", sans-serif; font-weight: 600; font-size: 13px; display: flex; align-items: center; gap: 7px; }
+  .wk-vtop .fn .material-symbols-rounded { font-size: 16px; color: var(--primary); }
+  .wk-vtop .zoom { margin-left: auto; display: flex; align-items: center; gap: 4px; }
+  .wk-vtop .zoom .zb { width: 26px; height: 26px; border: 1px solid var(--border); border-radius: 7px; display: grid; place-items: center; background: #fff; color: var(--muted-foreground); }
+  .wk-vtop .zoom .zb .material-symbols-rounded { font-size: 15px; }
+  .wk-canvas {
+    position: relative; flex: 1; min-height: 340px; overflow: hidden;
+    background-color: #EAF0FB;
+    background-image: linear-gradient(rgba(45,123,244,.10) 1px, transparent 1px), linear-gradient(90deg, rgba(45,123,244,.10) 1px, transparent 1px);
+    background-size: 26px 26px;
+  }
+  .wk-plan { position: absolute; inset: 34px 56px 34px 34px; border: 2px solid rgba(45,123,244,.5); border-radius: 2px; }
+  .wk-room { position: absolute; border: 1.6px solid rgba(45,123,244,.42); }
+  .wk-room.r1 { top: 0; left: 0; width: 46%; height: 58%; }
+  .wk-room.r2 { top: 0; right: 0; width: 54%; height: 58%; border-right: 0; border-top: 0; }
+  .wk-room.r3 { bottom: 0; left: 0; width: 100%; height: 42%; border-bottom: 0; border-left: 0; border-right: 0; }
+  .wk-dim { position: absolute; font-family: "Inter", sans-serif; font-size: 10px; font-weight: 600; color: rgba(45,123,244,.7); }
+  .wk-pin { position: absolute; width: 22px; height: 22px; border-radius: 50%; background: #2D7BF4; border: 3px solid #fff; color: #fff; font-size: 11px; font-weight: 700; display: grid; place-items: center; box-shadow: 0 2px 8px rgba(0,0,0,.25); z-index: 3; transform: translate(-50%, -50%); }
+  .wk-pop { position: absolute; width: 216px; background: #fff; border-radius: 12px; box-shadow: 0 18px 44px rgba(0,0,0,.20), 0 2px 6px rgba(0,0,0,.08); padding: 13px; z-index: 5; }
+  .wk-pop .ph { display: flex; align-items: center; gap: 9px; margin-bottom: 9px; }
+  .wk-pop .av { width: 26px; height: 26px; border-radius: 50%; background: linear-gradient(140deg, #E2843A, #C76A22); color: #fff; font-size: 10px; font-weight: 700; display: grid; place-items: center; flex-shrink: 0; }
+  .wk-pop .nm { font-family: "Inter", sans-serif; font-size: 12px; font-weight: 700; line-height: 1.2; }
+  .wk-pop .role { font-size: 9.5px; color: var(--muted-foreground); }
+  .wk-pop .q { font-size: 12px; color: #111827; line-height: 1.45; }
+  .wk-pop .reply { margin-top: 10px; border-top: 1px solid var(--border); padding-top: 9px; display: flex; align-items: center; gap: 7px; font-size: 11px; color: var(--muted-foreground); }
+  .wk-pop .reply .material-symbols-rounded { font-size: 14px; }
+  .wk-chat { position: absolute; right: 14px; bottom: 14px; display: inline-flex; align-items: center; gap: 7px; background: #fff; border: 1px solid var(--border); border-radius: 999px; padding: 7px 13px; font-size: 11.5px; font-weight: 600; color: var(--foreground); box-shadow: 0 8px 22px -10px rgba(15,23,42,.25); z-index: 4; }
+  .wk-chat .material-symbols-rounded { font-size: 15px; color: var(--primary); }
+  .wk-chat .badge { background: var(--primary); color: #fff; border-radius: 999px; font-size: 9.5px; padding: 1px 6px; }
+  @media (max-width: 920px) { #wykonawcy .module-row { grid-template-columns: 1fr; } }
+  @media (max-width: 520px) { .wk-frame { grid-template-columns: 1fr; } .wk-rail { display: none; } }
+
+  /* ANKIETY STAGE — moduł 10 (brief / ankieta klienta) */
+  .an-stage { position: relative; width: 100%; max-width: 440px; margin: 0 auto; }
+  .an-card { background: #fff; border: 1px solid var(--border); border-radius: 16px; overflow: hidden; box-shadow: 0 1px 2px rgba(36,37,43,.04), 0 24px 60px -28px rgba(79,70,229,.22), 0 12px 32px -20px rgba(36,37,43,.12); }
+  .an-top { padding: 16px 18px; border-bottom: 1px solid var(--border); }
+  .an-kicker { display: flex; align-items: center; gap: 7px; font-family: "Inter", sans-serif; font-weight: 700; font-size: 13px; }
+  .an-kicker .material-symbols-rounded { font-size: 17px; color: var(--primary); }
+  .an-prog { display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--muted-foreground); margin-top: 12px; }
+  .an-bar { height: 5px; border-radius: 99px; background: #ECEDF2; margin-top: 7px; overflow: hidden; }
+  .an-bar i { display: block; height: 100%; width: 25%; background: var(--primary); border-radius: 99px; }
+  .an-body { padding: 18px; }
+  .an-q { font-family: "Inter", sans-serif; font-weight: 700; font-size: 15.5px; margin-bottom: 14px; letter-spacing: -0.01em; }
+  .an-opt { display: flex; align-items: center; gap: 11px; padding: 12px 13px; border: 1px solid var(--border); border-radius: 11px; margin-bottom: 9px; font-size: 13.5px; color: var(--foreground); }
+  .an-opt .radio { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--border); flex-shrink: 0; }
+  .an-opt.sel { border-color: var(--primary); background: var(--indigo-50); color: var(--primary); font-weight: 600; }
+  .an-opt.sel .radio { border-color: var(--primary); background: var(--primary); box-shadow: inset 0 0 0 3px #fff; }
+  .an-foot { padding: 14px 18px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .an-foot .step { font-size: 11.5px; color: var(--muted-foreground); }
+  .an-next { display: inline-flex; align-items: center; gap: 6px; background: var(--primary); color: #fff; font-weight: 600; font-size: 13px; border-radius: 9px; padding: 9px 16px; }
+  .an-next .material-symbols-rounded { font-size: 16px; }
+  .an-chip { position: absolute; display: inline-flex; align-items: center; gap: 7px; background: #fff; border: 1px solid var(--border); border-radius: 999px; padding: 7px 13px; font-size: 11.5px; font-weight: 600; color: var(--foreground); box-shadow: 0 8px 22px -10px rgba(15,23,42,.25); z-index: 2; }
+  .an-chip .material-symbols-rounded { font-size: 15px; color: var(--primary); }
+  .an-chip.c1 { top: -16px; right: -8px; }
+  .an-chip.c2 { bottom: -16px; left: -10px; }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="top" id="siteNav">
+  <div class="container nav-inner">
+    <a class="brand" href="index.html">
+      <img class="brand-icon" src="vee-icon.png" alt="">
+      <img class="wordmark-img" src="vee_black.png" alt="veedeck">
+    </a>
+    <div class="nav-links">
+      <a href="veedeck-moduly.html" class="active">Moduły</a>
+      <a href="wtyczka.html">Wtyczka</a>
+      <a href="cennik.html">Cennik</a>
+      <a href="demo.html">Demo</a>
+      <a href="o-nas.html">O nas</a>
+      <a href="kontakt.html">Kontakt</a>
+    </div>
+    <div class="nav-cta">
+      <a href="login.html" class="btn btn-ghost">Zaloguj się</a>
+      <a href="login.html#register" class="btn btn-primary">Bezpłatne demo
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"></path></svg>
+      </a>
+    </div>
+    <button class="nav-burger" aria-label="Otwórz menu" aria-expanded="false" aria-controls="mobileMenu" onclick="toggleMobileMenu(this)">
+      <svg class="icon-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="3" y1="7" x2="21" y2="7"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="17" x2="21" y2="17"></line></svg>
+      <svg class="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="6" y1="6" x2="18" y2="18"></line><line x1="6" y1="18" x2="18" y2="6"></line></svg>
+    </button>
+  </div>
+
+</nav>
+<div class="mobile-backdrop" id="mobileBackdrop" onclick="closeMobileMenu()" aria-hidden="true"></div>
+<aside class="mobile-menu" id="mobileMenu" aria-label="Menu mobilne">
+    <div class="mobile-menu-header"><a class="brand" href="index.html" style="margin-right:auto; display:inline-flex; align-items:center; gap:9px;"><img class="brand-icon" src="vee-icon.png" alt="" style="height:28px;width:auto;"><img class="wordmark-img" src="vee_black.png" alt="veedeck" style="height:18px;width:auto;"></a>
+      <button class="mobile-menu-close" aria-label="Zamknij menu" onclick="closeMobileMenu()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="6" y1="6" x2="18" y2="18"></line><line x1="6" y1="18" x2="18" y2="6"></line></svg>
+      </button>
+    </div>
+    <div class="mobile-menu-inner">
+      <a class="menu-link active" href="veedeck-moduly.html">Moduły</a>
+      <a class="menu-link" href="wtyczka.html">Wtyczka</a>
+      <a class="menu-link" href="cennik.html">Cennik</a>
+      <a class="menu-link" href="demo.html">Demo</a>
+      <a class="menu-link" href="o-nas.html">O nas</a>
+      <a class="menu-link" href="kontakt.html">Kontakt</a>
+      <div class="mobile-cta">
+        <a href="login.html" class="btn btn-ghost">Zaloguj się</a>
+        <a href="login.html#register" class="btn btn-primary">Bezpłatne demo
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"></path></svg>
+        </a>
+      </div>
+    </div>
+  </aside>
+
+<script>
+  function setMobileMenu(open) {
+    var nav = document.getElementById('siteNav');
+    var btn = nav.querySelector('.nav-burger');
+    nav.classList.toggle('open', open);
+    document.body.classList.toggle('menu-locked', open);
+    if (btn) {
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      btn.setAttribute('aria-label', open ? 'Zamknij menu' : 'Otwórz menu');
+    }
+  }
+  function toggleMobileMenu(btn) {
+    var nav = document.getElementById('siteNav');
+    setMobileMenu(!nav.classList.contains('open'));
+  }
+  function closeMobileMenu() { setMobileMenu(false); }
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') closeMobileMenu();
+  });
+  document.addEventListener('click', function (e) {
+    var link = e.target.closest('.mobile-menu a');
+    if (link) closeMobileMenu();
+  });
+</script>
+
+<!-- HERO -->
+<section class="page-hero">
+  <div class="container">
+    <div class="eyebrow">Jedenaście modułów · Jedna platforma</div>
+    <h1>Wszystko, czego potrzebujesz<br>do prowadzenia <em>studia projektowego</em>.</h1>
+    <p class="lead">
+      Włącz tylko te moduły, których używasz. Ukryj nieużywane. Każdy klient dostaje
+      tylko to, co ma widzieć. Zobacz, jak działają moduły veedeck w praktyce.
+    </p>
+  </div>
+</section>
+
+<!-- MODULE STRIP / JUMP NAV -->
+<div class="module-strip">
+  <div class="container module-strip-inner">
+    <a href="#projectflow" class="module-chip">
+      <svg class="renderflow-pin" viewBox="-22 -22 228 229" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M121.728 122.988L162.007 82.6681C166.445 78.2248 163.239 70.6362 156.959 70.7215L146.549 70.8628L119.786 71.2261C119.236 71.2336 118.707 71.014 118.324 70.6191L86.1743 37.4878L58.6215 8.66333C55.9075 5.82403 51.389 5.77308 48.6117 8.55045L8.55019 48.6119C5.84554 51.3166 5.81265 55.6914 8.47633 58.4364L36.4243 87.2378L68.6112 120.408C68.9724 120.78 69.1749 121.278 69.1759 121.796L69.2485 158.623C69.2607 164.855 76.7967 167.965 81.2007 163.557L121.728 122.988ZM121.728 122.988L177.228 178.488" stroke="currentColor" stroke-width="13" stroke-linecap="round"></path>
+      </svg>
+      ProjectFlow
+    </a>
+    <a href="#klienci" class="module-chip"><span class="material-symbols-rounded">group</span>Klienci</a>
+    <a href="#listy" class="module-chip"><span class="material-symbols-rounded">local_mall</span>Listy zakupowe</a>
+    <a href="#zadania" class="module-chip"><span class="material-symbols-rounded">check_box</span>Zadania</a>
+    <a href="#produkty" class="module-chip"><span class="material-symbols-rounded">package_2</span>Produkty</a>
+    <a href="#wykonawcy" class="module-chip"><span class="material-symbols-rounded">engineering</span>Wykonawcy</a>
+    <a href="#ankiety" class="module-chip"><span class="material-symbols-rounded">assignment</span>Ankiety</a>
+    <a href="#kalendarz" class="module-chip"><span class="material-symbols-rounded">calendar_month</span>Kalendarz</a>
+    <a href="#notatnik" class="module-chip"><span class="material-symbols-rounded">note_stack</span>Notatnik</a>
+    <a href="#dyskusje" class="module-chip"><span class="material-symbols-rounded">chat_bubble</span>Dyskusje</a>
+    <a href="#generator3d" class="module-chip"><span class="material-symbols-rounded">wand_stars</span>Veezard<span class="soon-dot" title="Wkrótce"></span></a>
+  </div>
+</div>
+
+<!-- ───────── 01 · RENDERFLOW ───────── -->
+<section class="module-section" id="projectflow">
+  <div class="container">
+    <div class="module-row">
+      <div class="module-text">
+        <div class="module-eyebrow"><span class="num">Moduł 01</span></div>
+        <div class="module-head-row">
+          <div class="module-glyph">
+            <svg class="renderflow-pin" viewBox="-22 -22 228 229" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M121.728 122.988L162.007 82.6681C166.445 78.2248 163.239 70.6362 156.959 70.7215L146.549 70.8628L119.786 71.2261C119.236 71.2336 118.707 71.014 118.324 70.6191L86.1743 37.4878L58.6215 8.66333C55.9075 5.82403 51.389 5.77308 48.6117 8.55045L8.55019 48.6119C5.84554 51.3166 5.81265 55.6914 8.47633 58.4364L36.4243 87.2378L68.6112 120.408C68.9724 120.78 69.1749 121.278 69.1759 121.796L69.2485 158.623C69.2607 164.855 76.7967 167.965 81.2007 163.557L121.728 122.988ZM121.728 122.988L177.228 178.488" stroke="currentColor" stroke-width="13" stroke-linecap="round"></path>
+            </svg>
+          </div>
+          <h2 class="module-title">ProjectFlow</h2>
+        </div>
+        <p class="module-tagline">
+          Wizualizacje, rysunki techniczne i feedback w jednym miejscu. Klient pinuje uwagi wprost
+          na pliku, akceptuje lub odrzuca kolejne wersje, a Ty trzymasz wszystko w ryzach — z pełną historią zmian.
+        </p>
+        <ul class="module-features">
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Pinowanie komentarzy</strong> bezpośrednio na pliki — z tytułem, opisem i statusem.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Wersjonowanie wizualizacji</strong> — historia każdej iteracji, możliwość przywrócenia.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Status pliku:</strong> do weryfikacji, zaakceptowany, odrzucony — wszystko widoczne.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Panel klienta</strong> — klient loguje się na swoje konto i pracuje.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Ślad na piśmie</strong> — każda akceptacja zapisuje się w historii.</span></li>
+        </ul>
+      </div>
+      <div class="module-shot">
+        <div class="rf-stage" id="rfStage">
+          <div class="rf-tabs" role="tablist" aria-label="Widok grafiki ProjectFlow">
+            <span class="rf-tab-thumb" id="rfTabThumb"></span>
+            <button type="button" role="tab" class="active" data-rf-view="comments" aria-selected="true">
+              <span class="material-symbols-rounded">push_pin</span>
+              Komentarze klienta
+            </button>
+            <button type="button" role="tab" data-rf-view="history" aria-selected="false">
+              <span class="material-symbols-rounded">history</span>
+              Historia wersji
+            </button>
+          </div>
+
+          <div class="rf-canvas">
+            <img class="rf-render" src="rf-detail.png" alt="Render salonu — Tyczynska / Salon">
+
+            <!-- Persistent UI -->
+            <span class="rf-status-chip">Do weryfikacji</span>
+            <div class="rf-toolbar">
+              <span class="tb-btn primary"><span class="material-symbols-rounded">push_pin</span>Dodaj pin</span>
+              <span class="tb-btn"><span class="material-symbols-rounded">chair</span>Produkt</span>
+              <span class="tb-btn"><span class="material-symbols-rounded">forum</span>Dyskusja</span>
+            </div>
+
+            <!-- Pins (klient pinuje uwagi) -->
+            <div class="rf-pin" style="top: 41%; left: 33%;">1</div>
+            <div class="rf-pin" style="top: 30%; left: 72%;">2</div>
+
+            <!-- View 1: Komentarze klienta -->
+            <div class="rf-view active" data-rf-view-pane="comments">
+              <div class="rf-annot">
+                <div class="meta">
+                  <span class="avatar">AK</span>
+                  <span class="author">Anna Kowalska</span>
+                  <span class="time">2 min</span>
+                </div>
+                <div class="body">PIN 1 „Czy kinkiet może być w tonacji bardziej miedzianej? Reszta — idealna."</div>
+              </div>
+            </div>
+
+            <!-- View 2: Historia wersji -->
+            <div class="rf-view" data-rf-view-pane="history">
+              <div class="rf-bubble b1">
+                <span class="avatar">AK</span>
+                <div class="text">Anna K. · Pin 1
+„Kinkiet bardziej miedziany?"</div>
+              </div>
+              <div class="rf-bubble b2 accepted">
+                <span class="avatar">✓</span>
+                <div class="text"><span class="badge">Akceptacja</span><br><strong>Wersja v3</strong> zaakceptowana</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Version timeline (only for history view) -->
+          <div class="rf-timeline" data-rf-view-pane="history">
+            <div class="tl-title">Historia wersji</div>
+            <div class="tl-strip">
+              <div class="v done"><span class="dot">✓</span><span class="lab">v1</span></div>
+              <div class="line done"></div>
+              <div class="v done"><span class="dot">✓</span><span class="lab">v2</span></div>
+              <div class="line done"></div>
+              <div class="v active"><span class="dot"></span><span class="lab">v3 · teraz</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───────── 02 · KLIENCI ───────── -->
+<section class="module-section" id="klienci">
+  <div class="container">
+    <div class="module-row reverse">
+      <div class="module-text">
+        <div class="module-eyebrow"><span class="num">Moduł 02</span></div>
+        <div class="module-head-row">
+          <div class="module-glyph"><span class="material-symbols-rounded">group</span></div>
+          <h2 class="module-title">Klienci</h2>
+        </div>
+        <p class="module-tagline">
+          Kartoteka klientów i projektów. Dane kontaktowe, adres inwestycji,
+          pomieszczenia, kontakty — wszystko w jednej hierarchii.
+        </p>
+        <ul class="module-features">
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span>Wiele kontaktów na projekt — inwestorzy, architekt, kierownik budowy.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span>Konto klienta - stwórz konto klienta lub wyślij mu zaproszenie do jego dedykowanego panelu w veedeck.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span>Pomieszczenia - w ramach projektu — z ikonami i typami.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span>Płatności — zarządzaj płatnościami w projektach klienta.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Harmonogram</strong> — etapy realizacji projektu na osi czasu, od koncepcji po montaż.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Widoczność modułów</strong> — sterujesz tym, co klient widzi.</span></li>
+        </ul>
+      </div>
+      <div class="module-shot">
+        <div class="kl-deck">
+
+          <div class="kl-card d1">
+            <span class="kl-tab">01 · Info ogólne</span>
+            <div class="kl-title">Makowska</div>
+            <div class="field"><span class="lab">Opis</span><span class="val">Apartament 78 m² · Warszawa</span></div>
+            <div class="grid">
+              <div class="field"><span class="lab">Start</span><span class="val">24.04.2026</span></div>
+              <div class="field"><span class="lab">Koniec</span><span class="val">24.07.2026</span></div>
+            </div>
+            <div class="grid">
+              <div class="field"><span class="lab">Miasto</span><span class="val">Warszawa</span></div>
+              <div class="field"><span class="lab">Kraj</span><span class="val">Polska</span></div>
+            </div>
+          </div>
+
+          <div class="kl-card d2">
+            <span class="kl-tab">02 · Kontakty</span>
+            <div class="kl-title">4 kontakty</div>
+            <div class="kl-contact main"><span class="av">JK</span><span class="nm">Jan Kowalski</span><span class="badge">Główny</span></div>
+            <div class="kl-contact"><span class="av b">ZK</span><span class="nm">Zuzanna Kowalska</span></div>
+            <div class="kl-contact"><span class="av c">MP</span><span class="nm">Marian P</span></div>
+            <div class="kl-contact"><span class="av d">MW</span><span class="nm">Marian Wiesiołek</span></div>
+          </div>
+
+          <div class="kl-card d3">
+            <span class="kl-tab">03 · Płatności</span>
+            <div class="kl-title">12 150,00 zł</div>
+            <div class="pay-grp-head"><span>Wizualizacje</span><span>8 000 zł</span></div>
+            <div class="pay-row"><span class="ind open"></span><span class="nm">Salon ×5</span><span class="amt">5 000 zł</span><span class="st due">Do opłacenia</span></div>
+            <div class="pay-row"><span class="ind open"></span><span class="nm">Kuchnia ×3</span><span class="amt">3 000 zł</span><span class="st due">Do opłacenia</span></div>
+            <div class="pay-grp-head"><span>Nadzór</span><span>1 000 zł</span></div>
+            <div class="pay-row"><span class="ind paid">✓</span><span class="nm strike">Praca w terenie</span><span class="amt">1 000 zł</span><span class="st paid">Opłacone</span></div>
+            <div class="total"><span>Do opłacenia</span><span>9 750 zł</span></div>
+          </div>
+
+          <div class="kl-card d4">
+            <span class="kl-tab">04 · Harmonogram</span>
+            <div class="kl-title">4 etapy · 24.04 – 24.07</div>
+            <div class="gantt">
+              <div class="gantt-head"><span></span><div class="months"><span>KWI</span><span>MAJ</span><span>CZE</span><span>LIP</span></div></div>
+              <div class="gantt-row">
+                <span class="gl"><span class="gdot done"></span>Koncepcja</span>
+                <span class="track"><span class="bar a" style="left:0%; width:22%;"></span></span>
+              </div>
+              <div class="gantt-row">
+                <span class="gl"><span class="gdot active"></span>Wizualizacje</span>
+                <span class="track"><span class="bar b" style="left:18%; width:34%;"></span></span>
+              </div>
+              <div class="gantt-row">
+                <span class="gl"><span class="gdot"></span>Zakupy</span>
+                <span class="track"><span class="bar c" style="left:46%; width:28%;"></span></span>
+              </div>
+              <div class="gantt-row">
+                <span class="gl"><span class="gdot"></span>Montaż</span>
+                <span class="track"><span class="bar d" style="left:68%; width:30%;"></span></span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───────── 03 · LISTY ZAKUPOWE ───────── -->
+<section class="module-section" id="listy">
+  <div class="container">
+    <div class="module-row">
+      <div class="module-text">
+        <div class="module-eyebrow"><span class="num">Moduł 03</span></div>
+        <div class="module-head-row">
+          <div class="module-glyph"><span class="material-symbols-rounded">local_mall</span></div>
+          <h2 class="module-title">Listy zakupowe</h2>
+        </div>
+        <p class="module-tagline">
+          Tworzenie list produktów dla klientów — pogrupowane w sekcje, z cenami,
+          wymiarami i linkami. Klient zatwierdza, Ty zamawiasz.
+        </p>
+        <ul class="module-features">
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span>Komentarze — dyskutuj na temat produktu bezpośrednio na liście, przy konkretnym produkcie.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span>Wtyczka do przeglądarki — dodawaj produkty ze sklepu jednym kliknięciem dzięki wtyczce veepick.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span>Akceptacja przez klienta bezpośrednio na liście z komentarzami.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>5 szablonów exportu PDF</strong> — Violet, Editorial Mono, Atelier Warm, Architect Grid, Soft Linen.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Ukrywanie cen</strong> — kontroluj, czy klient widzi sumy.</span></li>
+        </ul>
+      </div>
+      <div class="module-shot">
+        <div class="lz-card">
+
+          <div class="lz-list">
+            <div class="lz-head">
+              <div>
+                <div class="crumb">Listy / Podwale</div>
+                <div class="name">Lista dla projektu Podwale</div>
+              </div>
+              <span class="share"><span class="material-symbols-rounded">share</span>Udostępnij</span>
+            </div>
+            <div class="lz-toolbar">
+              <span class="tb primary"><span class="material-symbols-rounded">add</span>Sekcja</span>
+              <span class="tb"><span class="material-symbols-rounded">add</span>Produkt</span>
+              <span class="tb"><span class="material-symbols-rounded">download</span>Eksportuj</span>
+              <span class="budget">94 849 / 100 000 zł <span class="pct">(95%)</span></span>
+            </div>
+            <div class="lz-section">Sypialnia<span class="total">35 323,70 zł · 4 produkty</span></div>
+            <div class="lz-product">
+              <div class="thumb pk" style="background-image:url('produkty/bed.png')"></div>
+              <div class="info">
+                <div class="nm">NEIDEN Rama łóżka — sosna 140×200 cm</div>
+                <div class="meta">IKEA · beżowy · 2 tyg</div>
+              </div>
+              <span class="st ok">Zaakceptowane</span>
+              <div class="price">798 zł<div class="qty">×2 · 399/szt</div></div>
+            </div>
+            <div class="lz-product selected">
+              <div class="thumb pk" style="background-image:url('produkty/lamp.png')"></div>
+              <div class="info">
+                <div class="nm">Lampa BONBON S Almond · Nicer Design</div>
+                <div class="meta">Artera · opalowe szkło · 2700 K</div>
+              </div>
+              <span class="st wait">Do akcept.</span>
+              <div class="price">629 zł<div class="qty">×1</div></div>
+            </div>
+            <div class="lz-product">
+              <div class="thumb pk" style="background-image:url('produkty/rug.png')"></div>
+              <div class="info">
+                <div class="nm">Chessie — dywan 20×20 cm</div>
+                <div class="meta">Rugvista · rdzawa czerwień</div>
+              </div>
+              <span class="st no">Odrzucone</span>
+              <div class="price">2 160 zł<div class="qty">×3 · 720/szt</div></div>
+            </div>
+            <div class="lz-product">
+              <div class="thumb pk" style="background-image:url('produkty/pillow.png')"></div>
+              <div class="info">
+                <div class="nm">Poduszka 70×80 ProComfort</div>
+                <div class="meta">Magiczne Sny · ×2</div>
+              </div>
+              <span class="st wait">Do akcept.</span>
+              <div class="price">110 zł<div class="qty">×2 · 55/szt</div></div>
+            </div>
+          </div>
+
+          <div class="lz-chat">
+            <div class="ch-head">
+              <div class="pt pk" style="background-image:url('produkty/lamp.png')"></div>
+              <div class="info">
+                <div class="lab">Komentarze</div>
+                <div class="nm">Lampa BONBON S Almond…</div>
+              </div>
+            </div>
+            <div class="ch-body">
+              <div class="time">dziś · 14:32</div>
+              <div class="msg client">
+                <span class="av">A</span>
+                <div class="bubble">Czy ta lampa pasuje do salonu? Mam ciemną sofę.</div>
+              </div>
+              <div class="msg me">
+                <span class="av">DM</span>
+                <div class="bubble">Tak — 2700 K, opalowe szkło daje miękkie ciepłe światło 🤍</div>
+              </div>
+              <div class="msg client">
+                <span class="av">A</span>
+                <div class="bubble">Super, zatwierdzam!</div>
+              </div>
+            </div>
+            <div class="ch-input"><span class="clip">📎</span>Napisz wiadomość…</div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───────── 04 · ZADANIA ───────── -->
+<section class="module-section" id="zadania">
+  <div class="container">
+    <div class="module-row reverse">
+      <div class="module-text">
+        <div class="module-eyebrow"><span class="num">Moduł 04</span></div>
+        <div class="module-head-row">
+          <div class="module-glyph"><span class="material-symbols-rounded">check_box</span></div>
+          <h2 class="module-title">Zadania</h2>
+        </div>
+        <p class="module-tagline">
+          Lista zadań do wykonania — przypisuj do projektów, ustawiaj terminy
+          i priorytety. Zadania na dziś trafiają od razu na dashboard.
+        </p>
+        <ul class="module-features">
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Zadania per projekt</strong> — wszystko w kontekście, bez chaosu.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Terminy i priorytety</strong> — wiesz, co musisz zrobić dziś, a co może poczekać.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Sekcja „Dziś"</strong> na dashboardzie — pierwszy ekran rana.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Powiadomienia</strong> o nadchodzących terminach — bez SMS-ów do siebie.</span></li>
+        </ul>
+      </div>
+      <div class="module-shot">
+        <div class="zd-stage">
+
+          <div class="zd-table">
+            <div class="t-head">
+              <div>
+                <div class="nm">Zadania</div>
+                <div class="sub">3 zadania · 1 zaległe</div>
+              </div>
+              <span class="new"><span class="material-symbols-rounded">add</span>Dodaj zadanie</span>
+            </div>
+            <div class="t-toolbar">
+              <span class="ctrl"><span class="lab">Grupuj:</span>Brak</span>
+              <span class="ctrl"><span class="lab">Sortuj:</span>Data utworzenia</span>
+            </div>
+            <div class="cols">
+              <div>Nazwa</div>
+              <div>Klient</div>
+              <div>Priorytet</div>
+              <div>Status</div>
+              <div>Przypisane</div>
+              <div>Termin</div>
+            </div>
+            <div class="task">
+              <div class="nm">Rozliczenie</div>
+              <div><span class="client-pill">Kowalscy</span></div>
+              <div><span class="zd-badge pri-med"><span class="dot"></span>Średni</span></div>
+              <div><span class="zd-badge st-todo"><span class="dot"></span>To Do</span></div>
+              <div class="person"><span class="zd-avatar">DR</span>Daniel R.</div>
+              <div class="due late">13.05.2026</div>
+            </div>
+            <div class="task">
+              <div class="nm">Nadzór na miejscu</div>
+              <div><span class="client-pill">Podwale</span></div>
+              <div><span class="zd-badge pri-med"><span class="dot"></span>Średni</span></div>
+              <div><span class="zd-badge st-done"><span class="dot"></span>Gotowe</span></div>
+              <div class="person"><span class="zd-avatar">DR</span>Daniel R.</div>
+              <div class="due">27.05.2026</div>
+            </div>
+            <div class="task">
+              <div class="nm"><span class="caret">▾</span>Projekt salonu</div>
+              <div><span class="client-pill">Pielech</span></div>
+              <div><span class="zd-badge pri-high"><span class="dot"></span>Wysoki</span></div>
+              <div><span class="zd-badge st-prog"><span class="dot"></span>W trakcie</span></div>
+              <div class="person"><span class="zd-avatar">DR</span>Daniel R.</div>
+              <div class="due">31.07.2026</div>
+            </div>
+            <div class="task">
+              <div class="nm indent">
+                <span class="check"><span class="material-symbols-rounded">check</span></span>
+                Rendery ×5
+              </div>
+              <div></div>
+              <div><span class="zd-badge pri-low"><span class="dot"></span>Niski</span></div>
+              <div><span class="zd-badge st-done"><span class="dot"></span>Gotowe</span></div>
+              <div></div>
+              <div></div>
+            </div>
+          </div>
+
+          <div class="zd-modal">
+            <div class="m-head">
+              <div class="nm">Nowe zadanie</div>
+              <span class="x">×</span>
+            </div>
+            <div class="m-body">
+              <div class="field">
+                <span class="lab">Tytuł *</span>
+                <span class="val">Nadzór na inwestycji 29.06.2026</span>
+              </div>
+              <div class="field">
+                <span class="lab">Opis</span>
+                <span class="val editor">Proszę o nadzór w dniu 29.06 — ekipa o 8:00. Klucze w biurze.</span>
+              </div>
+              <div class="grid2">
+                <div class="field">
+                  <span class="lab">Status</span>
+                  <span class="val"><span class="val-pill"><span class="d" style="background:#9CA3AF"></span>Do zrobienia</span></span>
+                </div>
+                <div class="field">
+                  <span class="lab">Priorytet</span>
+                  <span class="val"><span class="val-pill"><span class="d" style="background:#DC2626"></span>Wysoki</span></span>
+                </div>
+              </div>
+              <div class="grid2">
+                <div class="field">
+                  <span class="lab">Termin</span>
+                  <span class="val">29.06.2026</span>
+                </div>
+                <div class="field">
+                  <span class="lab">Klient</span>
+                  <span class="val">Dom w Leśnicy</span>
+                </div>
+              </div>
+            </div>
+            <div class="m-actions">
+              <span class="btn">Anuluj</span>
+              <span class="btn primary">Utwórz zadanie</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───────── 05 · PRODUKTY ───────── -->
+<section class="module-section" id="produkty">
+  <div class="container">
+    <div class="module-row">
+      <div class="module-text">
+        <div class="module-eyebrow"><span class="num">Moduł 05</span></div>
+        <div class="module-head-row">
+          <div class="module-glyph"><span class="material-symbols-rounded">package_2</span></div>
+          <h2 class="module-title">Produkty</h2>
+        </div>
+        <p class="module-tagline">
+          Biblioteka produktów całego studia. Raz dodajesz, wielokrotnie używasz —
+          na różnych projektach, z różnymi cenami i wariantami.
+        </p>
+        <ul class="module-features">
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span>Prosto z wtyczki, do bazy — produkty dodane przez veepick automatycznie trafiają do bazy.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span>Kategorie — Meble, Oświetlenie, Akcesoria, Armatura, Okładziny, Podłoga + te, które stworzysz sam!</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Pełne metadane</strong> — producent, dostawca, kolor, wymiar, numer katalogowy.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Powiązania z listami</strong> — z bazy do listy zakupowej jednym kliknięciem.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Sortowanie i grupowanie</strong> po cenie, nazwie, producencie.</span></li>
+        </ul>
+      </div>
+      <div class="module-shot">
+        <div class="pr-stage">
+          <div class="pr-gallery">
+            <div class="pr-card">
+              <div class="pr-img bed"></div>
+              <div class="pr-nm">Łóżko Calma 160×200</div>
+              <div class="pr-meta">Comforteo</div>
+              <div class="pr-price">2 799 zł</div>
+            </div>
+            <div class="pr-card">
+              <div class="pr-img bath"></div>
+              <div class="pr-nm">Bateria Liora podtynkowa</div>
+              <div class="pr-meta">BOCCO</div>
+              <div class="pr-price">849 zł</div>
+            </div>
+            <div class="pr-card">
+              <div class="pr-img lamp"></div>
+              <div class="pr-nm">Lampa BONBON Nicer Design</div>
+              <div class="pr-meta">Artera</div>
+              <div class="pr-price">629 zł</div>
+            </div>
+            <div class="pr-card">
+              <div class="pr-img toilet"></div>
+              <div class="pr-nm">Toaleta myjąca PRO+ 1102</div>
+              <div class="pr-meta">bernstein</div>
+              <div class="pr-price">5 099 zł</div>
+            </div>
+            <div class="pr-card">
+              <div class="pr-img vase"></div>
+              <div class="pr-nm">Wazon dekoracyjny Freda</div>
+              <div class="pr-meta">Sklum PL</div>
+              <div class="pr-price">129,95 zł</div>
+            </div>
+            <div class="pr-card">
+              <div class="pr-img kitchen"></div>
+              <div class="pr-nm">Moduł kuchni Savona</div>
+              <div class="pr-meta">Sklum PL</div>
+              <div class="pr-price">779,95 zł</div>
+            </div>
+            <div class="pr-card">
+              <div class="pr-img shower"></div>
+              <div class="pr-nm">Kabina Eternal — gun metal</div>
+              <div class="pr-meta">BOCCO</div>
+              <div class="pr-price">2 699 zł</div>
+            </div>
+            <div class="pr-card">
+              <div class="pr-img rug"></div>
+              <div class="pr-nm">Chessie dywan 20×20</div>
+              <div class="pr-meta">Rugvista</div>
+              <div class="pr-price">2 160 zł</div>
+            </div>
+          </div>
+
+          <div class="pr-chip c1">
+            <span class="ic b1"><span class="material-symbols-rounded">inventory_2</span></span>
+            <span><div class="v">35 produktów</div><div class="k">w bazie</div></span>
+          </div>
+          <div class="pr-chip c2">
+            <span class="ic b2"><span class="material-symbols-rounded">store</span></span>
+            <span><div class="v">17 sklepów</div><div class="k">producenci</div></span>
+          </div>
+          <div class="pr-chip c3">
+            <span class="ic b3"><span class="material-symbols-rounded">category</span></span>
+            <span><div class="v">6 kategorii</div><div class="k">Meble · Armatura · …</div></span>
+          </div>
+          <div class="pr-chip c4">
+            <span class="ic b4"><span class="material-symbols-rounded">link</span></span>
+            <span><div class="v">+ z URL</div><div class="k">dane zaciągane auto</div></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───────── 06 · KALENDARZ ───────── -->
+<section class="module-section" id="kalendarz">
+  <div class="container">
+    <div class="module-row reverse">
+      <div class="module-text">
+        <div class="module-eyebrow"><span class="num">Moduł 06</span></div>
+        <div class="module-head-row">
+          <div class="module-glyph"><span class="material-symbols-rounded">calendar_month</span></div>
+          <h2 class="module-title">Kalendarz</h2>
+        </div>
+        <p class="module-tagline">
+          Wydarzenia, zadania i przypomnienia w jednym widoku. Spotkania u klienta,
+          terminy dostaw, deadline'y projektowe — wszystko widoczne na pierwszy rzut oka.
+        </p>
+        <ul class="module-features">
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Spotkania u klienta</strong> z adresem i kontaktem — bez kopiowania danych.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span>Zadania i przypomnienia w Twoim kalendarzu</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Widok miesiąca, tygodnia, dnia</strong> — wybierz wygodny dla siebie.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Sekcja „Dziś"</strong> na dashboardzie — co Cię dziś czeka.</span></li>
+        </ul>
+      </div>
+      <div class="module-shot">
+        <div class="kal-stage">
+          <div class="kal-card">
+            <div class="kal-bar">
+              <div class="kal-bar-l">
+                <div class="kal-nav">
+                  <span class="kal-today">Dziś</span>
+                  <span class="kal-arrow"><span class="material-symbols-rounded">chevron_left</span></span>
+                  <span class="kal-arrow"><span class="material-symbols-rounded">chevron_right</span></span>
+                </div>
+                <div class="kal-range">18–24 Maj 2026</div>
+              </div>
+              <div class="kal-bar-r">
+                <div class="kal-seg"><span>Miesiąc</span><span class="active">Tydzień</span><span>Dzień</span></div>
+                <span class="kal-add"><span class="material-symbols-rounded">add</span>Dodaj</span>
+              </div>
+            </div>
+            <div class="kal-wkhead">
+              <div class="kal-cnr"></div>
+              <div class="kal-dh"><div class="dn">Pon</div><div class="dd">18</div></div>
+              <div class="kal-dh"><div class="dn">Wt</div><div class="dd">19</div></div>
+              <div class="kal-dh"><div class="dn">Śr</div><div class="dd">20</div></div>
+              <div class="kal-dh"><div class="dn">Czw</div><div class="dd">21</div></div>
+              <div class="kal-dh today"><div class="dn">Pt</div><div class="dd">22</div></div>
+              <div class="kal-dh"><div class="dn">Sob</div><div class="dd">23</div></div>
+              <div class="kal-dh"><div class="dn">Nd</div><div class="dd">24</div></div>
+            </div>
+            <div class="kal-wkbody">
+              <div class="kal-times">
+                <div class="t" style="top:18px">08:00</div>
+                <div class="t" style="top:67px">09:00</div>
+                <div class="t" style="top:116px">10:00</div>
+                <div class="t" style="top:165px">11:00</div>
+                <div class="t" style="top:214px">12:00</div>
+                <div class="t" style="top:263px">13:00</div>
+              </div>
+              <div class="kal-col">
+                <div class="kal-ev is-task" style="top:114px;height:44px"><div class="et">Odbiór mebli</div><div class="es">10:00 · zadanie</div></div>
+              </div>
+              <div class="kal-col">
+                <div class="kal-ev is-ev" style="top:165px;height:60px"><div class="et">Spotkanie — Kowalscy</div><div class="es">11:00–12:15</div></div>
+              </div>
+              <div class="kal-col"></div>
+              <div class="kal-col">
+                <div class="kal-ev is-rem" style="top:63px;height:40px"><div class="et">Deadline: rendery</div><div class="es">09:00 · przypomnienie</div></div>
+              </div>
+              <div class="kal-col today">
+                <div class="kal-ev is-ev" style="top:223px;height:62px"><div class="et">Prezentacja projektu</div><div class="es">12:30–13:30</div></div>
+              </div>
+              <div class="kal-col">
+                <div class="kal-ev is-task" style="top:136px;height:44px"><div class="et">Montaż oświetlenia</div><div class="es">10:30 · zadanie</div></div>
+              </div>
+              <div class="kal-col"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───────── 07 · NOTATNIK ───────── -->
+<section class="module-section" id="notatnik">
+  <div class="container">
+    <div class="module-row">
+      <div class="module-text">
+        <div class="module-eyebrow"><span class="num">Moduł 07</span></div>
+        <div class="module-head-row">
+          <div class="module-glyph"><span class="material-symbols-rounded">note_stack</span></div>
+          <h2 class="module-title">Notatnik</h2>
+        </div>
+        <p class="module-tagline">
+          Notatki, aby nic ważnego Ci nie umknęło. Szybka notatka zapisuje spontaniczne
+          myśli „tu i teraz", a Szkicownik działa na każdym urządzeniu.
+        </p>
+        <ul class="module-features">
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Szybka notatka</strong> — ikona w pasku nawigacji zawsze pod ręką.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span>Szkicownik — rysuj na telefonie lub tablecie, edytuj na komputerze.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Wyszukiwarka</strong> po tytule i treści — odnajdziesz wszystko.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Archiwum</strong> dla notatek, których nie chcesz usuwać.</span></li>
+        </ul>
+      </div>
+      <div class="module-shot">
+        <div class="nt-frame">
+          <div class="tab-scene">
+            <!-- TABLET -->
+            <div class="tablet">
+              <div class="tablet-screen">
+                <div class="tb-rail">
+                  <div class="rh"><h4>Notatnik</h4><span class="material-symbols-rounded">add</span></div>
+                  <div class="tb-search"><span class="material-symbols-rounded">search</span>Szukaj…</div>
+                  <div class="tb-item active"><div class="nm">Poprawki w Makowskiej</div><div class="pv"><span class="material-symbols-rounded">draw</span>Szkic + notatka</div></div>
+                  <div class="tb-item"><div class="nm">Pomiary — Sienkiewicza</div><div class="pv">Salon, kuchnia, hol</div></div>
+                  <div class="tb-item"><div class="nm">Szkic — zabudowa</div><div class="pv"><span class="material-symbols-rounded">draw</span>Szkic odręczny</div></div>
+                </div>
+                <div class="tb-canvas">
+                  <div class="tb-mini-tools">
+                    <span class="sk-tool active"><span class="material-symbols-rounded">stylus</span></span>
+                    <span class="sk-tool"><span class="material-symbols-rounded">ink_highlighter</span></span>
+                    <span class="sk-tool"><span class="material-symbols-rounded">ink_eraser</span></span>
+                    <span class="sw" style="background:#2A2A2E"></span>
+                    <span class="sw active" style="background:#E2843A"></span>
+                    <span class="sw" style="background:#4F46E5"></span>
+                  </div>
+                  <svg class="sketch-svg" style="max-width:300px" viewBox="0 0 340 250" xmlns="http://www.w3.org/2000/svg">
+                    <g transform="rotate(-0.8 170 125)">
+                      <path class="dim" d="M50 56 H262"/>
+                      <path class="dim" d="M50 49 V63 M262 49 V63"/>
+                      <text class="dim-lbl" x="156" y="44" text-anchor="middle">192</text>
+                      <path class="ink" d="M50 84 H262 V172 H50 Z"/>
+                      <path class="ink-thin" d="M50 128 H262"/>
+                      <path class="ink-thin" d="M84 136 H160 V166 H84 Z"/>
+                      <path class="ink-thin" d="M84 136 L160 166 M160 136 L84 166"/>
+                      <path class="dim" d="M284 84 V172"/>
+                      <path class="dim" d="M277 84 H291 M277 172 H291"/>
+                      <text class="dim-lbl" x="304" y="132" text-anchor="middle">64</text>
+                      <text class="lbl" x="50" y="200" fill="#2A2A2E" style="font-size:22px">salon</text>
+                    </g>
+                  </svg>
+                </div>
+              </div>
+              <div class="stylus"></div>
+            </div>
+            <!-- PHONE -->
+            <div class="phone">
+              <div class="phone-screen">
+                <div class="ph-top">
+                  <span class="material-symbols-rounded">chevron_left</span>
+                  <span class="ph-top-t">Notatnik</span>
+                  <span class="material-symbols-rounded pen">draw</span>
+                </div>
+                <div class="ph-note">
+                  <h5>Poprawki w Makowskiej</h5>
+                  <div class="ph-date">16 kwi · 13:31</div>
+                  <p>W trakcie analizy układu salonu z aneksem kuchennym zdecydowano o zmianach:</p>
+                  <div class="ph-li"><b>1. Stół jadalniany</b><span>Przesunięty bliżej okna — więcej światła naturalnego.</span></div>
+                  <div class="ph-li"><b>2. Zabudowa kuchni</b><span>Niższe górne szafki, otwarte półki.</span></div>
+                  <div class="ph-li"><b>3. Ściana akcentowa</b><span>Oliwkowa zieleń zamiast granatu.</span></div>
+                </div>
+              </div>
+            </div>
+            <div class="tab-cap"><span class="material-symbols-rounded">devices</span>Szkicuj wszędzie — tablet, telefon i komputer, zawsze w synchronizacji.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───────── 08 · DYSKUSJE ───────── -->
+<section class="module-section" id="dyskusje">
+  <div class="container">
+    <div class="module-row reverse">
+      <div class="module-text">
+        <div class="module-eyebrow"><span class="num">Moduł 08</span></div>
+        <div class="module-head-row">
+          <div class="module-glyph"><span class="material-symbols-rounded">chat_bubble</span></div>
+          <h2 class="module-title">Dyskusje</h2>
+        </div>
+        <p class="module-tagline">
+          Komentuj rendery i pozycje na liście zakupowej razem z klientem.
+          Wszystkie ustalenia w kontekście — żadnych zagubionych maili.
+        </p>
+        <ul class="module-features">
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Czat per klient</strong> — każda rozmowa w swoim miejscu.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span>Czat zespołowy — komunikacja z zespołem bezpośrednio w platformie.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Bez zrzutów z WhatsAppa</strong> — koniec z chaosem w komunikatorach.</span></li>
+        </ul>
+      </div>
+      <div class="module-shot">
+        <div class="dy-frame">
+          <div class="dy">
+            <!-- LISTA DYSKUSJI -->
+            <div class="dy-rail">
+              <div class="dy-rail-head"><h2>Dyskusje</h2><span class="dy-plus"><span class="material-symbols-rounded">add</span></span></div>
+              <div class="dy-search"><span class="material-symbols-rounded">search</span>Szukaj w dyskusjach…</div>
+              <div class="dy-filters">
+                <span class="dy-fl">Wszystkie <span class="material-symbols-rounded">expand_more</span></span>
+                <span class="dy-fl">Aktywne <span class="material-symbols-rounded">expand_more</span></span>
+              </div>
+              <div class="dy-convs">
+                <div class="dy-conv"><div class="r1"><div class="nm">Makowska</div><div class="dt">pon.</div></div><div class="pv">raport</div></div>
+                <div class="dy-conv"><div class="r1"><div class="nm">Podwale</div><div class="dt">5 maj</div></div><div class="pv">Przesyłam listę zakupową</div></div>
+                <div class="dy-conv active"><div class="r1"><div class="nm">Apartament Kowalskich — Kraków</div><div class="dt">10:43</div></div><div class="pv">Wszystko super, potrzebujemy jeszcze 2…</div></div>
+                <div class="dy-conv"><div class="r1"><div class="nm">Dom w Leśnicy</div><div class="dt">17 kwi</div></div><div class="pv">Do zobaczenia w piątek</div></div>
+                <div class="dy-conv"><div class="r1"><div class="nm">Tyczyńska</div><div class="dt">26 mar</div></div><div class="pv">oki</div></div>
+              </div>
+            </div>
+            <!-- CZAT -->
+            <div class="dy-chat">
+              <div class="dy-chat-head">
+                <div>
+                  <h3>Apartament Kowalskich — Kraków</h3>
+                  <span class="sub">Apartament Kowalskich – Kraków <span class="material-symbols-rounded">open_in_new</span></span>
+                </div>
+                <div class="dy-actions">
+                  <span class="ic"><span class="material-symbols-rounded">search</span></span>
+                  <span class="dy-pliki active"><span class="material-symbols-rounded">folder</span>Pliki <span class="cnt">5</span></span>
+                </div>
+              </div>
+              <div class="dy-msgs">
+                <div class="dy-date">19 kwietnia 2026</div>
+                <div class="dy-row"><div class="dy-av k">K</div><div class="dy-bub in">Dzień dobry, ile potrwają prace?</div><div class="dy-time">13:31</div></div>
+                <div class="dy-row me"><div class="dy-av me">TY</div><div class="dy-bub out">Około 2 tygodnie, jesteśmy na etapie wizualizacji :)</div><div class="dy-time">13:31</div></div>
+                <div class="dy-row"><div class="dy-av k">K</div><div class="dy-file-msg"><span class="fi"><span class="material-symbols-rounded">picture_as_pdf</span></span><span class="fn">Lista dla projektu Podwale (25).pdf</span><span class="material-symbols-rounded ext">open_in_new</span></div><div class="dy-time">13:32</div></div>
+                <div class="dy-date">01 czerwca 2026</div>
+                <div class="dy-row me"><div class="dy-av me">TY</div><div class="dy-bub out">Wszystko super, potrzebujemy jeszcze 2 dni i podeślemy Pani wszystkie materiały :)</div><div class="dy-time">10:43</div></div>
+              </div>
+              <div class="dy-composer">
+                <span class="dy-attach"><span class="material-symbols-rounded">attach_file</span></span>
+                <div class="dy-input">Napisz wiadomość…</div>
+                <span class="mic"><span class="material-symbols-rounded">mic</span></span>
+              </div>
+            </div>
+            <!-- PLIKI -->
+            <div class="dy-files">
+              <div class="dy-files-head">
+                <h4><span class="material-symbols-rounded">folder_open</span>Pliki</h4>
+              </div>
+              <div class="dy-tabs">
+                <span class="dy-tab active">Wszystkie</span>
+                <span class="dy-tab">Zdjęcia</span>
+                <span class="dy-tab">Dokumenty</span>
+                <span class="dy-tab">Arkusze</span>
+              </div>
+              <div class="dy-flist">
+                <div class="dy-f"><span class="ic pdf"><span class="material-symbols-rounded">picture_as_pdf</span></span><div class="meta"><div class="fn">Rysunek techniczny.pdf</div><div class="by">Kowalski · 19 kwi</div></div></div>
+                <div class="dy-f"><span class="dy-thumb"><span class="material-symbols-rounded">image</span></span><div class="meta"><div class="fn">Wizualizacja — salon.jpg</div><div class="by">Ty · 18 kwi</div></div></div>
+                <div class="dy-f"><span class="dy-thumb b"><span class="material-symbols-rounded">image</span></span><div class="meta"><div class="fn">Wizualizacja — kuchnia.jpg</div><div class="by">Ty · 18 kwi</div></div></div>
+                <div class="dy-f"><span class="ic sheet"><span class="material-symbols-rounded">table_chart</span></span><div class="meta"><div class="fn">Lista zakupowa.xlsx</div><div class="by">Kowalski · 17 kwi</div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───────── 09 · WYKONAWCY ───────── -->
+<section class="module-section" id="wykonawcy">
+  <div class="container">
+    <div class="module-row">
+      <div class="module-text">
+        <div class="module-eyebrow"><span class="num">Moduł 09</span></div>
+        <div class="module-head-row">
+          <div class="module-glyph"><span class="material-symbols-rounded">engineering</span></div>
+          <h2 class="module-title">Wykonawcy</h2>
+        </div>
+        <p class="module-tagline">
+          Udostępniasz wykonawcom dokładnie te pliki, których potrzebują do realizacji —
+          a oni zadają pytania pinem wprost na rysunku, bez maili i telefonów.
+        </p>
+        <ul class="module-features">
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span>Foldery wg typu — <strong>Rysunki techniczne</strong>, <strong>Wizualizacje</strong>, <strong>Inne dokumenty</strong>.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span>Podgląd obrazów i PDF z powiększeniem — wprost w przeglądarce.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span>Piny z pytaniem w konkretnym miejscu rysunku — z wątkowymi komentarzami.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span>Czat z projektantem w kontekście danego projektu.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Pełna kontrola dostępu</strong> — wykonawca widzi tylko udostępnione pliki, nigdy list zakupowych, cen ani innych klientów.</span></li>
+        </ul>
+      </div>
+      <div class="module-shot">
+        <div class="wk-frame">
+          <div class="wk-rail">
+            <h4>Pliki projektu</h4>
+            <div class="wk-folder active"><span class="material-symbols-rounded">folder</span>Rysunki techniczne<span class="cnt">8</span></div>
+            <div class="wk-folder"><span class="material-symbols-rounded">folder</span>Wizualizacje<span class="cnt">5</span></div>
+            <div class="wk-folder"><span class="material-symbols-rounded">folder</span>Inne dokumenty<span class="cnt">3</span></div>
+          </div>
+          <div class="wk-view">
+            <div class="wk-vtop">
+              <span class="fn"><span class="material-symbols-rounded">description</span>Rzut_salon_A3.pdf</span>
+              <span class="zoom">
+                <span class="zb"><span class="material-symbols-rounded">remove</span></span>
+                <span class="zb"><span class="material-symbols-rounded">add</span></span>
+                <span class="zb"><span class="material-symbols-rounded">open_in_full</span></span>
+              </span>
+            </div>
+            <div class="wk-canvas">
+              <div class="wk-plan">
+                <div class="wk-room r1"></div>
+                <div class="wk-room r2"></div>
+                <div class="wk-room r3"></div>
+                <span class="wk-dim" style="top:-18px; left:42%;">5,40 m</span>
+                <span class="wk-dim" style="top:44%; left:-30px; transform:rotate(-90deg);">3,10 m</span>
+              </div>
+              <span class="wk-pin" style="left:33%; top:56%;">1</span>
+              <span class="wk-pin" style="left:80%; top:71%;">2</span>
+              <div class="wk-pop" style="left:37%; top:14%;">
+                <div class="ph">
+                  <span class="av">MK</span>
+                  <span><span class="nm">Marek K.</span><span class="role"> · Ekipa wykończeniowa</span></span>
+                </div>
+                <div class="q">Co na połączeniu ściany z podłogą — listwa przypodłogowa czy fuga cienka?</div>
+                <div class="reply"><span class="material-symbols-rounded">reply</span>Odpowiedz projektantowi…</div>
+              </div>
+              <span class="wk-chat"><span class="material-symbols-rounded">chat_bubble</span>Czat z projektantem<span class="badge">2</span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───────── 10 · ANKIETY ───────── -->
+<section class="module-section" id="ankiety">
+  <div class="container">
+    <div class="module-row reverse">
+      <div class="module-text">
+        <div class="module-eyebrow"><span class="num">Moduł 10</span></div>
+        <div class="module-head-row">
+          <div class="module-glyph"><span class="material-symbols-rounded">assignment</span></div>
+          <h2 class="module-title">Ankiety</h2>
+        </div>
+        <p class="module-tagline">
+          Wysyłasz klientowi ankietę lub brief na starcie projektu, a uporządkowane
+          odpowiedzi wracają wprost do veedeck — koniec z dopytywaniem mailem.
+        </p>
+        <ul class="module-features">
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span>Gotowe szablony briefów i ankiet — albo twórz własne szablony od podstaw.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span>Różne typy pytań — wybór, skala, tekst, załączniki.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span>Klient wypełnia w przeglądarce, na dowolnym urządzeniu.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span>Odpowiedzi zebrane w jednym miejscu, podpięte pod projekt.</span></li>
+        </ul>
+      </div>
+      <div class="module-shot">
+        <div class="an-stage">
+          <div class="an-card">
+            <div class="an-top">
+              <div class="an-kicker"><span class="material-symbols-rounded">assignment</span>Brief wnętrza · Salon</div>
+              <div class="an-prog"><span>Pytanie 3 z 12</span><span>25%</span></div>
+              <div class="an-bar"><i></i></div>
+            </div>
+            <div class="an-body">
+              <div class="an-q">W jakim stylu ma być Twoje wnętrze?</div>
+              <div class="an-opt sel"><span class="radio"></span>Skandynawski</div>
+              <div class="an-opt"><span class="radio"></span>Nowoczesny / minimalistyczny</div>
+              <div class="an-opt"><span class="radio"></span>Klasyczny / glamour</div>
+              <div class="an-opt"><span class="radio"></span>Industrialny</div>
+            </div>
+            <div class="an-foot">
+              <span class="step">Można wrócić do poprzednich</span>
+              <span class="an-next">Dalej<span class="material-symbols-rounded">arrow_forward</span></span>
+            </div>
+          </div>
+          <span class="an-chip c1"><span class="material-symbols-rounded">quiz</span>12 pytań</span>
+          <span class="an-chip c2"><span class="material-symbols-rounded">person</span>Wypełnia: klient</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───────── 11 · VEEZARD — WKRÓTCE ───────── -->
+<section class="coming-soon" id="generator3d">
+  <div class="container">
+    <div class="cs-inner">
+      <div class="cs-eyebrow">
+        <span class="cs-num">Moduł 11</span>
+        <span class="badge-soon">Wkrótce</span>
+      </div>
+      <div class="cs-head">
+        <div class="module-glyph"><span class="material-symbols-rounded">wand_stars</span></div>
+        <h2 class="cs-title">Veezard</h2>
+      </div>
+      <p class="cs-desc">Twój osobisty czarodziej AI. Oszczędzaj czas dzięki magii sztucznej inteligencji.</p>
+    </div>
+  </div>
+</section>
+
+<!-- CLOSER -->
+<section class="closer">
+  <div class="container">
+    <div class="closer-inner">
+      <h2>Zobacz, jak to wygląda w Twojej pracy.</h2>
+      <p>
+        14 dni za darmo, bez karty kredytowej, bez zobowiązań. Włącz tylko te moduły,
+        których faktycznie używasz — resztę zostaw na potem.
+      </p>
+      <div class="cta-row">
+        <a href="login.html#register" class="btn btn-primary btn-lg">Wypróbuj 14 dni za darmo
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"></path></svg>
+        </a>
+        <a href="https://calendly.com/daniel-veedeck/" target="_blank" rel="noopener" class="btn btn-ghost btn-lg">Umów prezentację</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="site">
+  <div class="container">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <a class="brand" href="index.html">
+          <img class="brand-icon" src="vee-icon.png" alt="" style="height:28px;width:28px">
+          <img class="wordmark-img" src="vee_black.png" alt="veedeck" style="height:22px">
+        </a>
+        <p>Visualize, Design, Deliver.</p>
+        <div>Platforma dla projektantów wnętrz.</div>
+      </div>
+      <div class="footer-col">
+        <h4>Produkt</h4>
+        <ul>
+          <li><a href="veedeck-moduly.html">Moduły</a></li>
+          <li><a href="index.html#jak">Jak to działa</a></li>
+          <li><a href="demo.html">Demo</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Firma</h4>
+        <ul>
+          <li><a href="kontakt.html">Kontakt</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Konto</h4>
+        <ul>
+          <li><a href="login.html">Zaloguj się</a></li>
+          <li><a href="login.html#register">Załóż konto</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div>© 2026 veedeck.com</div>
+      <div>Wszystkie prawa zastrzeżone</div>
+    </div>
+  </div>
+</footer>
+
+<script>
+  (function () {
+    var stage = document.getElementById('rfStage');
+    if (!stage) return;
+    var tabs = stage.querySelector('.rf-tabs');
+    var thumb = document.getElementById('rfTabThumb');
+    function moveThumb() {
+      var active = tabs.querySelector('button.active');
+      if (!active) return;
+      var tabsRect = tabs.getBoundingClientRect();
+      var aRect = active.getBoundingClientRect();
+      thumb.style.left = (aRect.left - tabsRect.left) + 'px';
+      thumb.style.width = aRect.width + 'px';
+    }
+    function setView(name) {
+      tabs.querySelectorAll('button').forEach(function (b) {
+        var on = b.getAttribute('data-rf-view') === name;
+        b.classList.toggle('active', on);
+        b.setAttribute('aria-selected', on ? 'true' : 'false');
+      });
+      stage.querySelectorAll('[data-rf-view-pane]').forEach(function (el) {
+        el.classList.toggle('active', el.getAttribute('data-rf-view-pane') === name);
+      });
+      moveThumb();
+    }
+    tabs.querySelectorAll('button').forEach(function (b) {
+      b.addEventListener('click', function () { setView(b.getAttribute('data-rf-view')); });
+    });
+    // Initial thumb position
+    requestAnimationFrame(moveThumb);
+    window.addEventListener('resize', moveThumb);
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(moveThumb);
+    }
+  })();
+</script>
+
+<!-- ───────── FIX MOBILE: gęste mockupy → poziome przewijanie w karcie ───────── -->
+<style>
+  /* zamknięte menu off-canvas (position:fixed, przesunięte w prawo) nie może
+     rozpychać dokumentu w bok — clip ucina poziom bez tworzenia scroll-kontenera
+     (pionowy scroll i sticky nav działają normalnie) */
+  @media (max-width: 900px) {
+    html, body { overflow-x: clip; }
+  }
+
+  /* podpowiedź „przesuń" — domyślnie ukryta (widoczna tylko na mobile) */
+  .m-swipe-hint { display: none; }
+
+  @media (max-width: 760px) {
+    /* tracki nie mogą rozpychać sekcji ponad szerokość ekranu */
+    .module-row { grid-template-columns: minmax(0, 1fr) !important; gap: 36px !important; }
+
+    /* szeroki podgląd aplikacji przewija się w poziomie wewnątrz swojego wrappera */
+    .m-scroll {
+      overflow-x: auto;
+      overflow-y: hidden;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+      padding-bottom: 10px;
+      /* delikatna maska wygaszająca prawą krawędź — sygnał, że można przesunąć */
+      -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 26px), transparent 100%);
+              mask-image: linear-gradient(to right, #000 calc(100% - 26px), transparent 100%);
+    }
+    .m-scroll::-webkit-scrollbar { height: 5px; }
+    .m-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+
+    /* utrzymanie naturalnej szerokości mockupu, by nic się nie ściskało */
+    #projectflow .rf-stage  { min-width: 500px; }
+    #zadania   .zd-stage   { min-width: 540px; }
+    #kalendarz .kal-stage  { min-width: 560px; }
+    #notatnik  .nt-frame   { min-width: 600px; }
+    #dyskusje  .dy-frame   { min-width: 480px; }
+
+    /* podpowiedź siedzi tuż pod grafiką (wewnątrz .module-shot, po scrollerze) */
+    .m-swipe-hint {
+      display: inline-flex;
+      margin-top: 12px;
+      font-family: "Inter", sans-serif;
+      font-size: 12px; font-weight: 600;
+      color: var(--muted-foreground);
+      align-items: center; gap: 6px;
+    }
+    .m-swipe-hint .material-symbols-rounded { font-size: 16px; color: var(--primary); }
+
+    /* Klienci: rozłóż „talię" obróconych kart w czytelną pionową listę
+       (na desktopie są position:absolute i nachodzą na siebie jak karty) */
+    #klienci .kl-deck {
+      aspect-ratio: auto !important;
+      max-width: 100%;
+      display: flex; flex-direction: column; gap: 22px;
+    }
+    #klienci .kl-card {
+      position: static !important;
+      width: 100% !important; height: auto !important;
+      transform: none !important;
+      inset: auto !important;
+      margin-top: 4px;
+    }
+  }
+</style>
+<script>
+  // Owiń szeroki mockup w przewijalny .m-scroll i wstaw podpowiedź tuż pod nim (raz)
+  (function () {
+    var map = { projectflow: '.rf-stage', zadania: '.zd-stage', kalendarz: '.kal-stage', notatnik: '.nt-frame', dyskusje: '.dy-frame' };
+    Object.keys(map).forEach(function (id) {
+      var sec = document.getElementById(id);
+      if (!sec) return;
+      var shot = sec.querySelector('.module-shot');
+      var stage = shot && shot.querySelector(map[id]);
+      if (!shot || !stage || shot.querySelector('.m-scroll')) return;
+      var scroll = document.createElement('div');
+      scroll.className = 'm-scroll';
+      stage.parentNode.insertBefore(scroll, stage);
+      scroll.appendChild(stage);
+      var hint = document.createElement('div');
+      hint.className = 'm-swipe-hint';
+      hint.innerHTML = '<span class="material-symbols-rounded">swipe</span>Przesuń, aby zobaczyć cały widok';
+      shot.appendChild(hint);
+    });
+  })();
+</script>
+
+<!-- Przełącznik języka PL/EN -->
+<script src="veedeck-i18n.js"></script>
+<script src="veedeck-megamenu.js"></script>
+<script src="veedeck-reveal.js"></script>
+
+<style>
+/* MFIX: off-canvas menu nie rozpycha strony w bok */
+@media (max-width: 900px) { html, body { overflow-x: clip; } }
+</style>
+</body>
+</html>
