@@ -304,12 +304,12 @@ function ProjectListView({ projects }: { projects: Project[] }) {
       {projects.map((p, i) => (
         <div
           key={p.id}
-          onClick={() => router.push(`/projects/${p.id}`)}
+          onClick={() => router.push(`/projekty/${p.id}`)}
           className={`grid grid-cols-[1fr_80px] sm:grid-cols-[1fr_180px_160px_80px] gap-4 px-5 py-4 items-center hover:bg-muted/30 transition-colors cursor-pointer ${i !== projects.length - 1 ? "border-b border-border" : ""}`}
         >
           {/* Title + description */}
           <div className="min-w-0">
-            <Link href={`/projects/${p.id}`} className="font-semibold text-foreground truncate flex items-center gap-1.5">
+            <Link href={`/projekty/${p.id}`} className="font-semibold text-foreground truncate flex items-center gap-1.5">
               {p.pinned && <Pin size={12} className="text-red-500 fill-red-500 flex-shrink-0" />}
               {p.title}
             </Link>

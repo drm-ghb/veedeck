@@ -146,19 +146,19 @@ export async function GET(req: NextRequest) {
         id: r.id,
         title: r.name,
         subtitle: r.project.title,
-        href: `/projects/${r.projectId}/rooms/${r.id}`,
+        href: `/projekty/${r.projectId}/rooms/${r.id}`,
       })),
       renders: renders.map((r) => ({
         id: r.id,
         title: r.name,
         subtitle: r.project.title,
-        href: `/projects/${r.projectId}/renders/${r.id}`,
+        href: `/projekty/${r.projectId}/renders/${r.id}`,
         imageUrl: r.fileUrl,
       })),
       lists: lists.map((l) => ({
         id: l.id,
         title: l.name,
-        href: l.slug ? `/listy/${l.slug}` : `/listy`,
+        href: l.slug ? `/listy-zakupowe/${l.slug}` : `/listy-zakupowe`,
       })),
       clients: clients.flatMap((c) => {
         if (!c.project) return [];
@@ -175,7 +175,7 @@ export async function GET(req: NextRequest) {
         id: f.id,
         title: f.name,
         subtitle: f.room.project.title,
-        href: `/projects/${f.room.projectId}/rooms/${f.roomId}`,
+        href: `/projekty/${f.room.projectId}/rooms/${f.roomId}`,
       })),
       tasks: tasks.map((t) => ({
         id: t.id,

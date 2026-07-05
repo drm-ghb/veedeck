@@ -21,7 +21,7 @@ export default function RenderThumbnail({
   projectId,
 }: RenderThumbnailProps) {
   return (
-    <Link href={`/projects/${projectId}/renders/${id}`}>
+    <Link href={`/projekty/${projectId}/renders/${id}`}>
       <Card className="overflow-hidden hover:shadow-[0_4px_16px_rgba(25,33,61,0.2)] hover:border-primary/30 transition-all cursor-pointer group">
         <div className="relative aspect-video bg-gray-100 overflow-hidden flex items-center justify-center">
           {fileType === "pdf" ? (

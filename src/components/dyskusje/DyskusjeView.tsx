@@ -234,9 +234,12 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
   const selected = discussions.find((d) => d.id === selectedId) ?? null;
 
 
-  const markAsRead = useCallback((id: string) => {
+  const markAsRead = useCallback((id: string, lastMessageId?: string) => {
     const now = new Date().toISOString();
     localStorage.setItem(`discussion-read-${id}`, now);
+    if (lastMessageId) {
+      localStorage.setItem(`discussion-lastread-msg-${id}`, lastMessageId);
+    }
     setLastReadTimes((prev) => ({ ...prev, [id]: now }));
   }, []);
 
@@ -368,25 +371,26 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
       .then((data) => {
         const msgs: DiscussionMessage[] = Array.isArray(data) ? data : (data.messages ?? []);
         const recs: ReadReceipt[] = data.receipts ?? [];
-        // Compute first unread message ID before rendering
+        // Compute first unread: use the more recent of DB receipt and localStorage
         const myReceipt = recs.find((r) => r.readerId === currentUserId);
-        if (myReceipt?.lastMessageId) {
-          const readIdx = msgs.findIndex((m) => m.id === myReceipt.lastMessageId);
-          firstUnreadIdRef.current = (readIdx !== -1 && readIdx < msgs.length - 1)
-            ? msgs[readIdx + 1].id
-            : null;
-        } else {
-          firstUnreadIdRef.current = null;
-        }
+        const dbLastId = myReceipt?.lastMessageId ?? null;
+        const localLastId = localStorage.getItem(`discussion-lastread-msg-${selectedId}`);
+        const dbIdx = dbLastId ? msgs.findIndex((m) => m.id === dbLastId) : -1;
+        const localIdx = localLastId ? msgs.findIndex((m) => m.id === localLastId) : -1;
+        const bestIdx = Math.max(dbIdx, localIdx);
+        firstUnreadIdRef.current = (bestIdx !== -1 && bestIdx < msgs.length - 1)
+          ? msgs[bestIdx + 1].id
+          : null;
         setMessages(msgs);
         setReceipts(dedupeReceipts(recs));
         setLoadingMessages(false);
-        markAsRead(selectedId);
-        if (msgs.length > 0) {
+        const lastMsgId = msgs.length > 0 ? msgs[msgs.length - 1].id : undefined;
+        markAsRead(selectedId, lastMsgId);
+        if (lastMsgId) {
           fetch(`/api/discussions/${selectedId}/read`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ lastMessageId: msgs[msgs.length - 1].id }),
+            body: JSON.stringify({ lastMessageId: lastMsgId }),
           }).catch(() => {});
         }
       })
@@ -444,7 +448,7 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
             : d
         )
       );
-      markAsRead(selectedId);
+      markAsRead(selectedId, msg.id);
     });
 
     channel.bind("read-receipt", (receipt: ReadReceipt) => {
@@ -1324,7 +1328,7 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                     </div>
                     {selected.project ? (
                       <a
-                        href={`/projects/${selected.project.id}`}
+                        href={`/projekty/${selected.project.id}`}
                         className="text-xs text-primary hover:underline flex items-center gap-1"
                       >
                         {selected.project.title}

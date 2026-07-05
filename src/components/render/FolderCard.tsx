@@ -52,7 +52,7 @@ export default function FolderCard({ folder, projectId, roomId, onFileDrop }: Fo
 
   return (
     <Link
-      href={`/projects/${projectId}/rooms/${roomId}/folders/${folder.id}`}
+      href={`/projekty/${projectId}/rooms/${roomId}/folders/${folder.id}`}
       className={`block group relative bg-card border rounded-2xl p-5 shadow-sm transition-all ${isDragOver ? "border-primary bg-primary/5 shadow-[0_4px_16px_rgba(25,33,61,0.2)]" : "border-border hover:shadow-[0_4px_16px_rgba(25,33,61,0.2)] hover:border-primary/30"}`}
       onDragEnter={handleDragEnter}
       onDragLeave={handleDragLeave}

@@ -9,7 +9,7 @@ import { useTheme } from "@/lib/theme";
 import { useT } from "@/lib/i18n";
 import { useUploadThing } from "@/lib/uploadthing-client";
 
-const DEFAULT_SIDEBAR_ORDER = ["klienci", "projectflow", "listy", "zadania", "ankiety", "produkty", "wykonawcy", "kalendarz", "notatnik", "dyskusje", "veezard"];
+const DEFAULT_SIDEBAR_ORDER = ["klienci", "projectflow", "listy-zakupowe", "zadania", "ankiety", "produkty", "wykonawcy", "kalendarz", "notatnik", "dyskusje", "veezard"];
 
 interface NavSidebarProps {
   hiddenModules: string[];
@@ -22,14 +22,14 @@ interface NavSidebarProps {
 
 function getSettingsHref(pathname: string): string {
   if (pathname.startsWith("/projectflow")) return "/ustawienia/projectflow";
-  if (pathname.startsWith("/listy")) return "/ustawienia/listy";
+  if (pathname.startsWith("/listy-zakupowe")) return "/ustawienia/listy";
   if (pathname.startsWith("/zadania")) return "/ustawienia/zadania";
   return "/ustawienia/ogolne";
 }
 
 const HIDDEN_ON: RegExp[] = [
-  /^\/projects\/[^/]+\/renders\//,
-  /^\/listy\/.+/,
+  /^\/projekty\/[^/]+\/renders\//,
+  /^\/listy-zakupowe\/.+/,
   /^\/wykonawcy\/[^/]+\/projekty\/[^/]+\/foldery\//,
 ];
 
@@ -176,8 +176,8 @@ export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userI
   const items = [
     { label: t.nav.dashboard, href: "/dashboard", icon: <LayoutDashboard size={18} />, slug: null, badge: 0, matchPrefixes: [] as string[] },
     { label: t.nav.projects, href: "/klienci", icon: <Users size={18} />, slug: null, badge: 0, matchPrefixes: [] as string[] },
-    { label: t.nav.renderflow, href: "/projectflow", icon: <PushPin size={18} />, slug: "renderflow", badge: 0, matchPrefixes: ["/projects/"] },
-    { label: t.nav.lists, href: "/listy", icon: <LocalMall size={18} />, slug: "listy", badge: 0, matchPrefixes: [] as string[] },
+    { label: t.nav.renderflow, href: "/projectflow", icon: <PushPin size={18} />, slug: "renderflow", badge: 0, matchPrefixes: ["/projekty/"] },
+    { label: t.nav.lists, href: "/listy-zakupowe", icon: <LocalMall size={18} />, slug: "listy", badge: 0, matchPrefixes: [] as string[] },
     { label: t.nav.contractors, href: "/wykonawcy", icon: <Engineering size={18} />, slug: null, badge: contractorUnread, matchPrefixes: [] as string[] },
     { label: t.nav.tasks, href: "/zadania", icon: <CheckSquare size={18} />, slug: null, badge: 0, matchPrefixes: [] as string[] },
     { label: t.nav.surveys, href: "/ankiety", icon: <ClipboardList size={18} />, slug: null, badge: 0, matchPrefixes: [] as string[] },
@@ -199,7 +199,7 @@ export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userI
   const forceCollapsed = HIDDEN_ON.some((pattern) => pattern.test(pathname));
   const isCollapsed = forceCollapsed || collapsed;
 
-  const normalizedSidebarOrder = sidebarOrder?.map((k) => k === "renderflow" ? "projectflow" : k);
+  const normalizedSidebarOrder = sidebarOrder?.map((k) => k === "renderflow" ? "projectflow" : k === "listy" ? "listy-zakupowe" : k);
   const order = normalizedSidebarOrder && normalizedSidebarOrder.length > 0
     ? [...normalizedSidebarOrder, ...DEFAULT_SIDEBAR_ORDER.filter((k) => !normalizedSidebarOrder.includes(k))]
     : DEFAULT_SIDEBAR_ORDER;

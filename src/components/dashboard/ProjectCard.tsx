@@ -68,7 +68,7 @@ export default function ProjectCard({
 
   return (
     <>
-    <Link href={`/projects/${id}`} className="block">
+    <Link href={`/projekty/${id}`} className="block">
       <Card className="hover:shadow-[0_4px_16px_rgba(25,33,61,0.2)] hover:border-primary/30 transition-all cursor-pointer h-full relative">
         <CardHeader className="flex-1">
           <div className="flex items-start justify-between gap-2">

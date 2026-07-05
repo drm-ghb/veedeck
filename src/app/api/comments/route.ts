@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
       data: {
         userId: render.project.userId,
         message: notifMessage,
-        link: `/projects/${render.project.id}/renders/${renderId}${isPin ? `?pinId=${comment.id}` : `?chatId=${comment.id}`}`,
+        link: `/projekty/${render.project.id}/renders/${renderId}${isPin ? `?pinId=${comment.id}` : `?chatId=${comment.id}`}`,
         projectId: render.project.id,
         projectTitle: render.project.title,
       },

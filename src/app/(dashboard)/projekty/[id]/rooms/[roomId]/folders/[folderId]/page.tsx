@@ -30,8 +30,8 @@ export default async function FolderPage({ params }: Props) {
   return (
     <div>
       <Breadcrumb items={[
-        { label: folder.room.project.title, href: `/projects/${id}` },
-        { label: folder.room.name, href: `/projects/${id}/rooms/${roomId}` },
+        { label: folder.room.project.title, href: `/projekty/${id}` },
+        { label: folder.room.name, href: `/projekty/${id}/rooms/${roomId}` },
         { label: folder.name },
       ]} />
 

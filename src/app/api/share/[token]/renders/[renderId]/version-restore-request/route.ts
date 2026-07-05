@@ -43,7 +43,7 @@ export async function POST(
     },
   });
 
-  const renderUrl = `/projects/${project.id}/renders/${renderId}`;
+  const renderUrl = `/projekty/${project.id}/renders/${renderId}`;
   const message = `${request.clientName} prosi o przywrócenie wersji ${version.versionNumber} pliku „${render.name}" w projekcie „${project.title}"`;
 
   const notification = await prisma.notification.create({

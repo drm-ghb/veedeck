@@ -335,7 +335,7 @@ export default function ProjectView({ projectId, rooms, archivedRooms, allRender
                 return selectionMode ? (
                   <div key={render.id} onClick={() => toggleSelect(render.id)}>{card}</div>
                 ) : (
-                  <Link key={render.id} href={`/projects/${projectId}/renders/${render.id}`}>{card}</Link>
+                  <Link key={render.id} href={`/projekty/${projectId}/renders/${render.id}`}>{card}</Link>
                 );
               })}
             </div>
@@ -379,7 +379,7 @@ export default function ProjectView({ projectId, rooms, archivedRooms, allRender
                 return selectionMode ? (
                   <div key={render.id} onClick={() => toggleSelect(render.id)}>{row}</div>
                 ) : (
-                  <Link key={render.id} href={`/projects/${projectId}/renders/${render.id}`}>{row}</Link>
+                  <Link key={render.id} href={`/projekty/${projectId}/renders/${render.id}`}>{row}</Link>
                 );
               })}
             </div>
@@ -534,7 +534,7 @@ function SortableRoomRow({ room, projectId, isLast }: { room: Room; projectId: s
       <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
         <Icon size={16} className="text-primary" />
       </div>
-      <a href={`/projects/${projectId}/rooms/${room.id}`} className="flex-1 min-w-0 flex items-center gap-1.5">
+      <a href={`/projekty/${projectId}/rooms/${room.id}`} className="flex-1 min-w-0 flex items-center gap-1.5">
         {room.pinned && <Pin size={11} className="text-red-500 fill-red-500 flex-shrink-0" />}
         <div className="min-w-0">
           <p className="text-sm font-medium text-gray-800 truncate">{room.name}</p>

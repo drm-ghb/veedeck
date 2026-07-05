@@ -124,9 +124,9 @@ describe("ProjectCard", () => {
     });
   });
 
-  it("link projektu kieruje do /projects/[id]", () => {
+  it("link projektu kieruje do /projekty/[id]", () => {
     render(<ProjectCard {...defaultProps} />);
     const link = screen.getByRole("link");
-    expect(link).toHaveAttribute("href", "/projects/proj-1");
+    expect(link).toHaveAttribute("href", "/projekty/proj-1");
   });
 });

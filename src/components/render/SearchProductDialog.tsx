@@ -484,7 +484,7 @@ export default function SearchProductDialog({ open, onClose, onSelect, projectId
                         ? `Lista „${allLists.find((l) => l.id === selectedListId)?.name ?? ""}" ${t.render.searchListNoProducts}`
                         : t.render.searchSelectListHint}
                     </p>
-                    <Link href="/listy" onClick={handleClose} className="text-xs text-primary hover:underline">
+                    <Link href="/listy-zakupowe" onClick={handleClose} className="text-xs text-primary hover:underline">
                       {t.render.searchGoToLists}
                     </Link>
                   </div>

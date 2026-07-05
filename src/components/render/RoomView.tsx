@@ -643,7 +643,7 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
                       return selectionMode ? (
                         <div key={render.id} onClick={() => toggleSelect(render.id)} className={`rounded-xl transition-all duration-500 ${isNew ? "ring-2 ring-violet-500 ring-offset-2" : ""}`}>{cardContent}</div>
                       ) : (
-                        <Link key={render.id} href={`/projects/${projectId}/renders/${render.id}`} className={`block rounded-xl transition-all duration-500 ${isNew ? "ring-2 ring-violet-500 ring-offset-2" : ""}`}>{cardContent}</Link>
+                        <Link key={render.id} href={`/projekty/${projectId}/renders/${render.id}`} className={`block rounded-xl transition-all duration-500 ${isNew ? "ring-2 ring-violet-500 ring-offset-2" : ""}`}>{cardContent}</Link>
                       );
                     })}
                   </div>
@@ -693,7 +693,7 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
                       return selectionMode ? (
                         <div key={render.id} onClick={() => toggleSelect(render.id)}>{row}</div>
                       ) : (
-                        <Link key={render.id} href={`/projects/${projectId}/renders/${render.id}`}>{row}</Link>
+                        <Link key={render.id} href={`/projekty/${projectId}/renders/${render.id}`}>{row}</Link>
                       );
                     })}
                   </div>

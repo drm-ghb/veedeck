@@ -463,7 +463,7 @@ export default function DashboardView({
 
             {!hiddenModules.includes("listy") && (
               <Link
-                href="/listy"
+                href="/listy-zakupowe"
                 className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border hover:border-primary/30 hover:bg-primary/5 transition-colors"
               >
                 <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
@@ -516,7 +516,7 @@ export default function DashboardView({
                 {recentProjects.map((project, i) => (
                   <Link
                     key={project.id}
-                    href={`/projects/${project.id}`}
+                    href={`/projekty/${project.id}`}
                     className={`group flex flex-col rounded-xl border border-border bg-card overflow-hidden hover:border-primary/30 hover:shadow-md transition-all${i > 0 ? " hidden sm:flex" : ""}`}
                   >
                     <div className="w-full aspect-[4/3] bg-muted flex items-center justify-center overflow-hidden">
@@ -570,7 +570,7 @@ export default function DashboardView({
         <div className="order-5 space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-semibold text-foreground">{t.home.recentListsTitle}</h2>
-              <Link href="/listy" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-0.5 transition-colors">
+              <Link href="/listy-zakupowe" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-0.5 transition-colors">
                 {t.home.allLabel} <ChevronRight size={13} />
               </Link>
             </div>
@@ -583,7 +583,7 @@ export default function DashboardView({
             ) : (
               <div className="rounded-xl border border-border bg-card divide-y divide-border overflow-hidden">
                 {recentLists.map((list) => (
-                  <Link key={list.id} href={`/listy/${list.slug ?? list.id}`} className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors">
+                  <Link key={list.id} href={`/listy-zakupowe/${list.slug ?? list.id}`} className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors">
                     <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                       <LocalMall size={18} className="text-primary" />
                     </div>
@@ -699,7 +699,7 @@ export default function DashboardView({
                         const d = item.data;
                         return (
                           <div key={d.id} className="flex items-center hover:bg-muted/50 transition-colors">
-                            <Link href={`/projects/${d.projectId}/renders/${d.renderId}`} onClick={() => markDiscussionViewed(d.id)} className="flex items-start gap-3 px-4 py-3 flex-1 min-w-0">
+                            <Link href={`/projekty/${d.projectId}/renders/${d.renderId}`} onClick={() => markDiscussionViewed(d.id)} className="flex items-start gap-3 px-4 py-3 flex-1 min-w-0">
                               <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5"><Comment size={15} className="text-primary" /></div>
                               <div className="min-w-0 flex-1">
                                 <p className="text-sm font-medium truncate">{d.content}</p>
@@ -715,7 +715,7 @@ export default function DashboardView({
                         const r = item.data;
                         return (
                           <div key={r.id} className="flex items-center hover:bg-muted/50 transition-colors">
-                            <Link href={`/listy/${r.listSlug ?? r.listId}?product=${r.productId}`} onClick={() => markListReplyViewed(r)} className="flex items-start gap-3 px-4 py-3 flex-1 min-w-0">
+                            <Link href={`/listy-zakupowe/${r.listSlug ?? r.listId}?product=${r.productId}`} onClick={() => markListReplyViewed(r)} className="flex items-start gap-3 px-4 py-3 flex-1 min-w-0">
                               <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5"><Comment size={15} className="text-primary" /></div>
                               <div className="min-w-0 flex-1">
                                 <p className="text-sm font-medium truncate">{r.content}</p>
@@ -731,7 +731,7 @@ export default function DashboardView({
                         const r = item.data;
                         return (
                           <div key={r.id} className="flex items-center hover:bg-muted/50 transition-colors">
-                            <Link href={`/projects/${r.projectId}/renders/${r.renderId}`} onClick={() => markRenderReplyViewed(r)} className="flex items-start gap-3 px-4 py-3 flex-1 min-w-0">
+                            <Link href={`/projekty/${r.projectId}/renders/${r.renderId}`} onClick={() => markRenderReplyViewed(r)} className="flex items-start gap-3 px-4 py-3 flex-1 min-w-0">
                               <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5"><Comment size={15} className="text-primary" /></div>
                               <div className="min-w-0 flex-1">
                                 <p className="text-sm font-medium truncate">{r.content}</p>
@@ -746,7 +746,7 @@ export default function DashboardView({
                       const m = item.data;
                       return (
                         <div key={m.id} className="flex items-center hover:bg-muted/50 transition-colors">
-                          <Link href={`/listy/${m.listSlug ?? m.listId}?product=${m.productId}`} onClick={() => markListMessageViewed(m.id)} className="flex items-start gap-3 px-4 py-3 flex-1 min-w-0">
+                          <Link href={`/listy-zakupowe/${m.listSlug ?? m.listId}?product=${m.productId}`} onClick={() => markListMessageViewed(m.id)} className="flex items-start gap-3 px-4 py-3 flex-1 min-w-0">
                             <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5"><Comment size={15} className="text-primary" /></div>
                             <div className="min-w-0 flex-1">
                               <p className="text-sm font-medium truncate">{m.content}</p>
@@ -821,7 +821,7 @@ export default function DashboardView({
                   return (
                     <div key={pin.id} className="flex items-center hover:bg-muted/50 transition-colors">
                       <Link
-                        href={`/projects/${pin.projectId}/renders/${pin.renderId}?pinId=${pin.id}`}
+                        href={`/projekty/${pin.projectId}/renders/${pin.renderId}?pinId=${pin.id}`}
                         onClick={() => markPinViewed(pin.id)}
                         className="flex items-start gap-3 px-4 py-3 flex-1 min-w-0"
                       >

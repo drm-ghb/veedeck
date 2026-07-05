@@ -707,9 +707,9 @@ export default function RenderViewer({
       }
       toast.success(t.render.fileDeleted);
       if (roomId && projectId) {
-        router.push(`/projects/${projectId}/rooms/${roomId}`);
+        router.push(`/projekty/${projectId}/rooms/${roomId}`);
       } else if (projectId) {
-        router.push(`/projects/${projectId}`);
+        router.push(`/projekty/${projectId}`);
       } else {
         router.back();
       }
@@ -1525,8 +1525,8 @@ export default function RenderViewer({
         if (e.key === "ArrowLeft" && lightboxIndex > 0) { setLightboxIndex((i) => i - 1); setZoom(1); onViewCounted?.(roomRenders[lightboxIndex - 1].id); }
         if (e.key === "ArrowRight" && lightboxIndex < roomRenders.length - 1) { setLightboxIndex((i) => i + 1); setZoom(1); onViewCounted?.(roomRenders[lightboxIndex + 1].id); }
       } else if (projectId) {
-        if (e.key === "ArrowLeft" && prevRender) router.push(`/projects/${projectId}/renders/${prevRender.id}`);
-        if (e.key === "ArrowRight" && nextRender) router.push(`/projects/${projectId}/renders/${nextRender.id}`);
+        if (e.key === "ArrowLeft" && prevRender) router.push(`/projekty/${projectId}/renders/${prevRender.id}`);
+        if (e.key === "ArrowRight" && nextRender) router.push(`/projekty/${projectId}/renders/${nextRender.id}`);
       } else if (onRenderSelect) {
         if (e.key === "ArrowLeft" && prevRender) onRenderSelect(prevRender);
         if (e.key === "ArrowRight" && nextRender) onRenderSelect(nextRender);
@@ -1586,7 +1586,7 @@ export default function RenderViewer({
                 </button>
               ) : (
                 <Link
-                  href={folderId && roomId ? `/projects/${projectId}/rooms/${roomId}/folders/${folderId}` : roomId ? `/projects/${projectId}/rooms/${roomId}` : `/projects/${projectId}`}
+                  href={folderId && roomId ? `/projekty/${projectId}/rooms/${roomId}/folders/${folderId}` : roomId ? `/projekty/${projectId}/rooms/${roomId}` : `/projekty/${projectId}`}
                   className="flex-shrink-0 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
                 >
                   <ChevronLeft size={20} />
@@ -1624,7 +1624,7 @@ export default function RenderViewer({
               <>
                 {projectTitle && (
                   <>
-                    <Link href={`/projects/${projectId}`} className="min-w-0 shrink text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors font-medium truncate max-w-[120px]" title={projectTitle}>
+                    <Link href={`/projekty/${projectId}`} className="min-w-0 shrink text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors font-medium truncate max-w-[120px]" title={projectTitle}>
                       {projectTitle}
                     </Link>
                     <ChevronLeft size={13} className="flex-shrink-0 text-gray-300 rotate-180" />
@@ -1632,7 +1632,7 @@ export default function RenderViewer({
                 )}
                 {roomId && roomName && (
                   <>
-                    <Link href={`/projects/${projectId}/rooms/${roomId}`} className="min-w-0 shrink text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors font-medium truncate max-w-[120px]" title={roomName}>
+                    <Link href={`/projekty/${projectId}/rooms/${roomId}`} className="min-w-0 shrink text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors font-medium truncate max-w-[120px]" title={roomName}>
                       {roomName}
                     </Link>
                     <ChevronLeft size={13} className="flex-shrink-0 text-gray-300 rotate-180" />
@@ -1640,7 +1640,7 @@ export default function RenderViewer({
                 )}
                 {folderId && folderName && roomId && (
                   <>
-                    <Link href={`/projects/${projectId}/rooms/${roomId}/folders/${folderId}`} className="min-w-0 shrink text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors font-medium truncate max-w-[120px]" title={folderName}>
+                    <Link href={`/projekty/${projectId}/rooms/${roomId}/folders/${folderId}`} className="min-w-0 shrink text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors font-medium truncate max-w-[120px]" title={folderName}>
                       {folderName}
                     </Link>
                     <ChevronLeft size={13} className="flex-shrink-0 text-gray-300 rotate-180" />
@@ -1889,7 +1889,7 @@ export default function RenderViewer({
                 isDesigner ? (
                   <Link
                     key={r.id}
-                    href={`/projects/${projectId}/renders/${r.id}`}
+                    href={`/projekty/${projectId}/renders/${r.id}`}
                     data-sidebar-active={r.id === renderId ? "true" : undefined}
                     className={`block rounded-lg overflow-hidden border-2 transition-colors ${
                       r.id === renderId
@@ -1943,7 +1943,7 @@ export default function RenderViewer({
           {/* Left navigation arrow */}
           {prevRender && (projectId || onRenderSelect) && (
             <button
-              onClick={() => projectId ? router.push(`/projects/${projectId}/renders/${prevRender.id}`) : onRenderSelect?.(prevRender)}
+              onClick={() => projectId ? router.push(`/projekty/${projectId}/renders/${prevRender.id}`) : onRenderSelect?.(prevRender)}
               className="absolute left-3 top-1/2 -translate-y-1/2 z-10 bg-white/80 hover:bg-white dark:bg-gray-800/80 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full p-2 shadow-md text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 transition-all sm:opacity-60 sm:hover:opacity-100"
               title={prevRender.name}
             >
@@ -1953,7 +1953,7 @@ export default function RenderViewer({
           {/* Right navigation arrow */}
           {nextRender && (projectId || onRenderSelect) && (
             <button
-              onClick={() => projectId ? router.push(`/projects/${projectId}/renders/${nextRender.id}`) : onRenderSelect?.(nextRender)}
+              onClick={() => projectId ? router.push(`/projekty/${projectId}/renders/${nextRender.id}`) : onRenderSelect?.(nextRender)}
               className="absolute right-3 top-1/2 -translate-y-1/2 z-10 bg-white/80 hover:bg-white dark:bg-gray-800/80 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full p-2 shadow-md text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 transition-all sm:opacity-60 sm:hover:opacity-100"
               title={nextRender.name}
             >
@@ -2676,7 +2676,7 @@ export default function RenderViewer({
                           }`}
                           onClick={() => {
                             if (isFromOtherRender && projectId) {
-                              router.push(`/projects/${projectId}/renders/${c.renderId}?pinId=${c.id}`);
+                              router.push(`/projekty/${projectId}/renders/${c.renderId}?pinId=${c.id}`);
                               return;
                             }
                             setSelectedId(c.id === selectedId ? null : c.id);
@@ -3174,7 +3174,7 @@ export default function RenderViewer({
                   setMode("view");
                   cancelPending();
                   if (projectId && lightboxRender.id !== renderId) {
-                    router.push(`/projects/${projectId}/renders/${lightboxRender.id}`);
+                    router.push(`/projekty/${projectId}/renders/${lightboxRender.id}`);
                   }
                 }}
                 className="p-2 text-white/60 hover:text-white hover:bg-white/10 rounded-md transition-colors"

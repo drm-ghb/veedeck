@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
         data: {
           userId: list.userId,
           message: `${author} dodał komentarz do produktu „${product.name}" w liście „${list.name}"`,
-          link: `/listy/${listPath}?product=${productId}`,
+          link: `/listy-zakupowe/${listPath}?product=${productId}`,
           type: "list_comment",
         },
       });

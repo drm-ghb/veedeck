@@ -57,7 +57,7 @@ export async function PATCH(
         data: {
           userId: list.userId,
           message: `${clientName} ${label} produkt „${product.name}" na liście „${list.name}"`,
-          link: `/listy/${listPath}`,
+          link: `/listy-zakupowe/${listPath}`,
           type: "list_approval",
         },
       });

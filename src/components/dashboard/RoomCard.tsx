@@ -25,7 +25,7 @@ export default function RoomCard({ room, projectId }: RoomCardProps) {
 
   return (
     <Link
-      href={`/projects/${projectId}/rooms/${room.id}`}
+      href={`/projekty/${projectId}/rooms/${room.id}`}
       className="block group relative bg-card border border-border rounded-2xl p-5 shadow-sm hover:shadow-[0_4px_16px_rgba(25,33,61,0.2)] hover:border-primary/30 transition-all"
     >
       {/* Icon */}

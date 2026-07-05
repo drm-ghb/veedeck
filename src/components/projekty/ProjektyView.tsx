@@ -206,7 +206,7 @@ export default function ProjektyView({ projects, archivedProjects }: ProjektyVie
                     {new Date(p.createdAt).toLocaleDateString("pl-PL", { day: "2-digit", month: "short", year: "numeric" })}
                   </p>
                   <div className="hidden sm:flex items-center gap-2 flex-wrap">
-                    <Link href={`/projects/${p.id}`} onClick={(e) => e.stopPropagation()} className="inline-flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-md bg-primary/10 text-primary dark:bg-white/10 dark:text-white hover:bg-primary/20 dark:hover:bg-white/20 transition-colors">
+                    <Link href={`/projekty/${p.id}`} onClick={(e) => e.stopPropagation()} className="inline-flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-md bg-primary/10 text-primary dark:bg-white/10 dark:text-white hover:bg-primary/20 dark:hover:bg-white/20 transition-colors">
                       <ImageIcon size={11} />
                       {t.nav.renderflow}
                       {p.renderCount > 0 && <span className="text-[10px] opacity-60">({p.renderCount} {t.projekty.renders})</span>}

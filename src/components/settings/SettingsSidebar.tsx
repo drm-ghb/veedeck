@@ -27,7 +27,7 @@ export default function SettingsSidebar() {
       href: "/ustawienia/listy",
       label: t.settings.lists,
       icon: <LocalMall size={16} />,
-      module: { href: "/listy", label: t.settings.lists },
+      module: { href: "/listy-zakupowe", label: t.settings.lists },
     },
     {
       href: "/ustawienia/zadania",

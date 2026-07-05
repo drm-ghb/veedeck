@@ -31,7 +31,7 @@ describe("FolderCard", () => {
   it("link kieruje do właściwej ścieżki", () => {
     render(<FolderCard folder={folder} projectId="proj-1" roomId="room-1" />);
     const link = screen.getByRole("link");
-    expect(link).toHaveAttribute("href", "/projects/proj-1/rooms/room-1/folders/folder-1");
+    expect(link).toHaveAttribute("href", "/projekty/proj-1/rooms/room-1/folders/folder-1");
   });
 
   it("wyświetla liczbę plików — 1 plik (forma pojedyncza)", () => {

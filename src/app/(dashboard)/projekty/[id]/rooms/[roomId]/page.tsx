@@ -48,7 +48,7 @@ export default async function RoomPage({ params }: Props) {
   return (
     <div>
       <Breadcrumb items={[
-        { label: room.project.title, href: `/projects/${id}` },
+        { label: room.project.title, href: `/projekty/${id}` },
         { label: room.name },
       ]} />
 

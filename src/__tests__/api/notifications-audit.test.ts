@@ -211,7 +211,7 @@ describe("Guard !isDesigner — POST /api/comments", () => {
 
   it("triggeruje Pusher z nowym powiadomieniem gdy klient komentuje", async () => {
     vi.mocked(auth).mockResolvedValue(null);
-    const notif = { id: "notif-1", message: "Klient wysłał...", link: "/projects/proj-1/renders/r1", read: false, createdAt: new Date() };
+    const notif = { id: "notif-1", message: "Klient wysłał...", link: "/projekty/proj-1/renders/r1", read: false, createdAt: new Date() };
     vi.mocked(prisma.notification.create).mockResolvedValue(notif as any);
 
     await PostComment(makeRequest("POST", { renderId: "r1", content: "Treść", author: "Klient" }));
@@ -284,7 +284,7 @@ describe("Guard !isDesigner — POST /api/list-comments", () => {
 
   it("triggeruje Pusher z nowym powiadomieniem gdy klient komentuje", async () => {
     vi.mocked(auth).mockResolvedValue(null);
-    const notif = { id: "notif-2", message: "Klient dodał...", link: "/listy/lista-salonu?product=prod-1", read: false };
+    const notif = { id: "notif-2", message: "Klient dodał...", link: "/listy-zakupowe/lista-salonu?product=prod-1", read: false };
     vi.mocked(prisma.notification.create).mockResolvedValue(notif as any);
 
     await PostListComment(makeRequest("POST", {

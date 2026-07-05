@@ -150,7 +150,7 @@ export async function notifyDesignerNewPin(opts: {
   renderId: string;
   commentId: string;
 }) {
-  const link = `${APP_URL}/projects/${opts.projectId}/renders/${opts.renderId}?pinId=${opts.commentId}`;
+  const link = `${APP_URL}/projekty/${opts.projectId}/renders/${opts.renderId}?pinId=${opts.commentId}`;
   await sendNotificationEmail(
     opts.designerEmail,
     `Nowy pin w projekcie „${opts.projectTitle}"`,
@@ -173,7 +173,7 @@ export async function notifyDesignerNewComment(opts: {
   renderId: string;
   commentId: string;
 }) {
-  const link = `${APP_URL}/projects/${opts.projectId}/renders/${opts.renderId}?chatId=${opts.commentId}`;
+  const link = `${APP_URL}/projekty/${opts.projectId}/renders/${opts.renderId}?chatId=${opts.commentId}`;
   await sendNotificationEmail(
     opts.designerEmail,
     `Nowa wiadomość w projekcie „${opts.projectTitle}"`,
@@ -216,7 +216,7 @@ export async function notifyDesignerStatusRequest(opts: {
   renderName: string;
   clientName: string;
 }) {
-  const link = `${APP_URL}/projects/${opts.projectId}/renders/${opts.renderId}`;
+  const link = `${APP_URL}/projekty/${opts.projectId}/renders/${opts.renderId}`;
   await sendNotificationEmail(
     opts.designerEmail,
     `Prośba o zmianę statusu w projekcie „${opts.projectTitle}"`,
@@ -237,7 +237,7 @@ export async function notifyDesignerVersionRequest(opts: {
   clientName: string;
   versionNumber: number;
 }) {
-  const link = `${APP_URL}/projects/${opts.projectId}/renders/${opts.renderId}`;
+  const link = `${APP_URL}/projekty/${opts.projectId}/renders/${opts.renderId}`;
   await sendNotificationEmail(
     opts.designerEmail,
     `Prośba o przywrócenie wersji w projekcie „${opts.projectTitle}"`,
@@ -258,7 +258,7 @@ export async function notifyClientDesignerReply(opts: {
   designerName: string;
   content: string;
 }) {
-  const link = `${APP_URL}/projects/${opts.projectId}/renders/${opts.renderId}`;
+  const link = `${APP_URL}/projekty/${opts.projectId}/renders/${opts.renderId}`;
   await sendNotificationEmail(
     opts.clientEmail,
     `Projektant odpowiedział w projekcie „${opts.projectTitle}"`,

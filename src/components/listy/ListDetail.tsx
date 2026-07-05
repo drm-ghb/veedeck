@@ -1824,7 +1824,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
       <div className="flex items-center justify-between gap-2 mb-5 min-w-0">
         <div className="flex items-center gap-2 min-w-0">
           <Link
-            href="/listy"
+            href="/listy-zakupowe"
             className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors shrink-0"
           >
             <ChevronLeft size={16} />

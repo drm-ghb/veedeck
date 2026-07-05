@@ -87,7 +87,7 @@ export default auth((req) => {
     const MODULE_ROUTES: Record<string, string> = {
       renderflow: "/projectflow",
       klienci: "/klienci",
-      listy: "/listy",
+      listy: "/listy-zakupowe",
       wykonawcy: "/wykonawcy",
       zadania: "/zadania",
       produkty: "/produkty",

@@ -7,3 +7,7 @@
 /privacy-policy             /polityka-prywatnosci.html           200
 /privacy-policy-veepick     /polityka-prywatnosci-veepick.html   200
 /cookie-policy              /polityka-cookies.html               200
+
+# App redirects — login lives on app.veedeck.com
+/login                      https://app.veedeck.com/login        301
+/login.html                 https://app.veedeck.com/login        301

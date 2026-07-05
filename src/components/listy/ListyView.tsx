@@ -390,7 +390,7 @@ export default function ListyView({ lists: initialLists }: ListyViewProps) {
               list={list}
               isLast={i === filtered.length - 1}
               unreadCount={unreadListCounts[list.id] ?? 0}
-              onNavigate={() => router.push(`/listy/${list.slug ?? list.id}`)}
+              onNavigate={() => router.push(`/listy-zakupowe/${list.slug ?? list.id}`)}
               onCopyLink={handleCopyLink}
               menu={<ListMenu list={list} />}
             />
@@ -461,7 +461,7 @@ function SortableListGridCard({ list, unreadCount, onCopyLink, menu }: {
       >
         <GripVertical size={13} />
       </div>
-      <Link href={`/listy/${list.slug ?? list.id}`} className={`flex items-start gap-3 p-4 pr-16 block ${list.pinned ? "pl-8" : ""}`}>
+      <Link href={`/listy-zakupowe/${list.slug ?? list.id}`} className={`flex items-start gap-3 p-4 pr-16 block ${list.pinned ? "pl-8" : ""}`}>
         <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
           <LocalMall size={16} className="text-primary" />
         </div>

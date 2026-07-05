@@ -40,7 +40,7 @@ export async function POST(
     },
   });
 
-  const renderUrl = `/projects/${project.id}/renders/${renderId}`;
+  const renderUrl = `/projekty/${project.id}/renders/${renderId}`;
   const message = `${request.clientName} prosi o zmianę statusu pliku „${render.name}" na „Do weryfikacji" w projekcie „${project.title}"`;
 
   const notification = await prisma.notification.create({
