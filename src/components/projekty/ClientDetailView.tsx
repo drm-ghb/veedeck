@@ -585,15 +585,15 @@ export default function ClientDetailView({ client: initialClient }: Props) {
               />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 min-w-0">
                 <Label htmlFor="start-date">{t.projekty.startDateLabel}</Label>
-                <div className="relative">
+                <div className="relative overflow-hidden">
                   <Input
                     id="start-date"
                     type="date"
                     value={clientStartDate}
                     onChange={(e) => setClientStartDate(e.target.value)}
-                    className="pr-7"
+                    className="pr-7 w-full max-w-full"
                   />
                   {clientStartDate && (
                     <button
@@ -606,15 +606,15 @@ export default function ClientDetailView({ client: initialClient }: Props) {
                   )}
                 </div>
               </div>
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 min-w-0">
                 <Label htmlFor="end-date">{t.projekty.endDateLabel}</Label>
-                <div className="relative">
+                <div className="relative overflow-hidden">
                   <Input
                     id="end-date"
                     type="date"
                     value={clientEndDate}
                     onChange={(e) => setClientEndDate(e.target.value)}
-                    className="pr-7"
+                    className="pr-7 w-full max-w-full"
                   />
                   {clientEndDate && (
                     <button
