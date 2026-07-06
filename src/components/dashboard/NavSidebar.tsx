@@ -173,6 +173,22 @@ export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userI
     }
   }, [pathname]);
 
+  // Auto-collapse on tablet (768–1023px); restore saved preference on desktop (≥1024px)
+  useEffect(() => {
+    function syncToWidth() {
+      const w = window.innerWidth;
+      if (w >= 768 && w < 1024) {
+        setCollapsed(true);
+      } else if (w >= 1024) {
+        const saved = localStorage.getItem("nav-sidebar-collapsed");
+        setCollapsed(saved === "true");
+      }
+    }
+    syncToWidth();
+    window.addEventListener("resize", syncToWidth);
+    return () => window.removeEventListener("resize", syncToWidth);
+  }, []);
+
   const items = [
     { label: t.nav.dashboard, href: "/panel-glowny", icon: <LayoutDashboard size={18} />, slug: null, badge: 0, matchPrefixes: [] as string[] },
     { label: t.nav.projects, href: "/klienci", icon: <Users size={18} />, slug: null, badge: 0, matchPrefixes: [] as string[] },

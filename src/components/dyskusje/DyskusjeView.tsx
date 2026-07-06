@@ -1340,7 +1340,7 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                   </div>
                   <div className="ml-auto flex gap-1 items-center">
                     {/* Desktop tools */}
-                    <div className="hidden md:flex gap-1 items-center">
+                    <div className="hidden lg:flex gap-1 items-center">
                       <button
                         onClick={() => { setChatSearchOpen((v) => !v); setChatSearch(""); }}
                         title={t.dyskusje.searchTitle}
@@ -1402,7 +1402,7 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                     </div>
 
                     {/* Mobile: 3-dot menu */}
-                    <div className="md:hidden relative" ref={mobileActionsRef}>
+                    <div className="lg:hidden relative" ref={mobileActionsRef}>
                       <button
                         onClick={() => setMobileActionsOpen((v) => !v)}
                         className={`p-1.5 rounded-lg transition-colors ${mobileActionsOpen ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
