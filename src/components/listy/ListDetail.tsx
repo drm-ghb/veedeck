@@ -514,8 +514,8 @@ function ProductRow({
       {copyPortal}
       {categoryPortal}
 
-      {/* ── DESKTOP layout (md+) — original ── */}
-      <div className="hidden md:flex items-center gap-2 px-4 py-4">
+      {/* ── DESKTOP layout (lg+) — original ── */}
+      <div className="hidden lg:flex items-center gap-2 px-4 py-4">
         <div className="opacity-100 flex flex-col items-center gap-1 self-stretch justify-center shrink-0">
           {product.hidden && (
             <button onClick={() => setCollapsed((c) => !c)} className="w-4 h-5 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors" title={isCollapsed ? t.listy.expand : t.listy.collapse}>
@@ -720,8 +720,8 @@ function ProductRow({
         )}
       </div>
 
-      {/* ── MOBILE layout (< md) — compact ── */}
-      <div className="md:hidden flex items-start gap-2 px-3 py-2.5">
+      {/* ── MOBILE layout (< lg) — compact ── */}
+      <div className="lg:hidden flex items-start gap-2 px-3 py-2.5">
         <div className="w-20 h-20 shrink-0 rounded-lg overflow-hidden bg-white flex items-center justify-center">
           {product.imageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -1819,7 +1819,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
 
   return (
     <div className="pb-24">
-      <div className="md:max-w-[75%] md:mx-auto">
+      <div className="lg:max-w-[75%] lg:mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between gap-2 mb-5 min-w-0">
         <div className="flex items-center gap-2 min-w-0">
@@ -1859,8 +1859,8 @@ export default function ListDetail({ list, designerName, designerEmail, designer
       )}
 
       {/* Toolbar */}
-      <div className="mb-6 md:mb-0 md:sticky md:top-0 md:z-20 md:-mx-6 md:px-6 md:bg-background md:pb-3 md:pt-2">
-        <div className="md:max-w-[75%] md:mx-auto">
+      <div className="mb-6 lg:mb-0 lg:sticky lg:top-0 lg:z-20 lg:-mx-6 lg:px-6 lg:bg-background lg:pb-3 lg:pt-2">
+        <div className="lg:max-w-[75%] lg:mx-auto">
           <div className="flex flex-wrap items-center justify-between gap-2 p-2 bg-muted/40 border border-border rounded-xl shadow-sm">
         <div className="flex items-center gap-1.5 flex-wrap">
           <Button onClick={openAddSection} className="flex items-center gap-1.5 h-8 px-3 text-xs">
@@ -1966,9 +1966,9 @@ export default function ListDetail({ list, designerName, designerEmail, designer
         </div>
       </div>
 
-      <div className="md:max-w-[75%] md:mx-auto">
+      <div className="lg:max-w-[75%] lg:mx-auto">
       {displaySections.filter((s) => !s.unsorted).length > 1 && (
-        <div className="hidden md:block h-0 overflow-visible sticky top-[76px] z-30">
+        <div className="hidden lg:block h-0 overflow-visible sticky top-[76px] z-30">
           <div className="absolute right-full top-0 pr-4 w-36">
             <ListSectionNav
               sections={displaySections.filter((s) => !s.unsorted).map((s) => ({ id: s.id, name: s.name }))}
