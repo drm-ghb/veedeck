@@ -180,10 +180,10 @@ function ContractorListView({ contractors, unreadPerContractor = {}, onDeleted }
 
   return (
     <div className="bg-card border border-border rounded-xl overflow-hidden">
-      <div className="hidden sm:grid grid-cols-[1fr_180px_160px_140px_80px] gap-4 px-5 py-3 bg-muted/50 border-b border-border text-xs font-medium text-muted-foreground uppercase tracking-wide">
+      <div className="hidden sm:grid grid-cols-[1fr_140px_80px] lg:grid-cols-[1fr_180px_160px_140px_80px] gap-4 px-5 py-3 bg-muted/50 border-b border-border text-xs font-medium text-muted-foreground uppercase tracking-wide">
         <span>{t.wykonawcy.colCompanyContractor}</span>
-        <span></span>
-        <span>{t.wykonawcy.colSpecialization}</span>
+        <span className="hidden lg:block"></span>
+        <span className="hidden lg:block">{t.wykonawcy.colSpecialization}</span>
         <span>{t.wykonawcy.colProjects}</span>
         <span className="text-right">{t.wykonawcy.colActions}</span>
       </div>
@@ -191,7 +191,7 @@ function ContractorListView({ contractors, unreadPerContractor = {}, onDeleted }
         <div
           key={c.id}
           onClick={() => router.push(`/wykonawcy/${c.id}`)}
-          className={`grid grid-cols-[1fr_auto] sm:grid-cols-[1fr_180px_160px_140px_80px] gap-4 px-5 py-4 items-center hover:bg-muted/30 transition-colors cursor-pointer ${i !== contractors.length - 1 ? "border-b border-border" : ""}`}
+          className={`grid grid-cols-[1fr_140px_80px] lg:grid-cols-[1fr_180px_160px_140px_80px] gap-4 px-5 py-4 items-center hover:bg-muted/30 transition-colors cursor-pointer ${i !== contractors.length - 1 ? "border-b border-border" : ""}`}
         >
           <div className="min-w-0">
             <p className="font-semibold text-gray-900 dark:text-gray-100 truncate">
@@ -201,20 +201,20 @@ function ContractorListView({ contractors, unreadPerContractor = {}, onDeleted }
               <p className="text-xs text-muted-foreground truncate mt-0.5">{c.name}</p>
             )}
           </div>
-          <div className="hidden sm:block">
+          <div className="hidden lg:block">
             {(unreadPerContractor[c.id] ?? 0) > 0 && (
               <Badge variant="default" className="text-xs whitespace-nowrap">
                 {t.wykonawcy.unread} {unreadPerContractor[c.id]}
               </Badge>
             )}
           </div>
-          <div className="hidden sm:block">
+          <div className="hidden lg:block">
             {c.trade
               ? <Badge variant="secondary" className="text-xs">{c.trade}</Badge>
               : <span className="text-xs text-muted-foreground">—</span>
             }
           </div>
-          <div className="hidden sm:block">
+          <div>
             <Badge variant="secondary" className="text-xs">
               {c._count.assignments === 1
                 ? t.wykonawcy.project1

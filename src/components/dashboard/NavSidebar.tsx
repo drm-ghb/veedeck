@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import Pusher from "pusher-js";
 import { LayoutDashboard, Users, LocalMall, Package, PanelLeftClose, PanelLeftOpen, Settings, Sun, Moon, HelpCircle, X, CheckCircle, PushPin, ShieldCheck, CalendarDays, NotebookText, ChatBubble, CheckSquare, VeezardIcon, BookOpen, ClipboardList, Engineering, ChevronDown, Paperclip, Trash2 } from "@/components/ui/icons";
 import { useTheme } from "@/lib/theme";
@@ -38,6 +38,7 @@ export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userI
   const { theme, setTheme } = useTheme();
   const t = useT();
   const [collapsed, setCollapsed] = useState(initialCollapsed);
+  const [mounted, setMounted] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [helpCategory, setHelpCategory] = useState("");
   const [helpCategoryOpen, setHelpCategoryOpen] = useState(false);
@@ -173,7 +174,28 @@ export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userI
     }
   }, [pathname]);
 
-  // Auto-collapse on tablet (768–1023px); restore saved preference on desktop (≥1024px)
+  // Initial sync — sets correct state before first paint and persists tablet preference to cookie
+  // so subsequent SSR renders already receive initialCollapsed=true on tablet (same mechanism as desktop toggle)
+  useLayoutEffect(() => {
+    const w = window.innerWidth;
+    if (w >= 768 && w < 1024) {
+      setCollapsed(true);
+      document.cookie = "nav-sidebar-collapsed=true; path=/; max-age=31536000; SameSite=Lax";
+    } else if (w >= 1024) {
+      // Restore desktop preference and sync cookie (in case tablet visit overwrote it)
+      const saved = localStorage.getItem("nav-sidebar-collapsed");
+      const desktopCollapsed = saved === "true";
+      setCollapsed(desktopCollapsed);
+      document.cookie = `nav-sidebar-collapsed=${desktopCollapsed}; path=/; max-age=31536000; SameSite=Lax`;
+    }
+  }, []);
+
+  // Enable CSS transitions only after first paint — prevents animated collapse on mount
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Resize handler — auto-collapse on tablet, restore preference on desktop
   useEffect(() => {
     function syncToWidth() {
       const w = window.innerWidth;
@@ -184,7 +206,6 @@ export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userI
         setCollapsed(saved === "true");
       }
     }
-    syncToWidth();
     window.addEventListener("resize", syncToWidth);
     return () => window.removeEventListener("resize", syncToWidth);
   }, []);
@@ -232,7 +253,7 @@ export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userI
 
   return (
     <>
-    <aside className={`hidden md:flex flex-col flex-shrink-0 h-full transition-all duration-200 ${isCollapsed ? "w-14" : "w-52"}`} style={{ backgroundColor: 'var(--sidebar)', color: 'var(--sidebar-foreground)' }}>
+    <aside className={`hidden md:flex flex-col flex-shrink-0 h-full ${mounted ? "transition-all duration-200" : ""} ${isCollapsed ? "w-14" : "w-52"}`} style={{ backgroundColor: 'var(--sidebar)', color: 'var(--sidebar-foreground)' }}>
       <nav className="flex-1 p-2 space-y-0.5 overflow-y-auto">
         {visible.map((item) => {
           const active = pathname === item.href || pathname.startsWith(item.href + "/") || item.matchPrefixes.some((p) => pathname.startsWith(p));

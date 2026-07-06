@@ -59,29 +59,31 @@ export default function ContractorDashboard({ assignmentId, projectTitle, folder
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {folders.map((folder) => (
             <Link key={folder.id} href={`/wykonawca/projekty/${assignmentId}/foldery/${folder.id}`}>
-              <div className="relative flex flex-col items-center justify-center gap-3 h-44 rounded-2xl border border-border bg-card hover:shadow-[0_4px_16px_rgba(25,33,61,0.2)] hover:border-primary/30 transition-all cursor-pointer text-center">
-                <div className="text-primary">
-                  {folderIcon(folder.type)}
-                </div>
-                <div>
-                  <p className="font-semibold">{folder.name}</p>
-                  <p className="text-sm text-muted-foreground mt-0.5">
-                    {folder.totalFiles === 1 ? t.wykonawcy.file1 : `${folder.totalFiles} ${t.wykonawcy.filesPlural}`}
-                  </p>
-                </div>
-                <div className="absolute top-3 right-3 flex flex-col items-end gap-1">
+              <div className="flex flex-col h-44 rounded-2xl border border-border bg-card hover:shadow-[0_4px_16px_rgba(25,33,61,0.2)] hover:border-primary/30 transition-all cursor-pointer overflow-hidden">
+                <div className="flex justify-end gap-1 flex-wrap px-3 pt-3 min-h-[32px]">
                   {folder.unreadPinCount > 0 && (
-                    <span className="flex items-center gap-1 text-xs font-semibold text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-950/30 px-2 py-0.5 rounded-full">
+                    <span className="flex items-center gap-1 text-xs font-semibold text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-950/30 px-2 py-0.5 rounded-full whitespace-nowrap">
                       <Pin size={11} />
                       {t.wykonawcy.newPins} {folder.unreadPinCount}
                     </span>
                   )}
                   {folder.unreadCount > 0 && (
-                    <span className="flex items-center gap-1 text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                    <span className="flex items-center gap-1 text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full whitespace-nowrap">
                       <MessageSquare size={11} />
                       {t.wykonawcy.unread} {folder.unreadCount}
                     </span>
                   )}
+                </div>
+                <div className="flex-1 flex flex-col items-center justify-center gap-3 text-center px-3 pb-4">
+                  <div className="text-primary">
+                    {folderIcon(folder.type)}
+                  </div>
+                  <div>
+                    <p className="font-semibold">{folder.name}</p>
+                    <p className="text-sm text-muted-foreground mt-0.5">
+                      {folder.totalFiles === 1 ? t.wykonawcy.file1 : `${folder.totalFiles} ${t.wykonawcy.filesPlural}`}
+                    </p>
+                  </div>
                 </div>
               </div>
             </Link>
