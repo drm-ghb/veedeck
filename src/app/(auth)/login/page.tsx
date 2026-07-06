@@ -265,10 +265,13 @@ export default function LoginPage() {
   const router = useRouter();
 
   useLayoutEffect(() => {
-    const prev = document.documentElement.dataset.theme;
+    const prevTheme = document.documentElement.dataset.theme;
+    const hadDark = document.documentElement.classList.contains("dark");
     document.documentElement.dataset.theme = "violet";
+    document.documentElement.classList.remove("dark");
     return () => {
-      if (prev) document.documentElement.dataset.theme = prev;
+      if (prevTheme) document.documentElement.dataset.theme = prevTheme;
+      if (hadDark) document.documentElement.classList.add("dark");
     };
   }, []);
 
