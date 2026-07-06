@@ -16,8 +16,8 @@
     },
     "default_title": "Veepick"
   },
-  "permissions": ["storage", "activeTab", "scripting", "tabs", "contextMenus"],
-  "host_permissions": ["<all_urls>"],
+  "permissions": ["storage", "activeTab", "scripting", "contextMenus"],
+  "host_permissions": ["https://veedeck.vercel.app/*", "https://app.veedeck.com/*"],
   "background": {
     "service_worker": "background.js"
   },
