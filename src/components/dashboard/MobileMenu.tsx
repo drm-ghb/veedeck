@@ -42,7 +42,7 @@ export default function MobileMenu({ userName, logoUrl, hiddenModules = [], isTr
   }, []);
 
   const navItems = [
-    { label: t.nav.dashboard, href: "/dashboard", icon: <LayoutDashboard size={18} />, slug: null },
+    { label: t.nav.dashboard, href: "/panel-glowny", icon: <LayoutDashboard size={18} />, slug: null },
     { label: t.nav.projects, href: "/klienci", icon: <Users size={18} />, slug: null },
     { label: t.nav.renderflow, href: "/projectflow", icon: <PushPin size={18} />, slug: "renderflow" },
     { label: t.nav.lists, href: "/listy-zakupowe", icon: <LocalMall size={18} />, slug: "listy" },

@@ -314,7 +314,7 @@ export default function LoginPage() {
     if ((session?.user as any)?.role === "client") {
       router.push("/client");
     } else {
-      router.push("/dashboard");
+      router.push("/panel-glowny");
     }
     router.refresh();
   }
@@ -397,7 +397,7 @@ export default function LoginPage() {
                   </div>
 
                   <div className="vd-card">
-                    <button type="button" className="vd-btn w-full" data-variant="outline" onClick={() => signIn("google", { callbackUrl: "/dashboard" })}>
+                    <button type="button" className="vd-btn w-full" data-variant="outline" onClick={() => signIn("google", { callbackUrl: "/panel-glowny" })}>
                       <GoogleIcon />
                       Kontynuuj z Google
                     </button>

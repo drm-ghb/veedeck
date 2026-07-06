@@ -6,7 +6,7 @@ import { LogOut } from "@/components/ui/icons";
 export default async function ClientIndexPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
-  if ((session.user as any).role !== "client") redirect("/dashboard");
+  if ((session.user as any).role !== "client") redirect("/panel-glowny");
 
   const links = await prisma.projectClient.findMany({
     where: { userId: session.user.id },

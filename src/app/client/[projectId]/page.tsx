@@ -248,7 +248,7 @@ export default function ClientProjectPage() {
   useEffect(() => {
     if (status === "unauthenticated") { router.push("/login"); return; }
     if (status !== "authenticated") return;
-    if ((session?.user as any)?.role !== "client") { router.push("/dashboard"); return; }
+    if ((session?.user as any)?.role !== "client") { router.push("/panel-glowny"); return; }
 
     setSettingsName((session.user as any)?.name ?? "");
     setSettingsFullName((session.user as any)?.fullName ?? "");

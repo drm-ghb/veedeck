@@ -112,10 +112,10 @@ export default function OnboardingModal({ show }: { show: boolean }) {
   },
   ];
 
-  // Auto-show: only on /dashboard, only if not dismissed before
+  // Auto-show: only on /panel-glowny, only if not dismissed before
   useEffect(() => {
     if (!show) return;
-    if (pathname !== "/dashboard") return;
+    if (pathname !== "/panel-glowny") return;
     if (typeof window !== "undefined" && localStorage.getItem(STORAGE_KEY) === "true") return;
     setVisible(true);
   }, [show, pathname]);

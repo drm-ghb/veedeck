@@ -116,7 +116,7 @@ export async function POST(
     data: {
       userId: newUser.id,
       message: `Witaj! Twoje konto klienta u projektanta ${designerName} jest gotowe.`,
-      link: "/dashboard",
+      link: "/panel-glowny",
       type: "info",
     },
   });

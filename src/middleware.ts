@@ -56,7 +56,7 @@ export default auth((req) => {
       return NextResponse.redirect(new URL("/login", req.url));
     }
     if (!isContractor) {
-      return NextResponse.redirect(new URL("/dashboard", req.url));
+      return NextResponse.redirect(new URL("/panel-glowny", req.url));
     }
   }
 
@@ -99,9 +99,14 @@ export default auth((req) => {
     };
     for (const [slug, route] of Object.entries(MODULE_ROUTES)) {
       if (memberHiddenModules.includes(slug) && pathname.startsWith(route)) {
-        return NextResponse.redirect(new URL("/dashboard", req.url));
+        return NextResponse.redirect(new URL("/panel-glowny", req.url));
       }
     }
+  }
+
+  // Backward compat: redirect /dashboard → /panel-glowny
+  if (pathname === "/dashboard") {
+    return NextResponse.redirect(new URL("/panel-glowny", req.url));
   }
 
   // --- Regular user routes ---

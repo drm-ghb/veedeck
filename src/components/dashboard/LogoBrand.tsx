@@ -20,7 +20,7 @@ export function LogoBrand({ initialCollapsed = false }: { initialCollapsed?: boo
   const iconSrc = colorTheme === "violet" ? "/logo_violet.png" : "/veedeck_ikona_vsg.svg";
 
   return (
-    <Link href="/dashboard" className="flex items-center gap-2 shrink-0">
+    <Link href="/panel-glowny" className="flex items-center gap-2 shrink-0">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={iconSrc} alt="veedeck" className="h-7 w-7 shrink-0 object-contain" />
       {showWordmark && (

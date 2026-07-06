@@ -82,7 +82,7 @@ export async function POST(
       data: {
         userId: newUser.id,
         message: `Witaj w zespole ${designerName}! Twoje konto jest gotowe.`,
-        link: "/dashboard",
+        link: "/panel-glowny",
         type: "info",
       },
     }),

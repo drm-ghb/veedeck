@@ -40,7 +40,7 @@ export default function CompleteProfilePage() {
 
     // Refresh JWT so needsNameSetup is cleared
     await update();
-    router.push("/dashboard");
+    router.push("/panel-glowny");
     router.refresh();
   }
 
