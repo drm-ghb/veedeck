@@ -7,22 +7,10 @@ export function ColorThemeSync({ dbTheme, dbCustomTheme, forceApply }: { dbTheme
   const { setColorTheme, setCustomTheme } = useTheme();
 
   useEffect(() => {
-    if (forceApply) {
-      setColorTheme(dbTheme);
-      if (dbCustomTheme) setCustomTheme(dbCustomTheme);
-      return;
-    }
-    const local = localStorage.getItem("color-theme") as ColorTheme | null;
-    if (!local) {
-      // New device — sync everything from DB
-      setColorTheme(dbTheme);
-      if (dbCustomTheme) setCustomTheme(dbCustomTheme);
-    } else {
-      if (local === "custom" && !localStorage.getItem("custom-theme") && dbCustomTheme) {
-        // Has custom selected but no colors locally — pull from DB
-        setCustomTheme(dbCustomTheme);
-      }
-    }
+    // Always apply DB theme — it's the source of truth per user.
+    // localStorage is only a write-through cache, not authoritative.
+    setColorTheme(dbTheme);
+    if (dbCustomTheme) setCustomTheme(dbCustomTheme);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

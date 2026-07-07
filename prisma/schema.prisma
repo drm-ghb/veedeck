@@ -41,7 +41,7 @@ model User {
   ownerId                    String?
   showProfileName            Boolean                 @default(false)
   showClientLogo             Boolean                 @default(false)
-  colorTheme                 String                  @default("champagne")
+  colorTheme                 String                  @default("violet")
   customTheme                Json?
   extensionKey               String?                 @unique
   customCategories           String[]                @default([])
