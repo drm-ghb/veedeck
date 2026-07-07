@@ -2000,8 +2000,8 @@ export default function RenderViewer({
                 page={pdfPage}
                 onTotalPages={setPdfTotalPages}
                 onPageChange={(p) => { setPdfPage(p); setPending(null); }}
-                onClick={mode === "pin" ? handleImageClick : undefined}
-                className={mode === "pin" ? "cursor-crosshair" : "cursor-default"}
+                onClick={mode === "pin" ? handleImageClick : openLightbox}
+                className={mode === "pin" ? "cursor-crosshair" : "cursor-pointer"}
                 maxHeight={pdfMaxHeight}
                 maxWidth={pdfMaxWidth}
                 zoom={pdfZoom}
@@ -3110,7 +3110,7 @@ export default function RenderViewer({
 
       {/* Lightbox */}
       {lightboxOpen && (
-        <div className="fixed inset-0 z-50 bg-black/95 flex flex-col">
+        <div className="fixed inset-0 z-[200] bg-black/95 flex flex-col">
           {/* Lightbox header */}
           <div className="flex items-center justify-between px-5 py-3 flex-shrink-0 border-b border-white/10">
             <div className="flex items-center gap-1 min-w-0 text-sm">
