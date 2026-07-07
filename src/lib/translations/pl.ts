@@ -1788,6 +1788,7 @@ export const pl = {
     typeInternal: "Wewnętrzny",
     typeProject: "Projektowy",
     typeContractor: "Wykonawca",
+    typeSupport: "Wsparcie",
     projectLabel: "Projekt",
     noAssignment: "Bez przypisania",
     contractorLabel: "Wykonawca",

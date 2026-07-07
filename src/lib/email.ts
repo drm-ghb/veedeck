@@ -365,6 +365,36 @@ export async function sendSurveyReminderEmail({
   });
 }
 
+export async function notifyAdminNewTicket(opts: {
+  userEmail: string;
+  userName: string | null;
+  subject: string;
+  message: string;
+  category: string | null;
+}) {
+  const safeEmail = escapeHtml(opts.userEmail);
+  const safeName = opts.userName ? escapeHtml(opts.userName) : null;
+  const safeSubject = escapeHtml(opts.subject || "(brak tematu)");
+  const safeMessage = escapeHtml(opts.message || "(brak treści)");
+  const safeCategory = opts.category ? escapeHtml(opts.category) : null;
+
+  await transporter.sendMail({
+    from: FROM,
+    to: "support@veedeck.com",
+    subject: `Nowe zgłoszenie: ${safeSubject}`,
+    html: emailBase(`
+      <h2 style="margin:0 0 8px;font-size:18px;color:#111;">Nowe zgłoszenie od użytkownika</h2>
+      <p style="margin:0 0 16px;font-size:14px;color:#6b7280;">
+        ${safeName ? `<strong>${safeName}</strong> · ` : ""}${safeEmail}
+        ${safeCategory ? ` · <span style="background:#f3f4f6;padding:2px 8px;border-radius:99px;font-size:12px;">${safeCategory}</span>` : ""}
+      </p>
+      <p style="margin:0 0 8px;font-size:15px;font-weight:600;color:#111;">${safeSubject}</p>
+      <p style="margin:0;font-size:14px;color:#374151;line-height:1.7;white-space:pre-wrap;">${safeMessage}</p>
+      ${emailBtn("Otwórz zgłoszenie", `${APP_URL}/admin/tickets`)}
+    `),
+  }).catch((err) => console.error("[EMAIL] notifyAdminNewTicket failed:", err));
+}
+
 export async function notifyDesignerSurveySubmitted(opts: {
   designerEmail: string;
   surveyName: string;

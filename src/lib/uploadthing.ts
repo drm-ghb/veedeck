@@ -189,7 +189,7 @@ export const ourFileRouter = {
     .onUploadComplete(async ({ file }) => {
       return { url: file.url, key: file.key, name: file.name };
     }),
-  helpAttachmentUploader: f({ blob: { maxFileSize: "16MB", maxFileCount: 1 } })
+  helpAttachmentUploader: f({ blob: { maxFileSize: "256MB", maxFileCount: 10 } })
     .middleware(async () => {
       const session = await auth();
       if (!session?.user?.id) throw new Error("Unauthorized");

@@ -11,7 +11,9 @@ export default async function AdminTicketsPage() {
     orderBy: { createdAt: "desc" },
     include: {
       user: { select: { id: true, email: true, fullName: true, name: true } },
+      discussion: { select: { id: true } },
     },
+    // attachments field included automatically via select *
   });
 
   return (

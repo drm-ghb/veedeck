@@ -1786,6 +1786,7 @@ export const en: TranslationKeys = {
     typeInternal: "Internal",
     typeProject: "Project",
     typeContractor: "Contractor",
+    typeSupport: "Support",
     projectLabel: "Project",
     noAssignment: "No assignment",
     contractorLabel: "Contractor",

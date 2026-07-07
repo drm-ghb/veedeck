@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { Users, Activity, ShieldCheck, LogOut, Inbox } from "lucide-react";
 import { useT } from "@/lib/i18n";
+import { useState, useEffect, useRef } from "react";
+import Pusher from "pusher-js";
 
 export default function AdminSidebar({
   email,
@@ -15,10 +17,40 @@ export default function AdminSidebar({
 }) {
   const t = useT();
   const pathname = usePathname();
+  const [openTickets, setOpenTickets] = useState(0);
+  const pusherRef = useRef<Pusher | null>(null);
+
+  useEffect(() => {
+    fetch("/api/admin/tickets/count")
+      .then((r) => r.json())
+      .then((d) => setOpenTickets(d.count ?? 0))
+      .catch(() => {});
+
+    pusherRef.current = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY!, {
+      cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
+    });
+    const channel = pusherRef.current.subscribe("admin-channel");
+    channel.bind("new-ticket", () => {
+      setOpenTickets((prev) => prev + 1);
+    });
+
+    return () => {
+      pusherRef.current?.disconnect();
+      pusherRef.current = null;
+    };
+  }, []);
+
+  // Clear badge when visiting the tickets page
+  useEffect(() => {
+    if (pathname.startsWith("/admin/tickets")) {
+      setOpenTickets(0);
+    }
+  }, [pathname]);
+
   const items = [
-    { href: "/admin/users", label: t.admin.usersNav, icon: <Users size={15} /> },
-    { href: "/admin/tickets", label: "Zgłoszenia", icon: <Inbox size={15} /> },
-    { href: "/admin/logs", label: t.admin.logsNav, icon: <Activity size={15} /> },
+    { href: "/admin/users", label: t.admin.usersNav, icon: <Users size={15} />, badge: 0 },
+    { href: "/admin/tickets", label: "Zgłoszenia", icon: <Inbox size={15} />, badge: openTickets },
+    { href: "/admin/logs", label: t.admin.logsNav, icon: <Activity size={15} />, badge: 0 },
   ];
 
   return (
@@ -52,7 +84,12 @@ export default function AdminSidebar({
               }`}
             >
               <span>{item.icon}</span>
-              {item.label}
+              <span className="flex-1">{item.label}</span>
+              {item.badge > 0 && (
+                <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-blue-500 text-white text-[10px] font-bold flex items-center justify-center leading-none">
+                  {item.badge > 99 ? "99+" : item.badge}
+                </span>
+              )}
             </Link>
           );
         })}

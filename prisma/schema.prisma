@@ -704,6 +704,8 @@ model Discussion {
   messages               DiscussionMessage[]
   participants           DiscussionParticipant[]
   readReceipts           DiscussionReadReceipt[]
+  helpRequestId          String?                 @unique
+  helpRequest            HelpRequest?            @relation("HelpRequestDiscussion", fields: [helpRequestId], references: [id])
 }
 
 model DiscussionParticipant {
@@ -1062,8 +1064,10 @@ model HelpRequest {
   attachmentUrl  String?
   attachmentName String?
   status         String   @default("open")
+  attachments    Json?
   createdAt      DateTime @default(now())
   user           User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  discussion     Discussion? @relation("HelpRequestDiscussion")
 }
 
 model ContractorFileReply {

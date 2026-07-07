@@ -45,7 +45,7 @@ export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userI
   const helpCategoryRef = useRef<HTMLDivElement>(null);
   const [helpSubject, setHelpSubject] = useState("");
   const [helpDesc, setHelpDesc] = useState("");
-  const [helpAttachment, setHelpAttachment] = useState<{ url: string; name: string } | null>(null);
+  const [helpAttachments, setHelpAttachments] = useState<{ url: string; name: string }[]>([]);
   const [helpUploading, setHelpUploading] = useState(false);
   const [helpSent, setHelpSent] = useState(false);
   const { startUpload } = useUploadThing("helpAttachmentUploader");
@@ -350,7 +350,7 @@ export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userI
 
         {/* Help */}
         <button
-          onClick={() => { setHelpOpen(true); setHelpSent(false); setHelpCategory(""); setHelpSubject(""); setHelpDesc(""); setHelpAttachment(null); }}
+          onClick={() => { setHelpOpen(true); setHelpSent(false); setHelpCategory(""); setHelpSubject(""); setHelpDesc(""); setHelpAttachments([]); }}
           title={isCollapsed ? t.nav.help : undefined}
           className="flex items-center gap-3 px-2.5 py-2.5 rounded-lg text-sm font-medium transition-colors w-full opacity-60 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5"
         >
@@ -484,43 +484,47 @@ export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userI
               </div>
 
               {/* Attachment */}
-              <div>
-                {helpAttachment ? (
-                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/50 border border-border text-sm">
+              <div className="space-y-2">
+                {helpAttachments.map((att, i) => (
+                  <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/50 border border-border text-sm">
                     <Paperclip size={13} className="text-muted-foreground shrink-0" />
-                    <span className="flex-1 truncate text-foreground text-xs">{helpAttachment.name}</span>
+                    <span className="flex-1 truncate text-foreground text-xs">{att.name}</span>
                     <button
                       type="button"
-                      onClick={() => setHelpAttachment(null)}
+                      onClick={() => setHelpAttachments((prev) => prev.filter((_, j) => j !== i))}
                       className="text-muted-foreground hover:text-red-500 transition-colors shrink-0"
                     >
                       <Trash2 size={13} />
                     </button>
                   </div>
-                ) : (
-                  <label className={`flex items-center gap-2 text-xs text-muted-foreground cursor-pointer hover:text-foreground transition-colors ${helpUploading ? "opacity-50 pointer-events-none" : ""}`}>
-                    <Paperclip size={13} />
-                    {helpUploading ? "Wgrywanie..." : "Dodaj załącznik (max 16 MB)"}
-                    <input
-                      type="file"
-                      className="hidden"
-                      onChange={async (e) => {
-                        const file = e.target.files?.[0];
-                        if (!file) return;
-                        setHelpUploading(true);
-                        try {
-                          const results = await startUpload([file]);
-                          if (results?.[0]) {
-                            setHelpAttachment({ url: results[0].url, name: results[0].name ?? file.name });
-                          }
-                        } finally {
-                          setHelpUploading(false);
-                          e.target.value = "";
+                ))}
+                <label className={`flex items-center gap-2 text-xs text-muted-foreground cursor-pointer hover:text-foreground border border-border rounded-lg px-3 py-2 transition-colors ${helpUploading ? "opacity-50 pointer-events-none" : ""}`}>
+                  <Paperclip size={13} className="shrink-0" />
+                  {helpUploading ? "Wgrywanie..." : "Dodaj załączniki (zdjęcia, wideo, dokumenty)"}
+                  <input
+                    type="file"
+                    className="hidden"
+                    multiple
+                    accept="image/*,video/*,application/pdf,.doc,.docx,.xls,.xlsx,.csv"
+                    onChange={async (e) => {
+                      const files = Array.from(e.target.files ?? []);
+                      if (!files.length) return;
+                      setHelpUploading(true);
+                      try {
+                        const results = await startUpload(files);
+                        if (results) {
+                          setHelpAttachments((prev) => [
+                            ...prev,
+                            ...results.map((r, i) => ({ url: r.url, name: files[i]?.name ?? r.name ?? "plik" })),
+                          ]);
                         }
-                      }}
-                    />
-                  </label>
-                )}
+                      } finally {
+                        setHelpUploading(false);
+                        e.target.value = "";
+                      }
+                    }}
+                  />
+                </label>
               </div>
 
               <button
@@ -533,8 +537,9 @@ export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userI
                       category: helpCategory,
                       subject: helpSubject,
                       message: helpDesc,
-                      attachmentUrl: helpAttachment?.url ?? null,
-                      attachmentName: helpAttachment?.name ?? null,
+                      attachmentUrl: helpAttachments[0]?.url ?? null,
+                      attachmentName: helpAttachments[0]?.name ?? null,
+                      attachments: helpAttachments.length > 0 ? helpAttachments : null,
                     }),
                   });
                   setHelpSent(true);

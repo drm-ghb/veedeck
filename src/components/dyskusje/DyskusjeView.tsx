@@ -203,7 +203,7 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
     return times;
   });
   const [search, setSearch] = useState("");
-  const [typeFilter, setTypeFilter] = useState<"all" | "internal" | "project" | "contractor">("all");
+  const [typeFilter, setTypeFilter] = useState<"all" | "internal" | "project" | "contractor" | "support">("all");
   const [archivedFilter, setArchivedFilter] = useState<"active" | "archived">("active");
   const [chatSearch, setChatSearch] = useState("");
   const [chatSearchOpen, setChatSearchOpen] = useState(false);
@@ -321,9 +321,10 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
     return sortedDiscussions
       .filter((d) => (archivedFilter === "archived" ? d.archived : !d.archived))
       .filter((d) => {
-        if (typeFilter === "internal") return d.type !== "project" && d.type !== "contractor";
+        if (typeFilter === "internal") return d.type !== "project" && d.type !== "contractor" && d.type !== "support";
         if (typeFilter === "project") return d.type === "project";
         if (typeFilter === "contractor") return d.type === "contractor";
+        if (typeFilter === "support") return d.type === "support";
         return true;
       })
       .filter((d) => {
@@ -1145,6 +1146,7 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                   { value: "internal", label: t.dyskusje.filterInternal },
                   { value: "project", label: t.dyskusje.filterProject },
                   { value: "contractor", label: t.dyskusje.typeContractor },
+                  { value: "support", label: t.dyskusje.typeSupport },
                 ]}
               />
               <PillDropdown
@@ -1187,6 +1189,11 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                         {(d.unreadCount ?? 0) > 0 && (
                           <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center leading-none flex-shrink-0">
                             {(d.unreadCount ?? 0) > 99 ? "99+" : d.unreadCount}
+                          </span>
+                        )}
+                        {d.type === "support" && (
+                          <span className="w-5 h-5 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
+                            <img src="/veedeck_ikona_vsg.svg" alt="" className="w-3 h-3" />
                           </span>
                         )}
                         <span className={`text-sm font-medium truncate ${selectedId === d.id ? "text-primary" : ""}`}>{d.title}</span>
@@ -1325,6 +1332,9 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                       {selected.type === "internal" && (
                         <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground font-semibold shrink-0">{t.dyskusje.typeInternal}</span>
                       )}
+                      {selected.type === "support" && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 font-semibold shrink-0">{t.dyskusje.typeSupport}</span>
+                      )}
                     </div>
                     {selected.project ? (
                       <a
@@ -1378,20 +1388,24 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                           )}
                         </button>
                       )}
-                      <button
-                        onClick={startHeaderEdit}
-                        className="p-1.5 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-                        title={t.common.edit}
-                      >
-                        <Edit2 size={14} />
-                      </button>
-                      <button
-                        onClick={() => selected.archived ? toggleArchive(selected.id, true) : setShowArchiveConfirm(true)}
-                        className="p-1.5 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-                        title={selected.archived ? t.dyskusje.restoreDiscussion : t.dyskusje.archiveDiscussion}
-                      >
-                        {selected.archived ? <ArchiveRestore size={14} /> : <Archive size={14} />}
-                      </button>
+                      {selected.type !== "support" && (
+                        <>
+                          <button
+                            onClick={startHeaderEdit}
+                            className="p-1.5 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                            title={t.common.edit}
+                          >
+                            <Edit2 size={14} />
+                          </button>
+                          <button
+                            onClick={() => selected.archived ? toggleArchive(selected.id, true) : setShowArchiveConfirm(true)}
+                            className="p-1.5 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                            title={selected.archived ? t.dyskusje.restoreDiscussion : t.dyskusje.archiveDiscussion}
+                          >
+                            {selected.archived ? <ArchiveRestore size={14} /> : <Archive size={14} />}
+                          </button>
+                        </>
+                      )}
                       <button
                         onClick={() => deleteDiscussion(selected.id)}
                         className="p-1.5 rounded-lg text-muted-foreground hover:bg-muted hover:text-destructive transition-colors"
@@ -1529,6 +1543,31 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                         <div className="flex-1 h-px bg-border" />
                       </div>
                       {group.msgs.map((msg) => {
+                        if (msg.sourceType === "system_close") {
+                          return (
+                            <div key={msg.id} className="flex items-center gap-2 my-2">
+                              <div className="flex-1 h-px bg-border" />
+                              <span className="text-[10px] text-muted-foreground shrink-0 px-1">{msg.content}</span>
+                              <div className="flex-1 h-px bg-border" />
+                            </div>
+                          );
+                        }
+                        if (msg.sourceType === "help_request") {
+                          return (
+                            <div key={msg.id} className="flex items-end gap-2 mb-1.5">
+                              <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
+                                <img src="/veedeck_ikona_vsg.svg" alt="" className="w-4 h-4" />
+                              </div>
+                              <div className="max-w-[75%]">
+                                <div className="rounded-2xl px-3 py-2 text-sm bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800/40">
+                                  <div className="text-[10px] font-semibold text-yellow-700 dark:text-yellow-400 mb-1 uppercase tracking-wide">Treść zgłoszenia</div>
+                                  <p className="text-foreground whitespace-pre-wrap">{msg.content}</p>
+                                  <div className="text-[10px] text-muted-foreground/60 mt-1 text-right">{formatTimeOnly(msg.createdAt)}</div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        }
                         const isOwn = msg.userId === currentUserId;
                         const isFirstUnread = msg.id === firstUnreadIdRef.current;
                         return (
@@ -1923,7 +1962,15 @@ function PillDropdown({ value, onChange, options }: {
   );
 }
 
-function Avatar({ name, logoUrl }: { name: string; logoUrl?: string | null }) {
+function Avatar({ name, logoUrl, veedeck }: { name: string; logoUrl?: string | null; veedeck?: boolean }) {
+  if (veedeck) {
+    return (
+      <div title={name} className="w-7 h-7 rounded-full bg-primary flex items-center justify-center shrink-0 self-end mb-0.5 cursor-default">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/veedeck_ikona_vsg.svg" alt="" className="w-4 h-4" />
+      </div>
+    );
+  }
   if (logoUrl) {
     // eslint-disable-next-line @next/next/no-img-element
     return <img src={logoUrl} alt={name} title={name} className="w-7 h-7 rounded-full object-cover shrink-0 self-end mb-0.5 cursor-default" />;
@@ -2172,7 +2219,7 @@ function MessageBubble({ msg, isOwn, currentUserId, ownAvatarUrl, onImageClick, 
 
   return (
     <div className={`flex items-end gap-2 ${isOwn ? "justify-end" : "justify-start"} group ${msg.reactions && msg.reactions.length > 0 ? "mb-6" : "mb-1.5"}`}>
-      {!isOwn && <Avatar name={msg.authorName} />}
+      {!isOwn && <Avatar name={msg.authorName} veedeck={msg.authorName === "Dział Wsparcia"} />}
       <div className="max-w-[75%]">
       <SwipeableMessage
         isOwn={isOwn}
