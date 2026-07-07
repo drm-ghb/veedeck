@@ -77,6 +77,7 @@ export async function POST(req: NextRequest) {
         ...(url?.trim() ? [{ url: url.trim() }] : []),
       ],
     },
+    select: { id: true, category: true },
   });
   if (!exists) {
     await prisma.product.create({
@@ -94,6 +95,11 @@ export async function POST(req: NextRequest) {
         catalogNumber: catalogNumber || null,
         userId: user.workspaceId,
       },
+    });
+  } else if (category && !exists.category) {
+    await prisma.product.update({
+      where: { id: exists.id },
+      data: { category },
     });
   }
 
