@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useT } from "@/lib/i18n";
 import { createPortal } from "react-dom";
+import { useT } from "@/lib/i18n";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { pusherClient } from "@/lib/pusher";
@@ -3114,7 +3114,7 @@ export default function RenderViewer({
       </div>
 
       {/* Lightbox */}
-      {lightboxOpen && (
+      {lightboxOpen && createPortal(
         <div className="fixed inset-0 z-[200] bg-black/95 flex flex-col">
           {/* Lightbox header */}
           <div className="flex items-center justify-between px-5 py-3 flex-shrink-0 border-b border-white/10">
@@ -3841,7 +3841,7 @@ export default function RenderViewer({
             </button>
           </div>
         </div>
-      )}
+      , document.body)}
 
       {/* SearchProductDialog */}
       <SearchProductDialog
