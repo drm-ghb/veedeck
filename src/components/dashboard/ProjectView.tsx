@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { useViewPreference } from "@/hooks/useViewPreference";
-import { ArchiveRestore, CopyCheck, FolderOpen, GripVertical, LayoutGrid, List, Trash2, Pin, Eye, Search, X } from "@/components/ui/icons";
+import { ArchiveRestore, CopyCheck, DoorOpen, FolderOpen, GripVertical, LayoutGrid, List, Trash2, Pin, Eye, Search, X } from "@/components/ui/icons";
 import {
   DndContext,
   closestCenter,
@@ -70,7 +71,40 @@ export default function ProjectView({ projectId, rooms, archivedRooms, allRender
   const [filterStatus, setFilterStatus] = useState<"all" | "REVIEW" | "ACCEPTED">("all");
   const [search, setSearch] = useState("");
   const [localRooms, setLocalRooms] = useState(rooms);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+  const [addRoomOpen, setAddRoomOpen] = useState(false);
   useEffect(() => { setLocalRooms(rooms); }, [rooms]);
+
+  useEffect(() => {
+    function onRoomCreated(e: Event) {
+      const room = (e as CustomEvent).detail as Room;
+      setLocalRooms((prev) => [...prev, room]);
+    }
+    window.addEventListener("renderflow:room-created", onRoomCreated);
+    return () => window.removeEventListener("renderflow:room-created", onRoomCreated);
+  }, []);
+
+  useEffect(() => {
+    if (!contextMenu) return;
+    function close() { setContextMenu(null); }
+    function onKey(e: KeyboardEvent) { if (e.key === "Escape") close(); }
+    document.addEventListener("mousedown", close);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", close);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [contextMenu]);
+
+  function handleContextMenu(e: React.MouseEvent) {
+    if (tab !== "active") return;
+    const target = e.target as HTMLElement;
+    if (target.closest('a, button, [role="button"]')) return;
+    e.preventDefault();
+    const x = Math.min(e.clientX + 2, window.innerWidth - 210);
+    const y = Math.min(e.clientY + 2, window.innerHeight - 80);
+    setContextMenu({ x, y });
+  }
 
   function handleRoomAdded(room: Room) {
     setLocalRooms((prev) => [...prev, room]);
@@ -166,7 +200,7 @@ export default function ProjectView({ projectId, rooms, archivedRooms, allRender
   }
 
   return (
-    <>
+    <div className="contents" onContextMenu={handleContextMenu}>
       {/* Tabs + view toggle */}
       <div className="flex items-center gap-2 border-b border-border mb-6">
         <div className="flex items-center gap-0.5 overflow-x-auto flex-1 min-w-0" style={{ scrollbarWidth: "none" }}>
@@ -218,9 +252,6 @@ export default function ProjectView({ projectId, rooms, archivedRooms, allRender
         </div>
         {((tab === "active") || (tab === "all" && allRenders.length > 0)) && (
           <div className="flex items-center gap-2 mb-1 flex-shrink-0">
-            {tab === "active" && (
-              <AddRoomDialog projectId={projectId} onRoomAdded={handleRoomAdded} />
-            )}
             {tab === "all" && (
               <button
                 onClick={() => { setSelectionMode((v) => !v); setSelectedIds(new Set()); }}
@@ -486,7 +517,31 @@ export default function ProjectView({ projectId, rooms, archivedRooms, allRender
           </div>
         )
       )}
-    </>
+      {/* Controlled AddRoomDialog for context menu */}
+      <AddRoomDialog
+        projectId={projectId}
+        open={addRoomOpen}
+        onOpenChange={setAddRoomOpen}
+      />
+
+      {/* Context menu portal */}
+      {contextMenu && createPortal(
+        <div
+          onMouseDown={(e) => e.stopPropagation()}
+          style={{ left: contextMenu.x, top: contextMenu.y }}
+          className="fixed z-[150] bg-popover border border-border rounded-lg shadow-lg py-1 min-w-[200px] overflow-hidden"
+        >
+          <button
+            className="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors text-left"
+            onClick={() => { setContextMenu(null); setAddRoomOpen(true); }}
+          >
+            <DoorOpen size={14} className="text-muted-foreground shrink-0" />
+            Nowy folder
+          </button>
+        </div>,
+        document.body
+      )}
+    </div>
   );
 }
 

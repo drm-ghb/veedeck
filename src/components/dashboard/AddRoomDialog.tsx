@@ -28,11 +28,19 @@ interface Room {
 interface AddRoomDialogProps {
   projectId: string;
   onRoomAdded?: (room: Room) => void;
+  open?: boolean;
+  onOpenChange?: (v: boolean) => void;
 }
 
-export default function AddRoomDialog({ projectId, onRoomAdded }: AddRoomDialogProps) {
+export default function AddRoomDialog({ projectId, onRoomAdded, open: externalOpen, onOpenChange: externalOnOpenChange }: AddRoomDialogProps) {
   const t = useT();
-  const [open, setOpen] = useState(false);
+  const isControlled = externalOpen !== undefined;
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = isControlled ? externalOpen! : internalOpen;
+  function setOpen(v: boolean) {
+    if (isControlled) externalOnOpenChange?.(v);
+    else setInternalOpen(v);
+  }
   const [name, setName] = useState("");
   const [icon, setIcon] = useState<string>("INNE");
   const [loading, setLoading] = useState(false);
@@ -59,7 +67,9 @@ export default function AddRoomDialog({ projectId, onRoomAdded }: AddRoomDialogP
       setOpen(false);
       setName("");
       setIcon("INNE");
-      onRoomAdded?.({ ...room, _count: { renders: 0 } });
+      const roomWithCount = { ...room, _count: { renders: 0 } };
+      onRoomAdded?.(roomWithCount);
+      window.dispatchEvent(new CustomEvent("renderflow:room-created", { detail: roomWithCount }));
       router.refresh();
     } catch {
       toast.error(t.projekty.roomAddError);
@@ -70,9 +80,11 @@ export default function AddRoomDialog({ projectId, onRoomAdded }: AddRoomDialogP
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<Button />}>
-        {t.projekty.addRoom}
-      </DialogTrigger>
+      {!isControlled && (
+        <DialogTrigger render={<Button />}>
+          {t.projekty.addRoom}
+        </DialogTrigger>
+      )}
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t.projekty.newRoom}</DialogTitle>

@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { useViewPreference, useGridCols } from "@/hooks/useViewPreference";
-import { ArchiveRestore, ArrowUpDown, Check, CopyCheck, Eye, FileText, Folder, LayoutGrid, List, Pin, Trash2, GripVertical, Upload } from "@/components/ui/icons";
+import { ArchiveRestore, ArrowUpDown, Check, CopyCheck, Eye, FileText, Folder, FolderPlus, LayoutGrid, List, Pin, Trash2, GripVertical, Upload } from "@/components/ui/icons";
+import AddFolderDialog from "./AddFolderDialog";
 import { useUploadThing } from "@/lib/uploadthing-client";
 import {
   DndContext,
@@ -118,6 +120,9 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
   const [newRenderIds, setNewRenderIds] = useState<Set<string>>(new Set());
   const pendingFolderIds = useRef<Set<string>>(new Set());
   const pendingRenderIds = useRef<Set<string>>(new Set());
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+  const [addFolderOpen, setAddFolderOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   function addHighlight(ids: string[]) {
     if (!ids.length) return;
@@ -208,12 +213,74 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
     document.addEventListener("mousedown", onOutside);
     return () => document.removeEventListener("mousedown", onOutside);
   }, [sortOpen]);
+
+  useEffect(() => {
+    if (!contextMenu) return;
+    function close() { setContextMenu(null); }
+    function onKey(e: KeyboardEvent) { if (e.key === "Escape") close(); }
+    document.addEventListener("mousedown", close);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", close);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [contextMenu]);
+
+  function handleContextMenu(e: React.MouseEvent) {
+    if (tab !== "active") return;
+    const target = e.target as HTMLElement;
+    if (target.closest('a, button, [role="button"]')) return;
+    e.preventDefault();
+    const x = Math.min(e.clientX + 2, window.innerWidth - 210);
+    const y = Math.min(e.clientY + 2, window.innerHeight - 110);
+    setContextMenu({ x, y });
+  }
+
   const [isDragOver, setIsDragOver] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const dragCounterRef = useRef(0);
   const router = useRouter();
 
   const { startUpload } = useUploadThing("renderUploader");
+
+  const uploadFiles = useCallback(async (files: File[], targetFolderId: string | null = null) => {
+    setIsUploading(true);
+    try {
+      const results = await startUpload(files);
+      if (!results) throw new Error();
+      const created: Render[] = [];
+      for (let i = 0; i < results.length; i++) {
+        const file = files[i];
+        const r = results[i];
+        const name = file.name.replace(/\.[^.]+$/, "");
+        const fileType = file.type === "application/pdf" ? "pdf" : "image";
+        const res = await fetch("/api/renders", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ projectId, name, fileUrl: r.url, fileKey: r.key, roomId, folderId: targetFolderId, fileType }),
+        });
+        if (res.ok) {
+          const render = await res.json();
+          created.push({ id: render.id, name: render.name, fileUrl: render.fileUrl, fileType: render.fileType ?? null, commentCount: 0, viewCount: 0, status: (render.status ?? "REVIEW") as "REVIEW" | "ACCEPTED", folderId: render.folderId ?? null, pinned: false, createdAt: new Date().toISOString() });
+        }
+      }
+      if (created.length > 0 && !targetFolderId) {
+        setLocalRenders((prev) => [...prev, ...created]);
+        addHighlight(created.map((r) => r.id));
+      }
+      const count = results.length;
+      const suffix = count === 1 ? t.render.fileSingular : count < 5 ? t.render.fileFew : t.render.fileMany;
+      toast.success(targetFolderId
+        ? `${t.render.filesAddedPrefix} ${count} ${suffix} ${t.render.addedToFolder}`
+        : `${t.render.filesAddedPrefix} ${count} ${suffix}`
+      );
+      router.refresh();
+    } catch {
+      toast.error(t.render.filesUploadError);
+    } finally {
+      setIsUploading(false);
+    }
+  }, [startUpload, projectId, roomId, router, t]);
 
   const handleDragEnter = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -235,68 +302,12 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
       (f) => f.type.startsWith("image/") || f.type === "application/pdf"
     );
     if (files.length === 0) return;
-    setIsUploading(true);
-    try {
-      const results = await startUpload(files);
-      if (!results) throw new Error();
-      const created: Render[] = [];
-      for (let i = 0; i < results.length; i++) {
-        const file = files[i];
-        const r = results[i];
-        const name = file.name.replace(/\.[^.]+$/, "");
-        const fileType = file.type === "application/pdf" ? "pdf" : "image";
-        const res = await fetch("/api/renders", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ projectId, name, fileUrl: r.url, fileKey: r.key, roomId, folderId: null, fileType }),
-        });
-        if (res.ok) {
-          const render = await res.json();
-          created.push({ id: render.id, name: render.name, fileUrl: render.fileUrl, fileType: render.fileType ?? null, commentCount: 0, viewCount: 0, status: (render.status ?? "REVIEW") as "REVIEW" | "ACCEPTED", folderId: render.folderId ?? null, pinned: false, createdAt: new Date().toISOString() });
-        }
-      }
-      if (created.length > 0) {
-        setLocalRenders((prev) => [...prev, ...created]);
-        addHighlight(created.map((r) => r.id));
-      }
-      toast.success(`${t.render.filesAddedPrefix} ${results.length} ${results.length === 1 ? t.render.fileSingular : results.length < 5 ? t.render.fileFew : t.render.fileMany}`);
-      router.refresh();
-    } catch {
-      toast.error(t.render.filesUploadError);
-    } finally {
-      setIsUploading(false);
-    }
-  }, [startUpload, projectId, roomId, router]);
+    await uploadFiles(files, null);
+  }, [uploadFiles]);
 
   const handleFolderFileDrop = useCallback(async (files: File[], folderId: string) => {
-    setIsUploading(true);
-    try {
-      const results = await startUpload(files);
-      if (!results) throw new Error();
-      const created: Render[] = [];
-      for (let i = 0; i < results.length; i++) {
-        const file = files[i];
-        const r = results[i];
-        const name = file.name.replace(/\.[^.]+$/, "");
-        const fileType = file.type === "application/pdf" ? "pdf" : "image";
-        const res = await fetch("/api/renders", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ projectId, name, fileUrl: r.url, fileKey: r.key, roomId, folderId, fileType }),
-        });
-        if (res.ok) {
-          const render = await res.json();
-          created.push({ id: render.id, name: render.name, fileUrl: render.fileUrl, fileType: render.fileType ?? null, commentCount: 0, viewCount: 0, status: (render.status ?? "REVIEW") as "REVIEW" | "ACCEPTED", folderId: render.folderId ?? null, pinned: false, createdAt: new Date().toISOString() });
-        }
-      }
-      toast.success(`${t.render.filesAddedPrefix} ${results.length} ${results.length === 1 ? t.render.fileSingular : results.length < 5 ? t.render.fileFew : t.render.fileMany} ${t.render.addedToFolder}`);
-      router.refresh();
-    } catch {
-      toast.error(t.render.filesUploadError);
-    } finally {
-      setIsUploading(false);
-    }
-  }, [startUpload, projectId, roomId, router]);
+    await uploadFiles(files, folderId);
+  }, [uploadFiles]);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
@@ -427,6 +438,7 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
       onDragLeave={handleDragLeave}
       onDragOver={(e) => e.preventDefault()}
       onDrop={handleDrop}
+      onContextMenu={handleContextMenu}
     >
       {(isDragOver || isUploading) && (
         <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-primary/10 backdrop-blur-[1px] pointer-events-none rounded-xl">
@@ -802,6 +814,51 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
         projectId={projectId}
         onSuccess={exitSelection}
       />
+
+      {/* Hidden file input for context menu upload */}
+      <input
+        type="file"
+        multiple
+        accept="image/*,.pdf"
+        className="hidden"
+        ref={fileInputRef}
+        onChange={(e) => {
+          const files = Array.from(e.target.files ?? []).filter(
+            (f) => f.type.startsWith("image/") || f.type === "application/pdf"
+          );
+          e.target.value = "";
+          if (files.length > 0) uploadFiles(files, null);
+        }}
+      />
+
+      {/* AddFolderDialog controlled from context menu */}
+      <AddFolderDialog roomId={roomId} open={addFolderOpen} onOpenChange={setAddFolderOpen} />
+
+      {/* Context menu portal */}
+      {contextMenu && createPortal(
+        <div
+          onMouseDown={(e) => e.stopPropagation()}
+          style={{ left: contextMenu.x, top: contextMenu.y }}
+          className="fixed z-[150] bg-popover border border-border rounded-lg shadow-lg py-1 min-w-[200px] overflow-hidden"
+        >
+          <button
+            className="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors text-left"
+            onClick={() => { setContextMenu(null); fileInputRef.current?.click(); }}
+          >
+            <Upload size={14} className="text-muted-foreground shrink-0" />
+            Dodaj pliki
+          </button>
+          <div className="h-px bg-border mx-2 my-0.5" />
+          <button
+            className="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors text-left"
+            onClick={() => { setContextMenu(null); setAddFolderOpen(true); }}
+          >
+            <FolderPlus size={14} className="text-muted-foreground shrink-0" />
+            Nowy folder
+          </button>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }

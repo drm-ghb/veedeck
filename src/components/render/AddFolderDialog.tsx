@@ -16,12 +16,29 @@ import {
 } from "@/components/ui/dialog";
 import { useT } from "@/lib/i18n";
 
-export default function AddFolderDialog({ roomId }: { roomId: string }) {
+export default function AddFolderDialog({
+  roomId,
+  open: externalOpen,
+  onOpenChange: externalOnOpenChange,
+}: {
+  roomId: string;
+  open?: boolean;
+  onOpenChange?: (v: boolean) => void;
+}) {
   const router = useRouter();
   const t = useT();
-  const [open, setOpen] = useState(false);
+  const isControlled = externalOpen !== undefined;
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = isControlled ? externalOpen! : internalOpen;
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
+
+  function handleOpenChange(v: boolean) {
+    if (loading) return;
+    if (isControlled) externalOnOpenChange?.(v);
+    else setInternalOpen(v);
+    if (!v) setName("");
+  }
 
   async function handleSave() {
     if (!name.trim()) return;
@@ -37,7 +54,8 @@ export default function AddFolderDialog({ roomId }: { roomId: string }) {
       window.dispatchEvent(new CustomEvent("renderflow:folder-created", { detail: folder }));
       toast.success(t.render.folderCreated);
       setName("");
-      setOpen(false);
+      if (isControlled) externalOnOpenChange?.(false);
+      else setInternalOpen(false);
       router.refresh();
     } else {
       toast.error(t.render.folderCreateError);
@@ -45,11 +63,13 @@ export default function AddFolderDialog({ roomId }: { roomId: string }) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!loading) { setOpen(v); if (!v) setName(""); } }}>
-      <DialogTrigger render={<Button variant="outline" />}>
-        <FolderPlus size={15} />
-        {t.render.newFolder}
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      {!isControlled && (
+        <DialogTrigger render={<Button variant="outline" />}>
+          <FolderPlus size={15} />
+          {t.render.newFolder}
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
           <DialogTitle>{t.render.newFolder}</DialogTitle>

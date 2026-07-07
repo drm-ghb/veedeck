@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useViewPreference, useGridCols } from "@/hooks/useViewPreference";
 import { Check, CopyCheck, Eye, FileText, LayoutGrid, List, Pin, Upload } from "@/components/ui/icons";
 import Link from "next/link";
@@ -53,10 +54,38 @@ export default function FolderRenderView({ projectId, roomId, folderId, renders 
   const [isDragOver, setIsDragOver] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [newRenderIds, setNewRenderIds] = useState<Set<string>>(new Set());
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const dragCounterRef = useRef(0);
   const router = useRouter();
 
   const { startUpload } = useUploadThing("renderUploader");
+
+  const uploadFiles = useCallback(async (files: File[]) => {
+    setIsUploading(true);
+    try {
+      const results = await startUpload(files);
+      if (!results) throw new Error();
+      for (let i = 0; i < results.length; i++) {
+        const file = files[i];
+        const r = results[i];
+        const name = file.name.replace(/\.[^.]+$/, "");
+        const fileType = file.type === "application/pdf" ? "pdf" : "image";
+        await fetch("/api/renders", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ projectId, name, fileUrl: r.url, fileKey: r.key, roomId, folderId, fileType }),
+        });
+      }
+      const count = results.length;
+      toast.success(`${t.render.filesAddedPrefix} ${count} ${count === 1 ? t.render.fileSingular : count < 5 ? t.render.fileFew : t.render.fileMany}`);
+      router.refresh();
+    } catch {
+      toast.error(t.render.filesUploadError);
+    } finally {
+      setIsUploading(false);
+    }
+  }, [startUpload, projectId, roomId, folderId, router, t]);
 
   // Track previous render IDs to detect newly added ones
   const prevRenderIdsRef = useRef<Set<string>>(new Set(renders.map((r) => r.id)));
@@ -99,29 +128,8 @@ prevRenderIdsRef.current = currentIds;
       (f) => f.type.startsWith("image/") || f.type === "application/pdf"
     );
     if (files.length === 0) return;
-    setIsUploading(true);
-    try {
-      const results = await startUpload(files);
-      if (!results) throw new Error();
-      for (let i = 0; i < results.length; i++) {
-        const file = files[i];
-        const r = results[i];
-        const name = file.name.replace(/\.[^.]+$/, "");
-        const fileType = file.type === "application/pdf" ? "pdf" : "image";
-        await fetch("/api/renders", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ projectId, name, fileUrl: r.url, fileKey: r.key, roomId, folderId, fileType }),
-        });
-      }
-      toast.success(`${t.render.filesAddedPrefix} ${results.length} ${results.length === 1 ? t.render.fileSingular : results.length < 5 ? t.render.fileFew : t.render.fileMany}`);
-      router.refresh();
-    } catch {
-      toast.error(t.render.filesUploadError);
-    } finally {
-      setIsUploading(false);
-    }
-  }, [startUpload, projectId, roomId, folderId, router]);
+    await uploadFiles(files);
+  }, [uploadFiles]);
 
   function toggleSelect(id: string) {
     setSelectedIds((prev) => {
@@ -170,6 +178,27 @@ prevRenderIdsRef.current = currentIds;
     return () => document.removeEventListener("mousedown", onOutside);
   }, [gridOpen]);
 
+  useEffect(() => {
+    if (!contextMenu) return;
+    function close() { setContextMenu(null); }
+    function onKey(e: KeyboardEvent) { if (e.key === "Escape") close(); }
+    document.addEventListener("mousedown", close);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", close);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [contextMenu]);
+
+  function handleContextMenu(e: React.MouseEvent) {
+    const target = e.target as HTMLElement;
+    if (target.closest('a, button, [role="button"]')) return;
+    e.preventDefault();
+    const x = Math.min(e.clientX + 2, window.innerWidth - 210);
+    const y = Math.min(e.clientY + 2, window.innerHeight - 80);
+    setContextMenu({ x, y });
+  }
+
   const dragProps = {
     onDragEnter: handleDragEnter,
     onDragLeave: handleDragLeave,
@@ -193,16 +222,32 @@ prevRenderIdsRef.current = currentIds;
 
   if (renders.length === 0) {
     return (
-      <div className="relative min-h-[200px] text-center py-16 text-muted-foreground" {...dragProps}>
+      <div className="relative min-h-[200px] text-center py-16 text-muted-foreground" {...dragProps} onContextMenu={handleContextMenu}>
         {dropOverlay}
         <p className="text-lg font-medium">{t.render.noFiles}</p>
         <p className="text-sm mt-1">{t.render.noFilesFolderHint}</p>
+        <input type="file" multiple accept="image/*,.pdf" className="hidden" ref={fileInputRef}
+          onChange={(e) => {
+            const files = Array.from(e.target.files ?? []).filter(f => f.type.startsWith("image/") || f.type === "application/pdf");
+            e.target.value = "";
+            if (files.length > 0) uploadFiles(files);
+          }}
+        />
+        {contextMenu && createPortal(
+          <div onMouseDown={(e) => e.stopPropagation()} style={{ left: contextMenu.x, top: contextMenu.y }} className="fixed z-[150] bg-popover border border-border rounded-lg shadow-lg py-1 min-w-[200px] overflow-hidden">
+            <button className="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors text-left" onClick={() => { setContextMenu(null); fileInputRef.current?.click(); }}>
+              <Upload size={14} className="text-muted-foreground shrink-0" />
+              Dodaj pliki
+            </button>
+          </div>,
+          document.body
+        )}
       </div>
     );
   }
 
   return (
-    <div className="relative" {...dragProps}>
+    <div className="relative" {...dragProps} onContextMenu={handleContextMenu}>
       {dropOverlay}
       <div className="flex justify-end items-center gap-2 mb-4">
         <button
@@ -379,6 +424,24 @@ prevRenderIdsRef.current = currentIds;
         projectId={projectId}
         onSuccess={exitSelection}
       />
+
+      <input type="file" multiple accept="image/*,.pdf" className="hidden" ref={fileInputRef}
+        onChange={(e) => {
+          const files = Array.from(e.target.files ?? []).filter(f => f.type.startsWith("image/") || f.type === "application/pdf");
+          e.target.value = "";
+          if (files.length > 0) uploadFiles(files);
+        }}
+      />
+
+      {contextMenu && createPortal(
+        <div onMouseDown={(e) => e.stopPropagation()} style={{ left: contextMenu.x, top: contextMenu.y }} className="fixed z-[150] bg-popover border border-border rounded-lg shadow-lg py-1 min-w-[200px] overflow-hidden">
+          <button className="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors text-left" onClick={() => { setContextMenu(null); fileInputRef.current?.click(); }}>
+            <Upload size={14} className="text-muted-foreground shrink-0" />
+            Dodaj pliki
+          </button>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }
