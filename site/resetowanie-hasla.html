@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>veedeck — Ustaw nowe hasło</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="veedeckicon.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&amp;family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+  :root {
+    --background: #FFFFFF;
+    --foreground: #24252B;
+    --primary: #4F46E5;
+    --primary-foreground: #FFFFFF;
+    --primary-600: #4338CA;
+    --secondary: #F2F3F7;
+    --muted-foreground: #6B6F80;
+    --accent: #A5B4FC;
+    --border: #E5E7EB;
+    --indigo-50: #EEF2FF;
+    --indigo-100: #E0E7FF;
+    --indigo-950: #1E1B4B;
+    --destructive: #DC2626;
+    --success: #059669;
+    --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+    --font-heading: "Inter", ui-sans-serif, system-ui, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: var(--font-sans);
+    color: var(--foreground);
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.5;
+    min-height: 100vh;
+    background:
+      radial-gradient(1100px 480px at 80% -10%, rgba(165, 180, 252, 0.32), transparent 60%),
+      radial-gradient(800px 380px at 8% 0%, rgba(79, 70, 229, 0.12), transparent 65%),
+      radial-gradient(700px 380px at 50% 110%, rgba(199, 210, 254, 0.35), transparent 60%),
+      var(--background);
+    background-attachment: fixed;
+  }
+  h1, h2, h3 { font-family: var(--font-heading); font-weight: 700; letter-spacing: -0.028em; margin: 0; }
+  p { margin: 0; line-height: 1.55; }
+  a { color: inherit; text-decoration: none; }
+  img { display: block; max-width: 100%; }
+  em.accent { font-style: italic; font-family: var(--font-heading); color: var(--primary); font-weight: 500; }
+
+  .page {
+    min-height: 100vh;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    padding: 28px 32px;
+  }
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    max-width: 1200px; width: 100%; margin: 0 auto;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand img.ico { height: 28px; width: 28px; object-fit: contain; }
+  .brand img.word { height: 20px; }
+  .back-link {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 13.5px; color: var(--muted-foreground); font-weight: 500;
+    padding: 8px 12px; border-radius: 10px;
+    transition: background 140ms, color 140ms;
+  }
+  .back-link:hover { background: rgba(255,255,255,0.65); color: var(--foreground); }
+  .back-link svg { width: 14px; height: 14px; }
+
+  .stage { display: grid; place-items: center; padding: 32px 0; }
+  .panel { width: 100%; max-width: 460px; position: relative; }
+
+  .view { display: none; flex-direction: column; gap: 22px; }
+  .view.active { display: flex; animation: viewIn 280ms cubic-bezier(0.22, 0.61, 0.36, 1); }
+  @keyframes viewIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .panel-head { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 14px; }
+  .panel-head h1 { font-size: clamp(30px, 4vw, 38px); line-height: 1.05; letter-spacing: -0.028em; }
+  .panel-head .sub { color: var(--muted-foreground); font-size: 15px; max-width: 380px; }
+  .panel-head .sub b { color: var(--foreground); font-weight: 600; }
+
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 12px; font-weight: 700;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--primary);
+  }
+  .eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--primary); animation: pulse 1.6s ease-in-out infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+  .card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    padding: 28px 28px 26px;
+    box-shadow: 0 30px 60px -30px rgba(15, 23, 42, 0.18), 0 4px 16px -6px rgba(15, 23, 42, 0.06);
+    display: flex; flex-direction: column; gap: 16px;
+  }
+  .card-success { text-align: center; align-items: center; gap: 18px; padding: 36px 28px 28px; }
+  .card-success .success-icon {
+    width: 68px; height: 68px; border-radius: 50%;
+    background: var(--indigo-50); color: var(--primary);
+    display: grid; place-items: center;
+    box-shadow: 0 0 0 8px rgba(165, 180, 252, 0.18);
+  }
+  .card-success .success-icon.warn { background: #FEF2F2; color: var(--destructive); box-shadow: 0 0 0 8px rgba(220, 38, 38, 0.10); }
+  .card-success .success-icon svg { width: 30px; height: 30px; }
+  .card-success h2 { font-size: 24px; line-height: 1.15; letter-spacing: -0.022em; }
+  .card-success .body-text { font-size: 14.5px; color: var(--muted-foreground); line-height: 1.6; max-width: 340px; }
+  .card-success .body-text b { color: var(--foreground); font-weight: 600; }
+  .card-success .actions { width: 100%; display: flex; flex-direction: column; gap: 10px; padding-top: 4px; }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    height: 48px; padding: 0 22px;
+    border-radius: 12px;
+    font-family: var(--font-sans);
+    font-size: 14.5px; font-weight: 600;
+    cursor: pointer; border: 1px solid transparent;
+    transition: transform 120ms ease, background 140ms ease, box-shadow 140ms ease, border-color 140ms ease, opacity 140ms ease, color 140ms ease;
+    outline: none;
+  }
+  .btn:focus-visible { box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.25); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn.w-full { width: 100%; }
+  .btn[data-variant="primary"] { background: var(--primary); color: #fff; box-shadow: 0 8px 22px -10px rgba(79, 70, 229, 0.55); }
+  .btn[data-variant="primary"]:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 12px 28px -10px rgba(79, 70, 229, 0.65); }
+  .btn[data-variant="outline"] { background: #fff; color: var(--foreground); border-color: var(--border); }
+  .btn[data-variant="outline"]:hover:not(:disabled) { background: var(--secondary); border-color: #cdd0db; }
+  .btn[data-variant="ghost"] { background: transparent; color: var(--muted-foreground); }
+  .btn[data-variant="ghost"]:hover:not(:disabled) { background: var(--secondary); color: var(--foreground); }
+  .btn svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+  .form-stack { display: flex; flex-direction: column; gap: 14px; }
+  .field { display: flex; flex-direction: column; gap: 8px; }
+  .label { font-size: 13px; font-weight: 600; color: var(--foreground); letter-spacing: -0.005em; }
+  .input {
+    height: 48px; width: 100%;
+    border: 1px solid var(--border);
+    background: #fff;
+    border-radius: 12px;
+    padding: 0 14px;
+    font-family: var(--font-sans);
+    font-size: 14.5px; color: var(--foreground);
+    transition: border-color 140ms, box-shadow 140ms;
+    outline: none;
+  }
+  .input::placeholder { color: #9aa0b0; }
+  .input:focus-visible { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.12); }
+  .input.has-trailing { padding-right: 44px; }
+  .input.invalid { border-color: var(--destructive); }
+  .input.invalid:focus-visible { box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.12); }
+
+  .password-wrap { position: relative; }
+  .password-toggle {
+    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+    background: transparent; border: 0; padding: 6px; cursor: pointer;
+    color: #9aa0b0; display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 6px; transition: color 120ms, background 120ms;
+  }
+  .password-toggle:hover { color: var(--foreground); background: var(--secondary); }
+  .password-toggle svg { width: 16px; height: 16px; display: block; }
+
+  .helper-text { font-size: 12px; color: var(--muted-foreground); }
+  .error-text { font-size: 12px; color: var(--destructive); }
+
+  /* Wymagania hasła */
+  .reqs { display: flex; flex-direction: column; gap: 6px; padding: 2px 0 0; }
+  .req { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted-foreground); transition: color 140ms; }
+  .req .tick {
+    width: 16px; height: 16px; border-radius: 50%;
+    border: 1.5px solid #cdd0db; flex-shrink: 0;
+    display: grid; place-items: center; transition: all 140ms;
+  }
+  .req .tick svg { width: 10px; height: 10px; opacity: 0; transition: opacity 140ms; stroke: #fff; }
+  .req.ok { color: var(--success); }
+  .req.ok .tick { background: var(--success); border-color: var(--success); }
+  .req.ok .tick svg { opacity: 1; }
+
+  .switch-row { text-align: center; font-size: 14px; color: var(--muted-foreground); }
+  .meta-link { font-size: 13.5px; color: var(--muted-foreground); font-weight: 500; transition: color 140ms; }
+  .meta-link:hover { color: var(--primary); text-decoration: underline; }
+  .meta-link.strong { color: var(--foreground); font-weight: 600; }
+  .meta-link.strong:hover { color: var(--primary); }
+
+  .footer { text-align: center; padding: 16px 0 8px; color: var(--muted-foreground); font-size: 12.5px; }
+  .footer a { color: var(--muted-foreground); text-decoration: underline; text-decoration-color: transparent; transition: text-decoration-color 140ms; }
+  .footer a:hover { text-decoration-color: var(--muted-foreground); }
+
+  .hidden { display: none !important; }
+
+  @media (max-width: 520px) {
+    .page { padding: 20px 16px; }
+    .card { padding: 22px 20px 20px; border-radius: 18px; }
+    .card-success { padding: 28px 20px 22px; }
+    .panel-head h1 { font-size: 28px; }
+    .back-link { padding: 6px 10px; }
+    .back-link span { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+  <header class="topbar">
+    <a class="brand" href="index.html">
+      <img class="ico" src="vee-icon.png" alt="">
+      <img class="word" src="vee_black.png" alt="veedeck">
+    </a>
+    <a class="back-link" href="login.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"></path></svg>
+      <span>Wróć do logowania</span>
+    </a>
+  </header>
+
+  <main class="stage">
+    <div class="panel">
+
+      <!-- ════════════ RESET (form) ════════════ -->
+      <section class="view view-reset active" data-view="reset">
+        <div class="panel-head">
+          <div class="eyebrow"><span class="dot"></span>Reset hasła</div>
+          <h1>Ustaw nowe hasło.<br><em class="accent">Ostatni krok.</em></h1>
+          <p class="sub">Wpisz nowe hasło do konta <b id="resetEmail">veedeck</b>. Po zapisaniu zalogujesz się od nowa.</p>
+        </div>
+
+        <div class="card">
+          <form id="resetForm" class="form-stack" autocomplete="off">
+            <div class="field">
+              <label class="label" for="new-password">Nowe hasło</label>
+              <div class="password-wrap">
+                <input class="input has-trailing" id="new-password" name="password" type="password" placeholder="••••••••" required autocomplete="new-password">
+                <button type="button" class="password-toggle" aria-label="Pokaż / ukryj hasło" onclick="togglePassword(this)">
+                  <svg class="eye-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                  <svg class="eye-off hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"></path><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"></path><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"></path><line x1="2" y1="2" x2="22" y2="22"></line></svg>
+                </button>
+              </div>
+              <div class="reqs" id="reqs">
+                <div class="req" data-req="len"><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"></path></svg></span>Min. 8 znaków</div>
+                <div class="req" data-req="lower"><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"></path></svg></span>Mała litera</div>
+                <div class="req" data-req="upper"><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"></path></svg></span>Wielka litera</div>
+                <div class="req" data-req="digit"><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"></path></svg></span>Cyfra</div>
+              </div>
+            </div>
+
+            <div class="field">
+              <label class="label" for="confirm-password">Powtórz hasło</label>
+              <div class="password-wrap">
+                <input class="input has-trailing" id="confirm-password" name="confirmPassword" type="password" placeholder="••••••••" required autocomplete="new-password">
+                <button type="button" class="password-toggle" aria-label="Pokaż / ukryj hasło" onclick="togglePassword(this)">
+                  <svg class="eye-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                  <svg class="eye-off hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"></path><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"></path><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"></path><line x1="2" y1="2" x2="22" y2="22"></line></svg>
+                </button>
+              </div>
+              <p class="error-text hidden" id="matchError">Hasła nie są identyczne.</p>
+            </div>
+
+            <button type="submit" class="btn w-full" data-variant="primary" id="resetSubmit" disabled style="margin-top: 4px;">
+              <span>Zapisz nowe hasło</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"></path></svg>
+            </button>
+          </form>
+        </div>
+
+        <p class="switch-row">
+          Przypomniałaś sobie hasło?
+          <a class="meta-link strong" href="login.html">Wróć do logowania →</a>
+        </p>
+      </section>
+
+      <!-- ════════════ DONE (success) ════════════ -->
+      <section class="view view-done" data-view="done">
+        <div class="panel-head">
+          <div class="eyebrow"><span class="dot"></span>Gotowe</div>
+          <h1>Hasło zmienione.<br><em class="accent">Możesz się zalogować.</em></h1>
+        </div>
+
+        <div class="card card-success">
+          <div class="success-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"></path></svg>
+          </div>
+          <h2>Twoje nowe hasło jest aktywne</h2>
+          <p class="body-text">Zaktualizowaliśmy hasło do Twojego konta. Ze względów bezpieczeństwa wylogowaliśmy Cię na wszystkich urządzeniach — zaloguj się nowym hasłem.</p>
+          <div class="actions">
+            <a class="btn w-full" data-variant="primary" href="login.html">
+              <span>Przejdź do logowania</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"></path></svg>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <!-- ════════════ INVALID / EXPIRED ════════════ -->
+      <section class="view view-invalid" data-view="invalid">
+        <div class="panel-head">
+          <div class="eyebrow"><span class="dot"></span>Link nieaktywny</div>
+          <h1>Link wygasł.<br><em class="accent">Wyślij nowy.</em></h1>
+        </div>
+
+        <div class="card card-success">
+          <div class="success-icon warn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v5"></path><path d="M12 16h.01"></path></svg>
+          </div>
+          <h2>Ten link do resetu jest nieważny</h2>
+          <p class="body-text">Link mógł wygasnąć (ważny 60&nbsp;minut) lub został już użyty. Poproś o nowy — zajmie to chwilę.</p>
+          <div class="actions">
+            <a class="btn w-full" data-variant="primary" href="login.html#forgot">
+              <span>Wyślij nowy link</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"></path></svg>
+            </a>
+            <a class="btn w-full" data-variant="ghost" href="login.html">Wróć do logowania</a>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <footer class="footer">
+    © 2026 veedeck · <a href="Polityka prywatnosci.html">Polityka prywatności</a> · <a href="Kontakt.html">Pomoc</a>
+  </footer>
+</div>
+
+<script>
+  // ── Widoki ────────────────────────────────────────────────────
+  function setView(view) {
+    document.querySelectorAll('.view').forEach(function (v) {
+      v.classList.toggle('active', v.dataset.view === view);
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ── Token z URL (?token=...) ─────────────────────────────────
+  var params = new URLSearchParams(location.search);
+  var resetToken = params.get('token');
+
+  // Brak tokenu: w produkcji zwaliduj token na serwerze
+  // (GET /api/auth/reset-password/validate?token=...) i wywołaj setView('invalid')
+  // gdy token jest zły / wygasły / już użyty. W tym froncie-demie pokazujemy formularz,
+  // a widok 'invalid' jest dostępny pod ?state=invalid do podglądu.
+  if (params.get('state') === 'invalid') {
+    setView('invalid');
+  }
+  // Opcjonalnie: pokaż e-mail powiązany z tokenem (przekazany przez backend)
+  var emailFromServer = params.get('email');
+  if (emailFromServer) document.getElementById('resetEmail').textContent = emailFromServer;
+
+  // ── Pokaż / ukryj hasło ──────────────────────────────────────
+  function togglePassword(btn) {
+    var wrap = btn.parentElement;
+    var input = wrap.querySelector('input');
+    var on = btn.querySelector('.eye-on');
+    var off = btn.querySelector('.eye-off');
+    if (input.type === 'password') {
+      input.type = 'text'; on.classList.add('hidden'); off.classList.remove('hidden');
+    } else {
+      input.type = 'password'; on.classList.remove('hidden'); off.classList.add('hidden');
+    }
+  }
+
+  // ── Walidacja ────────────────────────────────────────────────
+  var pwInput = document.getElementById('new-password');
+  var confirmInput = document.getElementById('confirm-password');
+  var submitBtn = document.getElementById('resetSubmit');
+  var matchError = document.getElementById('matchError');
+  var reqEls = {
+    len: document.querySelector('[data-req="len"]'),
+    lower: document.querySelector('[data-req="lower"]'),
+    upper: document.querySelector('[data-req="upper"]'),
+    digit: document.querySelector('[data-req="digit"]')
+  };
+
+  function checks(pw) {
+    return {
+      len: pw.length >= 8,
+      lower: /[a-z]/.test(pw),
+      upper: /[A-Z]/.test(pw),
+      digit: /[0-9]/.test(pw)
+    };
+  }
+
+  function refresh() {
+    var pw = pwInput.value;
+    var c = checks(pw);
+    var allOk = c.len && c.lower && c.upper && c.digit;
+    Object.keys(c).forEach(function (k) { reqEls[k].classList.toggle('ok', c[k]); });
+
+    var confirm = confirmInput.value;
+    var match = confirm.length > 0 && confirm === pw;
+    var showMismatch = confirm.length > 0 && confirm !== pw;
+    matchError.classList.toggle('hidden', !showMismatch);
+    confirmInput.classList.toggle('invalid', showMismatch);
+
+    submitBtn.disabled = !(allOk && match);
+  }
+  pwInput.addEventListener('input', refresh);
+  confirmInput.addEventListener('input', refresh);
+
+  // ── Submit (frontend-only stub) ──────────────────────────────
+  document.getElementById('resetForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (submitBtn.disabled) return;
+    submitBtn.disabled = true;
+    submitBtn.querySelector('span').textContent = 'Zapisujemy...';
+    // Produkcja: POST /api/auth/reset-password { token: resetToken, password: pwInput.value }
+    // Sukces → setView('done'); błąd (token wygasł/użyty) → setView('invalid').
+    setTimeout(function () { setView('done'); }, 700);
+  });
+</script>
+
+<!-- Przełącznik języka PL/EN -->
+<script src="veedeck-i18n.js"></script>
+</body>
+</html>

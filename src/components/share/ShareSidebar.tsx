@@ -335,7 +335,7 @@ export default function ShareSidebar({
     `flex items-center gap-3 px-2.5 py-2.5 rounded-lg text-sm font-medium transition-colors ${
       active
         ? "bg-primary/10 text-primary"
-        : "text-gray-600 dark:text-gray-400 hover:bg-muted hover:text-foreground"
+        : "opacity-60 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5"
     }`;
 
   // On mobile overlay, always show labels (ignore collapsed state)
@@ -357,8 +357,8 @@ export default function ShareSidebar({
         // Mobile: fixed overlay, slides in/out from right
         "fixed inset-y-0 right-0 z-50 w-72 max-w-[85vw] bg-card shadow-2xl transition-transform duration-200",
         mobileSidebarOpen ? "translate-x-0" : "translate-x-full",
-        // Desktop: static in layout, no animation, no overlay background
-        "md:static md:z-auto md:max-w-none md:bg-transparent md:shadow-none md:translate-x-0 md:transition-none",
+        // Desktop: static in layout, inherits var(--sidebar) background from parent
+        "md:static md:z-auto md:max-w-none md:bg-transparent md:shadow-none md:translate-x-0 md:transition-none md:[color:var(--sidebar-foreground)]",
         isCollapsed ? "md:w-14" : "md:w-52",
       ].join(" ")}
     >
@@ -585,17 +585,17 @@ export default function ShareSidebar({
           <button
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
             title={theme === "dark" ? t.nav.switchLight : t.nav.switchDark}
-            className="flex items-center justify-center w-full py-2 px-2.5 rounded-lg text-gray-400 hover:bg-muted hover:text-foreground transition-colors"
+            className="flex items-center justify-center w-full py-2 px-2.5 rounded-lg opacity-60 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
           >
             {theme === "dark" ? <Moon size={18} /> : <Sun size={18} />}
           </button>
         ) : (
           <div className="flex items-center justify-between px-2.5 py-2.5 rounded-lg">
             <div className="flex items-center gap-3">
-              <span className="flex-shrink-0 w-5 flex items-center justify-center text-gray-400">
+              <span className="flex-shrink-0 w-5 flex items-center justify-center opacity-60">
                 {theme === "dark" ? <Moon size={18} /> : <Sun size={18} />}
               </span>
-              <span className="text-sm font-medium text-gray-400">
+              <span className="text-sm font-medium opacity-60">
                 {theme === "dark" ? t.nav.dark : t.nav.light}
               </span>
             </div>
@@ -613,7 +613,7 @@ export default function ShareSidebar({
         <button
           onClick={() => { setHelpOpen(true); setHelpSent(false); setHelpSubject(""); setHelpDesc(""); }}
           title={isCollapsed ? t.nav.help : undefined}
-          className="flex items-center gap-3 px-2.5 py-2.5 rounded-lg text-sm font-medium transition-colors w-full text-gray-400 hover:bg-muted hover:text-foreground"
+          className="flex items-center gap-3 px-2.5 py-2.5 rounded-lg text-sm font-medium transition-colors w-full opacity-60 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5"
         >
           <span className="flex-shrink-0 w-5 flex items-center justify-center">
             <HelpCircle size={18} />
@@ -636,7 +636,7 @@ export default function ShareSidebar({
           className={`flex items-center gap-3 px-2.5 py-2.5 rounded-lg text-sm font-medium transition-colors w-full ${
             clientProjectId && activeView === "settings"
               ? "bg-primary/10 text-primary"
-              : "text-gray-400 hover:bg-muted hover:text-foreground"
+              : "opacity-60 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5"
           }`}
         >
           <span className="flex-shrink-0 w-5 flex items-center justify-center">
@@ -649,7 +649,7 @@ export default function ShareSidebar({
         {clientProjectId && (
           <button
             onClick={() => signOut({ callbackUrl: "/login" })}
-            className="md:hidden flex items-center gap-3 px-2.5 py-2.5 rounded-lg text-sm font-medium transition-colors w-full text-gray-400 hover:bg-muted hover:text-foreground"
+            className="md:hidden flex items-center gap-3 px-2.5 py-2.5 rounded-lg text-sm font-medium transition-colors w-full opacity-60 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5"
           >
             <span className="flex-shrink-0 w-5 flex items-center justify-center">
               <LogOut size={18} />
@@ -662,7 +662,7 @@ export default function ShareSidebar({
         <button
           onClick={toggle}
           title={isCollapsed ? t.share.expandSidebar : t.share.collapseSidebar}
-          className="hidden md:flex items-center justify-center w-full py-2 px-2.5 rounded-lg text-gray-400 hover:bg-muted hover:text-foreground transition-colors"
+          className="hidden md:flex items-center justify-center w-full py-2 px-2.5 rounded-lg opacity-60 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
         >
           {isCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
         </button>

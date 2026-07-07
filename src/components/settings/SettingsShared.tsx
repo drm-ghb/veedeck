@@ -1,5 +1,28 @@
 "use client";
 
+import type { Area } from "react-easy-crop";
+
+export async function getCroppedImg(imageSrc: string, pixelCrop: Area): Promise<File> {
+  const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = imageSrc;
+  });
+  const size = Math.min(pixelCrop.width, pixelCrop.height, 512);
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext("2d")!;
+  ctx.drawImage(image, pixelCrop.x, pixelCrop.y, pixelCrop.width, pixelCrop.height, 0, 0, size, size);
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (!blob) { reject(new Error("Canvas empty")); return; }
+      resolve(new File([blob], "image.png", { type: "image/png" }));
+    }, "image/png");
+  });
+}
+
 export async function patchUser(data: Record<string, unknown>) {
   return fetch("/api/user", {
     method: "PATCH",

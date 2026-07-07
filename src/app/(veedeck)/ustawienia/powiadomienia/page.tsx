@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { SettingsGeneral } from "@/components/settings/SettingsGeneral";
 
-export default async function SettingsOgolnePage() {
+export default async function SettingsPowiadomieniaPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 

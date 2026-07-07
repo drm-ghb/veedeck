@@ -7,7 +7,7 @@ export default async function SubskrypcjaPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
-  const [user, subscription, discounts] = await Promise.all([
+  const [user, subscription, discounts, billingRecords] = await Promise.all([
     prisma.user.findUnique({
       where: { id: session.user.id },
       select: { trialEndsAt: true, isFree: true },
@@ -17,6 +17,10 @@ export default async function SubskrypcjaPage() {
       where: { userId: session.user.id },
       orderBy: { createdAt: "desc" },
     }),
+    prisma.billingRecord.findMany({
+      where: { userId: session.user.id },
+      orderBy: { paidAt: "desc" },
+    }),
   ]);
 
   return (
@@ -25,6 +29,7 @@ export default async function SubskrypcjaPage() {
       isFree={user?.isFree ?? false}
       subscription={subscription}
       discounts={discounts}
+      billingRecords={billingRecords}
     />
   );
 }

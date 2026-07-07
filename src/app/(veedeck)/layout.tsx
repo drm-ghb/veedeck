@@ -27,7 +27,7 @@ export default async function VeedeckLayout({
 
   const ownerId = dbUser?.ownerId;
   const [ownerSettings, memberPerms] = await Promise.all([
-    ownerId ? prisma.user.findUnique({ where: { id: ownerId }, select: { globalHiddenModules: true, clientLogoUrl: true } }) : null,
+    ownerId ? prisma.user.findUnique({ where: { id: ownerId }, select: { globalHiddenModules: true, clientLogoUrl: true, colorTheme: true, customTheme: true } }) : null,
     ownerId ? prisma.teamMemberPermission.findUnique({ where: { memberId: session.user.id! }, select: { hiddenModules: true } }) : null,
   ]);
 
@@ -35,7 +35,7 @@ export default async function VeedeckLayout({
   const firstName = (fullName || dbUser?.name)?.split(" ")[0] ?? dbUser?.email ?? null;
   const avatarUrl = dbUser?.avatarUrl ?? null;
   const hiddenModules = [...new Set([...((ownerSettings ?? dbUser)?.globalHiddenModules ?? []), ...(memberPerms?.hiddenModules ?? [])])];
-  const colorTheme = (dbUser?.colorTheme ?? "champagne") as ColorTheme;
+  const colorTheme = ((ownerSettings?.colorTheme ?? dbUser?.colorTheme) ?? "champagne") as ColorTheme;
   const viewPrefs = (dbUser?.viewPreferences ?? {}) as Record<string, unknown>;
   const sidebarOrder = (viewPrefs.sidebarOrder as string[]) ?? [];
   const isTrial = !!(dbUser?.trialEndsAt && dbUser.trialEndsAt > new Date() && !dbUser.isFree && dbUser.subscription?.status !== "active");
@@ -43,7 +43,7 @@ export default async function VeedeckLayout({
 
   return (
     <div className="h-dvh flex flex-col bg-muted/60">
-      <ColorThemeSync dbTheme={colorTheme} dbCustomTheme={dbUser?.customTheme as import("@/lib/theme").CustomThemeColors | null} />
+      <ColorThemeSync dbTheme={colorTheme} dbCustomTheme={(ownerSettings?.customTheme ?? dbUser?.customTheme) as import("@/lib/theme").CustomThemeColors | null} forceApply={!!ownerId} />
       <AppNavbar
         firstName={firstName}
         avatarUrl={avatarUrl}

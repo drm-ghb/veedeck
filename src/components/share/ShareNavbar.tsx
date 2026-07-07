@@ -65,7 +65,7 @@ export default function ShareNavbar({ backHref, backLabel, clientLogoUrl, design
 
   return (
     <>
-      <nav>
+      <nav style={{ backgroundColor: 'var(--sidebar)', color: 'var(--sidebar-foreground)' }}>
         <div className="px-3 sm:px-6 flex items-center justify-between py-3 gap-4">
           {/* Left: back icon + logo */}
           <div className="flex items-center gap-3 shrink-0">

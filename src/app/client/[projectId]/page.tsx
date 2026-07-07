@@ -559,7 +559,7 @@ export default function ClientProjectPage() {
       <div className="h-dvh flex flex-col bg-muted/60">
         {themeApplier}
         <ShareNavbar clientLogoUrl={project.clientLogoUrl} designerName={project.designerName ?? undefined} clientName={authorName} onLogoClick={() => { setView("home"); setSelectedRoom(null); setSelectedFolder(null); navigate({}); }} onMobileMenuOpen={() => setMobileSidebarOpen(true)} currentUserId={currentUserId} />
-        <div className="flex flex-1 min-h-0">
+        <div className="flex flex-1 min-h-0" style={{ backgroundColor: 'var(--sidebar)' }}>
           <ShareSidebar {...sidebarProps} />
           <main className="flex-1 overflow-y-auto bg-background rounded-tl-2xl">
             <ClientPaymentsView projectId={projectId} />
@@ -575,7 +575,7 @@ export default function ClientProjectPage() {
       <div className="h-dvh flex flex-col bg-muted/60">
         {themeApplier}
         <ShareNavbar clientLogoUrl={project.clientLogoUrl} designerName={project.designerName ?? undefined} clientName={authorName} onLogoClick={() => { setView("home"); setSelectedRoom(null); setSelectedFolder(null); navigate({}); }} onMobileMenuOpen={() => setMobileSidebarOpen(true)} currentUserId={currentUserId} />
-        <div className="flex flex-1 min-h-0">
+        <div className="flex flex-1 min-h-0" style={{ backgroundColor: 'var(--sidebar)' }}>
           <ShareSidebar {...sidebarProps} />
           <main className="flex-1 overflow-y-auto bg-background rounded-tl-2xl">
             <ClientScheduleView projectId={projectId} />
@@ -603,7 +603,7 @@ export default function ClientProjectPage() {
       <div className="h-dvh flex flex-col bg-muted/60">
         {themeApplier}
         <ShareNavbar clientLogoUrl={project.clientLogoUrl} designerName={project.designerName ?? undefined} clientName={authorName} onLogoClick={() => { setView("home"); setSelectedRoom(null); setSelectedFolder(null); navigate({}); }} onMobileMenuOpen={() => setMobileSidebarOpen(true)} currentUserId={currentUserId} />
-        <div className="flex flex-1 min-h-0">
+        <div className="flex flex-1 min-h-0" style={{ backgroundColor: 'var(--sidebar)' }}>
           <ShareSidebar
             token=""
             discussionId={project.discussionId}
@@ -687,7 +687,7 @@ export default function ClientProjectPage() {
       <div className="h-dvh flex flex-col bg-muted/60">
         {themeApplier}
         <ShareNavbar clientLogoUrl={project.clientLogoUrl} designerName={project.designerName ?? undefined} clientName={authorName} onLogoClick={() => { setView("home"); setSelectedRoom(null); setSelectedFolder(null); navigate({}); }} onMobileMenuOpen={() => setMobileSidebarOpen(true)} currentUserId={currentUserId} />
-        <div className="flex flex-1 min-h-0">
+        <div className="flex flex-1 min-h-0" style={{ backgroundColor: 'var(--sidebar)' }}>
           <ShareSidebar
             token=""
             discussionId={project.discussionId}
@@ -1363,7 +1363,7 @@ export default function ClientProjectPage() {
     <div className="h-dvh flex flex-col bg-muted/60">
       {themeApplier}
       <ShareNavbar clientLogoUrl={project.clientLogoUrl} designerName={project.designerName ?? undefined} clientName={authorName} onLogoClick={() => { setView("home"); setSelectedRoom(null); setSelectedFolder(null); navigate({}); }} onMobileMenuOpen={() => setMobileSidebarOpen(true)} currentUserId={currentUserId} />
-      <div className="flex flex-1 min-h-0">
+      <div className="flex flex-1 min-h-0" style={{ backgroundColor: 'var(--sidebar)' }}>
         <ShareSidebar
           token=""
           discussionId={project.discussionId}

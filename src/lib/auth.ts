@@ -47,6 +47,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null;
         }
 
+        if (user.activationToken) {
+          await prisma.loginLog.create({ data: { email: identifier, userId: user.id, success: false } });
+          return null;
+        }
+
         await prisma.loginLog.create({ data: { email: identifier, userId: user.id, success: true } });
 
         return { id: user.id, email: user.email, name: user.name, isAdmin: user.isAdmin, role: user.role };

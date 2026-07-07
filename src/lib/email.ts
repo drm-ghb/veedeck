@@ -1,5 +1,6 @@
 import nodemailer from "nodemailer";
 import { escapeHtml } from "@/lib/validation";
+import { activationEmailPL, activationEmailEN, resetEmailPL, resetEmailEN } from "@/lib/email-templates";
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
@@ -9,10 +10,50 @@ const transporter = nodemailer.createTransport({
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
   },
+  tls: {
+    rejectUnauthorized: false,
+  },
 });
 
 const FROM = `"${process.env.SMTP_FROM_NAME ?? "Widek"}" <${process.env.SMTP_USER}>`;
 const APP_URL = process.env.NEXTAUTH_URL ?? process.env.AUTH_URL ?? "http://localhost:3000";
+
+export async function sendActivationEmail({
+  to,
+  token,
+  locale = "pl",
+}: {
+  to: string;
+  token: string;
+  locale?: "pl" | "en";
+}) {
+  const link = `${APP_URL}/api/auth/activate/${token}`;
+  const isPL = locale !== "en";
+  await transporter.sendMail({
+    from: FROM,
+    to,
+    subject: isPL ? "Aktywuj swoje konto veedeck" : "Activate your veedeck account",
+    html: isPL ? activationEmailPL(link) : activationEmailEN(link),
+  });
+}
+
+export async function sendPasswordResetEmail({
+  to,
+  resetUrl,
+  locale = "pl",
+}: {
+  to: string;
+  resetUrl: string;
+  locale?: "pl" | "en";
+}) {
+  const isPL = locale !== "en";
+  await transporter.sendMail({
+    from: FROM,
+    to,
+    subject: isPL ? "Reset hasła w veedeck" : "Reset your veedeck password",
+    html: isPL ? resetEmailPL(resetUrl) : resetEmailEN(resetUrl),
+  });
+}
 
 export async function sendClientInvitationEmail({
   to,

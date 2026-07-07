@@ -1,8 +1,11 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Settings, LocalMall, ChevronLeft, Users, Puzzle, PushPin, BookOpen, Wallet, CheckSquare } from "@/components/ui/icons";
+import {
+  Bell, ChevronLeft, Users, Puzzle, BookOpen,
+  UserCircle, Image, Palette, Payments, UserMinus,
+} from "@/components/ui/icons";
 import { useT } from "@/lib/i18n";
 
 export default function SettingsSidebar() {
@@ -11,89 +14,36 @@ export default function SettingsSidebar() {
   const t = useT();
 
   const items = [
-    {
-      href: "/ustawienia/ogolne",
-      label: t.settings.generalNav,
-      icon: <Settings size={16} />,
-      module: null,
-    },
-    {
-      href: "/ustawienia/projectflow",
-      label: t.settings.renderflow,
-      icon: <PushPin size={16} />,
-      module: { href: "/klienci", label: "ProjectFlow" },
-    },
-    {
-      href: "/ustawienia/listy",
-      label: t.settings.lists,
-      icon: <LocalMall size={16} />,
-      module: { href: "/listy-zakupowe", label: t.settings.lists },
-    },
-    {
-      href: "/ustawienia/zadania",
-      label: t.settings.tasksNav,
-      icon: <CheckSquare size={16} />,
-      module: { href: "/zadania", label: t.settings.tasksNav },
-    },
-    {
-      href: "/ustawienia/uzytkownicy",
-      label: t.settings.usersNav,
-      icon: <Users size={16} />,
-      module: null,
-    },
-    {
-      href: "/ustawienia/wtyczka",
-      label: t.settings.pluginNav,
-      icon: <Puzzle size={16} />,
-      module: null,
-    },
-    {
-      href: "/ustawienia/instrukcja",
-      label: t.settings.guideNav,
-      icon: <BookOpen size={16} />,
-      module: null,
-    },
-    {
-      href: "/ustawienia/subskrypcja",
-      label: t.settings.subscriptionNav,
-      icon: <Wallet size={16} />,
-      module: null,
-    },
+    { href: "/ustawienia/profil",        label: "Profil",                   icon: <UserCircle size={16} /> },
+    { href: "/ustawienia/branding",      label: "Branding",                 icon: <Image size={16} /> },
+    { href: "/ustawienia/wyglad",        label: "Wygląd",                   icon: <Palette size={16} /> },
+    { href: "/ustawienia/uzytkownicy",   label: t.settings.usersNav,        icon: <Users size={16} /> },
+    { href: "/ustawienia/powiadomienia", label: "Powiadomienia",             icon: <Bell size={16} /> },
+    { href: "/ustawienia/wtyczka",       label: t.settings.pluginNav,       icon: <Puzzle size={16} /> },
+    { href: "/ustawienia/instrukcja",    label: t.settings.guideNav,        icon: <BookOpen size={16} /> },
+    { href: "/ustawienia/subskrypcja",   label: "Plan i rozliczenia",       icon: <Payments size={16} /> },
+    { href: "/ustawienia/konto",         label: "Konto",                    icon: <UserMinus size={16} /> },
   ];
-
-  const activeItem = items.find(
-    (item) => pathname === item.href || pathname.startsWith(item.href + "/")
-  );
-  const backModule = activeItem?.module ?? null;
-
-  const backButton = (
-    <button
-      onClick={() => router.back()}
-      className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors group"
-    >
-      <ChevronLeft size={16} className="group-hover:-translate-x-0.5 transition-transform" />
-      {backModule ? t.settings.backTo.replace("{module}", backModule.label) : t.common.back}
-    </button>
-  );
 
   return (
     <>
       {/* Mobile: horizontal scrollable tab bar */}
       <nav className="md:hidden w-full space-y-3">
-        {backButton}
+        <button
+          onClick={() => router.back()}
+          className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors group"
+        >
+          <ChevronLeft size={16} className="group-hover:-translate-x-0.5 transition-transform" />
+          {t.common.back}
+        </button>
         <div className="flex gap-1 overflow-x-auto pb-1 -mx-1 px-1">
           {items.map((item) => {
             const active = pathname === item.href || pathname.startsWith(item.href + "/");
             return (
-              <Link
-                key={item.href}
-                href={item.href}
+              <Link key={item.href} href={item.href}
                 className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm whitespace-nowrap flex-shrink-0 transition-colors ${
-                  active
-                    ? "bg-primary/10 text-primary font-medium"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                }`}
-              >
+                  active ? "bg-primary/10 text-primary font-medium" : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                }`}>
                 <span className={active ? "text-primary" : "text-muted-foreground"}>{item.icon}</span>
                 {item.label}
               </Link>
@@ -104,20 +54,22 @@ export default function SettingsSidebar() {
 
       {/* Desktop: vertical sidebar */}
       <nav className="hidden md:block w-48 shrink-0 space-y-4">
-        {backButton}
+        <button
+          onClick={() => router.back()}
+          className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors group"
+        >
+          <ChevronLeft size={16} className="group-hover:-translate-x-0.5 transition-transform" />
+          {t.common.back}
+        </button>
         <ul className="space-y-0.5">
           {items.map((item) => {
             const active = pathname === item.href || pathname.startsWith(item.href + "/");
             return (
               <li key={item.href}>
-                <Link
-                  href={item.href}
+                <Link href={item.href}
                   className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors ${
-                    active
-                      ? "bg-primary/10 text-primary font-medium"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                  }`}
-                >
+                    active ? "bg-primary/10 text-primary font-medium" : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  }`}>
                   <span className={active ? "text-primary" : "text-muted-foreground"}>{item.icon}</span>
                   {item.label}
                 </Link>

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useLayoutEffect } from "react";
 import { signIn, getSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
 type View = "login" | "register" | "forgot" | "forgotSent" | "registered";
@@ -262,7 +262,12 @@ export default function LoginPage() {
   const [registeredEmail, setRegisteredEmail] = useState("");
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotEmailSent, setForgotEmailSent] = useState("");
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendDone, setResendDone] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const activatedParam = searchParams.get("activated");
+  const resetParam = searchParams.get("reset");
 
   useLayoutEffect(() => {
     const prevTheme = document.documentElement.dataset.theme;
@@ -301,6 +306,16 @@ export default function LoginPage() {
     setLoading(true);
     const result = await signIn("credentials", { email, password, redirect: false });
     if (result?.error) {
+      // Check if account is pending activation
+      try {
+        const check = await fetch(`/api/auth/check-activation?email=${encodeURIComponent(email)}`);
+        const data = await check.json();
+        if (data.status === "pending") {
+          toast.error("Konto nie zostało aktywowane — sprawdź skrzynkę pocztową i kliknij link aktywacyjny.");
+          setLoading(false);
+          return;
+        }
+      } catch {}
       toast.error("Nieprawidłowy e-mail lub hasło.");
       setLoading(false);
       return;
@@ -330,13 +345,15 @@ export default function LoginPage() {
       return;
     }
     setLoading(true);
+    const locale = document.cookie.match(/veedeck-lang=([^;]+)/)?.[1] ?? "pl";
     const res = await fetch("/api/auth/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ fullName: fullName.trim(), name: companyName.trim() || null, email, password }),
+      body: JSON.stringify({ fullName: fullName.trim(), name: companyName.trim() || null, email, password, locale }),
     });
     if (!res.ok) {
-      const data = await res.json();
+      let data: { error?: string } = {};
+      try { data = await res.json(); } catch {}
       toast.error(data.error || "Błąd rejestracji.");
       setLoading(false);
       return;
@@ -346,11 +363,30 @@ export default function LoginPage() {
     setLoading(false);
   }
 
+  async function handleResend() {
+    if (resendLoading || resendDone) return;
+    setResendLoading(true);
+    const locale = document.cookie.match(/veedeck-lang=([^;]+)/)?.[1] ?? "pl";
+    await fetch("/api/auth/resend-activation", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: registeredEmail, locale }),
+    });
+    setResendLoading(false);
+    setResendDone(true);
+  }
+
   async function handleForgot(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    // Placeholder — reset password not yet implemented
-    await new Promise((r) => setTimeout(r, 700));
+    const locale = document.cookie.match(/veedeck-lang=([^;]+)/)?.[1] ?? "pl";
+    try {
+      await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: forgotEmail.trim(), locale }),
+      });
+    } catch {}
     setForgotEmailSent(forgotEmail);
     setView("forgotSent");
     setLoading(false);
@@ -390,6 +426,50 @@ export default function LoginPage() {
               {/* ── LOGIN ── */}
               {view === "login" && (
                 <>
+                  {resetParam === "true" && (
+                    <div style={{ background: "#f0fdf4", border: "1px solid #86efac", borderRadius: 14, padding: "14px 18px", display: "flex", alignItems: "flex-start", gap: 12 }}>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 20, height: 20, flexShrink: 0, marginTop: 1 }}>
+                        <path d="M20 6L9 17l-5-5" />
+                      </svg>
+                      <div>
+                        <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: "#15803d" }}>Hasło zmienione</p>
+                        <p style={{ margin: "2px 0 0", fontSize: 13, color: "#166534" }}>Zaloguj się nowym hasłem.</p>
+                      </div>
+                    </div>
+                  )}
+                  {activatedParam === "true" && (
+                    <div style={{ background: "#f0fdf4", border: "1px solid #86efac", borderRadius: 14, padding: "14px 18px", display: "flex", alignItems: "flex-start", gap: 12 }}>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 20, height: 20, flexShrink: 0, marginTop: 1 }}>
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" />
+                      </svg>
+                      <div>
+                        <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: "#15803d" }}>Konto aktywowane pomyślnie</p>
+                        <p style={{ margin: "2px 0 0", fontSize: 13, color: "#166534" }}>Możesz się teraz zalogować.</p>
+                      </div>
+                    </div>
+                  )}
+                  {activatedParam === "expired" && (
+                    <div style={{ background: "#fef9c3", border: "1px solid #fde047", borderRadius: 14, padding: "14px 18px", display: "flex", alignItems: "flex-start", gap: 12 }}>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="#ca8a04" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 20, height: 20, flexShrink: 0, marginTop: 1 }}>
+                        <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+                      </svg>
+                      <div>
+                        <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: "#92400e" }}>Link aktywacyjny wygasł</p>
+                        <p style={{ margin: "2px 0 0", fontSize: 13, color: "#78350f" }}>Zarejestruj się ponownie, aby otrzymać nowy link.</p>
+                      </div>
+                    </div>
+                  )}
+                  {activatedParam === "invalid" && (
+                    <div style={{ background: "#fef2f2", border: "1px solid #fca5a5", borderRadius: 14, padding: "14px 18px", display: "flex", alignItems: "flex-start", gap: 12 }}>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 20, height: 20, flexShrink: 0, marginTop: 1 }}>
+                        <circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" />
+                      </svg>
+                      <div>
+                        <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: "#991b1b" }}>Nieprawidłowy link aktywacyjny</p>
+                        <p style={{ margin: "2px 0 0", fontSize: 13, color: "#7f1d1d" }}>Link jest nieprawidłowy lub konto zostało już aktywowane.</p>
+                      </div>
+                    </div>
+                  )}
                   <div className="vd-panel-head">
                     <div className="vd-eyebrow"><span className="dot" />Konto veedeck</div>
                     <h1>Witaj ponownie.<br /><em className="accent">Zaloguj się.</em></h1>
@@ -440,28 +520,7 @@ export default function LoginPage() {
                   </div>
 
                   <div className="vd-reg-lock">
-                    <div className="vd-reg-overlay">
-                      <div className="vd-reg-overlay-inner">
-                        <div className="vd-lock-ic">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                          </svg>
-                        </div>
-                        <h3>Jesteśmy w trakcie testów</h3>
-                        <p>Jeżeli chcesz wziąć udział, napisz na:</p>
-                        <a
-                          className="vd-reg-mail"
-                          href="mailto:contact@veedeck.com?subject=Chc%C4%99%20wzi%C4%85%C4%87%20udzia%C5%82%20w%20testach%20veedeck&body=Cze%C5%9B%C4%87%21%20Chc%C4%99%20do%C5%82%C4%85czy%C4%87%20do%20test%C3%B3w%20veedeck."
-                        >
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" />
-                          </svg>
-                          contact@veedeck.com
-                        </a>
-                      </div>
-                    </div>
-
-                    <div className="vd-card reg-disabled" aria-hidden="true">
+                    <div className="vd-card">
                       <button type="button" className="vd-btn w-full" data-variant="outline" disabled>
                         <GoogleIcon />
                         Załóż konto przez Google
@@ -534,12 +593,20 @@ export default function LoginPage() {
                     </p>
                     <div className="vd-meta-note">Nie widzisz wiadomości? Sprawdź folder <b>Spam</b> lub <b>Oferty</b>.</div>
                     <div className="vd-actions">
+                      <button
+                        className="vd-btn w-full"
+                        data-variant="outline"
+                        onClick={handleResend}
+                        disabled={resendLoading || resendDone}
+                      >
+                        {resendDone ? "Link wysłany ponownie ✓" : resendLoading ? "Wysyłamy..." : "Wyślij link ponownie"}
+                      </button>
                       <button className="vd-btn w-full" data-variant="ghost" onClick={() => switchView("login")}>Wróć do logowania</button>
                     </div>
                   </div>
 
                   <p className="vd-switch-row">
-                    Wpisałaś zły e-mail?{" "}
+                    Wpisałeś zły e-mail?{" "}
                     <button className="vd-meta-link strong" onClick={() => switchView("register")}>Załóż konto ponownie →</button>
                   </p>
                 </>

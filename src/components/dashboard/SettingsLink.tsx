@@ -7,8 +7,8 @@ import { Settings } from "@/components/ui/icons";
 function getSettingsHref(pathname: string): string {
   if (pathname.startsWith("/projectflow")) return "/ustawienia/projectflow";
   if (pathname.startsWith("/listy-zakupowe")) return "/ustawienia/listy";
-  if (pathname.startsWith("/klienci")) return "/ustawienia/ogolne";
-  return "/ustawienia/ogolne";
+  if (pathname.startsWith("/klienci")) return "/ustawienia/profil";
+  return "/ustawienia/profil";
 }
 
 export function SettingsLink() {

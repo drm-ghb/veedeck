@@ -206,7 +206,7 @@ export default function MobileMenu({ userName, logoUrl, hiddenModules = [], isTr
           )}
 
           <Link
-            href="/ustawienia/ogolne"
+            href="/ustawienia/profil"
             className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
               pathname.startsWith("/ustawienia")
                 ? "bg-primary/10 text-primary"

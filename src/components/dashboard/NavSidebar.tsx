@@ -24,7 +24,7 @@ function getSettingsHref(pathname: string): string {
   if (pathname.startsWith("/projectflow")) return "/ustawienia/projectflow";
   if (pathname.startsWith("/listy-zakupowe")) return "/ustawienia/listy";
   if (pathname.startsWith("/zadania")) return "/ustawienia/zadania";
-  return "/ustawienia/ogolne";
+  return "/ustawienia/profil";
 }
 
 const HIDDEN_ON: RegExp[] = [

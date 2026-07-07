@@ -58,6 +58,8 @@ model User {
   contactEmail               String?
   emailNotifEnabled          Boolean                 @default(false)
   emailNotifModules          String[]                @default([])
+  activationToken            String?                 @unique
+  activationTokenExpiry      DateTime?
   accounts                   Account[]
   calendarEvents             CalendarEvent[]
   calendarGuestEntries       CalendarGuest[]
@@ -77,6 +79,7 @@ model User {
   projectClientAccounts      ProjectClient[]         @relation("ProjectClientUser")
   sessions                   Session[]
   shoppingLists              ShoppingList[]
+  billingRecords             BillingRecord[]
   subscription               Subscription?
   surveys                    Survey[]
   assignedTasks              Task[]                  @relation("TaskAssignee")
@@ -88,6 +91,17 @@ model User {
   memberPermission           TeamMemberPermission?   @relation("MemberPermissions")
   ownedMemberPermissions     TeamMemberPermission[]  @relation("OwnedPermissions")
   helpRequests               HelpRequest[]
+  passwordResetTokens        PasswordResetToken[]
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model TeamMemberPermission {
@@ -143,6 +157,18 @@ model Invitation {
   projectId  String?
   type       String   @default("team")
   designer   User     @relation("InvitationDesigner", fields: [designerId], references: [id], onDelete: Cascade)
+}
+
+model BillingRecord {
+  id         String   @id @default(cuid())
+  userId     String
+  plan       String
+  interval   String
+  amount     Float
+  currency   String   @default("PLN")
+  paidAt     DateTime @default(now())
+  invoiceUrl String?
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Subscription {

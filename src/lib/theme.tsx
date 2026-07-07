@@ -104,10 +104,12 @@ const ThemeContext = createContext<{
 });
 
 const AUTH_PATHS = ["/login", "/forgot-password", "/complete-profile", "/register"];
+const CLIENT_PATHS = ["/client", "/share", "/wykonawca"];
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isAuthPage = AUTH_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/"));
+  const isClientPage = CLIENT_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/"));
   const [theme, setThemeState] = useState<Theme>("light");
   const [colorTheme, setColorThemeState] = useState<ColorTheme>("violet");
   const [customTheme, setCustomThemeState] = useState<CustomThemeColors | null>(null);
@@ -163,6 +165,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
+    // On client/share/wykonawca pages, ClientThemeApplier handles the theme — don't interfere
+    if (isClientPage) return;
+
     document.documentElement.dataset.theme = colorTheme;
     localStorage.setItem("color-theme", colorTheme);
     document.cookie = `color-theme=${colorTheme}; path=/; max-age=31536000; SameSite=Lax`;
@@ -176,7 +181,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       }
       el.textContent = buildCustomThemeCSS(customTheme);
     }
-  }, [colorTheme, customTheme, isAuthPage]);
+  }, [colorTheme, customTheme, isAuthPage, isClientPage]);
 
   function setCustomTheme(c: CustomThemeColors) {
     setCustomThemeState(c);
