@@ -87,6 +87,7 @@ export async function POST(req: NextRequest) {
         price: price || null,
         manufacturer: manufacturer || null,
         color: color || null,
+        category: category || null,
         supplier: supplier || null,
         quantity: typeof quantity === "number" && quantity >= 1 ? quantity : 1,
         description: description || null,
