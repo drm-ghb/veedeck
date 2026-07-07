@@ -1518,6 +1518,11 @@ export default function RenderViewer({
   }, [lightboxRender.id, renderId]);
 
   useEffect(() => {
+    document.body.classList.toggle("lightbox-open", lightboxOpen);
+    return () => document.body.classList.remove("lightbox-open");
+  }, [lightboxOpen]);
+
+  useEffect(() => {
     if (roomRenders.length <= 1) return;
     function onKey(e: KeyboardEvent) {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;

@@ -2,6 +2,9 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
+/* Hide navbar when lightbox is open */
+body.lightbox-open #app-navbar { display: none; }
+
 /* ── Material Symbols Rounded (self-hosted) ───────────────────── */
 @font-face {
   font-family: 'Material Symbols Rounded';
