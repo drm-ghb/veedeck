@@ -3306,19 +3306,35 @@ export default function RenderViewer({
                 setSelectedId(null);
               }}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={lightboxRender.fileUrl}
-                alt="Render"
-                style={{
-                  maxWidth: "calc(100vw - 2rem)",
-                  maxHeight: "calc(100vh - 120px)",
-                  width: "auto",
-                  height: "auto",
-                }}
-                className="block rounded-lg"
-                draggable={false}
-              />
+              {lightboxRender.fileType === "pdf" ? (
+                <PdfViewer
+                  ref={lightboxImgRef}
+                  url={lightboxRender.fileUrl}
+                  page={1}
+                  onTotalPages={() => {}}
+                  onPageChange={() => {}}
+                  maxHeight={window.innerHeight - 140}
+                  maxWidth={window.innerWidth - 32}
+                  zoom={1}
+                  className="rounded-lg"
+                />
+              ) : (
+                <>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={lightboxRender.fileUrl}
+                    alt="Render"
+                    style={{
+                      maxWidth: "calc(100vw - 2rem)",
+                      maxHeight: "calc(100vh - 120px)",
+                      width: "auto",
+                      height: "auto",
+                    }}
+                    className="block rounded-lg"
+                    draggable={false}
+                  />
+                </>
+              )}
 
               {/* Product pins in lightbox */}
               {!hidePins && (lightboxRender.id === renderId ? productPins : lightboxProductPins).map((pin) => {
