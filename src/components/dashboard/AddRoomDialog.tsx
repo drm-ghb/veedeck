@@ -16,11 +16,21 @@ import { toast } from "sonner";
 import { ICON_OPTIONS, getRoomIcon } from "@/lib/roomIcons";
 import { useT } from "@/lib/i18n";
 
-interface AddRoomDialogProps {
-  projectId: string;
+interface Room {
+  id: string;
+  name: string;
+  type: string;
+  icon?: string | null;
+  pinned: boolean;
+  _count: { renders: number };
 }
 
-export default function AddRoomDialog({ projectId }: AddRoomDialogProps) {
+interface AddRoomDialogProps {
+  projectId: string;
+  onRoomAdded?: (room: Room) => void;
+}
+
+export default function AddRoomDialog({ projectId, onRoomAdded }: AddRoomDialogProps) {
   const t = useT();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
@@ -44,10 +54,12 @@ export default function AddRoomDialog({ projectId }: AddRoomDialogProps) {
 
       if (!res.ok) throw new Error();
 
+      const room = await res.json();
       toast.success(t.projekty.roomAdded);
       setOpen(false);
       setName("");
       setIcon("INNE");
+      onRoomAdded?.({ ...room, _count: { renders: 0 } });
       router.refresh();
     } catch {
       toast.error(t.projekty.roomAddError);

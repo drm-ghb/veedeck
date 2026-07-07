@@ -5,7 +5,6 @@ import { notFound } from "next/navigation";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import ProjectView from "@/components/dashboard/ProjectView";
 import ShareDialog from "@/components/dashboard/ShareDialog";
-import AddRoomDialog from "@/components/dashboard/AddRoomDialog";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -62,7 +61,6 @@ export default async function ProjectPage({ params }: Props) {
         </div>
         <div className="flex items-center gap-2 self-end sm:self-auto">
           <ShareDialog shareUrl={shareUrl} hiddenModules={project.hiddenModules} />
-          <AddRoomDialog projectId={id} />
         </div>
       </div>
 

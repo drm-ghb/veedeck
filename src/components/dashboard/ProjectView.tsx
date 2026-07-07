@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/button";
 import { useT } from "@/lib/i18n";
 import RoomCard from "./RoomCard";
 import RoomMenu from "./RoomMenu";
+import AddRoomDialog from "./AddRoomDialog";
 import { getRoomIcon } from "@/lib/roomIcons";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
@@ -70,6 +71,10 @@ export default function ProjectView({ projectId, rooms, archivedRooms, allRender
   const [search, setSearch] = useState("");
   const [localRooms, setLocalRooms] = useState(rooms);
   useEffect(() => { setLocalRooms(rooms); }, [rooms]);
+
+  function handleRoomAdded(room: Room) {
+    setLocalRooms((prev) => [...prev, room]);
+  }
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkLoading, setBulkLoading] = useState(false);
@@ -211,8 +216,11 @@ export default function ProjectView({ projectId, rooms, archivedRooms, allRender
             )}
           </button>
         </div>
-        {((tab === "active" && rooms.length > 0) || (tab === "all" && allRenders.length > 0)) && (
+        {((tab === "active") || (tab === "all" && allRenders.length > 0)) && (
           <div className="flex items-center gap-2 mb-1 flex-shrink-0">
+            {tab === "active" && (
+              <AddRoomDialog projectId={projectId} onRoomAdded={handleRoomAdded} />
+            )}
             {tab === "all" && (
               <button
                 onClick={() => { setSelectionMode((v) => !v); setSelectedIds(new Set()); }}
