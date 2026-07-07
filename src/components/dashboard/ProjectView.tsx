@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useViewPreference } from "@/hooks/useViewPreference";
 import { ArchiveRestore, CopyCheck, FolderOpen, GripVertical, LayoutGrid, List, Trash2, Pin, Eye, Search, X } from "@/components/ui/icons";
@@ -69,6 +69,7 @@ export default function ProjectView({ projectId, rooms, archivedRooms, allRender
   const [filterStatus, setFilterStatus] = useState<"all" | "REVIEW" | "ACCEPTED">("all");
   const [search, setSearch] = useState("");
   const [localRooms, setLocalRooms] = useState(rooms);
+  useEffect(() => { setLocalRooms(rooms); }, [rooms]);
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkLoading, setBulkLoading] = useState(false);
