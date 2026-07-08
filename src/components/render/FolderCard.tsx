@@ -21,14 +21,12 @@ export default function FolderCard({ folder, projectId, roomId, onFileDrop }: Fo
 
   function handleDragEnter(e: React.DragEvent) {
     e.preventDefault();
-    e.stopPropagation();
     dragCounter.current += 1;
     if (dragCounter.current === 1) setIsDragOver(true);
   }
 
   function handleDragLeave(e: React.DragEvent) {
     e.preventDefault();
-    e.stopPropagation();
     dragCounter.current -= 1;
     if (dragCounter.current === 0) setIsDragOver(false);
   }

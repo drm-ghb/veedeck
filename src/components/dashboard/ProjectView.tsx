@@ -96,15 +96,19 @@ export default function ProjectView({ projectId, rooms, archivedRooms, allRender
     };
   }, [contextMenu]);
 
-  function handleContextMenu(e: React.MouseEvent) {
-    if (tab !== "active") return;
-    const target = e.target as HTMLElement;
-    if (target.closest('a, button, [role="button"]')) return;
-    e.preventDefault();
-    const x = Math.min(e.clientX + 2, window.innerWidth - 210);
-    const y = Math.min(e.clientY + 2, window.innerHeight - 80);
-    setContextMenu({ x, y });
-  }
+  useEffect(() => {
+    function onCtxMenu(e: MouseEvent) {
+      e.preventDefault();
+      if (tab !== "active") return;
+      const target = e.target as HTMLElement;
+      if (target.closest('a, button, [role="button"]')) return;
+      const x = Math.min(e.clientX + 2, window.innerWidth - 210);
+      const y = Math.min(e.clientY + 2, window.innerHeight - 80);
+      setContextMenu({ x, y });
+    }
+    document.addEventListener("contextmenu", onCtxMenu);
+    return () => document.removeEventListener("contextmenu", onCtxMenu);
+  }, [tab]);
 
   function handleRoomAdded(room: Room) {
     setLocalRooms((prev) => [...prev, room]);
@@ -200,7 +204,7 @@ export default function ProjectView({ projectId, rooms, archivedRooms, allRender
   }
 
   return (
-    <div className="contents" onContextMenu={handleContextMenu}>
+    <div className="contents">
       {/* Tabs + view toggle */}
       <div className="flex items-center gap-2 border-b border-border mb-6">
         <div className="flex items-center gap-0.5 overflow-x-auto flex-1 min-w-0" style={{ scrollbarWidth: "none" }}>

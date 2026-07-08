@@ -1,10 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { createPortal, flushSync } from "react-dom";
+import { useUploadThing } from "@/lib/uploadthing-client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
-import { Eye, EyeOff, Plus, FileText, Image, Ruler, Trash2, ChevronLeft, ChevronDown, ChevronRight, Download, FolderPlus, Folder, Pencil, Check, X, CheckSquare, GripVertical, Info, MessageSquare, MoreHorizontal, Pin, RefreshCw, LayoutGrid, List } from "@/components/ui/icons";
+import { Eye, EyeOff, Plus, FileText, Image, Ruler, Trash2, ChevronLeft, ChevronDown, ChevronRight, Download, FolderPlus, Folder, Pencil, Check, X, CheckSquare, GripVertical, Info, MessageSquare, MoreHorizontal, Pin, RefreshCw, LayoutGrid, List, Upload } from "@/components/ui/icons";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, arrayMove, useSortable } from "@dnd-kit/sortable";
@@ -14,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import AddContractorFileDialog from "./AddContractorFileDialog";
+import AddContractorFileDialog, { type AddedFile } from "./AddContractorFileDialog";
 import EditProjectInfoDialog, { type ProjectInfoData } from "./EditProjectInfoDialog";
 import { useT } from "@/lib/i18n";
 import { useViewPreference } from "@/hooks/useViewPreference";
@@ -374,10 +376,105 @@ export default function ContractorProjectView({
     );
   }
 
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+
+  useEffect(() => {
+    if (!contextMenu) return;
+    function close() { setContextMenu(null); }
+    function onKey(e: KeyboardEvent) { if (e.key === "Escape") close(); }
+    document.addEventListener("mousedown", close);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", close);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [contextMenu]);
+
+  useEffect(() => {
+    function onCtxMenu(e: MouseEvent) {
+      e.preventDefault();
+      const target = e.target as HTMLElement;
+      if (target.closest('a, button, [role="button"], input')) return;
+      const hasActions =
+        (viewMode === "grid" && !!selectedFolderId) ||
+        (viewMode === "list" && !!expandedFolder);
+      if (!hasActions) return;
+      const x = Math.min(e.clientX + 2, window.innerWidth - 220);
+      const y = Math.min(e.clientY + 2, window.innerHeight - 120);
+      setContextMenu({ x, y });
+    }
+    document.addEventListener("contextmenu", onCtxMenu);
+    return () => document.removeEventListener("contextmenu", onCtxMenu);
+  }, [viewMode, selectedFolderId, selectedSubfolderId, expandedFolder]);
+
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
+  const [deletedFileIds, setDeletedFileIds] = useState<Set<string>>(new Set());
+  const [pendingFiles, setPendingFiles] = useState<Record<string, AddedFile[]>>({});
+  // Clear optimistic state when server data arrives
+  useEffect(() => { setDeletedFileIds(new Set()); setPendingFiles({}); }, [folders]);
+
   const [bulkFolderId, setBulkFolderId] = useState<string | null>(null);
   const [selectedFileIds, setSelectedFileIds] = useState<string[]>([]);
+
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const dragCounterRef = useRef(0);
+  const { startUpload } = useUploadThing("contractorFileUploader");
+
+  const uploadFiles = useCallback(async (files: File[], targetFolderId: string) => {
+    setIsUploading(true);
+    try {
+      for (const file of files) {
+        const uploaded = await startUpload([file]);
+        if (!uploaded?.[0]) continue;
+        const { url, key, name } = uploaded[0] as { url: string; key: string; name: string };
+        const ext = name.split(".").pop()?.toLowerCase() ?? "";
+        const fileType = ext === "pdf" ? "pdf" : ["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(ext) ? "image" : "file";
+        const res = await fetch(`/api/contractors/${contractorId}/assignments/${assignmentId}/folders/${targetFolderId}/files`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, fileUrl: url, fileKey: key, fileType }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setPendingFiles((prev) => ({
+            ...prev,
+            [targetFolderId]: [...(prev[targetFolderId] ?? []), { id: data.id, name: data.name ?? name, fileUrl: data.fileUrl ?? url, fileType: data.fileType ?? fileType, createdAt: data.createdAt ?? new Date().toISOString(), render: null }],
+          }));
+        }
+      }
+      toast.success(t.wykonawcy.fileAdded);
+      router.refresh();
+    } catch {
+      toast.error(t.wykonawcy.uploadError);
+    } finally {
+      setIsUploading(false);
+    }
+  }, [startUpload, contractorId, assignmentId, router, t]);
+
+  const handleDragEnter = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    dragCounterRef.current += 1;
+    if (dragCounterRef.current === 1) setIsDragOver(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    dragCounterRef.current -= 1;
+    if (dragCounterRef.current === 0) setIsDragOver(false);
+  }, []);
+
+  const handleDrop = useCallback(async (e: React.DragEvent) => {
+    e.preventDefault();
+    dragCounterRef.current = 0;
+    setIsDragOver(false);
+    const activeFolderId = selectedSubfolderId ?? selectedFolderId;
+    if (!activeFolderId) return;
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length === 0) return;
+    await uploadFiles(files, activeFolderId);
+  }, [selectedSubfolderId, selectedFolderId, uploadFiles]);
 
   function toggleBulk(folderId: string) {
     if (bulkFolderId === folderId) {
@@ -396,14 +493,18 @@ export default function ContractorProjectView({
   async function deleteSelected(folderId: string) {
     if (selectedFileIds.length === 0) return;
     if (!confirm(t.wykonawcy.confirmDeleteFiles)) return;
+    const idsToDelete = [...selectedFileIds];
+    flushSync(() => {
+      setDeletedFileIds((prev) => new Set([...prev, ...idsToDelete]));
+      setBulkFolderId(null);
+      setSelectedFileIds([]);
+    });
+    toast.success(t.wykonawcy.filesDeletedOk);
     await Promise.all(
-      selectedFileIds.map((fileId) =>
+      idsToDelete.map((fileId) =>
         fetch(`/api/contractors/${contractorId}/assignments/${assignmentId}/folders/${folderId}/files/${fileId}`, { method: "DELETE" })
       )
     );
-    toast.success(t.wykonawcy.filesDeletedOk);
-    setBulkFolderId(null);
-    setSelectedFileIds([]);
     router.refresh();
   }
 
@@ -420,6 +521,14 @@ export default function ContractorProjectView({
     );
     if (fromDialog) setNewFolderDialogLoading(false);
     if (res.ok) {
+      const newSub = await res.json();
+      setSubfolderOrder((prev) => ({
+        ...prev,
+        [parentId]: [
+          ...(prev[parentId] ?? []),
+          { ...newSub, sourceFolderName: null, _count: { files: newSub.files?.length ?? 0 } },
+        ],
+      }));
       toast.success(t.wykonawcy.folderCreated);
       setNewFolderParentId(null);
       setNewFolderName("");
@@ -432,16 +541,23 @@ export default function ContractorProjectView({
 
   async function deleteSubfolder(subfolderId: string, name: string) {
     if (!confirm(`"${name}" — ${t.wykonawcy.confirmDeleteFolder}`)) return;
+    setSubfolderOrder((prev) => {
+      const updated: Record<string, ContractorSubfolder[]> = {};
+      for (const [key, subs] of Object.entries(prev)) {
+        updated[key] = subs.filter((s) => s.id !== subfolderId);
+      }
+      return updated;
+    });
     const res = await fetch(
       `/api/contractors/${contractorId}/assignments/${assignmentId}/folders/${subfolderId}`,
       { method: "DELETE" }
     );
     if (res.ok) {
       toast.success(t.wykonawcy.folderDeleted);
-      router.refresh();
     } else {
       toast.error(t.wykonawcy.folderDeleteError);
     }
+    router.refresh();
   }
 
   async function saveRename(subfolderId: string) {
@@ -482,16 +598,17 @@ export default function ContractorProjectView({
 
   async function deleteFile(folderId: string, fileId: string, fileName: string) {
     if (!confirm(`"${fileName}" — ${t.wykonawcy.confirmDeleteFile}`)) return;
+    flushSync(() => setDeletedFileIds((prev) => new Set([...prev, fileId])));
+    toast.success(t.wykonawcy.fileDeletedOk);
     const res = await fetch(
       `/api/contractors/${contractorId}/assignments/${assignmentId}/folders/${folderId}/files/${fileId}`,
       { method: "DELETE" }
     );
-    if (res.ok) {
-      toast.success(t.wykonawcy.fileDeletedOk);
-      router.refresh();
-    } else {
+    if (!res.ok) {
       toast.error(t.wykonawcy.fileDeleteError);
+      setDeletedFileIds((prev) => { const next = new Set(prev); next.delete(fileId); return next; });
     }
+    router.refresh();
   }
 
   const filteredFolders = folders.filter((f) => ["rysunki", "wizualizacje", "dokumenty"].includes(f.type));
@@ -662,7 +779,7 @@ export default function ContractorProjectView({
         )}
 
         {/* Direct files at bottom */}
-        {folder.files.length > 0 && (
+        {folder.files.filter((f) => !deletedFileIds.has(f.id)).length > 0 && (
           <div>
             {subs.length > 0 && (
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-3">
@@ -670,7 +787,7 @@ export default function ContractorProjectView({
               </p>
             )}
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-              {folder.files.map((file) => (
+              {[...folder.files, ...(pendingFiles[folder.id] ?? [])].filter((f) => !deletedFileIds.has(f.id)).map((file) => (
                 <FileGridTile
                   key={file.id}
                   file={file}
@@ -700,7 +817,7 @@ export default function ContractorProjectView({
             folderId={folder.id}
             projectId={projectId}
             rooms={rooms}
-            onAdded={() => { setAddFileDialog(null); router.refresh(); }}
+            onAdded={(files) => { setAddFileDialog(null); if (files?.length) setPendingFiles((prev) => ({ ...prev, [folder.id]: [...(prev[folder.id] ?? []), ...files] })); router.refresh(); }}
           />
         )}
       </div>
@@ -711,11 +828,11 @@ export default function ContractorProjectView({
     return (
       <div className="space-y-6">
         {/* Files grid */}
-        {sub.files.length === 0 ? (
+        {[...sub.files, ...(pendingFiles[sub.id] ?? [])].filter((f) => !deletedFileIds.has(f.id)).length === 0 ? (
           <p className="text-sm text-muted-foreground">{t.wykonawcy.noFiles}</p>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-            {sub.files.map((file) => (
+            {[...sub.files, ...(pendingFiles[sub.id] ?? [])].filter((f) => !deletedFileIds.has(f.id)).map((file) => (
               <FileGridTile
                 key={file.id}
                 file={file}
@@ -741,7 +858,7 @@ export default function ContractorProjectView({
             projectId={projectId}
             rooms={rooms}
             isSubfolder={true}
-            onAdded={() => { setAddFileSubfolder(null); router.refresh(); }}
+            onAdded={(files) => { setAddFileSubfolder(null); if (files?.length) setPendingFiles((prev) => ({ ...prev, [sub.id]: [...(prev[sub.id] ?? []), ...files] })); router.refresh(); }}
           />
         )}
       </div>
@@ -927,7 +1044,7 @@ export default function ContractorProjectView({
                                 {sub.files.length === 0 ? (
                                   <p className="px-6 py-3 text-sm text-muted-foreground">{t.wykonawcy.noFiles}</p>
                                 ) : (
-                                  sub.files.map((file) => <FileRow key={file.id} file={file} onDelete={() => deleteFile(sub.id, file.id, file.name)} bulkMode={bulkFolderId === sub.id} selected={selectedFileIds.includes(file.id)} onSelect={() => toggleFileSelect(file.id)} unreadCount={unreadCounts[file.id] ?? 0} totalCount={totalPerFile[file.id] ?? 0} unreadPinCount={unreadPinCounts[file.id] ?? 0} totalPinCount={totalPinsPerFile[file.id] ?? 0} onFileClick={() => router.push(`/wykonawcy/${contractorId}/projekty/${assignmentId}/foldery/${sub.id}/pliki/${file.id}`)} onCommentClick={() => router.push(`/wykonawcy/${contractorId}/projekty/${assignmentId}/foldery/${sub.id}/pliki/${file.id}?comments=1`)} />)
+                                  [...sub.files, ...(pendingFiles[sub.id] ?? [])].filter((f) => !deletedFileIds.has(f.id)).map((file) => <FileRow key={file.id} file={file} onDelete={() => deleteFile(sub.id, file.id, file.name)} bulkMode={bulkFolderId === sub.id} selected={selectedFileIds.includes(file.id)} onSelect={() => toggleFileSelect(file.id)} unreadCount={unreadCounts[file.id] ?? 0} totalCount={totalPerFile[file.id] ?? 0} unreadPinCount={unreadPinCounts[file.id] ?? 0} totalPinCount={totalPinsPerFile[file.id] ?? 0} onFileClick={() => router.push(`/wykonawcy/${contractorId}/projekty/${assignmentId}/foldery/${sub.id}/pliki/${file.id}`)} onCommentClick={() => router.push(`/wykonawcy/${contractorId}/projekty/${assignmentId}/foldery/${sub.id}/pliki/${file.id}?comments=1`)} />)
                                 )}
                               </div>
                             )}
@@ -941,7 +1058,7 @@ export default function ContractorProjectView({
                                 projectId={projectId}
                                 rooms={rooms}
                                 isSubfolder={true}
-                                onAdded={() => { setAddFileSubfolder(null); router.refresh(); }}
+                                onAdded={(files) => { setAddFileSubfolder(null); if (files?.length) setPendingFiles((prev) => ({ ...prev, [sub.id]: [...(prev[sub.id] ?? []), ...files] })); router.refresh(); }}
                               />
                             )}
                           </div>
@@ -954,7 +1071,7 @@ export default function ContractorProjectView({
                   <p className="px-4 py-3 text-sm text-muted-foreground">{t.wykonawcy.noFilesInFolder}</p>
                 ) : folder.files.length > 0 ? (
                   <div className="divide-y divide-border">
-                    {folder.files.map((file) => <FileRow key={file.id} file={file} onDelete={() => deleteFile(folder.id, file.id, file.name)} bulkMode={bulkFolderId === folder.id} selected={selectedFileIds.includes(file.id)} onSelect={() => toggleFileSelect(file.id)} unreadCount={unreadCounts[file.id] ?? 0} totalCount={totalPerFile[file.id] ?? 0} unreadPinCount={unreadPinCounts[file.id] ?? 0} totalPinCount={totalPinsPerFile[file.id] ?? 0} onFileClick={() => router.push(`/wykonawcy/${contractorId}/projekty/${assignmentId}/foldery/${folder.id}/pliki/${file.id}`)} onCommentClick={() => router.push(`/wykonawcy/${contractorId}/projekty/${assignmentId}/foldery/${folder.id}/pliki/${file.id}?comments=1`)} />)}
+                    {[...folder.files, ...(pendingFiles[folder.id] ?? [])].filter((f) => !deletedFileIds.has(f.id)).map((file) => <FileRow key={file.id} file={file} onDelete={() => deleteFile(folder.id, file.id, file.name)} bulkMode={bulkFolderId === folder.id} selected={selectedFileIds.includes(file.id)} onSelect={() => toggleFileSelect(file.id)} unreadCount={unreadCounts[file.id] ?? 0} totalCount={totalPerFile[file.id] ?? 0} unreadPinCount={unreadPinCounts[file.id] ?? 0} totalPinCount={totalPinsPerFile[file.id] ?? 0} onFileClick={() => router.push(`/wykonawcy/${contractorId}/projekty/${assignmentId}/foldery/${folder.id}/pliki/${file.id}`)} onCommentClick={() => router.push(`/wykonawcy/${contractorId}/projekty/${assignmentId}/foldery/${folder.id}/pliki/${file.id}?comments=1`)} />)}
                   </div>
                 ) : null}
               </div>
@@ -969,7 +1086,7 @@ export default function ContractorProjectView({
                 folderId={folder.id}
                 projectId={projectId}
                 rooms={rooms}
-                onAdded={() => { setAddFileDialog(null); router.refresh(); }}
+                onAdded={(files) => { setAddFileDialog(null); if (files?.length) setPendingFiles((prev) => ({ ...prev, [folder.id]: [...(prev[folder.id] ?? []), ...files] })); router.refresh(); }}
               />
             )}
           </div>
@@ -985,9 +1102,29 @@ export default function ContractorProjectView({
     ? (subfolderOrder[selectedFolder.id] ?? selectedFolder.subfolders).find((s) => s.id === selectedSubfolderId) ?? null
     : null;
 
+  const activeFolderId = selectedSubfolderId ?? selectedFolderId;
+
   return (
     <>
-      <div className="space-y-6">
+      <div
+        className="space-y-6 relative min-h-dvh"
+        onDragEnter={handleDragEnter}
+        onDragLeave={handleDragLeave}
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={handleDrop}
+      >
+        {(isDragOver || isUploading) && activeFolderId && (
+          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-primary/10 backdrop-blur-[1px] pointer-events-none rounded-xl">
+            <div className="flex flex-col items-center gap-3 px-10 py-8 rounded-2xl border-2 border-dashed border-primary bg-background/80 shadow-lg">
+              <div className="w-14 h-14 rounded-full bg-primary/15 flex items-center justify-center">
+                <Upload size={28} className="text-primary" />
+              </div>
+              <p className="text-base font-semibold text-primary">
+                {isUploading ? t.wykonawcy.uploadingFiles : t.wykonawcy.dropFilesHere}
+              </p>
+            </div>
+          </div>
+        )}
         {/* Breadcrumb — dynamic, mirrors ProjectFlow style */}
         <nav className="flex items-center gap-2 mb-6">
           {/* Back arrow */}
@@ -1159,6 +1296,82 @@ export default function ContractorProjectView({
         assignmentId={assignmentId}
         info={info}
       />
+
+      {contextMenu && createPortal(
+        <div
+          onMouseDown={(e) => e.stopPropagation()}
+          style={{ left: contextMenu.x, top: contextMenu.y }}
+          className="fixed z-[150] bg-popover border border-border rounded-lg shadow-lg py-1 min-w-[200px] overflow-hidden"
+        >
+          {/* Grid — wewnątrz folderu, brak podfolderu */}
+          {viewMode === "grid" && selectedFolder && !selectedSubfolder && (
+            <>
+              <button
+                className="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors text-left"
+                onClick={() => {
+                  setContextMenu(null);
+                  setNewFolderParentId(selectedFolder.id);
+                  setNewFolderName("");
+                  setNewFolderDialogOpen(true);
+                }}
+              >
+                <FolderPlus size={14} className="text-muted-foreground shrink-0" />
+                {t.wykonawcy.newFolder}
+              </button>
+              <button
+                className="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors text-left"
+                onClick={() => {
+                  setContextMenu(null);
+                  setAddFileDialog(selectedFolder.id);
+                }}
+              >
+                <Plus size={14} className="text-muted-foreground shrink-0" />
+                {t.wykonawcy.addFileBtn}
+              </button>
+            </>
+          )}
+          {/* Grid — wewnątrz podfolderu */}
+          {viewMode === "grid" && selectedFolder && selectedSubfolder && (
+            <button
+              className="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors text-left"
+              onClick={() => {
+                setContextMenu(null);
+                setAddFileSubfolder(selectedSubfolder.id);
+              }}
+            >
+              <Plus size={14} className="text-muted-foreground shrink-0" />
+              {t.wykonawcy.addFileBtn}
+            </button>
+          )}
+          {/* List — folder rozwinięty */}
+          {viewMode === "list" && expandedFolder && (
+            <>
+              <button
+                className="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors text-left"
+                onClick={() => {
+                  setContextMenu(null);
+                  setNewFolderParentId(expandedFolder);
+                  setNewFolderName("");
+                }}
+              >
+                <FolderPlus size={14} className="text-muted-foreground shrink-0" />
+                {t.wykonawcy.newFolder}
+              </button>
+              <button
+                className="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors text-left"
+                onClick={() => {
+                  setContextMenu(null);
+                  setAddFileDialog(expandedFolder);
+                }}
+              >
+                <Plus size={14} className="text-muted-foreground shrink-0" />
+                {t.wykonawcy.addFileBtn}
+              </button>
+            </>
+          )}
+        </div>,
+        document.body
+      )}
     </>
   );
 }

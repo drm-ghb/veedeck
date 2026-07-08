@@ -30,6 +30,15 @@ interface Room {
   renders: RenderItem[]; // renders directly on room (no folder)
 }
 
+export interface AddedFile {
+  id: string;
+  name: string;
+  fileUrl: string | null;
+  fileType: string;
+  createdAt: string;
+  render: { id: string; name: string; fileUrl: string; fileType: string } | null;
+}
+
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -38,7 +47,7 @@ interface Props {
   folderId: string;
   projectId: string;
   rooms: Room[];
-  onAdded: () => void;
+  onAdded: (files?: AddedFile[]) => void;
   isSubfolder?: boolean;
 }
 
@@ -231,10 +240,11 @@ export default function AddContractorFileDialog({
         toast.error(t.wykonawcy.addFileError);
         return;
       }
+      const data = await res.json();
       toast.success(t.wykonawcy.fileAdded);
       onOpenChange(false);
       reset();
-      onAdded();
+      onAdded([{ id: data.id, name: data.name ?? name, fileUrl: data.fileUrl ?? url, fileType: data.fileType ?? fileType, createdAt: data.createdAt ?? new Date().toISOString(), render: null }]);
     } finally {
       setLoading(false);
     }
@@ -248,21 +258,26 @@ export default function AddContractorFileDialog({
     setLoading(true);
     try {
       const allRenders = rooms.flatMap((r) => [...r.renders, ...r.folders.flatMap((f) => f.renders)]);
+      const addedFiles: AddedFile[] = [];
       await Promise.all(
         selectedRenderIds.map(async (renderId) => {
           const render = allRenders.find((r) => r.id === renderId);
           if (!render) return;
-          await fetch(`/api/contractors/${contractorId}/assignments/${assignmentId}/folders/${folderId}/files`, {
+          const res = await fetch(`/api/contractors/${contractorId}/assignments/${assignmentId}/folders/${folderId}/files`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ renderId, name: render.name, fileType: render.fileType }),
           });
+          if (res.ok) {
+            const data = await res.json();
+            addedFiles.push({ id: data.id, name: render.name, fileUrl: null, fileType: render.fileType, createdAt: data.createdAt ?? new Date().toISOString(), render: { id: renderId, name: render.name, fileUrl: render.fileUrl, fileType: render.fileType } });
+          }
         })
       );
       toast.success(`${t.wykonawcy.added} ${selectedRenderIds.length} ${selectedRenderIds.length === 1 ? t.wykonawcy.render1 : t.wykonawcy.renderFew}`);
       onOpenChange(false);
       reset();
-      onAdded();
+      onAdded(addedFiles);
     } finally {
       setLoading(false);
     }

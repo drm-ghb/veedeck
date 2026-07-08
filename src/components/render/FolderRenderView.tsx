@@ -190,14 +190,18 @@ prevRenderIdsRef.current = currentIds;
     };
   }, [contextMenu]);
 
-  function handleContextMenu(e: React.MouseEvent) {
-    const target = e.target as HTMLElement;
-    if (target.closest('a, button, [role="button"]')) return;
-    e.preventDefault();
-    const x = Math.min(e.clientX + 2, window.innerWidth - 210);
-    const y = Math.min(e.clientY + 2, window.innerHeight - 80);
-    setContextMenu({ x, y });
-  }
+  useEffect(() => {
+    function onCtxMenu(e: MouseEvent) {
+      e.preventDefault();
+      const target = e.target as HTMLElement;
+      if (target.closest('a, button, [role="button"]')) return;
+      const x = Math.min(e.clientX + 2, window.innerWidth - 210);
+      const y = Math.min(e.clientY + 2, window.innerHeight - 80);
+      setContextMenu({ x, y });
+    }
+    document.addEventListener("contextmenu", onCtxMenu);
+    return () => document.removeEventListener("contextmenu", onCtxMenu);
+  }, []);
 
   const dragProps = {
     onDragEnter: handleDragEnter,
@@ -222,7 +226,7 @@ prevRenderIdsRef.current = currentIds;
 
   if (renders.length === 0) {
     return (
-      <div className="relative min-h-[200px] text-center py-16 text-muted-foreground" {...dragProps} onContextMenu={handleContextMenu}>
+      <div className="relative min-h-dvh text-center py-16 text-muted-foreground" {...dragProps}>
         {dropOverlay}
         <p className="text-lg font-medium">{t.render.noFiles}</p>
         <p className="text-sm mt-1">{t.render.noFilesFolderHint}</p>
@@ -247,7 +251,7 @@ prevRenderIdsRef.current = currentIds;
   }
 
   return (
-    <div className="relative" {...dragProps} onContextMenu={handleContextMenu}>
+    <div className="relative min-h-dvh" {...dragProps}>
       {dropOverlay}
       <div className="flex justify-end items-center gap-2 mb-4">
         <button

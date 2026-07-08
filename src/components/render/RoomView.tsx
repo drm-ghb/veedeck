@@ -226,15 +226,19 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
     };
   }, [contextMenu]);
 
-  function handleContextMenu(e: React.MouseEvent) {
-    if (tab !== "active") return;
-    const target = e.target as HTMLElement;
-    if (target.closest('a, button, [role="button"]')) return;
-    e.preventDefault();
-    const x = Math.min(e.clientX + 2, window.innerWidth - 210);
-    const y = Math.min(e.clientY + 2, window.innerHeight - 110);
-    setContextMenu({ x, y });
-  }
+  useEffect(() => {
+    function onCtxMenu(e: MouseEvent) {
+      e.preventDefault();
+      if (tab !== "active") return;
+      const target = e.target as HTMLElement;
+      if (target.closest('a, button, [role="button"]')) return;
+      const x = Math.min(e.clientX + 2, window.innerWidth - 210);
+      const y = Math.min(e.clientY + 2, window.innerHeight - 110);
+      setContextMenu({ x, y });
+    }
+    document.addEventListener("contextmenu", onCtxMenu);
+    return () => document.removeEventListener("contextmenu", onCtxMenu);
+  }, [tab]);
 
   const [isDragOver, setIsDragOver] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -433,12 +437,11 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
 
   return (
     <div
-      className="relative min-h-[50vh]"
+      className="relative min-h-dvh"
       onDragEnter={handleDragEnter}
       onDragLeave={handleDragLeave}
       onDragOver={(e) => e.preventDefault()}
       onDrop={handleDrop}
-      onContextMenu={handleContextMenu}
     >
       {(isDragOver || isUploading) && (
         <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-primary/10 backdrop-blur-[1px] pointer-events-none rounded-xl">
