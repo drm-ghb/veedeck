@@ -41,8 +41,9 @@ const PLANS_DATA = [
     id: "freelancer",
     name: "Freelancer",
     tagline: "Dla projektantów zaczynających z veedeck",
-    monthlyPLN: 99,
-    yearlyPLN: 79,
+    monthlyPLN: 79,
+    yearlyPLN: 71,
+    customPricing: false,
     featured: false,
     sections: [
       { label: "Projekty i pliki", features: [
@@ -50,7 +51,6 @@ const PLANS_DATA = [
         { text: "Historia wersji (5 wersji)", available: true },
         { text: "Komentarze z pinezkami", available: true },
         { text: "Panel klienta i wykonawcy", available: true },
-        { text: "20 GB przestrzeni", available: true },
       ]},
       { label: "Komunikacja", features: [
         { text: "Czat z klientem", available: true },
@@ -59,6 +59,7 @@ const PLANS_DATA = [
       ]},
       { label: "Zarządzanie projektem", features: [
         { text: "Zadania i podzadania", available: true },
+        { text: "Śledzenie płatności", available: false },
         { text: "Dokumenty klienta", available: false },
         { text: "Kalendarz z gośćmi", available: false },
       ]},
@@ -68,22 +69,22 @@ const PLANS_DATA = [
         { text: "Miejsca w zespole", available: false },
       ]},
     ] as PlanSection[],
-    upgradeNote: "Brak dokumentów klienta i kalendarza — upgrade do Studio gdy zaczniesz zarządzać pełną dokumentacją projektów.",
+    upgradeNote: "Brak śledzenia płatności, dokumentów klienta i kalendarza — upgrade do Studio gdy zaczniesz zarządzać pełną dokumentacją projektów.",
   },
   {
     id: "studio",
     name: "Studio",
     tagline: "Pełne studio projektowe dla rosnących pracowni",
     monthlyPLN: 199,
-    yearlyPLN: 159,
+    yearlyPLN: 179,
+    customPricing: false,
     featured: true,
     sections: [
       { label: "Projekty i pliki", features: [
-        { text: "30 aktywnych projektów", available: true },
+        { text: "15 aktywnych projektów", available: true },
         { text: "Pełna historia wersji", available: true },
         { text: "Komentarze z pinezkami", available: true },
         { text: "Panel klienta i wykonawcy", available: true },
-        { text: "60 GB przestrzeni", available: true },
       ]},
       { label: "Komunikacja", features: [
         { text: "Czat z klientem", available: true },
@@ -92,6 +93,7 @@ const PLANS_DATA = [
       ]},
       { label: "Zarządzanie projektem", features: [
         { text: "Zadania i podzadania", available: true },
+        { text: "Śledzenie płatności", available: true },
         { text: "Dokumenty klienta z folderami", available: true },
         { text: "Kalendarz z gośćmi", available: true },
       ]},
@@ -107,8 +109,9 @@ const PLANS_DATA = [
     id: "agencja",
     name: "Agencja",
     tagline: "Dla dużych pracowni i agencji bez kompromisów",
-    monthlyPLN: 499,
-    yearlyPLN: 399,
+    monthlyPLN: 0,
+    yearlyPLN: 0,
+    customPricing: true,
     featured: false,
     sections: [
       { label: "Projekty i pliki", features: [
@@ -116,7 +119,6 @@ const PLANS_DATA = [
         { text: "Pełna historia wersji", available: true },
         { text: "Komentarze z pinezkami", available: true },
         { text: "Panel klienta i wykonawcy", available: true },
-        { text: "200 GB przestrzeni", available: true },
       ]},
       { label: "Komunikacja", features: [
         { text: "Czat z klientem", available: true },
@@ -125,6 +127,7 @@ const PLANS_DATA = [
       ]},
       { label: "Zarządzanie projektem", features: [
         { text: "Zadania i podzadania", available: true },
+        { text: "Śledzenie płatności", available: true },
         { text: "Dokumenty klienta z folderami", available: true },
         { text: "Kalendarz z gośćmi", available: true },
       ]},
@@ -147,8 +150,9 @@ const TRIAL_DAYS = 14;
 
 /* ─── helpers ─────────────────────────────────────────────────────────────── */
 
-function formatPrice(plnPrice: number, currency: Currency, rates: Record<string, number>, annual: boolean): string {
-  const price = annual ? Math.round(plnPrice * 0.8) : plnPrice; // approx yearly discount
+function formatPrice(monthlyPLN: number, yearlyPLN: number, currency: Currency, rates: Record<string, number>, annual: boolean, vatMode: "netto" | "brutto"): string {
+  let price = annual ? yearlyPLN : monthlyPLN;
+  if (vatMode === "brutto") price = Math.round(price * 1.23);
   if (currency === "PLN") return `${price} zł`;
   const rate = rates[currency];
   if (!rate) return `${price} zł`;
@@ -159,6 +163,7 @@ function formatPrice(plnPrice: number, currency: Currency, rates: Record<string,
 
 function PlansModal({ onClose }: { onClose: () => void }) {
   const [annual, setAnnual] = useState(false);
+  const [vatMode, setVatMode] = useState<"netto" | "brutto">("netto");
   const [currency, setCurrency] = useState<Currency>("PLN");
   const [rates, setRates] = useState<Record<string, number>>({ EUR: 4.25, USD: 3.95, GBP: 5.05 });
   const [rateDate, setRateDate] = useState<string | null>(null);
@@ -208,12 +213,24 @@ function PlansModal({ onClose }: { onClose: () => void }) {
             </button>
             {annual && (
               <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-400">
-                −17% · 2 mies. gratis
+                −10% rocznie
               </span>
             )}
           </div>
 
-          {/* Currency + rate date */}
+          {/* VAT toggle */}
+          <div className="flex items-center gap-1 border border-border rounded-lg overflow-hidden">
+            <button onClick={() => setVatMode("netto")}
+              className={`px-3 py-1.5 text-xs font-semibold transition-colors ${vatMode === "netto" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}>
+              Netto
+            </button>
+            <button onClick={() => setVatMode("brutto")}
+              className={`px-3 py-1.5 text-xs font-semibold transition-colors ${vatMode === "brutto" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}>
+              Brutto
+            </button>
+          </div>
+
+          {/* Currency */}
           <div className="flex items-center gap-2">
             {rateDate && currency !== "PLN" && (
               <span className="text-xs text-muted-foreground">kurs z {rateDate}</span>
@@ -232,38 +249,57 @@ function PlansModal({ onClose }: { onClose: () => void }) {
         {/* Plans grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-0 divide-y md:divide-y-0 md:divide-x divide-border">
           {PLANS_DATA.map((plan) => {
-            const priceStr = ratesLoading ? "…" : formatPrice(plan.monthlyPLN, currency, rates, annual);
-            const annualTotal = annual
+            const vatYearly = vatMode === "brutto" ? Math.round(plan.yearlyPLN * 1.23) : plan.yearlyPLN;
+            const priceStr = ratesLoading ? "…" : formatPrice(plan.monthlyPLN, plan.yearlyPLN, currency, rates, annual, vatMode);
+            const annualTotal = annual && !plan.customPricing
               ? (currency === "PLN"
-                  ? `${plan.yearlyPLN * 12} zł/rok`
-                  : `${Math.ceil(plan.yearlyPLN / (rates[currency] ?? 1) * 12)} ${CURRENCY_SYMBOLS[currency]}/rok`)
+                  ? `${vatYearly * 12} zł/rok`
+                  : `${Math.ceil(vatYearly / (rates[currency] ?? 1) * 12)} ${CURRENCY_SYMBOLS[currency]}/rok`)
               : null;
             return (
               <div key={plan.id} className={`flex flex-col p-6 ${plan.featured ? "bg-primary/3" : ""}`}>
                 {plan.featured ? (
-                  <span className="self-start text-xs font-semibold px-2.5 py-1 rounded-full bg-primary/15 text-primary mb-3">Najpopularniejszy</span>
+                  <span className="self-center text-xs font-semibold px-2.5 py-1 rounded-full bg-primary/15 text-primary mb-3">Polecany</span>
                 ) : (
                   <div className="h-7 mb-3" />
                 )}
-                <h3 className="text-lg font-bold text-foreground">{plan.name}</h3>
-                <p className="text-xs text-muted-foreground mt-1 mb-4 leading-snug">{plan.tagline}</p>
-                <div className="mb-1">
-                  <span className="text-3xl font-bold text-foreground">{priceStr}</span>
-                  <span className="text-sm text-muted-foreground">/mies.</span>
-                </div>
-                {annualTotal ? (
-                  <p className="text-xs text-muted-foreground mb-4">Rozliczane {annualTotal}</p>
+                <h3 className="text-lg font-bold text-foreground text-center uppercase tracking-wide">{plan.name}</h3>
+                <p className="text-xs text-muted-foreground mt-1 mb-4 leading-snug text-center">{plan.tagline}</p>
+                {plan.customPricing ? (
+                  <>
+                    <div className="mb-1 text-center">
+                      <span className="text-2xl font-bold text-foreground">Wycena indywidualna</span>
+                    </div>
+                    <div className="h-5 mb-4" />
+                  </>
                 ) : (
-                  <div className="h-5 mb-4" />
+                  <>
+                    <div className="mb-1 text-center">
+                      <span className="text-3xl font-bold text-foreground">{priceStr}</span>
+                      <span className="text-sm text-muted-foreground">/mies.{vatMode === "brutto" ? " brutto" : " netto"}</span>
+                    </div>
+                    {annualTotal ? (
+                      <p className="text-xs text-muted-foreground mb-4 text-center">Rozliczane {annualTotal}</p>
+                    ) : (
+                      <div className="h-5 mb-4" />
+                    )}
+                  </>
                 )}
-                <button onClick={() => handleChoosePlan(plan.id)}
-                  className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-colors mb-5 ${
-                    plan.featured
-                      ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                      : "bg-muted text-foreground hover:bg-muted/70 border border-border"
-                  }`}>
-                  Wybierz {plan.name}
-                </button>
+                {plan.customPricing ? (
+                  <a href="https://veedeck.com/kontakt" target="_blank" rel="noopener noreferrer"
+                    className="w-full py-2.5 rounded-xl text-sm font-semibold transition-colors mb-5 bg-muted text-foreground hover:bg-muted/70 border border-border text-center block">
+                    Porozmawiajmy ↗
+                  </a>
+                ) : (
+                  <button onClick={() => handleChoosePlan(plan.id)}
+                    className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-colors mb-5 ${
+                      plan.featured
+                        ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                        : "bg-muted text-foreground hover:bg-muted/70 border border-border"
+                    }`}>
+                    Wybierz {plan.name}
+                  </button>
+                )}
 
                 <div className="space-y-4 flex-1">
                   {plan.sections.map((section) => (
@@ -284,14 +320,6 @@ function PlansModal({ onClose }: { onClose: () => void }) {
                   ))}
                 </div>
 
-                {plan.upgradeNote && (
-                  <div className="mt-4 pt-3 border-t border-border">
-                    <p className="text-[11px] text-amber-600 dark:text-amber-400 leading-snug flex items-start gap-1.5">
-                      <ChevronRight size={13} className="shrink-0 mt-0.5" />
-                      {plan.upgradeNote}
-                    </p>
-                  </div>
-                )}
               </div>
             );
           })}
