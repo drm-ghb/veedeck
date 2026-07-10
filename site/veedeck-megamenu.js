@@ -18,13 +18,13 @@
 
   // ── Dane (jedno źródło, PL + EN) ──
   var MODULES = [
-    { icon: "renderflow",     pl: "ProjectFlow",    en: "ProjectFlow",    dpl: "Rendery z pinami komentarzy klienta",   den: "Renders with client comment pins",     href: "#projectflow" },
     { icon: "group",          pl: "Klienci",        en: "Clients",        dpl: "Klienci, projekty, płatności",          den: "Clients, projects, payments",          href: "#klienci" },
+    { icon: "renderflow",     pl: "ProjectFlow",    en: "ProjectFlow",    dpl: "Rendery z pinami komentarzy klienta",   den: "Renders with client comment pins",     href: "#projectflow" },
     { icon: "local_mall",     pl: "Listy zakupowe", en: "Shopping lists", dpl: "Produkty z cenami i linkami",           den: "Products with prices and links",        href: "#listy" },
     { icon: "check_box",      pl: "Zadania",        en: "Tasks",          dpl: "Lista do zrobienia z terminami",        den: "A to-do list with deadlines",          href: "#zadania" },
+    { icon: "assignment",     pl: "Ankiety",        en: "Surveys",        dpl: "Briefy i ankiety dla klienta",          den: "Briefs and surveys for the client",    href: "#ankiety" },
     { icon: "package_2",      pl: "Produkty",       en: "Products",       dpl: "Twoja kartoteka mebli i materiałów",    den: "Your furniture & materials library",   href: "#produkty" },
     { icon: "engineering",    pl: "Wykonawcy",      en: "Contractors",    dpl: "Rysunki i dokumenty dla wykonawców",    den: "Drawings & docs for contractors",      href: "#wykonawcy" },
-    { icon: "assignment",     pl: "Ankiety",        en: "Surveys",        dpl: "Briefy i ankiety dla klienta",          den: "Briefs and surveys for the client",    href: "#ankiety" },
     { icon: "calendar_month", pl: "Kalendarz",      en: "Calendar",       dpl: "Spotkania, dostawy, deadline'y",        den: "Meetings, deliveries, deadlines",      href: "#kalendarz" },
     { icon: "note_stack",     pl: "Notatnik",       en: "Notes",          dpl: "Szybkie notatki i szkice",              den: "Quick notes and sketches",             href: "#notatnik" },
     { icon: "chat_bubble",    pl: "Dyskusje",       en: "Discussions",    dpl: "Komentowanie renderów z klientem",      den: "Discuss renders with the client",      href: "#dyskusje" },
@@ -134,6 +134,13 @@
     ".vd-mm-macc .am-chev{margin-left:auto;width:20px;height:20px;transition:transform .2s;color:var(--muted-foreground,#6B6F80);}",
     ".vd-mm-macc:hover .am-chev,.vd-mm-macc.open .am-chev{color:var(--primary,#4F46E5);}",
     ".vd-mm-macc.open .am-chev{transform:rotate(180deg);}",
+    ".vd-mm-msplit{display:flex;align-items:center;padding:0;border-bottom:1px solid var(--border,#E5E7EB);}",
+    ".vd-mm-msplit-lbl{flex:1;display:flex;align-items:center;padding:16px 4px;text-decoration:none;font-family:inherit;font-size:17px;font-weight:500;color:var(--foreground,#24252B);transition:color .12s ease;}",
+    ".vd-mm-msplit-lbl:hover,.vd-mm-msplit.open .vd-mm-msplit-lbl{color:var(--primary,#4F46E5);}",
+    ".vd-mm-msplit-chev{flex-shrink:0;display:flex;align-items:center;justify-content:center;padding:16px 4px 16px 12px;background:none;border:0;cursor:pointer;color:var(--muted-foreground,#6B6F80);transition:color .12s ease;}",
+    ".vd-mm-msplit-chev:hover,.vd-mm-msplit.open .vd-mm-msplit-chev{color:var(--primary,#4F46E5);}",
+    ".vd-mm-msplit .am-chev{width:20px;height:20px;transition:transform .2s;}",
+    ".vd-mm-msplit.open .am-chev{transform:rotate(180deg);}",
     ".vd-mm-msub{display:none;padding:2px 0 14px;}",
     ".vd-mm-msub.open{display:block;}",
     ".vd-mm-msub .sub-h{font-family:'Inter',sans-serif;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted-foreground,#6B6F80);margin:12px 6px 2px;display:flex;align-items:center;gap:7px;}",
@@ -288,7 +295,7 @@
     };
   }
 
-  // ── Mobile: zamień linki na akordeon „Funkcje" ──
+  // ── Mobile: "Funkcje" split — tekst → /moduly, chevron → akordeon ──
   function setupMobile(nav) {
     var inner = document.querySelector(".mobile-menu-inner");
     if (!inner || inner.querySelector(".vd-mm-macc")) return;
@@ -298,14 +305,27 @@
     var anchor = modLink || inner.firstElementChild;
     var L = lang();
 
-    var header = document.createElement("button");
-    header.type = "button";
-    header.className = "menu-link vd-mm-macc";
-    header.innerHTML = '<span class="vd-mm-mlbl">' + STR.funkcje[L] + "</span>" +
-      '<svg class="am-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>';
+    // Wrapper: tekst-link + button z chevronem
+    var wrapper = document.createElement("div");
+    wrapper.className = "menu-link vd-mm-macc vd-mm-msplit";
+
+    var textLink = document.createElement("a");
+    textLink.href = MODULES_PAGE;
+    textLink.className = "vd-mm-msplit-lbl";
+    textLink.innerHTML = '<span class="vd-mm-mlbl">' + STR.funkcje[L] + "</span>";
+
+    var chevBtn = document.createElement("button");
+    chevBtn.type = "button";
+    chevBtn.className = "vd-mm-msplit-chev";
+    chevBtn.setAttribute("aria-label", "Rozwiń moduły");
+    chevBtn.innerHTML = '<svg class="am-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>';
+
+    wrapper.appendChild(textLink);
+    wrapper.appendChild(chevBtn);
 
     var sub = document.createElement("div");
     sub.className = "vd-mm-msub";
+
     function fillSub() {
       var l2 = lang();
       function row(href, icHTML, name, desc, soon, ai) {
@@ -331,24 +351,24 @@
     fillSub();
 
     if (anchor) {
-      inner.insertBefore(header, anchor);
+      inner.insertBefore(wrapper, anchor);
       inner.insertBefore(sub, anchor);
     }
     if (modLink) modLink.remove();
     if (plugLink) plugLink.remove();
 
-    header.addEventListener("click", function () {
+    chevBtn.addEventListener("click", function () {
       var on = sub.classList.toggle("open");
-      header.classList.toggle("open", on);
+      wrapper.classList.toggle("open", on);
+      chevBtn.setAttribute("aria-label", on ? "Zwiń moduły" : "Rozwiń moduły");
     });
 
     nav._vdRebuildMobile = function () {
-      var lbl = header.querySelector(".vd-mm-mlbl");
+      var lbl = wrapper.querySelector(".vd-mm-mlbl");
       if (lbl) lbl.textContent = STR.funkcje[lang()];
       fillSub();
     };
   }
-
   function init() {
     var nav = document.getElementById("siteNav") || document.querySelector("nav.top");
     if (!nav) return;
