@@ -1742,7 +1742,8 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function onScroll() {
-    var offset = window.innerHeight * 0.5;
+    var strip = document.querySelector('.module-strip');
+    var offset = strip ? strip.getBoundingClientRect().bottom : 140;
     var current = sections[0];
     sections.forEach(function(s) {
       if (s.getBoundingClientRect().top <= offset) current = s;
