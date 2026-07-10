@@ -112,8 +112,10 @@
     background: rgba(250, 250, 251, 0.92);
   }
   .module-strip-inner {
-    display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
+    display: flex; flex-wrap: nowrap; gap: 8px; justify-content: center;
+    overflow-x: auto; scrollbar-width: none;
   }
+  .module-strip-inner::-webkit-scrollbar { display: none; }
   .module-chip {
     display: inline-flex; align-items: center; gap: 8px;
     padding: 8px 14px; border-radius: 999px;
@@ -123,7 +125,7 @@
     color: var(--muted-foreground);
     transition: all .15s;
   }
-  .module-chip:hover { color: var(--primary); border-color: var(--accent); background: var(--indigo-50); }
+  .module-chip:hover, .module-chip.active { color: var(--primary); border-color: var(--accent); background: var(--indigo-50); }
   .module-chip .material-symbols-rounded { font-size: 16px; color: var(--primary); }
   .module-chip .renderflow-pin {
     width: 14px; height: 14px; color: var(--primary); flex-shrink: 0;
@@ -1608,6 +1610,14 @@
   }
 }
 </script>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-TLPPBXZX1F"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-TLPPBXZX1F');
+</script>
 </head>
 <body>
 
@@ -1720,6 +1730,33 @@
     <a href="#generator3d" class="module-chip"><span class="material-symbols-rounded">wand_stars</span>Veezard<span class="soon-dot" title="Wkrótce"></span></a>
   </div>
 </div>
+
+<script>
+(function() {
+  function setActive() {
+    var hash = location.hash || '#projectflow';
+    document.querySelectorAll('.module-chip').forEach(function(c) {
+      c.classList.toggle('active', c.getAttribute('href') === hash);
+    });
+  }
+  setActive();
+  window.addEventListener('hashchange', setActive);
+  var sections = document.querySelectorAll('[id].module-section');
+  if ('IntersectionObserver' in window) {
+    var obs = new IntersectionObserver(function(entries) {
+      entries.forEach(function(e) {
+        if (e.isIntersecting) {
+          var id = '#' + e.target.id;
+          document.querySelectorAll('.module-chip').forEach(function(c) {
+            c.classList.toggle('active', c.getAttribute('href') === id);
+          });
+        }
+      });
+    }, { rootMargin: '-25% 0px -65% 0px' });
+    sections.forEach(function(s) { obs.observe(s); });
+  }
+})();
+</script>
 
 <!-- ───────── 01 · RENDERFLOW ───────── -->
 <section class="module-section" id="projectflow">
