@@ -57,6 +57,8 @@ export default function AddFolderDialog({
       if (isControlled) externalOnOpenChange?.(false);
       else setInternalOpen(false);
       router.refresh();
+    } else if (res.status === 409) {
+      toast.error(t.render.folderDuplicateError);
     } else {
       toast.error(t.render.folderCreateError);
     }

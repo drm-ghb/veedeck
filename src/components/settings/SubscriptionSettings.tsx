@@ -180,9 +180,28 @@ function PlansModal({ onClose }: { onClose: () => void }) {
       .finally(() => setRatesLoading(false));
   }, []);
 
-  function handleChoosePlan(planId: string) {
-    // TODO: redirect to Stripe checkout with price ID for planId + currency + interval
-    toast.info("Integracja ze Stripe wkrótce dostępna.");
+  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
+
+  async function handleChoosePlan(planId: string) {
+    if (planId === "agencja") return; // agencja = kontakt, nie checkout
+    setCheckoutError(null);
+    setCheckoutLoading(planId);
+    try {
+      const interval = annual ? "year" : "month";
+      const stripeCurrency = currency.toLowerCase() as "pln" | "eur" | "usd" | "gbp";
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan: planId, interval, currency: stripeCurrency }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Nieznany błąd");
+      window.location.href = data.url;
+    } catch (err) {
+      setCheckoutError(err instanceof Error ? err.message : "Nie udało się przejść do płatności");
+      setCheckoutLoading(null);
+    }
   }
 
   return (
@@ -246,6 +265,12 @@ function PlansModal({ onClose }: { onClose: () => void }) {
           </div>
         </div>
 
+        {checkoutError && (
+          <div className="px-6 py-3 bg-destructive/10 text-destructive text-sm border-b border-border">
+            {checkoutError}
+          </div>
+        )}
+
         {/* Plans grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-0 divide-y md:divide-y-0 md:divide-x divide-border">
           {PLANS_DATA.map((plan) => {
@@ -292,12 +317,13 @@ function PlansModal({ onClose }: { onClose: () => void }) {
                   </a>
                 ) : (
                   <button onClick={() => handleChoosePlan(plan.id)}
-                    className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-colors mb-5 ${
+                    disabled={checkoutLoading !== null}
+                    className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-colors mb-5 disabled:opacity-60 ${
                       plan.featured
                         ? "bg-primary text-primary-foreground hover:bg-primary/90"
                         : "bg-muted text-foreground hover:bg-muted/70 border border-border"
                     }`}>
-                    Wybierz {plan.name}
+                    {checkoutLoading === plan.id ? "Przekierowuję…" : `Wybierz ${plan.name}`}
                   </button>
                 )}
 

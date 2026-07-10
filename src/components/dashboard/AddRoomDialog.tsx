@@ -60,6 +60,10 @@ export default function AddRoomDialog({ projectId, onRoomAdded, open: externalOp
         body: JSON.stringify({ projectId, name: name.trim(), type: "INNE", icon }),
       });
 
+      if (res.status === 409) {
+        toast.error(t.projekty.roomDuplicateError);
+        return;
+      }
       if (!res.ok) throw new Error();
 
       const room = await res.json();

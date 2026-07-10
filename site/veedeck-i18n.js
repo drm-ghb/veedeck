@@ -46,22 +46,22 @@ window.VEEDECK_I18N = {
   "Dyskusje": "Discussions",
 
   // — Taglines modułów —
-  "Wizualizacje, rysunki techniczne i feedback w jednym miejscu. Klient pinuje uwagi wprost na pliku, akceptuje lub odrzuca kolejne wersje, a Ty trzymasz wszystko w ryzach — z pełną historią zmian.":
-    "Visualizations, technical drawings and feedback in one place. Your client pins notes directly on the file, approves or rejects each version, and you keep everything in check — with a full change history.",
-  "Kartoteka klientów i projektów. Dane kontaktowe, adres inwestycji, pomieszczenia, kontakty — wszystko w jednej hierarchii.":
-    "A register of clients and projects. Contact details, site address, rooms, contacts — all in one hierarchy.",
-  "Tworzenie list produktów dla klientów — pogrupowane w sekcje, z cenami, wymiarami i linkami. Klient zatwierdza, Ty zamawiasz.":
-    "Build product lists for clients — grouped into sections, with prices, dimensions and links. The client approves, you order.",
-  "Lista zadań do wykonania — przypisuj do projektów, ustawiaj terminy i priorytety. Zadania na dziś trafiają od razu na dashboard.":
-    "A to-do list — assign tasks to projects, set deadlines and priorities. Today's tasks land straight on your dashboard.",
+  "Wizualizacje, rysunki techniczne i feedback w jednym miejscu. Klient przypina pinezki z uwagami bezpośrednio na pliku. Akceptuje lub odrzuca wersje, a Ty trzymasz wszystko w ryzach - z pełną historią zmian.":
+    "Visualizations, technical drawings and feedback in one place. Your client pins notes directly on the file. They approve or reject versions, and you keep everything in check - with a full change history.",
+  "Kartoteka klientów z danymi kontaktowymi, informacjami o inwestycji, płatnościami i harmonogramami.":
+    "A client register with contact details, investment information, payments and schedules.",
+  "Tworzenie list produktów dla klientów - pogrupowane w sekcje, z cenami, wymiarami i linkami.":
+    "Create product lists for clients - grouped into sections, with prices, dimensions and links.",
+  "Lista zadań do wykonania — przypisuj do projektów, ustawiaj terminy i priorytety. Zadania na dziś trafiają od razu na panel główny.":
+    "A to-do list — assign tasks to projects, set deadlines and priorities. Today's tasks land straight on your main dashboard.",
   "Biblioteka produktów całego studia. Raz dodajesz, wielokrotnie używasz — na różnych projektach, z różnymi cenami i wariantami.":
     "A product library for your whole studio. Add once, reuse many times — across different projects, with different prices and variants.",
   "Wydarzenia, zadania i przypomnienia w jednym widoku. Spotkania u klienta, terminy dostaw, deadline'y projektowe — wszystko widoczne na pierwszy rzut oka.":
     "Events, tasks and reminders in one view. Client meetings, delivery dates, project deadlines — all visible at a glance.",
-  "Notatki, aby nic ważnego Ci nie umknęło. Szybka notatka zapisuje spontaniczne myśli „tu i teraz\", a Szkicownik działa na każdym urządzeniu.":
-    "Notes so nothing important slips by. Quick Note captures spontaneous thoughts on the spot, and the Sketchpad works on any device.",
-  "Komentuj rendery i pozycje na liście zakupowej razem z klientem. Wszystkie ustalenia w kontekście — żadnych zagubionych maili.":
-    "Comment on renders and shopping-list items together with your client. Every decision in context — no more lost emails.",
+  "Szybka notatka, aby nic ważnego Ci nie umknęło. Zapisujesz spontaniczne myśli tu i teraz. Szkicownik pozwala Ci je zobrazować.":
+    "Quick note so nothing important slips by. You capture spontaneous thoughts on the spot. The sketchpad lets you visualise them.",
+  "Prowadź konwersacje na temat projektu na chacie w veedeck. Koniec z zagubionymi mailami.":
+    "Have project conversations in the veedeck chat. No more lost emails.",
 
   // — Veezard (Wkrótce) —
   "Twój osobisty czarodziej AI. Oszczędzaj czas dzięki magii sztucznej inteligencji.":
@@ -82,9 +82,8 @@ window.VEEDECK_I18N = {
   "Konto": "Account",
   "Załóż konto": "Create account",
   "Wszystkie prawa zastrzeżone": "All rights reserved",
-  "Polityka cookies": "Cookie Policy",
-  "veedeck połączył całą moją pracownię w jednym miejscu — rendery, feedback klienta, listy zakupowe i kontakt z wykonawcą. Zamiast żonglować mailami, czatami i plikami, wszystko mam pod ręką. Oszczędzam dzięki temu kilka godzin każdego tygodnia. Do tego dopasowuję panel do identyfikacji mojego studia — klient po zalogowaniu widzi moje logo i kolory, a nie generyczny interfejs.":
-    "veedeck brought my whole studio into one place — renders, client feedback, shopping lists and contractor contact. Instead of juggling emails, chats and files, I have everything at hand. It saves me several hours every week. On top of that, I can match the panel to my studio's branding — when clients log in, they see my logo and colors, not a generic interface.",
+  "Polityka cookies": "Cookie Policy"Szczerze? Zanim zacząłem korzystać z veedeck, wszystko było porozrzucane – rendery gdzieś w mailu lub na Messengerze, feedback od klienta na WhatsApp'ie, a listy zakupowe w jakimś Excelu, a z wykonawcą dogadywaliśmy się na telefonie. Teraz mam to wszystko w jednym miejscu i naprawdę czuję różnicę – chyba ze dwie, trzy godziny tygodniowo mniej spędzam na samo szukanie informacji. A jak klient loguje się do panelu, to widzi moje logo i moje kolory, nie jakiś losowy interfejs – wygląda to tak, jakby to była moja własna aplikacja. Prosta i intuicyjna.":
+    "Honestly? Before I started using veedeck, everything was scattered – renders somewhere in email or Messenger, client feedback on WhatsApp, shopping lists in some Excel file, and I was coordinating with contractors by phone. Now I have it all in one place and I really notice the difference – I probably spend two or three fewer hours a week just searching for information. And when the client logs into the panel, they see my logo and my colours, not some random interface – it looks like my own app. Simple and intuitive."",
   "Umów się na prezentację": "Book a presentation",
   "Założyciel veedeck": "Founder of veedeck",
   "Zapraszam Cię na indywidualną prezentację veedeck! Osobiście wprowadzę Cię do platformy i pokażę, jak dużo czasu zaoszczędzisz korzystając z veedeck.":
@@ -104,12 +103,12 @@ window.VEEDECK_I18N = {
   "Tworzymy": "We're building",
   ", bo projektowanie wnętrz": ", because interior design",
   "zasługuje na lepsze narzędzia.": "deserves better tools.",
-  "veedeck powstaje z prostego przekonania — projektanci wnętrz tracą zbyt wiele czasu na żmudną pracę administracyjną. Budujemy platformę, która oddaje im ten czas z powrotem, do tego, co naprawdę kochają robić.":
+  "Veedeck powstaje z prostego przekonania — projektanci wnętrz tracą zbyt wiele czasu na żmudną pracę administracyjną. Budujemy platformę, która oddaje im ten czas z powrotem, do tego, co naprawdę kochają robić.":
     "veedeck grew out of a simple belief — interior designers lose far too much time on tedious admin work. We're building a platform that gives that time back, for the work they truly love.",
-  "Założyciel veedeck. Project Manager z 5-letnim doświadczeniem w IT. Przez lata obserwował branżę projektowania wnętrz i postanowił stworzyć narzędzie, które realnie pomoże projektantom w codziennej pracy z klientami.":
-    "Founder of veedeck. A project manager with 5 years' experience in IT. He spent years watching the interior design industry and set out to build a tool that genuinely helps designers in their day-to-day work with clients.",
-  "Współzałożyciel veedeck. Doświadczony programista, który przez lata rozwijał i utrzymywał ogromne platformy e-commerce. To zaplecze techniczne napędza rozwój veedeck — w roli CTO Oskar odpowiada za technologiczny fundament i stabilny rozwój platformy.":
-    "Co-founder of veedeck. A seasoned developer who spent years building and maintaining large e-commerce platforms. That technical background powers veedeck's growth — as CTO, Oskar owns the technological foundation and the platform's stable development.",
+  "Założyciel veedeck i Project Manager z 5 letnim doświadczeniem w branży IT. Przez lata obserwował branżę projektowania wnętrz i postanowił stworzyć narzędzie, które realnie pomoże projektantom w codziennej pracy z klientami.":
+    "Founder of veedeck and Project Manager with 5 years of experience in the IT industry. For years he observed the interior design industry and decided to create a tool that would genuinely help designers in their day-to-day work with clients."",
+  "Współzałożyciel veedeck i doświadczony programista. Od lat rozwija i utrzymuje wydajne platformy e-commerce. W funkcji CTO odpowiada za zaplecze techniczne oraz stabilny rozwój veedeck.":
+    "Co-founder of veedeck and an experienced developer. He has been building and maintaining high-performance e-commerce platforms for years. As CTO, he is responsible for the technical backbone and the stable growth of veedeck."",
   "veedeck powstaje w bliskiej współpracy z projektantami, którzy testują każdą nową funkcję. Napisz, czego potrzebujesz! Odpowiedź otrzymasz od zespołu, który buduje produkt, nie automat z generycznymi odpowiedziami.":
     "veedeck is built in close collaboration with designers who test every new feature. Tell us what you need! You'll hear back from the team building the product, not an autoresponder with generic replies.",
   "Listy zakupowe w kilka kliknięć.": "Shopping lists in a few clicks.",
@@ -480,7 +479,7 @@ window.VEEDECK_I18N = {
   "Logo i nazwy sklepów użyte wyłącznie jako przykład wsparcia. veepick działa na każdym sklepie z poprawnymi danymi strukturalnymi (schema.org / Open Graph).":
     "Store logos and names are used purely as examples of support. veepick works on any store with valid structured data (schema.org / Open Graph).",
   "Bezpieczeństwo": "Security",
-  "Czyta tylko stronę sklepu.": "It only reads the store page.",
+  "Wtyczka odczytuje tylko stronę sklepu internetowego": "The extension only reads the online shop page",
   "Nic więcej.": "Nothing more.",
   "veepick to lekka wtyczka MV3, która aktywuje się dopiero gdy klikniesz jej ikonę. Nie czyta historii przeglądania, nie zbiera analityki, nie wysyła nic poza podstawowymi danymi produktu — i tylko do Twojego konta veedeck.":
     "veepick is a lightweight MV3 extension that activates only when you click its icon. It doesn’t read your browsing history, collect analytics or send anything beyond the basic product data — and only to your veedeck account.",
@@ -548,8 +547,8 @@ window.VEEDECK_I18N = {
   "Dokładnie to. We wszystkich planach możesz prowadzić dowolną liczbę projektów dla dowolnej liczby klientów. Płacisz tylko za miejsca w zespole.":
     "Exactly that. On every plan you can run any number of projects for any number of clients. You only pay for team seats.",
   "Co obejmuje plan Enterprise?": "What does the Enterprise plan include?",
-  "Wszystko z Commercial plus nielimitowany zespół oraz prace na zamówienie — własne moduły, integracje i modyfikacje systemu dopasowane do Twojego procesu pracy.":
-    "Everything in Commercial plus an unlimited team and bespoke work — custom modules, integrations and system modifications tailored to your workflow.",
+  "Skontaktuj się z nami w celu omówienia zakresu i oferty planu Agencja.":
+    "Contact us to discuss the scope and pricing of the Agency plan.",
   "Przetestuj veedeck przez 14 dni.": "Try veedeck for 14 days.",
   "Bez karty, bez zobowiązań.": "No card, no commitment.",
   "Zarejestruj się w 30 sekund. Jeśli po 14 dniach uznasz, że veedeck nie jest dla Ciebie — po prostu nie kontynuujesz.":
@@ -597,11 +596,11 @@ window.VEEDECK_I18N = {
   "Tak — testerzy mają dedykowany kanał kontaktu i ich uwagi trafiają wprost do listy roadmapy. Część funkcji veedeck powstała dosłownie z jednej rozmowy z projektantem.":
     "Yes — testers have a dedicated channel and their feedback goes straight onto the roadmap. Some veedeck features came literally out of a single conversation with a designer.",
   "Ile będzie kosztować veedeck po oficjalnym starcie?": "How much will veedeck cost after the official launch?",
-  "Pracujemy nad modelem subskrypcji dopasowanym do skali studia. Testerzy bety dostaną na start 3 miesiące za darmo oraz preferencyjną cenę, którą zachowają tak długo, jak będą aktywni.":
+  "Pracujemy nad modelem subskrypcji dopasowanym do skali studia. Testerzy którzy zapisali się do wersji bety dostaną na start 3 miesiące za darmo oraz preferencyjną cenę, którą zachowają tak długo, jak będą aktywni.":
     "We’re working on a subscription model matched to the scale of your studio. Beta testers get 3 months free to start, plus a preferential price they’ll keep for as long as they stay active.",
   "Czy veedeck zastąpi mój CAD / 3DS Max / SketchUp?": "Will veedeck replace my CAD / 3DS Max / SketchUp?",
-  "Nie. veedeck nie modeluje — łączy Twoje renderingi i materiały z klientem, kalendarzem, listami zakupowymi i dostawcami. To warstwa „biuro projektowe\", która siedzi obok Twoich narzędzi 3D.":
-    "No. veedeck doesn’t model — it connects your renders and materials with the client, the calendar, shopping lists and suppliers. It’s a “design office” layer that sits alongside your 3D tools.",
+  "Nie. veedeck nie modeluje - łączy Twoje renderingi i materiały z klientem, kalendarzem, listami zakupowymi i dostawcami. To Twoje biuro projektowe w jednej zakładce, które wspiera Cię w codziennych obowiązkach.":
+    "No. veedeck doesn't model - it connects your renders and materials with the client, the calendar, shopping lists and suppliers. It's your design office in one tab, supporting you in your daily work.",
   "Czy obsługujecie zespoły / wielu projektantów?": "Do you support teams / multiple designers?",
   "Tak. Możesz pracować solo, ale veedeck jest gotowy na zespół — role, uprawnienia, przypisywanie projektów. Plan cenowy też skalujemy z Twoim studiem.":
     "Yes. You can work solo, but veedeck is ready for a team — roles, permissions, project assignment. We scale the pricing with your studio too.",
@@ -612,23 +611,23 @@ window.VEEDECK_I18N = {
   "veedeck powstaje z prostego przekonania — projektanci wnętrz tracą zbyt wiele czasu na żmudną pracę administracyjną. Budujemy platformę, która oddaje im ten czas z powrotem, do tego, co naprawdę kochają robić.":
     "veedeck grows out of a simple belief — interior designers lose too much time to tedious admin work. We’re building a platform that gives that time back, for what they truly love doing.",
   "Nasza misja": "Our mission",
-  "kończy erę chaosu w projektowaniu wnętrz —": "ends the era of chaos in interior design —",
+  "kończy erę chaosu w zarządzaniu projektami wnętrz": "ends the era of chaos in interior design project management",
   "żeby kreatywność, nie administracja, definiowała każdy projekt.": "so that creativity, not admin, defines every project.",
   "Branża projektowania wnętrz od lat działa na rozproszonych narzędziach — tabelach, mailach, czatach, folderach z renderami i listach zakupowych rozsianych po kilku dyskach.":
     "The interior-design industry has run on scattered tools for years — spreadsheets, emails, chats, folders of renders and shopping lists spread across several drives.",
   "Projektanci są ekspertami od przestrzeni, nie od zarządzania projektem.": "Designers are experts in space, not in project management.",
   "Veedeck powstaje, żeby zdjąć z Waszych barków ten administracyjny ciężar. Łączymy w jednym miejscu klienta, renderingi, materiały, kalendarz, listy zakupowe i dostawców — tak, żeby projektant mógł skupić się na projektowaniu, a nie na rozliczaniu się z chaosu.":
-    "veedeck exists to lift that administrative weight off your shoulders. We bring the client, renders, materials, calendar, shopping lists and suppliers together in one place — so the designer can focus on designing, not on accounting for the chaos.",
-  "Każda funkcja platformy powstaje w bliskiej rozmowie ze studiami, które testują kolejne wersje. Nie zgadujemy — pytamy, słuchamy, iterujemy.":
+    "veedeck exists to takes away all the administrative chaos. We bring the client, renders, materials, calendar, shopping lists and suppliers together in one place — so the designer can focus on designing, not on accounting for the chaos.",
+  "Każda funkcja platformy powstaje w bliskiej rozmowie z projektantami, którzy testują kolejne wersje. Nie zgadujemy — pytamy, słuchamy, wdrażamy.":
     "Every feature of the platform is born from close conversation with studios that test each version. We don’t guess — we ask, listen and iterate.",
   "Słuchamy, zanim zbudujemy": "We listen before we build",
   "Każdy moduł veedeck wyrasta z konkretnego problemu zgłoszonego przez projektanta — nie z naszej wyobraźni.":
     "Every veedeck module grows from a real problem reported by a designer — not from our imagination.",
   "Prostota ponad funkcjami": "Simplicity over features",
-  "Lepiej mieć siedem rzeczy, które działają idealnie, niż siedemdziesiąt, które trzeba zrozumieć.":
-    "Better to have seven things that work perfectly than seventy you have to figure out.",
+  "Nie chcemy, żebyś był ekspertem od naszego narzędzia. Chcemy, żebyś o nim w ogóle nie musiał myśleć – i mógł się skupić na projekcie.":
+    "We don't want you to be an expert in our tool. We want you to not have to think about it at all – and be able to focus on the project."",
   "Partnerstwo, nie sprzedaż": "Partnership, not a sale",
-  "Studia i projektanci, które z nami pracują, dostają realny wpływ na roadmapę produktu. Wasze problemy → nasza lista zadań.":
+  "Studia i projektanci, które z nami pracują, dostają realny wpływ na rozwój produktu. Wasze problemy → nasza lista zadań.":
     "The studios and designers who work with us get a real say in the product roadmap. Your problems → our to-do list.",
   "Dlaczego veedeck?": "Why veedeck?",
   "Ruch, postęp,": "Motion, progress,",
@@ -638,8 +637,8 @@ window.VEEDECK_I18N = {
   "Zespół": "Team",
   "Mały zespół,": "A small team,",
   "duża obsesja na punkcie szczegółów.": "a big obsession with detail.",
-  "Jesteśmy projektantami, inżynierami i ludźmi, którzy spędzili lata w branży kreatywnej. Wiemy, jak wygląda Wasza codzienność — bo sami przy niej byliśmy.":
-    "We’re designers, engineers and people who’ve spent years in the creative industry. We know what your daily work looks like — because we’ve lived it ourselves.",
+  "Jesteśmy projektantami, menadżerami, inżynierami i ludźmi, którzy spędzili lata w branży kreatywnej. Wiemy, jak wygląda Wasza codzienność - bo sami w niej jesteśmy.":
+    "We're designers, managers, engineers and people who've spent years in the creative industry. We know what your day-to-day looks like - because we're in it ourselves."",
   "visualize · vision · view — Twoje spojrzenie na przestrzeń i wizję wnętrza.":
     "visualize · vision · view — your perspective on space and the vision of an interior.",
   "// Twoja wizja": "// your vision",
@@ -652,8 +651,8 @@ window.VEEDECK_I18N = {
   "zdjęcie · członek 2": "photo · member 2",
   "Doświadczony programista, który przez lata rozwijał i utrzymywał ogromne platformy e-commerce. To zaplecze techniczne napędza rozwój veedeck — w roli CTO Oskar odpowiada za technologiczny fundament i stabilny rozwój platformy.":
     "An experienced software engineer who spent years building and maintaining huge e-commerce platforms. That technical background drives veedeck forward — as CTO, Oskar owns the platform’s technological foundation and its stable growth.",
-  "Doświadczony architekt wnętrz i współzałożycielka veedeck. Wnosi do zespołu perspektywę osoby, która latami żyła codziennością biura projektowego — dzięki czemu wiemy, że budujemy narzędzie odpowiadające na realne, a nie wyobrażone problemy projektantów.":
-    "An experienced interior architect and co-founder of veedeck. She brings the team the perspective of someone who lived the daily reality of a design office for years — so we know we’re building a tool that answers real, not imagined, designer problems.",
+  "Współzałożycielka veedeck i doświadczony architekt wnętrz. Wnosi do zespołu perspektywę osoby, która latami żyła codziennością biura projektowego - dzięki czemu wiemy, że budujemy narzędzie odpowiadające na realne, a nie wyobrażone problemy projektantów.":
+    "Co-founder of veedeck and an experienced interior architect. She brings to the team the perspective of someone who lived the daily reality of a design studio for years - which is why we know we are building a tool that addresses real, not imagined, problems of designers."",
   "Dołącz do nas": "Join us",
   "Chcesz pomóc nam": "Want to help us",
   "budować": "build",
@@ -738,37 +737,37 @@ window.VEEDECK_I18N = {
   "Projektujesz — nie zarządzasz chaosem.": "You design — you don’t manage chaos.",
   "Projektanci wnętrz spędzają więcej czasu na przesyłaniu plików, odpowiadaniu na maile i porządkowaniu uwag, niż na projektowaniu. veedeck zmienia tę proporcję.":
     "Interior designers spend more time sending files, answering emails and tidying up notes than designing. veedeck shifts that balance.",
-  "Jedno miejsce zamiast ośmiu": "One place instead of eight",
-  "Rendery, listy zakupowe, kalendarz, notatki, dyskusje z klientem — wszystko w jednej zakładce. Koniec przeskakiwania między Dyskiem Google, Excelem i mailem.":
-    "Renders, shopping lists, calendar, notes, client discussions — all in a single tab. No more jumping between Google Drive, Excel and email.",
-  "Uwagi klienta na obrazku": "Client notes on the image",
-  "Klient umieszcza komentarze bezpośrednio na wizualizacji za pomocą pinezki — zamiast pisać „ta lampa obok okna, ta druga z lewej\". Widzisz dokładnie co i gdzie zmienić.":
-    "The client places comments directly on the visualization with a pin — instead of writing “that lamp by the window, the other one on the left”. You see exactly what to change and where.",
+  "Jedna platforma": "One platform",
+  "Rendery, listy zakupowe, kalendarz, notatki, dyskusje z klientem - wszystko w jednej zakładce. Koniec przeskakiwania między Dyskiem Google, Excelem, mailem, WhatsApp'em i Messenger'em.":
+    "Renders, shopping lists, calendar, notes, client discussions - all in a single tab. No more jumping between Google Drive, Excel, email, WhatsApp and Messenger.",
+  "Uwagi klienta na wizualizacji": "Client notes on the visualization",
+  "Klient umieszcza komentarze bezpośrednio na wizualizacji za pomocą pinezki - zamiast zostawiać uwagi w wielu miejscach, masz je zebrane na jednej wizualizacji w ProjectFlow.\". Widzisz dokładnie co i gdzie zmienić.":
+    "The client places comments directly on the visualization with a pin - instead of leaving notes in multiple places, you have them all gathered in one visualization in ProjectFlow.",
   "Akceptacje zostają na piśmie": "Approvals stay in writing",
-  "Klient akceptuje render jednym kliknięciem — z datą, godziną i historią wersji. Koniec z nieporozumieniami typu: „ale nie tak się umawialiśmy\". Ty oszczędzasz czas, my Twoje nerwy!":
-    "The client approves a render with a single click — with date, time and version history. No more misunderstandings like “but that’s not what we agreed”. You save time, we save your nerves!",
+  "Klient akceptuje render jednym kliknięciem - z datą, godziną i historią wersji. Koniec z nieporozumieniami typu: „ale nie tak się umawialiśmy\". Ty oszczędzasz czas, my Twoje nerwy.":
+    "The client approves a render with a single click — with date, time and version history. No more misunderstandings like “but that’s not what we agreed”. You save time, we save your nerves.",
   "Czego nie ma konkurencja": "What others don’t have",
   "Jeden projekt. Trzy panele.": "One project. Three panels.",
-  "Projektant, klient i wykonawca pracują w tym samym projekcie — ale każdy widzi własny, dopasowany widok. To Ty decydujesz, co komu udostępniasz.":
-    "The designer, client and contractor work in the same project — but each sees their own tailored view. You decide what to share with whom.",
+  "Projektant, klient i wykonawca pracują w tym samym projekcie - ale każdy widzi własny, dopasowany widok. To Ty decydujesz, co komu udostępniasz.":
+    "The designer, client and contractor work in the same project - but each sees their own tailored view. You decide what to share with whom.",
   "Pełna kontrola": "Full control",
   "Panel Projektanta": "Designer Panel",
-  "Twoje centrum dowodzenia — tworzysz, organizujesz i decydujesz, kto co widzi.":
-    "Your command centre — you create, organise and decide who sees what.",
+  "Twoje centrum dowodzenia - tworzysz, organizujesz i decydujesz, kto co widzi.":
+    "Your command centre - you create, organise and decide who sees what.",
   "Tworzysz projekty, foldery, listy zakupowe i bazę produktów": "You create projects, folders, shopping lists and a product library",
   "Wgrywasz rendery, rysunki techniczne i dokumenty": "You upload renders, technical drawings and documents",
   "Ustawiasz, co widzi klient, a co wykonawca": "You set what the client sees and what the contractor sees",
   "Zbierasz wszystkie uwagi, piny i akceptacje w jednym miejscu": "You gather all notes, pins and approvals in one place",
-  "Widzisz cały projekt — to Ty zarządzasz dostępem każdego panelu.": "You see the whole project — you manage access for every panel.",
+  "Widzisz cały projekt - to Ty zarządzasz dostępem każdego panelu.": "You see the whole project - you manage access for every panel.",
   "Przegląda i akceptuje": "Reviews and approves",
   "Panel Klienta": "Client Panel",
-  "Lekki widok do oglądania renderów i zatwierdzania — konto zakłada mu projektant.":
-    "A lightweight view for viewing renders and approving — the designer sets up their account.",
-  "Ogląda rendery w przeglądarce, na każdym urządzeniu": "Views renders in the browser, on any device",
-  "Pinuje uwagi bezpośrednio na wizualizacji": "Pins notes directly on the visualization",
+  "Prosty widok do oglądania renderów i zatwierdzania - konto tworzy projektant.":
+    "A simple view for viewing renders and approving - the designer creates their account.enders and approving — the designer sets up their account.",
+  "Przegląda projekt na dowolnym urządzeniu": "Browses the project on any device",
+  "Przypina pinezki z uwagami bezpośrednio na wizualizacji": "Pins notes with comments directly on the visualization",
   "Sprawdza i zatwierdza listę zakupową": "Checks and approves the shopping list",
-  "Akceptuje wersje — z datą i historią zmian": "Approves versions — with date and change history",
-  "Nie widzi cen zakupu, marży ani danych innych projektów.": "Doesn’t see purchase prices, margins or other projects’ data.",
+  "Akceptuje wersje - z datą i historią zmian": "Approves versions - with date and change history",
+  "Widzi to co udostępni mu projektant.": "Sees only what the designer shares with them.",
   "Realizuje projekt": "Builds the project",
   "Panel Wykonawcy": "Contractor Panel",
   "Dla stolarza, montera czy ekipy wykończeniowej — tylko dokumenty do wykonania.":
@@ -777,10 +776,10 @@ window.VEEDECK_I18N = {
   "Podgląd obrazów i PDF z powiększeniem": "Image and PDF preview with zoom",
   "Piny i komentarze z pytaniem w konkretnym miejscu pliku": "Pins and comments asking a question at a specific spot on the file",
   "Czat z projektantem w kontekście danego projektu": "Chat with the designer in the context of the project",
-  "Nie widzi listy zakupowej, cen ani danych innych klientów.": "Doesn’t see the shopping list, prices or other clients’ data.",
-  "Każdy panel pokazuje wyłącznie to, co udostępnisz.": "Each panel shows only what you share.",
-  "Jeden projekt, trzy perspektywy": "One project, three perspectives",
-  "— bez chaosu i bez przypadkowych przecieków.": "— no chaos and no accidental leaks.",
+  "Widzi tylko 3 bazowe foldery: Dokumenty, Rysunki techniczne i Wizualizacje.": "Sees only 3 default folders: Documents, Technical Drawings and Visualizations.",
+  "Każdy widzi to, co mu udostępnisz.": "Everyone sees only what you share with them.",
+  "Jeden projekt, trzy perspektywy - bez chaosu i bez przypadkowych przecieków.": "One project, three perspectives - no chaos and no accidental leaks.",
+  "— bez chaosu i bez przypadkowych przecieków.": "- no chaos and no accidental leaks.",
   "JEDENAŚCIE MODUŁÓW · JEDNA PLATFORMA": "ELEVEN MODULES · ONE PLATFORM",
   "w jednej zakładce.": "in a single tab.",
   "Włącz tylko te moduły, których używasz. Ukryj nieużywane. Każdy klient dostaje tylko to, co ma widzieć.":
@@ -815,9 +814,9 @@ window.VEEDECK_I18N = {
   "nasza lista.": "our list.",
   "Surfujesz po sklepach z meblami, oświetleniem i materiałami — klikasz veepick i produkt ląduje na liście zakupowej klienta. Bez przepisywania, bez zrzutów ekranu.":
     "Browse stores for furniture, lighting and materials — click veepick and the product lands on your client’s shopping list. No retyping, no screenshots.",
-  "Jeden klik zamiast przepisywania": "One click instead of retyping",
-  "Zaznaczasz produkt w dowolnym sklepie i dodajesz go do projektu w sekundę.": "Select a product in any store and add it to a project in a second.",
-  "Pięć pól zaciąganych automatycznie": "Five fields pulled in automatically",
+  "Jedno kliknięcie zamiast ręcznego przepisywania": "One click instead of manual retyping",
+  "Zaznaczasz produkt w dowolnym sklepie internetowym i dodajesz go do listy zakupowej w sekundę.": "Select a product in any online shop and add it to your shopping list in a second.",
+  "Pola z danymi produktu wypełniają się automatycznie": "Product data fields fill in automatically",
   "Nazwa, cena, zdjęcie, producent i link do sklepu — czytane wprost z karty produktu.":
     "Name, price, photo, manufacturer and store link — read straight from the product page.",
   "Czyta tylko stronę sklepu": "It only reads the store page",
@@ -828,21 +827,23 @@ window.VEEDECK_I18N = {
   "Zielony": "Green",
   "Cztery proste kroki.": "Four simple steps.",
   "Projektujesz": "You design",
-  "Dodajesz nowego klienta, dodajesz pomieszczenia w ProjectFlow i wrzucasz rendery z 3ds Max, V-Ray, Corona lub SketchUp. Każdy folder, każda wersja — porządek i organizacja od samego startu.":
-    "You add a new client, add rooms in ProjectFlow and upload renders from 3ds Max, V-Ray, Corona or SketchUp. Every folder, every version — order and organisation from the very start.",
+  "Dodajesz nowego klienta, dodajesz foldery w ProjecFlow i wrzucasz swoje pliki. Zarządzasz nimi jak tylko Ci się podoba.":
+    "You add a new client, add folders in ProjectFlow and upload your files. Manage them however you like.",
   "Prezentujesz klientowi": "You present to the client",
-  "Zakładasz klientowi konto i wysyłasz mu link z hasłem. Klient otwiera panel w przeglądarce, przegląda rendery, pinuje uwagi bezpośrednio na obrazku, sprawdza listę zakupową — na każdym urządzeniu!":
-    "You set up an account for the client and send them a link with a password. The client opens the panel in their browser, reviews renders, pins notes directly on the image, checks the shopping list — on any device!",
+  "Zakładasz klientowi konto dzięki któremu będzie mógł się zalogować do swojego panelu klienta. Następnie w panelu może przeglądac zawartość, przypinać uwagi bezpośrednio na pliki oraz śledzić listę zakupową - na każdym urządzeniu.":
+    "You set up an account for the client, which lets them log in to their own client panel. From there they can browse content, pin notes directly on files and follow the shopping list - on any device."
   "Odbierasz feedback": "You collect feedback",
-  "Widzisz komentarze na dashboardzie, akceptujesz zmiany wersji, zamykasz piny. Każda akceptacja zapisuje się w historii — masz ślad na piśmie, nie w mailach. Koniec z poszukiwaniami na e-mailu.":
-    "You see comments on your dashboard, approve version changes, close pins. Every approval is saved in the history — you have a record in writing, not in emails. No more digging through your inbox.",
+  "Widzisz najnowsze komentarze i uwagi w panelu głównym. Masz wglądu do wszystkich akceptacji i odrzuceń produktów, a także uwag klienta na renderach. Koniec z niedopowiedzeniami i szukaniem informacji w mailach.":
+    "You see the latest comments and feedback in the main dashboard. You have full visibility into all product approvals and rejections, as well as client notes on renders. No more miscommunications or hunting for information in emails."",
   "Przekazujesz wykonawcy": "You hand off to the contractor",
-  "Udostępniasz wykonawcy rysunki techniczne i dokumenty do realizacji. Stolarz, monter czy ekipa wykończeniowa zadają pytania pinem wprost na pliku — bez maili i telefonów, w kontekście projektu.":
-    "You share technical drawings and documents for the contractor to build from. The carpenter, fitter or finishing crew ask questions with a pin right on the file — no emails or phone calls, in the context of the project.",
+  "Udostępniasz wykonawcy rysunki techniczne i dokumenty do realizacji. Stolarz, monter czy ekipa wykończeniowa mają możliwość dyskutować z Tobą i przypinać pinezki bezpośrednio na pliki.":
+    "You share technical drawings and documents for the contractor to work from. The carpenter, fitter or finishing crew can discuss things with you and pin notes directly on the files."",
   "Dla projektantów wnętrz": "For interior designers",
-  "Mniej chaosu, więcej kreatywności.": "Less chaos, more creativity.",
-  "Twoje biuro w jednej zakładce.": "Your office in a single tab.",
-  "Niezależnie czy prowadzisz studio samodzielnie, czy z trzyosobowym zespołem — veedeck zabiera cały administracyjny narzut, żebyś mógł robić to, w czym jesteś najlepszy.":
+  "Mniej chaosu,": "Less chaos,",
+  "więcej kreatywności": "more creativity",
+  "Twoje biuro": "Your office",
+  "w jednej zakładce.": "in a single tab.",
+  "Niezależnie czy prowadzisz studio samodzielnie, czy z trzyosobowym zespołem — veedeck zabiera cały administracyjny chaos, żebyś mógł robić to, w czym jesteś najlepszy.":
     "Whether you run your studio solo or with a team of three — veedeck takes away all the administrative overhead so you can do what you do best.",
   "szybszy feedback": "faster feedback",
   "maili do klienta": "emails to clients",
@@ -861,25 +862,28 @@ window.VEEDECK_I18N = {
   "Nie musi zakładać konta samodzielnie — to Ty, jako projektant, tworzysz konto klienta. Klient loguje się do platformy dokładnie tak samo jak Ty, z tą różnicą, że zamiast panelu projektanta widzi swój panel klienta. Dostęp ma na dowolnym urządzeniu (komputerze, tablecie i smartfonie), gdzie przegląda rendery, pinuje uwagi i sprawdza listę zakupową swojego projektu.":
     "They don’t have to create one themselves — you, as the designer, create the client’s account. The client logs into the platform exactly as you do, except that instead of the designer panel they see their client panel. They have access on any device (computer, tablet or smartphone), where they review renders, pin notes and check their project’s shopping list.",
   "Czym jest Panel Wykonawcy?": "What is the Contractor Panel?",
-  "To trzeci, osobny widok — obok panelu projektanta i panelu klienta. Udostępniasz w nim firmie lub osobie realizującej projekt (stolarzowi, monterowi, ekipie wykończeniowej) wyłącznie wybrane foldery z rysunkami technicznymi, wizualizacjami referencyjnymi i dokumentami. Wykonawca przegląda pliki, powiększa PDF-y, zostawia piny z pytaniem w konkretnym miejscu rysunku i pisze z Tobą na czacie w kontekście projektu. Nie widzi listy zakupowej, cen, marży ani danych innych klientów — i nie ma żadnych funkcji zarządczych.":
-    "It’s a third, separate view — alongside the designer panel and the client panel. In it you share with the company or person building the project (the carpenter, fitter, finishing crew) only selected folders with technical drawings, reference visualizations and documents. The contractor reviews files, zooms into PDFs, leaves pins asking a question at a specific spot on the drawing, and chats with you in the context of the project. They don’t see the shopping list, prices, margins or other clients’ data — and have no management features.",
-  "Jakie formaty renderów obsługujecie?": "What render formats do you support?",
-  "Wgrywasz gotowe obrazy (JPG/PNG) z 3ds Max, V-Ray, Corony, SketchUp czy dowolnego innego silnika. veedeck organizuje je w foldery i wersje — nie musisz niczego konwertować.":
-    "You upload finished images (JPG/PNG) from 3ds Max, V-Ray, Corona, SketchUp or any other engine. veedeck organises them into folders and versions — you don’t have to convert anything.",
+  "To trzeci, osobny widok — obok panelu projektanta i panelu klienta. Udostępniasz w nim firmie lub osobie realizującej projekt (stolarzowi, monterowi, ekipie wykończeniowej) wyłącznie wybrane foldery z rysunkami technicznymi, wizualizacjami referencyjnymi i dokumentami. Wykonawca przegląda pliki, powiększa PDF-y, zostawia piny z pytaniem w konkretnym miejscu rysunku i pisze z Tobą na czacie w kontekście projektu. Widzi tylko to co udostępni projektant.":
+    "It’s a third, separate view — alongside the designer panel and the client panel. In it you share with the company or person building the project (the carpenter, fitter, finishing crew) only selected folders with technical drawings, reference visualizations and documents. The contractor reviews files, zooms into PDFs, leaves pins asking a question at a specific spot on the drawing, and chats with you in the context of the project. They only see what the designer shares with them.",
+  "Jakie formaty plików obsługujecie?": "What file formats do you support?",
+  "W ProjectFlow (rendery i wizualizacje) obsługujemy obrazy JPG, PNG, WEBP oraz pliki PDF - do 32 MB i 10 plików naraz. W module Wykonawcy możesz wgrywać dowolny format pliku (DWG, DXF, PDF, DOCX, ZIP i inne) do 64 MB. Nie musisz niczego konwertować - wgrywasz to, co eksportujesz z 3ds Max, SketchUp czy AutoCAD.":
+    "In ProjectFlow (renders and visuals) we support JPG, PNG, WEBP images and PDF files — up to 32 MB and 10 files at once. In the Contractors module you can upload any file format (DWG, DXF, PDF, DOCX, ZIP and more) up to 64 MB. No conversion needed — upload exactly what you export from 3ds Max, SketchUp or AutoCAD."",
   "Czy moje projekty i dane są bezpieczne?": "Are my projects and data safe?",
   "Tak. Twoje materiały są prywatne, a każdy klient widzi wyłącznie to, co sam mu udostępnisz. Możesz włączać i ukrywać moduły dla poszczególnych projektów.":
     "Yes. Your materials are private, and each client sees only what you choose to share. You can turn modules on and off for individual projects.",
   "Czy muszę instalować wtyczkę veepick?": "Do I have to install the veepick extension?",
-  "Nie jest wymagana. veepick po prostu przyspiesza dodawanie produktów do list zakupowych — możesz też dodawać je ręcznie z poziomu platformy, kiedy tylko chcesz.":
-    "It’s not required. veepick simply speeds up adding products to shopping lists — you can also add them manually from within the platform whenever you like.",
+  "Nie jest wymagana. Veepick po prostu przyspiesza dodawanie produktów do list zakupowych - możesz też dodawać je ręcznie z poziomu platformy, kiedy tylko zechcesz.":
+    "It's not required. Veepick simply speeds up adding products to shopping lists - you can also add them manually from within the platform, whenever you like."",
   "Ile kosztuje veedeck po okresie próbnym?": "How much does veedeck cost after the trial?",
   "Zaczynasz od 14 dni za darmo, bez karty kredytowej. Pełną ofertę planów i cen znajdziesz na":
     "You start with 14 days free, no credit card. You’ll find the full range of plans and prices on the",
   "stronie cennika": "pricing page",
   "Czy klient otworzy panel na telefonie?": "Can the client open the panel on a phone?",
-  "Tak. veedeck działa w przeglądarce, więc render z pinami, lista zakupowa i akceptacje wyglądają tak samo dobrze na telefonie, tablecie i komputerze klienta.":
-    "Yes. veedeck runs in the browser, so the pinned render, shopping list and approvals look just as good on the client’s phone, tablet and computer.",
-  "Nie znalazłeś odpowiedzi?": "Didn’t find your answer?",
+  "Gdzie znajdę instrukcję veedeck?": "Where can I find the veedeck manual?",
+  "Instrukcja dostępna jest bezpośrednio w aplikacji w sekcji Ustawienia → Instrukcje. Każdy nowy użytkownik jest też automatycznie przeprowadzany krok po kroku przez start w aplikacji i wprowadzany do każdego z modułów. Jeśli wolisz indywidualne wprowadzenie, możesz się umówić na prezentację.":
+    "The manual is available directly in the app under <strong>Settings → Instructions</strong>. Every new user is also automatically guided step by step through getting started and introduced to each module. If you prefer a personal walkthrough, you can book a presentation.,
+  "Oczywiście, że tak. Veedeck działa w przeglądarce, więc render z pinami, lista zakupowa i akceptacje wyglądają tak samo dobrze na telefonie, tablecie i komputerze klienta.":
+    "Of course. Veedeck runs in the browser, so the pinned render, shopping list and approvals look just as good on the client’s phone, tablet and computer.",
+  "Nie znalazłeś/-aś odpowiedzi?": "Didn’t find your answer?",
   "Napisz do nas →": "Write to us →",
   "Masz pytanie? Napisz do nas.": "Have a question? Write to us.",
   "Niezależnie czy chcesz umówić prezentację platformy, zaproponować nową funkcję, która ułatwi Ci pracę, czy porozmawiać o współpracy — odpisujemy w ciągu 24 godzin w dni robocze.":
@@ -905,14 +909,14 @@ window.VEEDECK_I18N = {
 
   // ===== Veedeck Moduly.html (strona modułów) =====
   "Jedenaście modułów · Jedna platforma": "Eleven modules · One platform",
-  "Pinowanie komentarzy": "Comment pinning",
-  "bezpośrednio na pliki — z tytułem, opisem i statusem.": "directly on files — with a title, description and status.",
-  "Wersjonowanie wizualizacji": "Visualization versioning",
-  "— historia każdej iteracji, możliwość przywrócenia.": "— a history of every iteration, with the option to restore.",
-  "Status pliku:": "File status:",
-  "do weryfikacji, zaakceptowany, odrzucony — wszystko widoczne.": "for review, approved, rejected — all visible.",
+  "Przypinanie komentarzy": "Pinning comments",
+  "bezpośrednio na pliki.": "directly on files.",
+  "Wersje wizualizacji": "Visualization versions",
+  "- historia każdej zmiany z możliwością przywrócenia.": "- a history of every change, with the option to restore.",
+  "Statusy plików": "File statuses",
+  "do weryfikacji, zaakceptowany, odrzucony.": "for review, approved, rejected.",
   "Panel klienta": "Client panel",
-  "— klient loguje się na swoje konto i pracuje.": "— the client logs into their account and works.",
+  "- po zalogowaniu, klient ma swobodny dostęp do projektu.": "- after logging in, the client has free access to the project.",
   "Ślad na piśmie": "A record in writing",
   "— każda akceptacja zapisuje się w historii.": "— every approval is saved in the history.",
   "Komentarze klienta": "Client comments",
@@ -920,17 +924,21 @@ window.VEEDECK_I18N = {
   "Do weryfikacji": "For review",
   "Dodaj pin": "Add pin",
   "Dyskusja": "Discussion",
-  "PIN 1 „Czy kinkiet może być w tonacji bardziej miedzianej? Reszta — idealna.\"": "PIN 1 “Could the wall light be in a more copper tone? The rest — perfect.”",
+  "„Czy kinkiet może być w innym kolorze? Reszta idealnie!\"": "PIN 1 “Could the wall light be in a different colour? The rest - perfect!”",
   "Anna K. · Pin 1 „Kinkiet bardziej miedziany?\"": "Anna K. · Pin 1 “Wall light more copper?”",
   "Akceptacja": "Approval",
   "Wersja v3": "Version v3",
   "v3 · teraz": "v3 · now",
-  "Wiele kontaktów na projekt — inwestorzy, architekt, kierownik budowy.": "Multiple contacts per project — investors, architect, site manager.",
-  "Konto klienta - stwórz konto klienta lub wyślij mu zaproszenie do jego dedykowanego panelu w veedeck.": "Client account — create a client account or send them an invitation to their dedicated panel in veedeck.",
-  "Pomieszczenia - w ramach projektu — z ikonami i typami.": "Rooms — within a project — with icons and types.",
-  "Płatności — zarządzaj płatnościami w projektach klienta.": "Payments — manage payments across the client’s projects.",
+  "Zbiór informacji o kliencie": "A complete client profile",
+  "- koniec z poszukiwaniem danych klienta w wielu miejscach.": "- no more hunting for client details across multiple places.",
+  "Konto klienta": "Client account",
+  "- tworzy projektant, aby klient miał codzienny wgląd do etapów projektu.": "- created by the designer so the client has daily visibility into project progress.",
+  "Płatności": "Payments",
+  "- zarządzaj płatnościami i etapami rozliczeń. Bez strachu, że o czymś zapomnisz.": "- manage payments and billing milestones. No fear of missing anything.",
+  "Harmonogram": "Schedule",
+  "- etapy realizacji projektu na osi czasu, od koncepcji po montaż.": "- project milestones on a timeline, from concept to installation.",
   "Widoczność modułów": "Module visibility",
-  "— sterujesz tym, co klient widzi.": "— you control what the client sees.",
+  "- sterujesz tym, co klient widzi.": "- you control what the client sees.",
   "01 · Info ogólne": "01 · General info",
   "Opis": "Description",
   "Apartament 78 m² · Warszawa": "Apartment 78 m² · Warsaw",
@@ -954,12 +962,16 @@ window.VEEDECK_I18N = {
   "2 pliki": "2 files",
   "Umowa": "Contract",
   "Przeciągnij pliki tutaj, aby dodać": "Drag files here to add",
-  "Komentarze — dyskutuj na temat produktu bezpośrednio na liście, przy konkretnym produkcie.": "Comments — discuss a product directly on the list, next to the specific item.",
-  "Wtyczka do przeglądarki — dodawaj produkty ze sklepu jednym kliknięciem dzięki wtyczce veepick.": "Browser plugin — add products from a store with one click using the veepick extension.",
-  "Akceptacja przez klienta bezpośrednio na liście z komentarzami.": "Client approval directly on the list, with comments.",
+  "Komentarze": "Comments",
+  "- dyskutuj na temat produktu bezpośrednio na liście, przy konkretnym produkcie.": "- discuss a product directly on the list, next to the specific item.",
+  "Wtyczka do przeglądarki": "Browser plugin",
+  "- dodawaj produkty ze sklepu jednym kliknięciem dzięki wtyczce veepick.": "- add products from a store with one click using the veepick extension.",
+  "Status": "Status",
+  "- klient akceptuje lub odrzuca produkty z listy.": "- the client approves or rejects products from the list.",
   "5 szablonów exportu PDF": "5 PDF export templates",
+  "- wybierz wariant kolorystyczny który Ci odpowiada.": "- choose the colour variant that works for you.",
   "Ukrywanie cen": "Hiding prices",
-  "— kontroluj, czy klient widzi sumy.": "— control whether the client sees totals.",
+  "- Ty decydujesz czy klient widzi ceny produktów.": "- you decide whether the client sees product prices.",
   "Listy / Podwale": "Lists / Podwale",
   "Lista dla projektu Podwale": "List for the Podwale project",
   "Udostępnij": "Share",
@@ -976,18 +988,18 @@ window.VEEDECK_I18N = {
   "Komentarze": "Comments",
   "dziś · 14:32": "today · 14:32",
   "Czy ta lampa pasuje do salonu? Mam ciemną sofę.": "Does this lamp suit the living room? I have a dark sofa.",
-  "Tak — 2700 K, opalowe szkło daje miękkie ciepłe światło 🤍": "Yes — 2700 K, opal glass gives soft warm light 🤍",
+  "Tak - 2700 K, opalowe szkło daje miękkie ciepłe światło 🤍": "Yes - 2700 K, opal glass gives soft warm light 🤍",
   "Super, zatwierdzam!": "Great, I approve!",
   "Napisz wiadomość…": "Write a message…",
   "Zadania per projekt": "Tasks per project",
-  "— wszystko w kontekście, bez chaosu.": "— everything in context, no chaos.",
+  "— wszystko w kontekście projektu, bez chaosu.": "— everything in the project context, no chaos.",
   "Terminy i priorytety": "Deadlines and priorities",
   "— wiesz, co musisz zrobić dziś, a co może poczekać.": "— you know what to do today and what can wait.",
-  "Sekcja „Dziś\"": "The “Today” section",
-  "na dashboardzie — pierwszy ekran rana.": "on your dashboard — the first screen of the morning.",
-  "na dashboardzie — co Cię dziś czeka.": "on your dashboard — what’s waiting for you today.",
+  "Sekcja „Do zrobienia”": "The “To do” section",
+  " w panelu głównym przypomni Ci o zadaniach na dzisiaj.": "on your main dashboard to remind you of today's tasks.",
+  " w panelu głównym pokazuje co Cię dziś czeka.": "shows what's waiting for you today on your main dashboard.,
   "Powiadomienia": "Notifications",
-  "o nadchodzących terminach — bez SMS-ów do siebie.": "about upcoming deadlines — no texting yourself.",
+  "o nadchodzących terminach - nie obawiaj się, że o czymś zapomnisz.": "about upcoming deadlines - don't worry about forgetting something.",
   "3 zadania · 1 zaległe": "3 tasks · 1 overdue",
   "Dodaj zadanie": "Add task",
   "Grupuj:": "Group:",
@@ -1014,8 +1026,10 @@ window.VEEDECK_I18N = {
   "Proszę o nadzór w dniu 29.06 — ekipa o 8:00. Klucze w biurze.": "Please supervise on 29.06 — crew at 8:00. Keys at the office.",
   "Anuluj": "Cancel",
   "Utwórz zadanie": "Create task",
-  "Prosto z wtyczki, do bazy — produkty dodane przez veepick automatycznie trafiają do bazy.": "Straight from the extension to your library — products added via veepick land in the library automatically.",
-  "Kategorie — Meble, Oświetlenie, Akcesoria, Armatura, Okładziny, Podłoga + te, które stworzysz sam!": "Categories — Furniture, Lighting, Accessories, Fixtures, Cladding, Flooring + any you create yourself!",
+  "Prosto z wtyczki, do bazy": "Straight from the extension to your library",
+  "- produkty dodane przez veepick automatycznie trafiają do bazy produktów.": "- products added via veepick land in the product library automatically.",
+  "Kategorie": "Categories",
+  "- meble, oświetlenie, akcesoria, armatura, okładziny, podłoga + te, które stworzysz sam.": "- furniture, lighting, accessories, fixtures, cladding, flooring + any you create yourself.",
   "Pełne metadane": "Full metadata",
   "— producent, dostawca, kolor, wymiar, numer katalogowy.": "— manufacturer, supplier, colour, dimensions, catalogue number.",
   "Powiązania z listami": "Links to lists",
@@ -1029,9 +1043,9 @@ window.VEEDECK_I18N = {
   "Meble · Armatura · …": "Furniture · Fixtures · …",
   "+ z URL": "+ from URL",
   "dane zaciągane auto": "data pulled in automatically",
-  "Spotkania u klienta": "Client meetings",
-  "z adresem i kontaktem — bez kopiowania danych.": "with address and contact — no copying data.",
-  "Zadania i przypomnienia w Twoim kalendarzu": "Tasks and reminders in your calendar",
+  "Wydarzenia": "Events",
+  "- wszystkie zaplanowane wydarzenia w prostym, czytelnym kalendarzu.": "- all scheduled events in a simple, clear calendar.",
+  "Zadania i przypomnienia": "Tasks and reminders",
   "Widok miesiąca, tygodnia, dnia": "Month, week, day view",
   "— wybierz wygodny dla siebie.": "— pick the one that suits you.",
   "Dziś": "Today",
@@ -1057,7 +1071,8 @@ window.VEEDECK_I18N = {
   "10:30 · zadanie": "10:30 · task",
   "Szybka notatka": "Quick note",
   "— ikona w pasku nawigacji zawsze pod ręką.": "— an icon in the nav bar always at hand.",
-  "Szkicownik — rysuj na telefonie lub tablecie, edytuj na komputerze.": "Sketchpad — draw on your phone or tablet, edit on your computer.",
+  "Szkicownik": "Sketchpad",
+  "- rysuj na telefonie lub tablecie, edytuj na komputerze.": "- draw on your phone or tablet, edit on your computer.",
   "Wyszukiwarka": "Search",
   "po tytule i treści — odnajdziesz wszystko.": "by title and content — you’ll find everything.",
   "Archiwum": "Archive",
@@ -1078,11 +1093,14 @@ window.VEEDECK_I18N = {
   "3. Ściana akcentowa": "3. Accent wall",
   "Oliwkowa zieleń zamiast granatu.": "Olive green instead of navy.",
   "Szkicuj wszędzie — tablet, telefon i komputer, zawsze w synchronizacji.": "Sketch anywhere — tablet, phone and computer, always in sync.",
-  "Czat per klient": "Chat per client",
-  "— każda rozmowa w swoim miejscu.": "— every conversation in its place.",
-  "Czat zespołowy — komunikacja z zespołem bezpośrednio w platformie.": "Team chat — communicate with your team directly in the platform.",
-  "Bez zrzutów z WhatsAppa": "No WhatsApp screenshots",
-  "— koniec z chaosem w komunikatorach.": "— no more chaos in messaging apps.",
+  "Czat z klientem": "Client chat",
+  "- wszystkie ustalenia projektowe masz w jednej konwersacji.": "- all your project decisions in one conversation.",
+  "Czat zespołowy": "Team chat",
+  "- komunikacja z członkami zespołu.": "- communicate with team members.",
+  "Czat z wykonawcą": "Contractor chat",
+  "- komunikacja z wykonawcą projektu.": "- communicate with the project contractor.",
+  "Bez zrzutów z WhatsApp'a i Messenger'a": "No WhatsApp or Messenger screenshots",
+  "- koniec z chaosem w komunikatorach.": "- no more chaos in messaging apps.",
   "Szukaj w dyskusjach…": "Search discussions…",
   "Wszystkie": "All",
   "Aktywne": "Active",
@@ -1126,7 +1144,8 @@ window.VEEDECK_I18N = {
   "Wysyłasz klientowi ankietę lub brief na starcie projektu, a uporządkowane odpowiedzi wracają wprost do veedeck — koniec z dopytywaniem mailem.": "You send the client a survey or brief at the start of a project, and the organised answers come straight back into veedeck — no more chasing by email.",
   "Gotowe szablony briefów i ankiet — albo twórz własne szablony od podstaw.": "Ready-made brief and survey templates — or build your own from scratch.",
   "Różne typy pytań — wybór, skala, tekst, załączniki.": "Different question types — choice, scale, text, attachments.",
-  "Klient wypełnia w przeglądarce, na dowolnym urządzeniu.": "The client fills it in the browser, on any device.",
+  "Klient wypełnia ankiety na dowolnym urządzeniu.": "The client fills in surveys on any device.",
+  "Podsumowanie AI - wygeneruj podsumowanie AI na podstawie odpowiedzi i plików przesłanych w ankiecie.": "AI summary - generate an AI summary based on answers and files submitted in the survey.",
   "Odpowiedzi zebrane w jednym miejscu, podpięte pod projekt.": "Answers gathered in one place, attached to the project.",
   "Brief wnętrza · Salon": "Interior brief · Living room",
   "Pytanie 3 z 12": "Question 3 of 12",

@@ -1,11 +1,18 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-W6PSBGLB');</script>
+<!-- End Google Tag Manager -->
 <meta charset="utf-8">
-<title>Moduły veedeck — wszystkie narzędzia dla projektanta wnętrz w jednym miejscu</title>
+<title>Moduły veedeck - wszystkie narzędzia dla projektanta wnętrz w jednym miejscu</title>
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="ProjectFlow, listy zakupowe, wykonawcy, ankiety — 11 modułów do zarządzania całym projektem wnętrzarskim.">
+<meta name="description" content="ProjectFlow, listy zakupowe, wykonawcy, ankiety - 11 modułów do zarządzania całym projektem wnętrzarskim.">
 <link rel="alternate" hreflang="pl" href="https://veedeck.com/veedeck-moduly">
 <link rel="alternate" hreflang="en" href="https://veedeck.com/modules">
 <link rel="alternate" hreflang="x-default" href="https://veedeck.com/veedeck-moduly">
@@ -43,7 +50,7 @@
   p { margin: 0; }
   a { color: inherit; text-decoration: none; }
 
-  /* Material Symbols Rounded — explicit base to ensure ligatures render */
+  /* Material Symbols Rounded - explicit base to ensure ligatures render */
   .material-symbols-rounded {
     font-family: 'Material Symbols Rounded';
     font-weight: normal;
@@ -101,9 +108,10 @@
   .page-hero .eyebrow { display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--primary); margin-bottom: 14px; }
   .page-hero h1 { font-size: clamp(40px, 6vw, 64px); line-height: 1.05; letter-spacing: -0.03em; font-weight: 700; margin-bottom: 18px; max-width: 880px; }
   .page-hero h1 em { font-style: italic; font-family: "Inter", serif; color: var(--primary); font-weight: 500; }
-  .page-hero .lead { font-size: 18px; color: var(--muted-foreground); max-width: 720px; line-height: 1.6; }
+  .page-hero .lead { font-size: 18px; color: var(--muted-foreground); max-width: 720px; line-height: 1.6; white-space: nowrap; }
+  @media (max-width: 768px) { .page-hero .lead { white-space: normal; } }
 
-  /* MODULE NAV STRIP — jump links */
+  /* MODULE NAV STRIP - jump links */
   .module-strip {
     background: #FAFAFB;
     border-bottom: 1px solid var(--border);
@@ -150,7 +158,7 @@
     gap: 72px;
     align-items: center;
   }
-  /* ProjectFlow — wider visual to showcase the actual UI */
+  /* ProjectFlow - wider visual to showcase the actual UI */
   #projectflow .container { max-width: 1320px; }
   #projectflow .module-row {
     grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.45fr);
@@ -234,7 +242,7 @@
   .module-features .tick svg { width: 12px; height: 12px; }
   .module-features li strong { font-weight: 600; }
 
-  /* KALENDARZ STAGE — moduł 06 (widok tygodnia) */
+  /* KALENDARZ STAGE - moduł 08 (widok tygodnia) */
   #kalendarz .container { max-width: 1320px; }
   #kalendarz .module-row {
     grid-template-columns: minmax(0, 1.45fr) minmax(0, 0.82fr);
@@ -290,7 +298,7 @@
     .kal-wkbody { height: 312px; }
   }
 
-  /* NOTATNIK STAGE — moduł 07 (tablet + telefon) */
+  /* NOTATNIK STAGE - moduł 09 (tablet + telefon) */
   #notatnik .container { max-width: 1320px; }
   #notatnik .module-row {
     grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.45fr);
@@ -362,7 +370,7 @@
     #notatnik .tab-cap { position: static; margin-top: 14px; }
   }
 
-  /* DYSKUSJE STAGE — moduł 08 (lista · czat · pliki) */
+  /* DYSKUSJE STAGE - moduł 10 (lista · czat · pliki) */
   #dyskusje .container { max-width: 1320px; }
   #dyskusje .module-row {
     grid-template-columns: minmax(0, 1.45fr) minmax(0, 0.82fr);
@@ -525,7 +533,7 @@
     line-height: 1.45;
   }
 
-  /* RENDERFLOW STAGE — interaktywna grafika modułu 01 */
+  /* RENDERFLOW STAGE - interaktywna grafika modułu 02 */
   .rf-stage { position: relative; display: flex; flex-direction: column; gap: 16px; }
   .rf-tabs {
     display: inline-flex; align-self: flex-start;
@@ -624,7 +632,7 @@
   }
   .rf-toolbar .tb-btn.primary { background: var(--primary); color: #fff; }
   .rf-toolbar .tb-btn .material-symbols-rounded { font-size: 14px; }
-  /* View overlays — fade between */
+  /* View overlays - fade between */
   .rf-view {
     position: absolute; inset: 0;
     opacity: 0; pointer-events: none;
@@ -739,7 +747,7 @@
   }
   .rf-timeline .line.done { background: #059669; }
 
-  /* KLIENCI DECK — 4 pochylone karty (Info · Kontakty · Płatności · Dokumenty) */
+  /* KLIENCI DECK - 4 pochylone karty (Info · Kontakty · Płatności · Dokumenty) */
   #klienci .container { max-width: 1320px; }
   #klienci .module-row {
     grid-template-columns: minmax(0, 1.45fr) minmax(0, 0.82fr);
@@ -881,7 +889,7 @@
     .kl-deck { max-width: 100%; }
   }
 
-  /* LISTY ZAKUPOWE — lista produktów + dokowany czat */
+  /* LISTY ZAKUPOWE - lista produktów + dokowany czat */
   #listy .container { max-width: 1320px; }
   #listy .module-row {
     grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.45fr);
@@ -1058,7 +1066,7 @@
     .lz-card .lz-chat { border-left: 0; border-top: 1px solid var(--border); }
   }
 
-  /* ZADANIA — tabela zadań + modal "Nowe zadanie" */
+  /* ZADANIA - tabela zadań + modal "Nowe zadanie" */
   #zadania .container { max-width: 1320px; }
   #zadania .module-row {
     grid-template-columns: minmax(0, 1.45fr) minmax(0, 0.82fr);
@@ -1245,7 +1253,7 @@
     .zd-modal { position: relative; width: 100%; height: auto; transform: none; margin-top: 16px; right: auto; bottom: auto; }
   }
 
-  /* PRODUKTY — showcase gallery + chipy ze statystykami */
+  /* PRODUKTY - showcase gallery + chipy ze statystykami */
   #produkty .container { max-width: 1320px; }
   #produkty .module-row {
     grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.45fr);
@@ -1352,7 +1360,7 @@
     .pr-chip { position: relative; display: inline-flex; }
   }
 
-  /* Image variant — when actual image is provided */
+  /* Image variant - when actual image is provided */
   .shot-frame.has-image::before,
   .shot-frame.has-image::after { display: none; }
   .shot-frame.has-image .shot-label { display: none; }
@@ -1509,7 +1517,7 @@
 
   html { scroll-behavior: smooth; scroll-padding-top: 140px; }
 
-  /* WYKONAWCY STAGE — moduł 09 (podgląd pliku z pinami) */
+  /* WYKONAWCY STAGE - moduł 07 (podgląd pliku z pinami) */
   #wykonawcy .container { max-width: 1320px; }
   #wykonawcy .module-row { grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.45fr); gap: 56px; }
   .wk-frame {
@@ -1558,7 +1566,7 @@
   @media (max-width: 920px) { #wykonawcy .module-row { grid-template-columns: 1fr; } }
   @media (max-width: 520px) { .wk-frame { grid-template-columns: 1fr; } .wk-rail { display: none; } }
 
-  /* ANKIETY STAGE — moduł 10 (brief / ankieta klienta) */
+  /* ANKIETY STAGE - moduł 05 (brief / ankieta klienta) */
   .an-stage { position: relative; width: 100%; max-width: 440px; margin: 0 auto; }
   .an-card { background: #fff; border: 1px solid var(--border); border-radius: 16px; overflow: hidden; box-shadow: 0 1px 2px rgba(36,37,43,.04), 0 24px 60px -28px rgba(79,70,229,.22), 0 12px 32px -20px rgba(36,37,43,.12); }
   .an-top { padding: 16px 18px; border-bottom: 1px solid var(--border); }
@@ -1589,15 +1597,15 @@
   "name": "veedeck",
   "applicationCategory": "BusinessApplication",
   "operatingSystem": "Web",
-  "description": "11 modułów do zarządzania projektami wnętrzarskimi — ProjectFlow, listy zakupowe, wykonawcy, ankiety, dyskusje i więcej w jednej platformie.",
+  "description": "11 modułów do zarządzania projektami wnętrzarskimi - ProjectFlow, listy zakupowe, wykonawcy, ankiety, dyskusje i więcej w jednej platformie.",
   "url": "https://veedeck.com",
   "featureList": [
-    "ProjectFlow — wizualizacje i feedback klienta",
+    "ProjectFlow - wizualizacje i feedback klienta",
     "Listy zakupowe z sekcjami i produktami",
     "Moduł klientów z udostępnianiem plików",
     "Zarządzanie wykonawcami",
     "Ankiety dla klientów",
-    "Dyskusje projektant–klient",
+    "Dyskusje projektant-klient",
     "Generator 3D",
     "Panele projektowe"
   ],
@@ -1619,6 +1627,10 @@
 </script>
 </head>
 <body>
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W6PSBGLB"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
 
 <!-- NAV -->
 <nav class="top" id="siteNav">
@@ -1700,10 +1712,9 @@
 <section class="page-hero">
   <div class="container">
     <div class="eyebrow">Jedenaście modułów · Jedna platforma</div>
-    <h1>Wszystko, czego potrzebujesz<br>do prowadzenia <em>studia projektowego</em>.</h1>
+    <h1>Narzędzie dla projektantów wnętrz, <em>jakiego potrzebujesz</em></h1>
     <p class="lead">
-      Włącz tylko te moduły, których używasz. Ukryj nieużywane. Każdy klient dostaje
-      tylko to, co ma widzieć. Zobacz, jak działają moduły veedeck w praktyce.
+      Pełny zestaw funkcji dla studia projektowego: od pierwszego szkicu po odbiór końcowy.
     </p>
   </div>
 </section>
@@ -1711,18 +1722,18 @@
 <!-- MODULE STRIP / JUMP NAV -->
 <div class="module-strip">
   <div class="container module-strip-inner">
+    <a href="#klienci" class="module-chip"><span class="material-symbols-rounded">group</span>Klienci</a>
     <a href="#projectflow" class="module-chip">
       <svg class="renderflow-pin" viewBox="-22 -22 228 229" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
         <path d="M121.728 122.988L162.007 82.6681C166.445 78.2248 163.239 70.6362 156.959 70.7215L146.549 70.8628L119.786 71.2261C119.236 71.2336 118.707 71.014 118.324 70.6191L86.1743 37.4878L58.6215 8.66333C55.9075 5.82403 51.389 5.77308 48.6117 8.55045L8.55019 48.6119C5.84554 51.3166 5.81265 55.6914 8.47633 58.4364L36.4243 87.2378L68.6112 120.408C68.9724 120.78 69.1749 121.278 69.1759 121.796L69.2485 158.623C69.2607 164.855 76.7967 167.965 81.2007 163.557L121.728 122.988ZM121.728 122.988L177.228 178.488" stroke="currentColor" stroke-width="13" stroke-linecap="round"></path>
       </svg>
       ProjectFlow
     </a>
-    <a href="#klienci" class="module-chip"><span class="material-symbols-rounded">group</span>Klienci</a>
     <a href="#listy" class="module-chip"><span class="material-symbols-rounded">local_mall</span>Listy zakupowe</a>
     <a href="#zadania" class="module-chip"><span class="material-symbols-rounded">check_box</span>Zadania</a>
+    <a href="#ankiety" class="module-chip"><span class="material-symbols-rounded">assignment</span>Ankiety</a>
     <a href="#produkty" class="module-chip"><span class="material-symbols-rounded">package_2</span>Produkty</a>
     <a href="#wykonawcy" class="module-chip"><span class="material-symbols-rounded">engineering</span>Wykonawcy</a>
-    <a href="#ankiety" class="module-chip"><span class="material-symbols-rounded">assignment</span>Ankiety</a>
     <a href="#kalendarz" class="module-chip"><span class="material-symbols-rounded">calendar_month</span>Kalendarz</a>
     <a href="#notatnik" class="module-chip"><span class="material-symbols-rounded">note_stack</span>Notatnik</a>
     <a href="#dyskusje" class="module-chip"><span class="material-symbols-rounded">chat_bubble</span>Dyskusje</a>
@@ -1767,125 +1778,26 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-<!-- ───────── 01 · RENDERFLOW ───────── -->
-<section class="module-section" id="projectflow">
-  <div class="container">
-    <div class="module-row">
-      <div class="module-text">
-        <div class="module-eyebrow"><span class="num">Moduł 01</span></div>
-        <div class="module-head-row">
-          <div class="module-glyph">
-            <svg class="renderflow-pin" viewBox="-22 -22 228 229" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-              <path d="M121.728 122.988L162.007 82.6681C166.445 78.2248 163.239 70.6362 156.959 70.7215L146.549 70.8628L119.786 71.2261C119.236 71.2336 118.707 71.014 118.324 70.6191L86.1743 37.4878L58.6215 8.66333C55.9075 5.82403 51.389 5.77308 48.6117 8.55045L8.55019 48.6119C5.84554 51.3166 5.81265 55.6914 8.47633 58.4364L36.4243 87.2378L68.6112 120.408C68.9724 120.78 69.1749 121.278 69.1759 121.796L69.2485 158.623C69.2607 164.855 76.7967 167.965 81.2007 163.557L121.728 122.988ZM121.728 122.988L177.228 178.488" stroke="currentColor" stroke-width="13" stroke-linecap="round"></path>
-            </svg>
-          </div>
-          <h2 class="module-title">ProjectFlow</h2>
-        </div>
-        <p class="module-tagline">
-          Wizualizacje, rysunki techniczne i feedback w jednym miejscu. Klient pinuje uwagi wprost
-          na pliku, akceptuje lub odrzuca kolejne wersje, a Ty trzymasz wszystko w ryzach — z pełną historią zmian.
-        </p>
-        <ul class="module-features">
-          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Pinowanie komentarzy</strong> bezpośrednio na pliki — z tytułem, opisem i statusem.</span></li>
-          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Wersjonowanie wizualizacji</strong> — historia każdej iteracji, możliwość przywrócenia.</span></li>
-          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Status pliku:</strong> do weryfikacji, zaakceptowany, odrzucony — wszystko widoczne.</span></li>
-          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Panel klienta</strong> — klient loguje się na swoje konto i pracuje.</span></li>
-          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Ślad na piśmie</strong> — każda akceptacja zapisuje się w historii.</span></li>
-        </ul>
-      </div>
-      <div class="module-shot">
-        <div class="rf-stage" id="rfStage">
-          <div class="rf-tabs" role="tablist" aria-label="Widok grafiki ProjectFlow">
-            <span class="rf-tab-thumb" id="rfTabThumb"></span>
-            <button type="button" role="tab" class="active" data-rf-view="comments" aria-selected="true">
-              <span class="material-symbols-rounded">push_pin</span>
-              Komentarze klienta
-            </button>
-            <button type="button" role="tab" data-rf-view="history" aria-selected="false">
-              <span class="material-symbols-rounded">history</span>
-              Historia wersji
-            </button>
-          </div>
-
-          <div class="rf-canvas">
-            <img class="rf-render" src="rf-detail.png" alt="Render salonu — Tyczynska / Salon">
-
-            <!-- Persistent UI -->
-            <span class="rf-status-chip">Do weryfikacji</span>
-            <div class="rf-toolbar">
-              <span class="tb-btn primary"><span class="material-symbols-rounded">push_pin</span>Dodaj pin</span>
-              <span class="tb-btn"><span class="material-symbols-rounded">chair</span>Produkt</span>
-              <span class="tb-btn"><span class="material-symbols-rounded">forum</span>Dyskusja</span>
-            </div>
-
-            <!-- Pins (klient pinuje uwagi) -->
-            <div class="rf-pin" style="top: 41%; left: 33%;">1</div>
-            <div class="rf-pin" style="top: 30%; left: 72%;">2</div>
-
-            <!-- View 1: Komentarze klienta -->
-            <div class="rf-view active" data-rf-view-pane="comments">
-              <div class="rf-annot">
-                <div class="meta">
-                  <span class="avatar">AK</span>
-                  <span class="author">Anna Kowalska</span>
-                  <span class="time">2 min</span>
-                </div>
-                <div class="body">PIN 1 „Czy kinkiet może być w tonacji bardziej miedzianej? Reszta — idealna."</div>
-              </div>
-            </div>
-
-            <!-- View 2: Historia wersji -->
-            <div class="rf-view" data-rf-view-pane="history">
-              <div class="rf-bubble b1">
-                <span class="avatar">AK</span>
-                <div class="text">Anna K. · Pin 1
-„Kinkiet bardziej miedziany?"</div>
-              </div>
-              <div class="rf-bubble b2 accepted">
-                <span class="avatar">✓</span>
-                <div class="text"><span class="badge">Akceptacja</span><br><strong>Wersja v3</strong> zaakceptowana</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Version timeline (only for history view) -->
-          <div class="rf-timeline" data-rf-view-pane="history">
-            <div class="tl-title">Historia wersji</div>
-            <div class="tl-strip">
-              <div class="v done"><span class="dot">✓</span><span class="lab">v1</span></div>
-              <div class="line done"></div>
-              <div class="v done"><span class="dot">✓</span><span class="lab">v2</span></div>
-              <div class="line done"></div>
-              <div class="v active"><span class="dot"></span><span class="lab">v3 · teraz</span></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ───────── 02 · KLIENCI ───────── -->
+<!-- ───────── 01 · KLIENCI ───────── -->
 <section class="module-section" id="klienci">
   <div class="container">
     <div class="module-row reverse">
       <div class="module-text">
-        <div class="module-eyebrow"><span class="num">Moduł 02</span></div>
+        <div class="module-eyebrow"><span class="num">Moduł 01</span></div>
         <div class="module-head-row">
           <div class="module-glyph"><span class="material-symbols-rounded">group</span></div>
           <h2 class="module-title">Klienci</h2>
         </div>
         <p class="module-tagline">
-          Kartoteka klientów i projektów. Dane kontaktowe, adres inwestycji,
-          pomieszczenia, kontakty — wszystko w jednej hierarchii.
+          Kartoteka klientów z danymi kontaktowymi, informacjami o inwestycji, płatnościami i harmonogramami.
         </p>
         <ul class="module-features">
-          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span>Wiele kontaktów na projekt — inwestorzy, architekt, kierownik budowy.</span></li>
-          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span>Konto klienta - stwórz konto klienta lub wyślij mu zaproszenie do jego dedykowanego panelu w veedeck.</span></li>
-          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span>Pomieszczenia - w ramach projektu — z ikonami i typami.</span></li>
-          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span>Płatności — zarządzaj płatnościami w projektach klienta.</span></li>
-          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Harmonogram</strong> — etapy realizacji projektu na osi czasu, od koncepcji po montaż.</span></li>
-          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Widoczność modułów</strong> — sterujesz tym, co klient widzi.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Zbiór informacji o kliencie</strong> - koniec z poszukiwaniem danych klienta w wielu miejscach.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Konto klienta</strong> - tworzy projektant, aby klient miał codzienny wgląd do etapów projektu.</span></li>
+          
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Płatności</strong> - zarządzaj płatnościami i etapami rozliczeń. Bez strachu, że o czymś zapomnisz.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Harmonogram</strong> - etapy realizacji projektu na osi czasu, od koncepcji po montaż.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Widoczność modułów</strong> - sterujesz tym, co klient widzi.</span></li>
         </ul>
       </div>
       <div class="module-shot">
@@ -1927,7 +1839,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
           <div class="kl-card d4">
             <span class="kl-tab">04 · Harmonogram</span>
-            <div class="kl-title">4 etapy · 24.04 – 24.07</div>
+            <div class="kl-title">4 etapy · 24.04 - 24.07</div>
             <div class="gantt">
               <div class="gantt-head"><span></span><div class="months"><span>KWI</span><span>MAJ</span><span>CZE</span><span>LIP</span></div></div>
               <div class="gantt-row">
@@ -1955,6 +1867,98 @@ document.addEventListener('DOMContentLoaded', function() {
   </div>
 </section>
 
+<!-- ───────── 02 · RENDERFLOW ───────── -->
+<section class="module-section" id="projectflow">
+  <div class="container">
+    <div class="module-row">
+      <div class="module-text">
+        <div class="module-eyebrow"><span class="num">Moduł 02</span></div>
+        <div class="module-head-row">
+          <div class="module-glyph">
+            <svg class="renderflow-pin" viewBox="-22 -22 228 229" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M121.728 122.988L162.007 82.6681C166.445 78.2248 163.239 70.6362 156.959 70.7215L146.549 70.8628L119.786 71.2261C119.236 71.2336 118.707 71.014 118.324 70.6191L86.1743 37.4878L58.6215 8.66333C55.9075 5.82403 51.389 5.77308 48.6117 8.55045L8.55019 48.6119C5.84554 51.3166 5.81265 55.6914 8.47633 58.4364L36.4243 87.2378L68.6112 120.408C68.9724 120.78 69.1749 121.278 69.1759 121.796L69.2485 158.623C69.2607 164.855 76.7967 167.965 81.2007 163.557L121.728 122.988ZM121.728 122.988L177.228 178.488" stroke="currentColor" stroke-width="13" stroke-linecap="round"></path>
+            </svg>
+          </div>
+          <h2 class="module-title">ProjectFlow</h2>
+        </div>
+        <p class="module-tagline">
+          Wizualizacje, rysunki techniczne i feedback w jednym miejscu. Klient przypina pinezki z uwagami bezpośrednio na pliku. Akceptuje lub odrzuca wersje, a Ty trzymasz wszystko w ryzach - z pełną historią zmian.
+        </p>
+        <ul class="module-features">
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Przypinanie komentarzy</strong> bezpośrednio na pliki.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Wersje wizualizacji</strong> - historia każdej zmiany z możliwością przywrócenia.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Statusy plików</strong> - do weryfikacji, zaakceptowany, odrzucony.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Panel klienta</strong> - po zalogowaniu, klient ma swobodny dostęp do projektu.</span></li>
+        </ul>
+      </div>
+      <div class="module-shot">
+        <div class="rf-stage" id="rfStage">
+          <div class="rf-tabs" role="tablist" aria-label="Widok grafiki ProjectFlow">
+            <span class="rf-tab-thumb" id="rfTabThumb"></span>
+            <button type="button" role="tab" class="active" data-rf-view="comments" aria-selected="true">
+              <span class="material-symbols-rounded">push_pin</span>
+              Komentarze klienta
+            </button>
+            <button type="button" role="tab" data-rf-view="history" aria-selected="false">
+              <span class="material-symbols-rounded">history</span>
+              Historia wersji
+            </button>
+          </div>
+
+          <div class="rf-canvas">
+            <img class="rf-render" src="rf-detail.png" alt="Render salonu - Tyczynska / Salon">
+
+            <!-- Persistent UI -->
+            <span class="rf-status-chip">Do weryfikacji</span>
+            <div class="rf-toolbar">
+              <span class="tb-btn primary"><span class="material-symbols-rounded">push_pin</span>Dodaj pin</span>
+              <span class="tb-btn"><span class="material-symbols-rounded">chair</span>Produkt</span>
+              <span class="tb-btn"><span class="material-symbols-rounded">forum</span>Dyskusja</span>
+            </div>
+
+            <!-- Pins (klient pinuje uwagi) -->
+            <div class="rf-pin" style="top: 41%; left: 33%;">1</div>
+            <div class="rf-pin" style="top: 30%; left: 72%;">2</div>
+
+            <!-- View 1: Komentarze klienta -->
+            <div class="rf-view active" data-rf-view-pane="comments">
+              <div class="rf-annot">
+                <div class="meta">
+                  <span class="avatar">AK</span>
+                  <span class="author">Anna Kowalska</span>
+                  <span class="time">2 min</span>
+                </div>
+                <div class="body">„Czy kinkiet może być w innym kolorze? Reszta idealnie!"</div>
+              </div>
+            </div>
+
+            <!-- View 2: Historia wersji -->
+            <div class="rf-view" data-rf-view-pane="history">
+
+              <div class="rf-bubble b2 accepted">
+                <span class="avatar">✓</span>
+                <div class="text"><span class="badge">Akceptacja</span><br><strong>Wersja v3</strong> zaakceptowana</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Version timeline (only for history view) -->
+          <div class="rf-timeline" data-rf-view-pane="history">
+            <div class="tl-title">Historia wersji</div>
+            <div class="tl-strip">
+              <div class="v done"><span class="dot">✓</span><span class="lab">v1</span></div>
+              <div class="line done"></div>
+              <div class="v done"><span class="dot">✓</span><span class="lab">v2</span></div>
+              <div class="line done"></div>
+              <div class="v active"><span class="dot"></span><span class="lab">v3 · teraz</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- ───────── 03 · LISTY ZAKUPOWE ───────── -->
 <section class="module-section" id="listy">
   <div class="container">
@@ -1966,15 +1970,14 @@ document.addEventListener('DOMContentLoaded', function() {
           <h2 class="module-title">Listy zakupowe</h2>
         </div>
         <p class="module-tagline">
-          Tworzenie list produktów dla klientów — pogrupowane w sekcje, z cenami,
-          wymiarami i linkami. Klient zatwierdza, Ty zamawiasz.
+          Tworzenie list produktów dla klientów - pogrupowane w sekcje, z cenami, wymiarami i linkami.
         </p>
         <ul class="module-features">
-          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span>Komentarze — dyskutuj na temat produktu bezpośrednio na liście, przy konkretnym produkcie.</span></li>
-          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span>Wtyczka do przeglądarki — dodawaj produkty ze sklepu jednym kliknięciem dzięki wtyczce veepick.</span></li>
-          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span>Akceptacja przez klienta bezpośrednio na liście z komentarzami.</span></li>
-          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>5 szablonów exportu PDF</strong> — Violet, Editorial Mono, Atelier Warm, Architect Grid, Soft Linen.</span></li>
-          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Ukrywanie cen</strong> — kontroluj, czy klient widzi sumy.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Komentarze</strong> - dyskutuj na temat produktu bezpośrednio na liście, przy konkretnym produkcie.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Wtyczka do przeglądarki</strong> - dodawaj produkty ze sklepu jednym kliknięciem dzięki wtyczce veepick.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Status</strong> - klient akceptuje lub odrzuca produkty z listy.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>5 szablonów exportu PDF</strong> - wybierz wariant kolorystyczny który Ci odpowiada.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Ukrywanie cen</strong> - Ty decydujesz czy klient widzi ceny produktów.</span></li>
         </ul>
       </div>
       <div class="module-shot">
@@ -1998,7 +2001,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="lz-product">
               <div class="thumb pk" style="background-image:url('produkty/bed.png')"></div>
               <div class="info">
-                <div class="nm">NEIDEN Rama łóżka — sosna 140×200 cm</div>
+                <div class="nm">NEIDEN Rama łóżka - sosna 140×200 cm</div>
                 <div class="meta">IKEA · beżowy · 2 tyg</div>
               </div>
               <span class="st ok">Zaakceptowane</span>
@@ -2016,7 +2019,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="lz-product">
               <div class="thumb pk" style="background-image:url('produkty/rug.png')"></div>
               <div class="info">
-                <div class="nm">Chessie — dywan 20×20 cm</div>
+                <div class="nm">Chessie - dywan 20×20 cm</div>
                 <div class="meta">Rugvista · rdzawa czerwień</div>
               </div>
               <span class="st no">Odrzucone</span>
@@ -2049,7 +2052,7 @@ document.addEventListener('DOMContentLoaded', function() {
               </div>
               <div class="msg me">
                 <span class="av">DM</span>
-                <div class="bubble">Tak — 2700 K, opalowe szkło daje miękkie ciepłe światło 🤍</div>
+                <div class="bubble">Tak - 2700 K, opalowe szkło daje miękkie ciepłe światło 🤍</div>
               </div>
               <div class="msg client">
                 <span class="av">A</span>
@@ -2076,14 +2079,14 @@ document.addEventListener('DOMContentLoaded', function() {
           <h2 class="module-title">Zadania</h2>
         </div>
         <p class="module-tagline">
-          Lista zadań do wykonania — przypisuj do projektów, ustawiaj terminy
-          i priorytety. Zadania na dziś trafiają od razu na dashboard.
+          Lista zadań do wykonania - przypisuj do projektów, ustawiaj terminy
+          i priorytety. Zadania na dziś trafiają od razu na panel główny.
         </p>
         <ul class="module-features">
-          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Zadania per projekt</strong> — wszystko w kontekście, bez chaosu.</span></li>
-          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Terminy i priorytety</strong> — wiesz, co musisz zrobić dziś, a co może poczekać.</span></li>
-          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Sekcja „Dziś"</strong> na dashboardzie — pierwszy ekran rana.</span></li>
-          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Powiadomienia</strong> o nadchodzących terminach — bez SMS-ów do siebie.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Zadania per projekt</strong> - wszystko w kontekście projektu, bez chaosu.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Terminy i priorytety</strong> - wiesz, co musisz zrobić dziś, a co może poczekać.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Sekcja „Do zrobienia”</strong> w panelu głównym przypomni Ci o zadaniach na dzisiaj.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Powiadomienia</strong> o nadchodzących terminach - nie obawiaj się, że o czymś zapomnisz.</span></li>
         </ul>
       </div>
       <div class="module-shot">
@@ -2158,7 +2161,7 @@ document.addEventListener('DOMContentLoaded', function() {
               </div>
               <div class="field">
                 <span class="lab">Opis</span>
-                <span class="val editor">Proszę o nadzór w dniu 29.06 — ekipa o 8:00. Klucze w biurze.</span>
+                <span class="val editor">Proszę o nadzór w dniu 29.06 - ekipa o 8:00. Klucze w biurze.</span>
               </div>
               <div class="grid2">
                 <div class="field">
@@ -2193,25 +2196,75 @@ document.addEventListener('DOMContentLoaded', function() {
   </div>
 </section>
 
-<!-- ───────── 05 · PRODUKTY ───────── -->
+<!-- ───────── 05 · ANKIETY ───────── -->
+<section class="module-section" id="ankiety">
+  <div class="container">
+    <div class="module-row reverse">
+      <div class="module-text">
+        <div class="module-eyebrow"><span class="num">Moduł 05</span></div>
+        <div class="module-head-row">
+          <div class="module-glyph"><span class="material-symbols-rounded">assignment</span></div>
+          <h2 class="module-title">Ankiety</h2>
+        </div>
+        <p class="module-tagline">
+          Wysyłasz klientowi ankietę lub brief na starcie projektu, a uporządkowane
+          odpowiedzi wracają wprost do veedeck - koniec z dopytywaniem mailem.
+        </p>
+        <ul class="module-features">
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Gotowe szablony briefów i ankiet</strong> - dodatkowo masz możliwość tworzenia własnych szablonów od podstaw.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span>Klient wypełnia ankiety na dowolnym urządzeniu.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span>Podsumowanie AI - wygeneruj podsumowanie AI na podstawie odpowiedzi i plików przesłanych w ankiecie.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span>Odpowiedzi zebrane w jednym miejscu, podpięte pod projekt.</span></li>
+        </ul>
+      </div>
+      <div class="module-shot">
+        <div class="an-stage">
+          <div class="an-card">
+            <div class="an-top">
+              <div class="an-kicker"><span class="material-symbols-rounded">assignment</span>Brief wnętrza · Salon</div>
+              <div class="an-prog"><span>Pytanie 3 z 12</span><span>25%</span></div>
+              <div class="an-bar"><i></i></div>
+            </div>
+            <div class="an-body">
+              <div class="an-q">W jakim stylu ma być Twoje wnętrze?</div>
+              <div class="an-opt sel"><span class="radio"></span>Skandynawski</div>
+              <div class="an-opt"><span class="radio"></span>Nowoczesny / minimalistyczny</div>
+              <div class="an-opt"><span class="radio"></span>Klasyczny / glamour</div>
+              <div class="an-opt"><span class="radio"></span>Industrialny</div>
+            </div>
+            <div class="an-foot">
+              <span class="step">Można wrócić do poprzednich</span>
+              <span class="an-next">Dalej<span class="material-symbols-rounded">arrow_forward</span></span>
+            </div>
+          </div>
+          <span class="an-chip c1"><span class="material-symbols-rounded">quiz</span>12 pytań</span>
+          <span class="an-chip c2"><span class="material-symbols-rounded">person</span>Wypełnia: klient</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───────── 06 · PRODUKTY ───────── -->
 <section class="module-section" id="produkty">
   <div class="container">
     <div class="module-row">
       <div class="module-text">
-        <div class="module-eyebrow"><span class="num">Moduł 05</span></div>
+        <div class="module-eyebrow"><span class="num">Moduł 06</span></div>
         <div class="module-head-row">
           <div class="module-glyph"><span class="material-symbols-rounded">package_2</span></div>
           <h2 class="module-title">Produkty</h2>
         </div>
         <p class="module-tagline">
-          Biblioteka produktów całego studia. Raz dodajesz, wielokrotnie używasz —
-          na różnych projektach, z różnymi cenami i wariantami.
+          Biblioteka produktów całego studia. Raz dodajesz, wielokrotnie używasz -
+          na różnych projektach,
+          z różnymi cenami i wariantami.
         </p>
         <ul class="module-features">
-          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span>Prosto z wtyczki, do bazy — produkty dodane przez veepick automatycznie trafiają do bazy.</span></li>
-          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span>Kategorie — Meble, Oświetlenie, Akcesoria, Armatura, Okładziny, Podłoga + te, które stworzysz sam!</span></li>
-          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Pełne metadane</strong> — producent, dostawca, kolor, wymiar, numer katalogowy.</span></li>
-          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Powiązania z listami</strong> — z bazy do listy zakupowej jednym kliknięciem.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Prosto z wtyczki, do bazy</strong> - produkty dodane przez veepick automatycznie trafiają do bazy produktów.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Kategorie</strong> - meble, oświetlenie, akcesoria, armatura, okładziny, podłoga + te, które stworzysz sam.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Pełne metadane</strong> - producent, dostawca, kolor, wymiar, numer katalogowy.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Powiązania z listami</strong> - z bazy do listy zakupowej jednym kliknięciem.</span></li>
           <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Sortowanie i grupowanie</strong> po cenie, nazwie, producencie.</span></li>
         </ul>
       </div>
@@ -2256,7 +2309,7 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
             <div class="pr-card">
               <div class="pr-img shower"></div>
-              <div class="pr-nm">Kabina Eternal — gun metal</div>
+              <div class="pr-nm">Kabina Eternal - gun metal</div>
               <div class="pr-meta">BOCCO</div>
               <div class="pr-price">2 699 zł</div>
             </div>
@@ -2290,25 +2343,91 @@ document.addEventListener('DOMContentLoaded', function() {
   </div>
 </section>
 
-<!-- ───────── 06 · KALENDARZ ───────── -->
+<!-- ───────── 07 · WYKONAWCY ───────── -->
+<section class="module-section" id="wykonawcy">
+  <div class="container">
+    <div class="module-row">
+      <div class="module-text">
+        <div class="module-eyebrow"><span class="num">Moduł 07</span></div>
+        <div class="module-head-row">
+          <div class="module-glyph"><span class="material-symbols-rounded">engineering</span></div>
+          <h2 class="module-title">Wykonawcy</h2>
+        </div>
+        <p class="module-tagline">
+          Udostępniasz wykonawcom dokładnie te pliki, których potrzebują do realizacji -
+          a oni zadają pytania pinem wprost na rysunku, bez maili i telefonów.
+        </p>
+        <ul class="module-features">
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span>Foldery wg typu - <strong>Rysunki techniczne</strong>, <strong>Wizualizacje</strong>, <strong>Inne dokumenty</strong>.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span>Podgląd obrazów i PDF z powiększeniem - wprost w przeglądarce.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span>Piny z pytaniem w konkretnym miejscu rysunku - z wątkowymi komentarzami.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span>Czat z projektantem w kontekście danego projektu.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Pełna kontrola dostępu</strong> - wykonawca widzi tylko udostępnione pliki, nigdy list zakupowych, cen ani innych klientów.</span></li>
+        </ul>
+      </div>
+      <div class="module-shot">
+        <div class="wk-frame">
+          <div class="wk-rail">
+            <h4>Pliki projektu</h4>
+            <div class="wk-folder active"><span class="material-symbols-rounded">folder</span>Rysunki techniczne<span class="cnt">8</span></div>
+            <div class="wk-folder"><span class="material-symbols-rounded">folder</span>Wizualizacje<span class="cnt">5</span></div>
+            <div class="wk-folder"><span class="material-symbols-rounded">folder</span>Inne dokumenty<span class="cnt">3</span></div>
+          </div>
+          <div class="wk-view">
+            <div class="wk-vtop">
+              <span class="fn"><span class="material-symbols-rounded">description</span>Rzut_salon_A3.pdf</span>
+              <span class="zoom">
+                <span class="zb"><span class="material-symbols-rounded">remove</span></span>
+                <span class="zb"><span class="material-symbols-rounded">add</span></span>
+                <span class="zb"><span class="material-symbols-rounded">open_in_full</span></span>
+              </span>
+            </div>
+            <div class="wk-canvas">
+              <div class="wk-plan">
+                <div class="wk-room r1"></div>
+                <div class="wk-room r2"></div>
+                <div class="wk-room r3"></div>
+                <span class="wk-dim" style="top:-18px; left:42%;">5,40 m</span>
+                <span class="wk-dim" style="top:44%; left:-30px; transform:rotate(-90deg);">3,10 m</span>
+              </div>
+              <span class="wk-pin" style="left:33%; top:56%;">1</span>
+              <span class="wk-pin" style="left:80%; top:71%;">2</span>
+              <div class="wk-pop" style="left:37%; top:14%;">
+                <div class="ph">
+                  <span class="av">MK</span>
+                  <span><span class="nm">Marek K.</span><span class="role"> · Ekipa wykończeniowa</span></span>
+                </div>
+                <div class="q">Co na połączeniu ściany z podłogą - listwa przypodłogowa czy fuga cienka?</div>
+                <div class="reply"><span class="material-symbols-rounded">reply</span>Odpowiedz projektantowi…</div>
+              </div>
+              <span class="wk-chat"><span class="material-symbols-rounded">chat_bubble</span>Czat z projektantem<span class="badge">2</span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───────── 08 · KALENDARZ ───────── -->
 <section class="module-section" id="kalendarz">
   <div class="container">
     <div class="module-row reverse">
       <div class="module-text">
-        <div class="module-eyebrow"><span class="num">Moduł 06</span></div>
+        <div class="module-eyebrow"><span class="num">Moduł 08</span></div>
         <div class="module-head-row">
           <div class="module-glyph"><span class="material-symbols-rounded">calendar_month</span></div>
           <h2 class="module-title">Kalendarz</h2>
         </div>
         <p class="module-tagline">
           Wydarzenia, zadania i przypomnienia w jednym widoku. Spotkania u klienta,
-          terminy dostaw, deadline'y projektowe — wszystko widoczne na pierwszy rzut oka.
+          terminy dostaw, deadline'y projektowe - wszystko widoczne na pierwszy rzut oka.
         </p>
         <ul class="module-features">
-          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Spotkania u klienta</strong> z adresem i kontaktem — bez kopiowania danych.</span></li>
-          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span>Zadania i przypomnienia w Twoim kalendarzu</span></li>
-          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Widok miesiąca, tygodnia, dnia</strong> — wybierz wygodny dla siebie.</span></li>
-          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Sekcja „Dziś"</strong> na dashboardzie — co Cię dziś czeka.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Wydarzenia</strong> - wszystkie zaplanowane wydarzenia w prostym, czytelnym kalendarzu.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span>Zadania i przypomnienia</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Widok miesiąca, tygodnia, dnia</strong> - wybierz wygodny dla siebie.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Sekcja „Dziś”</strong> w panelu głównym pokazuje co Cię dziś czeka.</span></li>
         </ul>
       </div>
       <div class="module-shot">
@@ -2321,7 +2440,7 @@ document.addEventListener('DOMContentLoaded', function() {
                   <span class="kal-arrow"><span class="material-symbols-rounded">chevron_left</span></span>
                   <span class="kal-arrow"><span class="material-symbols-rounded">chevron_right</span></span>
                 </div>
-                <div class="kal-range">18–24 Maj 2026</div>
+                <div class="kal-range">18-24 Maj 2026</div>
               </div>
               <div class="kal-bar-r">
                 <div class="kal-seg"><span>Miesiąc</span><span class="active">Tydzień</span><span>Dzień</span></div>
@@ -2351,14 +2470,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="kal-ev is-task" style="top:114px;height:44px"><div class="et">Odbiór mebli</div><div class="es">10:00 · zadanie</div></div>
               </div>
               <div class="kal-col">
-                <div class="kal-ev is-ev" style="top:165px;height:60px"><div class="et">Spotkanie — Kowalscy</div><div class="es">11:00–12:15</div></div>
+                <div class="kal-ev is-ev" style="top:165px;height:60px"><div class="et">Spotkanie - Kowalscy</div><div class="es">11:00-12:15</div></div>
               </div>
               <div class="kal-col"></div>
               <div class="kal-col">
                 <div class="kal-ev is-rem" style="top:63px;height:40px"><div class="et">Deadline: rendery</div><div class="es">09:00 · przypomnienie</div></div>
               </div>
               <div class="kal-col today">
-                <div class="kal-ev is-ev" style="top:223px;height:62px"><div class="et">Prezentacja projektu</div><div class="es">12:30–13:30</div></div>
+                <div class="kal-ev is-ev" style="top:223px;height:62px"><div class="et">Prezentacja projektu</div><div class="es">12:30-13:30</div></div>
               </div>
               <div class="kal-col">
                 <div class="kal-ev is-task" style="top:136px;height:44px"><div class="et">Montaż oświetlenia</div><div class="es">10:30 · zadanie</div></div>
@@ -2372,24 +2491,23 @@ document.addEventListener('DOMContentLoaded', function() {
   </div>
 </section>
 
-<!-- ───────── 07 · NOTATNIK ───────── -->
+<!-- ───────── 09 · NOTATNIK ───────── -->
 <section class="module-section" id="notatnik">
   <div class="container">
     <div class="module-row">
       <div class="module-text">
-        <div class="module-eyebrow"><span class="num">Moduł 07</span></div>
+        <div class="module-eyebrow"><span class="num">Moduł 09</span></div>
         <div class="module-head-row">
           <div class="module-glyph"><span class="material-symbols-rounded">note_stack</span></div>
           <h2 class="module-title">Notatnik</h2>
         </div>
         <p class="module-tagline">
-          Notatki, aby nic ważnego Ci nie umknęło. Szybka notatka zapisuje spontaniczne
-          myśli „tu i teraz", a Szkicownik działa na każdym urządzeniu.
+          Szybka notatka, aby nic ważnego Ci nie umknęło. Zapisujesz spontaniczne myśli tu i teraz. Szkicownik pozwala Ci je zobrazować.
         </p>
         <ul class="module-features">
-          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Szybka notatka</strong> — ikona w pasku nawigacji zawsze pod ręką.</span></li>
-          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span>Szkicownik — rysuj na telefonie lub tablecie, edytuj na komputerze.</span></li>
-          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Wyszukiwarka</strong> po tytule i treści — odnajdziesz wszystko.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Szybka notatka</strong> - ikona w pasku nawigacji zawsze pod ręką.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Szkicownik</strong> - rysuj na telefonie lub tablecie, edytuj na komputerze.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Wyszukiwarka</strong> po tytule i treści - odnajdziesz wszystko.</span></li>
           <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Archiwum</strong> dla notatek, których nie chcesz usuwać.</span></li>
         </ul>
       </div>
@@ -2403,8 +2521,8 @@ document.addEventListener('DOMContentLoaded', function() {
                   <div class="rh"><h4>Notatnik</h4><span class="material-symbols-rounded">add</span></div>
                   <div class="tb-search"><span class="material-symbols-rounded">search</span>Szukaj…</div>
                   <div class="tb-item active"><div class="nm">Poprawki w Makowskiej</div><div class="pv"><span class="material-symbols-rounded">draw</span>Szkic + notatka</div></div>
-                  <div class="tb-item"><div class="nm">Pomiary — Sienkiewicza</div><div class="pv">Salon, kuchnia, hol</div></div>
-                  <div class="tb-item"><div class="nm">Szkic — zabudowa</div><div class="pv"><span class="material-symbols-rounded">draw</span>Szkic odręczny</div></div>
+                  <div class="tb-item"><div class="nm">Pomiary - Sienkiewicza</div><div class="pv">Salon, kuchnia, hol</div></div>
+                  <div class="tb-item"><div class="nm">Szkic - zabudowa</div><div class="pv"><span class="material-symbols-rounded">draw</span>Szkic odręczny</div></div>
                 </div>
                 <div class="tb-canvas">
                   <div class="tb-mini-tools">
@@ -2446,13 +2564,13 @@ document.addEventListener('DOMContentLoaded', function() {
                   <h5>Poprawki w Makowskiej</h5>
                   <div class="ph-date">16 kwi · 13:31</div>
                   <p>W trakcie analizy układu salonu z aneksem kuchennym zdecydowano o zmianach:</p>
-                  <div class="ph-li"><b>1. Stół jadalniany</b><span>Przesunięty bliżej okna — więcej światła naturalnego.</span></div>
+                  <div class="ph-li"><b>1. Stół jadalniany</b><span>Przesunięty bliżej okna - więcej światła naturalnego.</span></div>
                   <div class="ph-li"><b>2. Zabudowa kuchni</b><span>Niższe górne szafki, otwarte półki.</span></div>
                   <div class="ph-li"><b>3. Ściana akcentowa</b><span>Oliwkowa zieleń zamiast granatu.</span></div>
                 </div>
               </div>
             </div>
-            <div class="tab-cap"><span class="material-symbols-rounded">devices</span>Szkicuj wszędzie — tablet, telefon i komputer, zawsze w synchronizacji.</div>
+            <div class="tab-cap"><span class="material-symbols-rounded">devices</span>Szkicuj wszędzie - tablet, telefon i komputer, zawsze w synchronizacji.</div>
           </div>
         </div>
       </div>
@@ -2460,24 +2578,24 @@ document.addEventListener('DOMContentLoaded', function() {
   </div>
 </section>
 
-<!-- ───────── 08 · DYSKUSJE ───────── -->
+<!-- ───────── 10 · DYSKUSJE ───────── -->
 <section class="module-section" id="dyskusje">
   <div class="container">
     <div class="module-row reverse">
       <div class="module-text">
-        <div class="module-eyebrow"><span class="num">Moduł 08</span></div>
+        <div class="module-eyebrow"><span class="num">Moduł 10</span></div>
         <div class="module-head-row">
           <div class="module-glyph"><span class="material-symbols-rounded">chat_bubble</span></div>
           <h2 class="module-title">Dyskusje</h2>
         </div>
         <p class="module-tagline">
-          Komentuj rendery i pozycje na liście zakupowej razem z klientem.
-          Wszystkie ustalenia w kontekście — żadnych zagubionych maili.
+          Prowadź konwersacje na temat projektu na chacie w veedeck. Koniec z zagubionymi mailami.
         </p>
         <ul class="module-features">
-          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Czat per klient</strong> — każda rozmowa w swoim miejscu.</span></li>
-          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span>Czat zespołowy — komunikacja z zespołem bezpośrednio w platformie.</span></li>
-          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Bez zrzutów z WhatsAppa</strong> — koniec z chaosem w komunikatorach.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Czat z klientem</strong> - wszystkie ustalenia projektowe masz w jednej konwersacji.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Czat zespołowy</strong> - komunikacja z członkami zespołu.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Czat z wykonawcą</strong> - komunikacja z wykonawcą projektu.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Bez zrzutów z WhatsApp'a i Messenger'a</strong> - koniec z chaosem w komunikatorach.</span></li>
         </ul>
       </div>
       <div class="module-shot">
@@ -2494,7 +2612,7 @@ document.addEventListener('DOMContentLoaded', function() {
               <div class="dy-convs">
                 <div class="dy-conv"><div class="r1"><div class="nm">Makowska</div><div class="dt">pon.</div></div><div class="pv">raport</div></div>
                 <div class="dy-conv"><div class="r1"><div class="nm">Podwale</div><div class="dt">5 maj</div></div><div class="pv">Przesyłam listę zakupową</div></div>
-                <div class="dy-conv active"><div class="r1"><div class="nm">Apartament Kowalskich — Kraków</div><div class="dt">10:43</div></div><div class="pv">Wszystko super, potrzebujemy jeszcze 2…</div></div>
+                <div class="dy-conv active"><div class="r1"><div class="nm">Apartament Kowalskich - Kraków</div><div class="dt">10:43</div></div><div class="pv">Wszystko super, potrzebujemy jeszcze 2…</div></div>
                 <div class="dy-conv"><div class="r1"><div class="nm">Dom w Leśnicy</div><div class="dt">17 kwi</div></div><div class="pv">Do zobaczenia w piątek</div></div>
                 <div class="dy-conv"><div class="r1"><div class="nm">Tyczyńska</div><div class="dt">26 mar</div></div><div class="pv">oki</div></div>
               </div>
@@ -2503,8 +2621,8 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="dy-chat">
               <div class="dy-chat-head">
                 <div>
-                  <h3>Apartament Kowalskich — Kraków</h3>
-                  <span class="sub">Apartament Kowalskich – Kraków <span class="material-symbols-rounded">open_in_new</span></span>
+                  <h3>Apartament Kowalskich - Kraków</h3>
+                  <span class="sub">Apartament Kowalskich - Kraków <span class="material-symbols-rounded">open_in_new</span></span>
                 </div>
                 <div class="dy-actions">
                   <span class="ic"><span class="material-symbols-rounded">search</span></span>
@@ -2538,8 +2656,8 @@ document.addEventListener('DOMContentLoaded', function() {
               </div>
               <div class="dy-flist">
                 <div class="dy-f"><span class="ic pdf"><span class="material-symbols-rounded">picture_as_pdf</span></span><div class="meta"><div class="fn">Rysunek techniczny.pdf</div><div class="by">Kowalski · 19 kwi</div></div></div>
-                <div class="dy-f"><span class="dy-thumb"><span class="material-symbols-rounded">image</span></span><div class="meta"><div class="fn">Wizualizacja — salon.jpg</div><div class="by">Ty · 18 kwi</div></div></div>
-                <div class="dy-f"><span class="dy-thumb b"><span class="material-symbols-rounded">image</span></span><div class="meta"><div class="fn">Wizualizacja — kuchnia.jpg</div><div class="by">Ty · 18 kwi</div></div></div>
+                <div class="dy-f"><span class="dy-thumb"><span class="material-symbols-rounded">image</span></span><div class="meta"><div class="fn">Wizualizacja - salon.jpg</div><div class="by">Ty · 18 kwi</div></div></div>
+                <div class="dy-f"><span class="dy-thumb b"><span class="material-symbols-rounded">image</span></span><div class="meta"><div class="fn">Wizualizacja - kuchnia.jpg</div><div class="by">Ty · 18 kwi</div></div></div>
                 <div class="dy-f"><span class="ic sheet"><span class="material-symbols-rounded">table_chart</span></span><div class="meta"><div class="fn">Lista zakupowa.xlsx</div><div class="by">Kowalski · 17 kwi</div></div></div>
               </div>
             </div>
@@ -2550,122 +2668,7 @@ document.addEventListener('DOMContentLoaded', function() {
   </div>
 </section>
 
-<!-- ───────── 09 · WYKONAWCY ───────── -->
-<section class="module-section" id="wykonawcy">
-  <div class="container">
-    <div class="module-row">
-      <div class="module-text">
-        <div class="module-eyebrow"><span class="num">Moduł 09</span></div>
-        <div class="module-head-row">
-          <div class="module-glyph"><span class="material-symbols-rounded">engineering</span></div>
-          <h2 class="module-title">Wykonawcy</h2>
-        </div>
-        <p class="module-tagline">
-          Udostępniasz wykonawcom dokładnie te pliki, których potrzebują do realizacji —
-          a oni zadają pytania pinem wprost na rysunku, bez maili i telefonów.
-        </p>
-        <ul class="module-features">
-          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span>Foldery wg typu — <strong>Rysunki techniczne</strong>, <strong>Wizualizacje</strong>, <strong>Inne dokumenty</strong>.</span></li>
-          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span>Podgląd obrazów i PDF z powiększeniem — wprost w przeglądarce.</span></li>
-          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span>Piny z pytaniem w konkretnym miejscu rysunku — z wątkowymi komentarzami.</span></li>
-          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span>Czat z projektantem w kontekście danego projektu.</span></li>
-          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Pełna kontrola dostępu</strong> — wykonawca widzi tylko udostępnione pliki, nigdy list zakupowych, cen ani innych klientów.</span></li>
-        </ul>
-      </div>
-      <div class="module-shot">
-        <div class="wk-frame">
-          <div class="wk-rail">
-            <h4>Pliki projektu</h4>
-            <div class="wk-folder active"><span class="material-symbols-rounded">folder</span>Rysunki techniczne<span class="cnt">8</span></div>
-            <div class="wk-folder"><span class="material-symbols-rounded">folder</span>Wizualizacje<span class="cnt">5</span></div>
-            <div class="wk-folder"><span class="material-symbols-rounded">folder</span>Inne dokumenty<span class="cnt">3</span></div>
-          </div>
-          <div class="wk-view">
-            <div class="wk-vtop">
-              <span class="fn"><span class="material-symbols-rounded">description</span>Rzut_salon_A3.pdf</span>
-              <span class="zoom">
-                <span class="zb"><span class="material-symbols-rounded">remove</span></span>
-                <span class="zb"><span class="material-symbols-rounded">add</span></span>
-                <span class="zb"><span class="material-symbols-rounded">open_in_full</span></span>
-              </span>
-            </div>
-            <div class="wk-canvas">
-              <div class="wk-plan">
-                <div class="wk-room r1"></div>
-                <div class="wk-room r2"></div>
-                <div class="wk-room r3"></div>
-                <span class="wk-dim" style="top:-18px; left:42%;">5,40 m</span>
-                <span class="wk-dim" style="top:44%; left:-30px; transform:rotate(-90deg);">3,10 m</span>
-              </div>
-              <span class="wk-pin" style="left:33%; top:56%;">1</span>
-              <span class="wk-pin" style="left:80%; top:71%;">2</span>
-              <div class="wk-pop" style="left:37%; top:14%;">
-                <div class="ph">
-                  <span class="av">MK</span>
-                  <span><span class="nm">Marek K.</span><span class="role"> · Ekipa wykończeniowa</span></span>
-                </div>
-                <div class="q">Co na połączeniu ściany z podłogą — listwa przypodłogowa czy fuga cienka?</div>
-                <div class="reply"><span class="material-symbols-rounded">reply</span>Odpowiedz projektantowi…</div>
-              </div>
-              <span class="wk-chat"><span class="material-symbols-rounded">chat_bubble</span>Czat z projektantem<span class="badge">2</span></span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ───────── 10 · ANKIETY ───────── -->
-<section class="module-section" id="ankiety">
-  <div class="container">
-    <div class="module-row reverse">
-      <div class="module-text">
-        <div class="module-eyebrow"><span class="num">Moduł 10</span></div>
-        <div class="module-head-row">
-          <div class="module-glyph"><span class="material-symbols-rounded">assignment</span></div>
-          <h2 class="module-title">Ankiety</h2>
-        </div>
-        <p class="module-tagline">
-          Wysyłasz klientowi ankietę lub brief na starcie projektu, a uporządkowane
-          odpowiedzi wracają wprost do veedeck — koniec z dopytywaniem mailem.
-        </p>
-        <ul class="module-features">
-          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span>Gotowe szablony briefów i ankiet — albo twórz własne szablony od podstaw.</span></li>
-          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span>Różne typy pytań — wybór, skala, tekst, załączniki.</span></li>
-          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span>Klient wypełnia w przeglądarce, na dowolnym urządzeniu.</span></li>
-          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span>Odpowiedzi zebrane w jednym miejscu, podpięte pod projekt.</span></li>
-        </ul>
-      </div>
-      <div class="module-shot">
-        <div class="an-stage">
-          <div class="an-card">
-            <div class="an-top">
-              <div class="an-kicker"><span class="material-symbols-rounded">assignment</span>Brief wnętrza · Salon</div>
-              <div class="an-prog"><span>Pytanie 3 z 12</span><span>25%</span></div>
-              <div class="an-bar"><i></i></div>
-            </div>
-            <div class="an-body">
-              <div class="an-q">W jakim stylu ma być Twoje wnętrze?</div>
-              <div class="an-opt sel"><span class="radio"></span>Skandynawski</div>
-              <div class="an-opt"><span class="radio"></span>Nowoczesny / minimalistyczny</div>
-              <div class="an-opt"><span class="radio"></span>Klasyczny / glamour</div>
-              <div class="an-opt"><span class="radio"></span>Industrialny</div>
-            </div>
-            <div class="an-foot">
-              <span class="step">Można wrócić do poprzednich</span>
-              <span class="an-next">Dalej<span class="material-symbols-rounded">arrow_forward</span></span>
-            </div>
-          </div>
-          <span class="an-chip c1"><span class="material-symbols-rounded">quiz</span>12 pytań</span>
-          <span class="an-chip c2"><span class="material-symbols-rounded">person</span>Wypełnia: klient</span>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ───────── 11 · VEEZARD — WKRÓTCE ───────── -->
+<!-- ───────── 11 · VEEZARD - WKRÓTCE ───────── -->
 <section class="coming-soon" id="generator3d">
   <div class="container">
     <div class="cs-inner">
@@ -2689,7 +2692,7 @@ document.addEventListener('DOMContentLoaded', function() {
       <h2>Zobacz, jak to wygląda w Twojej pracy.</h2>
       <p>
         14 dni za darmo, bez karty kredytowej, bez zobowiązań. Włącz tylko te moduły,
-        których faktycznie używasz — resztę zostaw na potem.
+        których faktycznie używasz - resztę zostaw na potem.
       </p>
       <div class="cta-row">
         <a href="https://app.veedeck.com/login#register" class="btn btn-primary btn-lg">Wypróbuj 14 dni za darmo
@@ -2786,13 +2789,13 @@ document.addEventListener('DOMContentLoaded', function() {
 <!-- ───────── FIX MOBILE: gęste mockupy → poziome przewijanie w karcie ───────── -->
 <style>
   /* zamknięte menu off-canvas (position:fixed, przesunięte w prawo) nie może
-     rozpychać dokumentu w bok — clip ucina poziom bez tworzenia scroll-kontenera
+     rozpychać dokumentu w bok - clip ucina poziom bez tworzenia scroll-kontenera
      (pionowy scroll i sticky nav działają normalnie) */
   @media (max-width: 900px) {
     html, body { overflow-x: clip; }
   }
 
-  /* podpowiedź „przesuń" — domyślnie ukryta (widoczna tylko na mobile) */
+  /* podpowiedź „przesuń" - domyślnie ukryta (widoczna tylko na mobile) */
   .m-swipe-hint { display: none; }
 
   @media (max-width: 760px) {
@@ -2806,7 +2809,7 @@ document.addEventListener('DOMContentLoaded', function() {
       -webkit-overflow-scrolling: touch;
       scrollbar-width: thin;
       padding-bottom: 10px;
-      /* delikatna maska wygaszająca prawą krawędź — sygnał, że można przesunąć */
+      /* delikatna maska wygaszająca prawą krawędź - sygnał, że można przesunąć */
       -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 26px), transparent 100%);
               mask-image: linear-gradient(to right, #000 calc(100% - 26px), transparent 100%);
     }

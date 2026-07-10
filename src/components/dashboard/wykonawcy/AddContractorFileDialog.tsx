@@ -154,6 +154,10 @@ export default function AddContractorFileDialog({
           }),
         }
       );
+      if (res.status === 409) {
+        toast.error(t.wykonawcy.subfolderDuplicateError);
+        return;
+      }
       if (!res.ok) {
         toast.error(t.wykonawcy.folderCreateError);
         return;
@@ -176,9 +180,11 @@ export default function AddContractorFileDialog({
     }
     setLoading(true);
     try {
+      let addedCount = 0;
+      let duplicateCount = 0;
       // One subfolder per ProjectFlow folder
       for (const f of foldersToCreate) {
-        await fetch(
+        const res = await fetch(
           `/api/contractors/${contractorId}/assignments/${assignmentId}/folders/${folderId}/subfolders`,
           {
             method: "POST",
@@ -190,10 +196,12 @@ export default function AddContractorFileDialog({
             }),
           }
         );
+        if (res.status === 409) duplicateCount++;
+        else if (res.ok) addedCount++;
       }
       // Direct renders on room (no folder) → one subfolder named after the room (no sync link)
       if (room.renders.length > 0) {
-        await fetch(
+        const res = await fetch(
           `/api/contractors/${contractorId}/assignments/${assignmentId}/folders/${folderId}/subfolders`,
           {
             method: "POST",
@@ -204,12 +212,18 @@ export default function AddContractorFileDialog({
             }),
           }
         );
+        if (res.status === 409) duplicateCount++;
+        else if (res.ok) addedCount++;
       }
-      const total = foldersToCreate.length + (room.renders.length > 0 ? 1 : 0);
-      toast.success(`${t.wykonawcy.added} ${total} ${total === 1 ? t.wykonawcy.folder1 : t.wykonawcy.folderFew}`);
-      onOpenChange(false);
-      reset();
-      onAdded();
+      if (addedCount > 0) {
+        toast.success(`${t.wykonawcy.added} ${addedCount} ${addedCount === 1 ? t.wykonawcy.folder1 : t.wykonawcy.folderFew}`);
+        onOpenChange(false);
+        reset();
+        onAdded();
+      }
+      if (duplicateCount > 0) {
+        toast.error(t.wykonawcy.subfolderDuplicateError);
+      }
     } finally {
       setLoading(false);
     }
@@ -236,6 +250,10 @@ export default function AddContractorFileDialog({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, fileUrl: url, fileKey: key, fileType }),
       });
+      if (res.status === 409) {
+        toast.error(t.wykonawcy.fileDuplicateError);
+        return;
+      }
       if (!res.ok) {
         toast.error(t.wykonawcy.addFileError);
         return;
@@ -259,6 +277,7 @@ export default function AddContractorFileDialog({
     try {
       const allRenders = rooms.flatMap((r) => [...r.renders, ...r.folders.flatMap((f) => f.renders)]);
       const addedFiles: AddedFile[] = [];
+      let duplicateCount = 0;
       await Promise.all(
         selectedRenderIds.map(async (renderId) => {
           const render = allRenders.find((r) => r.id === renderId);
@@ -271,13 +290,20 @@ export default function AddContractorFileDialog({
           if (res.ok) {
             const data = await res.json();
             addedFiles.push({ id: data.id, name: render.name, fileUrl: null, fileType: render.fileType, createdAt: data.createdAt ?? new Date().toISOString(), render: { id: renderId, name: render.name, fileUrl: render.fileUrl, fileType: render.fileType } });
+          } else if (res.status === 409) {
+            duplicateCount++;
           }
         })
       );
-      toast.success(`${t.wykonawcy.added} ${selectedRenderIds.length} ${selectedRenderIds.length === 1 ? t.wykonawcy.render1 : t.wykonawcy.renderFew}`);
-      onOpenChange(false);
-      reset();
-      onAdded(addedFiles);
+      if (addedFiles.length > 0) {
+        toast.success(`${t.wykonawcy.added} ${addedFiles.length} ${addedFiles.length === 1 ? t.wykonawcy.render1 : t.wykonawcy.renderFew}`);
+        onOpenChange(false);
+        reset();
+        onAdded(addedFiles);
+      }
+      if (duplicateCount > 0) {
+        toast.error(t.wykonawcy.fileDuplicateError);
+      }
     } finally {
       setLoading(false);
     }

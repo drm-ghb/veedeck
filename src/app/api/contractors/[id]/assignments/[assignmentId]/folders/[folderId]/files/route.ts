@@ -66,6 +66,13 @@ export async function POST(
     return NextResponse.json({ error: "Wymagany renderId lub fileUrl" }, { status: 400 });
   }
 
+  const duplicate = await prisma.contractorFile.findFirst({
+    where: { folderId, name: { equals: name, mode: "insensitive" } },
+  });
+  if (duplicate) {
+    return NextResponse.json({ error: "Plik o tej nazwie już istnieje" }, { status: 409 });
+  }
+
   const file = await prisma.contractorFile.create({
     data: {
       folderId,

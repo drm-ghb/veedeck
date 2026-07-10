@@ -50,6 +50,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Brak dostępu" }, { status: 403 });
   }
 
+  const duplicate = await prisma.room.findFirst({
+    where: { projectId, name: { equals: name.trim(), mode: "insensitive" }, archived: false },
+  });
+  if (duplicate) {
+    return NextResponse.json({ error: "Pomieszczenie o tej nazwie już istnieje" }, { status: 409 });
+  }
+
   const count = await prisma.room.count({ where: { projectId } });
   const room = await prisma.room.create({
     data: { projectId, name: name.trim(), type: type ?? "INNE", icon: icon ?? null, order: count },

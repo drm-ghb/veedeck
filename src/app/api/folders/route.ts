@@ -20,6 +20,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Brak dostępu" }, { status: 403 });
   }
 
+  const duplicate = await prisma.folder.findFirst({
+    where: { roomId, name: { equals: name.trim(), mode: "insensitive" }, archived: false },
+  });
+  if (duplicate) {
+    return NextResponse.json({ error: "Folder o tej nazwie już istnieje" }, { status: 409 });
+  }
+
   const folder = await prisma.folder.create({
     data: { name: name.trim(), roomId },
   });

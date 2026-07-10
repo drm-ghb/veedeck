@@ -60,6 +60,7 @@ model User {
   emailNotifModules          String[]                @default([])
   activationToken            String?                 @unique
   activationTokenExpiry      DateTime?
+  stripeCustomerId           String?                 @unique
   accounts                   Account[]
   calendarEvents             CalendarEvent[]
   calendarGuestEntries       CalendarGuest[]

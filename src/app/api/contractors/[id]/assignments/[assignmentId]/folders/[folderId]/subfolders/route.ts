@@ -31,6 +31,13 @@ export async function POST(
     return NextResponse.json({ error: "Nazwa podfolderu jest wymagana" }, { status: 400 });
   }
 
+  const duplicate = await prisma.contractorFolder.findFirst({
+    where: { assignmentId, parentId: folderId, name: { equals: name, mode: "insensitive" } },
+  });
+  if (duplicate) {
+    return NextResponse.json({ error: "Podfolder o tej nazwie już istnieje" }, { status: 409 });
+  }
+
   // renders: { renderId, name, fileType }[]
   const subfolder = await prisma.contractorFolder.create({
     data: {

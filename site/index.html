@@ -1,10 +1,17 @@
 <!DOCTYPE html><html data-src-ver="59cc55f7" lang="pl"><head>
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-W6PSBGLB');</script>
+<!-- End Google Tag Manager -->
 
 
 
 
 <meta charset="utf-8">
-<title>veedeck — platforma do zarządzania projektami dla projektantów wnętrz</title>
+<title>veedeck - platforma do zarządzania projektami dla projektantów wnętrz</title>
 <script>
   /* Zalogowany użytkownik (z „Nie wylogowuj mnie") → prosto do aplikacji */
   try { if (localStorage.getItem('veedeck_keep_logged_in') === '1') { location.replace('dashboard.html'); } } catch (e) {}
@@ -22,7 +29,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
 <style>
   :root {
-    /* Violet theme — z src/app/globals.css */
+    /* Violet theme - z src/app/globals.css */
     --background: #FFFFFF;
     --foreground: #24252B;
     --card: #FFFFFF;
@@ -131,7 +138,7 @@
   }
   nav.top.open + .mobile-backdrop { opacity: 1; pointer-events: auto; }
   /* Po otwarciu menu nav musi być nad backdropem (menu jest dzieckiem nav,
-     więc dziedziczy jego kontekst stackingu) — inaczej szary overlay nachodzi
+     więc dziedziczy jego kontekst stackingu) - inaczej szary overlay nachodzi
      na menu i przechwytuje kliknięcia w linki. */
   nav.top.open { z-index: 70; }
 
@@ -242,7 +249,7 @@
   .hero-copy .cta-row { justify-content: flex-start; }
   .hero-copy .meta { justify-content: flex-start; }
   .hero-stage-wrap { width: 100%; position: relative; }
-  /* Znak wodny — koncentryczne pierścienie wychodzące z prawej krawędzi (opcja B) */
+  /* Znak wodny - koncentryczne pierścienie wychodzące z prawej krawędzi (opcja B) */
   img.hero-wm {
     position: absolute; top: 50%; right: -240px;
     width: 900px; max-width: none; height: auto;
@@ -315,7 +322,7 @@
   @media (max-width: 1024px) { .hero .meta { flex-wrap: wrap; } }
   .hero .meta svg { color: var(--primary); }
 
-  /* Hero — animowany render z pinami (ProjectFlow demo) */
+  /* Hero - animowany render z pinami (ProjectFlow demo) */
   .render-stage {
     position: relative;
     width: 100%;
@@ -358,7 +365,7 @@
     z-index: 20;
   }
 
-  /* Pin marker — solid niebieski z białym ringiem */
+  /* Pin marker - solid niebieski z białym ringiem */
   .rs-pin {
     position: absolute;
     width: 18px; height: 18px;
@@ -371,7 +378,7 @@
     z-index: 25;
   }
 
-  /* Pin marker B — ciemna kropka z ikoną produktu (mebla) */
+  /* Pin marker B - ciemna kropka z ikoną produktu (mebla) */
   .rs-pin.rs-pin-b {
     width: 32px; height: 32px;
     background: #2A2520;
@@ -385,7 +392,7 @@
     font-variation-settings: 'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 24;
   }
 
-  /* Comment panel (Nowy pin · Lampa) — 1:1 z mockupem */
+  /* Comment panel (Nowy pin · Lampa) - 1:1 z mockupem */
   .rs-panel {
     position: absolute;
     width: 208px;
@@ -444,7 +451,7 @@
   }
   .rs-comment .send-icon svg { width: 100%; height: 100%; display: block; }
 
-  /* Product card (sofa) — 1:1 z mockupem */
+  /* Product card (sofa) - 1:1 z mockupem */
   .rs-product {
     position: absolute;
     width: 168px;
@@ -582,7 +589,7 @@
   .rs-panel-a  { animation: rs-panel-1 6s ease-out infinite; }
   .rs-product-a { animation: rs-product-1 6s ease-out infinite; }
 
-  /* Hero preview — makiet dashboardu Violet (legacy, nieużywany w hero) */
+  /* Hero preview - makiet dashboardu Violet (legacy, nieużywany w hero) */
   .preview {
     background: var(--card);
     border: 1px solid var(--border);
@@ -695,6 +702,9 @@
   @media (max-width: 860px) { .values { grid-template-columns: 1fr; } }
   .h2-nowrap { white-space: nowrap; }
   @media (max-width: 768px) { .h2-nowrap { white-space: normal; } }
+  .d-br { display: block; }
+  .m-br { display: none; }
+  @media (max-width: 768px) { .d-br { display: none; } .m-br { display: block; } }
   .value-card {
     background: var(--card);
     border: 1px solid var(--border);
@@ -851,7 +861,7 @@
   .mini-ui { font-size: 9px; color: var(--foreground); line-height: 1.3; }
   .mini-ui * { box-sizing: border-box; }
 
-  /* laptop mock content — dashboard */
+  /* laptop mock content - dashboard */
   .lap-shell { display: grid; grid-template-columns: 92px 1fr; height: 100%; }
   .lap-side {
     background: var(--card, #fff);
@@ -915,7 +925,7 @@
   .lap-card-t { font-size: 7.5px; font-weight: 600; }
   .lap-card-s { font-size: 6.5px; color: var(--muted-foreground); margin-top: 1px; }
 
-  /* tablet content — shopping list */
+  /* tablet content - shopping list */
   .tab-shell { height: 100%; display: flex; flex-direction: column; background: var(--background); }
   .tab-top {
     padding: 12px 12px 8px; border-bottom: 1px solid var(--border);
@@ -957,7 +967,7 @@
   }
   .tab-check svg { width: 7px; height: 7px; }
 
-  /* phone content — render review */
+  /* phone content - render review */
   .phn-shell { height: 100%; display: flex; flex-direction: column; background: var(--background); }
   .phn-top {
     padding: 28px 12px 10px; display: flex; align-items: center; gap: 8px;
@@ -1515,6 +1525,45 @@
     display: flex; justify-content: space-between; flex-wrap: wrap; gap: 16px;
     font-size: 12px;
   }
+
+  /* ── Intro splash ── */
+  #intro-splash{
+    position: fixed; inset: 0; z-index: 9999;
+    background: #FFFFFF;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px;
+    opacity: 1;
+    transition: opacity .5s ease, visibility .5s ease;
+  }
+  #intro-splash.intro-done{ opacity: 0; visibility: hidden; pointer-events: none; }
+  #intro-splash .intro-word{
+    display: flex;
+    font-family: "Nunito", ui-sans-serif, system-ui, sans-serif;
+    font-weight: 400;
+    font-size: clamp(40px, 6vw, 72px);
+    letter-spacing: -0.05em;
+    color: #4F46E5;
+  }
+  #intro-splash .intro-word span{
+    display: inline-block;
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  @media (prefers-reduced-motion: no-preference){
+    #intro-splash .intro-word span{
+      animation: intro-letter-in .75s cubic-bezier(.22,.61,.36,1) forwards;
+    }
+    #intro-splash .intro-word span:nth-child(1){ animation-delay: 1.825s; }
+    #intro-splash .intro-word span:nth-child(2){ animation-delay: 1.93s; }
+    #intro-splash .intro-word span:nth-child(3){ animation-delay: 2.035s; }
+    #intro-splash .intro-word span:nth-child(4){ animation-delay: 2.14s; }
+    #intro-splash .intro-word span:nth-child(5){ animation-delay: 2.245s; }
+    #intro-splash .intro-word span:nth-child(6){ animation-delay: 2.35s; }
+    #intro-splash .intro-word span:nth-child(7){ animation-delay: 2.455s; }
+  }
+  @keyframes intro-letter-in{ to{ opacity: 1; transform: translateY(0); } }
+  @media (prefers-reduced-motion: reduce){
+    #intro-splash .intro-word span{ opacity: 1; transform: none; }
+  }
 </style>
 <script type="application/ld+json">
 {
@@ -1523,15 +1572,15 @@
   "name": "veedeck",
   "applicationCategory": "BusinessApplication",
   "operatingSystem": "Web",
-  "description": "Platforma do zarządzania projektami wnętrzarskimi — rendery, feedback klienta, listy zakupowe, wykonawcy i ankiety w jednym miejscu.",
+  "description": "Platforma do zarządzania projektami wnętrzarskimi - rendery, feedback klienta, listy zakupowe, wykonawcy i ankiety w jednym miejscu.",
   "url": "https://veedeck.com",
   "screenshot": "https://veedeck.com/hero-render.png",
   "featureList": [
-    "ProjectFlow — rendery i feedback klienta z pinezkami",
+    "ProjectFlow - rendery i feedback klienta z pinezkami",
     "Listy zakupowe z linkami do produktów",
     "Moduł wykonawców z folderami plików",
     "Ankiety dla klientów",
-    "Dyskusje i czat projektant–klient"
+    "Dyskusje i czat projektant-klient"
   ],
   "offers": {
     "@type": "Offer",
@@ -1572,6 +1621,37 @@
 </script>
 </head>
 <body data-new-gr-c-s-check-loaded="14.1286.0" data-gr-ext-installed="" data-cc-id="cc-1" style="cursor: crosshair;" data-new-gr-c-s-loaded="14.1286.0">
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W6PSBGLB"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+<!-- INTRO SPLASH -->
+<div id="intro-splash" data-no-reveal="">
+  <div class="intro-word" aria-label="veedeck">
+    <span>v</span><span>e</span><span>e</span><span>d</span><span>e</span><span>c</span><span>k</span>
+  </div>
+</div>
+<script>
+  (function(){
+    try {
+      if (sessionStorage.getItem('veedeck_intro_seen') === '1') {
+        var el = document.getElementById('intro-splash');
+        if (el) el.remove();
+        return;
+      }
+      sessionStorage.setItem('veedeck_intro_seen', '1');
+    } catch (e) {}
+    window.addEventListener('load', function () {
+      var el = document.getElementById('intro-splash');
+      if (!el) return;
+      setTimeout(function () {
+        el.classList.add('intro-done');
+        setTimeout(function () { el.remove(); }, 550);
+      }, 3425);
+    });
+  })();
+</script>
+
 
 <!-- NAV -->
 <nav class="top" data-cc-id="cc-64" id="siteNav">
@@ -1660,7 +1740,7 @@
       </div>
       <h1>Twoje studio projektowania wnętrz<br><em>w jednej zakładce</em></h1>
       <p class="tagline">
-        Mniej chaosu, więcej kreatywności. Od wizualizacji,<br>przez listy zakupowe, po feedback klienta i współpracę<br>z wykonawcą.
+        Mniej chaosu, więcej kreatywności.<br class="m-br"> Od wizualizacji,<br class="d-br"> przez listy zakupowe,<br class="m-br"> po feedback klienta i współpracę<br class="d-br"> z wykonawcą.
       </p>
       <div class="cta-row">
         <a href="https://app.veedeck.com/login#register" class="btn btn-primary btn-lg">Wypróbuj 14 dni za darmo</a>
@@ -1678,7 +1758,7 @@
       </div>
     </div>
 
-    <!-- RENDER STAGE — animowany pin & komentarz -->
+    <!-- RENDER STAGE - animowany pin & komentarz -->
     <div class="hero-stage-wrap">
       <img class="hero-wm" src="hero-watermark-b.svg" alt="" aria-hidden="true">
       <div class="render-stage">
@@ -1762,10 +1842,10 @@
         <div class="value-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path></svg>
         </div>
-        <h3>Jedno miejsce zamiast ośmiu</h3>
+        <h3>Jedna platforma</h3>
         <p data-cc-id="cc-45" style="">
-          Rendery, listy zakupowe, kalendarz, notatki, dyskusje z klientem —
-          wszystko w jednej zakładce. Koniec przeskakiwania między Dyskiem Google, Excelem i mailem.
+          Rendery, listy zakupowe, kalendarz, notatki, dyskusje z klientem -
+          wszystko w jednej zakładce. Koniec przeskakiwania między Dyskiem Google, Excelem, mailem, WhatsApp'em i Messenger'em.
         </p>
       </div>
 
@@ -1773,10 +1853,9 @@
         <div class="value-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-cc-id="cc-42"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
         </div>
-        <h3>Uwagi klienta na obrazku</h3>
+        <h3>Uwagi klienta na wizualizacji</h3>
         <p data-cc-id="cc-44" style="">
-          Klient umieszcza komentarze bezpośrednio na wizualizacji za pomocą pinezki — zamiast pisać „ta lampa obok okna,
-          ta druga z lewej". Widzisz dokładnie co i gdzie zmienić.&nbsp;</p>
+          Klient umieszcza komentarze bezpośrednio na wizualizacji za pomocą pinezki - zamiast zostawiać uwagi w wielu miejscach, masz je zebrane na jednej wizualizacji w ProjectFlow.</p>
       </div>
 
       <div class="value-card">
@@ -1785,21 +1864,21 @@
         </div>
         <h3>Akceptacje zostają na piśmie</h3>
         <p data-cc-id="cc-10" style="">
-          Klient akceptuje render jednym kliknięciem — z datą, godziną i historią wersji.
-          Koniec z nieporozumieniami typu: „ale nie tak się umawialiśmy". Ty oszczędzasz czas, my Twoje nerwy!</p>
+          Klient akceptuje render jednym kliknięciem - z datą, godziną i historią wersji.
+          Koniec z nieporozumieniami typu: „ale nie tak się umawialiśmy". Ty oszczędzasz czas, my Twoje nerwy.</p>
       </div>
     </div>
   </div>
 </section>
 
-<!-- PANELS — jeden projekt, trzy panele -->
+<!-- PANELS - jeden projekt, trzy panele -->
 <section class="pad" id="panele">
   <div class="container">
     <div class="section-head" style="max-width:720px;">
       <div class="eyebrow">Czego nie ma konkurencja</div>
       <h2>Jeden projekt. Trzy panele.</h2>
       <p>
-        Projektant, klient i wykonawca pracują w tym samym projekcie — ale każdy widzi
+        Projektant, klient i wykonawca pracują w tym samym projekcie - ale każdy widzi
         własny, dopasowany widok. To Ty decydujesz, co komu udostępniasz.
       </p>
     </div>
@@ -1812,7 +1891,7 @@
           <span class="panel-role">Pełna kontrola</span>
         </div>
         <h3>Panel Projektanta</h3>
-        <p class="panel-who">Twoje centrum dowodzenia — tworzysz, organizujesz i decydujesz, kto co widzi.</p>
+        <p class="panel-who">Twoje centrum dowodzenia - tworzysz, organizujesz i decydujesz, kto co widzi.</p>
         <ul class="panel-list">
           <li><span class="tk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span>Tworzysz projekty, foldery, listy zakupowe i bazę produktów</li>
           <li><span class="tk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span>Wgrywasz rendery, rysunki techniczne i dokumenty</li>
@@ -1821,27 +1900,27 @@
         </ul>
         <div class="panel-scope">
           <span class="material-symbols-rounded">visibility</span>
-          <span>Widzisz cały projekt — to Ty zarządzasz dostępem każdego panelu.</span>
+          <span>Widzisz cały projekt - to Ty zarządzasz dostępem każdego panelu.</span>
         </div>
       </article>
 
       <!-- Panel Klienta -->
       <article class="panel-card">
         <div class="panel-top">
-          <span class="panel-ic"><span class="material-symbols-rounded">reviews</span></span>
+          <span class="panel-ic"><span class="material-symbols-rounded">group</span></span>
           <span class="panel-role">Przegląda i akceptuje</span>
         </div>
         <h3>Panel Klienta</h3>
-        <p class="panel-who">Lekki widok do oglądania renderów i zatwierdzania — konto zakłada mu projektant.</p>
+        <p class="panel-who">Prosty widok do oglądania renderów i zatwierdzania - konto tworzy projektant.</p>
         <ul class="panel-list">
-          <li><span class="tk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span>Ogląda rendery w przeglądarce, na każdym urządzeniu</li>
-          <li><span class="tk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span>Pinuje uwagi bezpośrednio na wizualizacji</li>
+          <li><span class="tk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span>Przegląda projekt na dowolnym urządzeniu</li>
+          <li><span class="tk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span>Przypina pinezki z uwagami bezpośrednio na wizualizacji</li>
           <li><span class="tk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span>Sprawdza i zatwierdza listę zakupową</li>
-          <li><span class="tk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span>Akceptuje wersje — z datą i historią zmian</li>
+          <li><span class="tk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span>Akceptuje wersje - z datą i historią zmian</li>
         </ul>
         <div class="panel-scope">
-          <span class="material-symbols-rounded">visibility_off</span>
-          <span>Nie widzi cen zakupu, marży ani danych innych projektów.</span>
+          <span class="material-symbols-rounded">visibility</span>
+          <span>Widzi to co udostępni mu projektant.</span>
         </div>
       </article>
 
@@ -1852,23 +1931,23 @@
           <span class="panel-role">Realizuje projekt</span>
         </div>
         <h3>Panel Wykonawcy</h3>
-        <p class="panel-who">Dla stolarza, montera czy ekipy wykończeniowej — tylko dokumenty do wykonania.</p>
+        <p class="panel-who">Dla stolarza, montera czy ekipy wykończeniowej. Dokumenty i pliki potrzebne do realizacji.</p>
         <ul class="panel-list">
           <li><span class="tk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span>Foldery z rysunkami technicznymi i dokumentami</li>
           <li><span class="tk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span>Podgląd obrazów i PDF z powiększeniem</li>
-          <li><span class="tk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span>Piny i komentarze z pytaniem w konkretnym miejscu pliku</li>
+          <li><span class="tk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span>Przypina pinezki z uwagami i pytaniami bezpośrednio na pliku</li>
           <li><span class="tk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span>Czat z projektantem w kontekście danego projektu</li>
         </ul>
         <div class="panel-scope">
-          <span class="material-symbols-rounded">visibility_off</span>
-          <span>Nie widzi listy zakupowej, cen ani danych innych klientów.</span>
+          <span class="material-symbols-rounded">visibility</span>
+          <span>Widzi tylko 3 bazowe foldery: Dokumenty, Rysunki techniczne i Wizualizacje.</span>
         </div>
       </article>
     </div>
 
     <p class="panels-foot">
-<strong>Jeden projekt, trzy perspektywy</strong> — bez chaosu i bez przypadkowych przecieków.<br>
-      Każdy panel pokazuje wyłącznie to, co udostępnisz.
+<strong>Jeden projekt, trzy perspektywy - bez chaosu i bez przypadkowych przecieków.</strong><br>
+      Każdy widzi to, co mu udostępnisz.
     </p>
   </div>
 </section>
@@ -1880,13 +1959,12 @@
       <div class="eyebrow">JEDENAŚCIE MODUŁÓW · JEDNA PLATFORMA</div>
       <h2>Wszystko, czego potrzebujesz<br>w&nbsp;jednej zakładce.</h2>
       <p>
-        Włącz tylko te moduły, których używasz. Ukryj nieużywane. Każdy klient
-        dostaje tylko to, co ma widzieć.
+        Włącz tylko te moduły, których używasz. Ukryj nieużywane.<br class="d-br"> Każdy klient dostaje tylko to, co ma widzieć.
       </p>
     </div>
 
     <div class="modules-marquee">
-      <!-- Row 1 — przewija się w lewo -->
+      <!-- Row 1 - przewija się w lewo -->
       <div class="marquee-row marquee-row--top">
         <div class="marquee-track" aria-hidden="false">
           <!-- set 1 -->
@@ -1898,7 +1976,7 @@
             </div>
             <div class="pill-body">
               <div class="pill-name">ProjectFlow</div>
-              <div class="pill-desc">Rendery z pinami komentarzy klienta — wersjonowanie i historia uwag w jednym miejscu.</div>
+              <div class="pill-desc">Rendery z pinami komentarzy klienta - wersjonowanie i historia uwag w jednym miejscu.</div>
             </div>
           </div>
           <div class="marquee-pill">
@@ -1912,7 +1990,7 @@
             <div class="pill-icon"><span class="material-symbols-rounded">package_2</span></div>
             <div class="pill-body">
               <div class="pill-name">Baza produktów</div>
-              <div class="pill-desc">Twoja prywatna kartoteka mebli i materiałów — gotowa do wstawienia w każdy projekt.</div>
+              <div class="pill-desc">Twoja prywatna kartoteka mebli i materiałów - gotowa do wstawienia w każdy projekt.</div>
             </div>
           </div>
           <div class="marquee-pill">
@@ -1936,7 +2014,7 @@
               <div class="pill-desc">Lista do zrobienia z deadline'ami, którą widzisz na dashboardzie w sekcji „Dziś".</div>
             </div>
           </div>
-          <!-- set 2 (duplikat — pętla bezszwowa) -->
+          <!-- set 2 (duplikat - pętla bezszwowa) -->
           <div class="marquee-pill" aria-hidden="true">
             <div class="pill-icon">
               <svg class="renderflow-svg" viewBox="-22 -22 228 229" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -1945,7 +2023,7 @@
             </div>
             <div class="pill-body">
               <div class="pill-name">ProjectFlow</div>
-              <div class="pill-desc">Rendery z pinami komentarzy klienta — wersjonowanie i historia uwag w jednym miejscu.</div>
+              <div class="pill-desc">Rendery z pinami komentarzy klienta - wersjonowanie i historia uwag w jednym miejscu.</div>
             </div>
           </div>
           <div class="marquee-pill" aria-hidden="true">
@@ -1959,7 +2037,7 @@
             <div class="pill-icon"><span class="material-symbols-rounded">package_2</span></div>
             <div class="pill-body">
               <div class="pill-name">Baza produktów</div>
-              <div class="pill-desc">Twoja prywatna kartoteka mebli i materiałów — gotowa do wstawienia w każdy projekt.</div>
+              <div class="pill-desc">Twoja prywatna kartoteka mebli i materiałów - gotowa do wstawienia w każdy projekt.</div>
             </div>
           </div>
           <div class="marquee-pill" aria-hidden="true">
@@ -1986,7 +2064,7 @@
         </div>
       </div>
 
-      <!-- Row 2 — przewija się w prawo -->
+      <!-- Row 2 - przewija się w prawo -->
       <div class="marquee-row marquee-row--bottom">
         <div class="marquee-track" aria-hidden="false">
           <!-- set 1 -->
@@ -1994,35 +2072,35 @@
             <div class="pill-icon"><span class="material-symbols-rounded">calendar_month</span></div>
             <div class="pill-body">
               <div class="pill-name">Kalendarz</div>
-              <div class="pill-desc">Spotkania, terminy dostaw, deadline'y projektowe — wszystko w jednym widoku.</div>
+              <div class="pill-desc">Spotkania, terminy dostaw, deadline'y projektowe - wszystko w jednym widoku.</div>
             </div>
           </div>
           <div class="marquee-pill">
             <div class="pill-icon"><span class="material-symbols-rounded">note_stack</span></div>
             <div class="pill-body">
               <div class="pill-name">Notatnik</div>
-              <div class="pill-desc">Szybkie notatki i szkice — żeby spontaniczne myśli z spotkania z klientem nie umknęły.</div>
+              <div class="pill-desc">Szybkie notatki i szkice - żeby spontaniczne myśli z spotkania z klientem nie umknęły.</div>
             </div>
           </div>
           <div class="marquee-pill">
             <div class="pill-icon"><span class="material-symbols-rounded">chat_bubble</span></div>
             <div class="pill-body">
               <div class="pill-name">Dyskusje</div>
-              <div class="pill-desc">Komentowanie renderów i pozycji z klientem — bez maili, bez zrzutów z Whatsappa.</div>
+              <div class="pill-desc">Komentowanie renderów i pozycji z klientem - bez maili, bez zrzutów z Whatsappa.</div>
             </div>
           </div>
           <div class="marquee-pill">
             <div class="pill-icon"><span class="material-symbols-rounded">engineering</span></div>
             <div class="pill-body">
               <div class="pill-name">Wykonawcy</div>
-              <div class="pill-desc">Udostępniasz wykonawcom rysunki techniczne i dokumenty — z pinami, komentarzami i czatem.</div>
+              <div class="pill-desc">Udostępniasz wykonawcom rysunki techniczne i dokumenty - z pinami, komentarzami i czatem.</div>
             </div>
           </div>
           <div class="marquee-pill">
             <div class="pill-icon"><span class="material-symbols-rounded">wand_stars</span></div>
             <div class="pill-body">
               <div class="pill-name">Veezard <span class="pill-soon">Wkrótce</span></div>
-              <div class="pill-desc">Szybka wizualizacja przestrzeni z poziomu listy materiałów — bez wychodzenia z veedeck.</div>
+              <div class="pill-desc">Szybka wizualizacja przestrzeni z poziomu listy materiałów - bez wychodzenia z veedeck.</div>
             </div>
           </div>
           <!-- set 2 (duplikat) -->
@@ -2030,35 +2108,35 @@
             <div class="pill-icon"><span class="material-symbols-rounded">calendar_month</span></div>
             <div class="pill-body">
               <div class="pill-name">Kalendarz</div>
-              <div class="pill-desc">Spotkania, terminy dostaw, deadline'y projektowe — wszystko w jednym widoku.</div>
+              <div class="pill-desc">Spotkania, terminy dostaw, deadline'y projektowe - wszystko w jednym widoku.</div>
             </div>
           </div>
           <div class="marquee-pill" aria-hidden="true">
             <div class="pill-icon"><span class="material-symbols-rounded">note_stack</span></div>
             <div class="pill-body">
               <div class="pill-name">Notatnik</div>
-              <div class="pill-desc">Szybkie notatki i szkice — żeby spontaniczne myśli z spotkania z klientem nie umknęły.</div>
+              <div class="pill-desc">Szybkie notatki i szkice - żeby spontaniczne myśli z spotkania z klientem nie umknęły.</div>
             </div>
           </div>
           <div class="marquee-pill" aria-hidden="true">
             <div class="pill-icon"><span class="material-symbols-rounded">chat_bubble</span></div>
             <div class="pill-body">
               <div class="pill-name">Dyskusje</div>
-              <div class="pill-desc">Komentowanie renderów i pozycji z klientem — bez maili, bez zrzutów z Whatsappa.</div>
+              <div class="pill-desc">Komentowanie renderów i pozycji z klientem - bez maili, bez zrzutów z Whatsappa.</div>
             </div>
           </div>
           <div class="marquee-pill" aria-hidden="true">
             <div class="pill-icon"><span class="material-symbols-rounded">engineering</span></div>
             <div class="pill-body">
               <div class="pill-name">Wykonawcy</div>
-              <div class="pill-desc">Udostępniasz wykonawcom rysunki techniczne i dokumenty — z pinami, komentarzami i czatem.</div>
+              <div class="pill-desc">Udostępniasz wykonawcom rysunki techniczne i dokumenty - z pinami, komentarzami i czatem.</div>
             </div>
           </div>
           <div class="marquee-pill" aria-hidden="true">
             <div class="pill-icon"><span class="material-symbols-rounded">wand_stars</span></div>
             <div class="pill-body">
               <div class="pill-name">Veezard <span class="pill-soon">Wkrótce</span></div>
-              <div class="pill-desc">Szybka wizualizacja przestrzeni z poziomu listy materiałów — bez wychodzenia z veedeck.</div>
+              <div class="pill-desc">Szybka wizualizacja przestrzeni z poziomu listy materiałów - bez wychodzenia z veedeck.</div>
             </div>
           </div>
         </div>
@@ -2083,21 +2161,21 @@
         <div class="plugin-name"><span class="vp-word">veepick</span><br><em>Lista zakupowa gotowa w kilka kliknięć.</em></div>
         <div class="plugin-browsers">Chrome · Edge · Firefox</div>
         <p class="plugin-lead">
-          Surfujesz po sklepach z meblami, oświetleniem i materiałami — klikasz veepick
+          Surfujesz po sklepach z meblami, oświetleniem i materiałami - klikasz veepick
           i produkt ląduje na liście zakupowej klienta. Bez przepisywania, bez zrzutów ekranu.
         </p>
         <div class="plugin-points">
           <div class="plugin-point">
             <span class="pc"><span class="material-symbols-rounded">ads_click</span></span>
-            <span><strong>Jeden klik zamiast przepisywania</strong><span class="pt">Zaznaczasz produkt w dowolnym sklepie i dodajesz go do projektu w sekundę.</span></span>
+            <span><strong>Jedno kliknięcie zamiast ręcznego przepisywania</strong><span class="pt">Zaznaczasz produkt w dowolnym sklepie internetowym i dodajesz go do listy zakupowej w sekundę.</span></span>
           </div>
           <div class="plugin-point">
             <span class="pc"><span class="material-symbols-rounded">auto_awesome</span></span>
-            <span><strong>Pięć pól zaciąganych automatycznie</strong><span class="pt">Nazwa, cena, zdjęcie, producent i link do sklepu — czytane wprost z karty produktu.</span></span>
+            <span><strong>Pola z danymi produktu wypełniają się automatycznie</strong><span class="pt">Nazwa, cena, zdjęcie, producent i link do sklepu - czytane wprost z karty produktu.</span></span>
           </div>
           <div class="plugin-point">
             <span class="pc"><span class="material-symbols-rounded">lock</span></span>
-            <span><strong>Czyta tylko stronę sklepu</strong><span class="pt">Lekka wtyczka (~2 MB), aktywna dopiero po kliknięciu ikony. Nic więcej.</span></span>
+            <span><strong>Wtyczka odczytuje tylko stronę sklepu internetowego</strong><span class="pt">Lekka wtyczka (~2 MB), aktywna dopiero po kliknięciu ikony. Nic więcej.</span></span>
           </div>
         </div>
         <div class="plugin-cta-row">
@@ -2189,19 +2267,15 @@
         <div class="step-role"><span class="material-symbols-rounded">design_services</span>Panel Projektanta</div>
         <h3>Projektujesz</h3>
         <p data-cc-id="cc-31" style="">
-          Dodajesz nowego klienta, dodajesz pomieszczenia w ProjectFlow i wrzucasz rendery
-          z 3ds Max, V-Ray, Corona lub SketchUp. Każdy folder, każda wersja —
-          porządek i organizacja od samego startu.<br></p>
+          Dodajesz nowego klienta, dodajesz foldery w ProjecFlow i wrzucasz swoje pliki. Zarządzasz nimi jak tylko Ci się podoba.<br></p>
       </div>
 
       <div class="step" data-cc-id="cc-79">
         <div class="step-num">02</div>
-        <div class="step-role"><span class="material-symbols-rounded">reviews</span>Panel Klienta</div>
+        <div class="step-role"><span class="material-symbols-rounded">group</span>Panel Klienta</div>
         <h3>Prezentujesz klientowi</h3>
         <p data-cc-id="cc-32" style="">
-          Zakładasz klientowi konto i wysyłasz mu link z hasłem. Klient otwiera panel w przeglądarce,
-          przegląda rendery, pinuje uwagi bezpośrednio na obrazku, sprawdza listę
-          zakupową — na każdym urządzeniu!</p>
+          Zakładasz klientowi konto dzięki któremu będzie mógł się zalogować do swojego panelu klienta. Następnie w panelu może przeglądac zawartość, przypinać uwagi bezpośrednio na pliki oraz śledzić listę zakupową - na każdym urządzeniu.</p>
       </div>
 
       <div class="step" data-cc-id="cc-80">
@@ -2209,8 +2283,7 @@
         <div class="step-role"><span class="material-symbols-rounded">design_services</span>Panel Projektanta</div>
         <h3>Odbierasz feedback</h3>
         <p data-cc-id="cc-2" style="">
-          Widzisz komentarze na dashboardzie, akceptujesz zmiany wersji, zamykasz piny.
-          Każda akceptacja zapisuje się w historii — masz ślad na piśmie, nie w mailach. Koniec z&nbsp; poszukiwaniami na e-mailu.</p>
+          Widzisz najnowsze komentarze i uwagi w panelu głównym. Masz wglądu do wszystkich akceptacji i odrzuceń produktów, a także uwag klienta na renderach. Koniec z niedopowiedzeniami i szukaniem informacji w mailach.</p>
       </div>
 
       <div class="step">
@@ -2218,9 +2291,7 @@
         <div class="step-role"><span class="material-symbols-rounded">engineering</span>Panel Wykonawcy</div>
         <h3>Przekazujesz wykonawcy</h3>
         <p>
-          Udostępniasz wykonawcy rysunki techniczne i dokumenty do realizacji. Stolarz, monter
-          czy ekipa wykończeniowa zadają pytania pinem wprost na pliku — bez maili i telefonów,
-          w kontekście projektu.</p>
+          Udostępniasz wykonawcy rysunki techniczne i dokumenty do realizacji. Stolarz, monter czy ekipa wykończeniowa mają możliwość dyskutować z Tobą i przypinać pinezki bezpośrednio na pliki.</p>
       </div>
     </div>
   </div>
@@ -2232,10 +2303,10 @@
     <div class="audience" data-cc-id="cc-82">
       <div>
         <div class="eyebrow">Dla projektantów wnętrz</div>
-        <h2>Mniej chaosu, więcej kreatywności.<br>Twoje biuro w jednej zakładce.</h2>
+        <h2>Mniej chaosu,<br>więcej kreatywności<br>Twoje biuro<br>w jednej zakładce.</h2>
         <p data-cc-id="cc-11" style="">
-          Niezależnie czy prowadzisz studio samodzielnie, czy z trzyosobowym zespołem —
-          veedeck zabiera cały administracyjny narzut, żebyś mógł robić to, w czym jesteś najlepszy.
+          Niezależnie czy prowadzisz studio samodzielnie, czy z trzyosobowym zespołem -
+          veedeck zabiera cały administracyjny chaos, żebyś mógł robić to, w czym jesteś najlepszy.
         </p>
       </div>
       <div class="stats-row">
@@ -2274,7 +2345,7 @@
           <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg>
           <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg>
         </div>
-        <blockquote>„veedeck połączył całą moją pracownię w jednym miejscu — rendery, feedback klienta, listy zakupowe i kontakt z wykonawcą. Zamiast żonglować mailami, czatami i plikami, wszystko mam pod ręką. Oszczędzam dzięki temu kilka godzin każdego tygodnia. Do tego dopasowuję panel do identyfikacji mojego studia — klient po zalogowaniu widzi moje logo i kolory, a nie generyczny interfejs.”</blockquote>
+        <blockquote><em>„Szczerze? Zanim zacząłem korzystać z veedeck, wszystko było porozrzucane – rendery gdzieś w mailu lub na Messengerze, feedback od klienta na WhatsApp'ie, a listy zakupowe w jakimś Excelu, a z wykonawcą dogadywaliśmy się na telefonie. Teraz mam to wszystko w jednym miejscu i naprawdę czuję różnicę – chyba ze dwie, trzy godziny tygodniowo mniej spędzam na samo szukanie informacji. A jak klient loguje się do panelu, to widzi moje logo i moje kolory, nie jakiś losowy interfejs – wygląda to tak, jakby to była moja własna aplikacja. Prosta i intuicyjna.”</em></blockquote>
         <div class="who">
           <img class="ava" src="tomasz-ziolkowski.jpg" alt="Tomasz Ziółkowski" style="object-fit:cover;">
           <span><span class="n">Tomasz Ziółkowski</span><a class="s ig" href="https://www.instagram.com/t.ziolkowski.design/" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"></rect><circle cx="12" cy="12" r="4"></circle><circle cx="17.5" cy="6.5" r="0.6" fill="currentColor" stroke="none"></circle></svg>t.ziolkowski.design</a></span>
@@ -2297,21 +2368,21 @@
         <summary>Czy mój klient musi zakładać konto?
           <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg>
         </summary>
-        <div class="faq-a">Nie musi zakładać konta samodzielnie — to Ty, jako projektant, tworzysz konto klienta. Klient loguje się do platformy dokładnie tak samo jak Ty, z tą różnicą, że zamiast panelu projektanta widzi swój panel klienta. Dostęp ma na dowolnym urządzeniu (komputerze, tablecie i smartfonie), gdzie przegląda rendery, pinuje uwagi i sprawdza listę zakupową swojego projektu.</div>
+        <div class="faq-a">Nie musi zakładać konta samodzielnie - to Ty, jako projektant, tworzysz konto klienta. Klient loguje się do platformy dokładnie tak samo jak Ty, z tą różnicą, że zamiast panelu projektanta widzi swój panel klienta. Dostęp ma na dowolnym urządzeniu (komputerze, tablecie i smartfonie), gdzie przegląda rendery, pinuje uwagi i sprawdza listę zakupową swojego projektu.</div>
       </details>
 
       <details class="faq-item">
         <summary>Czym jest Panel Wykonawcy?
           <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg>
         </summary>
-        <div class="faq-a">To trzeci, osobny widok — obok panelu projektanta i panelu klienta. Udostępniasz w nim firmie lub osobie realizującej projekt (stolarzowi, monterowi, ekipie wykończeniowej) wyłącznie wybrane foldery z rysunkami technicznymi, wizualizacjami referencyjnymi i dokumentami. Wykonawca przegląda pliki, powiększa PDF-y, zostawia piny z pytaniem w konkretnym miejscu rysunku i pisze z Tobą na czacie w kontekście projektu. Nie widzi listy zakupowej, cen, marży ani danych innych klientów — i nie ma żadnych funkcji zarządczych.</div>
+        <div class="faq-a">To trzeci, osobny widok - obok panelu projektanta i panelu klienta. Udostępniasz w nim firmie lub osobie realizującej projekt (stolarzowi, monterowi, ekipie wykończeniowej) wyłącznie wybrane foldery z rysunkami technicznymi, wizualizacjami referencyjnymi i dokumentami. Wykonawca przegląda pliki, powiększa PDF-y, zostawia piny z pytaniem w konkretnym miejscu rysunku i pisze z Tobą na czacie w kontekście projektu. Widzi tylko to co udostępni projektant.</div>
       </details>
 
       <details class="faq-item">
-        <summary>Jakie formaty renderów obsługujecie?
+        <summary>Jakie formaty plików obsługujecie?
           <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg>
         </summary>
-        <div class="faq-a">Wgrywasz gotowe obrazy (JPG/PNG) z 3ds Max, V-Ray, Corony, SketchUp czy dowolnego innego silnika. veedeck organizuje je w foldery i wersje — nie musisz niczego konwertować.</div>
+        <div class="faq-a">W ProjectFlow (rendery i wizualizacje) obsługujemy obrazy JPG, PNG, WEBP oraz pliki PDF - do 32 MB i 10 plików naraz. W module Wykonawcy możesz wgrywać dowolny format pliku (DWG, DXF, PDF, DOCX, ZIP i inne) do 64 MB. Nie musisz niczego konwertować - wgrywasz to, co eksportujesz z 3ds Max, SketchUp czy AutoCAD.</div>
       </details>
 
       <details class="faq-item">
@@ -2325,7 +2396,7 @@
         <summary>Czy muszę instalować wtyczkę veepick?
           <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg>
         </summary>
-        <div class="faq-a">Nie jest wymagana. veepick po prostu przyspiesza dodawanie produktów do list zakupowych — możesz też dodawać je ręcznie z poziomu platformy, kiedy tylko chcesz.</div>
+        <div class="faq-a">Nie jest wymagana. veepick po prostu przyspiesza dodawanie produktów do list zakupowych - możesz też dodawać je ręcznie z poziomu platformy, kiedy tylko chcesz.</div>
       </details>
 
       <details class="faq-item">
@@ -2339,11 +2410,17 @@
         <summary>Czy klient otworzy panel na telefonie?
           <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg>
         </summary>
-        <div class="faq-a">Tak. veedeck działa w przeglądarce, więc render z pinami, lista zakupowa i akceptacje wyglądają tak samo dobrze na telefonie, tablecie i komputerze klienta.</div>
+        <div class="faq-a">Oczywiście, że tak. Veedeck działa w przeglądarce, więc render z pinami, lista zakupowa i akceptacje wyglądają tak samo dobrze na telefonie, tablecie i komputerze klienta.</div>
+      </details>
+      <details class="faq-item">
+        <summary>Gdzie znajdę instrukcję veedeck?
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg>
+        </summary>
+        <div class="faq-a">Instrukcja dostępna jest bezpośrednio w aplikacji w sekcji <strong>Ustawienia → Instrukcje</strong>. Każdy nowy użytkownik jest też automatycznie przeprowadzany krok po kroku przez start w aplikacji i wprowadzany do każdego z modułów. Jeśli wolisz indywidualne wprowadzenie, możesz się <a href="https://calendly.com/daniel-veedeck/" target="_blank" rel="noopener">umówić na prezentację</a>.</div>
       </details>
     </div>
 
-    <div class="faq-foot">Nie znalazłeś odpowiedzi? <a href="kontakt.html">Napisz do nas →</a></div>
+    <div class="faq-foot">Nie znalazłeś/-aś odpowiedzi? <a href="kontakt.html">Napisz do nas →</a></div>
   </div>
 </section>
 
@@ -2356,26 +2433,26 @@
         <h2>Masz pytanie? Napisz do nas.</h2>
         <p>
           Niezależnie czy chcesz umówić prezentację platformy, zaproponować nową funkcję,
-          która ułatwi Ci pracę, czy porozmawiać o współpracy — odpisujemy w ciągu 24 godzin
+          która ułatwi Ci pracę, czy porozmawiać o współpracy - odpisujemy w ciągu 24 godzin
           w dni robocze.
         </p>
 
         <div class="demo-list">
           <div class="demo-list-item">
             <span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span>
-            <div><strong>Umów spotkanie prezentacyjne</strong> — pokażemy Ci platformę na żywo i odpowiemy na wszystkie pytania</div>
+            <div><strong>Umów spotkanie prezentacyjne</strong> - pokażemy Ci platformę na żywo i odpowiemy na wszystkie pytania</div>
           </div>
           <div class="demo-list-item">
             <span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span>
-            <div><strong>Zaproponuj nową funkcję</strong> — słuchamy projektantów i rozwijamy narzędzie pod realne potrzeby</div>
+            <div><strong>Zaproponuj nową funkcję</strong> - słuchamy projektantów i rozwijamy narzędzie pod realne potrzeby</div>
           </div>
           <div class="demo-list-item">
             <span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span>
-            <div><strong>Współpraca / partnerstwo</strong> — jesteśmy otwarci na rozmowy o integracjach i partnerstwie</div>
+            <div><strong>Współpraca / partnerstwo</strong> - jesteśmy otwarci na rozmowy o integracjach i partnerstwie</div>
           </div>
           <div class="demo-list-item">
             <span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span>
-            <div><strong>Bezpośredni kontakt</strong> z zespołem rozwijającym platformę — bez supportu pierwszej linii</div>
+            <div><strong>Bezpośredni kontakt</strong> z zespołem rozwijającym platformę - bez supportu pierwszej linii</div>
           </div>
         </div>
       </div>
@@ -2384,7 +2461,7 @@
         <input type="hidden" name="_next" value="https://veedeck.com/">
         <input type="hidden" name="_subject" value="Nowa wiadomość z veedeck.com">
         <div class="form-title">Napisz do nas</div>
-        <div class="form-sub">Wypełnij formularz — wrócimy z odpowiedzią najszybciej jak to możliwe.</div>
+        <div class="form-sub">Wypełnij formularz - wrócimy z odpowiedzią najszybciej jak to możliwe.</div>
 
         <div class="field">
           <label for="cf-name">Imię i nazwisko</label>
@@ -2531,7 +2608,7 @@ section.plugin { border-block: 1px solid var(--border); }
 .plugin-point span.pt { color: var(--muted-foreground); font-size: 13.5px; line-height: 1.55; }
 .plugin-cta-row { margin-top: 28px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
 
-/* plugin visual — pływająca makieta veepick (spójna z hero podstrony Wtyczka) */
+/* plugin visual - pływająca makieta veepick (spójna z hero podstrony Wtyczka) */
 .plugin-visual { position: relative; }
 .vp-stage { position: relative; width: 100%; aspect-ratio: 1 / 0.95; max-width: 560px; margin-left: auto; display: grid; place-items: center; container-type: inline-size; }
 .vp-stage::before { content: ""; position: absolute; inset: -40px; background: radial-gradient(420px 320px at 30% 60%, rgba(165,180,252,0.40), transparent 70%), radial-gradient(380px 280px at 75% 40%, rgba(199,210,254,0.50), transparent 70%); pointer-events: none; z-index: 0; }
@@ -2679,7 +2756,7 @@ section.testimonials { background: linear-gradient(180deg, #FFFFFF 0%, #FAFAFB 1
 .panels-foot { text-align: center; margin-top: 34px; font-size: 14.5px; color: var(--muted-foreground); max-width: 700px; margin-left: auto; margin-right: auto; line-height: 1.6; }
 .panels-foot strong { color: var(--foreground); font-weight: 600; }
 
-/* ───────── WORKFLOW — 4 kroki + etykiety ról ───────── */
+/* ───────── WORKFLOW - 4 kroki + etykiety ról ───────── */
 .workflow { grid-template-columns: repeat(4, 1fr); }
 @media (max-width: 1080px) { .workflow { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 560px)  { .workflow { grid-template-columns: 1fr; } }
@@ -2698,7 +2775,7 @@ section.testimonials { background: linear-gradient(180deg, #FFFFFF 0%, #FAFAFB 1
 .step-num { font-size: 36px; }
 </style>
 
-<!-- ───────── SCROLL REVEAL — styl „Subtelne unoszenie" ───────── -->
+<!-- ───────── SCROLL REVEAL - styl „Subtelne unoszenie" ───────── -->
 <style id="scroll-reveal">
   @media (prefers-reduced-motion: no-preference) {
     .reveal {
@@ -2713,7 +2790,7 @@ section.testimonials { background: linear-gradient(180deg, #FFFFFF 0%, #FAFAFB 1
 </style>
 <script>
   /* Auto-tagowanie treści strony głównej do reveal-on-scroll.
-     Elementy są domyślnie widoczne — ukrywa je dopiero klasa .reveal pod
+     Elementy są domyślnie widoczne - ukrywa je dopiero klasa .reveal pod
      @media (prefers-reduced-motion: no-preference). Jeśli JS lub ruch są
      wyłączone, treść po prostu pokazuje się od razu. */
   (function () {
