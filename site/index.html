@@ -693,6 +693,8 @@
     display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
   }
   @media (max-width: 860px) { .values { grid-template-columns: 1fr; } }
+  .h2-nowrap { white-space: nowrap; }
+  @media (max-width: 768px) { .h2-nowrap { white-space: normal; } }
   .value-card {
     background: var(--card);
     border: 1px solid var(--border);
@@ -1747,7 +1749,7 @@
     <div class="section-head">
       <div>
         <div class="eyebrow" data-cc-id="cc-43" style="">Dlaczego veedeck?</div>
-        <h2 data-cc-id="cc-39" style="white-space: nowrap;">Projektujesz - nie zarządzasz chaosem.</h2>
+        <h2 data-cc-id="cc-39" class="h2-nowrap" style="">Projektujesz - nie zarządzasz chaosem.</h2>
       </div>
       <p data-cc-id="cc-40" style="color: rgb(107, 111, 128);">
         Projektanci wnętrz spędzają więcej czasu na przesyłaniu plików, odpowiadaniu na maile
