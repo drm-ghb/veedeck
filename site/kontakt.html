@@ -758,7 +758,9 @@
         <h3>Wyślij wiadomość</h3>
         <p class="form-sub">Wypełnij formularz — wrócimy z odpowiedzią najszybciej jak to możliwe.</p>
 
-        <form class="contact-form" id="contactForm" onsubmit="event.preventDefault(); document.getElementById('formConfirm').classList.add('show'); this.reset();">
+        <form class="contact-form" id="contactForm" action="https://formspree.io/f/xlgyqbjd" method="POST">
+          <input type="hidden" name="_next" value="https://veedeck.com/kontakt">
+          <input type="hidden" name="_subject" value="Nowa wiadomość z veedeck.com">
           <div class="contact-row">
             <div class="field">
               <label for="cf-name">Imię i nazwisko</label>

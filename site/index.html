@@ -2377,28 +2377,30 @@
         </div>
       </div>
 
-      <form class="demo" onsubmit="event.preventDefault(); this.querySelector('.form-title').innerText='Dzięki! Odezwiemy się w ciągu 24h.'; this.querySelector('.form-sub').innerText='Sprawdzaj skrzynkę — odpowiedź przyjdzie z adresu contact@veedeck.com.'; this.querySelectorAll('.field, .checkbox-row, button').forEach(el=>el.style.display='none');">
+      <form class="demo" action="https://formspree.io/f/xlgyqbjd" method="POST">
+        <input type="hidden" name="_next" value="https://veedeck.com/">
+        <input type="hidden" name="_subject" value="Nowa wiadomość z veedeck.com">
         <div class="form-title">Napisz do nas</div>
         <div class="form-sub">Wypełnij formularz — wrócimy z odpowiedzią najszybciej jak to możliwe.</div>
 
         <div class="field">
           <label for="cf-name">Imię i nazwisko</label>
-          <input id="cf-name" type="text" placeholder="np. Anna Kowalska" required="">
+          <input id="cf-name" name="name" type="text" placeholder="np. Anna Kowalska" required="">
         </div>
 
         <div class="field">
           <label for="cf-email">Email</label>
-          <input id="cf-email" type="email" placeholder="twoj@email.com" required="">
+          <input id="cf-email" name="email" type="email" placeholder="twoj@email.com" required="">
         </div>
 
         <div class="field">
           <label for="cf-studio">Nazwa studia (opcjonalnie)</label>
-          <input id="cf-studio" type="text" placeholder="np. Studio Wnętrz 12">
+          <input id="cf-studio" name="studio" type="text" placeholder="np. Studio Wnętrz 12">
         </div>
 
         <div class="field">
           <label for="cf-topic">Temat</label>
-          <select id="cf-topic">
+          <select id="cf-topic" name="topic">
             <option>Chcę umówić prezentację platformy</option>
             <option>Mam propozycję nowej funkcji</option>
             <option>Współpraca / partnerstwo</option>
@@ -2409,7 +2411,7 @@
 
         <div class="field">
           <label for="cf-msg">Wiadomość</label>
-          <textarea id="cf-msg" rows="3" placeholder="Opowiedz krótko o swoim studiu i czego potrzebujesz…" required=""></textarea>
+          <textarea id="cf-msg" name="message" rows="3" placeholder="Opowiedz krótko o swoim studiu i czego potrzebujesz…" required=""></textarea>
         </div>
 
         <label class="checkbox-row">
