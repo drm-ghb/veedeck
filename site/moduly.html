@@ -1742,7 +1742,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function onScroll() {
-    var offset = 120;
+    var offset = window.innerHeight * 0.5;
     var current = sections[0];
     sections.forEach(function(s) {
       if (s.getBoundingClientRect().top <= offset) current = s;
