@@ -10,7 +10,7 @@
 (function () {
   "use strict";
 
-  var MODULES_PAGE = "veedeck-moduly.html";
+  var MODULES_PAGE = "moduly.html";
   var PLUGIN_PAGE  = "wtyczka.html";
   var PANELS_LINK  = "index.html#panele";
 

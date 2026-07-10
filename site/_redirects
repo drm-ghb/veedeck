@@ -1,5 +1,5 @@
 # EN slug → PL file (200 = rewrite, URL stays as EN slug)
-/modules                    /veedeck-moduly.html                 200
+/modules                    /moduly.html                 200
 /plugin                     /wtyczka.html                        200
 /pricing                    /cennik.html                         200
 /about                      /o-nas.html                          200
