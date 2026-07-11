@@ -15,7 +15,7 @@ import { toast } from "sonner";
 import { useUploadThing } from "@/lib/uploadthing-client";
 import { useT } from "@/lib/i18n";
 
-type RenderStatus = "REVIEW" | "ACCEPTED";
+type RenderStatus = "REVIEW" | "ACCEPTED" | "REJECTED";
 
 interface Render {
   id: string;
@@ -336,8 +336,8 @@ prevRenderIdsRef.current = currentIds;
                   <p className="text-sm font-medium truncate mb-1">{render.name}</p>
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-1.5">
-                      <span className={`flex-shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${render.status === "ACCEPTED" ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"}`}>
-                        {render.status === "ACCEPTED" ? t.render.statusAccepted : t.render.statusReview}
+                      <span className={`flex-shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${render.status === "ACCEPTED" ? "bg-green-100 text-green-700" : render.status === "REJECTED" ? "bg-red-100 text-red-700" : "bg-blue-100 text-blue-700"}`}>
+                        {render.status === "ACCEPTED" ? t.render.statusAccepted : render.status === "REJECTED" ? t.render.statusRejected : t.render.statusReview}
                       </span>
                       {render.commentCount > 0 && <span className="text-xs text-muted-foreground flex items-center gap-1"><Pin size={11} />{render.commentCount}</span>}
                       <span className="text-xs text-muted-foreground flex items-center gap-1"><Eye size={11} />{render.viewCount}</span>

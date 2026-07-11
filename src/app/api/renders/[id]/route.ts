@@ -75,17 +75,17 @@ export async function PATCH(
     }
   }
 
-  // Notify client when status changes back to REVIEW
-  if (body.status === "REVIEW" && render.status !== "REVIEW") {
+  // Notify client when status changes back to REVIEW or REJECTED
+  if ((body.status === "REVIEW" || body.status === "REJECTED") && render.status !== body.status) {
     const user = render.project.user;
     if (user.notifyClientOnStatusChange) {
       await pusherServer.trigger(`render-${id}`, "render-status-changed", {
         renderId: id,
-        status: "REVIEW",
+        status: body.status,
       });
       await pusherServer.trigger(`share-${render.project.shareToken}`, "render-status-changed", {
         renderId: id,
-        status: "REVIEW",
+        status: body.status,
       });
     }
   }

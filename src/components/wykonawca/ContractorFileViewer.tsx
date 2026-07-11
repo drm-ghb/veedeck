@@ -749,18 +749,18 @@ export default function ContractorFileViewer({
           )}
 
           {/* File display */}
-          <div className={`absolute inset-0 flex items-start ${isPdf ? "justify-center overflow-auto" : "justify-center overflow-auto"} p-2 sm:p-6`}>
+          <div className="absolute inset-0 z-0 flex items-center overflow-hidden p-4 sm:p-6">
             {isImage && file.displayUrl ? (
               <div
                 ref={imgRef}
-                className={`relative flex-shrink-0 select-none ${pinMode ? "cursor-crosshair" : "cursor-zoom-in"}`}
+                className={`relative select-none max-w-full mx-auto ${pinMode ? "cursor-crosshair" : "cursor-zoom-in"}`}
                 onClick={handleImageClick}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={file.displayUrl}
                   alt={file.name}
-                  className="block rounded-lg shadow-sm sm:max-w-full"
+                  className="block rounded-lg shadow-sm max-w-full"
                   style={{ maxHeight: "calc(100vh - 180px)" }}
                   draggable={false}
                 />

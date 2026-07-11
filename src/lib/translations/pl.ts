@@ -1050,6 +1050,7 @@ export const pl = {
     // Status
     statusAccepted: "Zaakceptowany",
     statusReview: "Do weryfikacji",
+    statusRejected: "Odrzucony",
     // Pin statuses
     pinStatusNew: "Nowy",
     pinStatusInProgress: "W trakcie",

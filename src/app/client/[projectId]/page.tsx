@@ -29,7 +29,7 @@ import type { Area } from "react-easy-crop";
 import { useUploadThing } from "@/lib/uploadthing-client";
 import { zip } from "fflate";
 
-type RenderStatus = "REVIEW" | "ACCEPTED";
+type RenderStatus = "REVIEW" | "ACCEPTED" | "REJECTED";
 
 interface ListProduct {
   id: string; name: string; url: string | null; imageUrl: string | null;
@@ -72,7 +72,7 @@ export default function ClientProjectPage() {
     const sp = new URLSearchParams();
     Object.entries(params).forEach(([k, v]) => { if (v) sp.set(k, v); });
     const qs = sp.toString();
-    window.history.replaceState(null, "", `/client/${projectId}${qs ? `?${qs}` : ""}`);
+    window.history.pushState(null, "", `/client/${projectId}${qs ? `?${qs}` : ""}`);
   }
 
   function restoreFromParams(data: Project, sp: URLSearchParams) {
@@ -227,6 +227,7 @@ export default function ClientProjectPage() {
   const [avatarCropUploading, setAvatarCropUploading] = useState(false);
   const avatarFileInputRef = useRef<HTMLInputElement>(null);
   const hasRestoredParams = useRef(false);
+  const restoreFromUrlRef = useRef<() => void>(() => {});
   const { startUpload: startAvatarUpload } = useUploadThing("avatarUploader");
 
   // Effect 1: load from sessionStorage cache instantly on mount (no loading screen on refresh/back)
@@ -283,6 +284,19 @@ export default function ClientProjectPage() {
       })
       .catch(() => { toast.error("Nie udało się załadować projektu"); setLoading(false); });
   }, [projectId, status, session, router]);
+
+  // Keep ref current so popstate handler always uses latest project + openList
+  restoreFromUrlRef.current = () => {
+    if (!project) return;
+    restoreFromParams(project, new URLSearchParams(window.location.search));
+  };
+
+  useEffect(() => {
+    const handlePopState = () => restoreFromUrlRef.current();
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function handleNameSave() {
     if (!settingsName.trim()) return;
@@ -390,6 +404,10 @@ export default function ClientProjectPage() {
       ...room,
       renders: room.renders.map((r) => r.id === renderId ? { ...r, status } : r),
     })) : prev);
+    setSelectedRoom((prev) => prev ? {
+      ...prev,
+      renders: prev.renders.map((r) => r.id === renderId ? { ...r, status } : r),
+    } : prev);
     setSelectedRender((prev) => prev?.id === renderId ? { ...prev, status } : prev);
   }
 
@@ -1456,8 +1474,8 @@ function RenderCard({ render, hideCommentCount, onClick, onDownload, isSelected,
         <div className="flex items-start justify-between gap-2">
           <p className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">{render.name}</p>
           <div className="flex items-center gap-1 flex-shrink-0">
-            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${render.status === "ACCEPTED" ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"}`}>
-              {render.status === "ACCEPTED" ? "Zaakceptowany" : "Do weryfikacji"}
+            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${render.status === "ACCEPTED" ? "bg-green-100 text-green-700" : render.status === "REJECTED" ? "bg-red-100 text-red-700" : "bg-blue-100 text-blue-700"}`}>
+              {render.status === "ACCEPTED" ? "Zaakceptowany" : render.status === "REJECTED" ? "Odrzucony" : "Do weryfikacji"}
             </span>
           </div>
         </div>

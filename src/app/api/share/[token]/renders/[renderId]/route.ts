@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-const VALID_STATUSES = ["REVIEW", "ACCEPTED"] as const;
+const VALID_STATUSES = ["REVIEW", "ACCEPTED", "REJECTED"] as const;
 type RenderStatus = (typeof VALID_STATUSES)[number];
 
 export async function PATCH(

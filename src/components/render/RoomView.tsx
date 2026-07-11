@@ -33,7 +33,7 @@ import BulkActionBar from "./BulkActionBar";
 import BulkMoveDialog from "./BulkMoveDialog";
 import { useT } from "@/lib/i18n";
 
-type RenderStatus = "REVIEW" | "ACCEPTED";
+type RenderStatus = "REVIEW" | "ACCEPTED" | "REJECTED";
 type SortBy = "manual" | "name" | "createdAt";
 
 interface Render {
@@ -168,7 +168,7 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
           fileType: r.fileType ?? undefined,
           commentCount: 0,
           viewCount: r.viewCount ?? 0,
-          status: (r.status ?? "REVIEW") as "REVIEW" | "ACCEPTED",
+          status: (r.status ?? "REVIEW") as RenderStatus,
           folderId: r.folderId ?? null,
           pinned: false,
           createdAt: new Date().toISOString(),
@@ -265,7 +265,7 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
         });
         if (res.ok) {
           const render = await res.json();
-          created.push({ id: render.id, name: render.name, fileUrl: render.fileUrl, fileType: render.fileType ?? null, commentCount: 0, viewCount: 0, status: (render.status ?? "REVIEW") as "REVIEW" | "ACCEPTED", folderId: render.folderId ?? null, pinned: false, createdAt: new Date().toISOString() });
+          created.push({ id: render.id, name: render.name, fileUrl: render.fileUrl, fileType: render.fileType ?? null, commentCount: 0, viewCount: 0, status: (render.status ?? "REVIEW") as RenderStatus, folderId: render.folderId ?? null, pinned: false, createdAt: new Date().toISOString() });
         }
       }
       if (created.length > 0 && !targetFolderId) {
@@ -638,8 +638,8 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
                             <p className="text-sm font-medium truncate mb-1">{render.name}</p>
                             <div className="flex items-center justify-between gap-2">
                               <div className="flex items-center gap-1.5">
-                                <span className={`flex-shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${render.status === "ACCEPTED" ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"}`}>
-                                  {render.status === "ACCEPTED" ? t.render.statusAccepted : t.render.statusReview}
+                                <span className={`flex-shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${render.status === "ACCEPTED" ? "bg-green-100 text-green-700" : render.status === "REJECTED" ? "bg-red-100 text-red-700" : "bg-blue-100 text-blue-700"}`}>
+                                  {render.status === "ACCEPTED" ? t.render.statusAccepted : render.status === "REJECTED" ? t.render.statusRejected : t.render.statusReview}
                                 </span>
                                 {render.commentCount > 0 && (
                                   <span className="text-xs text-muted-foreground flex items-center gap-1"><Pin size={11} />{render.commentCount}</span>
@@ -695,8 +695,8 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
                               </div>
                             </div>
                           </div>
-                          <span className={`flex-shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${render.status === "ACCEPTED" ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"}`}>
-                            {render.status === "ACCEPTED" ? t.render.statusAccepted : t.render.statusReview}
+                          <span className={`flex-shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${render.status === "ACCEPTED" ? "bg-green-100 text-green-700" : render.status === "REJECTED" ? "bg-red-100 text-red-700" : "bg-blue-100 text-blue-700"}`}>
+                            {render.status === "ACCEPTED" ? t.render.statusAccepted : render.status === "REJECTED" ? t.render.statusRejected : t.render.statusReview}
                           </span>
                           {!selectionMode && (
                             <div className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" onClick={(e) => e.preventDefault()}>

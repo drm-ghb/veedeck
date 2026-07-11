@@ -1100,6 +1100,7 @@ enum RoomType {
 enum RenderStatus {
   REVIEW
   ACCEPTED
+  REJECTED
 }
 
 enum CommentStatus {

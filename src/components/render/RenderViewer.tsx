@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useT } from "@/lib/i18n";
 import Link from "next/link";
@@ -74,7 +74,7 @@ interface RenderVersion {
   archivedAt: string;
 }
 
-type RenderStatus = "REVIEW" | "ACCEPTED";
+type RenderStatus = "REVIEW" | "ACCEPTED" | "REJECTED";
 
 interface ProductPin {
   id: string;
@@ -288,6 +288,13 @@ export default function RenderViewer({
     return () => ro.disconnect();
   }, []);
   const [showComments, setShowComments] = useState(false);
+  const [mobileToolbarCollapsed, setMobileToolbarCollapsed] = useState(false);
+  const [toolbarMounted, setToolbarMounted] = useState(false);
+  useLayoutEffect(() => { setToolbarMounted(true); }, []);
+  // Auto-expand toolbar when discussion panel closes
+  useEffect(() => {
+    if (!showComments) setMobileToolbarCollapsed(false);
+  }, [showComments]);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [lightboxComments, setLightboxComments] = useState<Comment[]>([]);
@@ -1161,7 +1168,7 @@ export default function RenderViewer({
         if (!res.ok) throw new Error();
       }
       setRenderStatus(status);
-      toast.success(status === "ACCEPTED" ? "Plik zaakceptowany" : "Status zmieniony na: Do weryfikacji");
+      toast.success(status === "ACCEPTED" ? "Plik zaakceptowany" : status === "REJECTED" ? "Plik odrzucony" : "Status zmieniony na: Do weryfikacji", { duration: 2000 });
     } catch {
       toast.error(t.render.statusChangeError);
     }
@@ -1710,8 +1717,8 @@ export default function RenderViewer({
             {/* Zone 3: Render status */}
             {isDesigner ? (
               <DropdownMenu>
-                <DropdownMenuTrigger className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-md border transition-colors ${renderStatus === "ACCEPTED" ? "bg-green-500 text-white border-green-600" : "bg-blue-500 text-white border-blue-600"}`}>
-                  {renderStatus === "ACCEPTED" ? "Zaakceptowany" : "Do weryfikacji"}
+                <DropdownMenuTrigger className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-md border transition-colors ${renderStatus === "ACCEPTED" ? "bg-green-500 text-white border-green-600" : renderStatus === "REJECTED" ? "bg-red-500 text-white border-red-600" : "bg-blue-500 text-white border-blue-600"}`}>
+                  {renderStatus === "ACCEPTED" ? "Zaakceptowany" : renderStatus === "REJECTED" ? "Odrzucony" : "Do weryfikacji"}
                   <ChevronDown size={11} />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
@@ -1720,6 +1727,9 @@ export default function RenderViewer({
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => updateRenderStatus("ACCEPTED")} className={renderStatus === "ACCEPTED" ? "font-semibold" : ""}>
                     Zaakceptowany
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => updateRenderStatus("REJECTED")} className={renderStatus === "REJECTED" ? "font-semibold" : ""}>
+                    Odrzucony
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -1732,8 +1742,18 @@ export default function RenderViewer({
                   <button onClick={onStatusRequest} className="text-xs text-gray-400 hover:text-gray-600 underline transition-colors">{t.render.requestChange}</button>
                 ) : null}
               </div>
+            ) : renderStatus === "REJECTED" ? (
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-red-100 text-red-700">Odrzucony</span>
+                {(allowDirectStatusChange || allowClientAcceptance) && (
+                  <button onClick={() => updateRenderStatus("REVIEW")} className="text-xs text-gray-400 hover:text-gray-600 underline transition-colors">Cofnij odrzucenie</button>
+                )}
+              </div>
             ) : allowClientAcceptance ? (
-              <button onClick={() => updateRenderStatus("ACCEPTED")} className="text-xs font-semibold px-2.5 py-1 rounded-md bg-green-500 text-white hover:bg-green-600 transition-colors">Zaakceptuj</button>
+              <div className="flex items-center gap-1.5">
+                <button onClick={() => updateRenderStatus("ACCEPTED")} className="text-xs font-semibold px-2.5 py-1 rounded-md bg-green-500 text-white hover:bg-green-600 transition-colors">Zaakceptuj</button>
+                <button onClick={() => updateRenderStatus("REJECTED")} className="text-xs font-semibold px-2.5 py-1 rounded-md bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors">Odrzuć</button>
+              </div>
             ) : (
               <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-blue-100 text-blue-700">Do weryfikacji</span>
             )}
@@ -1747,113 +1767,73 @@ export default function RenderViewer({
               className={`relative flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md border transition-colors ${showComments ? "bg-primary text-primary-foreground border-primary" : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted"}`}
             >
               <svg viewBox="0 0 24 24" className="w-[14px] h-[14px]" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg> Dyskusja
-              {chatUnreadCount > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 bg-blue-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
-                  {chatUnreadCount > 99 ? "99+" : chatUnreadCount}
-                </span>
-              )}
+              {(() => {
+                const total = comments.filter(c => c.posX === null && c.posY === null).length;
+                if (total === 0) return null;
+                return (
+                  <span className={`absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 text-[10px] font-bold rounded-full flex items-center justify-center leading-none ${chatUnreadCount > 0 ? "bg-blue-500 text-white" : "bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300"}`}>
+                    {total > 99 ? "99+" : total}
+                  </span>
+                );
+              })()}
             </button>
           </div>
         </div>
 
-        {/* Row 2: Mobile toolbar */}
-        <div className="sm:hidden border-t">
-          {/* Sub-row 1: Actions + view controls (scrollable) */}
-          <div className="overflow-x-auto" style={{ scrollbarWidth: "none" }}>
-            <div className="flex items-center gap-1 px-2 py-1.5 w-max">
-              {/* Zone 1: Primary actions */}
-              {(isDesigner || allowClientComments) && (
-                <button onClick={() => { setMode(mode === "pin" ? "view" : "pin"); setProductPinMode(false); setPendingProductPos(null); }} className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md border transition-colors flex-shrink-0 ${mode === "pin" ? "bg-primary text-primary-foreground border-primary" : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted"}`}>
-                  <Pin size={14} /> Dodaj pin
-                </button>
-              )}
-              {isDesigner && (
-                <button onClick={() => { setProductPinMode((v) => !v); setMode("view"); setPending(null); setPendingProductPos(null); }} className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md border transition-colors flex-shrink-0 ${productPinMode ? "bg-primary text-primary-foreground border-primary" : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted"}`}>
-                  <Package size={14} /> Dodaj produkt
-                </button>
-              )}
+      </div>
 
-              <div className="w-px h-5 bg-gray-200 dark:bg-gray-700 mx-0.5 flex-shrink-0" />
-
-              {/* Zone 2: View controls — icon only */}
-              <button onClick={() => setHidePins((v) => !v)} title={hidePins ? t.render.showPins : t.render.hidePins} className={`flex items-center justify-center w-8 h-8 rounded-md border transition-colors flex-shrink-0 ${hidePins ? "bg-primary text-primary-foreground border-primary" : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted"}`}>
-                <svg viewBox="0 0 24 24" className="w-[15px] h-[15px]" fill="currentColor"><path d="M16 9V4h1c.55 0 1-.45 1-1s-.45-1-1-1H7c-.55 0-1 .45-1 1s.45 1 1 1h1v5c0 1.66-1.34 3-3 3h10c-1.66 0-3-1.34-3-3zm-3 12v-6h-2v6c0 .55.45 1 1 1s1-.45 1-1z"/><path d="M3.51 3.51c-.39.39-.39 1.02 0 1.41l15.56 15.57c.39.39 1.02.39 1.41 0s.39-1.02 0-1.41L4.93 3.51c-.39-.39-1.02-.39-1.42 0z"/></svg>
-              </button>
-              <button onClick={openLightbox} title={t.render.fullscreen} className={`flex items-center justify-center w-8 h-8 rounded-md border transition-colors flex-shrink-0 ${lightboxOpen ? "bg-primary text-primary-foreground border-primary" : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted"}`}>
-                <Maximize2 size={15} />
-              </button>
-              <button onClick={() => setShowComparePanel(true)} title={t.render.compare} className={`flex items-center justify-center w-8 h-8 rounded-md border transition-colors flex-shrink-0 ${showComparePanel ? "bg-primary text-primary-foreground border-primary" : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted"}`}>
-                <SplitSquareHorizontal size={15} />
-              </button>
-              {isDesigner && (
-                <button onClick={() => setShowVersionHistory(true)} title={`Historia wersji${versions.length > 0 ? ` (${versions.length})` : ""}`} className="relative flex items-center justify-center w-8 h-8 rounded-md border border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted transition-colors flex-shrink-0">
-                  <History size={15} />
-                  {versions.length > 0 && (
-                    <span className="absolute -top-1 -right-1 min-w-[14px] h-3.5 px-0.5 bg-gray-400 text-white text-[9px] font-bold rounded-full flex items-center justify-center leading-none">{versions.length}</span>
-                  )}
-                </button>
-              )}
-              <button onClick={downloadFile} title="Pobierz plik" className="flex items-center justify-center w-8 h-8 rounded-md border border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted transition-colors flex-shrink-0">
-                <Download size={15} />
-              </button>
-              {isDesigner && (
-                <button onClick={() => setShowDeleteConfirm(true)} title={t.render.deleteFile} className="flex items-center justify-center w-8 h-8 rounded-md border border-transparent text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors flex-shrink-0">
-                  <Trash2 size={15} />
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Sub-row 2: Status + Discussion (full width) */}
-          <div className="flex items-center justify-between gap-2 px-2 py-1.5 border-t">
-            {/* Zone 3: Status (fits content) */}
-            <div className="flex items-center gap-1.5 min-w-0">
-              {isDesigner ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-md border transition-colors ${renderStatus === "ACCEPTED" ? "bg-green-500 text-white border-green-600" : "bg-blue-500 text-white border-blue-600"}`}>
-                    {renderStatus === "ACCEPTED" ? "Zaakceptowany" : "Do weryfikacji"}
-                    <ChevronDown size={11} />
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start">
-                    <DropdownMenuItem onClick={() => updateRenderStatus("REVIEW")} className={renderStatus === "REVIEW" ? "font-semibold" : ""}>
-                      Do weryfikacji
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => updateRenderStatus("ACCEPTED")} className={renderStatus === "ACCEPTED" ? "font-semibold" : ""}>
-                      Zaakceptowany
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              ) : renderStatus === "ACCEPTED" ? (
-                <>
-                  <span className="text-xs font-semibold px-2 py-1.5 rounded-md bg-green-100 text-green-700">{t.render.statusAccepted}</span>
-                  {allowDirectStatusChange ? (
-                    <button onClick={() => updateRenderStatus("REVIEW")} className="text-xs text-gray-400 underline">{t.render.undoShort}</button>
-                  ) : onStatusRequest ? (
-                    <button onClick={onStatusRequest} className="text-xs text-gray-400 underline">{t.render.changeAction}</button>
-                  ) : null}
-                </>
-              ) : allowClientAcceptance ? (
-                <button onClick={() => updateRenderStatus("ACCEPTED")} className="text-xs font-semibold px-2 py-1.5 rounded-md bg-green-500 text-white">{t.render.acceptBtn}</button>
-              ) : (
-                <span className="text-xs font-semibold px-2 py-1.5 rounded-md bg-blue-100 text-blue-700">{t.render.statusReview}</span>
-              )}
-            </div>
-
-            {/* Zone 4: Discussion */}
-            <button
-              onClick={() => setShowComments((v) => { const next = !v; sessionStorage.setItem("renderflow_showComments", String(next)); if (next && sidebarTabRef.current === "chat") markChatRead(); return next; })}
-              className={`relative flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md border transition-colors flex-shrink-0 ${showComments ? "bg-primary text-primary-foreground border-primary" : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted"}`}
-            >
-              <svg viewBox="0 0 24 24" className="w-[14px] h-[14px]" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg> Dyskusja
-              {chatUnreadCount > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 bg-blue-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
-                  {chatUnreadCount > 99 ? "99+" : chatUnreadCount}
-                </span>
-              )}
-            </button>
-          </div>
-        </div>
-
+      {/* Row 2: Mobile toolbar (hidden on sm+) — excludes Pin/Discussion (they're in the bottom toolbar) */}
+      <div className="sm:hidden border-b bg-card flex-shrink-0 overflow-x-auto">
+      <div className="flex items-center gap-0.5 px-2 py-1.5 w-max mx-auto">
+        {/* Hide pins */}
+        <button onClick={() => setHidePins((v) => !v)} className={`flex items-center justify-center w-9 h-9 rounded-md border transition-colors flex-shrink-0 ${hidePins ? "bg-primary text-primary-foreground border-primary" : "border-transparent text-gray-500 hover:bg-muted"}`} title={hidePins ? t.render.showPins : t.render.hidePins}>
+          <svg viewBox="0 0 24 24" className="w-[15px] h-[15px]" fill="currentColor"><path d="M16 9V4h1c.55 0 1-.45 1-1s-.45-1-1-1H7c-.55 0-1 .45-1 1s.45 1 1 1h1v5c0 1.66-1.34 3-3 3h10c-1.66 0-3-1.34-3-3zm-3 12v-6h-2v6c0 .55.45 1 1 1s1-.45 1-1z"/><path d="M3.51 3.51c-.39.39-.39 1.02 0 1.41l15.56 15.57c.39.39 1.02.39 1.41 0s.39-1.02 0-1.41L4.93 3.51c-.39-.39-1.02-.39-1.42 0z"/></svg>
+        </button>
+        {/* Fullscreen */}
+        <button onClick={openLightbox} className="flex items-center justify-center w-9 h-9 rounded-md border border-transparent text-gray-500 hover:bg-muted transition-colors flex-shrink-0" title={t.render.fullscreen}>
+          <Maximize2 size={16} />
+        </button>
+        {/* Compare */}
+        <button onClick={() => setShowComparePanel(true)} className={`flex items-center justify-center w-9 h-9 rounded-md border transition-colors flex-shrink-0 ${showComparePanel ? "bg-primary text-primary-foreground border-primary" : "border-transparent text-gray-500 hover:bg-muted"}`} title={t.render.compare}>
+          <SplitSquareHorizontal size={16} />
+        </button>
+        {/* History (designer only) */}
+        {isDesigner && (
+          <button onClick={() => setShowVersionHistory(true)} className="relative flex items-center justify-center w-9 h-9 rounded-md border border-transparent text-gray-500 hover:bg-muted transition-colors flex-shrink-0" title="Historia wersji">
+            <History size={16} />
+            {versions.length > 0 && <span className="absolute -top-1 -right-1 min-w-[14px] h-3.5 px-0.5 bg-gray-400 text-white text-[9px] font-bold rounded-full flex items-center justify-center leading-none">{versions.length}</span>}
+          </button>
+        )}
+        {/* Download */}
+        <button onClick={downloadFile} className="flex items-center justify-center w-9 h-9 rounded-md border border-transparent text-gray-500 hover:bg-muted transition-colors flex-shrink-0" title="Pobierz plik">
+          <Download size={16} />
+        </button>
+        {/* Delete (designer only) */}
+        {isDesigner && (
+          <button onClick={() => setShowDeleteConfirm(true)} className="flex items-center justify-center w-9 h-9 rounded-md border border-transparent text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors flex-shrink-0" title={t.render.deleteFile}>
+            <Trash2 size={16} />
+          </button>
+        )}
+        <div className="w-px h-5 bg-gray-200 dark:bg-gray-700 mx-1 flex-shrink-0" />
+        {/* Status */}
+        {isDesigner ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-md border transition-colors flex-shrink-0 ${renderStatus === "ACCEPTED" ? "bg-green-500 text-white border-green-600" : renderStatus === "REJECTED" ? "bg-red-500 text-white border-red-600" : "bg-blue-500 text-white border-blue-600"}`}>
+              {renderStatus === "ACCEPTED" ? "Zaakceptowany" : renderStatus === "REJECTED" ? "Odrzucony" : "Do weryfikacji"}
+              <ChevronDown size={10} />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              <DropdownMenuItem onClick={() => updateRenderStatus("REVIEW")} className={renderStatus === "REVIEW" ? "font-semibold" : ""}>Do weryfikacji</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => updateRenderStatus("ACCEPTED")} className={renderStatus === "ACCEPTED" ? "font-semibold" : ""}>Zaakceptowany</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => updateRenderStatus("REJECTED")} className={renderStatus === "REJECTED" ? "font-semibold" : ""}>Odrzucony</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          <span className={`text-xs font-semibold px-2 py-0.5 rounded-md flex-shrink-0 ${renderStatus === "ACCEPTED" ? "bg-green-100 text-green-700" : renderStatus === "REJECTED" ? "bg-red-100 text-red-700" : "bg-blue-100 text-blue-700"}`}>
+            {renderStatus === "ACCEPTED" ? "Zaakceptowany" : renderStatus === "REJECTED" ? "Odrzucony" : "Do weryfikacji"}
+          </span>
+        )}
+      </div>
       </div>
 
       {/* Content */}
@@ -1965,9 +1945,9 @@ export default function RenderViewer({
               <ChevronRight size={20} />
             </button>
           )}
-          {/* Pin mode hint */}
+          {/* Pin mode hint — desktop only (mobile version rendered in portal below) */}
           {(mode === "pin" || productPinMode) && !pending && !pendingProductPos && (
-            <div className="absolute top-3 left-1/2 -translate-x-1/2 z-10 bg-primary/90 text-primary-foreground text-xs px-3 py-1.5 rounded-full shadow pointer-events-none select-none">
+            <div className="hidden sm:block absolute top-3 left-1/2 -translate-x-1/2 z-10 bg-primary/90 text-primary-foreground text-xs px-3 py-1.5 rounded-full shadow pointer-events-none select-none">
               {t.render.clickToAddPinImage}
             </div>
           )}
@@ -1992,10 +1972,10 @@ export default function RenderViewer({
               </button>
             </div>
           )}
-          <div className={`absolute inset-0 flex items-start ${isPdf ? "justify-center overflow-auto" : "justify-start sm:justify-center overflow-auto"} p-2 sm:p-6`}>
+          <div className={`absolute inset-0 z-0 flex items-center p-4 sm:p-6 ${isPdf ? "overflow-auto" : "overflow-hidden"}`}>
           <div
             ref={!isPdf ? imgRef : undefined}
-            className={`relative select-none ${(mode === "pin" || productPinMode) && !isPdf ? "cursor-crosshair" : "cursor-default"}`}
+            className={`relative select-none max-w-full mx-auto ${(mode === "pin" || productPinMode) && !isPdf ? "cursor-crosshair" : "cursor-default"}`}
             onClick={!isPdf ? handleImageClick : undefined}
           >
             {isPdf ? (
@@ -2016,7 +1996,7 @@ export default function RenderViewer({
               <img
                 src={imageUrl}
                 alt="Render"
-                className="block rounded-lg shadow-sm sm:max-w-full"
+                className="block rounded-lg shadow-sm max-w-full"
                 style={{ maxHeight: "calc(100vh - 180px)" }}
                 draggable={false}
               />
@@ -3171,7 +3151,7 @@ export default function RenderViewer({
                 title={hidePins ? t.render.showPins : t.render.hidePins}
                 className={`p-2 rounded-md transition-colors ${hidePins ? "bg-white/20 text-white" : "text-white/60 hover:text-white hover:bg-white/10"}`}
               >
-                <Pin size={18} />
+                <svg viewBox="0 0 24 24" width={18} height={18} fill="currentColor"><path d="M16 9V4h1c.55 0 1-.45 1-1s-.45-1-1-1H7c-.55 0-1 .45-1 1s.45 1 1 1h1v5c0 1.66-1.34 3-3 3h10c-1.66 0-3-1.34-3-3zm-3 12v-6h-2v6c0 .55.45 1 1 1s1-.45 1-1z"/><path d="M3.51 3.51c-.39.39-.39 1.02 0 1.41l15.56 15.57c.39.39 1.02.39 1.41 0s.39-1.02 0-1.41L4.93 3.51c-.39-.39-1.02-.39-1.42 0z"/></svg>
               </button>
               <button
                 onClick={() => {
@@ -4160,6 +4140,181 @@ export default function RenderViewer({
             setSliderPos(50);
           }}
         />
+      )}
+
+      {/* Mobile floating toolbar — portal to document.body, visible on <640px */}
+      {toolbarMounted && !showComments && createPortal(
+        <div className="sm:hidden">
+          {/* Pin mode hint — centered above toolbar */}
+          {(mode === "pin" || productPinMode) && !pending && !pendingProductPos && (
+            <div
+              className="fixed left-1/2 -translate-x-1/2 z-[201] bg-primary/90 text-primary-foreground text-xs px-3 py-1.5 rounded-full shadow pointer-events-none select-none whitespace-nowrap"
+              style={{ bottom: "calc(92px + env(safe-area-inset-bottom, 0px))" }}
+            >
+              {t.render.clickToAddPinImage}
+            </div>
+          )}
+          <div
+            className="fixed inset-x-0 bottom-0 z-[200] flex justify-center pointer-events-none"
+            style={{ paddingBottom: "calc(20px + env(safe-area-inset-bottom, 0px))" }}
+          >
+          <div
+            className="pointer-events-auto flex items-center rounded-full bg-card border border-border shadow-lg overflow-hidden"
+            style={{
+              transform: mobileToolbarCollapsed ? "translateX(calc(50vw - 28px))" : "translateX(0)",
+              transition: "transform 320ms cubic-bezier(0.2, 0, 0, 1)",
+            }}
+          >
+            {/* Toggle chevron — always visible, on the LEFT */}
+            <button
+              onClick={() => setMobileToolbarCollapsed((v) => !v)}
+              aria-label={mobileToolbarCollapsed ? "Rozwiń pasek" : "Zwiń pasek"}
+              className="flex items-center justify-center w-14 h-14 flex-shrink-0 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ChevronRight
+                size={28}
+                style={{
+                  transform: mobileToolbarCollapsed ? "rotate(180deg)" : "rotate(0deg)",
+                  transition: "transform 320ms cubic-bezier(0.2, 0, 0, 1)",
+                }}
+              />
+            </button>
+            <div className="w-px h-10 flex-shrink-0 bg-border" />
+
+            {/* Collapsible content — hidden when collapsed */}
+            <div
+              className="flex items-center overflow-hidden"
+              style={{
+                maxWidth: mobileToolbarCollapsed ? 0 : "380px",
+                opacity: mobileToolbarCollapsed ? 0 : 1,
+                transition: "max-width 320ms cubic-bezier(0.2, 0, 0, 1), opacity 180ms ease",
+              }}
+            >
+              {isDesigner ? (
+                <>
+                  {/* Add Product */}
+                  <button
+                    onClick={() => { setProductPinMode((v) => !v); setMode("view"); setPending(null); setPendingProductPos(null); }}
+                    aria-label="Dodaj produkt"
+                    className={`flex items-center justify-center w-16 h-16 rounded-full mx-1 flex-shrink-0 transition-colors ${
+                      productPinMode ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    }`}
+                  >
+                    <Package size={26} />
+                  </button>
+
+                  {/* Add Pin */}
+                  <button
+                    onClick={() => { setMode(mode === "pin" ? "view" : "pin"); setProductPinMode(false); setPendingProductPos(null); }}
+                    aria-label="Dodaj pin"
+                    className={`flex items-center justify-center w-16 h-16 rounded-full mx-1 flex-shrink-0 transition-colors ${
+                      mode === "pin" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    }`}
+                  >
+                    <Pin size={26} />
+                  </button>
+
+                  <div className="w-px h-10 flex-shrink-0 bg-border" />
+
+                  {/* Discussion */}
+                  <button
+                    onClick={() => setShowComments((v) => { const next = !v; sessionStorage.setItem("renderflow_showComments", String(next)); if (next && sidebarTabRef.current === "chat") markChatRead(); return next; })}
+                    aria-label="Otwórz dyskusję"
+                    className={`relative flex items-center justify-center w-16 h-16 rounded-full mx-1 flex-shrink-0 transition-colors ${
+                      showComments ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    }`}
+                  >
+                    <svg viewBox="0 0 24 24" className="w-[26px] h-[26px]" fill="currentColor">
+                      <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z" />
+                    </svg>
+                    {(() => {
+                      const total = comments.filter(c => c.posX === null && c.posY === null).length;
+                      if (total === 0) return null;
+                      return (
+                        <span className={`absolute top-2.5 right-2.5 min-w-[18px] h-[18px] px-1 text-[10px] font-bold rounded-full flex items-center justify-center leading-none ${chatUnreadCount > 0 ? "bg-blue-500 text-white" : "bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300"}`}>
+                          {total > 99 ? "99+" : total}
+                        </span>
+                      );
+                    })()}
+                  </button>
+                </>
+              ) : (
+                <>
+                  {/* Reject button — client if allowed */}
+                  {(allowDirectStatusChange || allowClientAcceptance) && (
+                    <button
+                      onClick={() => updateRenderStatus(renderStatus === "REJECTED" ? "REVIEW" : "REJECTED")}
+                      aria-label="Odrzuć wizualizację"
+                      className={`flex items-center justify-center w-16 h-16 rounded-full mx-1 flex-shrink-0 transition-colors ${
+                        renderStatus === "REJECTED"
+                          ? "bg-destructive/10 text-destructive"
+                          : "text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                      }`}
+                    >
+                      <X size={26} />
+                    </button>
+                  )}
+
+                  {/* Accept button — client if allowed */}
+                  {(allowClientAcceptance || allowDirectStatusChange) && (
+                    <button
+                      onClick={() => updateRenderStatus(renderStatus === "ACCEPTED" ? "REVIEW" : "ACCEPTED")}
+                      aria-label="Zaakceptuj wizualizację"
+                      className={`flex items-center justify-center w-16 h-16 rounded-full mx-1 flex-shrink-0 transition-colors ${
+                        renderStatus === "ACCEPTED"
+                          ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      }`}
+                    >
+                      <CheckCircle2 size={26} />
+                    </button>
+                  )}
+
+                  <div className="w-px h-10 flex-shrink-0 bg-border" />
+
+                  {/* Discussion */}
+                  <button
+                    onClick={() => setShowComments((v) => { const next = !v; sessionStorage.setItem("renderflow_showComments", String(next)); if (next && sidebarTabRef.current === "chat") markChatRead(); return next; })}
+                    aria-label="Otwórz dyskusję"
+                    className={`relative flex items-center justify-center w-16 h-16 rounded-full mx-1 flex-shrink-0 transition-colors ${
+                      showComments ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    }`}
+                  >
+                    <svg viewBox="0 0 24 24" className="w-[26px] h-[26px]" fill="currentColor">
+                      <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z" />
+                    </svg>
+                    {(() => {
+                      const total = comments.filter(c => c.posX === null && c.posY === null).length;
+                      if (total === 0) return null;
+                      return (
+                        <span className={`absolute top-2.5 right-2.5 min-w-[18px] h-[18px] px-1 text-[10px] font-bold rounded-full flex items-center justify-center leading-none ${chatUnreadCount > 0 ? "bg-blue-500 text-white" : "bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300"}`}>
+                          {total > 99 ? "99+" : total}
+                        </span>
+                      );
+                    })()}
+                  </button>
+
+                  {/* Pin — client if allowed */}
+                  {allowClientComments && (
+                    <button
+                      onClick={() => { setMode(mode === "pin" ? "view" : "pin"); setProductPinMode(false); setPendingProductPos(null); }}
+                      aria-label="Dodaj pin"
+                      className={`flex items-center justify-center w-16 h-16 rounded-full mx-1 flex-shrink-0 transition-colors ${
+                        mode === "pin" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      }`}
+                    >
+                      <Pin size={26} />
+                    </button>
+                  )}
+                </>
+              )}
+
+              <div className="w-1 flex-shrink-0" />
+            </div>
+          </div>
+        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

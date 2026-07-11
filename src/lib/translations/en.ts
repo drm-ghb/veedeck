@@ -1049,6 +1049,7 @@ export const en: TranslationKeys = {
     // Status
     statusAccepted: "Accepted",
     statusReview: "For review",
+    statusRejected: "Rejected",
     // Pin statuses
     pinStatusNew: "New",
     pinStatusInProgress: "In progress",
