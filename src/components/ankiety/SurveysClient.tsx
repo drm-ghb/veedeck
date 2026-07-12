@@ -223,8 +223,8 @@ export default function SurveysClient({ surveys: initial, clients, customTemplat
         </div>
 
         {/* Sort — mobile icon button */}
-        <div className={`relative sm:hidden w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-md border ${sort !== "manual" ? "border-gray-900 bg-gray-900 dark:border-gray-100 dark:bg-gray-100" : "border-gray-200 bg-white dark:border-gray-700 dark:bg-card"}`}>
-          <ArrowDownUp size={14} className={`pointer-events-none ${sort !== "manual" ? "text-white dark:text-gray-900" : "text-gray-500"}`} />
+        <div className={`relative sm:hidden w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-md border ${sort !== "manual" ? "border-foreground bg-foreground" : "border-border bg-background"}`}>
+          <ArrowDownUp size={14} className={`pointer-events-none ${sort !== "manual" ? "text-background" : "text-muted-foreground"}`} />
           <select
             value={sort}
             onChange={(e) => { const v = e.target.value as SortMode; setSort(v); localStorage.setItem("ankiety-sort", v); }}
