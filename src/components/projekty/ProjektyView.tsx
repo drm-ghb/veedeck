@@ -134,8 +134,8 @@ export default function ProjektyView({ projects, archivedProjects }: ProjektyVie
               className="w-full pl-9 pr-4 py-2 border border-border rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-transparent"
             />
           </div>
-          <div className={`relative sm:hidden w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-md border ${sort !== "newest" ? "border-gray-900 bg-gray-900" : "border-gray-200 bg-white dark:border-gray-700 dark:bg-card"}`}>
-            <SlidersHorizontal size={14} className={`pointer-events-none ${sort !== "newest" ? "text-white" : "text-gray-500"}`} />
+          <div className={`relative sm:hidden w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-md border ${sort !== "newest" ? "border-primary/30 bg-primary/10" : "border-border bg-background"}`}>
+            <SlidersHorizontal size={14} className={`pointer-events-none ${sort !== "newest" ? "text-primary" : "text-muted-foreground"}`} />
             <select value={sort} onChange={(e) => setSort(e.target.value as SortOption)} className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" aria-label={t.common.sort}>
               <option value="newest">{t.common.newest}</option>
               <option value="oldest">{t.common.oldest}</option>

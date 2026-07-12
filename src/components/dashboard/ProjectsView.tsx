@@ -157,8 +157,8 @@ export default function ProjectsView({ projects, archivedProjects }: ProjectsVie
         </div>
         {projects.length > 0 && (
           <>
-            <div className={`relative sm:hidden w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-md border ${sort !== "newest" ? "border-gray-900 bg-gray-900" : "border-gray-200 bg-white dark:border-gray-700 dark:bg-card"}`}>
-              <ArrowDownUp size={14} className={`pointer-events-none ${sort !== "newest" ? "text-white" : "text-gray-500"}`} />
+            <div className={`relative sm:hidden w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-md border ${sort !== "newest" ? "border-primary/30 bg-primary/10" : "border-border bg-background"}`}>
+              <ArrowDownUp size={14} className={`pointer-events-none ${sort !== "newest" ? "text-primary" : "text-muted-foreground"}`} />
               <select
                 value={sort}
                 onChange={(e) => setSort(e.target.value as typeof sort)}
