@@ -439,15 +439,15 @@ function SurveyTable({ surveys, openMenuId, setOpenMenuId, onArchive, onPin, onD
   const t = useT();
   return (
     <div className="border border-border rounded-xl overflow-visible">
-      <table className="w-full text-sm">
+      <table className="w-full text-sm table-fixed">
         <thead>
           <tr className="bg-muted/50 border-b border-border">
-            <th className="text-left px-3 sm:px-4 py-3 font-medium text-muted-foreground rounded-tl-xl">{t.ankiety.colName}</th>
-            <th className="text-left px-3 sm:px-4 py-3 font-medium text-muted-foreground">{t.ankiety.colStatus}</th>
-            <th className="text-left px-3 sm:px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">{t.ankiety.colClient}</th>
-            <th className="text-left px-3 sm:px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">{t.ankiety.colDate}</th>
-            <th className="text-left px-3 sm:px-4 py-3 font-medium text-muted-foreground hidden sm:table-cell">{t.ankiety.colResponses}</th>
-            <th className="px-3 sm:px-4 py-3 rounded-tr-xl" />
+            <th className="text-left px-3 sm:px-4 py-3 font-medium text-muted-foreground rounded-tl-xl w-full">{t.ankiety.colName}</th>
+            <th className="text-left px-3 sm:px-4 py-3 font-medium text-muted-foreground w-28 sm:w-32">{t.ankiety.colStatus}</th>
+            <th className="text-left px-3 sm:px-4 py-3 font-medium text-muted-foreground hidden md:table-cell w-36">{t.ankiety.colClient}</th>
+            <th className="text-left px-3 sm:px-4 py-3 font-medium text-muted-foreground hidden md:table-cell w-32">{t.ankiety.colDate}</th>
+            <th className="text-left px-3 sm:px-4 py-3 font-medium text-muted-foreground hidden sm:table-cell w-24">{t.ankiety.colResponses}</th>
+            <th className="px-3 sm:px-4 py-3 rounded-tr-xl w-16 sm:w-28" />
           </tr>
         </thead>
         <tbody>
@@ -456,7 +456,7 @@ function SurveyTable({ surveys, openMenuId, setOpenMenuId, onArchive, onPin, onD
             return (
               <tr key={survey.id} className={`border-b border-border last:border-0 ${i % 2 === 0 ? "" : "bg-muted/20"} ${openMenuId === survey.id ? "relative z-10" : ""}`}>
                 <td className="px-3 sm:px-4 py-3 min-w-0">
-                  <a href={`/ankiety/${survey.id}/edytuj`} className="font-medium hover:text-primary transition-colors line-clamp-2">
+                  <a href={`/ankiety/${survey.id}/edytuj`} className="font-medium hover:text-primary transition-colors truncate block">
                     {survey.name}
                   </a>
                 </td>
@@ -474,15 +474,15 @@ function SurveyTable({ surveys, openMenuId, setOpenMenuId, onArchive, onPin, onD
                     )}
                   </div>
                 </td>
-                <td className="px-3 sm:px-4 py-3">
+                <td className="px-3 sm:px-4 py-3 whitespace-nowrap">
                   <div className="relative flex items-center justify-end gap-1">
                     {survey.hasCompletedResponse && (
                       <a
                         href={`/ankiety/${survey.id}/odpowiedzi`}
-                        className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1 text-xs font-medium bg-primary/10 text-primary rounded-md hover:bg-primary/20 transition-colors"
+                        className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium bg-primary/10 text-primary rounded-md hover:bg-primary/20 transition-colors"
                       >
                         <BarChart2 size={13} />
-                        <span className="hidden sm:inline">{t.ankiety.responses}</span>
+                        {t.ankiety.responses}
                       </a>
                     )}
                     <button
