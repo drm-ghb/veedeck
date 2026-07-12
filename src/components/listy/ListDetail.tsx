@@ -107,6 +107,7 @@ interface ListDetailProps {
     shareToken: string;
     budget: number | null;
     hidePrices: boolean;
+    viewCount?: number;
     project: {
       id: string;
       title: string;
@@ -1921,7 +1922,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
               <Search size={13} />
             </button>
             {searchOpen && (
-              <div className="absolute right-9 top-0 flex items-center">
+              <div className="absolute left-0 top-0 flex items-center">
                 <Search size={13} className="absolute left-2.5 text-muted-foreground pointer-events-none" />
                 <input
                   ref={searchInputRef}
@@ -1945,6 +1946,11 @@ export default function ListDetail({ list, designerName, designerEmail, designer
         {hasTotal && (
           <div className="flex flex-col items-end gap-1 shrink-0 pr-1 min-w-0">
             <div className="flex items-center gap-1.5 text-sm">
+              <div className="flex items-center gap-1 text-xs text-muted-foreground" title="Liczba wyświetleń listy przez klienta">
+                <Eye size={13} />
+                <span>{list.viewCount ?? 0}</span>
+              </div>
+              <span className="text-muted-foreground/30 select-none">|</span>
               <span className="text-muted-foreground text-xs">{t.listy.sumLabel}</span>
               <span className={`font-semibold tabular-nums ${budget != null && budget > 0 && grandTotal > budget ? "text-red-500" : ""}`}>
                 {formatPriceNum(grandTotal)} {grandCurrency}

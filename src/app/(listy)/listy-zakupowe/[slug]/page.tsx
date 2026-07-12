@@ -22,7 +22,7 @@ export default async function ListPage({ params, searchParams }: { params: Promi
         OR: [{ slug }, { id: slug }],
       },
       select: {
-        id: true, name: true, shareToken: true, budget: true, hidePrices: true,
+        id: true, name: true, shareToken: true, budget: true, hidePrices: true, viewCount: true,
         project: {
           select: {
             id: true, title: true, hiddenModules: true,
@@ -69,6 +69,7 @@ export default async function ListPage({ params, searchParams }: { params: Promi
         shareToken: list.shareToken,
         budget: list.budget ?? null,
         hidePrices: list.hidePrices,
+        viewCount: list.viewCount,
         project: list.project ? {
           id: list.project.id,
           title: list.project.title,

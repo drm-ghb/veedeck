@@ -14,6 +14,19 @@ export async function POST(
   const project = await getClientProject(session, projectId);
   if (!project) return NextResponse.json({ error: "Nie znaleziono" }, { status: 404 });
 
+  const render = await prisma.render.findUnique({ where: { id: renderId }, select: { name: true, projectId: true } });
   await prisma.render.update({ where: { id: renderId }, data: { viewCount: { increment: 1 } } }).catch(() => {});
+  if (render?.projectId === projectId) {
+    const user = session.user as any;
+    await prisma.clientEvent.create({
+      data: {
+        projectId,
+        type: "render_view",
+        clientEmail: user.email ?? null,
+        clientName: user.name ?? null,
+        meta: { renderId, renderName: render.name },
+      },
+    }).catch(() => {});
+  }
   return NextResponse.json({ ok: true });
 }

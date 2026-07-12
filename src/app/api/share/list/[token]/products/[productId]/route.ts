@@ -23,7 +23,7 @@ export async function PATCH(
     include: {
       section: {
         include: {
-          list: { select: { id: true, name: true, slug: true, userId: true } },
+          list: { select: { id: true, name: true, slug: true, userId: true, projectId: true } },
         },
       },
     },
@@ -47,6 +47,17 @@ export async function PATCH(
     });
   } catch (e) {
     console.error("[approval] pusher trigger failed:", e);
+  }
+
+  if (approval !== null && list.projectId) {
+    await prisma.clientEvent.create({
+      data: {
+        projectId: list.projectId,
+        type: approval === "accepted" ? "product_approved" : "product_rejected",
+        clientName: clientName ?? null,
+        meta: { productId, productName: product.name, listId: list.id, listName: list.name, listSlug: list.slug ?? list.id },
+      },
+    }).catch(() => {});
   }
 
   if (approval !== null && clientName) {

@@ -51,6 +51,7 @@ import {
 } from "@/components/ui/dialog";
 import { generateClientLogin } from "@/lib/client-login";
 import { useT } from "@/lib/i18n";
+import ClientHistoryTab from "@/components/projekty/ClientHistoryTab";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -130,7 +131,7 @@ export default function ClientDetailView({ client: initialClient }: Props) {
   const [clientCanUpload, setClientCanUpload] = useState(initialClient.clientCanUpload);
 
   const [contacts, setContacts] = useState<Contact[]>(initialClient.contacts);
-  const [activeTab, setActiveTab] = useState<"info" | "contacts" | "payments" | "schedule" | "documents">(
+  const [activeTab, setActiveTab] = useState<"info" | "contacts" | "payments" | "schedule" | "documents" | "history">(
     searchParams.get("tab") === "contacts" ? "contacts" : "info"
   );
 
@@ -540,7 +541,7 @@ export default function ClientDetailView({ client: initialClient }: Props) {
 
       {/* Tabs */}
       <div className="flex gap-1 border-b border-border mb-6 overflow-x-auto scrollbar-none">
-        {(["info", "contacts", "payments", "schedule", "documents"] as const).map((tab) => (
+        {(["info", "contacts", "payments", "schedule", "documents", "history"] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -554,6 +555,7 @@ export default function ClientDetailView({ client: initialClient }: Props) {
             {tab === "contacts" && t.projekty.clients}
             {tab === "payments" && t.projekty.tabPayments}
             {tab === "schedule" && t.projekty.tabSchedule}
+            {tab === "history" && "Historia klienta"}
             {tab === "documents" && t.projekty.tabDocuments}
           </button>
         ))}
@@ -1116,6 +1118,11 @@ export default function ClientDetailView({ client: initialClient }: Props) {
             <p className="text-sm">{t.projekty.addContactHint} <button onClick={() => setActiveTab("contacts")} className="underline hover:no-underline">{t.projekty.clients}</button>, {t.projekty.documentsConfigSuffix}</p>
           </div>
         )
+      )}
+
+      {/* ── Tab: Historia klienta ────────────────────────────────────────── */}
+      {activeTab === "history" && (
+        <ClientHistoryTab apiUrl={`/api/klienci/${initialClient.id}/client-history`} />
       )}
 
       {/* ── Invite dialog ─────────────────────────────────────────────────── */}

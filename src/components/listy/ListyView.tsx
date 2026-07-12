@@ -20,7 +20,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useT } from "@/lib/i18n";
-import { LocalMall, Search, LayoutGrid, List, ArrowDownUp, Link2, MoreHorizontal, Pencil, Archive, ArchiveRestore, Trash2, Pin, PinOff, AlertTriangle, Check, Comment, GripVertical, KeyRound } from "@/components/ui/icons";
+import { LocalMall, Search, LayoutGrid, List, ArrowDownUp, Link2, MoreHorizontal, Pencil, Archive, ArchiveRestore, Trash2, Pin, PinOff, AlertTriangle, Check, Comment, GripVertical, KeyRound, Eye } from "@/components/ui/icons";
 import { pusherClient } from "@/lib/pusher";
 import { getUnreadSet, syncListUnread } from "@/lib/list-unread-store";
 import NewListDialog from "./NewListDialog";
@@ -51,6 +51,7 @@ interface ShoppingList {
   pinned: boolean;
   order: number;
   createdAt: string;
+  viewCount?: number;
   project: { id: string; title: string; clientName: string | null; hiddenModules: string[]; clientHasNoAccount: boolean } | null;
 }
 
@@ -493,6 +494,10 @@ function SortableListGridCard({ list, unreadCount, onCopyLink, menu }: {
             {t.projekty.noAccount}
           </Link>
         )}
+        <div className="flex items-center gap-0.5 text-[11px] text-muted-foreground/70 px-1">
+          <Eye size={11} />
+          <span>{list.viewCount ?? 0}</span>
+        </div>
         <button
           onClick={(e) => { e.preventDefault(); onCopyLink(list); }}
           className="w-7 h-7 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
@@ -542,9 +547,15 @@ function SortableListRowItem({ list, isLast, unreadCount, onNavigate, onCopyLink
         </div>
         <div className="flex flex-col gap-0 mt-0.5">
           {list.project && <span className="text-xs text-muted-foreground truncate">{list.project.clientName ? `${t.home.clientPrefix} ${list.project.clientName}` : list.project.title}</span>}
-          <span className="text-xs text-muted-foreground whitespace-nowrap">
-            {t.listy.createdPrefix} {new Date(list.createdAt).toLocaleDateString("pl-PL", { day: "2-digit", month: "short", year: "numeric" })}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground whitespace-nowrap">
+              {t.listy.createdPrefix} {new Date(list.createdAt).toLocaleDateString("pl-PL", { day: "2-digit", month: "short", year: "numeric" })}
+            </span>
+            <span className="flex items-center gap-1 text-[11px] text-muted-foreground/70 whitespace-nowrap">
+              <Eye size={11} />
+              {list.viewCount ?? 0}
+            </span>
+          </div>
         </div>
       </div>
       <div className="flex items-center gap-0.5 shrink-0" onClick={(e) => e.stopPropagation()}>

@@ -73,6 +73,7 @@ interface ShareListClientProps {
   hidePrices: boolean;
   designerName?: string;
   designerLogoUrl?: string;
+  trackView?: boolean;
 }
 
 export default function ShareListClient({
@@ -88,6 +89,7 @@ export default function ShareListClient({
   hidePrices,
   designerName,
   designerLogoUrl,
+  trackView = true,
 }: ShareListClientProps) {
   const [commentsPanelProductId, setCommentsPanelProductId] = useState<string | null>(null);
   const [panelLastReadAt, setPanelLastReadAt] = useState<string | null>(null);
@@ -130,9 +132,18 @@ export default function ShareListClient({
     commentsPanelProductIdRef.current = commentsPanelProductId;
   }, [commentsPanelProductId]);
 
+  const viewTrackedRef = useRef(false);
   useEffect(() => {
     const stored = localStorage.getItem(`veedeck-author-${projectShareToken ?? listShareToken}`);
     if (stored) setAuthorName(stored);
+    if (trackView && !viewTrackedRef.current) {
+      viewTrackedRef.current = true;
+      fetch(`/api/share/list/${listShareToken}/view`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ clientName: stored ?? null }),
+      }).catch(() => {});
+    }
     // Initialize unread set from localStorage + module-level store
     const store = getUnreadSet(listId);
     const unread = new Set<string>(store);

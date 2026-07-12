@@ -17,7 +17,9 @@ export default async function ListyPage() {
       userId,
       ...(allowedIds ? { project: { clientId: { in: allowedIds } } } : {}),
     },
-    include: {
+    select: {
+      id: true, slug: true, name: true, shareToken: true, archived: true,
+      pinned: true, order: true, createdAt: true, viewCount: true,
       project: {
         select: {
           id: true, title: true, hiddenModules: true, slug: true,
@@ -41,6 +43,7 @@ export default async function ListyPage() {
         pinned: l.pinned,
         order: l.order,
         createdAt: l.createdAt.toISOString(),
+        viewCount: l.viewCount,
         project: l.project ? {
           id: l.project.id,
           title: l.project.title,

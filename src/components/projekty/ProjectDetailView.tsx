@@ -5,6 +5,7 @@ import DatePicker from "@/components/ui/DatePicker";
 import { PaymentsTab } from "@/components/projekty/PaymentsTab";
 import { ScheduleTab } from "@/components/projekty/ScheduleTab";
 import DocumentsTab from "@/components/projekty/DocumentsTab";
+import ClientHistoryTab from "@/components/projekty/ClientHistoryTab";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -134,7 +135,7 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
 
   // Tab state
   const searchParams = useSearchParams();
-  const [activeTab, setActiveTab] = useState<"info" | "contacts" | "payments" | "documents" | "schedule">(
+  const [activeTab, setActiveTab] = useState<"info" | "contacts" | "payments" | "documents" | "schedule" | "history">(
     searchParams.get("tab") === "contacts" ? "contacts" : "info"
   );
 
@@ -629,7 +630,7 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
       {/* Tabs */}
       <div className="border-b border-border mb-6 overflow-hidden">
         <div className="flex gap-1 overflow-x-auto [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
-          {(["info", "contacts", "payments", "schedule", "documents"] as const).map((tab) => (
+          {(["info", "contacts", "payments", "schedule", "documents", "history"] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -644,6 +645,7 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
               {tab === "payments" && t.projekty.tabPayments}
               {tab === "schedule" && t.projekty.tabSchedule}
               {tab === "documents" && t.projekty.tabDocuments}
+              {tab === "history" && "Historia klienta"}
             </button>
           ))}
         </div>
@@ -998,6 +1000,10 @@ export default function ProjectDetailView({ project }: { project: ProjectData })
           projectId={project.id}
           scheduleSharedWithClient={project.scheduleSharedWithClient}
         />
+      )}
+
+      {activeTab === "history" && (
+        <ClientHistoryTab apiUrl={`/api/projekty/${project.id}/client-history`} />
       )}
 
       {activeTab === "info" && <div className="space-y-6">

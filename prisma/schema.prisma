@@ -328,6 +328,7 @@ model Project {
   client                   Client?                @relation(fields: [clientId], references: [id])
   user                     User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
   clients                  ProjectClient[]
+  clientEvents             ClientEvent[]
   renders                  Render[]
   rooms                    Room[]
   schedulePhases           SchedulePhase[]        @relation("SchedulePhaseRfProject")
@@ -409,6 +410,7 @@ model ShoppingList {
   budget     Float?
   hidePrices Boolean       @default(false)
   order      Int           @default(0)
+  viewCount  Int           @default(0)
   sections   ListSection[]
   project    Project?      @relation(fields: [projectId], references: [id])
   user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -1095,6 +1097,17 @@ enum RoomType {
   KUCHNIA
   SYPIALNIA
   INNE
+}
+
+model ClientEvent {
+  id          String   @id @default(cuid())
+  projectId   String
+  type        String   // render_view | list_view | product_approved | product_rejected
+  clientEmail String?
+  clientName  String?
+  meta        Json?
+  createdAt   DateTime @default(now())
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
 }
 
 enum RenderStatus {

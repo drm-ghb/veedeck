@@ -185,6 +185,7 @@ export default function ClientProjectPage() {
       if (!res.ok) throw new Error();
       const data: ListData = await res.json();
       setSelectedListData(data);
+      fetch(`/api/client/${projectId}/lists/${listId}/view`, { method: "POST" }).catch(() => {});
     } catch {
       toast.error("Nie udało się załadować listy");
       setView("lists");
@@ -1043,6 +1044,7 @@ export default function ClientProjectPage() {
                   listId={selectedListData.id}
                   listShareToken={selectedListData.shareToken}
                   listName={selectedListData.name}
+                  trackView={false}
                   projectTitle={project.title}
                   sections={sections}
                   grandTotal={grandTotal}
