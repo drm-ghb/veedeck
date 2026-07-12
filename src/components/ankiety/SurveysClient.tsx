@@ -375,11 +375,12 @@ interface CardProps {
 
 function SurveyCard({ survey, openMenuId, setOpenMenuId, onArchive, onPin, onDelete, onCopyLink, formatDate }: CardProps) {
   const t = useT();
+  const router = useRouter();
   const open = openMenuId === survey.id;
 
   return (
-    <a
-      href={`/ankiety/${survey.id}/edytuj`}
+    <div
+      onClick={() => router.push(`/ankiety/${survey.id}/edytuj`)}
       className={`relative block bg-card border border-border rounded-xl p-4 hover:shadow-sm hover:border-primary/30 transition-all cursor-pointer ${open ? "z-10" : ""}`}
     >
       {survey.pinned && (
@@ -392,7 +393,7 @@ function SurveyCard({ survey, openMenuId, setOpenMenuId, onArchive, onPin, onDel
         <span className="font-semibold text-sm text-foreground line-clamp-2 flex-1">
           {survey.name}
         </span>
-        <div className="relative flex-shrink-0 flex items-center gap-1" onClick={(e) => e.preventDefault()}>
+        <div className="relative flex-shrink-0 flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
           {survey.hasCompletedResponse && (
             <a
               href={`/ankiety/${survey.id}/odpowiedzi`}
@@ -403,7 +404,7 @@ function SurveyCard({ survey, openMenuId, setOpenMenuId, onArchive, onPin, onDel
             </a>
           )}
           <button
-            onClick={(e) => { e.preventDefault(); setOpenMenuId(open ? null : survey.id); }}
+            onClick={(e) => { e.stopPropagation(); setOpenMenuId(open ? null : survey.id); }}
             className="p-1 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
           >
             <MoreVertical size={16} />
@@ -428,7 +429,7 @@ function SurveyCard({ survey, openMenuId, setOpenMenuId, onArchive, onPin, onDel
           )}
         </div>
       </div>
-    </a>
+    </div>
   );
 }
 
