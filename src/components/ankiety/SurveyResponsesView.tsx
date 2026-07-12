@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { ChevronLeft, Download, Bell, User, FileText, Sparkles, RefreshCw } from "@/components/ui/icons";
+import { ChevronLeft, Download, Bell, User, FileText, Sparkles, RefreshCw, MoreVertical, Edit2 } from "@/components/ui/icons";
 import type { SurveyQuestion, SurveySection } from "./SurveyEditor";
 import { useT } from "@/lib/i18n";
 
@@ -48,6 +48,19 @@ export default function SurveyResponsesView({ survey }: Props) {
   const [reminderEmails, setReminderEmails] = useState("");
   const [reminderMsg, setReminderMsg] = useState("");
   const [selectedResponse, setSelectedResponse] = useState<SurveyResponse | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    function close(e: MouseEvent) {
+      if (mobileMenuRef.current && !mobileMenuRef.current.contains(e.target as Node)) {
+        setMobileMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [mobileMenuOpen]);
 
   useEffect(() => {
     fetch(`/api/surveys/${survey.id}/responses`)
@@ -119,8 +132,8 @@ export default function SurveyResponsesView({ survey }: Props) {
   return (
     <div className="bg-background">
       {/* Header */}
-      <div className="border-b border-border bg-card px-6 py-4 flex items-center gap-4">
-        <Link href="/ankiety" className="text-muted-foreground hover:text-foreground transition-colors">
+      <div className="border-b border-border bg-card px-4 sm:px-6 py-4 flex items-center gap-3">
+        <Link href="/ankiety" className="text-muted-foreground hover:text-foreground transition-colors flex-shrink-0">
           <ChevronLeft size={20} />
         </Link>
         <div className="flex-1 min-w-0">
@@ -129,7 +142,8 @@ export default function SurveyResponsesView({ survey }: Props) {
             {totalResponses} {totalResponses === 1 ? t.ankiety.responseCountSingular : t.ankiety.responseCountPlural}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        {/* Desktop buttons */}
+        <div className="hidden sm:flex items-center gap-2">
           <Link
             href={`/api/surveys/${survey.id}/export`}
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-border rounded-lg hover:bg-muted transition-colors"
@@ -144,16 +158,45 @@ export default function SurveyResponsesView({ survey }: Props) {
             {t.common.edit}
           </Link>
         </div>
+        {/* Mobile 3-dot menu */}
+        <div className="relative sm:hidden flex-shrink-0" ref={mobileMenuRef}>
+          <button
+            onClick={() => setMobileMenuOpen((o) => !o)}
+            className="p-1.5 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+          >
+            <MoreVertical size={18} />
+          </button>
+          {mobileMenuOpen && (
+            <div className="absolute right-0 top-full mt-1 z-20 bg-card border border-border rounded-xl shadow-lg py-1 min-w-44">
+              <Link
+                href={`/api/surveys/${survey.id}/export`}
+                className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted transition-colors"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <Download size={14} />
+                {t.ankiety.exportCsv}
+              </Link>
+              <Link
+                href={`/ankiety/${survey.id}/edytuj`}
+                className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted transition-colors"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <Edit2 size={14} />
+                {t.common.edit}
+              </Link>
+            </div>
+          )}
+        </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
+      <div className="max-w-4xl mx-auto px-4 py-6 sm:py-8 space-y-6">
         {/* Tabs */}
-        <div className="flex gap-1 bg-muted/50 rounded-xl p-1 w-fit">
+        <div className="flex gap-1 bg-muted/50 rounded-xl p-1">
           {(["agregacja", "indywidualne", "ai"] as Tab[]).map((tabKey) => (
             <button
               key={tabKey}
               onClick={() => setTab(tabKey)}
-              className={`flex items-center gap-1.5 px-4 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+              className={`flex-1 flex items-center justify-center gap-1.5 px-2 sm:px-4 py-1.5 text-xs sm:text-sm font-medium rounded-lg transition-colors ${
                 tab === tabKey ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
               }`}
             >
