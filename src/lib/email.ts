@@ -365,6 +365,57 @@ export async function sendSurveyReminderEmail({
   });
 }
 
+export async function notifyAdminNewUser(opts: {
+  fullName: string;
+  email: string;
+  createdAt: Date;
+}) {
+  const safe = (s: string) => escapeHtml(s);
+  await transporter.sendMail({
+    from: FROM,
+    to: "veedeck@veedeck.com",
+    subject: `Nowy użytkownik: ${safe(opts.fullName)}`,
+    html: emailBase(`
+      <h2 style="margin:0 0 8px;font-size:18px;color:#111;">Nowe konto w veedeck</h2>
+      <table style="width:100%;border-collapse:collapse;margin-top:16px;font-size:14px;">
+        <tr><td style="padding:6px 0;color:#6b7280;width:140px;">Imię i nazwisko</td><td style="padding:6px 0;color:#111;font-weight:600;">${safe(opts.fullName)}</td></tr>
+        <tr><td style="padding:6px 0;color:#6b7280;">Email</td><td style="padding:6px 0;color:#111;">${safe(opts.email)}</td></tr>
+        <tr><td style="padding:6px 0;color:#6b7280;">Data rejestracji</td><td style="padding:6px 0;color:#111;">${opts.createdAt.toLocaleString("pl-PL", { timeZone: "Europe/Warsaw" })}</td></tr>
+      </table>
+    `),
+  }).catch((err) => console.error("[EMAIL] notifyAdminNewUser failed:", err));
+}
+
+export async function notifyAdminNewPayment(opts: {
+  userEmail: string;
+  userName: string | null;
+  plan: string;
+  interval: string;
+  amountTotal: number | null;
+  currency: string | null;
+}) {
+  const safe = (s: string) => escapeHtml(s);
+  const amount =
+    opts.amountTotal != null && opts.amountTotal > 0
+      ? `${(opts.amountTotal / 100).toFixed(2)} ${(opts.currency ?? "").toUpperCase()}`
+      : "trial / bez płatności";
+  await transporter.sendMail({
+    from: FROM,
+    to: "veedeck@veedeck.com",
+    subject: `Nowa subskrypcja: ${safe(opts.plan)} · ${safe(opts.interval)}`,
+    html: emailBase(`
+      <h2 style="margin:0 0 8px;font-size:18px;color:#111;">Nowa subskrypcja</h2>
+      <table style="width:100%;border-collapse:collapse;margin-top:16px;font-size:14px;">
+        <tr><td style="padding:6px 0;color:#6b7280;width:140px;">Użytkownik</td><td style="padding:6px 0;color:#111;font-weight:600;">${opts.userName ? safe(opts.userName) : "—"}</td></tr>
+        <tr><td style="padding:6px 0;color:#6b7280;">Email</td><td style="padding:6px 0;color:#111;">${safe(opts.userEmail)}</td></tr>
+        <tr><td style="padding:6px 0;color:#6b7280;">Plan</td><td style="padding:6px 0;color:#111;">${safe(opts.plan)}</td></tr>
+        <tr><td style="padding:6px 0;color:#6b7280;">Interwał</td><td style="padding:6px 0;color:#111;">${safe(opts.interval)}</td></tr>
+        <tr><td style="padding:6px 0;color:#6b7280;">Kwota</td><td style="padding:6px 0;color:#111;">${amount}</td></tr>
+      </table>
+    `),
+  }).catch((err) => console.error("[EMAIL] notifyAdminNewPayment failed:", err));
+}
+
 export async function notifyAdminNewTicket(opts: {
   userEmail: string;
   userName: string | null;

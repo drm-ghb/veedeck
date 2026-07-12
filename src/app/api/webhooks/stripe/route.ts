@@ -5,6 +5,8 @@ import {
   saveStripeCustomerForUser,
   updateSubscriptionStatus,
 } from "@/lib/db/subscriptions";
+import { prisma } from "@/lib/prisma";
+import { notifyAdminNewPayment } from "@/lib/email";
 
 export const runtime = "nodejs"; // wymagane, Stripe SDK nie działa na edge runtime
 
@@ -35,6 +37,17 @@ export async function POST(req: NextRequest) {
       if (userId && session.customer) {
         await saveStripeCustomerForUser(userId, session.customer as string);
       }
+      const user = userId
+        ? await prisma.user.findUnique({ where: { id: userId }, select: { email: true, fullName: true } })
+        : null;
+      await notifyAdminNewPayment({
+        userEmail: user?.email ?? session.customer_details?.email ?? "nieznany",
+        userName: user?.fullName ?? null,
+        plan: session.metadata?.plan ?? "nieznany",
+        interval: session.metadata?.interval ?? "nieznany",
+        amountTotal: session.amount_total,
+        currency: session.currency,
+      });
       break;
     }
 

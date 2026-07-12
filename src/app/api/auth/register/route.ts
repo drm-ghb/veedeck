@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { validatePassword } from "@/lib/validation";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
-import { sendActivationEmail } from "@/lib/email";
+import { sendActivationEmail, notifyAdminNewUser } from "@/lib/email";
 
 export async function POST(req: NextRequest) {
   try {
@@ -54,6 +54,12 @@ export async function POST(req: NextRequest) {
     await sendActivationEmail({ to: email, token: activationToken, locale: safeLocale });
   } catch (err) {
     console.error("[register] sendActivationEmail error:", err);
+  }
+
+  try {
+    await notifyAdminNewUser({ fullName: fullName.trim(), email, createdAt: user.createdAt });
+  } catch (err) {
+    console.error("[register] notifyAdminNewUser error:", err);
   }
 
   return NextResponse.json({ id: user.id, email: user.email }, { status: 201 });
