@@ -539,13 +539,6 @@ function SurveyMenu({ survey, onClose, onArchive, onPin, onDelete, onCopyLink }:
         <BarChart2 size={14} />
         {t.ankiety.responses}
       </a>
-      <a
-        href={`/ankiety/${survey.id}/edytuj`}
-        className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted transition-colors"
-      >
-        <Edit2 size={14} />
-        {t.common.edit}
-      </a>
       {survey.status === "ACTIVE" && (
         <button
           onClick={() => { onCopyLink(survey); onClose(); }}
@@ -555,6 +548,13 @@ function SurveyMenu({ survey, onClose, onArchive, onPin, onDelete, onCopyLink }:
           {t.common.copyLink}
         </button>
       )}
+      <a
+        href={`/ankiety/${survey.id}/edytuj`}
+        className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted transition-colors"
+      >
+        <Edit2 size={14} />
+        {t.common.edit}
+      </a>
       <button
         onClick={() => onPin(survey)}
         className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted transition-colors"
