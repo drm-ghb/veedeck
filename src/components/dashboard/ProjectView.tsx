@@ -46,7 +46,7 @@ interface AllRender {
   id: string;
   name: string;
   fileUrl: string;
-  status: "REVIEW" | "ACCEPTED";
+  status: "REVIEW" | "ACCEPTED" | "REJECTED";
   commentCount: number;
   viewCount: number;
   pinned: boolean;
@@ -68,7 +68,7 @@ export default function ProjectView({ projectId, rooms, archivedRooms, allRender
   const [tab, setTab] = useState<"active" | "archived" | "all">("active");
   const [viewMode, setViewMode] = useViewPreference("project-rooms", "grid");
   const [filterRoom, setFilterRoom] = useState<string>("all");
-  const [filterStatus, setFilterStatus] = useState<"all" | "REVIEW" | "ACCEPTED">("all");
+  const [filterStatus, setFilterStatus] = useState<"all" | "REVIEW" | "ACCEPTED" | "REJECTED">("all");
   const [search, setSearch] = useState("");
   const [localRooms, setLocalRooms] = useState(rooms);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
@@ -320,13 +320,13 @@ export default function ProjectView({ projectId, rooms, archivedRooms, allRender
               </select>
             )}
             <div className="flex items-center gap-1 bg-muted rounded-lg p-0.5">
-              {(["all", "REVIEW", "ACCEPTED"] as const).map((s) => (
+              {(["all", "REVIEW", "ACCEPTED", "REJECTED"] as const).map((s) => (
                 <button
                   key={s}
                   onClick={() => setFilterStatus(s)}
                   className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${filterStatus === s ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
                 >
-                  {s === "all" ? t.products.all : s === "REVIEW" ? t.render.statusReview : t.render.statusAccepted}
+                  {s === "all" ? t.products.all : s === "REVIEW" ? t.render.statusReview : s === "ACCEPTED" ? t.render.statusAccepted : t.render.statusRejected}
                 </button>
               ))}
             </div>
@@ -367,8 +367,8 @@ export default function ProjectView({ projectId, rooms, archivedRooms, allRender
                         </p>
                       )}
                       <div className="flex items-center gap-1.5">
-                        <span className={`flex-shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${render.status === "ACCEPTED" ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"}`}>
-                          {render.status === "ACCEPTED" ? t.render.statusAccepted : t.render.statusReview}
+                        <span className={`flex-shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${render.status === "ACCEPTED" ? "bg-green-100 text-green-700" : render.status === "REJECTED" ? "bg-red-100 text-red-700" : "bg-blue-100 text-blue-700"}`}>
+                          {render.status === "ACCEPTED" ? t.render.statusAccepted : render.status === "REJECTED" ? t.render.statusRejected : t.render.statusReview}
                         </span>
                         {render.commentCount > 0 && <span className="text-xs text-muted-foreground flex items-center gap-1"><Pin size={11} />{render.commentCount}</span>}
                         <span className="text-xs text-muted-foreground flex items-center gap-1"><Eye size={11} />{render.viewCount}</span>
@@ -412,8 +412,8 @@ export default function ProjectView({ projectId, rooms, archivedRooms, allRender
                       </div>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
-                      <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${render.status === "ACCEPTED" ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"}`}>
-                        {render.status === "ACCEPTED" ? t.render.statusAccepted : t.render.statusReview}
+                      <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${render.status === "ACCEPTED" ? "bg-green-100 text-green-700" : render.status === "REJECTED" ? "bg-red-100 text-red-700" : "bg-blue-100 text-blue-700"}`}>
+                        {render.status === "ACCEPTED" ? t.render.statusAccepted : render.status === "REJECTED" ? t.render.statusRejected : t.render.statusReview}
                       </span>
                       {render.commentCount > 0 && <span className="text-xs text-muted-foreground flex items-center gap-1"><Pin size={11} />{render.commentCount}</span>}
                       <span className="text-xs text-muted-foreground flex items-center gap-1"><Eye size={11} />{render.viewCount}</span>
