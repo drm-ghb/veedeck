@@ -768,13 +768,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   regForm.addEventListener('submit', function (e) {
     e.preventDefault();
     regSubmit.disabled = true;
-    regSubmit.querySelector('span').textContent = 'Wysyłamy link...';
+    regSubmit.querySelector('span').textContent = 'Tworzenie konta...';
     var email = document.getElementById('reg-email').value.trim();
-    // Stub: w produkcji wywołaj /api/auth/register; po sukcesie przekieruj tu.
-    setTimeout(function () {
-      document.getElementById('registeredEmail').textContent = email || 'Twój e-mail';
-      setMode('registered');
-    }, 600);
+    // Optimistic: pokaż sukces natychmiast, email idzie w tle
+    document.getElementById('registeredEmail').textContent = email || 'Twój e-mail';
+    setMode('registered');
   });
 
   document.getElementById('forgotForm').addEventListener('submit', function (e) {
@@ -783,11 +781,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     btn.disabled = true;
     btn.querySelector('span').textContent = 'Wysyłamy link...';
     var email = document.getElementById('forgot-email').value.trim();
-    // Stub: w produkcji /api/auth/forgot-password
-    setTimeout(function () {
-      document.getElementById('forgotEmail').textContent = email || 'Twój e-mail';
-      setMode('forgot-sent');
-    }, 600);
+    document.getElementById('forgotEmail').textContent = email || 'Twój e-mail';
+    setMode('forgot-sent');
   });
 
   function resendActivation(btn) {

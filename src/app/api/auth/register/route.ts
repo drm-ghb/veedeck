@@ -50,17 +50,11 @@ export async function POST(req: NextRequest) {
   });
 
   const safeLocale: "pl" | "en" = locale === "en" ? "en" : "pl";
-  try {
-    await sendActivationEmail({ to: email, token: activationToken, locale: safeLocale });
-  } catch (err) {
-    console.error("[register] sendActivationEmail error:", err);
-  }
-
-  try {
-    await notifyAdminNewUser({ fullName: fullName.trim(), email, createdAt: user.createdAt });
-  } catch (err) {
-    console.error("[register] notifyAdminNewUser error:", err);
-  }
+  // Fire emails in background — do not block the response
+  sendActivationEmail({ to: email, token: activationToken, locale: safeLocale })
+    .catch((err) => console.error("[register] sendActivationEmail error:", err));
+  notifyAdminNewUser({ fullName: fullName.trim(), email, createdAt: user.createdAt })
+    .catch((err) => console.error("[register] notifyAdminNewUser error:", err));
 
   return NextResponse.json({ id: user.id, email: user.email }, { status: 201 });
   } catch (err) {
