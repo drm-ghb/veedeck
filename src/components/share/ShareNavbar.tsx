@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { Grid2x2, Settings, Sun, Moon, Monitor, UserRound, LogOut, Menu } from "@/components/ui/icons";
 import { signOut } from "next-auth/react";
 import { useTheme, type Theme } from "@/lib/theme";
@@ -30,7 +29,7 @@ interface ShareNavbarProps {
 
 export default function ShareNavbar({ backHref, backLabel, clientLogoUrl, designerName, listToken, projectShareToken, clientName, onLogoClick, onMobileMenuOpen, currentUserId }: ShareNavbarProps) {
   const t = useT();
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, colorTheme } = useTheme();
 
   const THEME_OPTIONS: { value: Theme; label: string; Icon: React.ElementType }[] = [
     { value: "light", label: t.theme.light, Icon: Sun },
@@ -84,9 +83,18 @@ export default function ShareNavbar({ backHref, backLabel, clientLogoUrl, design
             >
               {!clientLogoUrl && !designerName ? (
                 <>
-                  <Image src="/logo.svg" alt="Veedeck" width={28} height={28} className="block dark:hidden" />
-                  <Image src="/logo-dark.svg" alt="Veedeck" width={28} height={28} className="hidden dark:block" />
-                  <span className="text-2xl font-bold tracking-tight">veedeck</span>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={colorTheme === "violet" ? "/logo_violet.png" : "/veedeck_ikona_vsg.svg"}
+                    alt="veedeck"
+                    className="h-7 w-7 shrink-0 object-contain"
+                  />
+                  {/* Light mode wordmark */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/vee_black.png" alt="veedeck" className="dark:hidden shrink-0" style={{ height: "17px", width: "auto" }} />
+                  {/* Dark mode wordmark */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/veedeckicon.png" alt="" className="hidden dark:block shrink-0" style={{ height: "17px", width: "auto" }} />
                 </>
               ) : (
                 <>
