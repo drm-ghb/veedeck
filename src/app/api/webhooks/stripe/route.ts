@@ -5,6 +5,7 @@ import {
   saveStripeCustomerForUser,
   updateSubscriptionStatus,
 } from "@/lib/db/subscriptions";
+import { getPlanFromPriceId } from "@/lib/stripe/prices";
 import { prisma } from "@/lib/prisma";
 import { notifyAdminNewPayment } from "@/lib/email";
 
@@ -54,10 +55,17 @@ export async function POST(req: NextRequest) {
     case "customer.subscription.updated":
     case "customer.subscription.created": {
       const subscription = event.data.object as Stripe.Subscription;
+      const priceId = subscription.items.data[0]?.price?.id;
+      const planFromPrice = priceId ? getPlanFromPriceId(priceId) : null;
+      if (priceId && !planFromPrice) {
+        console.warn("[webhook] Nieznany priceId, plan nie zaktualizowany:", priceId);
+        break;
+      }
+      const plan = planFromPrice ?? subscription.metadata?.plan;
       await updateSubscriptionStatus({
         stripeCustomerId: subscription.customer as string,
-        status: subscription.status, // "trialing" | "active" | "past_due" | ...
-        plan: subscription.metadata?.plan,
+        status: subscription.status,
+        plan: plan ?? undefined,
         currentPeriodEnd: new Date(subscription.items.data[0].current_period_end * 1000),
       });
       break;
@@ -68,6 +76,36 @@ export async function POST(req: NextRequest) {
       await updateSubscriptionStatus({
         stripeCustomerId: subscription.customer as string,
         status: "canceled",
+      });
+      break;
+    }
+
+    case "invoice.paid": {
+      const invoice = event.data.object as Stripe.Invoice;
+      if (!invoice.customer || invoice.amount_paid === 0) break;
+
+      const user = await prisma.user.findUnique({
+        where: { stripeCustomerId: invoice.customer as string },
+        select: { id: true, subscription: { select: { plan: true } } },
+      });
+      if (!user) break;
+
+      const plan = user.subscription?.plan ?? "unknown";
+      const interval = (invoice.lines?.data?.[0] as any)?.price?.recurring?.interval ?? "month";
+      const paidAt = invoice.status_transitions?.paid_at
+        ? new Date(invoice.status_transitions.paid_at * 1000)
+        : new Date();
+
+      await prisma.billingRecord.create({
+        data: {
+          userId: user.id,
+          plan,
+          interval,
+          amount: invoice.amount_paid / 100,
+          currency: invoice.currency.toUpperCase(),
+          paidAt,
+          invoiceUrl: invoice.hosted_invoice_url ?? null,
+        },
       });
       break;
     }
