@@ -1,10 +1,11 @@
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 
 export async function queueEmailNotif(
   userId: string,
   module: string,
   type: string,
-  payload: Record<string, unknown>
+  payload: Prisma.InputJsonValue
 ) {
   await prisma.emailNotifQueue.create({
     data: { userId, module, type, payload },
