@@ -1,5 +1,6 @@
 import { prisma } from "./prisma";
 import bcrypt from "bcryptjs";
+import demoListsData from "./demo-lists-data.json";
 
 export const DEMO_EMAIL = "d.rychlik@veedeck.com";
 
@@ -771,6 +772,68 @@ async function seedDemoData(userId: string) {
     { discussionId: discT2.id, content: "Ja 1–14 sierpnia. Czy Piotrek mógłby być osobą kontaktową dla Kowalskich i Grabowskiej w tym czasie?", authorName: "Marta Zielińska", userId: marta.id },
     { discussionId: discT2.id, content: "Piotrek kryje Kowalskich i Grabowską przez cały sierpień. Annu, Twoje projekty (Nowak, Wiśniewscy) kryjemy z Martą do 10-go, później sam. Dziękuję wszystkim – uzupełniam kalendarz!", authorName: "Daniel Rychlik", userId },
   ] });
+
+  // ─── SHOPPING LISTS ──────────────────────────────────────────────────────
+  for (let i = 0; i < demoListsData.length; i++) {
+    const listData = demoListsData[i] as {
+      name: string;
+      budget: number | null;
+      hidePrices: boolean;
+      sections: Array<{
+        name: string;
+        budget: number | null;
+        unsorted: boolean;
+        products: Array<Record<string, unknown>>;
+      }>;
+    };
+
+    const list = await prisma.shoppingList.create({
+      data: {
+        name: listData.name,
+        userId,
+        budget: listData.budget,
+        hidePrices: listData.hidePrices,
+        order: i,
+      },
+    });
+
+    for (let si = 0; si < listData.sections.length; si++) {
+      const sectionData = listData.sections[si];
+      const section = await prisma.listSection.create({
+        data: {
+          name: sectionData.name,
+          listId: list.id,
+          budget: sectionData.budget,
+          unsorted: sectionData.unsorted,
+          order: si,
+        },
+      });
+
+      if (sectionData.products.length > 0) {
+        await prisma.listProduct.createMany({
+          data: sectionData.products.map((p, pi) => ({
+            sectionId: section.id,
+            name: p.name as string,
+            url: (p.url as string | null) ?? null,
+            imageUrl: (p.imageUrl as string | null) ?? null,
+            price: (p.price as string | null) ?? null,
+            manufacturer: (p.manufacturer as string | null) ?? null,
+            color: (p.color as string | null) ?? null,
+            description: (p.description as string | null) ?? null,
+            deliveryTime: (p.deliveryTime as string | null) ?? null,
+            quantity: (p.quantity as number) ?? 1,
+            optional: (p.optional as boolean) ?? false,
+            catalogNumber: (p.catalogNumber as string | null) ?? null,
+            supplier: (p.supplier as string | null) ?? null,
+            dimensions: (p.dimensions as string | null) ?? null,
+            category: (p.category as string | null) ?? null,
+            note: (p.note as string | null) ?? null,
+            order: pi,
+          })),
+        });
+      }
+    }
+  }
 }
 
 function daysFromNow(days: number, hour = 10): Date {
