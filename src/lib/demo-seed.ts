@@ -1,6 +1,7 @@
 import { prisma } from "./prisma";
 import bcrypt from "bcryptjs";
 import demoListsData from "./demo-lists-data.json";
+import demoProductsData from "./demo-products-data.json";
 
 export const DEMO_EMAIL = "d.rychlik@veedeck.com";
 
@@ -38,6 +39,7 @@ async function clearDemoData(userId: string) {
   await prisma.project.deleteMany({ where: { userId } }); // cascades rooms, renders
   await prisma.note.deleteMany({ where: { userId } });
   await prisma.calendarEvent.deleteMany({ where: { userId } });
+  await prisma.product.deleteMany({ where: { userId } });
   await prisma.user.deleteMany({ where: { email: { in: DEMO_HELPER_EMAILS } } });
 }
 
@@ -772,6 +774,27 @@ async function seedDemoData(userId: string) {
     { discussionId: discT2.id, content: "Ja 1–14 sierpnia. Czy Piotrek mógłby być osobą kontaktową dla Kowalskich i Grabowskiej w tym czasie?", authorName: "Marta Zielińska", userId: marta.id },
     { discussionId: discT2.id, content: "Piotrek kryje Kowalskich i Grabowską przez cały sierpień. Annu, Twoje projekty (Nowak, Wiśniewscy) kryjemy z Martą do 10-go, później sam. Dziękuję wszystkim – uzupełniam kalendarz!", authorName: "Daniel Rychlik", userId },
   ] });
+
+  // ─── PRODUCTS ────────────────────────────────────────────────────────────
+  await prisma.product.createMany({
+    data: (demoProductsData as Array<Record<string, unknown>>).map((p) => ({
+      userId,
+      name: p.name as string,
+      url: (p.url as string | null) ?? null,
+      imageUrl: (p.imageUrl as string | null) ?? null,
+      price: (p.price as string | null) ?? null,
+      manufacturer: (p.manufacturer as string | null) ?? null,
+      color: (p.color as string | null) ?? null,
+      description: (p.description as string | null) ?? null,
+      deliveryTime: (p.deliveryTime as string | null) ?? null,
+      quantity: (p.quantity as number) ?? 1,
+      catalogNumber: (p.catalogNumber as string | null) ?? null,
+      supplier: (p.supplier as string | null) ?? null,
+      dimensions: (p.dimensions as string | null) ?? null,
+      category: (p.category as string | null) ?? null,
+      favorite: (p.favorite as boolean) ?? false,
+    })),
+  });
 
   // ─── SHOPPING LISTS ──────────────────────────────────────────────────────
   for (let i = 0; i < demoListsData.length; i++) {

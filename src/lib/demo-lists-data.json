@@ -1,6 +1,6 @@
 [
   {
-    "name": "PRZYJAŹNI LISTA",
+    "name": "Apartament Nowak - zakupy",
     "budget": null,
     "hidePrices": false,
     "sections": [
@@ -923,7 +923,7 @@
     ]
   },
   {
-    "name": "ROCHA LISTA",
+    "name": "Dom Wiśniewskich - lista",
     "budget": null,
     "hidePrices": false,
     "sections": [
@@ -2090,7 +2090,7 @@
     ]
   },
   {
-    "name": "Lista dla projektu Podwale",
+    "name": "Malinowski & Co - lista zakupowa",
     "budget": 100000,
     "hidePrices": false,
     "sections": [
@@ -2829,7 +2829,7 @@
     ]
   },
   {
-    "name": "Makwoska lista",
+    "name": "Biuro Grabowska Design - lista",
     "budget": null,
     "hidePrices": true,
     "sections": [
