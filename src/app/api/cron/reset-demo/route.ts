@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
   try {
     const result = await resetDemoAccount();
     console.log("[cron/reset-demo] Demo account reset successfully:", result);
-    return NextResponse.json({ success: true, ...result });
+    return NextResponse.json(result);
   } catch (err) {
     console.error("[cron/reset-demo] Failed:", err);
     return NextResponse.json(
