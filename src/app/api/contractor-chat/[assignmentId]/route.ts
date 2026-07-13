@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { pusherServer } from "@/lib/pusher";
+import { queueEmailNotif } from "@/lib/email-queue";
 
 export async function GET(
   _req: NextRequest,
@@ -126,6 +127,19 @@ export async function POST(
       discussionId: discussion.id,
       hasMessage: true,
     });
+  }
+
+  // Queue email notification for designer
+  const designer = await prisma.user.findUnique({
+    where: { id: assignment.designerId },
+    select: { emailNotifEnabled: true, emailNotifModules: true },
+  });
+  if (designer?.emailNotifEnabled && designer.emailNotifModules.includes("dyskusje")) {
+    queueEmailNotif(assignment.designerId, "dyskusje", "discussion_message", {
+      authorName,
+      content: content?.trim() || "[załącznik]",
+      discussionTitle: assignment.project.title,
+    }).catch(() => {});
   }
 
   return NextResponse.json(message, { status: 201 });

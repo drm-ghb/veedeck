@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { pusherServer } from "@/lib/pusher";
 import { getClientProject } from "@/lib/client-access";
+import { queueEmailNotif } from "@/lib/email-queue";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function verifyAccess(session: any, projectId: string, id: string) {
@@ -74,6 +75,25 @@ export async function POST(
 
   await prisma.discussion.update({ where: { id }, data: { updatedAt: new Date() } });
   await pusherServer.trigger(`discussion-${id}`, "new-message", message);
+
+  // Queue email notification for designer
+  const fullDiscussion = await prisma.discussion.findUnique({
+    where: { id },
+    select: { ownerId: true, title: true },
+  });
+  if (fullDiscussion?.ownerId) {
+    const designer = await prisma.user.findUnique({
+      where: { id: fullDiscussion.ownerId },
+      select: { emailNotifEnabled: true, emailNotifModules: true },
+    });
+    if (designer?.emailNotifEnabled && designer.emailNotifModules.includes("dyskusje")) {
+      queueEmailNotif(fullDiscussion.ownerId, "dyskusje", "discussion_message", {
+        authorName,
+        content: content?.trim() || "[załącznik]",
+        discussionTitle: fullDiscussion.title || "Dyskusja",
+      }).catch(() => {});
+    }
+  }
 
   return NextResponse.json(message, { status: 201 });
 }

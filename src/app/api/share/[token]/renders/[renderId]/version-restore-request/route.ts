@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { pusherServer } from "@/lib/pusher";
-import { notifyDesignerVersionRequest } from "@/lib/email";
+import { queueEmailNotif } from "@/lib/email-queue";
 
 export async function POST(
   req: NextRequest,
@@ -64,7 +64,7 @@ export async function POST(
   });
 
   if (project.user.emailNotifEnabled && project.user.emailNotifModules.includes("renderflow")) {
-    notifyDesignerVersionRequest({
+    queueEmailNotif(project.userId, "renderflow", "version_request", {
       designerEmail: project.user.email,
       projectTitle: project.title,
       projectId: project.id,

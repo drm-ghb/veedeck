@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { notifyDesignerSurveySubmitted } from "@/lib/email";
+import { queueEmailNotif } from "@/lib/email-queue";
 import { pusherServer } from "@/lib/pusher";
 
 async function getVerifiedResponse(token: string, responseId: string) {
@@ -127,14 +127,20 @@ export async function POST(
     },
   });
 
-  // Fire-and-forget email notification to designer
-  notifyDesignerSurveySubmitted({
-    designerEmail: updated.survey.user.email ?? "",
-    surveyName: updated.survey.name,
-    surveyId: updated.survey.id,
-    respondentEmail: updated.respondentEmail,
-    respondentName: updated.respondentName,
-  }).catch(() => {});
+  // Queue email notification to designer
+  const designer = await prisma.user.findUnique({
+    where: { id: updated.survey.userId },
+    select: { emailNotifEnabled: true, emailNotifModules: true },
+  });
+  if (designer?.emailNotifEnabled && designer.emailNotifModules.includes("ankiety")) {
+    queueEmailNotif(updated.survey.userId, "ankiety", "survey_submitted", {
+      designerEmail: updated.survey.user.email ?? "",
+      surveyName: updated.survey.name,
+      surveyId: updated.survey.id,
+      respondentEmail: updated.respondentEmail,
+      respondentName: updated.respondentName,
+    }).catch(() => {});
+  }
 
   // In-app notification for designer
   prisma.notification.create({

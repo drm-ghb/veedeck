@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { pusherServer } from "@/lib/pusher";
 import { auth } from "@/lib/auth";
 import { getWorkspaceUserId } from "@/lib/workspace";
-import { notifyDesignerNewListComment } from "@/lib/email";
+import { queueEmailNotif } from "@/lib/email-queue";
 
 export async function GET(req: NextRequest) {
   const productId = req.nextUrl.searchParams.get("productId");
@@ -66,13 +66,13 @@ export async function POST(req: NextRequest) {
       });
       await pusherServer.trigger(`user-${list.userId}`, "new-notification", notification);
 
-      // Email notification to designer
+      // Queue email notification to designer
       const designer = await prisma.user.findUnique({
         where: { id: list.userId },
         select: { email: true, emailNotifEnabled: true, emailNotifModules: true },
       });
       if (designer?.emailNotifEnabled && designer.emailNotifModules.includes("listy")) {
-        notifyDesignerNewListComment({
+        queueEmailNotif(list.userId, "listy", "list_comment", {
           designerEmail: designer.email,
           listName: list.name,
           listPath,

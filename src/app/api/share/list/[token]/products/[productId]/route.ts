@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { pusherServer } from "@/lib/pusher";
+import { queueEmailNotif } from "@/lib/email-queue";
 
 const VALID_APPROVALS = ["accepted", "rejected", null];
 
@@ -73,6 +74,21 @@ export async function PATCH(
         },
       });
       await pusherServer.trigger(`user-${list.userId}`, "new-notification", notification);
+
+      // Queue email notification to designer
+      const designer = await prisma.user.findUnique({
+        where: { id: list.userId },
+        select: { email: true, emailNotifEnabled: true, emailNotifModules: true },
+      });
+      if (designer?.emailNotifEnabled && designer.emailNotifModules.includes("listy")) {
+        queueEmailNotif(list.userId, "listy", approval === "accepted" ? "product_approved" : "product_rejected", {
+          designerEmail: designer.email,
+          clientName,
+          productName: product.name,
+          listName: list.name,
+          listPath,
+        }).catch(() => {});
+      }
     } catch (e) {
       console.error("[approval] notification failed:", e);
     }

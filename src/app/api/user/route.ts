@@ -84,6 +84,12 @@ export async function PATCH(req: NextRequest) {
   for (const f of stringFields) if (body[f] !== undefined) data[f] = body[f] || null;
   if (body.globalHiddenModules !== undefined) data.globalHiddenModules = body.globalHiddenModules;
   if (body.emailNotifModules !== undefined) data.emailNotifModules = body.emailNotifModules;
+  if (body.emailNotifDigestInterval !== undefined) {
+    const VALID_INTERVALS = [15, 30, 60, 120, 240, 1440];
+    const interval = Number(body.emailNotifDigestInterval);
+    if (!VALID_INTERVALS.includes(interval)) return NextResponse.json({ error: "Nieprawidłowy interwał" }, { status: 400 });
+    data.emailNotifDigestInterval = interval;
+  }
   if (body.colorTheme !== undefined) data.colorTheme = body.colorTheme;
   if (body.customTheme !== undefined) data.customTheme = body.customTheme ?? null;
   if (body.pdfListTemplate !== undefined) data.pdfListTemplate = body.pdfListTemplate;

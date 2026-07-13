@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { pusherServer } from "@/lib/pusher";
 import { auth } from "@/lib/auth";
 import { getWorkspaceUserId } from "@/lib/workspace";
-import { notifyDesignerNewPin, notifyDesignerNewComment } from "@/lib/email";
+import { queueEmailNotif } from "@/lib/email-queue";
 
 export async function GET(req: NextRequest) {
   const renderId = req.nextUrl.searchParams.get("renderId");
@@ -97,31 +97,18 @@ export async function POST(req: NextRequest) {
     });
     await pusherServer.trigger(`user-${render.project.userId}`, "new-notification", notif);
 
-    // Email notification to designer
+    // Queue email notification to designer
     if (user.emailNotifEnabled && user.emailNotifModules.includes("renderflow")) {
-      if (isPin) {
-        notifyDesignerNewPin({
-          designerEmail: user.email,
-          projectTitle: render.project.title,
-          renderName: render.name,
-          author,
-          content: finalContent,
-          projectId: render.project.id,
-          renderId,
-          commentId: comment.id,
-        }).catch(() => {});
-      } else {
-        notifyDesignerNewComment({
-          designerEmail: user.email,
-          projectTitle: render.project.title,
-          renderName: render.name,
-          author,
-          content: finalContent,
-          projectId: render.project.id,
-          renderId,
-          commentId: comment.id,
-        }).catch(() => {});
-      }
+      queueEmailNotif(render.project.userId, "renderflow", isPin ? "pin" : "comment", {
+        designerEmail: user.email,
+        projectTitle: render.project.title,
+        renderName: render.name,
+        author,
+        content: finalContent,
+        projectId: render.project.id,
+        renderId,
+        commentId: comment.id,
+      }).catch(() => {});
     }
   }
 

@@ -57,7 +57,9 @@ model User {
   trialEndsAt                DateTime?
   contactEmail               String?
   emailNotifEnabled          Boolean                 @default(false)
-  emailNotifModules          String[]                @default([])
+  emailNotifModules          String[]                @default(["renderflow", "listy", "dyskusje", "ankiety", "wykonawcy"])
+  emailNotifDigestInterval   Int                     @default(30)
+  lastEmailDigestSentAt      DateTime?
   activationToken            String?                 @unique
   activationTokenExpiry      DateTime?
   stripeCustomerId           String?                 @unique
@@ -93,6 +95,17 @@ model User {
   ownedMemberPermissions     TeamMemberPermission[]  @relation("OwnedPermissions")
   helpRequests               HelpRequest[]
   passwordResetTokens        PasswordResetToken[]
+  emailNotifQueue            EmailNotifQueue[]
+}
+
+model EmailNotifQueue {
+  id        String   @id @default(cuid())
+  userId    String
+  module    String
+  type      String
+  payload   Json
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model PasswordResetToken {

@@ -1,4 +1,4 @@
-const ICON_URL = "https://veedeck.com/vee-icon.png";
+const ICON_URL = "https://veedeck.com/veedeck_ikona_vsg.svg";
 const PRIVACY_URL_PL = "https://veedeck.com/polityka-prywatnosci.html";
 const PRIVACY_URL_EN = "https://veedeck.com/privacy-policy.html";
 const CONTACT_EMAIL = "contact@veedeck.com";

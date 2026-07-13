@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { pusherServer } from "@/lib/pusher";
+import { queueEmailNotif } from "@/lib/email-queue";
 
 export async function GET(
   _req: NextRequest,
@@ -41,7 +42,7 @@ export async function POST(
 
   const project = await prisma.project.findUnique({
     where: { shareToken: token },
-    select: { archived: true, shareExpiresAt: true, discussion: { select: { id: true } } },
+    select: { archived: true, shareExpiresAt: true, userId: true, discussion: { select: { id: true, title: true } } },
   });
 
   if (!project || project.archived) return NextResponse.json({ error: "Nie znaleziono" }, { status: 404 });
@@ -75,6 +76,19 @@ export async function POST(
 
   await prisma.discussion.update({ where: { id }, data: { updatedAt: new Date() } });
   await pusherServer.trigger(`discussion-${id}`, "new-message", message);
+
+  // Queue email notification for designer
+  const designer = await prisma.user.findUnique({
+    where: { id: project.userId },
+    select: { emailNotifEnabled: true, emailNotifModules: true },
+  });
+  if (designer?.emailNotifEnabled && designer.emailNotifModules.includes("dyskusje")) {
+    queueEmailNotif(project.userId, "dyskusje", "discussion_message", {
+      authorName: authorName.trim(),
+      content: content?.trim() || "[załącznik]",
+      discussionTitle: project.discussion.title || "Dyskusja",
+    }).catch(() => {});
+  }
 
   return NextResponse.json(message, { status: 201 });
 }

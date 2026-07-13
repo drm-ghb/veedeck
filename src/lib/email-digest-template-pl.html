@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light only">
+<meta name="supported-color-schemes" content="light only">
+<title>veedeck — podsumowanie powiadomień</title>
+<!-- Temat maila (nie renderowany w treści): Masz {N} nowych powiadomień w veedeck -->
+<!--[if mso]>
+<style>* { font-family: Arial, sans-serif !important; }</style>
+<![endif]-->
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Inter:wght@600;700&family=Nunito:wght@300&display=swap');
+  body { margin: 0; padding: 0; background: #EDEDEA; }
+  a { color: #4F46E5; }
+  @media (max-width: 620px) {
+    .vd-card-pad { padding: 32px 24px !important; }
+    .vd-outer-pad { padding: 24px 12px !important; }
+    .vd-h1 { font-size: 26px !important; }
+  }
+</style>
+</head>
+<body style="margin:0;padding:0;background:#EDEDEA;">
+  <!-- Preheader (ukryty) -->
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:#EDEDEA;font-size:1px;line-height:1px;">
+    <!-- PLACEHOLDER: preheader -->Oto co wydarzyło się od ostatniego podsumowania w veedeck.
+  </div>
+
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#EDEDEA;">
+    <tr>
+      <td align="center" class="vd-outer-pad" style="padding:40px 16px;font-family:'DM Sans',-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;">
+
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:600px;">
+
+          <!-- Brand -->
+          <tr>
+            <td style="padding:0 6px 22px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                <tr>
+                  <td style="vertical-align:middle;padding-right:10px;">
+                    <img src="vee-icon.png" width="30" height="30" alt="veedeck" style="display:block;width:30px;height:30px;">
+                  </td>
+                  <td style="vertical-align:middle;font-family:'Nunito',Arial,sans-serif;font-size:19px;font-weight:300;letter-spacing:-0.05em;color:#24252B;width:100%;">
+                    veedeck
+                  </td>
+                  <td style="vertical-align:middle;white-space:nowrap;font-family:'DM Sans',Arial,sans-serif;font-size:12.5px;color:#A0A3AE;">
+                    <!-- PLACEHOLDER: data wysyłki -->13 lipca 2026
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Card -->
+          <tr>
+            <td style="background:#FFFFFF;border:1px solid #E5E7EB;border-radius:18px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td class="vd-card-pad" style="padding:44px 48px 12px;">
+
+                    <div style="font-family:'Inter',Arial,sans-serif;font-size:12px;font-weight:700;letter-spacing:0.09em;text-transform:uppercase;color:#8A8D9A;">
+                      Podsumowanie powiadomień
+                    </div>
+
+                    <h1 class="vd-h1" style="margin:10px 0 0;font-family:'Inter',Arial,sans-serif;font-size:30px;line-height:1.15;font-weight:700;letter-spacing:-0.025em;color:#24252B;">
+                      Podsumowanie powiadomień
+                    </h1>
+
+                    <p style="margin:14px 0 0;font-size:16px;line-height:1.6;color:#565A69;">
+                      Oto co wydarzyło się od ostatniego podsumowania:
+                    </p>
+
+                    <!-- Count badge -->
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:20px 0 8px;">
+                      <tr>
+                        <td style="background:#F2F3F7;border-radius:999px;padding:6px 14px;">
+                          <span style="font-family:'DM Sans',Arial,sans-serif;font-size:13px;font-weight:600;color:#4F46E5;">
+                            <!-- PLACEHOLDER: liczba powiadomień -->8 nowych powiadomień
+                          </span>
+                        </td>
+                      </tr>
+                    </table>
+
+                  </td>
+                </tr>
+
+                <!-- EVENT LIST -->
+                <tr>
+                  <td class="vd-card-pad" style="padding:8px 48px 12px;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+
+                      <!-- EVENT: pin -->
+                      <!-- PLACEHOLDER: event.type=pin -->
+                      <tr>
+                        <td style="padding:18px 0;border-top:1px solid #E5E7EB;">
+                          <div style="font-family:'Inter',Arial,sans-serif;font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#4F46E5;">
+                            📍 Nowy pin
+                          </div>
+                          <div style="margin-top:8px;font-family:'DM Sans',Arial,sans-serif;font-size:15px;line-height:1.5;color:#24252B;">
+                            <!-- PLACEHOLDER: opis --><strong>Anna K.</strong> · Salon · <strong>Projekt Kowalski</strong>
+                          </div>
+                          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:10px;">
+                            <tr>
+                              <td style="background:#F2F3F7;border-radius:10px;padding:11px 14px;">
+                                <span style="font-family:'DM Sans',Arial,sans-serif;font-size:14px;font-style:italic;color:#565A69;">
+                                  <!-- PLACEHOLDER: treść -->„Czy możemy zmienić kolor ściany?"
+                                </span>
+                              </td>
+                            </tr>
+                          </table>
+                          <div style="margin-top:10px;">
+                            <!-- PLACEHOLDER: link do zdarzenia -->
+                            <a href="#" style="font-family:'DM Sans',Arial,sans-serif;font-size:14px;font-weight:600;color:#4F46E5;text-decoration:none;">Przejdź →</a>
+                          </div>
+                        </td>
+                      </tr>
+
+                      <!-- EVENT: comment -->
+                      <!-- PLACEHOLDER: event.type=comment -->
+                      <tr>
+                        <td style="padding:18px 0;border-top:1px solid #E5E7EB;">
+                          <div style="font-family:'Inter',Arial,sans-serif;font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#4F46E5;">
+                            💬 Nowa wiadomość
+                          </div>
+                          <div style="margin-top:8px;font-family:'DM Sans',Arial,sans-serif;font-size:15px;line-height:1.5;color:#24252B;">
+                            <strong>Marek B.</strong> · Kuchnia · <strong>Projekt Nowak</strong>
+                          </div>
+                          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:10px;">
+                            <tr>
+                              <td style="background:#F2F3F7;border-radius:10px;padding:11px 14px;">
+                                <span style="font-family:'DM Sans',Arial,sans-serif;font-size:14px;font-style:italic;color:#565A69;">
+                                  „Kiedy będą gotowe kolejne rendery?"
+                                </span>
+                              </td>
+                            </tr>
+                          </table>
+                          <div style="margin-top:10px;">
+                            <a href="#" style="font-family:'DM Sans',Arial,sans-serif;font-size:14px;font-weight:600;color:#4F46E5;text-decoration:none;">Przejdź →</a>
+                          </div>
+                        </td>
+                      </tr>
+
+                      <!-- EVENT: list_comment -->
+                      <!-- PLACEHOLDER: event.type=list_comment -->
+                      <tr>
+                        <td style="padding:18px 0;border-top:1px solid #E5E7EB;">
+                          <div style="font-family:'Inter',Arial,sans-serif;font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#4F46E5;">
+                            🛋️ Komentarz do produktu
+                          </div>
+                          <div style="margin-top:8px;font-family:'DM Sans',Arial,sans-serif;font-size:15px;line-height:1.5;color:#24252B;">
+                            <strong>Julia W.</strong> · Sofa Malmo · <strong>Lista Salon</strong>
+                          </div>
+                          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:10px;">
+                            <tr>
+                              <td style="background:#F2F3F7;border-radius:10px;padding:11px 14px;">
+                                <span style="font-family:'DM Sans',Arial,sans-serif;font-size:14px;font-style:italic;color:#565A69;">
+                                  „Czy mają to w kolorze szarym?"
+                                </span>
+                              </td>
+                            </tr>
+                          </table>
+                          <div style="margin-top:10px;">
+                            <a href="#" style="font-family:'DM Sans',Arial,sans-serif;font-size:14px;font-weight:600;color:#4F46E5;text-decoration:none;">Przejdź →</a>
+                          </div>
+                        </td>
+                      </tr>
+
+                      <!-- EVENT: product_approved -->
+                      <!-- PLACEHOLDER: event.type=product_approved -->
+                      <tr>
+                        <td style="padding:18px 0;border-top:1px solid #E5E7EB;">
+                          <div style="font-family:'Inter',Arial,sans-serif;font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#1E9E63;">
+                            ✓ Zatwierdzono produkt
+                          </div>
+                          <div style="margin-top:8px;font-family:'DM Sans',Arial,sans-serif;font-size:15px;line-height:1.5;color:#24252B;">
+                            <strong>Anna K.</strong> zaakceptowała <strong>Lampa Nordlux</strong> na liście <strong>Lista Sypialnia</strong>
+                          </div>
+                          <div style="margin-top:10px;">
+                            <a href="#" style="font-family:'DM Sans',Arial,sans-serif;font-size:14px;font-weight:600;color:#4F46E5;text-decoration:none;">Przejdź →</a>
+                          </div>
+                        </td>
+                      </tr>
+
+                      <!-- EVENT: product_rejected -->
+                      <!-- PLACEHOLDER: event.type=product_rejected -->
+                      <tr>
+                        <td style="padding:18px 0;border-top:1px solid #E5E7EB;">
+                          <div style="font-family:'Inter',Arial,sans-serif;font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#D6473C;">
+                            ✕ Odrzucono produkt
+                          </div>
+                          <div style="margin-top:8px;font-family:'DM Sans',Arial,sans-serif;font-size:15px;line-height:1.5;color:#24252B;">
+                            <strong>Marek B.</strong> odrzucił <strong>Krzesło Hay</strong> na liście <strong>Lista Jadalnia</strong>
+                          </div>
+                          <div style="margin-top:10px;">
+                            <a href="#" style="font-family:'DM Sans',Arial,sans-serif;font-size:14px;font-weight:600;color:#4F46E5;text-decoration:none;">Przejdź →</a>
+                          </div>
+                        </td>
+                      </tr>
+
+                      <!-- EVENT: status_request -->
+                      <!-- PLACEHOLDER: event.type=status_request -->
+                      <tr>
+                        <td style="padding:18px 0;border-top:1px solid #E5E7EB;">
+                          <div style="font-family:'Inter',Arial,sans-serif;font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#8A8D9A;">
+                            ⏳ Prośba o status
+                          </div>
+                          <div style="margin-top:8px;font-family:'DM Sans',Arial,sans-serif;font-size:15px;line-height:1.5;color:#24252B;">
+                            <strong>Anna K.</strong> prosi o zmianę statusu <strong>Wizualizacja 3</strong> w projekcie <strong>Projekt Kowalski</strong>
+                          </div>
+                          <div style="margin-top:10px;">
+                            <a href="#" style="font-family:'DM Sans',Arial,sans-serif;font-size:14px;font-weight:600;color:#4F46E5;text-decoration:none;">Przejdź →</a>
+                          </div>
+                        </td>
+                      </tr>
+
+                      <!-- EVENT: version_request -->
+                      <!-- PLACEHOLDER: event.type=version_request -->
+                      <tr>
+                        <td style="padding:18px 0;border-top:1px solid #E5E7EB;">
+                          <div style="font-family:'Inter',Arial,sans-serif;font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#8A8D9A;">
+                            ↺ Przywrócenie wersji
+                          </div>
+                          <div style="margin-top:8px;font-family:'DM Sans',Arial,sans-serif;font-size:15px;line-height:1.5;color:#24252B;">
+                            <strong>Marek B.</strong> prosi o przywrócenie wersji 2 pliku <strong>Rzut parteru</strong>
+                          </div>
+                          <div style="margin-top:10px;">
+                            <a href="#" style="font-family:'DM Sans',Arial,sans-serif;font-size:14px;font-weight:600;color:#4F46E5;text-decoration:none;">Przejdź →</a>
+                          </div>
+                        </td>
+                      </tr>
+
+                      <!-- EVENT: survey_submitted -->
+                      <!-- PLACEHOLDER: event.type=survey_submitted -->
+                      <tr>
+                        <td style="padding:18px 0 6px;border-top:1px solid #E5E7EB;">
+                          <div style="font-family:'Inter',Arial,sans-serif;font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#4F46E5;">
+                            📋 Wypełniono ankietę
+                          </div>
+                          <div style="margin-top:8px;font-family:'DM Sans',Arial,sans-serif;font-size:15px;line-height:1.5;color:#24252B;">
+                            <strong>Anna K.</strong> wypełniła ankietę <strong>Brief projektowy — Nowakowie</strong>
+                          </div>
+                          <div style="margin-top:10px;">
+                            <a href="#" style="font-family:'DM Sans',Arial,sans-serif;font-size:14px;font-weight:600;color:#4F46E5;text-decoration:none;">Zobacz →</a>
+                          </div>
+                        </td>
+                      </tr>
+                      <!-- /PLACEHOLDER: powtórz blok <tr> dla każdego zdarzenia (do ~20) -->
+
+                    </table>
+                  </td>
+                </tr>
+
+                <!-- CTA -->
+                <tr>
+                  <td class="vd-card-pad" style="padding:16px 48px 44px;">
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                      <tr>
+                        <td align="center" style="border-radius:12px;background:#4F46E5;">
+                          <!-- PLACEHOLDER: link do aplikacji -->
+                          <a href="#" style="display:block;padding:15px 30px;font-family:'DM Sans',Arial,sans-serif;font-size:15px;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:12px;">
+                            Otwórz veedeck
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <div style="border-top:1px solid #E5E7EB;margin:28px 0 0;"></div>
+
+                    <p style="margin:20px 0 0;font-size:13px;line-height:1.6;color:#8A8D9A;">
+                      Częstotliwość: <!-- PLACEHOLDER: interwał -->co 30 minut
+                      &nbsp;·&nbsp;
+                      <!-- PLACEHOLDER: link do ustawień powiadomień -->
+                      <a href="#" style="color:#4F46E5;text-decoration:underline;">Zarządzaj powiadomieniami</a>
+                    </p>
+                  </td>
+                </tr>
+
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding:26px 24px 8px;text-align:center;">
+              <p style="margin:0;font-size:13px;line-height:1.6;color:#8A8D9A;">
+                veedeck — Visualize, Design, Deliver. Platforma dla projektantów wnętrz.
+              </p>
+              <p style="margin:10px 0 0;font-size:13px;line-height:1.6;color:#A0A3AE;">
+                <a href="Polityka prywatnosci.html" style="color:#8A8D9A;text-decoration:none;">Polityka prywatności</a>
+                &nbsp;·&nbsp;
+                <a href="Polityka cookies.html" style="color:#8A8D9A;text-decoration:none;">Cookies</a>
+                &nbsp;·&nbsp;
+                <a href="/cdn-cgi/l/email-protection#8cefe3e2f8edeff8ccfae9e9e8e9efe7a2efe3e1" style="color:#8A8D9A;text-decoration:none;"><span class="__cf_email__" data-cfemail="a6c5c9c8d2c7c5d2e6d0c3c3c2c3c5cd88c5c9cb">[email&#160;protected]</span></a>
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script></body>
+</html>

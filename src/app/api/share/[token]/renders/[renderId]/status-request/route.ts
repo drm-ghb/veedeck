@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { pusherServer } from "@/lib/pusher";
-import { notifyDesignerStatusRequest } from "@/lib/email";
+import { queueEmailNotif } from "@/lib/email-queue";
 
 export async function POST(
   req: NextRequest,
@@ -61,7 +61,7 @@ export async function POST(
   });
 
   if (project.user.emailNotifEnabled && project.user.emailNotifModules.includes("renderflow")) {
-    notifyDesignerStatusRequest({
+    queueEmailNotif(project.userId, "renderflow", "status_request", {
       designerEmail: project.user.email,
       projectTitle: project.title,
       projectId: project.id,

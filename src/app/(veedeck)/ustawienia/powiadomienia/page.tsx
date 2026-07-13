@@ -12,6 +12,7 @@ export default async function SettingsPowiadomieniaPage() {
     select: {
       emailNotifEnabled: true,
       emailNotifModules: true,
+      emailNotifDigestInterval: true,
     },
   });
   if (!user) redirect("/login");
@@ -20,6 +21,7 @@ export default async function SettingsPowiadomieniaPage() {
     <SettingsGeneral
       initialEmailNotifEnabled={user.emailNotifEnabled}
       initialEmailNotifModules={user.emailNotifModules}
+      initialEmailNotifDigestInterval={user.emailNotifDigestInterval}
     />
   );
 }
