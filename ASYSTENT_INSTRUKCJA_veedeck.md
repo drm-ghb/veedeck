@@ -66,7 +66,7 @@ System działa w modelu trzech paneli:
 | Panel | Kto używa | Dostęp |
 |---|---|---|
 | Panel projektanta | Projektant i zaproszeni członkowie zespołu | Po zalogowaniu na konto veedeck |
-| Panel klienta | Klient inwestora | Przez link od projektanta lub konto klienta |
+| Panel klienta | Klient lub inwestor | Po zalogowaniu na konto veedeck utworzone przez projektanta w module Klienc -> Kontakty |
 | Panel wykonawcy | Wykonawcy (hydraulicy, malarze itp.) | Przez konto zakładane przez projektanta |
 
 Dane każdego projektanta są izolowane. Klient widzi tylko to, co projektant mu udostępni. Wykonawca widzi tylko swoje foldery i pliki.
@@ -121,23 +121,23 @@ Centrum aktywności workspace'u. Pokazuje na jednym ekranie:
 **Statystyki:**
 - Klienci — liczba klientów w bazie
 - Projekty — łączna liczba aktywnych projektów
-- RenderFlow — projekty z modułem renderów
+- ProjectFlow— ostatnie projekty z ProjectFlow
 - Listy zakupowe — liczba aktywnych list
 
 **Sekcje aktywności:**
-- Ostatnie projekty RenderFlow — kafelki z miniaturą ostatniego renderu, licznikami nieprzeczytanych pinezek i wiadomości
+- Ostatnie projekty ProjectFlow — kafelki z miniaturą ostatniego renderu, licznikami nieprzeczytanych pinezek i wiadomości
 - Ostatnie listy zakupowe — 3 ostatnie listy z informacją o projekcie i kliencie
 - Zadania na dziś / przeterminowane — zadania z datą do dziś lub wcześniejszą, które nie są ukończone
 - Nieprzeczytane pinezki — pinezki od klientów oczekujące na reakcję
 - Prośby o zmianę statusu — klient wysłał prośbę o zaakceptowanie renderu
 - Prośby o przywrócenie wersji — klient chce przywrócić starszą wersję pliku
-- Nieodebrane wiadomości — wiadomości z czatu RenderFlow i wiadomości do produktów na listach
+- Nieodebrane wiadomości — wiadomości z czatu ProjectFlow i wiadomości do produktów na listach
 
 Kliknięcie w element przekierowuje bezpośrednio do odpowiedniego miejsca w aplikacji.
 
 ---
 
-### 3.2 Moduł ProjectFlow / RenderFlow
+### 3.2 Moduł ProjectFlow
 
 Lista wszystkich projektów z modułem renderów.
 
@@ -148,7 +148,7 @@ Lista wszystkich projektów z modułem renderów.
 
 **Widok projektu:**
 
-Projekt zawiera "pokoje" (pomieszczenia) — każdy pokój to osobna galeria renderów z ikoną pasującą do typu pomieszczenia.
+Projekt zawiera "pokoje" (pomieszczenia) w formie folderow — każdy pokój/folder to osobna galeria renderów z ikoną pasującą do typu pomieszczenia.
 
 Akcje dostępne w projekcie:
 - Dodaj pokój — ikona "+" na liście pokojów
@@ -158,7 +158,7 @@ Akcje dostępne w projekcie:
 - Edytuj ustawienia projektu — ikona ustawień w nagłówku
 
 **Dostęp klienta do projektu:**
-Klient uzyskuje dostęp do projektu przez panel klienta. Dostęp nadawany jest z modułu **Klienci → profil klienta → zakładka Kontakty** — projektant przypisuje tam osoby kontaktowe do projektu. Klient loguje się do panelu klienta kontem założonym przez projektanta i widzi przypisane projekty.
+Klient uzyskuje dostęp do projektu przez panel klienta. Dostęp nadawany jest z modułu **Klienci → profil klienta → zakładka Kontakty** — projektant przypisuje tam osoby kontaktowe do projektu. Klient loguje się tak jak projektant, na app.veedeck.com/login, do panelu klienta kontem założonym przez projektanta i widzi przypisane projekty.
 
 **Ustawienia widoku klienta (per-projekt):**
 - Ukryte moduły — możliwość ukrycia ProjectFlow, List lub Dyskusji w widoku klienta
@@ -206,22 +206,23 @@ Porównanie wersji: w widoku renderu można otworzyć panel porównania (dwie we
 
 **Typowe zadania:**
 
-_Jak dodać render do pokoju:_
+_Jak dodać plik do pokoju/folderu:_
 1. Otwórz projekt z listy ProjectFlow.
 2. Kliknij pokój, do którego chcesz dodać plik.
-3. Kliknij "Dodaj render" lub przeciągnij plik do obszaru uploadu.
+3. Kliknij "Dodaj pliki" lub przeciągnij plik do obszaru uploadu.
 4. Plik pojawi się w galerii pokoju.
 
 _Jak udostępnić projekt klientowi:_
 1. Przejdź do modułu Klienci.
 2. Otwórz profil klienta i przejdź do zakładki "Kontakty".
 3. Wybierz osobę kontaktową lub dodaj nową.
-4. Przypisz tę osobę do projektu.
-5. Klient loguje się do panelu klienta i widzi przypisany projekt.
+4. Upewnij się,ze klient jest dodany do projektu w ProjectFlow
+5. Upewnij się, ze kontakt ma utworzone konto (jezeli nie, dodaj login i haslo)
+6. Klient loguje się do panelu klienta i widzi przypisany projekt.
 
 _Jak obsłużyć prośbę o zmianę statusu od klienta:_
 1. Przejdź do Panelu głównego → sekcja "Prośby o zmianę statusu".
-2. Kliknij daną prośbę — otwiera się render.
+2. Kliknij daną prośbę — otwiera się plik.
 3. Kliknij "Zaakceptuj" lub "Odrzuć".
 
 **FAQ:**
@@ -256,7 +257,7 @@ Nazwa (wymagana), URL, obraz (z URL lub wgrany ręcznie), cena, producent, kolor
 
 **Sposoby dodawania produktu:**
 1. Przez link — wklej URL produktu ze sklepu; dane mogą się wypełnić częściowo lub całkowicie
-2. Przez wtyczkę Veepick — skrapuj produkt bezpośrednio ze strony sklepu w przeglądarce; dane wypełniają się automatycznie i trafiają od razu na wybraną listę (szczegóły w sekcji 6)
+2. Przez wtyczkę veepick — skrapuj produkt bezpośrednio ze strony sklepu w przeglądarce; dane wypełniają się automatycznie i trafiają od razu na wybraną listę (szczegóły w sekcji 6)
 3. Ręcznie — wypełnij formularz bez URL
 4. Z biblioteki produktów — wybierz z wcześniej zapisanych produktów
 
@@ -311,7 +312,7 @@ Q: Chcę dodać własną kategorię produktów.
 A: Ustawienia → Listy zakupowe. Tam dodasz kategorie i zmienisz ich kolejność.
 
 Q: Nie mogę usunąć sekcji.
-A: Sekcje możesz usunąć z menu sekcji (3 kropki). Uwaga: usunięcie sekcji usuwa też produkty w niej.
+A: Sekcje możesz usunąć z menu sekcji (3 kropki). Uwaga: usunięcie sekcji usuwa też produkty które w niej są.
 
 ---
 
