@@ -56,6 +56,17 @@ export function getPriceId(plan: PlanId, interval: BillingInterval, currency: Cu
   return price;
 }
 
+export function getPlanFromPriceId(priceId: string): PlanId | null {
+  for (const [plan, intervals] of Object.entries(STRIPE_PRICES)) {
+    for (const currencies of Object.values(intervals)) {
+      if (Object.values(currencies).includes(priceId)) {
+        return plan as PlanId;
+      }
+    }
+  }
+  return null;
+}
+
 export function isPlanId(value: string): value is PlanId {
   return value === "freelancer" || value === "studio";
 }

@@ -8,8 +8,6 @@ import {
 } from "@/lib/stripe/prices";
 import { getCurrentUser } from "@/lib/auth/getCurrentUser";
 
-const TRIAL_DAYS = 14;
-
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -45,13 +43,14 @@ export async function POST(req: NextRequest) {
     const session = await getStripe().checkout.sessions.create({
       mode: "subscription",
       line_items: [{ price: priceId, quantity: 1 }],
-      subscription_data: {
-        trial_period_days: TRIAL_DAYS,
-      },
+      automatic_tax: { enabled: true },
+      customer_update: { address: "auto", name: "auto" },
+      billing_address_collection: "required",
+      tax_id_collection: { enabled: true },
       payment_method_collection: "if_required",
       allow_promotion_codes: true,
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/ustawienia/wtyczka?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/ustawienia/wtyczka?checkout=cancelled`,
+      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/ustawienia/subskrypcja?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/ustawienia/subskrypcja?checkout=cancelled`,
       metadata: {
         userId: user.id,
         plan,

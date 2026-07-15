@@ -479,6 +479,7 @@ export const en: TranslationKeys = {
     changeCategoryTitle: "Change category",
     noteLabel: "Note:",
     addNote: "+ Note",
+    editNote: "Edit note",
     checkPriceWarning: "Check the current product price!",
     editPriceTitle: "Edit price",
     addPriceTitle: "Add price",

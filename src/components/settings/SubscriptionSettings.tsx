@@ -161,7 +161,7 @@ function formatPrice(monthlyPLN: number, yearlyPLN: number, currency: Currency, 
 
 /* ─── Plans Modal ─────────────────────────────────────────────────────────── */
 
-function PlansModal({ onClose }: { onClose: () => void }) {
+function PlansModal({ onClose, subscription }: { onClose: () => void; subscription: Subscription | null }) {
   const [annual, setAnnual] = useState(false);
   const [vatMode, setVatMode] = useState<"netto" | "brutto">("netto");
   const [currency, setCurrency] = useState<Currency>("PLN");
@@ -188,6 +188,13 @@ function PlansModal({ onClose }: { onClose: () => void }) {
     setCheckoutError(null);
     setCheckoutLoading(planId);
     try {
+      if (subscription?.status === "active") {
+        const res = await fetch("/api/portal", { method: "POST" });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error ?? "Nieznany błąd");
+        window.location.href = data.url;
+        return;
+      }
       const interval = annual ? "year" : "month";
       const stripeCurrency = currency.toLowerCase() as "pln" | "eur" | "usd" | "gbp";
       const res = await fetch("/api/checkout", {
@@ -274,6 +281,8 @@ function PlansModal({ onClose }: { onClose: () => void }) {
         {/* Plans grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-0 divide-y md:divide-y-0 md:divide-x divide-border">
           {PLANS_DATA.map((plan) => {
+            const isCurrentPlan = subscription?.status === "active" && subscription.plan === plan.id;
+            const hasActiveSub = subscription?.status === "active";
             const vatYearly = vatMode === "brutto" ? Math.round(plan.yearlyPLN * 1.23) : plan.yearlyPLN;
             const priceStr = ratesLoading ? "…" : formatPrice(plan.monthlyPLN, plan.yearlyPLN, currency, rates, annual, vatMode);
             const annualTotal = annual && !plan.customPricing
@@ -283,7 +292,9 @@ function PlansModal({ onClose }: { onClose: () => void }) {
               : null;
             return (
               <div key={plan.id} className={`flex flex-col p-6 ${plan.featured ? "bg-primary/3" : ""}`}>
-                {plan.featured ? (
+                {isCurrentPlan ? (
+                  <span className="self-center text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 mb-3">Twój plan</span>
+                ) : plan.featured ? (
                   <span className="self-center text-xs font-semibold px-2.5 py-1 rounded-full bg-primary/15 text-primary mb-3">Polecany</span>
                 ) : (
                   <div className="h-7 mb-3" />
@@ -317,13 +328,19 @@ function PlansModal({ onClose }: { onClose: () => void }) {
                   </a>
                 ) : (
                   <button onClick={() => handleChoosePlan(plan.id)}
-                    disabled={checkoutLoading !== null}
+                    disabled={checkoutLoading !== null || isCurrentPlan}
                     className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-colors mb-5 disabled:opacity-60 ${
-                      plan.featured
-                        ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                        : "bg-muted text-foreground hover:bg-muted/70 border border-border"
+                      isCurrentPlan
+                        ? "bg-muted text-muted-foreground border border-border cursor-not-allowed"
+                        : plan.featured
+                          ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                          : "bg-muted text-foreground hover:bg-muted/70 border border-border"
                     }`}>
-                    {checkoutLoading === plan.id ? "Przekierowuję…" : `Wybierz ${plan.name}`}
+                    {checkoutLoading === plan.id ? "Przekierowuję…"
+                      : isCurrentPlan
+                        ? <span className="flex items-center justify-center gap-1.5"><Check size={14} />Posiadasz</span>
+                        : hasActiveSub ? `Zmień na ${plan.name}`
+                        : `Wybierz ${plan.name}`}
                   </button>
                 )}
 
@@ -554,7 +571,7 @@ export default function SubscriptionSettings({ trialEndsAt, isFree, subscription
         )}
       </section>
 
-      {showPlansModal && <PlansModal onClose={() => setShowPlansModal(false)} />}
+      {showPlansModal && <PlansModal onClose={() => setShowPlansModal(false)} subscription={subscription} />}
     </div>
   );
 }

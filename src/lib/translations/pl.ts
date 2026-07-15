@@ -478,6 +478,7 @@ export const pl = {
     changeCategoryTitle: "Zmień kategorię",
     noteLabel: "Notatka:",
     addNote: "+ Notatka",
+    editNote: "Edytuj notatkę",
     checkPriceWarning: "Sprawdź aktualną cenę produktu!",
     editPriceTitle: "Edytuj cenę",
     addPriceTitle: "Dodaj cenę",
