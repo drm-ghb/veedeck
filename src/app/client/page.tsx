@@ -9,7 +9,13 @@ export default async function ClientIndexPage() {
   if ((session.user as any).role !== "client") redirect("/panel-glowny");
 
   const links = await prisma.projectClient.findMany({
-    where: { userId: session.user.id },
+    where: {
+      userId: session.user.id,
+      OR: [
+        { projectId: null },
+        { project: { archived: false } },
+      ],
+    },
     select: {
       clientId: true,
       project: {

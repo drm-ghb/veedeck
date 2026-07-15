@@ -14,13 +14,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Search, ChevronRight, Eye, EyeOff } from "@/components/ui/icons";
+import { Search, ChevronRight, Eye, EyeOff, Plus } from "@/components/ui/icons";
 import { useT } from "@/lib/i18n";
 
 interface NewProjectDialogProps {
   module?: string;
   label?: string;
   clientMode?: boolean;
+  iconOnly?: boolean;
   // When passed, project is created directly under this client (no client picker step)
   clientId?: string;
   clientName?: string;
@@ -31,7 +32,7 @@ interface ClientOption {
   name: string;
 }
 
-export default function NewProjectDialog({ module, label, clientMode, clientId: fixedClientId, clientName: fixedClientName }: NewProjectDialogProps = {}) {
+export default function NewProjectDialog({ module, label, iconOnly, clientMode, clientId: fixedClientId, clientName: fixedClientName }: NewProjectDialogProps = {}) {
   const t = useT();
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<"new" | "existing">("new");
@@ -147,7 +148,14 @@ export default function NewProjectDialog({ module, label, clientMode, clientId: 
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger render={<Button />}>{label ?? t.projekty.newProject}</DialogTrigger>
+      <DialogTrigger
+        render={iconOnly
+          ? <button className="w-8 h-8 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground flex items-center justify-center transition-colors shrink-0" />
+          : <Button />
+        }
+      >
+        {iconOnly ? <Plus size={16} /> : (label ?? t.projekty.newProject)}
+      </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{label ?? t.projekty.newProject}</DialogTitle>

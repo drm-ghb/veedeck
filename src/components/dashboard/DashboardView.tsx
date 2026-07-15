@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import { pusherClient } from "@/lib/pusher";
 import {
   Users,
@@ -22,6 +22,7 @@ import {
   X,
   CalendarDays,
   CheckSquare,
+  MoreVertical,
 } from "@/components/ui/icons";
 import NewProjectDialog from "./NewProjectDialog";
 import NewListDialog from "@/components/listy/NewListDialog";
@@ -250,6 +251,30 @@ const EVENT_TYPE_COLORS: Record<string, { bar: string; bg: string; text: string 
   PRZYPOMNIENIE: { bar: "bg-amber-400 dark:bg-amber-500", bg: "bg-amber-50 dark:bg-amber-900/30", text: "text-amber-700 dark:text-amber-300" },
 };
 
+function SectionCollapse({ hidden, children }: { hidden: boolean; children: ReactNode }) {
+  return (
+    <div style={{
+      display: "grid",
+      gridTemplateRows: hidden ? "0fr" : "1fr",
+      transition: "grid-template-rows 0.3s ease, opacity 0.2s ease",
+      opacity: hidden ? 0 : 1,
+      pointerEvents: hidden ? "none" : undefined,
+    }}>
+      <div className="min-h-0 overflow-hidden">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+const SECTION_CONFIG = [
+  { key: "projekty", label: "Projekty" },
+  { key: "listy", label: "Listy" },
+  { key: "kalendarz", label: "Kalendarz" },
+  { key: "wiadomosci", label: "Wiadomości" },
+  { key: "zadania", label: "Zadania" },
+] as const;
+
 export default function DashboardView({
   displayName,
   userId,
@@ -270,6 +295,25 @@ export default function DashboardView({
   const t = useT();
 
   const [notifCount, setNotifCount] = useState(stats.notificationCount);
+  const [hiddenSections, setHiddenSections] = useState<string[]>([]);
+  const [sectionMenuOpen, setSectionMenuOpen] = useState(false);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("dashboard-hidden-sections");
+      if (stored) setHiddenSections(JSON.parse(stored));
+    } catch {}
+  }, []);
+
+  function toggleSection(key: string) {
+    setHiddenSections((prev) => {
+      const next = prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key];
+      try { localStorage.setItem("dashboard-hidden-sections", JSON.stringify(next)); } catch {}
+      return next;
+    });
+  }
+
+  const isSectionHidden = (key: string) => hiddenSections.includes(key);
 
   useEffect(() => {
     function onUpdated() {
@@ -409,98 +453,136 @@ export default function DashboardView({
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold">
-            {displayName
-              ? t.home.welcome.replace("{name}", displayName.split(" ")[0])
-              : t.home.welcomeDefault}
-          </h1>
+    <div>
+      {/* Welcome row */}
+      <div className="flex items-center justify-between gap-3 mb-5 lg:mb-[22px]">
+        <h1 className="text-2xl font-bold lg:text-[23px] lg:tracking-tight">
+          {displayName
+            ? t.home.welcome.replace("{name}", displayName.split(" ")[0])
+            : t.home.welcomeDefault}
+        </h1>
+        <div className="flex items-center gap-2 shrink-0">
+          <div className="lg:hidden">
+            <NewProjectDialog clientMode iconOnly />
+          </div>
+          <div className="hidden lg:block">
+            <NewProjectDialog label={t.projekty.newClient} clientMode />
+          </div>
+          <div className="relative">
+            <button
+              onClick={() => setSectionMenuOpen((v) => !v)}
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              title="Dostosuj panel"
+            >
+              <MoreVertical size={16} />
+            </button>
+            {sectionMenuOpen && (
+              <>
+                <div className="fixed inset-0 z-[5]" onClick={() => setSectionMenuOpen(false)} />
+                <div className="absolute right-0 top-[calc(100%+6px)] z-10 w-52 bg-card border border-border rounded-xl shadow-lg overflow-hidden p-1.5">
+                  {SECTION_CONFIG.map(({ key, label }) => (
+                    <button
+                      key={key}
+                      onClick={() => toggleSection(key)}
+                      className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm text-left hover:bg-muted transition-colors"
+                    >
+                      <div className={`w-4 h-4 rounded flex items-center justify-center border-2 shrink-0 transition-colors ${
+                        !hiddenSections.includes(key)
+                          ? "bg-primary border-primary"
+                          : "border-muted-foreground/40"
+                      }`}>
+                        {!hiddenSections.includes(key) && <Check size={10} className="text-primary-foreground" />}
+                      </div>
+                      <span className="text-foreground">{label}</span>
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
         </div>
-        <NewProjectDialog label={t.projekty.newClient} clientMode />
+      </div>
+      <div className="mb-4 lg:hidden">
         <MobileDiscussionsBubble />
       </div>
 
-
-      {/* Main grid — two independent flex columns */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-        {/* Left column: Stats → Projekty → Listy */}
-        <div className="contents lg:col-span-2 lg:flex lg:flex-col lg:gap-6">
-
-        {/* Stats */}
-        <div className="order-1">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <Link
-              href="/klienci"
-              className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border hover:border-primary/30 hover:bg-primary/5 transition-colors"
-            >
-              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                <Users size={16} className="text-primary" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-xl font-bold leading-none">{stats.clients}</p>
-                <p className="text-xs text-muted-foreground mt-0.5 truncate">{t.home.statsClients}</p>
-              </div>
-            </Link>
-
-            {!hiddenModules.includes("renderflow") && (
-              <Link
-                href="/projectflow"
-                className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border hover:border-primary/30 hover:bg-primary/5 transition-colors"
-              >
-                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                  <PushPin size={16} className="text-primary" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-xl font-bold leading-none">{stats.renderflowProjects}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5 truncate">{t.home.statsProjects}</p>
-                </div>
-              </Link>
-            )}
-
-            {!hiddenModules.includes("listy") && (
-              <Link
-                href="/listy-zakupowe"
-                className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border hover:border-primary/30 hover:bg-primary/5 transition-colors"
-              >
-                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                  <LocalMall size={16} className="text-primary" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-xl font-bold leading-none">{stats.lists}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5 truncate">{t.home.statsLists}</p>
-                </div>
-              </Link>
-            )}
-
-            <Link
-              href="/notifications"
-              className={`flex items-center gap-3 p-3 rounded-xl border transition-colors ${
-                notifCount > 0
-                  ? "bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800 hover:border-amber-300 dark:hover:border-amber-700"
-                  : "bg-card border-border hover:border-primary/30 hover:bg-primary/5"
-              }`}
-            >
-              <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${notifCount > 0 ? "bg-amber-100 dark:bg-amber-900/40" : "bg-muted"}`}>
-                {notifCount > 0
-                  ? <Bell size={16} className="text-amber-600 dark:text-amber-400" />
-                  : <CheckCircle2 size={16} className="text-muted-foreground" />}
-              </div>
-              <div className="min-w-0">
-                <p className="text-xl font-bold leading-none">{notifCount}</p>
-                <p className="text-xs text-muted-foreground mt-0.5 truncate">{t.home.statsNotifications}</p>
-              </div>
-            </Link>
+      {/* Stats — full width */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6 lg:mb-5">
+        <Link
+          href="/klienci"
+          className="min-w-0 flex items-center gap-3 p-3 rounded-xl bg-card border border-border hover:border-primary/30 hover:bg-primary/5 transition-colors"
+        >
+          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+            <Users size={16} className="text-primary" />
           </div>
-        </div>{/* end stats */}
+          <div className="min-w-0">
+            <p className="text-xl font-bold leading-none">{stats.clients}</p>
+            <p className="text-xs text-muted-foreground mt-0.5 truncate">{t.home.statsClients}</p>
+          </div>
+        </Link>
+
+        {!hiddenModules.includes("renderflow") && (
+          <Link
+            href="/projectflow"
+            className="min-w-0 flex items-center gap-3 p-3 rounded-xl bg-card border border-border hover:border-primary/30 hover:bg-primary/5 transition-colors"
+          >
+            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+              <PushPin size={16} className="text-primary" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xl font-bold leading-none">{stats.renderflowProjects}</p>
+              <p className="text-xs text-muted-foreground mt-0.5 truncate">{t.home.statsProjects}</p>
+            </div>
+          </Link>
+        )}
+
+        {!hiddenModules.includes("listy") && (
+          <Link
+            href="/listy-zakupowe"
+            className="min-w-0 flex items-center gap-3 p-3 rounded-xl bg-card border border-border hover:border-primary/30 hover:bg-primary/5 transition-colors"
+          >
+            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+              <LocalMall size={16} className="text-primary" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xl font-bold leading-none">{stats.lists}</p>
+              <p className="text-xs text-muted-foreground mt-0.5 truncate">{t.home.statsLists}</p>
+            </div>
+          </Link>
+        )}
+
+        <Link
+          href="/notifications"
+          className={`min-w-0 flex items-center gap-3 p-3 rounded-xl border transition-colors ${
+            notifCount > 0
+              ? "bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800 hover:border-amber-300 dark:hover:border-amber-700"
+              : "bg-card border-border hover:border-primary/30 hover:bg-primary/5"
+          }`}
+        >
+          <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${notifCount > 0 ? "bg-amber-100 dark:bg-amber-900/40" : "bg-muted"}`}>
+            {notifCount > 0
+              ? <Bell size={16} className="text-amber-600 dark:text-amber-400" />
+              : <CheckCircle2 size={16} className="text-muted-foreground" />}
+          </div>
+          <div className="min-w-0">
+            <p className="text-xl font-bold leading-none">{notifCount}</p>
+            <p className="text-xs text-muted-foreground mt-0.5 truncate">{t.home.statsNotifications}</p>
+          </div>
+        </Link>
+      </div>
+
+      {/* Main grid — 50/50 on desktop */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 lg:items-start">
+
+        {/* Left column: Projekty → Listy */}
+        <div className="contents lg:flex lg:flex-col">
 
         {/* Projekty */}
-        <div className="order-6 space-y-3">
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-foreground">{t.home.recentProjectsTitle}</h2>
+        <div className="order-5 lg:order-1">
+        <SectionCollapse hidden={isSectionHidden("projekty")}>
+        <div className="space-y-3 lg:space-y-0 lg:pb-[22px]">
+            <div className="flex items-center justify-between mb-0 lg:mb-[10px]">
+              <h2 className="text-sm lg:text-[13px] font-semibold lg:font-bold text-foreground">{t.home.recentProjectsTitle}</h2>
               <Link href="/projectflow" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-0.5 transition-colors">
                 {t.home.allLabel} <ChevronRight size={13} />
               </Link>
@@ -512,7 +594,7 @@ export default function DashboardView({
                 <NewProjectDialog module="renderflow" />
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {recentProjects.map((project, i) => (
                   <Link
                     key={project.id}
@@ -564,12 +646,16 @@ export default function DashboardView({
                 ))}
               </div>
             )}
+        </div>
+        </SectionCollapse>
         </div>{/* end Projekty */}
 
         {/* Listy */}
-        <div className="order-5 space-y-3">
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-foreground">{t.home.recentListsTitle}</h2>
+        <div className="order-4 lg:order-2">
+        <SectionCollapse hidden={isSectionHidden("listy")}>
+        <div className="space-y-3 lg:space-y-0">
+            <div className="flex items-center justify-between mb-0 lg:mb-[10px]">
+              <h2 className="text-sm lg:text-[13px] font-semibold lg:font-bold text-foreground">{t.home.recentListsTitle}</h2>
               <Link href="/listy-zakupowe" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-0.5 transition-colors">
                 {t.home.allLabel} <ChevronRight size={13} />
               </Link>
@@ -601,17 +687,21 @@ export default function DashboardView({
                 ))}
               </div>
             )}
+        </div>
+        </SectionCollapse>
         </div>{/* end Listy */}
 
         </div>{/* end left column */}
 
         {/* Right column: Kalendarz → Nieprzeczytane → Do zrobienia */}
-        <div className="contents lg:flex lg:flex-col lg:gap-6">
+        <div className="contents lg:flex lg:flex-col">
 
         {/* Kalendarz dziś */}
-        <div className="order-2 space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-foreground">{t.home.calendarTitle}</h2>
+        <div className="order-1">
+        <SectionCollapse hidden={isSectionHidden("kalendarz")}>
+        <div className="space-y-3 lg:space-y-0 lg:pb-5">
+          <div className="flex items-center justify-between mb-0 lg:mb-[10px]">
+            <h2 className="text-sm lg:text-[13px] font-semibold lg:font-bold text-foreground">{t.home.calendarTitle}</h2>
             <Link href="/kalendarz" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-0.5 transition-colors">
               {t.home.openLabel} <ChevronRight size={13} />
             </Link>
@@ -659,12 +749,16 @@ export default function DashboardView({
               </div>
             )}
           </div>
+        </div>
+        </SectionCollapse>
         </div>{/* end Kalendarz */}
 
         {/* Nieprzeczytane */}
-        <div className="order-3 space-y-3">
-            <div className="flex items-center gap-1.5">
-              <h2 className="text-sm font-semibold text-foreground">{t.home.unreadMessages}</h2>
+        <div className="order-3">
+        <SectionCollapse hidden={isSectionHidden("wiadomosci")}>
+        <div className="space-y-3 lg:space-y-0 lg:pb-5">
+            <div className="flex items-center gap-1.5 mb-0 lg:mb-[10px]">
+              <h2 className="text-sm lg:text-[13px] font-semibold lg:font-bold text-foreground">{t.home.unreadMessages}</h2>
               <InfoTooltip items={[t.home.unreadTip1, t.home.unreadTip2]} />
             </div>
 
@@ -762,12 +856,16 @@ export default function DashboardView({
                 </div>
               );
             })()}
+        </div>
+        </SectionCollapse>
         </div>{/* end Nieprzeczytane */}
 
         {/* Do zrobienia */}
-        <div className="order-4 space-y-3">
-            <div className="flex items-center gap-1.5">
-              <h2 className="text-sm font-semibold text-foreground">{t.home.todoTitle}</h2>
+        <div className="order-4">
+        <SectionCollapse hidden={isSectionHidden("zadania")}>
+        <div className="space-y-3 lg:space-y-0">
+            <div className="flex items-center gap-1.5 mb-0 lg:mb-[10px]">
+              <h2 className="text-sm lg:text-[13px] font-semibold lg:font-bold text-foreground">{t.home.todoTitle}</h2>
               <InfoTooltip items={[t.home.todoTip1, t.home.todoTip2, t.home.todoTip3, t.home.todoTip4]} />
             </div>
 
@@ -939,6 +1037,8 @@ export default function DashboardView({
             </div>
             </div>
           )}
+        </div>
+        </SectionCollapse>
         </div>{/* end Do zrobienia */}
 
         </div>{/* end right column */}

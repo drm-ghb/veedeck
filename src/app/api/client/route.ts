@@ -8,7 +8,13 @@ export async function GET() {
   if ((session.user as any).role !== "client") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const links = await prisma.projectClient.findMany({
-    where: { userId: session.user.id },
+    where: {
+      userId: session.user.id,
+      OR: [
+        { projectId: null },
+        { project: { archived: false } },
+      ],
+    },
     select: {
       clientId: true,
       project: {

@@ -318,7 +318,7 @@ export default function ClientProjectPage() {
       .catch(() => {});
 
     fetch(`/api/client/${projectId}`)
-      .then((r) => { if (!r.ok) throw new Error(); return r.json(); })
+      .then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
       .then((data) => {
         setProject(data);
         try { sessionStorage.setItem(`client-project-${projectId}`, JSON.stringify(data)); } catch {}
@@ -328,7 +328,15 @@ export default function ClientProjectPage() {
         }
         setLoading(false);
       })
-      .catch(() => { toast.error("Nie udało się załadować projektu"); setLoading(false); });
+      .catch((err) => {
+        const status = parseInt(err?.message ?? "0", 10);
+        if (status === 403 || status === 404 || status === 410) {
+          router.replace("/client");
+        } else {
+          toast.error("Nie udało się załadować projektu");
+          setLoading(false);
+        }
+      });
   }, [projectId, status, session, router]);
 
   // Keep ref current so popstate handler always uses latest project + openList
@@ -487,6 +495,14 @@ export default function ClientProjectPage() {
     setSelectionMode(false);
     setSelectedRenderIds(new Set());
   }, [selectedFolder]);
+
+  useEffect(() => {
+    if (view !== "projects") return;
+    fetch("/api/client")
+      .then((r) => r.ok ? r.json() : [])
+      .then((list: { id: string; title: string; description: string | null; createdAt: string; renderCount: number }[]) => setClientProjects(list))
+      .catch(() => {});
+  }, [view]);
 
   async function downloadFile(url: string, filename: string) {
     try {
@@ -812,7 +828,16 @@ export default function ClientProjectPage() {
               ) : (
                 <>
                   <button
-                    onClick={() => setProjectSwitcherOpen((v) => !v)}
+                    onClick={() => {
+                      const opening = !projectSwitcherOpen;
+                      setProjectSwitcherOpen(opening);
+                      if (opening) {
+                        fetch("/api/client")
+                          .then((r) => r.ok ? r.json() : [])
+                          .then((list: { id: string; title: string; description: string | null; createdAt: string; renderCount: number }[]) => setClientProjects(list))
+                          .catch(() => {});
+                      }
+                    }}
                     className="inline-flex items-center gap-2 bg-card border border-border rounded-[10px] px-3.5 py-2 text-[13.5px] font-semibold text-foreground"
                   >
                     <HomeWork size={17} className="text-primary" />

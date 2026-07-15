@@ -61,11 +61,7 @@ export default function ProjectMenu({ project }: ProjectMenuProps) {
 
   async function handleDelete() {
     if (!confirm(t.projekty.confirmRemoveFromFlow.replace("{title}", project.title))) return;
-    const res = await fetch(`/api/projects/${project.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ removeModule: "renderflow" }),
-    });
+    const res = await fetch(`/api/projects/${project.id}`, { method: "DELETE" });
     if (res.ok) {
       toast.success(t.projekty.projectDeleted);
       router.refresh();
