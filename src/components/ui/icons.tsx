@@ -238,6 +238,8 @@ export const CalendarNote     = icon("event_note");
 
 // ── Misc ──────────────────────────────────────────────────────────────────
 export const Home             = icon("home");
+export const HomeWork         = icon("home_work");
+export const Timeline         = icon("timeline");
 export const Loader2          = icon("progress_activity");
 export const Clock            = icon("schedule");
 export const ScrollText2      = icon("receipt_long");

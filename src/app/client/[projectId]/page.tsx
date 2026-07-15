@@ -12,9 +12,8 @@ import ClientPaymentsView from "@/components/share/ClientPaymentsView";
 import ClientScheduleView from "@/components/share/ClientScheduleView";
 import ClientSurveyView from "@/components/ankiety/share/ClientSurveyView";
 import ShareListClient from "@/components/listy/ShareListClient";
-import ModuleGuideSlider from "@/components/share/ModuleGuideSlider";
 import { getRoomIcon } from "@/lib/roomIcons";
-import { ChevronLeft, ChevronRight, ChatBubble, FileText, Folder, User, Mail, Lock, Info, LocalMall, Pencil, X, Eye, EyeOff, UserCircle, Check, CopyCheck, Download, ClipboardList, CheckCircle } from "@/components/ui/icons";
+import { ChevronLeft, ChevronRight, ChevronDown, ChatBubble, FileText, Folder, User, Mail, Lock, Info, LocalMall, Pencil, X, Eye, EyeOff, UserCircle, Check, CopyCheck, Download, ClipboardList, CheckCircle, Lamp, Sofa, Armchair, LayoutGrid, Package, Payments, HomeWork, Timeline } from "@/components/ui/icons";
 import PdfThumbnail from "@/components/render/PdfThumbnail";
 import Image from "next/image";
 import { Input } from "@/components/ui/input";
@@ -61,6 +60,49 @@ interface Project {
   paymentsSharedWithClient: boolean;
   scheduleSharedWithClient: boolean;
   hasSurveys: boolean;
+}
+
+interface HomeData {
+  recentRenders: {
+    id: string; name: string; fileUrl: string; fileType: string; status: string;
+    roomId: string; roomName: string; folderId: string | null; createdAt: string;
+  }[];
+  recentProducts: {
+    id: string; name: string; approval: string | null;
+    category: string | null; listId: string; listName: string; createdAt: string;
+  }[];
+  scheduleSummary: {
+    phases: { id: string; name: string; done: boolean; isCurrent: boolean; nextItem: { name: string; endDate: string | null } | null }[];
+  } | null;
+  paymentsSummary: {
+    paidTotal: number; grandTotal: number;
+    nextPayment: { name: string; amount: number } | null;
+  } | null;
+  pendingSurveys: {
+    id: string; name: string; shareToken: string; answeredCount: number; totalQuestions: number;
+  }[] | null;
+}
+
+function relTime(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const min = Math.floor(diff / 60000);
+  if (min < 2) return "przed chwilą";
+  if (min < 60) return `${min} min. temu`;
+  const h = Math.floor(min / 60);
+  if (h < 24) return `${h} godz. temu`;
+  const d = Math.floor(h / 24);
+  if (d === 1) return "wczoraj";
+  if (d < 7) return `${d} dni temu`;
+  return new Date(iso).toLocaleDateString("pl-PL");
+}
+
+function HomeCategoryIcon({ category }: { category: string | null }) {
+  if (category === "OSWIETLENIE") return <Lamp size={17} />;
+  if (category === "MEBLE") return <Sofa size={17} />;
+  if (category === "OKLADZINY_SCIENNE" || category === "PODLOGA") return <LayoutGrid size={17} />;
+  if (category === "ARMATURA") return <Package size={17} />;
+  if (category === "AKCESORIA") return <Armchair size={17} />;
+  return <LocalMall size={17} />;
 }
 
 export default function ClientProjectPage() {
@@ -139,6 +181,9 @@ export default function ClientProjectPage() {
   const [surveysFetched, setSurveysFetched] = useState(false);
   const [selectedSurvey, setSelectedSurvey] = useState<{ shareToken: string; name: string; readOnly?: boolean } | null>(null);
   const [pendingSurveyToken, setPendingSurveyToken] = useState<string | null>(null);
+  const [homeData, setHomeData] = useState<HomeData | null>(null);
+  const [homeLoading, setHomeLoading] = useState(false);
+  const [projectSwitcherOpen, setProjectSwitcherOpen] = useState(false);
 
   const fetchSurveys = useCallback(async () => {
     setSurveysLoading(true);
@@ -298,6 +343,17 @@ export default function ClientProjectPage() {
     return () => window.removeEventListener("popstate", handlePopState);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (view !== "home" || !project) return;
+    setHomeLoading(true);
+    setHomeData(null);
+    fetch(`/api/client/${projectId}/home`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => { if (data) setHomeData(data); })
+      .catch(() => {})
+      .finally(() => setHomeLoading(false));
+  }, [view, projectId, project]);
 
   async function handleNameSave() {
     if (!settingsName.trim()) return;
@@ -739,17 +795,277 @@ export default function ClientProjectPage() {
   const pageContent = (
     <>
       {view === "home" && (
-        <div className="flex flex-col items-start justify-start w-full">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            Witaj{authorName && authorName !== "Klient" ? `, ${authorName}` : ""}!
-          </h2>
-          <p className="text-sm text-muted-foreground mt-2">
-            {project.clientWelcomeMessage ?? "Wybierz moduł z paska bocznego, aby przeglądać projekt."}
-          </p>
-          <ModuleGuideSlider
-            hiddenModules={project.hiddenModules}
-            hasDiscussion={project.hasDiscussion}
-          />
+        <div>
+          {/* ── Welcome row ── */}
+          <div className="flex items-center justify-between flex-wrap gap-3.5 mb-[22px]">
+            <h2 className="text-[23px] font-bold tracking-tight text-foreground">
+              Witaj{authorName && authorName !== "Klient" ? `, ${authorName}` : ""}! 👋
+            </h2>
+
+            {/* Project switcher */}
+            <div className="relative">
+              {clientProjects.length <= 1 ? (
+                <div className="inline-flex items-center gap-2 bg-card border border-border rounded-[10px] px-3.5 py-2 text-[13.5px] font-semibold text-foreground">
+                  <HomeWork size={17} className="text-primary" />
+                  Projekt: {clientProjects[0]?.title ?? project.title}
+                </div>
+              ) : (
+                <>
+                  <button
+                    onClick={() => setProjectSwitcherOpen((v) => !v)}
+                    className="inline-flex items-center gap-2 bg-card border border-border rounded-[10px] px-3.5 py-2 text-[13.5px] font-semibold text-foreground"
+                  >
+                    <HomeWork size={17} className="text-primary" />
+                    Projekt: {clientProjects.find((p) => p.id === projectId)?.title ?? project.title}
+                    <ChevronDown size={16} className={`text-muted-foreground ml-0.5 transition-transform ${projectSwitcherOpen ? "rotate-180" : ""}`} />
+                  </button>
+                  {projectSwitcherOpen && (
+                    <>
+                      <div className="fixed inset-0 z-[5]" onClick={() => setProjectSwitcherOpen(false)} />
+                      <div className="absolute right-0 top-[calc(100%+6px)] z-10 min-w-[240px] bg-card border border-border rounded-xl shadow-[0_20px_40px_-14px_rgba(15,23,42,0.25)] p-1.5">
+                        {clientProjects.map((p) => (
+                          <button
+                            key={p.id}
+                            onClick={() => { setProjectSwitcherOpen(false); router.push(`/client/${p.id}`); }}
+                            className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13.5px] transition-colors ${
+                              p.id === projectId ? "bg-indigo-50 dark:bg-primary/10 text-primary font-semibold" : "text-foreground font-medium hover:bg-muted"
+                            }`}
+                          >
+                            <Check size={16} className={p.id === projectId ? "text-primary" : "opacity-0"} />
+                            {p.title}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+
+          {homeLoading && !homeData ? (
+            <div className="flex items-center justify-center py-16 text-sm text-muted-foreground animate-pulse">Ładowanie...</div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-5 items-start">
+
+              {/* ── Left column ── */}
+              <div>
+                {/* ProjectFlow — recent renders */}
+                {!project.hiddenModules.includes("renderflow") && (
+                  <>
+                    <div className="flex items-center justify-between mb-[10px]">
+                      <h3 className="text-[13px] font-bold text-foreground">Ostatnio dodane w ProjectFlow</h3>
+                      <button
+                        onClick={() => { setActiveRooms(null); setActiveProjectId(projectId); if (project.rooms.length === 1) { setSelectedRoom(project.rooms[0]); setSelectedFolder(null); setView("room"); navigate({ view: "room", roomId: project.rooms[0].id }); } else { setView("rooms"); navigate({ view: "rooms" }); } }}
+                        className="text-[12px] text-muted-foreground flex items-center gap-0.5 font-medium hover:text-foreground transition-colors"
+                      >
+                        Wszystkie <ChevronRight size={14} />
+                      </button>
+                    </div>
+                    {homeData?.recentRenders && homeData.recentRenders.length > 0 ? (
+                      <div className="grid grid-cols-3 gap-3">
+                        {homeData.recentRenders.map((r) => {
+                          const room = project.rooms.find((rm) => rm.id === r.roomId);
+                          const render = room?.renders.find((re) => re.id === r.id);
+                          return (
+                            <button
+                              key={r.id}
+                              onClick={() => {
+                                if (!room || !render) return;
+                                setActiveRooms(null); setActiveProjectId(projectId);
+                                setSelectedRoom(room);
+                                setSelectedFolder(r.folderId ? room.folders.find((f) => f.id === r.folderId) ?? null : null);
+                                setSelectedRender(render);
+                                setView("render");
+                                navigate({ view: "render", roomId: room.id, folderId: r.folderId, renderId: r.id });
+                                fetch(`/api/client/${projectId}/renders/${r.id}/view`, { method: "POST" });
+                              }}
+                              className="border border-border rounded-xl overflow-hidden text-left hover:border-primary/30 hover:shadow-[0_4px_16px_rgba(25,33,61,0.12)] transition-all bg-card"
+                            >
+                              <div className="aspect-[4/3] bg-muted overflow-hidden">
+                                {r.fileType === "pdf" ? (
+                                  <PdfThumbnail fileUrl={r.fileUrl} className="w-full h-full" />
+                                ) : (
+                                  // eslint-disable-next-line @next/next/no-img-element
+                                  <img src={r.fileUrl} alt={r.name} className="w-full h-full object-cover" />
+                                )}
+                              </div>
+                              <div className="p-[10px_12px]">
+                                <p className="text-[12.5px] font-semibold flex flex-wrap items-center gap-x-1.5 gap-y-1">
+                                  <span className="truncate max-w-full">{r.name}</span>
+                                  <span className={`inline-flex items-center text-[10.5px] font-semibold px-[7px] py-[3px] rounded-[6px] flex-shrink-0 ${
+                                    r.status === "ACCEPTED" ? "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400" :
+                                    r.status === "REJECTED" ? "bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400" :
+                                    "bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400"
+                                  }`}>
+                                    {r.status === "ACCEPTED" ? "Zaakceptowany" : r.status === "REJECTED" ? "Odrzucony" : "Do weryfikacji"}
+                                  </span>
+                                </p>
+                                <p className="text-[11px] text-muted-foreground mt-0.5">{r.roomName} · {relTime(r.createdAt)}</p>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="text-sm text-muted-foreground text-center py-8 border border-border rounded-xl bg-card">Brak plików w ProjectFlow</div>
+                    )}
+                  </>
+                )}
+
+                {/* Lists — recent products */}
+                {!project.hiddenModules.includes("listy") && project.shoppingLists.length > 0 && (
+                  <div className={!project.hiddenModules.includes("renderflow") ? "mt-[22px]" : ""}>
+                    <div className="flex items-center justify-between mb-[10px]">
+                      <h3 className="text-[13px] font-bold text-foreground">Ostatnio dodane produkty</h3>
+                      <button
+                        onClick={() => { if (project.shoppingLists.length === 1) { openList(project.shoppingLists[0].id); } else { setView("lists"); navigate({ view: "lists" }); } }}
+                        className="text-[12px] text-muted-foreground flex items-center gap-0.5 font-medium hover:text-foreground transition-colors"
+                      >
+                        Wszystkie <ChevronRight size={14} />
+                      </button>
+                    </div>
+                    <div className="bg-card border border-border rounded-xl overflow-hidden">
+                      {homeData?.recentProducts && homeData.recentProducts.length > 0 ? (
+                        homeData.recentProducts.map((p, i) => (
+                          <button
+                            key={p.id}
+                            onClick={() => openList(p.listId)}
+                            className={`w-full flex items-center gap-3 px-3.5 py-[11px] hover:bg-muted/50 transition-colors text-left ${i > 0 ? "border-t border-border" : ""}`}
+                          >
+                            <div className="w-[34px] h-[34px] rounded-lg bg-indigo-50 dark:bg-primary/10 flex items-center justify-center flex-shrink-0 text-primary">
+                              <HomeCategoryIcon category={p.category} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-[13px] font-semibold truncate text-foreground">{p.name}</p>
+                              <p className="text-[11.5px] text-muted-foreground truncate">{p.listName}</p>
+                            </div>
+                            <span className={`inline-flex items-center text-[10.5px] font-semibold px-[7px] py-[3px] rounded-[6px] flex-shrink-0 ${
+                              p.approval === "accepted" ? "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400" :
+                              p.approval === "rejected" ? "bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400" :
+                              "bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400"
+                            }`}>
+                              {p.approval === "accepted" ? "Zaakceptowany" : p.approval === "rejected" ? "Odrzucony" : "Do akceptacji"}
+                            </span>
+                            <span className="text-[11.5px] text-muted-foreground flex-shrink-0">{relTime(p.createdAt)}</span>
+                          </button>
+                        ))
+                      ) : (
+                        <p className="text-sm text-muted-foreground text-center py-8">Brak produktów na listach</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* ── Right column ── */}
+              <div>
+                {/* Harmonogram */}
+                {project.scheduleSharedWithClient && homeData?.scheduleSummary && homeData.scheduleSummary.phases.length > 0 && (
+                  <div className="mb-5">
+                    <div className="flex items-center justify-between mb-[10px]">
+                      <h3 className="text-[13px] font-bold text-foreground flex items-center gap-1.5">
+                        <Timeline size={13.5} className="text-muted-foreground/60" />
+                        Harmonogram
+                      </h3>
+                      <button onClick={() => { setView("schedule"); navigate({ view: "schedule" }); }} className="text-[12px] text-muted-foreground flex items-center gap-0.5 font-medium hover:text-foreground transition-colors">
+                        Otwórz <ChevronRight size={14} />
+                      </button>
+                    </div>
+                    <div className="bg-card border border-border rounded-xl p-3.5">
+                      {homeData.scheduleSummary.phases.map((phase) => (
+                        <div key={phase.id} className="flex gap-2.5 py-2">
+                          <div className={`w-[9px] h-[9px] rounded-full mt-[5px] flex-shrink-0 ${
+                            phase.done ? "bg-green-600" :
+                            phase.isCurrent ? "bg-primary shadow-[0_0_0_4px_#EEF2FF] dark:shadow-[0_0_0_4px_rgba(79,70,229,0.15)]" :
+                            "bg-[#D7D9E2] dark:bg-muted-foreground/30"
+                          }`} />
+                          <div>
+                            <p className={`text-[12.5px] font-semibold leading-snug ${(!phase.done && !phase.isCurrent) ? "text-muted-foreground font-medium" : "text-foreground"}`}>{phase.name}</p>
+                            {phase.isCurrent && phase.nextItem && (
+                              <p className="text-[11px] text-muted-foreground mt-0.5">
+                                Najbliższe: {phase.nextItem.name}{phase.nextItem.endDate ? ` — ${new Date(phase.nextItem.endDate).toLocaleDateString("pl-PL")}` : ""}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Płatności */}
+                {project.paymentsSharedWithClient && homeData?.paymentsSummary && (
+                  <div className="mb-5">
+                    <div className="flex items-center justify-between mb-[10px]">
+                      <h3 className="text-[13px] font-bold text-foreground flex items-center gap-1.5">
+                        <Payments size={13.5} className="text-muted-foreground/60" />
+                        Płatności
+                      </h3>
+                      <button onClick={() => { setView("payments"); navigate({ view: "payments" }); }} className="text-[12px] text-muted-foreground flex items-center gap-0.5 font-medium hover:text-foreground transition-colors">
+                        Wszystkie <ChevronRight size={14} />
+                      </button>
+                    </div>
+                    <div className="bg-card border border-border rounded-xl p-3.5">
+                      <div className="flex items-baseline justify-between mb-2">
+                        <b className="text-[19px] font-bold">
+                          {homeData.paymentsSummary.paidTotal.toLocaleString("pl-PL", { minimumFractionDigits: 0, maximumFractionDigits: 0 })} zł
+                        </b>
+                        <span className="text-[12px] text-muted-foreground">
+                          z {homeData.paymentsSummary.grandTotal.toLocaleString("pl-PL", { minimumFractionDigits: 0, maximumFractionDigits: 0 })} zł
+                        </span>
+                      </div>
+                      <div className="h-[7px] rounded-full bg-[#EDEEF4] dark:bg-muted overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-primary transition-all"
+                          style={{ width: `${homeData.paymentsSummary.grandTotal > 0 ? Math.min(100, Math.round(homeData.paymentsSummary.paidTotal / homeData.paymentsSummary.grandTotal * 100)) : 0}%` }}
+                        />
+                      </div>
+                      {homeData.paymentsSummary.nextPayment && (
+                        <p className="text-[12px] text-muted-foreground mt-2.5">
+                          Następna: <b className="text-foreground">{homeData.paymentsSummary.nextPayment.amount.toLocaleString("pl-PL", { minimumFractionDigits: 0, maximumFractionDigits: 0 })} zł</b> — {homeData.paymentsSummary.nextPayment.name}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Ankiety */}
+                {project.hasSurveys && homeData?.pendingSurveys && homeData.pendingSurveys.length > 0 && (
+                  <div>
+                    <div className="flex items-center justify-between mb-[10px]">
+                      <h3 className="text-[13px] font-bold text-foreground flex items-center gap-1.5">
+                        <ClipboardList size={13.5} className="text-muted-foreground/60" />
+                        Ankiety do wypełnienia
+                      </h3>
+                    </div>
+                    <div className="bg-card border border-border rounded-xl px-3.5 pb-3.5 pt-1.5">
+                      {homeData.pendingSurveys.map((survey, i) => (
+                        <div key={survey.id} className={`py-2.5 ${i > 0 ? "border-t border-border" : ""}`}>
+                          <div className="flex items-center justify-between gap-2 mb-1.5">
+                            <p className="text-[12.5px] font-semibold text-foreground min-w-0 truncate">{survey.name}</p>
+                            <button
+                              onClick={() => { setSelectedSurvey({ shareToken: survey.shareToken, name: survey.name }); setView("survey"); navigate({ view: "ankiety" }); fetchSurveys(); }}
+                              className="text-[11.5px] font-semibold px-2.5 py-[5px] rounded-[7px] bg-primary text-primary-foreground flex-shrink-0 hover:opacity-90 transition-opacity"
+                            >
+                              {survey.answeredCount > 0 ? "Kontynuuj" : "Wypełnij"}
+                            </button>
+                          </div>
+                          <div className="h-[7px] rounded-full bg-[#EDEEF4] dark:bg-muted overflow-hidden">
+                            <div
+                              className="h-full rounded-full transition-all"
+                              style={{ width: `${survey.totalQuestions > 0 ? Math.min(100, Math.round(survey.answeredCount / survey.totalQuestions * 100)) : 0}%`, background: "#7C3AED" }}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+            </div>
+          )}
         </div>
       )}
 
