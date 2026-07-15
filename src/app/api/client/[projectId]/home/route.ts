@@ -54,7 +54,7 @@ export async function GET(
       orderBy: { createdAt: "desc" },
       take: 3,
       select: {
-        id: true, name: true, approval: true, category: true, createdAt: true,
+        id: true, name: true, imageUrl: true, approval: true, category: true, createdAt: true,
         section: { select: { list: { select: { id: true, name: true } } } },
       },
     }),
@@ -173,6 +173,7 @@ export async function GET(
     recentProducts: recentProducts.map((p) => ({
       id: p.id,
       name: p.name,
+      imageUrl: p.imageUrl,
       approval: p.approval,
       category: p.category,
       listId: p.section.list.id,

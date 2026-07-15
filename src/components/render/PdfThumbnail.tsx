@@ -5,11 +5,13 @@ import { FileText } from "@/components/ui/icons";
 import { useT } from "@/lib/i18n";
 
 // Singleton init — prevents race conditions when multiple thumbnails load simultaneously
+const WORKER_SRC = new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url).href;
+
 let pdfjsInitPromise: Promise<typeof import("pdfjs-dist")> | null = null;
 function getPdfJs() {
   if (!pdfjsInitPromise) {
     pdfjsInitPromise = import("pdfjs-dist").then((lib) => {
-      lib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
+      lib.GlobalWorkerOptions.workerSrc = WORKER_SRC;
       return lib;
     });
   }

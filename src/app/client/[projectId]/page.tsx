@@ -68,7 +68,7 @@ interface HomeData {
     roomId: string; roomName: string; folderId: string | null; createdAt: string;
   }[];
   recentProducts: {
-    id: string; name: string; approval: string | null;
+    id: string; name: string; imageUrl: string | null; approval: string | null;
     category: string | null; listId: string; listName: string; createdAt: string;
   }[];
   scheduleSummary: {
@@ -353,7 +353,7 @@ export default function ClientProjectPage() {
       .then((data) => { if (data) setHomeData(data); })
       .catch(() => {})
       .finally(() => setHomeLoading(false));
-  }, [view, projectId, project]);
+  }, [view, projectId, project?.id]);
 
   async function handleNameSave() {
     if (!settingsName.trim()) return;
@@ -882,7 +882,7 @@ export default function ClientProjectPage() {
                               }}
                               className="border border-border rounded-xl overflow-hidden text-left hover:border-primary/30 hover:shadow-[0_4px_16px_rgba(25,33,61,0.12)] transition-all bg-card"
                             >
-                              <div className="aspect-[4/3] bg-muted overflow-hidden">
+                              <div className="aspect-[4/3] bg-muted overflow-hidden flex items-center justify-center">
                                 {r.fileType === "pdf" ? (
                                   <PdfThumbnail fileUrl={r.fileUrl} className="w-full h-full" />
                                 ) : (
@@ -933,8 +933,12 @@ export default function ClientProjectPage() {
                             onClick={() => openList(p.listId)}
                             className={`w-full flex items-center gap-3 px-3.5 py-[11px] hover:bg-muted/50 transition-colors text-left ${i > 0 ? "border-t border-border" : ""}`}
                           >
-                            <div className="w-[34px] h-[34px] rounded-lg bg-indigo-50 dark:bg-primary/10 flex items-center justify-center flex-shrink-0 text-primary">
-                              <HomeCategoryIcon category={p.category} />
+                            <div className="w-[34px] h-[34px] rounded-lg overflow-hidden bg-indigo-50 dark:bg-primary/10 flex items-center justify-center flex-shrink-0 text-primary">
+                              {p.imageUrl ? (
+                                <img src={p.imageUrl} alt={p.name} className="w-full h-full object-cover" />
+                              ) : (
+                                <HomeCategoryIcon category={p.category} />
+                              )}
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="text-[13px] font-semibold truncate text-foreground">{p.name}</p>
