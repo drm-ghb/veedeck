@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
       mode: "subscription",
       line_items: [{ price: priceId, quantity: 1 }],
       automatic_tax: { enabled: true },
-      customer_update: { address: "auto", name: "auto" },
+      ...(user.stripeCustomerId ? { customer_update: { address: "auto", name: "auto" } } : {}),
       billing_address_collection: "required",
       tax_id_collection: { enabled: true },
       payment_method_collection: "if_required",
