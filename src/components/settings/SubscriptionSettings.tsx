@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { CheckCircle2, X, Check, ChevronRight, Users, PushPin, LocalMall, ChatBubble, CheckSquare, Package, CalendarDays, NotebookText, ClipboardList, Engineering } from "@/components/ui/icons";
 import { useT } from "@/lib/i18n";
+import { PLAN_LABELS } from "@/lib/stripe/prices";
 
 /* ─── types ─────────────────────────────────────────────────────────────── */
 
@@ -488,7 +489,7 @@ export default function SubscriptionSettings({ trialEndsAt, isFree, subscription
           <div className="bg-card border border-border rounded-2xl p-5">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="text-sm font-semibold text-foreground capitalize">Plan {subscription.plan}</p>
+                <p className="text-sm font-semibold text-foreground capitalize">Plan {PLAN_LABELS[subscription.plan as keyof typeof PLAN_LABELS] ?? subscription.plan}</p>
                 <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium mt-0.5">{t.subscription.statusActive}</p>
                 {subscription.cardLast4 && (
                   <p className="text-xs text-muted-foreground mt-1">
@@ -522,7 +523,7 @@ export default function SubscriptionSettings({ trialEndsAt, isFree, subscription
         <div className="bg-card border border-amber-500/20 rounded-2xl p-5">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="text-sm font-semibold text-foreground capitalize">Plan {subscription.plan}</p>
+              <p className="text-sm font-semibold text-foreground capitalize">Plan {PLAN_LABELS[subscription.plan as keyof typeof PLAN_LABELS] ?? subscription.plan}</p>
               <p className="text-xs text-amber-600 dark:text-amber-400 font-medium mt-0.5">{t.subscription.statusCancelled}</p>
               {subscription.cancelAt && (
                 <p className="text-xs text-muted-foreground mt-1">
