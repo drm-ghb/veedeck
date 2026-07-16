@@ -254,8 +254,8 @@ function PlansModal({ onClose, subscription }: { onClose: () => void; subscripti
           🏷️ Ceny promocyjne przez pierwsze 6 miesięcy od startu — potem cena standardowa
         </div>
 
-        {/* Plans grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-0 divide-y md:divide-y-0 md:divide-x divide-border mt-4">
+        {/* Plans grid — subgrid aligns rows across cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-border mt-4">
           {PLANS_DATA.map((plan) => {
             const isCurrentPlan = subscription?.status === "active" && subscription.plan === plan.id;
             const hasActiveSub = subscription?.status === "active";
@@ -270,77 +270,86 @@ function PlansModal({ onClose, subscription }: { onClose: () => void; subscripti
                   : `${Math.ceil(vatYearly / (rates[currency] ?? 1) * 12)} ${CURRENCY_SYMBOLS[currency]}/rok`)
               : null;
             return (
-              <div key={plan.id} className={`flex flex-col p-6 ${plan.featured ? "bg-primary/3" : ""}`}>
-                {isCurrentPlan ? (
-                  <span className="self-center text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 mb-3">Twój plan</span>
-                ) : plan.featured ? (
-                  <span className="self-center text-xs font-semibold px-2.5 py-1 rounded-full bg-primary/15 text-primary mb-3">Polecany</span>
-                ) : (
-                  <div className="h-7 mb-3" />
-                )}
-                <h3 className="text-lg font-bold text-foreground text-center uppercase tracking-wide">{plan.name}</h3>
-                <p className="text-xs text-muted-foreground mt-1 mb-3 leading-snug text-center">{plan.tagline}</p>
+              <div key={plan.id}
+                className={`p-6 ${plan.featured ? "bg-primary/3" : ""}`}
+                style={{ display: "grid", gridTemplateRows: "subgrid", gridRow: "span 13" }}>
 
-                {/* Price */}
-                {plan.customPricing ? (
-                  <>
-                    <div className="mb-1 text-center">
-                      <span className="text-xl font-semibold text-muted-foreground italic">Cena ustalana indywidualnie</span>
-                    </div>
-                    <div className="h-5 mb-3" />
-                  </>
-                ) : (
-                  <>
-                    <div className="mb-1 text-center flex items-baseline justify-center gap-2">
+                {/* Row 1: Badge */}
+                <div className="flex justify-center items-start">
+                  {isCurrentPlan ? (
+                    <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-400">Twój plan</span>
+                  ) : plan.featured ? (
+                    <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-primary/15 text-primary">Polecany</span>
+                  ) : null}
+                </div>
+
+                {/* Row 2: Name */}
+                <h3 className="text-lg font-bold text-foreground text-center uppercase tracking-wide">{plan.name}</h3>
+
+                {/* Row 3: Tagline */}
+                <p className="text-xs text-muted-foreground leading-snug text-center">{plan.tagline}</p>
+
+                {/* Row 4: Price block */}
+                <div className="text-center flex items-baseline justify-center gap-2 pt-3">
+                  {plan.customPricing ? (
+                    <span className="text-xl font-semibold text-muted-foreground italic">Cena ustalana indywidualnie</span>
+                  ) : (
+                    <>
                       <span className="text-3xl font-bold text-foreground">{priceStr}</span>
                       {regularStr && !ratesLoading && (
                         <span className="text-sm text-muted-foreground line-through">{regularStr}</span>
                       )}
                       <span className="text-sm text-muted-foreground">/mies.{vatMode === "brutto" ? " brutto" : " netto"}</span>
-                    </div>
-                    {annualTotal ? (
-                      <p className="text-xs text-muted-foreground mb-3 text-center">Rozliczane {annualTotal}</p>
-                    ) : (
-                      <div className="h-5 mb-3" />
-                    )}
-                  </>
-                )}
+                    </>
+                  )}
+                </div>
 
-                {/* Team size chip */}
-                <div className="flex justify-center mb-4">
+                {/* Row 5: Annual note */}
+                <div className="text-center">
+                  {annualTotal && !plan.customPricing && (
+                    <p className="text-xs text-muted-foreground">Rozliczane {annualTotal}</p>
+                  )}
+                </div>
+
+                {/* Row 6: Team size chip */}
+                <div className="flex justify-center py-2">
                   <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground bg-muted border border-border rounded-full px-3 py-1">
                     <Users size={12} />
                     {plan.teamSize}
                   </span>
                 </div>
 
-                {/* CTA */}
-                {plan.customPricing ? (
-                  <a href="https://veedeck.com/kontakt" target="_blank" rel="noopener noreferrer"
-                    className="w-full py-2.5 rounded-xl text-sm font-semibold transition-colors mb-5 bg-muted text-foreground hover:bg-muted/70 border border-border text-center block">
-                    Porozmawiajmy ↗
-                  </a>
-                ) : (
-                  <button onClick={() => handleChoosePlan(plan.id)}
-                    disabled={checkoutLoading !== null || isCurrentPlan}
-                    className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-colors mb-5 disabled:opacity-60 ${
-                      isCurrentPlan
-                        ? "bg-muted text-muted-foreground border border-border cursor-not-allowed"
-                        : plan.featured
-                          ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                          : "bg-muted text-foreground hover:bg-muted/70 border border-border"
-                    }`}>
-                    {checkoutLoading === plan.id ? "Przekierowuję…"
-                      : isCurrentPlan
-                        ? <span className="flex items-center justify-center gap-1.5"><Check size={14} />Posiadasz</span>
-                        : hasActiveSub ? `Zmień na ${plan.name}`
-                        : `Wybierz ${plan.name}`}
-                  </button>
-                )}
+                {/* Row 7: CTA */}
+                <div>
+                  {plan.customPricing ? (
+                    <a href="https://veedeck.com/kontakt" target="_blank" rel="noopener noreferrer"
+                      className="w-full py-2.5 rounded-xl text-sm font-semibold transition-colors bg-muted text-foreground hover:bg-muted/70 border border-border text-center block">
+                      Porozmawiajmy ↗
+                    </a>
+                  ) : (
+                    <button onClick={() => handleChoosePlan(plan.id)}
+                      disabled={checkoutLoading !== null || isCurrentPlan}
+                      className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-colors disabled:opacity-60 ${
+                        isCurrentPlan
+                          ? "bg-muted text-muted-foreground border border-border cursor-not-allowed"
+                          : plan.featured
+                            ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                            : "bg-muted text-foreground hover:bg-muted/70 border border-border"
+                      }`}>
+                      {checkoutLoading === plan.id ? "Przekierowuję…"
+                        : isCurrentPlan
+                          ? <span className="flex items-center justify-center gap-1.5"><Check size={14} />Posiadasz</span>
+                          : hasActiveSub ? `Zmień na ${plan.name}`
+                          : `Wybierz ${plan.name}`}
+                    </button>
+                  )}
+                </div>
 
-                {/* Modules grid */}
-                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Moduły</p>
-                <div className="grid grid-cols-2 gap-x-2 gap-y-1 mb-4">
+                {/* Row 8: Modules label */}
+                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider pt-4">Moduły</p>
+
+                {/* Row 9: Modules grid */}
+                <div className="grid grid-cols-2 gap-x-2 gap-y-1">
                   {PLAN_MODULES.map((mod) => (
                     <div key={mod.label} className="flex items-center gap-1.5 text-xs text-muted-foreground py-0.5">
                       <span className="text-muted-foreground/70 shrink-0">{mod.icon}</span>
@@ -349,11 +358,14 @@ function PlansModal({ onClose, subscription }: { onClose: () => void; subscripti
                   ))}
                 </div>
 
-                <hr className="border-border mb-4" />
+                {/* Row 10: Separator */}
+                <hr className="border-border my-2" />
 
-                {/* Features */}
-                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Co zyskujesz</p>
-                <div className="space-y-1.5 flex-1">
+                {/* Row 11: Features label */}
+                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Co zyskujesz</p>
+
+                {/* Row 12: Features list */}
+                <div className="space-y-1.5">
                   {plan.features.map((f) => (
                     <div key={f} className="flex items-start gap-2 text-xs text-foreground">
                       <Check size={13} className="text-emerald-500 shrink-0 mt-0.5" />
@@ -362,13 +374,16 @@ function PlansModal({ onClose, subscription }: { onClose: () => void; subscripti
                   ))}
                 </div>
 
-                {/* Upgrade note */}
-                {plan.upgradeNote && (
-                  <div className="mt-4 pt-3 border-t border-border flex items-start gap-1.5 text-[11px] text-amber-700 dark:text-amber-400 leading-snug">
-                    <span className="shrink-0 mt-0.5">↑</span>
-                    {plan.upgradeNote}
-                  </div>
-                )}
+                {/* Row 13: Upgrade note */}
+                <div>
+                  {plan.upgradeNote && (
+                    <div className="pt-3 border-t border-border flex items-start gap-1.5 text-[11px] text-amber-700 dark:text-amber-400 leading-snug mt-3">
+                      <span className="shrink-0 mt-0.5">↑</span>
+                      {plan.upgradeNote}
+                    </div>
+                  )}
+                </div>
+
               </div>
             );
           })}
