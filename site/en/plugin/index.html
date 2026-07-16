@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-W6PSBGLB');</script>
+<!-- End Google Tag Manager -->
+<meta charset="utf-8">
+<title>veepick Plugin | veedeck</title>
+<meta name="robots" content="index, follow">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="veedeck_ikona.svg" type="image/svg+xml"><link rel="icon" href="veedeck_ikona.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&amp;family=Inter:wght@400;500;600;700;800&amp;family=Nunito:wght@300;400;600&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+<style>
+  :root {
+    --background: #FFFFFF;
+    --foreground: #24252B;
+    --primary: #4F46E5;
+    --primary-foreground: #FFFFFF;
+    --secondary: #F2F3F7;
+    --muted-foreground: #6B6F80;
+    --accent: #A5B4FC;
+    --border: #E5E7EB;
+    --indigo-50: #EEF2FF;
+    --indigo-100: #E0E7FF;
+    --indigo-950: #1E1B4B;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+    background: var(--background); color: var(--foreground);
+    -webkit-font-smoothing: antialiased; line-height: 1.5;
+  }
+  h1, h2, h3, h4 {
+    font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+    font-weight: 600; letter-spacing: -0.022em; margin: 0;
+  }
+  p { margin: 0; }
+  a { color: inherit; text-decoration: none; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 0 32px; }
+
+  /* NAV */
+  nav.top {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: saturate(180%) blur(14px);
+    -webkit-backdrop-filter: saturate(180%) blur(14px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-inner { display: flex; align-items: center; justify-content: space-between; padding: 16px 32px; height: 68px; }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand-icon { height: 32px; width: 32px; }
+  .wordmark-img { height: 24px; }
+  .nav-links { display: flex; align-items: center; gap: 28px; font-size: 14.5px; color: var(--muted-foreground); font-weight: 500; }
+  .nav-links a:hover { color: var(--foreground); }
+  .nav-links a.active { color: var(--primary); }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    height: 40px; padding: 0 18px;
+    border-radius: 12px;
+    font-weight: 600; font-size: 14px;
+    cursor: pointer; border: 1px solid transparent;
+    transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
+  }
+  .btn-primary { background: var(--primary); color: var(--primary-foreground); box-shadow: 0 6px 20px -8px rgba(79, 70, 229, 0.45); }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 10px 24px -8px rgba(79, 70, 229, 0.55); }
+  .btn-ghost { background: transparent; color: var(--foreground); border: 1px solid var(--border); }
+  .btn-ghost:hover { background: var(--secondary); }
+  .btn-lg { height: 52px; padding: 0 26px; font-size: 15.5px; border-radius: 14px; }
+
+  /* HERO */
+  .page-hero {
+    position: relative;
+    padding: 80px 0 96px;
+    background:
+      radial-gradient(1100px 400px at 80% -10%, rgba(165, 180, 252, 0.30), transparent 60%),
+      radial-gradient(700px 320px at 8% 0%, rgba(79, 70, 229, 0.10), transparent 65%),
+      var(--background);
+    border-bottom: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .hero-inner {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 64px;
+    align-items: center;
+  }
+  .hero-eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 12px; font-weight: 600;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--primary); margin-bottom: 18px;
+  }
+  .hero-eyebrow .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--primary);
+    animation: pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+  .hero-name {
+    font-family: "Nunito", sans-serif;
+    font-size: clamp(56px, 8vw, 96px);
+    line-height: 0.95; letter-spacing: -0.05em;
+    font-weight: 300;
+    margin-bottom: 14px;
+    display: flex; align-items: baseline; gap: 14px;
+  }
+  .hero-browsers .badge {
+    display: inline-flex; align-items: center;
+    font-family: "DM Sans", sans-serif;
+    font-size: 11px; font-weight: 600;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--primary);
+    background: var(--indigo-50);
+    padding: 6px 12px; border-radius: 999px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .hero-browsers { margin-bottom: 26px; }
+  .hero-tagline {
+    font-family: "Inter", serif;
+    font-size: clamp(24px, 3vw, 32px);
+    font-style: italic; font-weight: 500;
+    color: var(--primary);
+    letter-spacing: -0.018em;
+    line-height: 1.15;
+    margin-bottom: 14px;
+  }
+  .hero-lead {
+    font-size: 17px; color: var(--muted-foreground);
+    max-width: 520px; line-height: 1.6;
+    margin-bottom: 28px;
+  }
+  .hero-ctas { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 22px; }
+  .hero-ctas svg.browser-ic { width: 18px; height: 18px; }
+  svg.browser-ic { width: 18px; height: 18px; flex-shrink: 0; }
+  img.browser-ic { width: 20px; height: 20px; flex-shrink: 0; display: inline-block; }
+  .hero-meta {
+    display: flex; gap: 18px; flex-wrap: wrap;
+    font-size: 13px; color: var(--muted-foreground);
+  }
+  .hero-meta-item { display: inline-flex; align-items: center; gap: 6px; }
+  .hero-meta-item .material-symbols-rounded {
+    font-family: 'Material Symbols Rounded';
+    font-size: 16px; line-height: 1;
+    color: #10B981;
+    font-variation-settings: 'FILL' 1, 'wght' 600, 'GRAD' 0, 'opsz' 24;
+  }
+
+  /* HERO VISUAL — veepick floating + data particles */
+.vp-stage { position: relative; width: 100%; aspect-ratio: 1 / 0.95; max-width: 560px; margin-left: auto; display: grid; place-items: center; container-type: inline-size; }
+.vp-stage::before { content: ""; position: absolute; inset: -40px; background: radial-gradient(420px 320px at 30% 60%, rgba(165,180,252,0.40), transparent 70%), radial-gradient(380px 280px at 75% 40%, rgba(199,210,254,0.50), transparent 70%); pointer-events: none; z-index: 0; }
+.vp-canvas { position: relative; width: 100%; height: 100%; z-index: 1; }
+.vp-floating { position: absolute; background: #fff; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 30px 60px -28px rgba(15,23,42,0.32), 0 6px 20px -8px rgba(15,23,42,0.12); }
+.vp-shop { width: 42%; aspect-ratio: 0.85; left: 0; top: 22%; padding: 2.86cqw; display: flex; flex-direction: column; gap: 2.14cqw; transform: rotate(-5deg); animation: vpFloatA 6s ease-in-out infinite; }
+.vp-shop .vp-tag { position: absolute; top: -1.79cqw; left: 2.86cqw; background: var(--foreground); color: #fff; font-size: 1.7cqw; font-weight: 700; letter-spacing: 0.14em; padding: 0.71cqw 1.61cqw; border-radius: 999px; text-transform: uppercase; white-space: nowrap; }
+.vp-shop .vp-photo { aspect-ratio: 1; background: #F6F4F0; border-radius: 1.8cqw; display: grid; place-items: center; overflow: hidden; }
+.vp-shop .vp-photo img { width: 78%; object-fit: contain; }
+.vp-shop .vp-name { font-family: "Inter", sans-serif; font-weight: 700; font-size: 2.5cqw; letter-spacing: -0.012em; line-height: 1.2; }
+.vp-shop .vp-meta { font-size: 2.05cqw; color: var(--muted-foreground); margin-top: 0.71cqw; }
+.vp-sidebar { width: 48%; height: auto; right: 0; top: 50%; overflow: hidden; display: flex; flex-direction: column; transform: translateY(-50%) rotate(3deg); animation: vpFloatB 6.5s ease-in-out infinite; }
+.vp-sidebar .vp-head { padding: 1.79cqw 2.5cqw; display: flex; align-items: center; gap: 1.43cqw; border-bottom: 1px solid var(--border); font-family: "Inter", sans-serif; font-weight: 700; font-size: 2.5cqw; }
+.vp-sidebar .vp-head .vp-ic { width: 3.57cqw; height: 3.57cqw; object-fit: contain; flex-shrink: 0; }
+.vp-sidebar .vp-head .vp-acts { margin-left: auto; color: var(--muted-foreground); font-size: 1.96cqw; letter-spacing: 0.22em; }
+.vp-sidebar .vp-tabs { padding: 0 2.5cqw; border-bottom: 1px solid var(--border); display: grid; grid-template-columns: 1fr 1fr; font-size: 2.05cqw; }
+.vp-sidebar .vp-tabs .vp-t { padding: 1.61cqw 0; text-align: center; color: var(--muted-foreground); font-weight: 600; position: relative; white-space: nowrap; }
+.vp-sidebar .vp-tabs .vp-t.on { color: var(--primary); }
+.vp-sidebar .vp-tabs .vp-t.on::after { content: ""; position: absolute; bottom: -1px; left: 8px; right: 8px; height: 2px; background: var(--primary); border-radius: 2px; }
+.vp-sidebar .vp-tabs .vp-t .vp-pill { display: inline-block; background: #EDEEF2; color: var(--muted-foreground); border-radius: 999px; padding: 0.18cqw 1.07cqw; font-size: 1.79cqw; margin-left: 0.71cqw; }
+.vp-sidebar .vp-body { padding: 2.14cqw 2.5cqw; display: flex; flex-direction: column; gap: 1.79cqw; flex: 1; font-size: 2.05cqw; }
+.vp-sidebar .vp-img { aspect-ratio: 5 / 2.6; background: #F6F4F0; border-radius: 1.43cqw; display: grid; place-items: center; overflow: hidden; }
+.vp-sidebar .vp-img img { width: 50%; object-fit: contain; }
+.vp-sidebar .vp-hint { font-size: 1.79cqw; color: var(--muted-foreground); text-align: center; }
+.vp-sidebar .vp-lab { font-size: 1.88cqw; font-weight: 600; color: var(--foreground); }
+.vp-sidebar .vp-input { height: 4.64cqw; border: 1px solid var(--border); border-radius: 1.07cqw; padding: 0 1.43cqw; font-size: 1.96cqw; color: var(--foreground); display: flex; align-items: center; justify-content: space-between; gap: 0.71cqw; background: #fff; white-space: nowrap; overflow: hidden; }
+.vp-sidebar .vp-input span:first-child { overflow: hidden; text-overflow: ellipsis; }
+.vp-sidebar .vp-input .vp-caret { color: var(--muted-foreground); flex-shrink: 0; }
+.vp-sidebar .vp-grid3 { display: grid; grid-template-columns: 1.2fr 0.7fr 1fr; gap: 1.07cqw; }
+.vp-sidebar .vp-cta { padding: 2.14cqw 2.5cqw; border-top: 1px solid var(--border); }
+.vp-sidebar .vp-cta button { width: 100%; height: 6.07cqw; background: var(--primary); color: #fff; border: 0; border-radius: 1.43cqw; font-family: "DM Sans", sans-serif; font-weight: 600; font-size: 2.14cqw; cursor: pointer; box-shadow: 0 6px 18px -8px rgba(79,70,229,0.45); white-space: nowrap; }
+.vp-sidebar .vp-foot { padding: 1.07cqw 2.5cqw 1.43cqw; font-size: 1.7cqw; color: var(--muted-foreground); text-align: center; }
+.vp-flow { position: absolute; top: 50%; left: 38%; right: 44%; height: 2px; background: repeating-linear-gradient(90deg, var(--primary) 0 6px, transparent 6px 12px); opacity: 0.5; z-index: 0; }
+.vp-chip { position: absolute; display: inline-flex; align-items: center; gap: 1.25cqw; background: #fff; border: 1px solid var(--border); border-radius: 999px; padding: 1.25cqw 2.14cqw; font-size: 2.05cqw; font-weight: 600; color: var(--foreground); box-shadow: 0 6px 18px -8px rgba(15,23,42,0.18); z-index: 2; white-space: nowrap; }
+.vp-chip .vp-k { color: var(--muted-foreground); font-weight: 500; font-size: 1.79cqw; letter-spacing: 0.04em; text-transform: uppercase; }
+.vp-chip.c1 { top: 2%; left: 30%; animation: vpChip 3.6s ease-in-out infinite 0s; }
+.vp-chip.c2 { top: 18%; right: -2%; animation: vpChip 3.6s ease-in-out infinite 0.5s; }
+.vp-chip.c3 { bottom: 22%; left: -3%; animation: vpChip 3.6s ease-in-out infinite 1s; }
+.vp-chip.c4 { bottom: 4%; left: 40%; animation: vpChip 3.6s ease-in-out infinite 1.5s; }
+@keyframes vpFloatA { 0%,100% { transform: rotate(-5deg) translateY(0); } 50% { transform: rotate(-5deg) translateY(-6px); } }
+@keyframes vpFloatB { 0%,100% { transform: translateY(-50%) rotate(3deg); } 50% { transform: translateY(calc(-50% - 8px)) rotate(3deg); } }
+@keyframes vpChip { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+
+  /* SECTION SCAFFOLDING */
+  .pad { padding: 96px 0; }
+  .pad-sm { padding: 64px 0; }
+  .section-head { max-width: 720px; margin-bottom: 56px; }
+  .section-head.center { text-align: center; margin-left: auto; margin-right: auto; }
+  .section-head .eyebrow {
+    display: inline-block;
+    font-size: 12px; font-weight: 600;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--primary); margin-bottom: 14px;
+  }
+  .section-head h2 {
+    font-size: clamp(28px, 3.6vw, 44px);
+    line-height: 1.12; letter-spacing: -0.022em;
+    font-weight: 700; margin-bottom: 14px;
+  }
+  .section-head h2 em { font-style: italic; font-family: "Inter", serif; color: var(--primary); font-weight: 500; }
+  .section-head p {
+    color: var(--muted-foreground);
+    font-size: 16.5px; line-height: 1.6;
+  }
+
+  /* WORKFLOW (3 steps) */
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    position: relative;
+  }
+  .step-card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 32px 28px;
+    position: relative;
+    overflow: hidden;
+    transition: transform 200ms ease, border-color 200ms ease, box-shadow 200ms ease;
+  }
+  .step-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--accent);
+    box-shadow: 0 18px 40px -28px rgba(15, 23, 42, 0.22);
+  }
+  .step-num {
+    font-family: "Inter", sans-serif;
+    font-size: 14px; font-weight: 700;
+    letter-spacing: 0.12em;
+    color: var(--primary);
+    margin-bottom: 36px;
+    display: inline-flex; align-items: center; gap: 10px;
+  }
+  .step-num::after {
+    content: ""; height: 1px; width: 40px;
+    background: var(--accent);
+  }
+  .step-card h3 {
+    font-size: 22px; font-weight: 700;
+    letter-spacing: -0.018em;
+    margin-bottom: 12px;
+  }
+  .step-card p {
+    color: var(--muted-foreground);
+    font-size: 14.5px; line-height: 1.65;
+  }
+  .step-card .step-ic {
+    position: absolute;
+    top: 28px; right: 24px;
+    width: 44px; height: 44px; border-radius: 12px;
+    background: linear-gradient(140deg, var(--indigo-50), var(--indigo-100));
+    color: var(--primary);
+    display: grid; place-items: center;
+  }
+  .step-card .step-ic .material-symbols-rounded {
+    font-family: 'Material Symbols Rounded';
+    font-size: 22px;
+    font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 24;
+  }
+
+  /* WHAT IT GRABS */
+  .fields-section { background: #FAFAFB; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+  .fields-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 16px;
+  }
+  .field-card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px 20px;
+    text-align: left;
+    transition: transform 200ms ease, border-color 200ms ease;
+  }
+  .field-card:hover { transform: translateY(-2px); border-color: var(--accent); }
+  .field-card .ic {
+    width: 40px; height: 40px; border-radius: 10px;
+    background: linear-gradient(140deg, var(--indigo-50), var(--indigo-100));
+    color: var(--primary);
+    display: grid; place-items: center;
+    margin-bottom: 16px;
+  }
+  .field-card .ic .material-symbols-rounded {
+    font-family: 'Material Symbols Rounded';
+    font-size: 20px;
+    font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 24;
+  }
+  .field-card h3 {
+    font-size: 15px; font-weight: 700;
+    letter-spacing: -0.012em;
+    margin-bottom: 6px;
+  }
+  .field-card p {
+    color: var(--muted-foreground);
+    font-size: 13px; line-height: 1.55;
+  }
+
+  /* SHOPS / SUPPORT STRIP */
+  .shops-section { padding: 80px 0; }
+  .shops-head { text-align: center; max-width: 640px; margin: 0 auto 32px; }
+  .shops-head .eyebrow {
+    display: inline-block;
+    font-size: 12px; font-weight: 600;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--primary); margin-bottom: 12px;
+  }
+  .shops-head h2 { font-size: 26px; font-weight: 700; letter-spacing: -0.018em; }
+  .shops-head p { margin-top: 10px; color: var(--muted-foreground); font-size: 15px; }
+  .shop-strip {
+    display: flex; flex-wrap: wrap; justify-content: center;
+    gap: 12px;
+    margin-top: 32px;
+  }
+  .shop-pill {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 10px 18px 10px 14px;
+    font-size: 13.5px; font-weight: 500;
+    color: var(--foreground);
+    transition: border-color 200ms ease, transform 200ms ease;
+  }
+  .shop-pill:hover { border-color: var(--accent); transform: translateY(-1px); }
+  .shop-pill .dot {
+    width: 22px; height: 22px; border-radius: 6px;
+    background: linear-gradient(140deg, var(--indigo-50), var(--indigo-100));
+    color: var(--primary);
+    display: grid; place-items: center;
+    font-family: "Inter", sans-serif;
+    font-weight: 700; font-size: 11px;
+    letter-spacing: -0.02em;
+  }
+  .shop-disclaimer {
+    text-align: center;
+    color: var(--muted-foreground);
+    font-size: 13px;
+    margin-top: 22px;
+    max-width: 620px;
+    margin-left: auto; margin-right: auto;
+    line-height: 1.55;
+  }
+
+  /* SECURITY / BACKSTAGE */
+  .security-section { padding: 96px 0; }
+  .security-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: start; }
+  .security-list { display: flex; flex-direction: column; gap: 18px; }
+  .security-item {
+    display: flex; gap: 16px;
+    padding: 22px 24px;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: #fff;
+    transition: border-color 200ms ease, transform 200ms ease;
+  }
+  .security-item:hover { border-color: var(--accent); transform: translateY(-1px); }
+  .security-item .ic {
+    width: 42px; height: 42px; border-radius: 10px;
+    background: linear-gradient(140deg, var(--indigo-50), var(--indigo-100));
+    color: var(--primary);
+    display: grid; place-items: center;
+    flex-shrink: 0;
+  }
+  .security-item .ic .material-symbols-rounded {
+    font-family: 'Material Symbols Rounded';
+    font-size: 22px;
+    font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 24;
+  }
+  .security-item h3 { font-size: 16px; font-weight: 700; letter-spacing: -0.012em; margin-bottom: 4px; }
+  .security-item p { color: var(--muted-foreground); font-size: 14px; line-height: 1.6; }
+
+  /* CTA */
+  .cta-section { padding: 80px 0 96px; text-align: center; }
+  .cta-card {
+    max-width: 780px; margin: 0 auto;
+    background: linear-gradient(150deg, #1E1B4B 0%, #4F46E5 70%, #6B63F0 100%);
+    color: #fff;
+    border-radius: 28px;
+    padding: 56px 48px;
+    box-shadow: 0 40px 80px -30px rgba(30, 27, 75, 0.5);
+    position: relative;
+    overflow: hidden;
+  }
+  .cta-card::after {
+    content: "";
+    position: absolute; inset: 0;
+    background: radial-gradient(600px 200px at 0% 0%, rgba(255,255,255,0.18), transparent 60%);
+    pointer-events: none;
+  }
+  .cta-card .eyebrow {
+    display: inline-block;
+    font-size: 12px; font-weight: 600;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: rgba(255,255,255,0.7);
+    margin-bottom: 14px;
+  }
+  .cta-card h2 {
+    font-size: clamp(28px, 3.6vw, 40px);
+    line-height: 1.15; letter-spacing: -0.022em;
+    font-weight: 700; margin-bottom: 14px;
+    color: #fff;
+  }
+  .cta-card h2 em { font-style: italic; font-family: "Inter", serif; color: #C7D2FE; font-weight: 500; }
+  .cta-card p {
+    color: rgba(255,255,255,0.78);
+    font-size: 16px; line-height: 1.6;
+    max-width: 540px; margin: 0 auto 28px;
+  }
+  .cta-buttons { display: inline-flex; gap: 12px; flex-wrap: wrap; justify-content: center; position: relative; z-index: 1; }
+  .btn-white { background: #fff; color: var(--primary); }
+  .btn-white:hover { background: #F4F4F8; }
+  .btn-outline { background: transparent; color: #fff; border-color: rgba(255,255,255,0.4); }
+  .btn-outline:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.7); }
+
+  /* FOOTER */
+  footer.site { padding: 56px 0 32px; background: #fff; border-top: 1px solid var(--border); }
+  .footer-inner { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr; gap: 32px; align-items: start; padding-bottom: 32px; border-bottom: 1px solid var(--border); }
+  .footer-brand p, .footer-brand div { color: var(--muted-foreground); font-size: 14px; margin-top: 12px; max-width: 280px; line-height: 1.55; }
+  .footer-col h4 { font-size: 12px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted-foreground); margin-bottom: 14px; }
+  .footer-col ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+  .footer-col a { color: var(--foreground); font-size: 14.5px; font-weight: 500; }
+  .footer-col a:hover { color: var(--primary); }
+  .footer-bottom { padding-top: 24px; display: flex; justify-content: space-between; color: var(--muted-foreground); font-size: 13px; }
+
+  /* RESPONSIVE */
+  @media (max-width: 1000px) {
+    .hero-inner { grid-template-columns: 1fr; gap: 48px; }
+    .steps { grid-template-columns: 1fr; }
+    .fields-grid { grid-template-columns: repeat(2, 1fr); }
+    .security-inner { grid-template-columns: 1fr; gap: 36px; }
+  }
+  @media (max-width: 900px) {
+    .nav-links { display: none; }
+    .nav-cta { display: none !important; }
+    nav.top > .container .btn { display: none; }
+    .footer-inner { grid-template-columns: 1fr 1fr; gap: 32px; }
+  }
+  @media (max-width: 900px) {
+    nav.top .nav-burger { display: inline-flex; }
+  }
+  @media (max-width: 600px) {
+    .fields-grid { grid-template-columns: 1fr; }
+    .browser-body { grid-template-columns: 1fr; }
+    .vp-stage { max-width: 100%; aspect-ratio: 1 / 0.85; }
+    .vp-chip { font-size: 10.5px; padding: 6px 10px; }
+    .cta-card { padding: 40px 28px; border-radius: 22px; }
+  }
+
+  /* HAMBURGER + MOBILE SIDEBAR (shared pattern) */
+  .nav-burger {
+    display: none;
+    align-items: center; justify-content: center;
+    width: 42px; height: 42px;
+    background: transparent; border: none;
+    border-radius: 10px;
+    color: var(--foreground);
+    cursor: pointer; padding: 0;
+    transition: background 120ms ease;
+    position: relative; z-index: 80;
+  }
+  .nav-burger:hover { background: var(--secondary); }
+  .nav-burger svg { width: 22px; height: 22px; }
+  .nav-burger .icon-close { display: none; }
+  nav.top.open .nav-burger .icon-open { display: none; }
+  nav.top.open .nav-burger .icon-close { display: block; }
+
+  .mobile-backdrop { position: fixed; inset: 0; background: rgba(15, 15, 20, 0.45); opacity: 0; pointer-events: none; transition: opacity 240ms ease; z-index: 60; }
+  nav.top.open + .mobile-backdrop { opacity: 1; pointer-events: auto; }
+  nav.top.open { z-index: 70; }
+  .mobile-menu {
+    position: fixed; top: 0; right: 0;
+    width: 100%; left: 0; height: 100dvh;
+    background: #fff;
+    box-shadow: -16px 0 40px rgba(15,15,20,0.12);
+    transform: translateX(100%);
+    transition: transform 280ms cubic-bezier(0.22, 0.61, 0.36, 1);
+    z-index: 70;
+    display: flex; flex-direction: column;
+    overflow-y: auto;
+  }
+  body.menu-locked .mobile-menu { transform: translateX(0); }
+  .mobile-menu-header { display: flex; align-items: center; justify-content: flex-end; padding: 18px 20px; }
+  .mobile-menu-close {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 40px; height: 40px;
+    background: transparent; border: none; cursor: pointer;
+    color: var(--foreground); border-radius: 10px; padding: 0;
+  }
+  .mobile-menu-close:hover { background: var(--secondary); }
+  .mobile-menu-close svg { width: 20px; height: 20px; }
+  .mobile-menu-inner { display: flex; flex-direction: column; gap: 2px; padding: 8px 28px 32px; flex: 1; }
+  .mobile-menu a.menu-link {
+    display: block; padding: 16px 4px;
+    font-size: 17px; font-weight: 500;
+    color: var(--foreground);
+    border-bottom: 1px solid var(--border);
+    transition: color 120ms ease;
+  }
+  .mobile-menu a.menu-link:last-of-type { border-bottom: none; }
+  .mobile-menu a.menu-link:hover, .mobile-menu a.menu-link.active { color: var(--primary); }
+  .mobile-menu .mobile-cta { display: flex; flex-direction: column; gap: 10px; margin-top: 28px; }
+  .mobile-menu .mobile-cta .btn { width: 100%; justify-content: center; }
+  body.menu-locked { overflow: hidden; }
+  @media (min-width: 901px) {
+    .mobile-menu { display: none; }
+    .mobile-backdrop { display: none; }
+  }
+</style>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-TLPPBXZX1F"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-TLPPBXZX1F');
+</script>
+<meta name="description" content="The veepick browser extension for interior designers: add products from any online shop to your veedeck shopping lists in one click.">
+
+<link rel="canonical" href="https://veedeck.com/en/plugin/"/>
+<link rel="alternate" hreflang="pl" href="https://veedeck.com/pl/wtyczka/"/>
+<link rel="alternate" hreflang="en" href="https://veedeck.com/en/plugin/"/>
+<link rel="alternate" hreflang="x-default" href="https://veedeck.com/pl/wtyczka/"/>
+</head>
+<body>
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W6PSBGLB"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+
+<!-- NAV -->
+<nav class="top" id="siteNav">
+  <div class="container nav-inner">
+    <a class="brand" href="/en/">
+      <img class="brand-icon" src="/vee-icon.png" alt="">
+      <img class="wordmark-img" src="/vee_black.png" alt="veedeck">
+    </a>
+    <div class="nav-links">
+      <a href="/en/modules/">Modules</a>
+      <a href="/en/plugin/" class="active">Plugin</a>
+      <a href="/en/pricing/">Pricing</a>
+      <a href="/en/demo/">Demo</a>
+      <a href="/en/about/">About</a>
+      <a href="/en/contact/">Contact</a>
+    </div>
+    <div class="nav-cta" style="display:flex; gap:10px; align-items:center;">
+      <a href="/pl/wtyczka/" class="btn btn-ghost" style="font-size:12px;padding:0 10px;letter-spacing:0.06em;font-weight:700;">PL</a>
+      <a href="https://app.veedeck.com/login" class="btn btn-ghost">Log in</a>
+      <a href="/en/demo/" class="btn btn-primary">
+        Free demo
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"></path></svg>
+      </a>
+    </div>
+    <button class="nav-burger" aria-label="Otwórz menu" aria-expanded="false" aria-controls="mobileMenu" onclick="toggleMobileMenu(this)">
+      <svg class="icon-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="3" y1="7" x2="21" y2="7"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="17" x2="21" y2="17"></line></svg>
+      <svg class="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="6" y1="6" x2="18" y2="18"></line><line x1="6" y1="18" x2="18" y2="6"></line></svg>
+    </button>
+  </div>
+
+</nav>
+<div class="mobile-backdrop" id="mobileBackdrop" onclick="closeMobileMenu()" aria-hidden="true"></div>
+<aside class="mobile-menu" id="mobileMenu" aria-label="Menu mobilne">
+    <div class="mobile-menu-header"><a class="brand" href="/en/" style="margin-right:auto; display:inline-flex; align-items:center; gap:9px;"><img class="brand-icon" src="/vee-icon.png" alt="" style="height:28px;width:auto;"><img class="wordmark-img" src="/vee_black.png" alt="veedeck" style="height:18px;width:auto;"></a>
+      <button class="mobile-menu-close" aria-label="Zamknij menu" onclick="closeMobileMenu()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="6" y1="6" x2="18" y2="18"></line><line x1="6" y1="18" x2="18" y2="6"></line></svg>
+      </button>
+    </div>
+    <div class="mobile-menu-inner">
+      <a class="menu-link" href="/en/modules/">Modules</a>
+      <a class="menu-link active" href="/en/plugin/">Plugin</a>
+      <a class="menu-link" href="/en/demo/">Demo</a>
+      <a class="menu-link" href="/en/about/">About</a>
+      <a class="menu-link" href="/en/contact/">Contact</a>
+      <div class="mobile-cta">
+      <a href="/pl/wtyczka/" class="btn btn-ghost" style="width:100%;justify-content:center;font-size:12px;font-weight:700;letter-spacing:0.06em;">PL</a>
+        <a href="https://app.veedeck.com/login" class="btn btn-ghost">Log in</a>
+        <a href="/en/demo/" class="btn btn-primary">Free demo
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"></path></svg>
+        </a>
+      </div>
+    </div>
+  </aside>
+
+<script>
+  function setMobileMenu(open) {
+    var nav = document.getElementById('siteNav');
+    var btn = nav.querySelector('.nav-burger');
+    nav.classList.toggle('open', open);
+    document.body.classList.toggle('menu-locked', open);
+    if (btn) {
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      btn.setAttribute('aria-label', open ? 'Zamknij menu' : 'Otwórz menu');
+    }
+  }
+  function toggleMobileMenu(btn) {
+    var nav = document.getElementById('siteNav');
+    setMobileMenu(!nav.classList.contains('open'));
+  }
+  function closeMobileMenu() { setMobileMenu(false); }
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeMobileMenu(); });
+  document.addEventListener('click', function (e) {
+    var link = e.target.closest('.mobile-menu a');
+    if (link) closeMobileMenu();
+  });
+</script>
+
+<!-- HERO -->
+<section class="page-hero">
+  <div class="container">
+    <div class="hero-inner">
+      <div>
+        <div class="hero-eyebrow"><span class="dot"></span>Browser plugin</div>
+        <div class="hero-name">veepick</div>
+        <h1 class="hero-tagline">Browser plugin dla projektantów wnętrz. <br><em>Shopping lists in a few clicks.</em></h1>
+        <div class="hero-browsers"><span class="badge">Chrome · Edge · Firefox</span></div>
+        <p class="hero-lead">
+          Surfujesz po sklepach z meblami, oświetleniem i materiałami wykończeniowymi —
+          klikasz <strong>veepick</strong> i produkt ląduje na liście zakupowej klienta.
+          Name, cena, zdjęcie, producent i link do sklepu zaciągane są automatycznie.
+        </p>
+        <div class="hero-ctas">
+          <a href="https://chromewebstore.google.com/detail/veepick/ahnalaifooponobepoccpecdhdkgalmd?hl=pl" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-lg">
+            <img class="browser-ic" src="/chrome-logo.webp" alt="" aria-hidden="true">
+            Add to Chrome
+          </a>
+          <a href="#download" class="btn btn-ghost btn-lg">Get it for Edge / Firefox</a>
+        </div>
+        <div class="hero-meta">
+          <span class="hero-meta-item"><span class="material-symbols-rounded">check_circle</span>Bezpłatna przez 30 dni</span>
+          <span class="hero-meta-item"><span class="material-symbols-rounded">check_circle</span>Works offline</span>
+          <span class="hero-meta-item"><span class="material-symbols-rounded">check_circle</span>~2 MB</span>
+        </div>
+      </div>
+
+      <!-- HERO VISUAL — veepick floating + data particles -->
+      <div class="vp-stage">
+        <div class="vp-canvas">
+          <div class="vp-flow"></div>
+
+          <!-- Shop product card -->
+          <div class="vp-floating vp-shop">
+            <span class="vp-tag">ONLINE STORE</span>
+            <div class="vp-photo"><img src="/sofa-seria-7r.png" alt="Kanapa Seria 7R"></div>
+            <div>
+              <div class="vp-name">7R Series Sofa, Green</div>
+              <div class="vp-meta">ChairsPL · 2,158 zł</div>
+            </div>
+          </div>
+
+          <!-- veepick sidebar -->
+          <div class="vp-floating vp-sidebar">
+            <div class="vp-head">
+              <img class="vp-ic" src="/veepic.png" alt="veepick">veepick
+              <span class="vp-acts">⚙ ↻ ›</span>
+            </div>
+            <div class="vp-tabs">
+              <div class="vp-t on">Add product</div>
+              <div class="vp-t">Recent<span class="vp-pill">7</span></div>
+            </div>
+            <div class="vp-body">
+              <div class="vp-img"><img src="/sofa-seria-7r.png" alt=""></div>
+              <div class="vp-hint">Hover an image on the page to pick another</div>
+              <div>
+                <div class="vp-lab">Shopping list</div>
+                <div class="vp-input"><span>Podwale · Living room</span><span class="vp-caret">⌄</span></div>
+              </div>
+              <div>
+                <div class="vp-lab">Name</div>
+                <div class="vp-input"><span>7R Series Sofa, Green</span></div>
+              </div>
+              <div class="vp-grid3">
+                <div>
+                  <div class="vp-lab">Price</div>
+                  <div class="vp-input">2,158 zł</div>
+                </div>
+                <div>
+                  <div class="vp-lab">Quantity</div>
+                  <div class="vp-input">1</div>
+                </div>
+                <div>
+                  <div class="vp-lab">Dimensions</div>
+                  <div class="vp-input">82×46</div>
+                </div>
+              </div>
+            </div>
+            <div class="vp-cta"><button>+ Add to list</button></div>
+            <div class="vp-foot">Signed in: MiejsceDesign</div>
+          </div>
+
+          <!-- Data chips floating -->
+          <div class="vp-chip c1"><span class="vp-k">Price</span><span>2,158 zł</span></div>
+          <div class="vp-chip c2"><span class="vp-k">Manufacturer</span><span>Soffa</span></div>
+          <div class="vp-chip c3"><span class="vp-k">Dimensions</span><span>210 × 96 × 110 cm</span></div>
+          <div class="vp-chip c4"><span class="vp-k">Colour</span><span>Brown</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="pad">
+  <div class="container">
+    <div class="section-head">
+      <div class="eyebrow">How it works</div>
+      <h2>Three steps.<br><em>No copying, no screenshots.</em></h2>
+      <p>
+        No more tedious, time-consuming typing of products into tables. veepick automatically pulls product data from the web page and sends it straight to your list in veedeck.
+      </p>
+    </div>
+
+    <div class="steps">
+      <div class="step-card">
+        <div class="step-ic"><span class="material-symbols-rounded">storefront</span></div>
+        <div class="step-num">Step 01</div>
+        <h3>Find a product in a store</h3>
+        <p>Open any product page — furniture, lighting, accessories. veepick works on most online stores, with no setup required.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-ic"><span class="material-symbols-rounded">mouse</span></div>
+        <div class="step-num">Step 02</div>
+        <h3>Click the veepick icon</h3>
+        <p>The icon in your browser toolbar opens a mini window. Check that the name, price and photo are correct — accept with a single click.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-ic"><span class="material-symbols-rounded">checklist</span></div>
+        <div class="step-num">Step 03</div>
+        <h3>Pick a list and section</h3>
+        <p>Choose which client list and which section (e.g. “Living room”, “Bathroom”) the product goes to. The list in veedeck refreshes instantly — no reload.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FIELDS / WHAT IT GRABS -->
+<section class="pad fields-section">
+  <div class="container">
+    <div class="section-head center">
+      <div class="eyebrow">What veepick recognises</div>
+      <h2>Five fields from any page.<br><em>The rest is up to you.</em></h2>
+      <p>
+        veepick reads the data from a product page in the online store. Anything it can't find automatically — you can add by hand in the plugin window before saving.
+      </p>
+    </div>
+
+    <div class="fields-grid">
+      <div class="field-card">
+        <div class="ic"><span class="material-symbols-rounded">label</span></div>
+        <h3>Name</h3>
+        <p>The product title pulled from the page’s meta tags.</p>
+      </div>
+      <div class="field-card">
+        <div class="ic"><span class="material-symbols-rounded">payments</span></div>
+        <h3>Price</h3>
+        <p>The current price in the store’s currency — with or without VAT, however you’ve set it.</p>
+      </div>
+      <div class="field-card">
+        <div class="ic"><span class="material-symbols-rounded">image</span></div>
+        <h3>Photo</h3>
+        <p>The main product image at the best available resolution.</p>
+      </div>
+      <div class="field-card">
+        <div class="ic"><span class="material-symbols-rounded">factory</span></div>
+        <h3>Manufacturer</h3>
+        <p>The brand or manufacturer — if the store provides it in its structured data.</p>
+      </div>
+      <div class="field-card">
+        <div class="ic"><span class="material-symbols-rounded">link</span></div>
+        <h3>Store link</h3>
+        <p>A direct URL to the product page — so you can always get back to the source.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SHOPS -->
+<section class="shops-section">
+  <div class="container">
+    <div class="shops-head">
+      <div class="eyebrow">What it works with</div>
+      <h2>Works everywhere you design.</h2>
+      <p>veepick needs no store integration — it reads any product page.</p>
+    </div>
+    <div class="shop-strip">
+      <span class="shop-pill"><span class="dot">IK</span>IKEA</span>
+      <span class="shop-pill"><span class="dot">SK</span>Sklum</span>
+      <span class="shop-pill"><span class="dot">SE</span>Selsey</span>
+      <span class="shop-pill"><span class="dot">BE</span>Beliani</span>
+      <span class="shop-pill"><span class="dot">MX</span>Maxfliz</span>
+      <span class="shop-pill"><span class="dot">IW</span>IWC Home</span>
+      <span class="shop-pill"><span class="dot">+</span>and thousands more</span>
+    </div>
+    <p class="shop-disclaimer">
+      Store logos and names are used purely as examples of support. veepick works on any store with valid structured data (schema.org / Open Graph).
+    </p>
+  </div>
+</section>
+
+<!-- SECURITY / BACKSTAGE -->
+<section class="security-section">
+  <div class="container">
+    <div class="security-inner">
+      <div>
+        <div class="section-head" style="margin-bottom: 0;">
+          <div class="eyebrow">Security</div>
+          <h2>It only reads the store page.<br><em>Nothing more.</em></h2>
+          <p>
+            veepick to lekka wtyczka MV3, która aktywuje się dopiero gdy klikniesz jej ikonę.
+            Nie czyta historii przeglądania, nie zbiera analityki, nie wysyła nic poza
+            podstawowymi danymi produktu — i tylko do Twojego konta veedeck.
+          </p>
+        </div>
+      </div>
+
+      <div class="security-list">
+        <div class="security-item">
+          <div class="ic"><span class="material-symbols-rounded">lock</span></div>
+          <div>
+            <h3>A secure connection to veedeck</h3>
+            <p>All data is sent over HTTPS, authorised with a token tied to your account. No one but you can see it.</p>
+          </div>
+        </div>
+        <div class="security-item">
+          <div class="ic"><span class="material-symbols-rounded">visibility_off</span></div>
+          <div>
+            <h3>Zero tracking</h3>
+            <p>No Google Analytics, no third-party trackers, no telemetry. The extension knows nothing about what you do in your browser beyond the open store tab.</p>
+          </div>
+        </div>
+        <div class="security-item">
+          <div class="ic"><span class="material-symbols-rounded">cloud_off</span></div>
+          <div>
+            <h3>Runs locally</h3>
+            <p>All product data is parsed in your browser — no file, image or page touches an intermediary server before you confirm.</p>
+          </div>
+        </div>
+        <div class="security-item">
+          <div class="ic"><span class="material-symbols-rounded">refresh</span></div>
+          <div>
+            <h3>Live sync with the platform</h3>
+            <p>A product added with veepick appears on the list in veedeck instantly — no page reload. You work across two windows as if they were one platform.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section" id="download">
+  <div class="container">
+    <div class="cta-card">
+      <div class="eyebrow">Get veepick</div>
+      <h2>Add the extension and turn tabs<br><em>w&nbsp;zatwierdzoną listę zakupową.</em></h2>
+      <p>Instalacja w 30 sekund. Pierwsze 30 dni darmowe razem z całym veedeck — bez karty kredytowej, bez zobowiązań.</p>
+      <div class="cta-buttons">
+        <a href="https://chromewebstore.google.com/detail/veepick/ahnalaifooponobepoccpecdhdkgalmd?hl=pl" target="_blank" rel="noopener noreferrer" class="btn btn-white btn-lg">
+          <img class="browser-ic" src="/chrome-logo.webp" alt="" aria-hidden="true">
+          Chrome Web Store
+        </a>
+        <span class="btn btn-outline btn-lg" style="opacity:0.4;cursor:not-allowed;">Edge Add-ons</span>
+        <span class="btn btn-outline btn-lg" style="opacity:0.4;cursor:not-allowed;">Firefox Add-ons</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="site">
+  <div class="container">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <a class="brand" href="/en/">
+          <img class="brand-icon" src="/vee-icon.png" alt="" style="height:28px;width:28px">
+          <img class="wordmark-img" src="/vee_black.png" alt="veedeck" style="height:22px">
+        </a>
+        <p>Visualize, Design, Deliver.</p>
+        <div>A platform for interior designers.</div>
+      </div>
+            <div class="footer-col">
+        <h4>Company</h4>
+        <ul>
+          <li><a href="/en/about/">About</a></li>
+          <li><a href="/en/demo/">Demo</a></li>
+          <li><a href="/en/contact/">Contact</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Product</h4>
+        <ul>
+          <li><a href="/en/modules/">Mołuły</a></li>
+          <li><a href="/en/plugin/">veepick plugin</a></li>
+          <li><a href="/en/pricing/">Pricing</a></li>
+          <li><a href="index.html#jak">How it works</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Zasoby</h4>
+        <ul>
+          <li><a href="/en/help/">Help</a></li>
+          <li><a href="pomoc/dla-projektantow/">Baza wiedzy</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Legal</h4>
+        <ul>
+          <li><a href="/en/privacy-policy/">Privacy Policy</a></li>
+          <li><a href="/en/privacy-policy-veepick/">veepick Privacy Policy</a></li>
+          <li><a href="/en/cookie-policy/">Cookie Policy</a></li>
+        </ul>
+      </div>
+</div>
+    <div class="footer-bottom">
+      <div>© 2026 veedeck. All rights reserved.</div>
+      <div>contact@veedeck.com</div>
+    </div>
+  </div>
+</footer>
+
+
+<script src="/veedeck-megamenu.js"></script>
+<script src="/veedeck-reveal.js"></script>
+
+<style>
+/* MFIX: off-canvas menu nie rozpycha strony w bok */
+@media (max-width: 900px) { html, body { overflow-x: clip; } }
+</style>
+</body>
+</html>

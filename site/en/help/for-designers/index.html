@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>For designers | veedeck Help Center</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="/veedeckicon.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&amp;family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+<style>
+  :root {
+    --background: #FFFFFF;
+    --foreground: #24252B;
+    --card: #FFFFFF;
+    --card-foreground: #24252B;
+    --primary: #4F46E5;
+    --primary-foreground: #FFFFFF;
+    --secondary: #F2F3F7;
+    --muted: #F2F3F7;
+    --muted-foreground: #6B6F80;
+    --accent: #A5B4FC;
+    --accent-foreground: #1E1B4B;
+    --border: #E5E7EB;
+    --ring: #4F46E5;
+    --indigo-50: #EEF2FF;
+    --indigo-950: #1E1B4B;
+    --radius: 0.625rem;
+    --radius-lg: 14px;
+    --radius-xl: 18px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+    background: var(--background);
+    color: var(--foreground);
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.5;
+  }
+  h1, h2, h3, h4 { font-family: "Inter", ui-sans-serif, system-ui, sans-serif; font-weight: 600; letter-spacing: -0.022em; margin: 0; }
+  p { margin: 0; }
+  a { color: inherit; text-decoration: none; }
+  a:hover { color: var(--primary); }
+  .container { max-width: 1200px; margin: 0 auto; padding: 0 32px; }
+
+  /* NAV (shared pattern) */
+  nav.top { position: sticky; top: 0; z-index: 50; background: rgba(255,255,255,0.85); backdrop-filter: saturate(180%) blur(14px); -webkit-backdrop-filter: saturate(180%) blur(14px); border-bottom: 1px solid var(--border); }
+  .nav-inner { display: flex; align-items: center; justify-content: space-between; padding: 16px 32px; height: 68px; }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand-icon { height: 32px; width: 32px; }
+  .wordmark-img { height: 24px; }
+  .nav-links { display: flex; align-items: center; gap: 26px; font-size: 14.5px; color: var(--muted-foreground); font-weight: 500; }
+  .nav-links a:hover { color: var(--foreground); }
+  .nav-links a.active { color: var(--primary); }
+  .btn { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 18px; border-radius: 12px; font-weight: 600; font-size: 14px; cursor: pointer; border: 1px solid transparent; transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease; }
+  .btn-ghost { color: var(--foreground); }
+  .btn-ghost:hover { background: var(--secondary); }
+  .btn-primary { background: var(--primary); color: var(--primary-foreground); box-shadow: 0 6px 20px -8px rgba(79, 70, 229, 0.45); }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 10px 24px -8px rgba(79, 70, 229, 0.55); }
+
+  /* HERO */
+  .page-hero { position: relative; padding: 76px 0 44px; background: radial-gradient(1100px 400px at 80% -10%, rgba(165, 180, 252, 0.28), transparent 60%), radial-gradient(700px 320px at 8% 0%, rgba(79, 70, 229, 0.10), transparent 65%), var(--background); border-bottom: 1px solid var(--border); text-align: center; }
+  .page-hero .eyebrow { display: inline-block; font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--primary); margin-bottom: 14px; }
+  .page-hero h1 { font-size: clamp(36px, 5.5vw, 56px); line-height: 1.06; letter-spacing: -0.03em; font-weight: 700; margin-bottom: 14px; }
+  .page-hero .lead { font-size: 17px; color: var(--muted-foreground); max-width: 560px; line-height: 1.55; margin: 0 auto; }
+  .help-search { max-width: 560px; margin: 30px auto 0; position: relative; }
+  .help-search input { width: 100%; height: 54px; border-radius: 16px; border: 1px solid var(--border); background: #fff; padding: 0 20px 0 50px; font-family: inherit; font-size: 15.5px; color: var(--foreground); box-shadow: 0 18px 40px -24px rgba(15,23,42,0.22); transition: border-color .12s, box-shadow .12s; }
+  .help-search input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(79,70,229,0.14); }
+  .help-search .material-symbols-rounded { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: var(--muted-foreground); font-size: 22px; }
+  .help-quick { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-top: 22px; }
+  .help-quick a { font-size: 13.5px; font-weight: 600; color: var(--muted-foreground); background: #fff; border: 1px solid var(--border); border-radius: 999px; padding: 8px 16px; transition: border-color .12s, color .12s; }
+  .help-quick a:hover { border-color: var(--accent); color: var(--primary); }
+
+  /* ROLE CARDS */
+  .role-section { padding: 64px 0 8px; }
+  .role-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .role-card { background: #fff; border: 1px solid var(--border); border-radius: 18px; padding: 26px; transition: border-color .12s, transform .12s; }
+  .role-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .role-card .ic { width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(140deg, #EEF2FF, #E0E7FF); display: grid; place-items: center; margin-bottom: 14px; }
+  .role-card .ic .material-symbols-rounded { font-size: 23px; color: var(--primary); }
+  .role-card h3 { font-size: 17px; margin-bottom: 6px; }
+  .role-card p { font-size: 13.5px; color: var(--muted-foreground); line-height: 1.55; }
+  .role-card .go { display: inline-flex; align-items: center; gap: 6px; margin-top: 14px; font-size: 13.5px; font-weight: 600; color: var(--primary); }
+
+  /* HELP LAYOUT */
+  .help-section { padding: 56px 0; scroll-margin-top: 90px; }
+  .help-section + .help-section { border-top: 1px solid var(--border); }
+  .help-head { margin-bottom: 28px; max-width: 680px; }
+  .help-head .eyebrow { display: inline-block; font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--primary); margin-bottom: 10px; }
+  .help-head h2 { font-size: 28px; letter-spacing: -0.02em; margin-bottom: 8px; }
+  .help-head p { font-size: 15px; color: var(--muted-foreground); line-height: 1.6; }
+
+  .acc-group { display: flex; flex-direction: column; gap: 10px; }
+  details.acc { background: #fff; border: 1px solid var(--border); border-radius: 14px; padding: 18px 22px; transition: border-color .12s; }
+  details.acc[open] { border-color: var(--accent); box-shadow: 0 12px 30px -18px rgba(15,23,42,0.16); }
+  details.acc summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 12px; }
+  details.acc summary::-webkit-details-marker { display: none; }
+  details.acc summary .material-symbols-rounded.lead-ic { font-size: 20px; color: var(--primary); flex-shrink: 0; }
+  details.acc summary .sum-title { font-weight: 600; font-size: 15.5px; flex: 1; }
+  details.acc summary::after { content: ""; width: 20px; height: 20px; flex-shrink: 0; background-color: var(--muted-foreground); -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") center / contain no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") center / contain no-repeat; transition: transform 240ms cubic-bezier(.22,.61,.36,1); }
+  details.acc[open] summary::after { transform: rotate(180deg); background-color: var(--primary); }
+  .acc-body { margin-top: 14px; padding-left: 32px; color: var(--muted-foreground); font-size: 14.5px; line-height: 1.7; }
+  .acc-body p + p, .acc-body p + ol, .acc-body ol + p { margin-top: 10px; }
+  .acc-body strong { color: var(--foreground); }
+  .acc-body ol, .acc-body ul { margin: 10px 0 0; padding-left: 20px; display: flex; flex-direction: column; gap: 5px; }
+  .acc-body code { background: var(--secondary); border-radius: 5px; padding: 2px 6px; font-size: 13px; color: var(--foreground); }
+
+  .steps-mini { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
+
+  /* GLOSSARY */
+  .glossary-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+  .gloss-item { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; }
+  .gloss-item dt { font-family: "Inter", sans-serif; font-weight: 700; font-size: 14.5px; color: var(--foreground); margin-bottom: 4px; }
+  .gloss-item dd { margin: 0; font-size: 13.5px; color: var(--muted-foreground); line-height: 1.55; }
+
+  /* BUG REPORT FORM (mirrors contact form pattern) */
+  .bug-section { background: #FAFAFB; border-top: 1px solid var(--border); }
+  .bug-card { background: #fff; border: 1px solid var(--border); border-radius: 22px; padding: 40px; box-shadow: 0 24px 60px -32px rgba(15,23,42,0.16); max-width: 760px; margin: 0 auto; }
+  .bug-card h3 { font-size: 22px; font-weight: 700; letter-spacing: -0.012em; margin-bottom: 6px; }
+  .form-sub { color: var(--muted-foreground); font-size: 14px; margin-bottom: 24px; }
+  .bug-form { display: flex; flex-direction: column; gap: 16px; }
+  .bug-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label { font-size: 12.5px; font-weight: 600; color: var(--muted-foreground); letter-spacing: 0.01em; }
+  .field input, .field select, .field textarea { width: 100%; height: 44px; padding: 0 14px; border: 1px solid var(--border); border-radius: 10px; background: #FAFAFB; font-family: inherit; font-size: 14.5px; color: var(--foreground); transition: border-color 120ms ease, box-shadow 120ms ease, background 120ms ease; }
+  .field textarea { height: 130px; padding: 12px 14px; resize: vertical; min-height: 100px; line-height: 1.5; }
+  .field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: var(--primary); background: #fff; box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.12); }
+  .field-file { display: flex; flex-direction: column; gap: 6px; }
+  .file-drop { border: 1.5px dashed var(--border); border-radius: 12px; padding: 18px; text-align: center; font-size: 13px; color: var(--muted-foreground); background: #FAFAFB; }
+  .field-checkbox { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; color: var(--muted-foreground); line-height: 1.5; cursor: pointer; }
+  .field-checkbox input { margin-top: 2px; accent-color: var(--primary); }
+  .bug-submit { margin-top: 8px; height: 48px; border-radius: 12px; background: var(--primary); color: #fff; border: none; font-family: inherit; font-weight: 600; font-size: 15px; display: inline-flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; box-shadow: 0 6px 20px -8px rgba(79, 70, 229, 0.45); transition: transform 120ms ease, box-shadow 120ms ease; }
+  .bug-submit:hover { transform: translateY(-1px); box-shadow: 0 12px 28px -10px rgba(79, 70, 229, 0.55); }
+  .form-confirm { display: none; margin-top: 14px; padding: 14px 16px; background: #ECFDF5; border: 1px solid #A7F3D0; border-radius: 12px; color: #065F46; font-size: 14px; font-weight: 500; }
+  .form-confirm.show { display: block; }
+
+  .help-foot { text-align: center; margin-top: 40px; color: var(--muted-foreground); font-size: 14.5px; }
+  .help-foot a { color: var(--primary); font-weight: 600; }
+
+  /* FOOTER */
+  footer.site { padding: 96px 0 32px; background: #fff; border-top: 1px solid var(--border); }
+  .footer-inner { display: grid; grid-template-columns: 1.4fr 1fr 1fr 1fr; gap: 48px; align-items: start; padding-bottom: 32px; border-bottom: 1px solid var(--border); }
+  .footer-brand p, .footer-brand div { color: var(--muted-foreground); font-size: 14px; margin-top: 12px; max-width: 280px; line-height: 1.55; }
+  .footer-col h4 { font-size: 12px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted-foreground); margin-bottom: 14px; }
+  .footer-col ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+  .footer-col a { color: var(--foreground); font-size: 14.5px; font-weight: 500; }
+  .footer-col a:hover { color: var(--primary); }
+  .footer-bottom { padding-top: 24px; display: flex; justify-content: space-between; color: var(--muted-foreground); font-size: 13px; }
+
+  @media (max-width: 900px) {
+    .nav-links { display: none; }
+    .nav-cta { display: none !important; }
+    nav.top > .container .btn { display: none; }
+    .role-grid { grid-template-columns: 1fr; }
+    .bug-row { grid-template-columns: 1fr; }
+    .footer-inner { grid-template-columns: 1fr 1fr; gap: 32px; }
+    .glossary-grid { grid-template-columns: 1fr; }
+    .acc-body { padding-left: 0; }
+  }
+  @media (max-width: 900px) { nav.top .nav-burger { display: inline-flex; } }
+
+  /* HAMBURGER + MOBILE SIDEBAR (shared pattern) */
+  .nav-burger { display: none; align-items: center; justify-content: center; width: 42px; height: 42px; background: transparent; border: none; border-radius: 10px; color: var(--foreground); cursor: pointer; padding: 0; transition: background 120ms ease; position: relative; z-index: 80; }
+  .nav-burger:hover { background: var(--secondary); }
+  .nav-burger svg { width: 22px; height: 22px; }
+  .nav-burger .icon-close { display: none; }
+  nav.top.open .nav-burger .icon-open { display: none; }
+  nav.top.open .nav-burger .icon-close { display: block; }
+  .mobile-backdrop { position: fixed; inset: 0; background: rgba(15, 15, 20, 0.45); opacity: 0; pointer-events: none; transition: opacity 240ms ease; z-index: 60; }
+  nav.top.open + .mobile-backdrop { opacity: 1; pointer-events: auto; }
+  nav.top.open { z-index: 70; }
+  .mobile-menu { position: fixed; top: 0; right: 0; width: 100%; left: 0; height: 100dvh; background: #fff; box-shadow: -16px 0 40px rgba(15,15,20,0.12); transform: translateX(100%); transition: transform 280ms cubic-bezier(0.22, 0.61, 0.36, 1); z-index: 70; display: flex; flex-direction: column; overflow-y: auto; }
+  body.menu-locked .mobile-menu { transform: translateX(0); }
+  .mobile-menu-header { display: flex; align-items: center; justify-content: flex-end; padding: 18px 20px; }
+  .mobile-menu-close { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: transparent; border: none; cursor: pointer; color: var(--foreground); border-radius: 10px; padding: 0; }
+  .mobile-menu-close:hover { background: var(--secondary); }
+  .mobile-menu-close svg { width: 20px; height: 20px; }
+  .mobile-menu-inner { display: flex; flex-direction: column; gap: 2px; padding: 8px 28px 32px; flex: 1; }
+  .mobile-menu a.menu-link { display: block; padding: 16px 4px; font-size: 17px; font-weight: 500; color: var(--foreground); border-bottom: 1px solid var(--border); transition: color 120ms ease; }
+  .mobile-menu a.menu-link:last-of-type { border-bottom: none; }
+  .mobile-menu a.menu-link:hover, .mobile-menu a.menu-link.active { color: var(--primary); }
+  .mobile-menu .mobile-cta { display: flex; flex-direction: column; gap: 10px; margin-top: 28px; }
+  .mobile-menu .mobile-cta .btn { width: 100%; justify-content: center; }
+  body.menu-locked { overflow: hidden; }
+  @media (min-width: 901px) { .mobile-menu { display: none; } .mobile-backdrop { display: none; } }
+</style>
+<style>
+  .breadcrumb { font-size: 13px; color: var(--muted-foreground); margin-bottom: 16px; display: flex; gap: 6px; align-items: center; justify-content: center; flex-wrap: wrap; }
+  .breadcrumb a { color: var(--muted-foreground); font-weight: 600; }
+  .breadcrumb a:hover { color: var(--primary); }
+  .sub-nav { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-top: 22px; }
+  .sub-nav a { font-size: 13.5px; font-weight: 600; color: var(--muted-foreground); background: #fff; border: 1px solid var(--border); border-radius: 999px; padding: 8px 16px; transition: border-color .12s, color .12s; }
+  .sub-nav a.active { color: var(--primary); border-color: var(--accent); }
+  .sub-nav a:hover { border-color: var(--accent); color: var(--primary); }
+  .sub-hero { padding: 56px 0 40px; }
+</style>
+<meta name="description" content="Guide to all modules in the designer panel: ProjectFlow, shopping lists, clients, contractors, veepick plugin and more.">
+
+<link rel="canonical" href="https://veedeck.com/en/help/for-designers/"/>
+<link rel="alternate" hreflang="pl" href="https://veedeck.com/pl/pomoc/dla-projektantow/"/>
+<link rel="alternate" hreflang="en" href="https://veedeck.com/en/help/for-designers/"/>
+<link rel="alternate" hreflang="x-default" href="https://veedeck.com/pl/pomoc/dla-projektantow/"/>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="top" id="siteNav">
+  <div class="container nav-inner">
+    <a class="brand" href="/en/">
+      <img class="brand-icon" src="/vee-icon.png" alt="">
+      <img class="wordmark-img" src="/vee_black.png" alt="veedeck">
+    </a>
+    <div class="nav-links">
+      <a href="/en/modules/">Modules</a>
+      <a href="/en/plugin/">Plugin</a>
+      <a href="/en/pricing/">Pricing</a>
+      <a href="/en/demo/">Demo</a>
+      <a href="/en/about/">About</a>
+      <a href="/en/contact/">Contact</a>
+      
+    </div>
+    <div class="nav-cta" style="display:flex; gap:10px; align-items:center;">
+      <a href="/pl/pomoc/dla-projektantow/" class="btn btn-ghost" style="font-size:12px;padding:0 10px;letter-spacing:0.06em;font-weight:700;">PL</a>
+      <a href="https://app.veedeck.com/login" class="btn btn-ghost">Log in</a>
+      <a href="/en/#demo" class="btn btn-primary">
+        Free demo
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"></path></svg>
+      </a>
+    </div>
+    <button class="nav-burger" aria-label="Otwórz menu" aria-expanded="false" aria-controls="mobileMenu" onclick="toggleMobileMenu(this)">
+      <svg class="icon-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="3" y1="7" x2="21" y2="7"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="17" x2="21" y2="17"></line></svg>
+      <svg class="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="6" y1="6" x2="18" y2="18"></line><line x1="6" y1="18" x2="18" y2="6"></line></svg>
+    </button>
+  </div>
+</nav>
+<div class="mobile-backdrop" id="mobileBackdrop" onclick="closeMobileMenu()" aria-hidden="true"></div>
+<aside class="mobile-menu" id="mobileMenu" aria-label="Menu mobilne">
+  <div class="mobile-menu-header"><a class="brand" href="/en/" style="margin-right:auto; display:inline-flex; align-items:center; gap:9px;"><img class="brand-icon" src="/vee-icon.png" alt="" style="height:28px;width:auto;"><img class="wordmark-img" src="/vee_black.png" alt="veedeck" style="height:18px;width:auto;"></a>
+    <button class="mobile-menu-close" aria-label="Zamknij menu" onclick="closeMobileMenu()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="6" y1="6" x2="18" y2="18"></line><line x1="6" y1="18" x2="18" y2="6"></line></svg>
+    </button>
+  </div>
+  <div class="mobile-menu-inner">
+    <a class="menu-link" href="/en/modules/">Modules</a>
+    <a class="menu-link" href="/en/plugin/">Plugin</a>
+    <a class="menu-link" href="/en/pricing/">Pricing</a>
+    <a class="menu-link" href="/en/demo/">Demo</a>
+    <a class="menu-link" href="/en/about/">About</a>
+    <a class="menu-link" href="/en/contact/">Contact</a>
+    
+    <div class="mobile-cta">
+      <a href="/pl/pomoc/dla-projektantow/" class="btn btn-ghost" style="width:100%;justify-content:center;font-size:12px;font-weight:700;letter-spacing:0.06em;">PL</a>
+      <a href="https://app.veedeck.com/login" class="btn btn-ghost">Log in</a>
+      <a href="/en/#demo" class="btn btn-primary">Free demo
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"></path></svg>
+      </a>
+    </div>
+  </div>
+</aside>
+
+<script>
+  function setMobileMenu(open) {
+    var nav = document.getElementById('siteNav');
+    var btn = nav.querySelector('.nav-burger');
+    nav.classList.toggle('open', open);
+    document.body.classList.toggle('menu-locked', open);
+    if (btn) { btn.setAttribute('aria-expanded', open ? 'true' : 'false'); btn.setAttribute('aria-label', open ? 'Zamknij menu' : 'Otwórz menu'); }
+  }
+  function toggleMobileMenu(btn) { var nav = document.getElementById('siteNav'); setMobileMenu(!nav.classList.contains('open')); }
+  function closeMobileMenu() { setMobileMenu(false); }
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeMobileMenu(); });
+  document.addEventListener('click', function (e) { var link = e.target.closest('.mobile-menu a'); if (link) closeMobileMenu(); });
+</script>
+
+
+
+<!-- HERO -->
+<section class="page-hero sub-hero">
+  <div class="container">
+    <div class="breadcrumb"><a href="/en/help/">Help Center</a><span>／</span><span>For designers</span></div>
+    <div class="eyebrow">Modules</div>
+    <h1>For designers</h1>
+    <p class="lead">A guide to all modules in the designer panel: ProjectFlow, shopping lists, clients, contractors, the veepick plugin and more.</p>
+    <div class="help-search">
+      <span class="material-symbols-rounded">search</span>
+      <input type="text" id="helpSearch" placeholder="Search on this page…" oninput="filterHelp(this.value)">
+    </div>
+    <div class="sub-nav"><a href="/en/help/getting-started/">Getting started</a>
+      <a href="/en/help/for-designers/" class="active">For designers</a>
+      <a href="/en/help/for-clients-and-contractors/">For clients &amp; contractors</a>
+      <a href="/en/help/faq/">FAQ</a>
+      <a href="/en/help/troubleshooting/">Troubleshooting</a>
+      <a href="/en/help/report-a-bug/">Report a bug</a></div>
+  </div>
+</section>
+
+<section class="help-section" id="for-designers">
+  <div class="container">
+    <div class="acc-group">
+
+      <details class="acc">
+        <summary><span class="material-symbols-rounded lead-ic">space_dashboard</span><span class="sum-title">Main dashboard</span></summary>
+        <div class="acc-body">
+          <p>Your starting dashboard — at a glance you see what needs attention: number of clients, active projects and shopping lists, recent projects with render preview, tasks for today and overdue ones, unread comments/pins, requests to change status or restore a version, and unread chat messages.</p>
+          <p>Clicking any element takes you straight to the right place in the app.</p>
+        </div>
+      </details>
+
+      <details class="acc">
+        <summary><span class="material-symbols-rounded lead-ic">push_pin</span><span class="sum-title">ProjectFlow - renders &amp; visualisations</span></summary>
+        <div class="acc-body">
+          <p>The heart of veedeck: upload renders, organise them into rooms and collect live client feedback. Structure: <strong>Project → Rooms</strong> (e.g. Living room, Kitchen) <strong>→ (optional folders) → Renders</strong>.</p>
+          <p><strong>How to add a new project:</strong></p>
+          <ol><li>Open "ProjectFlow" in the sidebar.</li><li>Click "New project".</li><li>Enter a title and optionally assign a client from the database.</li><li>Click "Create".</li></ol>
+          <p><strong>How to add a render to a room:</strong></p>
+          <ol><li>Open a project.</li><li>Click the room you want to add a file to (or create a new one with the "+" icon).</li><li>Click "Add render" or drag the file onto the upload area.</li></ol>
+          <p>Supported formats: JPEG, PNG, WebP, HEIC and PDF. Render statuses: <em>Under review</em> → <em>Accepted</em> / <em>Rejected</em>. Uploading a new file to an existing render creates the next version — previous ones are preserved in the history and can be compared or restored.</p>
+          <p><strong>Comments and pins:</strong> the client (if you allow it) clicks directly on the image to leave a note at a specific spot. You see every comment with a status of New / In progress / Done and can reply in the thread.</p>
+          <p><strong>How to share a project with a client:</strong></p>
+          <ol><li>Go to the "Clients" module.</li><li>Open the client profile → "Contacts" tab.</li><li>Select a contact person (or add a new one) and assign them to the project.</li></ol>
+          <p><strong>What you can configure per project</strong> (Project settings): whether the client can comment and place pins, independently accept renders, change status without requesting approval, restore older versions, upload their own files, and which modules are visible to them.</p>
+        </div>
+      </details>
+
+      <details class="acc">
+        <summary><span class="material-symbols-rounded lead-ic">local_mall</span><span class="sum-title">Shopping lists</span></summary>
+        <div class="acc-body">
+          <p>Product breakdowns (furniture, lighting, fixtures, etc.) for client approval. Structure: <strong>List → Sections → Products</strong>.</p>
+          <p><strong>How to add a product:</strong></p>
+          <ol><li>Open a list and select (or create) a section.</li><li>Click "+ Add product".</li><li>Paste a shop link, fill in data manually, pick from the product library, or use the veepick plugin.</li></ol>
+          <p><strong>Faster product adding — veepick plugin:</strong> instead of copying data by hand, install <a href="https://chromewebstore.google.com/detail/veepick/ahnalaifooponobepoccpecdhdkgalmd?hl=en" target="_blank" rel="noopener noreferrer" style="color:#7C3AED;text-decoration:underline;font-weight:600;">→ veepick in the Chrome Web Store</a>. When you're on a product page in a shop, click the plugin icon, select the shopping list and confirm — the data (name, image, price, link) fills in automatically.</p>
+          <p>Product statuses are set by the client: no status → Accepted / Rejected. The list can be exported to PDF or CSV (list menu → three dots), with full product data and — if you share prices — totals.</p>
+        </div>
+      </details>
+
+      <details class="acc">
+        <summary><span class="material-symbols-rounded lead-ic">group</span><span class="sum-title">Clients</span></summary>
+        <div class="acc-body">
+          <p>Your contact and investor database: add and edit clients, contact persons (each with their own login account), assign to projects, archive.</p>
+          <p><strong>Email invitation:</strong> client profile → "Contacts" → select/add a person → "Send invitation". The client receives an email with a link to set their password (valid 24 h).</p>
+          <p><strong>Manual account creation:</strong> client profile → "Contacts" → "Create account" and enter the credentials you share directly with the client.</p>
+        </div>
+      </details>
+
+      <details class="acc">
+        <summary><span class="material-symbols-rounded lead-ic">engineering</span><span class="sum-title">Contractors</span></summary>
+        <div class="acc-body">
+          <p><strong>How to add a contractor and assign them to a project:</strong></p>
+          <ol><li>Sidebar → "Contractors" → "Add contractor".</li><li>Enter a name or company name.</li><li>Open the profile → "Assign project" and select a project from the list.</li><li>In the assignment, add folders and upload files.</li></ol>
+          <p>Folders have three types: Drawings, Visualisations, Other — you can also link a folder directly from ProjectFlow (syncs automatically) or hide it from the contractor.</p>
+          <p>You create the contractor's account in their profile ("Create account") — you share the login credentials directly with them; the app does not send passwords by email automatically.</p>
+        </div>
+      </details>
+
+      <details class="acc">
+        <summary><span class="material-symbols-rounded lead-ic">check_box</span><span class="sum-title">Tasks</span></summary>
+        <div class="acc-body"><p>A simple task list with subtasks, priorities (Low / Medium / High) and statuses (To do / In progress / Done). Tasks are private — the client cannot see them. You can assign a task to a project, client or team member.</p></div>
+      </details>
+
+      <details class="acc">
+        <summary><span class="material-symbols-rounded lead-ic">assignment</span><span class="sum-title">Surveys</span></summary>
+        <div class="acc-body">
+          <p><strong>How to send a survey:</strong></p>
+          <ol><li>Sidebar → "Surveys" → "New survey" (from scratch or from a template).</li><li>Add questions (short/long answer, single/multiple choice, rating, yes/no, budget range).</li><li>Assign to a client (optional).</li><li>Set the status to "Active" — otherwise the survey stays as a "Draft" and the client cannot see it.</li></ol>
+          <p>The survey appears automatically in the assigned client's panel — no link needs to be sent. You'll see responses in the "Responses" tab.</p>
+        </div>
+      </details>
+
+      <details class="acc">
+        <summary><span class="material-symbols-rounded lead-ic">calendar_month</span><span class="sum-title">Calendar &amp; Notepad</span></summary>
+        <div class="acc-body"><p><strong>Calendar</strong> — events with date, time, description and a guest list (adding guests from the client database from the Studio plan). <strong>Notepad</strong> — notes with a text editor and attachments, private to you and your team.</p></div>
+      </details>
+
+      <details class="acc">
+        <summary><span class="material-symbols-rounded lead-ic">chat_bubble</span><span class="sum-title">Discussions</span></summary>
+        <div class="acc-body"><p>A built-in messenger for internal conversations, project conversations (with clients) and conversations with contractors — in real time, without switching to email or external messaging apps.</p></div>
+      </details>
+
+      <details class="acc">
+        <summary><span class="material-symbols-rounded lead-ic">package_2</span><span class="sum-title">Product library</span></summary>
+        <div class="acc-body"><p>A global product database for your workspace. Products are added here automatically when you add them to a shopping list (via link or manually) or save them with the veepick plugin — once saved, a product can be reused across multiple projects.</p></div>
+      </details>
+
+      <details class="acc">
+        <summary><span class="material-symbols-rounded lead-ic">extension</span><span class="sum-title">veepick plugin</span></summary>
+        <div class="acc-body">
+          <p>A browser extension that lets you add products from any online shop to shopping lists without copying data by hand. Available in all plans.</p>
+          <p><strong>Installation:</strong></p>
+          <ol><li>Install the veepick plugin from the Chrome Web Store (or Opera Add-ons).</li><li>Open the plugin panel and log in with the access key from Settings → Plugin (veepick).</li><li>Done — the plugin is connected to your account.</li></ol>
+          <p><strong>How to add a product via veepick:</strong></p>
+          <ol><li>Go to the product page in a shop.</li><li>Click the veepick icon in the browser toolbar.</li><li>Select a shopping list.</li><li>Confirm — the product data fills in automatically.</li></ol>
+          <p>If the plugin doesn't fetch data from the page or shows an authorisation error — check in Settings whether the access key is up to date and try generating a new one.</p>
+        </div>
+      </details>
+
+      <details class="acc">
+        <summary><span class="material-symbols-rounded lead-ic">settings</span><span class="sum-title">Settings &amp; account</span></summary>
+        <div class="acc-body">
+          <p>In Settings you manage: <strong>Profile</strong> (account details, photo), <strong>Branding</strong> (logo and welcome message visible in the client panel), <strong>Appearance</strong> (theme, light/dark/system mode, PL/EN language, module visibility), <strong>Users</strong> (team and permissions), <strong>Notifications</strong> (email summaries, modules and frequency), <strong>Plugin</strong> (access key), <strong>Plan &amp; billing</strong>, and <strong>Account</strong> (password, account deletion).</p>
+        </div>
+      </details>
+
+    </div>
+  </div>
+</section>
+
+<!-- GLOSSARY -->
+<section class="help-section" id="glossary">
+  <div class="container">
+    <div class="help-head">
+      <div class="eyebrow">Glossary</div>
+      <h2>Glossary</h2>
+    </div>
+    <dl class="glossary-grid">
+      <div class="gloss-item"><dt>Project</dt><dd>One design commission for one client — contains rooms, renders and shopping lists.</dd></div>
+      <div class="gloss-item"><dt>Room</dt><dd>A space within a project (e.g. living room, kitchen) that groups renders.</dd></div>
+      <div class="gloss-item"><dt>Render</dt><dd>A visualisation file (image or PDF) uploaded to a room, with a status and version history.</dd></div>
+      <div class="gloss-item"><dt>Pin</dt><dd>A comment attached to a specific location on a render.</dd></div>
+      <div class="gloss-item"><dt>Shopping list</dt><dd>A product breakdown prepared for the client, divided into sections.</dd></div>
+      <div class="gloss-item"><dt>Product library</dt><dd>An archive of all saved products, ready to reuse in future projects.</dd></div>
+      <div class="gloss-item"><dt>Workspace</dt><dd>Your working environment — all projects, clients and settings.</dd></div>
+      <div class="gloss-item"><dt>Trial period</dt><dd>30 days of free access after registration, no credit card required.</dd></div>
+      <div class="gloss-item"><dt>Client panel</dt><dd>A simplified project view for the client, without designer tools.</dd></div>
+      <div class="gloss-item"><dt>Contractor panel</dt><dd>A view for the contractor — only their folders and files.</dd></div>
+      <div class="gloss-item"><dt>Assignment</dt><dd>The link between a contractor and a specific project.</dd></div>
+      <div class="gloss-item"><dt>veepick</dt><dd>A browser extension that adds products from online shops directly to shopping lists.</dd></div>
+    </dl>
+  </div>
+</section>
+
+<script>
+  function filterHelp(query) {
+    var q = query.trim().toLowerCase();
+    var items = document.querySelectorAll('.help-section .acc');
+    items.forEach(function (item) {
+      var text = item.textContent.toLowerCase();
+      var match = !q || text.indexOf(q) !== -1;
+      item.style.display = match ? '' : 'none';
+      if (q && match) item.open = true;
+    });
+  }
+</script>
+
+<!-- FOOTER -->
+<footer class="site">
+  <div class="container">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <a class="brand" href="/en/">
+          <img class="brand-icon" src="/vee-icon.png" alt="" style="height:28px;width:28px">
+          <img class="wordmark-img" src="/vee_black.png" alt="veedeck" style="height:22px">
+        </a>
+        <p>Visualize, Design, Deliver.</p>
+        <div>A platform for interior designers.</div>
+      </div>
+      <div class="footer-col">
+        <h4>Product</h4>
+        <ul>
+          <li><a href="/en/modules/">Modules</a></li>
+          <li><a href="/en/plugin/">veepick plugin</a></li>
+          <li><a href="/en/pricing/">Pricing</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Company</h4>
+        <ul>
+          <li><a href="/en/about/">About</a></li>
+          <li><a href="/en/demo/">Demo</a></li>
+          <li><a href="/en/contact/">Contact</a></li>
+          <li><a href="/en/help/">Help Center</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Legal</h4>
+        <ul>
+          <li><a href="/en/privacy-policy/">Privacy Policy</a></li>
+          <li><a href="/en/privacy-policy-veepick/">Privacy Policy veepick</a></li>
+          <li><a href="/en/cookie-policy/">Cookie Policy</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div>© 2026 veedeck. All rights reserved.</div>
+      <div>support@veedeck.com</div>
+    </div>
+  </div>
+</footer>
+
+<script>
+  function filterHelp(query) {
+    var q = query.trim().toLowerCase();
+    var items = document.querySelectorAll('.help-section .acc');
+    items.forEach(function (item) {
+      var text = item.textContent.toLowerCase();
+      var match = !q || text.indexOf(q) !== -1;
+      item.style.display = match ? '' : 'none';
+      if (q && match) item.open = true;
+    });
+  }
+</script>
+
+<script src="/veedeck-megamenu.js"></script>
+<script src="/veedeck-reveal.js"></script>
+
+<style>
+@media (max-width: 900px) { html, body { overflow-x: clip; } }
+</style>
+</body>
+</html>

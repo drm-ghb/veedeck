@@ -2,92 +2,265 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:xhtml="http://www.w3.org/1999/xhtml">
 
+  <!-- ── Strona główna ───────────────────────────────────────── -->
   <url>
-    <loc>https://veedeck.com/</loc>
-    <xhtml:link rel="alternate" hreflang="pl" href="https://veedeck.com/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://veedeck.com/"/>
+    <loc>https://veedeck.com/pl/</loc>
+    <xhtml:link rel="alternate" hreflang="pl"        href="https://veedeck.com/pl/"/>
+    <xhtml:link rel="alternate" hreflang="en"        href="https://veedeck.com/en/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://veedeck.com/pl/"/>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
 
   <url>
-    <loc>https://veedeck.com/cennik</loc>
-    <xhtml:link rel="alternate" hreflang="pl" href="https://veedeck.com/cennik"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://veedeck.com/pricing"/>
-    <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
+    <loc>https://veedeck.com/en/</loc>
+    <xhtml:link rel="alternate" hreflang="pl"        href="https://veedeck.com/pl/"/>
+    <xhtml:link rel="alternate" hreflang="en"        href="https://veedeck.com/en/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://veedeck.com/pl/"/>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
   </url>
 
+  <!-- ── Moduły ─────────────────────────────────────────────── -->
   <url>
-    <loc>https://veedeck.com/pricing</loc>
-    <xhtml:link rel="alternate" hreflang="pl" href="https://veedeck.com/cennik"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://veedeck.com/pricing"/>
-    <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
-  </url>
-
-  <url>
-    <loc>https://veedeck.com/veedeck-moduly</loc>
-    <xhtml:link rel="alternate" hreflang="pl" href="https://veedeck.com/veedeck-moduly"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://veedeck.com/modules"/>
+    <loc>https://veedeck.com/pl/moduly/</loc>
+    <xhtml:link rel="alternate" hreflang="pl"        href="https://veedeck.com/pl/moduly/"/>
+    <xhtml:link rel="alternate" hreflang="en"        href="https://veedeck.com/en/modules/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://veedeck.com/pl/moduly/"/>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <url>
-    <loc>https://veedeck.com/modules</loc>
-    <xhtml:link rel="alternate" hreflang="pl" href="https://veedeck.com/veedeck-moduly"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://veedeck.com/modules"/>
+    <loc>https://veedeck.com/en/modules/</loc>
+    <xhtml:link rel="alternate" hreflang="pl"        href="https://veedeck.com/pl/moduly/"/>
+    <xhtml:link rel="alternate" hreflang="en"        href="https://veedeck.com/en/modules/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://veedeck.com/pl/moduly/"/>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
 
+  <!-- ── Wtyczka / Plugin ────────────────────────────────────── -->
   <url>
-    <loc>https://veedeck.com/wtyczka</loc>
-    <xhtml:link rel="alternate" hreflang="pl" href="https://veedeck.com/wtyczka"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://veedeck.com/plugin"/>
+    <loc>https://veedeck.com/pl/wtyczka/</loc>
+    <xhtml:link rel="alternate" hreflang="pl"        href="https://veedeck.com/pl/wtyczka/"/>
+    <xhtml:link rel="alternate" hreflang="en"        href="https://veedeck.com/en/plugin/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://veedeck.com/pl/wtyczka/"/>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
 
   <url>
-    <loc>https://veedeck.com/plugin</loc>
-    <xhtml:link rel="alternate" hreflang="pl" href="https://veedeck.com/wtyczka"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://veedeck.com/plugin"/>
+    <loc>https://veedeck.com/en/plugin/</loc>
+    <xhtml:link rel="alternate" hreflang="pl"        href="https://veedeck.com/pl/wtyczka/"/>
+    <xhtml:link rel="alternate" hreflang="en"        href="https://veedeck.com/en/plugin/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://veedeck.com/pl/wtyczka/"/>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
 
+  <!-- ── Cennik / Pricing ────────────────────────────────────── -->
   <url>
-    <loc>https://veedeck.com/o-nas</loc>
-    <xhtml:link rel="alternate" hreflang="pl" href="https://veedeck.com/o-nas"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://veedeck.com/about"/>
+    <loc>https://veedeck.com/pl/cennik/</loc>
+    <xhtml:link rel="alternate" hreflang="pl"        href="https://veedeck.com/pl/cennik/"/>
+    <xhtml:link rel="alternate" hreflang="en"        href="https://veedeck.com/en/pricing/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://veedeck.com/pl/cennik/"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://veedeck.com/en/pricing/</loc>
+    <xhtml:link rel="alternate" hreflang="pl"        href="https://veedeck.com/pl/cennik/"/>
+    <xhtml:link rel="alternate" hreflang="en"        href="https://veedeck.com/en/pricing/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://veedeck.com/pl/cennik/"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- ── O nas / About ──────────────────────────────────────── -->
+  <url>
+    <loc>https://veedeck.com/pl/o-nas/</loc>
+    <xhtml:link rel="alternate" hreflang="pl"        href="https://veedeck.com/pl/o-nas/"/>
+    <xhtml:link rel="alternate" hreflang="en"        href="https://veedeck.com/en/about/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://veedeck.com/pl/o-nas/"/>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
 
   <url>
-    <loc>https://veedeck.com/about</loc>
-    <xhtml:link rel="alternate" hreflang="pl" href="https://veedeck.com/o-nas"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://veedeck.com/about"/>
+    <loc>https://veedeck.com/en/about/</loc>
+    <xhtml:link rel="alternate" hreflang="pl"        href="https://veedeck.com/pl/o-nas/"/>
+    <xhtml:link rel="alternate" hreflang="en"        href="https://veedeck.com/en/about/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://veedeck.com/pl/o-nas/"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <!-- ── Kontakt / Contact ──────────────────────────────────── -->
+  <url>
+    <loc>https://veedeck.com/pl/kontakt/</loc>
+    <xhtml:link rel="alternate" hreflang="pl"        href="https://veedeck.com/pl/kontakt/"/>
+    <xhtml:link rel="alternate" hreflang="en"        href="https://veedeck.com/en/contact/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://veedeck.com/pl/kontakt/"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://veedeck.com/en/contact/</loc>
+    <xhtml:link rel="alternate" hreflang="pl"        href="https://veedeck.com/pl/kontakt/"/>
+    <xhtml:link rel="alternate" hreflang="en"        href="https://veedeck.com/en/contact/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://veedeck.com/pl/kontakt/"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- ── Demo ────────────────────────────────────────────────── -->
+  <url>
+    <loc>https://veedeck.com/pl/demo/</loc>
+    <xhtml:link rel="alternate" hreflang="pl"        href="https://veedeck.com/pl/demo/"/>
+    <xhtml:link rel="alternate" hreflang="en"        href="https://veedeck.com/en/demo/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://veedeck.com/pl/demo/"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://veedeck.com/en/demo/</loc>
+    <xhtml:link rel="alternate" hreflang="pl"        href="https://veedeck.com/pl/demo/"/>
+    <xhtml:link rel="alternate" hreflang="en"        href="https://veedeck.com/en/demo/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://veedeck.com/pl/demo/"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- ── Pomoc / Help Center ────────────────────────────────── -->
+  <url>
+    <loc>https://veedeck.com/pl/pomoc/</loc>
+    <xhtml:link rel="alternate" hreflang="pl"        href="https://veedeck.com/pl/pomoc/"/>
+    <xhtml:link rel="alternate" hreflang="en"        href="https://veedeck.com/en/help/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://veedeck.com/pl/pomoc/"/>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
 
   <url>
-    <loc>https://veedeck.com/kontakt</loc>
-    <xhtml:link rel="alternate" hreflang="pl" href="https://veedeck.com/kontakt"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://veedeck.com/contact"/>
+    <loc>https://veedeck.com/en/help/</loc>
+    <xhtml:link rel="alternate" hreflang="pl"        href="https://veedeck.com/pl/pomoc/"/>
+    <xhtml:link rel="alternate" hreflang="en"        href="https://veedeck.com/en/help/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://veedeck.com/pl/pomoc/"/>
     <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.6</priority>
+  </url>
+
+  <!-- ── Pomoc / Help — podstrony ───────────────────────────── -->
+  <url>
+    <loc>https://veedeck.com/pl/pomoc/jak-zaczac/</loc>
+    <xhtml:link rel="alternate" hreflang="pl"        href="https://veedeck.com/pl/pomoc/jak-zaczac/"/>
+    <xhtml:link rel="alternate" hreflang="en"        href="https://veedeck.com/en/help/getting-started/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://veedeck.com/pl/pomoc/jak-zaczac/"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
   </url>
 
   <url>
-    <loc>https://veedeck.com/contact</loc>
-    <xhtml:link rel="alternate" hreflang="pl" href="https://veedeck.com/kontakt"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://veedeck.com/contact"/>
+    <loc>https://veedeck.com/en/help/getting-started/</loc>
+    <xhtml:link rel="alternate" hreflang="pl"        href="https://veedeck.com/pl/pomoc/jak-zaczac/"/>
+    <xhtml:link rel="alternate" hreflang="en"        href="https://veedeck.com/en/help/getting-started/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://veedeck.com/pl/pomoc/jak-zaczac/"/>
     <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.5</priority>
+  </url>
+
+  <url>
+    <loc>https://veedeck.com/pl/pomoc/dla-projektantow/</loc>
+    <xhtml:link rel="alternate" hreflang="pl"        href="https://veedeck.com/pl/pomoc/dla-projektantow/"/>
+    <xhtml:link rel="alternate" hreflang="en"        href="https://veedeck.com/en/help/for-designers/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://veedeck.com/pl/pomoc/dla-projektantow/"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+
+  <url>
+    <loc>https://veedeck.com/en/help/for-designers/</loc>
+    <xhtml:link rel="alternate" hreflang="pl"        href="https://veedeck.com/pl/pomoc/dla-projektantow/"/>
+    <xhtml:link rel="alternate" hreflang="en"        href="https://veedeck.com/en/help/for-designers/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://veedeck.com/pl/pomoc/dla-projektantow/"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+
+  <url>
+    <loc>https://veedeck.com/pl/pomoc/dla-klientow-i-wykonawcow/</loc>
+    <xhtml:link rel="alternate" hreflang="pl"        href="https://veedeck.com/pl/pomoc/dla-klientow-i-wykonawcow/"/>
+    <xhtml:link rel="alternate" hreflang="en"        href="https://veedeck.com/en/help/for-clients-and-contractors/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://veedeck.com/pl/pomoc/dla-klientow-i-wykonawcow/"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+
+  <url>
+    <loc>https://veedeck.com/en/help/for-clients-and-contractors/</loc>
+    <xhtml:link rel="alternate" hreflang="pl"        href="https://veedeck.com/pl/pomoc/dla-klientow-i-wykonawcow/"/>
+    <xhtml:link rel="alternate" hreflang="en"        href="https://veedeck.com/en/help/for-clients-and-contractors/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://veedeck.com/pl/pomoc/dla-klientow-i-wykonawcow/"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+
+  <url>
+    <loc>https://veedeck.com/pl/pomoc/faq/</loc>
+    <xhtml:link rel="alternate" hreflang="pl"        href="https://veedeck.com/pl/pomoc/faq/"/>
+    <xhtml:link rel="alternate" hreflang="en"        href="https://veedeck.com/en/help/faq/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://veedeck.com/pl/pomoc/faq/"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+
+  <url>
+    <loc>https://veedeck.com/en/help/faq/</loc>
+    <xhtml:link rel="alternate" hreflang="pl"        href="https://veedeck.com/pl/pomoc/faq/"/>
+    <xhtml:link rel="alternate" hreflang="en"        href="https://veedeck.com/en/help/faq/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://veedeck.com/pl/pomoc/faq/"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+
+  <url>
+    <loc>https://veedeck.com/pl/pomoc/rozwiazywanie-problemow/</loc>
+    <xhtml:link rel="alternate" hreflang="pl"        href="https://veedeck.com/pl/pomoc/rozwiazywanie-problemow/"/>
+    <xhtml:link rel="alternate" hreflang="en"        href="https://veedeck.com/en/help/troubleshooting/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://veedeck.com/pl/pomoc/rozwiazywanie-problemow/"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+
+  <url>
+    <loc>https://veedeck.com/en/help/troubleshooting/</loc>
+    <xhtml:link rel="alternate" hreflang="pl"        href="https://veedeck.com/pl/pomoc/rozwiazywanie-problemow/"/>
+    <xhtml:link rel="alternate" hreflang="en"        href="https://veedeck.com/en/help/troubleshooting/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://veedeck.com/pl/pomoc/rozwiazywanie-problemow/"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+
+  <url>
+    <loc>https://veedeck.com/pl/pomoc/zglos-blad/</loc>
+    <xhtml:link rel="alternate" hreflang="pl"        href="https://veedeck.com/pl/pomoc/zglos-blad/"/>
+    <xhtml:link rel="alternate" hreflang="en"        href="https://veedeck.com/en/help/report-a-bug/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://veedeck.com/pl/pomoc/zglos-blad/"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.4</priority>
+  </url>
+
+  <url>
+    <loc>https://veedeck.com/en/help/report-a-bug/</loc>
+    <xhtml:link rel="alternate" hreflang="pl"        href="https://veedeck.com/pl/pomoc/zglos-blad/"/>
+    <xhtml:link rel="alternate" hreflang="en"        href="https://veedeck.com/en/help/report-a-bug/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://veedeck.com/pl/pomoc/zglos-blad/"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.4</priority>
   </url>
 
 </urlset>

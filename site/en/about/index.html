@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-W6PSBGLB');</script>
+<!-- End Google Tag Manager -->
+<meta charset="utf-8">
+<title>About us | veedeck</title>
+<meta name="robots" content="index, follow">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="veedeck_ikona.svg" type="image/svg+xml"><link rel="icon" href="veedeck_ikona.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&amp;family=Inter:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500;600&amp;family=Nunito:wght@300&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+<style>
+  :root {
+    --background: #FFFFFF;
+    --foreground: #24252B;
+    --card: #FFFFFF;
+    --card-foreground: #24252B;
+    --primary: #4F46E5;
+    --primary-foreground: #FFFFFF;
+    --secondary: #F2F3F7;
+    --muted: #F2F3F7;
+    --muted-foreground: #6B6F80;
+    --accent: #A5B4FC;
+    --accent-foreground: #1E1B4B;
+    --border: #E5E7EB;
+    --ring: #4F46E5;
+    --indigo-50: #EEF2FF;
+    --indigo-100: #E0E7FF;
+    --indigo-950: #1E1B4B;
+    --radius: 0.625rem;
+    --radius-lg: 14px;
+    --radius-xl: 18px;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+    background: var(--background);
+    color: var(--foreground);
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.5;
+  }
+  h1, h2, h3, h4 {
+    font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+    font-weight: 600;
+    letter-spacing: -0.022em;
+    margin: 0;
+  }
+  p { margin: 0; }
+  a { color: inherit; text-decoration: none; }
+
+  .container { max-width: 1200px; margin: 0 auto; padding: 0 32px; }
+
+  /* NAV */
+  nav.top {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: saturate(180%) blur(14px);
+    -webkit-backdrop-filter: saturate(180%) blur(14px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-inner { display: flex; align-items: center; justify-content: space-between; padding: 16px 32px; height: 68px; }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand-icon { height: 32px; width: 32px; }
+  .wordmark-img { height: 24px; }
+  .nav-links { display: flex; align-items: center; gap: 28px; font-size: 14.5px; color: var(--muted-foreground); font-weight: 500; }
+  .nav-links a:hover { color: var(--foreground); }
+  .nav-links a.active { color: var(--primary); }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    height: 40px; padding: 0 18px;
+    border-radius: 12px;
+    font-weight: 600; font-size: 14px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
+  }
+  .btn-primary {
+    background: var(--primary); color: var(--primary-foreground);
+    box-shadow: 0 6px 20px -8px rgba(79, 70, 229, 0.45);
+  }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 10px 24px -8px rgba(79, 70, 229, 0.55); }
+  .btn-ghost { background: transparent; color: var(--foreground); border: 1px solid var(--border); }
+  .btn-ghost:hover { background: var(--secondary); }
+
+  /* HERO */
+  .page-hero {
+    position: relative;
+    padding: 80px 0 56px;
+    background:
+      radial-gradient(1100px 400px at 80% -10%, rgba(165, 180, 252, 0.28), transparent 60%),
+      radial-gradient(700px 320px at 8% 0%, rgba(79, 70, 229, 0.10), transparent 65%),
+      var(--background);
+    border-bottom: 1px solid var(--border);
+  }
+  .page-hero .eyebrow {
+    display: inline-block;
+    font-size: 12px; font-weight: 600;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--primary);
+    margin-bottom: 14px;
+  }
+  .page-hero h1 {
+    font-size: clamp(40px, 6vw, 64px);
+    line-height: 1.05; letter-spacing: -0.03em;
+    font-weight: 700; margin-bottom: 18px;
+    max-width: 880px;
+  }
+  .page-hero h1 em { font-style: italic; font-family: "Inter", serif; color: var(--primary); font-weight: 500; }
+  .page-hero h1 .wordmark-text {
+    font-family: "Nunito", sans-serif;
+    font-weight: 300;
+    letter-spacing: -0.05em;
+    font-style: normal;
+  }
+  .page-hero .lead {
+    font-size: 18px; color: var(--muted-foreground);
+    max-width: 720px; line-height: 1.6;
+  }
+
+  /* MISSION */
+  .mission-section { padding: 96px 0; }
+  .mission-inner {
+    display: grid;
+    grid-template-columns: 0.85fr 1.15fr;
+    gap: 80px;
+    align-items: start;
+  }
+  .section-eyebrow {
+    display: inline-block;
+    font-size: 12px; font-weight: 600;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--primary);
+    margin-bottom: 14px;
+  }
+  .mission-head h2 {
+    font-size: clamp(28px, 3.4vw, 40px);
+    line-height: 1.12; letter-spacing: -0.022em;
+    font-weight: 700;
+  }
+  .mission-head h2 em { font-style: italic; font-family: "Inter", serif; color: var(--primary); font-weight: 500; }
+  .mission-body p {
+    color: var(--muted-foreground);
+    font-size: 16.5px;
+    line-height: 1.7;
+  }
+  .mission-body p + p { margin-top: 18px; }
+  .mission-body p strong { color: var(--foreground); font-weight: 600; }
+
+  /* VALUES STRIP */
+  .values-strip {
+    margin-top: 56px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+  .value-card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 28px;
+    transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+  }
+  .value-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--accent);
+    box-shadow: 0 18px 40px -28px rgba(15, 23, 42, 0.18);
+  }
+  .value-card .ic {
+    width: 44px; height: 44px; border-radius: 12px;
+    background: linear-gradient(140deg, #EEF2FF, #E0E7FF);
+    display: grid; place-items: center;
+    margin-bottom: 18px;
+  }
+  .value-card .ic .material-symbols-rounded {
+    font-family: 'Material Symbols Rounded';
+    font-size: 22px; line-height: 1;
+    font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 24;
+    color: var(--primary);
+  }
+  .value-card h3 { font-size: 17px; font-weight: 700; letter-spacing: -0.012em; margin-bottom: 8px; }
+  .value-card p { font-size: 14.5px; color: var(--muted-foreground); line-height: 1.6; }
+
+  /* TEAM */
+  .team-section {
+    padding: 96px 0;
+    background: #FAFAFB;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .team-head { text-align: center; max-width: 720px; margin: 0 auto 56px; }
+  .team-head h2 {
+    font-size: clamp(28px, 3.4vw, 40px);
+    line-height: 1.12; letter-spacing: -0.022em;
+    font-weight: 700;
+    margin-bottom: 16px;
+  }
+  .team-head h2 em { font-style: italic; font-family: "Inter", serif; color: var(--primary); font-weight: 500; }
+  .team-head p { color: var(--muted-foreground); font-size: 16.5px; line-height: 1.6; }
+
+  .team-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 28px;
+  }
+  .team-card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    overflow: hidden;
+    display: flex; flex-direction: column;
+    transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+  }
+  .team-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--accent);
+    box-shadow: 0 24px 50px -28px rgba(15, 23, 42, 0.22);
+  }
+  .team-photo {
+    aspect-ratio: 1 / 1;
+    width: 100%;
+    background: #E5E7EB;
+    background-position: center;
+    background-size: cover;
+    position: relative;
+  }
+  .team-photo.placeholder {
+    background:
+      repeating-linear-gradient(135deg, #EEF2FF 0 12px, #E0E7FF 12px 24px);
+    display: grid; place-items: center;
+  }
+  .team-photo.placeholder span {
+    font-family: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 12px; letter-spacing: 0.05em;
+    color: var(--indigo-950);
+    background: rgba(255,255,255,0.7);
+    padding: 6px 12px; border-radius: 999px;
+    text-transform: uppercase; font-weight: 600;
+  }
+  .team-info { padding: 24px 26px 28px; }
+  .team-info .role {
+    display: inline-block;
+    font-size: 11.5px; font-weight: 600;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--primary);
+    margin-bottom: 10px;
+  }
+  .team-info h3 {
+    font-size: 22px; font-weight: 700;
+    letter-spacing: -0.018em;
+    margin-bottom: 6px;
+  }
+  .team-email {
+    display: inline-block;
+    margin-bottom: 12px;
+    font-size: 13.5px; font-weight: 500;
+    color: var(--primary, #4F46E5);
+    text-decoration: none;
+    transition: opacity 120ms ease;
+  }
+  .team-email:hover { text-decoration: underline; }
+  .team-info p {
+    color: var(--muted-foreground);
+    font-size: 14.5px; line-height: 1.65;
+  }
+  .team-socials {
+    margin-top: 18px;
+    display: flex; gap: 10px;
+  }
+  .team-socials a {
+    width: 36px; height: 36px; border-radius: 10px;
+    border: 1px solid var(--border);
+    display: grid; place-items: center;
+    color: var(--muted-foreground);
+    transition: color 120ms ease, border-color 120ms ease, background 120ms ease;
+  }
+  .team-socials a:hover { color: var(--primary); border-color: var(--accent); background: var(--indigo-50); }
+  .team-socials svg { width: 16px; height: 16px; }
+
+  /* CTA */
+  .cta-section {
+    padding: 96px 0;
+    text-align: center;
+  }
+  .cta-inner {
+    max-width: 720px; margin: 0 auto;
+  }
+  .cta-inner h2 {
+    font-size: clamp(28px, 3.4vw, 40px);
+    line-height: 1.12; letter-spacing: -0.022em;
+    font-weight: 700;
+    margin-bottom: 16px;
+  }
+  .cta-inner h2 em { font-style: italic; font-family: "Inter", serif; color: var(--primary); font-weight: 500; }
+  .cta-inner p { color: var(--muted-foreground); font-size: 16.5px; line-height: 1.6; margin-bottom: 32px; }
+  .cta-row { display: inline-flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+  .btn-lg { height: 52px; padding: 0 26px; font-size: 15.5px; border-radius: 14px; }
+
+  /* FOOTER */
+  footer.site { padding: 56px 0 32px; background: #fff; border-top: 1px solid var(--border); }
+  .footer-inner {
+    display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+    gap: 32px; align-items: start;
+    padding-bottom: 32px; border-bottom: 1px solid var(--border);
+  }
+  .footer-brand p, .footer-brand div { color: var(--muted-foreground); font-size: 14px; margin-top: 12px; max-width: 280px; line-height: 1.55; }
+  .footer-col h4 { font-size: 12px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted-foreground); margin-bottom: 14px; }
+  .footer-col ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+  .footer-col a { color: var(--foreground); font-size: 14.5px; font-weight: 500; }
+  .footer-col a:hover { color: var(--primary); }
+  .footer-bottom { padding-top: 24px; display: flex; justify-content: space-between; color: var(--muted-foreground); font-size: 13px; }
+
+  @media (max-width: 1000px) {
+    .mission-inner { grid-template-columns: 1fr; gap: 40px; }
+    .values-strip { grid-template-columns: 1fr; }
+    .team-grid { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 900px) {
+    .nav-links { display: none; }
+    .nav-cta { display: none !important; }
+    nav.top > .container .btn { display: none; }
+    .footer-inner { grid-template-columns: 1fr 1fr; gap: 32px; }
+  }
+  @media (max-width: 900px) {
+    nav.top .nav-burger { display: inline-flex; }
+  }
+  @media (max-width: 720px) {
+    .team-grid { grid-template-columns: 1fr; }
+  }
+
+  /* HAMBURGER + MOBILE SIDEBAR */
+  .nav-burger {
+    display: none;
+    align-items: center; justify-content: center;
+    width: 42px; height: 42px;
+    background: transparent;
+    border: none;
+    border-radius: 10px;
+    color: var(--foreground);
+    cursor: pointer;
+    padding: 0;
+    transition: background 120ms ease;
+    position: relative; z-index: 80;
+  }
+  .nav-burger:hover { background: var(--secondary); }
+  .nav-burger svg { width: 22px; height: 22px; }
+  .nav-burger .icon-close { display: none; }
+  nav.top.open .nav-burger .icon-open { display: none; }
+  nav.top.open .nav-burger .icon-close { display: block; }
+
+  .mobile-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(15, 15, 20, 0.45);
+    opacity: 0; pointer-events: none;
+    transition: opacity 240ms ease;
+    z-index: 60;
+  }
+  nav.top.open + .mobile-backdrop { opacity: 1; pointer-events: auto; }
+  nav.top.open { z-index: 70; }
+
+  .mobile-menu {
+    position: fixed; top: 0; right: 0;
+    width: 100%; left: 0; height: 100dvh;
+    background: #fff;
+    box-shadow: -16px 0 40px rgba(15,15,20,0.12);
+    transform: translateX(100%);
+    transition: transform 280ms cubic-bezier(0.22, 0.61, 0.36, 1);
+    z-index: 70;
+    display: flex; flex-direction: column;
+    overflow-y: auto;
+  }
+  body.menu-locked .mobile-menu { transform: translateX(0); }
+  .mobile-menu-header { display: flex; align-items: center; justify-content: flex-end; padding: 18px 20px; }
+  .mobile-menu-close {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 40px; height: 40px;
+    background: transparent; border: none; cursor: pointer;
+    color: var(--foreground); border-radius: 10px; padding: 0;
+  }
+  .mobile-menu-close:hover { background: var(--secondary); }
+  .mobile-menu-close svg { width: 20px; height: 20px; }
+  .mobile-menu-inner { display: flex; flex-direction: column; gap: 2px; padding: 8px 28px 32px; flex: 1; }
+  .mobile-menu a.menu-link {
+    display: block; padding: 16px 4px;
+    font-size: 17px; font-weight: 500;
+    color: var(--foreground);
+    border-bottom: 1px solid var(--border);
+    transition: color 120ms ease;
+  }
+  .mobile-menu a.menu-link:last-of-type { border-bottom: none; }
+  .mobile-menu a.menu-link:hover, .mobile-menu a.menu-link.active { color: var(--primary); }
+  .mobile-menu .mobile-cta { display: flex; flex-direction: column; gap: 10px; margin-top: 28px; }
+  .mobile-menu .mobile-cta .btn { width: 100%; justify-content: center; }
+
+  body.menu-locked { overflow: hidden; }
+
+  @media (min-width: 901px) {
+    .mobile-menu { display: none; }
+    .mobile-backdrop { display: none; }
+  }
+</style>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-TLPPBXZX1F"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-TLPPBXZX1F');
+</script>
+<meta name="description" content="Learn about the veedeck team and mission: building the best platform for interior design studios.">
+
+<link rel="canonical" href="https://veedeck.com/en/about/"/>
+<link rel="alternate" hreflang="pl" href="https://veedeck.com/pl/o-nas/"/>
+<link rel="alternate" hreflang="en" href="https://veedeck.com/en/about/"/>
+<link rel="alternate" hreflang="x-default" href="https://veedeck.com/pl/o-nas/"/>
+</head>
+<body>
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W6PSBGLB"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+
+<!-- NAV -->
+<nav class="top" id="siteNav">
+  <div class="container nav-inner">
+    <a class="brand" href="/en/">
+      <img class="brand-icon" src="/vee-icon.png" alt="">
+      <img class="wordmark-img" src="/vee_black.png" alt="veedeck">
+    </a>
+    <div class="nav-links">
+      <a href="/en/modules/">Modules</a>
+      <a href="/en/plugin/">Plugin</a>
+      <a href="/en/pricing/">Pricing</a>
+      <a href="/en/demo/">Demo</a>
+      <a href="/en/about/" class="active">About</a>
+      <a href="/en/contact/">Contact</a>
+    </div>
+    <div class="nav-cta" style="display:flex; gap:10px; align-items:center;">
+      <a href="/pl/o-nas/" class="btn btn-ghost" style="font-size:12px;padding:0 10px;letter-spacing:0.06em;font-weight:700;">PL</a>
+      <a href="https://app.veedeck.com/login" class="btn btn-ghost">Log in</a>
+      <a href="/en/demo/" class="btn btn-primary">
+        Free demo
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"></path></svg>
+      </a>
+    </div>
+    <button class="nav-burger" aria-label="Otwórz menu" aria-expanded="false" aria-controls="mobileMenu" onclick="toggleMobileMenu(this)">
+      <svg class="icon-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="3" y1="7" x2="21" y2="7"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="17" x2="21" y2="17"></line></svg>
+      <svg class="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="6" y1="6" x2="18" y2="18"></line><line x1="6" y1="18" x2="18" y2="6"></line></svg>
+    </button>
+  </div>
+
+</nav>
+<div class="mobile-backdrop" id="mobileBackdrop" onclick="closeMobileMenu()" aria-hidden="true"></div>
+<aside class="mobile-menu" id="mobileMenu" aria-label="Menu mobilne">
+    <div class="mobile-menu-header"><a class="brand" href="/en/" style="margin-right:auto; display:inline-flex; align-items:center; gap:9px;"><img class="brand-icon" src="/vee-icon.png" alt="" style="height:28px;width:auto;"><img class="wordmark-img" src="/vee_black.png" alt="veedeck" style="height:18px;width:auto;"></a>
+      <button class="mobile-menu-close" aria-label="Zamknij menu" onclick="closeMobileMenu()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="6" y1="6" x2="18" y2="18"></line><line x1="6" y1="18" x2="18" y2="6"></line></svg>
+      </button>
+    </div>
+    <div class="mobile-menu-inner">
+      <a class="menu-link" href="/en/modules/">Modules</a>
+      <a class="menu-link" href="/en/plugin/">Plugin</a>
+      <a class="menu-link" href="/en/pricing/">Pricing</a>
+      <a class="menu-link" href="/en/demo/">Demo</a>
+      <a class="menu-link active" href="/en/about/">About</a>
+      <a class="menu-link" href="/en/contact/">Contact</a>
+      <div class="mobile-cta">
+      <a href="/pl/o-nas/" class="btn btn-ghost" style="width:100%;justify-content:center;font-size:12px;font-weight:700;letter-spacing:0.06em;">PL</a>
+        <a href="https://app.veedeck.com/login" class="btn btn-ghost">Log in</a>
+        <a href="/en/demo/" class="btn btn-primary">Free demo
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"></path></svg>
+        </a>
+      </div>
+    </div>
+  </aside>
+
+<script>
+  function setMobileMenu(open) {
+    var nav = document.getElementById('siteNav');
+    var btn = nav.querySelector('.nav-burger');
+    nav.classList.toggle('open', open);
+    document.body.classList.toggle('menu-locked', open);
+    if (btn) {
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      btn.setAttribute('aria-label', open ? 'Zamknij menu' : 'Otwórz menu');
+    }
+  }
+  function toggleMobileMenu(btn) {
+    var nav = document.getElementById('siteNav');
+    setMobileMenu(!nav.classList.contains('open'));
+  }
+  function closeMobileMenu() { setMobileMenu(false); }
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') closeMobileMenu();
+  });
+  document.addEventListener('click', function (e) {
+    var link = e.target.closest('.mobile-menu a');
+    if (link) closeMobileMenu();
+  });
+</script>
+
+<!-- HERO -->
+<section class="page-hero">
+  <div class="container">
+    <div class="eyebrow">About</div>
+    <h1>Projektowanie wnętrz <br><em>deserves better tools.</em></h1>
+    <p class="lead">
+      Veedeck powstaje z prostego przekonania - projektanci wnętrz tracą zbyt
+      wiele czasu na żmudną pracę administracyjną. Budujemy platformę, która
+      oddaje im ten czas z powrotem, do tego, co naprawdę kochają robić.
+    </p>
+  </div>
+</section>
+
+<!-- MISSION -->
+<section class="mission-section">
+  <div class="container">
+    <div class="section-eyebrow" style="margin-bottom:20px">Our mission</div>
+    <div class="mission-inner">
+      <div class="mission-head">
+        <h2><span class="wordmark-text">veedeck</span> kończy erę <em>chaosu w zarządzaniu projektami wnętrz</em></h2>
+      </div>
+      <div class="mission-body">
+        <p>
+          Branża projektowania wnętrz od lat działa na rozproszonych narzędziach -
+          tabelach, mailach, czatach, folderach z renderami i listach zakupowych
+          rozsianych po kilku dyskach. <strong>
+Designers are experts in space, not in project management.</strong>
+        </p>
+        <p>Veedeck powstaje, żeby zdjąć z Waszych barków ten administracyjny ciężar. Łączymy w jednym miejscu klienta, renderingi, materiały, kalendarz, listy zakupowe i dostawców - tak, żeby projektant mógł skupić się na projektowaniu, a nie na rozliczaniu się z chaosu.</p>
+        <p>
+          Każda funkcja platformy powstaje w bliskiej rozmowie ze studiami,
+          które testują kolejne wersje. Nie zgadujemy - pytamy, słuchamy,
+          iterujemy.
+        </p>
+      </div>
+    </div>
+
+    <div class="values-strip">
+      <div class="value-card">
+        <div class="ic"><span class="material-symbols-rounded">hearing</span></div>
+        <h3>We listen before we build</h3>
+        <p>Każdy moduł veedeck wyrasta z konkretnego problemu zgłoszonego przez projektanta - nie z naszej wyobraźni.</p>
+      </div>
+      <div class="value-card">
+        <div class="ic"><span class="material-symbols-rounded">layers</span></div>
+        <h3>Simplicity over features</h3>
+        <p>We don't want you to be an expert in our tool. We want you to not have to think about it at all – and be able to focus on the project.</p>
+      </div>
+      <div class="value-card">
+        <div class="ic"><span class="material-symbols-rounded">handshake</span></div>
+        <h3>Partnership, not a sale</h3>
+        <p>The studios and designers who work with us get a real say in the product roadmap. Your problems → our to-do list.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DLACZEGO VEEDECK - Dark spotlight (brandbook) -->
+<style>
+  /* glify konstrukcji znaku: V + play + check = znak */
+  .why-vd .glyph { display:grid; place-items:center; width:64px; height:64px; border-radius:16px; flex-shrink:0; }
+  .why-vd .glyph .gl-v { font-family:"Inter",sans-serif; font-weight:700; font-size:34px; line-height:1; letter-spacing:-0.04em; transform:skewX(-6deg); }
+  .why-vd .glyph svg { width:30px; height:30px; }
+  .why-vd .eq-plus, .why-vd .eq-eq { font-family:"Inter",sans-serif; font-weight:300; font-size:30px; color:rgba(255,255,255,0.45); }
+  .why-vd .mark-tile { border-radius:18px; display:block; }
+
+  .why-vd {
+    padding:108px 0; position:relative; overflow:hidden;
+    background:
+      radial-gradient(900px 500px at 82% 30%, rgba(79,70,229,0.30), transparent 60%),
+      radial-gradient(600px 400px at 10% 90%, rgba(124,116,243,0.14), transparent 60%),
+      #0B0F1A;
+    color:#fff;
+  }
+  .why-vd .section-eyebrow { color:var(--accent); }
+  .why-vd-inner { display:grid; grid-template-columns:1.05fr 1fr; gap:64px; align-items:center; position:relative; z-index:2; }
+  .why-vd h2 { font-size:clamp(30px,3.8vw,46px); line-height:1.08; letter-spacing:-0.03em; font-weight:700; color:#fff; }
+  .why-vd h2 em { color:var(--accent); font-family:"Inter",serif; font-style:italic; font-weight:500; }
+  .why-vd .lead { color:rgba(255,255,255,0.7); font-size:16.5px; line-height:1.65; margin-top:18px; max-width:500px; }
+  .why-vd-split { margin-top:32px; display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .why-vd-chip { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.12); border-radius:16px; padding:20px; min-width:0; overflow-wrap:anywhere; }
+  .why-vd-chip .w { font-family:"Inter",sans-serif; font-weight:700; font-size:24px; letter-spacing:-0.03em; color:#fff; }
+  .why-vd-chip .w b { color:var(--accent); }
+  .why-vd-chip .d { font-size:13.5px; color:rgba(255,255,255,0.66); line-height:1.5; margin-top:8px; }
+  .why-vd-chip .mono { font-family:"JetBrains Mono",ui-monospace,monospace; font-size:11px; color:var(--accent); margin-top:10px; display:block; letter-spacing:0.02em; }
+
+  .why-vd-stage { position:relative; display:grid; place-items:center; min-height:420px; }
+  .why-vd-streaks { position:absolute; inset:0; overflow:hidden; border-radius:24px; }
+  .why-vd-streaks i { position:absolute; height:2px; right:-10%; background:linear-gradient(90deg, transparent, rgba(124,116,243,0.0), rgba(124,116,243,0.65)); transform:rotate(14deg); border-radius:2px; }
+  .why-vd-streaks i:nth-child(1){ top:34%; width:60%; opacity:0.5; }
+  .why-vd-streaks i:nth-child(2){ top:46%; width:80%; opacity:0.8; }
+  .why-vd-streaks i:nth-child(3){ top:54%; width:52%; opacity:0.4; }
+  .why-vd-streaks i:nth-child(4){ top:62%; width:70%; opacity:0.6; }
+  .why-vd-mark { position:relative; z-index:2; width:230px; height:230px; border-radius:46px; transform:rotate(-2deg); box-shadow:0 40px 90px -30px rgba(79,70,229,0.8), 0 0 0 1px rgba(255,255,255,0.06); }
+  .why-vd-glow { position:absolute; width:300px; height:300px; border-radius:50%; background:radial-gradient(closest-side, rgba(79,70,229,0.55), transparent 70%); filter:blur(20px); z-index:1; }
+
+  .why-vd-eq { margin-top:48px; position:relative; z-index:2; display:flex; align-items:center; gap:18px; flex-wrap:wrap; }
+  .why-vd-eq .glyph { background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.14); color:#fff; }
+  .why-vd-eq .glyph.play, .why-vd-eq .glyph.chk { color:var(--accent); }
+  .why-vd-eq .mark-tile { width:64px; height:64px; box-shadow:0 14px 34px -10px rgba(79,70,229,0.9); }
+  .why-vd-eq-note { font-size:13.5px; color:rgba(255,255,255,0.6); line-height:1.5; flex-basis:100%; white-space:nowrap; }
+  .why-vd-eq-note b { color:#fff; font-weight:600; }
+
+  @media (max-width:1000px) {
+    .why-vd-inner { grid-template-columns:1fr; gap:44px; }
+    .why-vd-split { grid-template-columns:1fr 1fr; }
+    .why-vd-stage { min-height:320px; order:-1; }
+  }
+  @media (max-width:560px) {
+    .why-vd-split { grid-template-columns:1fr; }
+    .why-vd-eq-note { white-space:normal; }
+    .why-vd-eq { gap:6px; }
+    .why-vd .glyph { width:52px; height:52px; }
+    .why-vd .glyph .gl-v { font-size:27px; } .why-vd .glyph svg { width:24px; height:24px; }
+    .why-vd-eq .mark-tile { width:52px; height:52px; }
+    .why-vd-mark { width:170px; height:170px; border-radius:34px; }
+  }
+</style>
+<section class="why-vd" id="dlaczego-veedeck">
+  <div class="container">
+    <div class="why-vd-inner">
+      <div>
+        <div class="section-eyebrow">Why veedeck?</div>
+        <h2>Motion, progress,<br><em>decision.</em></h2>
+        <p class="lead">The name and the mark say the same thing as the product: you bring the vision, and veedeck carries it from idea to finished project.</p>
+        <div class="why-vd-split">
+          <div class="why-vd-chip">
+            <div class="w"><b>vee</b></div>
+            <div class="d">visualize · vision · view - Twoje spojrzenie na przestrzeń i wizję wnętrza.</div>
+            <span class="mono">// your vision</span>
+          </div>
+          <div class="why-vd-chip">
+            <div class="w"><b>deck</b></div>
+            <div class="d">modułowość - zestaw narzędzi, które składasz w jeden spójny system.</div>
+            <span class="mono">// the rest is on us</span>
+          </div>
+        </div>
+        <div class="why-vd-eq">
+          <div class="glyph v"><span class="gl-v">V</span></div>
+          <span class="eq-plus">+</span>
+          <div class="glyph play"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.54.84l10-6.5a1 1 0 0 0 0-1.68l-10-6.5A1 1 0 0 0 8 5.5Z"></path></svg></div>
+          <span class="eq-plus">+</span>
+          <div class="glyph chk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></div>
+          <span class="eq-eq">=</span>
+          <img class="mark-tile" src="/vee-icon.png" alt="Znak veedeck">
+          <div class="why-vd-eq-note"><b>V</b> + play (motion) + check (decision) = a tilted mark in motion.</div>
+        </div>
+      </div>
+
+      <div class="why-vd-stage">
+        <div class="why-vd-streaks"><i></i><i></i><i></i><i></i></div>
+        <div class="why-vd-glow"></div>
+        <img class="why-vd-mark" src="/vee-icon.png" alt="Znak veedeck">
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TEAM -->
+<section class="team-section" id="zespol">
+  <div class="container">
+    <div class="team-head">
+      <div class="section-eyebrow">Team</div>
+      <h2>A small team,<br><em>a big obsession with detail.</em></h2>
+      <p>We're designers, managers, engineers and people who've spent years in the creative industry. We know what your day-to-day looks like - because we're in it ourselves.</p>
+    </div>
+
+    <div class="team-grid">
+      <article class="team-card">
+        <div class="team-photo" style="background-image: url('team-founder.png');"></div>
+        <div class="team-info">
+          <div class="role">FOUNDER &amp; CEO</div>
+          <h3>Daniel Rychlik</h3>
+          <a class="team-email" href="mailto:daniel@veedeck.com">daniel@veedeck.com</a>
+          <p>
+            Founder of veedeck i Project Manager z 5 letnim doświadczeniem w branży IT.<br>Przez lata obserwował branżę projektowania wnętrz i postanowił stworzyć narzędzie, które realnie pomoże projektantom w codziennej pracy z klientami.</p>
+          <div class="team-socials">
+            <a href="https://www.linkedin.com/in/daniel-rychlik/" target="_blank" rel="noopener" aria-label="LinkedIn">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19 3A2 2 0 0 1 21 5v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14ZM8.5 18v-8H6v8h2.5ZM7.25 8.9a1.45 1.45 0 1 0 0-2.9 1.45 1.45 0 0 0 0 2.9ZM18 18v-4.6c0-2.34-1.25-3.4-2.92-3.4-1.35 0-1.95.74-2.28 1.26V10H10.3c.03.7 0 8 0 8h2.5v-4.47c0-.22.02-.45.08-.6.18-.45.59-.92 1.28-.92.9 0 1.26.68 1.26 1.68V18H18Z"></path></svg>
+            </a>
+            <a href="mailto:daniel@veedeck.com" aria-label="E-mail">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="m3 7 9 6 9-6"></path></svg>
+            </a>
+          </div>
+        </div>
+      </article>
+
+      <article class="team-card">
+        <div class="team-photo" style="background-image: url('team-adrianna.jpg'); background-position: center 60%;"></div>
+        <div class="team-info">
+          <div class="role">CO-FOUNDER &amp; INTERIOR ARCHITECT</div>
+          <h3>Adrianna Liskowicz</h3>
+          <a class="team-email" href="mailto:a.liskowicz@veedeck.com">a.liskowicz@veedeck.com</a>
+          <p>
+            Doświadczony architekt wnętrz i współzałożycielka veedeck. Wnosi do
+            zespołu perspektywę osoby, która latami żyła codziennością biura
+            projektowego - dzięki czemu wiemy, że budujemy narzędzie odpowiadające
+            na realne, a nie wyobrażone problemy projektantów.
+          </p>
+          <div class="team-socials">
+            <a href="#" aria-label="LinkedIn">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19 3A2 2 0 0 1 21 5v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14ZM8.5 18v-8H6v8h2.5ZM7.25 8.9a1.45 1.45 0 1 0 0-2.9 1.45 1.45 0 0 0 0 2.9ZM18 18v-4.6c0-2.34-1.25-3.4-2.92-3.4-1.35 0-1.95.74-2.28 1.26V10H10.3c.03.7 0 8 0 8h2.5v-4.47c0-.22.02-.45.08-.6.18-.45.59-.92 1.28-.92.9 0 1.26.68 1.26 1.68V18H18Z"></path></svg>
+            </a>
+            <a href="https://www.instagram.com/adrianna.liskowicz.interior/" target="_blank" rel="noopener" aria-label="Instagram"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"></rect><circle cx="12" cy="12" r="4"></circle><circle cx="17.5" cy="6.5" r="0.6" fill="currentColor" stroke="none"></circle></svg></a>
+            <a href="mailto:a.liskowicz@veedeck.com" aria-label="E-mail">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="m3 7 9 6 9-6"></path></svg>
+            </a>
+          </div>
+        </div>
+      </article>
+
+      <article class="team-card">
+        <div class="team-photo" style="background-image: url('team-oskar.png'); background-position: center 25%;"></div>
+        <div class="team-info">
+          <div class="role">CO-FOUNDER &amp; CTO</div>
+          <h3>Oskar Pielech</h3>
+          <a class="team-email" href="mailto:o.pielech@veedeck.com">o.pielech@veedeck.com</a>
+          <p>
+            Współzałożyciel veedeck i doświadczony programista.<br>Od lat rozwija i utrzymuje wydajne platformy e-commerce. W funkcji CTO odpowiada za zaplecze techniczne oraz stabilny rozwój veedeck.</p>
+          <div class="team-socials">
+            <a href="https://www.linkedin.com/in/oskar-pielech-468970215/" target="_blank" rel="noopener" aria-label="LinkedIn">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19 3A2 2 0 0 1 21 5v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14ZM8.5 18v-8H6v8h2.5ZM7.25 8.9a1.45 1.45 0 1 0 0-2.9 1.45 1.45 0 0 0 0 2.9ZM18 18v-4.6c0-2.34-1.25-3.4-2.92-3.4-1.35 0-1.95.74-2.28 1.26V10H10.3c.03.7 0 8 0 8h2.5v-4.47c0-.22.02-.45.08-.6.18-.45.59-.92 1.28-.92.9 0 1.26.68 1.26 1.68V18H18Z"></path></svg>
+            </a>
+            <a href="mailto:o.pielech@veedeck.com" aria-label="E-mail">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="m3 7 9 6 9-6"></path></svg>
+            </a>
+          </div>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- MISJA I WIZJA - Dark spotlight split -->
+<style id="mv-style">
+  .mv2 {
+    padding: 100px 0; position: relative; overflow: hidden;
+    background:
+      radial-gradient(900px 520px at 84% 18%, rgba(79,70,229,0.30), transparent 60%),
+      radial-gradient(620px 420px at 8% 95%, rgba(124,116,243,0.14), transparent 60%),
+      #0B0F1A;
+    color: #fff;
+    border-top: 1px solid var(--border);
+  }
+  .mv2 .container { position: relative; z-index: 2; }
+  .mv2-streaks { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+  .mv2-streaks i { position: absolute; height: 2px; right: -10%; background: linear-gradient(90deg, transparent, rgba(124,116,243,0.55)); transform: rotate(13deg); border-radius: 2px; }
+  .mv2-streaks i:nth-child(1){ top: 20%; width: 46%; opacity: .45; }
+  .mv2-streaks i:nth-child(2){ top: 27%; width: 64%; opacity: .7; }
+  .mv2-streaks i:nth-child(3){ top: 33%; width: 38%; opacity: .4; }
+  .mv2 .section-eyebrow { color: var(--accent); }
+  .mv2 .head { max-width: 760px; }
+  .mv2 h2.title { font-size: clamp(28px, 3.4vw, 40px); line-height: 1.12; letter-spacing: -0.022em; font-weight: 700; color: #fff; }
+  .mv2 h2.title em { font-style: italic; font-family: "Inter", serif; color: var(--accent); font-weight: 500; }
+  .mv2 .sub { margin-top: 16px; font-size: 16.5px; color: rgba(255,255,255,.7); line-height: 1.6; max-width: 640px; }
+  .mv2-grid { margin-top: 50px; display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+  .mv2-card { border-radius: 22px; padding: 38px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.04); transition: transform 160ms ease, border-color 160ms ease; display: flex; flex-direction: column; }
+  .mv2-card:hover { transform: translateY(-3px); border-color: rgba(165,180,252,0.45); }
+  .mv2-card.mission { background: linear-gradient(160deg, rgba(79,70,229,0.22), rgba(255,255,255,0.03)); border-color: rgba(165,180,252,0.32); }
+  .mv2-label { display: flex; align-items: center; gap: 11px; }
+  .mv2-label .ic { width: 46px; height: 46px; border-radius: 13px; display: grid; place-items: center; flex-shrink: 0; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.16); }
+  .mv2-label .ic .material-symbols-rounded { font-family: 'Material Symbols Rounded'; font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 24; font-size: 24px; line-height: 1; color: var(--accent); }
+  .mv2-label .kicker { font-size: 12px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #fff; }
+  .mv2-label .kicker small { display: block; font-size: 13px; font-weight: 600; letter-spacing: 0; text-transform: none; margin-top: 2px; color: rgba(255,255,255,0.6); }
+  .mv2-card .quote { margin-top: 26px; font-family: "Inter", ui-sans-serif, sans-serif; font-size: 22px; line-height: 1.46; font-weight: 500; letter-spacing: -0.018em; color: #fff; text-wrap: pretty; }
+  .mv2-card .quote b { color: var(--accent); font-weight: 600; }
+  .mv2-card .mono { display: block; margin-top: auto; padding-top: 22px; font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11px; letter-spacing: 0.02em; color: var(--accent); }
+  .wordmark-text { font-family: "Nunito", sans-serif; font-weight: 300; font-style: normal; letter-spacing: -0.02em; }
+  @media (max-width: 1000px) { .mv2-grid { grid-template-columns: 1fr; } }
+</style>
+<section class="mv2" id="misja-wizja">
+  <div class="mv2-streaks"><i></i><i></i><i></i></div>
+  <div class="container">
+    <div class="head">
+      <div class="section-eyebrow">Mission & vision</div>
+      <h2 class="title">The direction that<br><em>guides us.</em></h2>
+      <p class="sub">To, w co wierzymy, i to, dokąd zmierzamy - krótko, bez owijania.</p>
+    </div>
+    <div class="mv2-grid">
+      <div class="mv2-card mission">
+        <div class="mv2-label">
+          <div class="ic"><span class="material-symbols-rounded">track_changes</span></div>
+          <div class="kicker">Mission<small>Why we’re here</small></div>
+        </div>
+        <p class="quote"><span class="wordmark-text">veedeck</span> kończy erę chaosu w projektowaniu wnętrz - żeby <b>creativity, not admin,</b> defines every project.</p>
+        <span class="mono">// time reclaimed → creativity</span>
+      </div>
+      <div class="mv2-card vision">
+        <div class="mv2-label">
+          <div class="ic"><span class="material-symbols-rounded">explore</span></div>
+          <div class="kicker">Vision<small>Where we’re headed</small></div>
+        </div>
+        <p class="quote">Chcemy zmienić sposób, w jaki projektanci wnętrz pracują - i wprowadzić <b>a new standard:</b> professional, transparent and fast collaboration with the client and contractor, from the first meeting to project handover.</p>
+        <span class="mono">// a new standard of collaboration</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="container">
+    <div class="cta-inner">
+      <div class="section-eyebrow">Join us</div>
+      <h2>Want to help us<br><em>build <span class="wordmark-text">veedeck</span>?</em></h2>
+      <p>We’re looking for designers who’ll help us build a product that genuinely changes the daily life of a design office.</p>
+      <div class="cta-row">
+        <a href="/en/demo/" class="btn btn-primary btn-lg">
+          Try the free demo
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"></path></svg>
+        </a>
+        <a href="/en/contact/" class="btn btn-ghost btn-lg">Talk to us</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="site">
+  <div class="container">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <a class="brand" href="/en/">
+          <img class="brand-icon" src="/vee-icon.png" alt="" style="height:28px;width:28px">
+          <img class="wordmark-img" src="/vee_black.png" alt="veedeck" style="height:22px">
+        </a>
+        <p>Visualize, Design, Deliver.</p>
+        <div>A platform for interior designers.</div>
+      </div>
+            <div class="footer-col">
+        <h4>Company</h4>
+        <ul>
+          <li><a href="/en/about/">About</a></li>
+          <li><a href="/en/demo/">Demo</a></li>
+          <li><a href="/en/contact/">Contact</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Product</h4>
+        <ul>
+          <li><a href="/en/modules/">Mołuły</a></li>
+          <li><a href="/en/plugin/">veepick plugin</a></li>
+          <li><a href="/en/pricing/">Pricing</a></li>
+          <li><a href="index.html#jak">How it works</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Zasoby</h4>
+        <ul>
+          <li><a href="/en/help/">Help</a></li>
+          <li><a href="pomoc/dla-projektantow/">Baza wiedzy</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Legal</h4>
+        <ul>
+          <li><a href="/en/privacy-policy/">Privacy Policy</a></li>
+          <li><a href="/en/privacy-policy-veepick/">veepick Privacy Policy</a></li>
+          <li><a href="/en/cookie-policy/">Cookie Policy</a></li>
+        </ul>
+      </div>
+</div>
+    <div class="footer-bottom">
+      <div>© 2026 veedeck. All rights reserved.</div>
+      <div>contact@veedeck.com</div>
+    </div>
+  </div>
+</footer>
+
+
+<!-- ───────── SCROLL REVEAL - styl „Subtelne unoszenie" (jak na stronie głównej) ───────── -->
+<style id="scroll-reveal">
+  @media (prefers-reduced-motion: no-preference) {
+    .reveal {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity .6s cubic-bezier(.22,.61,.36,1),
+                  transform .6s cubic-bezier(.22,.61,.36,1);
+      will-change: opacity, transform;
+    }
+    .reveal.in { opacity: 1; transform: none; }
+  }
+</style>
+<script>
+  (function () {
+    var staggerGroups = [
+      '.mission-head',
+      '.mission-body',
+      '.values-strip',
+      '.why-vd-inner > div:first-child',
+      '.team-head',
+      '.team-grid',
+      '.mv2 .head',
+      '.mv2-grid',
+      '.cta-inner'
+    ];
+    var soloGroups = [
+      '.why-vd-stage'
+    ];
+
+    var marked = [];
+    function mark(el, i) {
+      if (!el || el.classList.contains('reveal')) return;
+      el.classList.add('reveal');
+      if (i) el.style.transitionDelay = (Math.min(i, 6) * 70) + 'ms';
+      marked.push(el);
+    }
+
+    staggerGroups.forEach(function (sel) {
+      document.querySelectorAll(sel).forEach(function (container) {
+        var kids = container.children;
+        for (var i = 0; i < kids.length; i++) mark(kids[i], i);
+      });
+    });
+    soloGroups.forEach(function (sel) {
+      document.querySelectorAll(sel).forEach(function (el) { mark(el, 0); });
+    });
+
+    if (!('IntersectionObserver' in window)) {
+      marked.forEach(function (el) { el.classList.add('in'); });
+      return;
+    }
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) {
+          e.target.classList.add('in');
+          io.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -6% 0px' });
+
+    marked.forEach(function (el) { io.observe(el); });
+  })();
+</script>
+
+<script src="/veedeck-megamenu.js"></script>
+
+<style>
+/* MFIX: off-canvas menu nie rozpycha strony w bok */
+@media (max-width: 900px) { html, body { overflow-x: clip; } }
+</style>
+</body>
+</html>

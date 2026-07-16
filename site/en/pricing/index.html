@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-W6PSBGLB');</script>
+<!-- End Google Tag Manager -->
+<meta charset="utf-8">
+<title>Pricing | veedeck</title>
+<meta name="robots" content="index, follow">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="veedeck_ikona.svg" type="image/svg+xml"><link rel="icon" href="veedeck_ikona.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&amp;family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+<style>
+  :root {
+    --background: #FFFFFF;
+    --foreground: #24252B;
+    --primary: #4F46E5;
+    --primary-foreground: #FFFFFF;
+    --secondary: #F2F3F7;
+    --muted-foreground: #6B6F80;
+    --accent: #A5B4FC;
+    --border: #E5E7EB;
+    --indigo-50: #EEF2FF;
+    --indigo-100: #E0E7FF;
+    --indigo-950: #1E1B4B;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+    background: var(--background); color: var(--foreground);
+    -webkit-font-smoothing: antialiased; line-height: 1.5;
+  }
+  h1, h2, h3, h4 {
+    font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+    font-weight: 600; letter-spacing: -0.022em; margin: 0;
+  }
+  p { margin: 0; }
+  a { color: inherit; text-decoration: none; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 0 32px; }
+
+  /* NAV */
+  nav.top {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: saturate(180%) blur(14px);
+    -webkit-backdrop-filter: saturate(180%) blur(14px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-inner { display: flex; align-items: center; justify-content: space-between; padding: 16px 32px; height: 68px; }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand-icon { height: 32px; width: 32px; }
+  .wordmark-img { height: 24px; }
+  .nav-links { display: flex; align-items: center; gap: 28px; font-size: 14.5px; color: var(--muted-foreground); font-weight: 500; }
+  .nav-links a:hover { color: var(--foreground); }
+  .nav-links a.active { color: var(--primary); }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    height: 40px; padding: 0 18px;
+    border-radius: 12px;
+    font-weight: 600; font-size: 14px;
+    cursor: pointer; border: 1px solid transparent;
+    transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
+  }
+  .btn-primary { background: var(--primary); color: var(--primary-foreground); box-shadow: 0 6px 20px -8px rgba(79, 70, 229, 0.45); }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 10px 24px -8px rgba(79, 70, 229, 0.55); }
+  .btn-ghost { background: transparent; color: var(--foreground); border: 1px solid var(--border); }
+  .btn-ghost:hover { background: var(--secondary); }
+  .btn-dark { background: #111827; color: #fff; }
+  .btn-dark:hover { background: #1F2937; transform: translateY(-1px); }
+  .btn-lg { height: 52px; padding: 0 26px; font-size: 15.5px; border-radius: 14px; }
+
+  /* HERO */
+  .page-hero {
+    position: relative;
+    padding: 80px 0 24px;
+    background:
+      radial-gradient(1100px 400px at 80% -10%, rgba(165, 180, 252, 0.30), transparent 60%),
+      radial-gradient(700px 320px at 8% 0%, rgba(79, 70, 229, 0.10), transparent 65%),
+      var(--background);
+    overflow: hidden;
+  }
+  .hero-eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 12px; font-weight: 600;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--primary); margin-bottom: 18px;
+  }
+  .hero-eyebrow .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--primary);
+    animation: pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+  .hero-head { max-width: 760px; }
+  .hero-head h1 {
+    font-family: "Inter", sans-serif;
+    font-size: clamp(40px, 6vw, 64px);
+    line-height: 1.02; letter-spacing: -0.032em;
+    font-weight: 700;
+    margin-bottom: 18px;
+  }
+  .hero-head h1 em { font-style: italic; font-family: "Inter", serif; color: var(--primary); font-weight: 500; }
+  .hero-head p {
+    font-size: 17.5px; color: var(--muted-foreground);
+    max-width: 580px; line-height: 1.6;
+  }
+
+  /* TOGGLES */
+  .toggles-wrap {
+    margin-top: 44px;
+    display: flex; align-items: center; justify-content: center;
+    gap: 18px; flex-wrap: wrap;
+  }
+  .seg {
+    display: inline-flex;
+    background: var(--secondary);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 4px;
+    position: relative;
+  }
+  .seg button {
+    appearance: none; border: none; background: transparent;
+    font-family: inherit;
+    font-size: 13.5px; font-weight: 600;
+    color: var(--muted-foreground);
+    padding: 9px 18px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: color 180ms ease;
+    display: inline-flex; align-items: center; gap: 7px;
+    position: relative; z-index: 2;
+    line-height: 1;
+  }
+  .seg button.active { color: var(--foreground); }
+  .seg .seg-thumb {
+    position: absolute;
+    top: 4px; bottom: 4px;
+    border-radius: 999px;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(15, 23, 42, 0.04);
+    transition: left 260ms cubic-bezier(0.22, 0.61, 0.36, 1), width 260ms cubic-bezier(0.22, 0.61, 0.36, 1);
+    z-index: 1;
+  }
+  .seg-save {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.04em;
+    color: var(--primary);
+    background: var(--indigo-50);
+    padding: 3px 7px; border-radius: 999px;
+    margin-left: 2px;
+  }
+
+  /* PRICING GRID */
+  .pricing-section {
+    padding: 56px 0 96px;
+    background:
+      radial-gradient(900px 300px at 50% 0%, rgba(165, 180, 252, 0.15), transparent 65%),
+      var(--background);
+  }
+  .plans {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    align-items: stretch;
+  }
+  .plan {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 36px 32px 32px;
+    display: flex; flex-direction: column;
+    position: relative;
+    transition: transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
+  }
+  .plan:hover {
+    transform: translateY(-3px);
+    border-color: var(--accent);
+    box-shadow: 0 22px 50px -28px rgba(15, 23, 42, 0.22);
+  }
+  .plan.featured {
+    background: linear-gradient(165deg, #1E1B4B 0%, #312E81 55%, #4F46E5 110%);
+    border-color: transparent;
+    color: #fff;
+    box-shadow: 0 30px 70px -28px rgba(30, 27, 75, 0.55);
+  }
+  .plan.featured:hover { border-color: transparent; box-shadow: 0 36px 80px -28px rgba(30, 27, 75, 0.65); }
+  .plan-badge {
+    position: absolute; top: 18px; right: 18px;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--primary);
+    background: #fff;
+    padding: 6px 12px; border-radius: 999px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+  }
+  .plan-name {
+    font-family: "Inter", sans-serif;
+    font-size: 13px; font-weight: 700;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--muted-foreground);
+    margin-bottom: 8px;
+  }
+  .plan.featured .plan-name { color: rgba(255,255,255,0.7); }
+  .plan-title {
+    font-family: "Inter", sans-serif;
+    font-size: 26px; font-weight: 700;
+    letter-spacing: -0.022em;
+    margin-bottom: 22px;
+  }
+  .plan-price {
+    display: flex; align-items: baseline; gap: 6px;
+    margin-bottom: 6px;
+    min-height: 56px;
+  }
+  .plan-price .currency {
+    font-family: "Inter", sans-serif;
+    font-size: 18px; font-weight: 600;
+    color: var(--muted-foreground);
+  }
+  .plan.featured .plan-price .currency { color: rgba(255,255,255,0.7); }
+  .plan-price .amount {
+    font-family: "Inter", sans-serif;
+    font-size: 56px; font-weight: 700;
+    letter-spacing: -0.035em;
+    line-height: 1;
+    transition: opacity 180ms ease;
+  }
+  .plan-price .amount.flash { opacity: 0.4; }
+  .plan-price .per {
+    font-size: 14px; color: var(--muted-foreground);
+    font-weight: 500;
+  }
+  .plan.featured .plan-price .per { color: rgba(255,255,255,0.65); }
+  .plan-price.custom .amount {
+    font-size: 34px;
+    letter-spacing: -0.02em;
+  }
+  .plan-meta {
+    font-size: 12.5px; color: var(--muted-foreground);
+    margin-bottom: 8px;
+    min-height: 18px;
+  }
+  .plan.featured .plan-meta { color: rgba(255,255,255,0.65); }
+  .plan-tax {
+    font-size: 12.5px; color: var(--muted-foreground);
+    margin-bottom: 28px;
+    min-height: 18px;
+  }
+  .plan.featured .plan-tax { color: rgba(255,255,255,0.6); }
+  .plan-cta {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%;
+    height: 48px; padding: 0 22px;
+    border-radius: 12px;
+    font-family: "DM Sans", sans-serif;
+    font-weight: 600; font-size: 14.5px;
+    margin-bottom: 28px;
+    cursor: pointer; border: 1px solid transparent;
+    transition: transform 120ms ease, background 120ms ease, box-shadow 120ms ease;
+  }
+  .plan-cta.primary { background: var(--primary); color: #fff; box-shadow: 0 6px 20px -8px rgba(79, 70, 229, 0.45); }
+  .plan-cta.primary:hover { transform: translateY(-1px); box-shadow: 0 10px 24px -8px rgba(79, 70, 229, 0.55); }
+  .plan-cta.outline { background: transparent; color: var(--foreground); border-color: var(--border); }
+  .plan-cta.outline:hover { background: var(--secondary); }
+  .plan.featured .plan-cta.primary { background: #fff; color: var(--primary); box-shadow: 0 8px 22px -8px rgba(0,0,0,0.45); }
+  .plan.featured .plan-cta.primary:hover { background: #F4F4F8; }
+
+  .plan-features {
+    list-style: none; padding: 0; margin: 0;
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .plan-features li {
+    display: flex; align-items: flex-start; gap: 12px;
+    font-size: 14.5px; line-height: 1.5;
+    color: var(--foreground);
+  }
+  .plan.featured .plan-features li { color: rgba(255,255,255,0.92); }
+  .plan-features li .check {
+    flex-shrink: 0;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--indigo-50);
+    color: var(--primary);
+    display: grid; place-items: center;
+    margin-top: 1px;
+  }
+  .plan-features li .check .material-symbols-rounded {
+    font-family: 'Material Symbols Rounded';
+    font-size: 14px;
+    font-variation-settings: 'FILL' 1, 'wght' 700, 'GRAD' 0, 'opsz' 24;
+  }
+  .plan.featured .plan-features li .check {
+    background: rgba(255,255,255,0.18);
+    color: #fff;
+  }
+  .plan-features li .x {
+    flex-shrink: 0;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: #F3F4F6;
+    color: #9CA3AF;
+    display: grid; place-items: center;
+    margin-top: 1px;
+  }
+  .plan-features li .x .material-symbols-rounded {
+    font-family: 'Material Symbols Rounded';
+    font-size: 14px;
+    font-variation-settings: 'FILL' 1, 'wght' 700, 'GRAD' 0, 'opsz' 24;
+  }
+  .plan-features li.muted { color: var(--muted-foreground); }
+
+  .plan-divider {
+    height: 1px;
+    background: var(--border);
+    margin-bottom: 22px;
+  }
+  .plan.featured .plan-divider { background: rgba(255,255,255,0.15); }
+
+  /* FAQ */
+  .faq-section {
+    padding: 96px 0;
+    background: #FAFAFB;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .section-head { max-width: 720px; margin-bottom: 48px; }
+  .section-head.center { text-align: center; margin-left: auto; margin-right: auto; }
+  .section-head .eyebrow {
+    display: inline-block;
+    font-size: 12px; font-weight: 600;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--primary); margin-bottom: 14px;
+  }
+  .section-head h2 {
+    font-size: clamp(28px, 3.6vw, 44px);
+    line-height: 1.12; letter-spacing: -0.022em;
+    font-weight: 700; margin-bottom: 14px;
+  }
+  .section-head h2 em { font-style: italic; font-family: "Inter", serif; color: var(--primary); font-weight: 500; }
+  .section-head p { color: var(--muted-foreground); font-size: 16.5px; line-height: 1.6; }
+  .faq-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px 24px;
+  }
+  .faq-item {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px 26px;
+  }
+  .faq-item h3 {
+    font-size: 16px; font-weight: 700; letter-spacing: -0.012em;
+    margin-bottom: 8px;
+  }
+  .faq-item p {
+    color: var(--muted-foreground);
+    font-size: 14.5px; line-height: 1.6;
+  }
+
+  /* CTA */
+  .cta-section { padding: 96px 0; text-align: center; }
+  .cta-card {
+    max-width: 780px; margin: 0 auto;
+    background: linear-gradient(150deg, #1E1B4B 0%, #4F46E5 70%, #6B63F0 100%);
+    color: #fff;
+    border-radius: 28px;
+    padding: 56px 48px;
+    box-shadow: 0 40px 80px -30px rgba(30, 27, 75, 0.5);
+    position: relative;
+    overflow: hidden;
+  }
+  .cta-card::after {
+    content: "";
+    position: absolute; inset: 0;
+    background: radial-gradient(600px 200px at 0% 0%, rgba(255,255,255,0.18), transparent 60%);
+    pointer-events: none;
+  }
+  .cta-card .eyebrow {
+    display: inline-block;
+    font-size: 12px; font-weight: 600;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: rgba(255,255,255,0.7);
+    margin-bottom: 14px;
+  }
+  .cta-card h2 {
+    font-size: clamp(28px, 3.6vw, 40px);
+    line-height: 1.15; letter-spacing: -0.022em;
+    font-weight: 700; margin-bottom: 14px;
+    color: #fff;
+  }
+  .cta-card h2 em { font-style: italic; font-family: "Inter", serif; color: #C7D2FE; font-weight: 500; }
+  .cta-card p {
+    color: rgba(255,255,255,0.78);
+    font-size: 16px; line-height: 1.6;
+    max-width: 540px; margin: 0 auto 28px;
+  }
+  .cta-buttons { display: inline-flex; gap: 12px; flex-wrap: wrap; justify-content: center; position: relative; z-index: 1; }
+  .btn-white { background: #fff; color: var(--primary); }
+  .btn-white:hover { background: #F4F4F8; }
+  .btn-outline { background: transparent; color: #fff; border-color: rgba(255,255,255,0.4); }
+  .btn-outline:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.7); }
+
+  /* FOOTER */
+  footer.site { padding: 56px 0 32px; background: #fff; border-top: 1px solid var(--border); }
+  .footer-inner { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr; gap: 32px; align-items: start; padding-bottom: 32px; border-bottom: 1px solid var(--border); }
+  .footer-brand p, .footer-brand div { color: var(--muted-foreground); font-size: 14px; margin-top: 12px; max-width: 280px; line-height: 1.55; }
+  .footer-col h4 { font-size: 12px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted-foreground); margin-bottom: 14px; }
+  .footer-col ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+  .footer-col a { color: var(--foreground); font-size: 14.5px; font-weight: 500; }
+  .footer-col a:hover { color: var(--primary); }
+  .footer-bottom { padding-top: 24px; display: flex; justify-content: space-between; color: var(--muted-foreground); font-size: 13px; }
+
+  /* RESPONSIVE */
+  @media (max-width: 1000px) {
+    .plans { grid-template-columns: 1fr; }
+    .faq-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 900px) {
+    .nav-links { display: none; }
+    .nav-cta { display: none !important; }
+    nav.top > .container .btn { display: none; }
+    .footer-inner { grid-template-columns: 1fr 1fr; gap: 32px; }
+    nav.top .nav-burger { display: inline-flex; }
+  }
+  @media (max-width: 600px) {
+    .cta-card { padding: 40px 28px; border-radius: 22px; }
+    .toggles-wrap { gap: 12px; }
+    .seg button { padding: 9px 14px; font-size: 13px; }
+  }
+
+  /* HAMBURGER + MOBILE SIDEBAR */
+  .nav-burger {
+    display: none;
+    align-items: center; justify-content: center;
+    width: 42px; height: 42px;
+    background: transparent; border: none;
+    border-radius: 10px;
+    color: var(--foreground);
+    cursor: pointer; padding: 0;
+    transition: background 120ms ease;
+    position: relative; z-index: 80;
+  }
+  .nav-burger:hover { background: var(--secondary); }
+  .nav-burger svg { width: 22px; height: 22px; }
+  .nav-burger .icon-close { display: none; }
+  nav.top.open .nav-burger .icon-open { display: none; }
+  nav.top.open .nav-burger .icon-close { display: block; }
+
+  .mobile-backdrop { position: fixed; inset: 0; background: rgba(15, 15, 20, 0.45); opacity: 0; pointer-events: none; transition: opacity 240ms ease; z-index: 60; }
+  nav.top.open + .mobile-backdrop { opacity: 1; pointer-events: auto; }
+  nav.top.open { z-index: 70; }
+  .mobile-menu {
+    position: fixed; top: 0; right: 0;
+    width: 100%; left: 0; height: 100dvh;
+    background: #fff;
+    box-shadow: -16px 0 40px rgba(15,15,20,0.12);
+    transform: translateX(100%);
+    transition: transform 280ms cubic-bezier(0.22, 0.61, 0.36, 1);
+    z-index: 70;
+    display: flex; flex-direction: column;
+    overflow-y: auto;
+  }
+  body.menu-locked .mobile-menu { transform: translateX(0); }
+  .mobile-menu-header { display: flex; align-items: center; justify-content: flex-end; padding: 18px 20px; }
+  .mobile-menu-close {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 40px; height: 40px;
+    background: transparent; border: none; cursor: pointer;
+    color: var(--foreground); border-radius: 10px; padding: 0;
+  }
+  .mobile-menu-close:hover { background: var(--secondary); }
+  .mobile-menu-close svg { width: 20px; height: 20px; }
+  .mobile-menu-inner { display: flex; flex-direction: column; gap: 2px; padding: 8px 28px 32px; flex: 1; }
+  .mobile-menu a.menu-link {
+    display: block; padding: 16px 4px;
+    font-size: 17px; font-weight: 500;
+    color: var(--foreground);
+    border-bottom: 1px solid var(--border);
+    transition: color 120ms ease;
+  }
+  .mobile-menu a.menu-link:last-of-type { border-bottom: none; }
+  .mobile-menu a.menu-link:hover, .mobile-menu a.menu-link.active { color: var(--primary); }
+  .mobile-menu .mobile-cta { display: flex; flex-direction: column; gap: 10px; margin-top: 28px; }
+  .mobile-menu .mobile-cta .btn { width: 100%; justify-content: center; }
+  body.menu-locked { overflow: hidden; }
+  @media (min-width: 901px) {
+    .mobile-menu { display: none; }
+    .mobile-backdrop { display: none; }
+  }
+
+  /* ── Blokada cennika (przed oficjalnym startem) ──────────── */
+  .price-lock { position: relative; }
+  .price-lock .plans {
+    filter: blur(3px) grayscale(0.6);
+    opacity: 0.5;
+    pointer-events: none;
+    user-select: none;
+  }
+  .price-overlay {
+    position: absolute; inset: -8px;
+    z-index: 5;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(251,251,253,0.5);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+  .price-overlay-inner {
+    max-width: 440px; text-align: center;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 38px 34px;
+    box-shadow: 0 32px 80px -34px rgba(36,37,43,0.42), 0 6px 18px -10px rgba(36,37,43,0.2);
+  }
+  .price-overlay-inner .lock-ic {
+    width: 54px; height: 54px; margin: 0 auto 18px;
+    display: grid; place-items: center;
+    border-radius: 15px;
+    background: var(--indigo-50, #EEF2FF);
+    color: var(--primary, #4F46E5);
+  }
+  .price-overlay-inner .lock-ic .material-symbols-rounded { font-size: 28px; }
+  .price-overlay-inner h2 {
+    font-family: "Inter", sans-serif; font-weight: 700;
+    font-size: 24px; letter-spacing: -0.02em;
+    color: var(--foreground, #24252B);
+    margin: 0 0 10px;
+  }
+  .price-overlay-inner p {
+    font-size: 15.5px; color: var(--muted-foreground, #6B6F80);
+    line-height: 1.55; margin: 0 0 22px; text-wrap: pretty;
+  }
+  .price-overlay-inner .price-cta {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--primary, #4F46E5); color: #fff;
+    font-family: "Inter", sans-serif; font-weight: 600; font-size: 15px;
+    padding: 12px 22px; border-radius: 12px; text-decoration: none;
+    transition: background .15s, transform .15s;
+  }
+  .price-overlay-inner .price-cta:hover { background: var(--primary-600, #4338CA); transform: translateY(-1px); }
+  .price-overlay-inner .price-cta svg { width: 17px; height: 17px; }
+  @media (max-width: 520px) {
+    .price-overlay-inner { padding: 30px 22px; }
+    .price-overlay-inner h2 { font-size: 21px; }
+  }
+</style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Czy mogę zmienić plan w trakcie subskrypcji?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Tak, w każdej chwili. Upgrade działa od razu, downgrade — od następnego okresu rozliczeniowego. Niewykorzystaną część bieżącego okresu rozliczamy proporcjonalnie."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Czy ceny zawierają VAT?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Domyślnie pokazujemy ceny netto. Przełącznik \"Brutto\" doliczy 23% podatek VAT — tak będzie wyglądała kwota na fakturze dla klientów z Polski."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Jak działa rabat 10% przy płatności rocznej?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Wybierając rozliczenie roczne, płacisz z góry za 12 miesięcy w cenie obniżonej o 10% w skali miesiąca. Otrzymujesz jedną fakturę i nie musisz pamiętać o odnawianiu co miesiąc."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Czy jest okres próbny?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Tak — przez pierwsze 30 dni veedeck jest bezpłatny. Bez karty kredytowej, bez zobowiązań. W każdej chwili możesz zrezygnować."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Co to znaczy „bez limitu klientów i projektów"?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "We wszystkich planach możesz prowadzić dowolną liczbę projektów dla dowolnej liczby klientów. Płacisz tylko za miejsca w zespole."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Co obejmuje plan Enterprise?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Skontaktuj się z nami w celu omówienia zakresu i oferty planu Agencja."
+      }
+    }
+  ]
+}
+</script>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-TLPPBXZX1F"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-TLPPBXZX1F');
+</script>
+<meta name="description" content="Simple, transparent pricing for veedeck. Choose the plan that fits your studio. 14-day free trial, no credit card required.">
+
+<link rel="canonical" href="https://veedeck.com/en/pricing/"/>
+<link rel="alternate" hreflang="pl" href="https://veedeck.com/pl/cennik/"/>
+<link rel="alternate" hreflang="en" href="https://veedeck.com/en/pricing/"/>
+<link rel="alternate" hreflang="x-default" href="https://veedeck.com/pl/cennik/"/>
+</head>
+<body>
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W6PSBGLB"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+
+<!-- NAV -->
+<nav class="top" id="siteNav">
+  <div class="container nav-inner">
+    <a class="brand" href="/en/">
+      <img class="brand-icon" src="/vee-icon.png" alt="">
+      <img class="wordmark-img" src="/vee_black.png" alt="veedeck">
+    </a>
+    <div class="nav-links">
+      <a href="/en/modules/">Modules</a>
+      <a href="/en/plugin/">Plugin</a>
+      <a href="/en/pricing/" class="active">Pricing</a>
+      <a href="/en/demo/">Demo</a>
+      <a href="/en/about/">About</a>
+      <a href="/en/contact/">Contact</a>
+    </div>
+    <div class="nav-cta" style="display:flex; gap:10px; align-items:center;">
+      <a href="/pl/cennik/" class="btn btn-ghost" style="font-size:12px;padding:0 10px;letter-spacing:0.06em;font-weight:700;">PL</a>
+      <a href="https://app.veedeck.com/login" class="btn btn-ghost">Log in</a>
+      <a href="/en/demo/" class="btn btn-primary">
+        Free demo
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"></path></svg>
+      </a>
+    </div>
+    <button class="nav-burger" aria-label="Otwórz menu" aria-expanded="false" aria-controls="mobileMenu" onclick="toggleMobileMenu(this)">
+      <svg class="icon-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="3" y1="7" x2="21" y2="7"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="17" x2="21" y2="17"></line></svg>
+      <svg class="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="6" y1="6" x2="18" y2="18"></line><line x1="6" y1="18" x2="18" y2="6"></line></svg>
+    </button>
+  </div>
+
+</nav>
+<div class="mobile-backdrop" id="mobileBackdrop" onclick="closeMobileMenu()" aria-hidden="true"></div>
+<aside class="mobile-menu" id="mobileMenu" aria-label="Menu mobilne">
+    <div class="mobile-menu-header"><a class="brand" href="/en/" style="margin-right:auto; display:inline-flex; align-items:center; gap:9px;"><img class="brand-icon" src="/vee-icon.png" alt="" style="height:28px;width:auto;"><img class="wordmark-img" src="/vee_black.png" alt="veedeck" style="height:18px;width:auto;"></a>
+      <button class="mobile-menu-close" aria-label="Zamknij menu" onclick="closeMobileMenu()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="6" y1="6" x2="18" y2="18"></line><line x1="6" y1="18" x2="18" y2="6"></line></svg>
+      </button>
+    </div>
+    <div class="mobile-menu-inner">
+      <a class="menu-link" href="/en/modules/">Modules</a>
+      <a class="menu-link" href="/en/plugin/">Plugin</a>
+      <a class="menu-link active" href="/en/pricing/">Pricing</a>
+      <a class="menu-link" href="/en/demo/">Demo</a>
+      <a class="menu-link" href="/en/about/">About</a>
+      <a class="menu-link" href="/en/contact/">Contact</a>
+      <div class="mobile-cta">
+      <a href="/pl/cennik/" class="btn btn-ghost" style="width:100%;justify-content:center;font-size:12px;font-weight:700;letter-spacing:0.06em;">PL</a>
+        <a href="https://app.veedeck.com/login" class="btn btn-ghost">Log in</a>
+        <a href="/en/demo/" class="btn btn-primary">Free demo
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"></path></svg>
+        </a>
+      </div>
+    </div>
+  </aside>
+
+<script>
+  function setMobileMenu(open) {
+    var nav = document.getElementById('siteNav');
+    var btn = nav.querySelector('.nav-burger');
+    nav.classList.toggle('open', open);
+    document.body.classList.toggle('menu-locked', open);
+    if (btn) {
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      btn.setAttribute('aria-label', open ? 'Zamknij menu' : 'Otwórz menu');
+    }
+  }
+  function toggleMobileMenu(btn) {
+    var nav = document.getElementById('siteNav');
+    setMobileMenu(!nav.classList.contains('open'));
+  }
+  function closeMobileMenu() { setMobileMenu(false); }
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeMobileMenu(); });
+  document.addEventListener('click', function (e) {
+    var link = e.target.closest('.mobile-menu a');
+    if (link) closeMobileMenu();
+  });
+</script>
+
+<!-- HERO -->
+<section class="page-hero">
+  <div class="container">
+    <div class="hero-head">
+      <div class="hero-eyebrow"><span class="dot"></span>Pricing</div>
+      <h1>Prosty cennik dla biura projektowego. <br><em>No hidden costs.</em></h1>
+      <p>Choose the plan that fits the scale of your studio. No client limit, no project limit — the only difference is the number of people on your team.</p>
+    </div>
+
+    <!-- TOGGLES -->
+    <div class="toggles-wrap" role="group" aria-label="Opcje cennika" style="display:none;">
+      <div class="seg" id="taxSeg" role="radiogroup" aria-label="Cena netto lub brutto">
+        <span class="seg-thumb" id="taxThumb"></span>
+        <button type="button" role="radio" aria-checked="true" class="active" data-val="net">Net</button>
+        <button type="button" role="radio" aria-checked="false" data-val="gross">Gross <span style="opacity:.6">(VAT 23%)</span></button>
+      </div>
+      <div class="seg" id="cycleSeg" role="radiogroup" aria-label="Cykl rozliczeniowy">
+        <span class="seg-thumb" id="cycleThumb"></span>
+        <button type="button" role="radio" aria-checked="true" class="active" data-val="monthly">Monthly</button>
+        <button type="button" role="radio" aria-checked="false" data-val="annual">Yearly <span class="seg-save">−10%</span></button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="pricing-section">
+  <div class="container">
+    <div class="price-lock">
+    <div class="price-overlay">
+      <div class="price-overlay-inner">
+        <div class="lock-ic"><span class="material-symbols-rounded">lock</span></div>
+        <h2>Pricing już wkrótce</h2>
+        <p>Pricing będzie dostępny po oficjalnym uruchomieniu aplikacji. Trwają testy — dołącz do nich już teraz.</p>
+        <a class="price-cta" id="priceMail" href="#">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="m3 7 9 6 9-6"></path></svg>
+          <span id="priceMailText">napisz do nas</span>
+        </a>
+      </div>
+    </div>
+    <div class="plans">
+
+      <!-- STANDARD -->
+      <article class="plan" data-plan="standard">
+        <div class="plan-name">Standard</div>
+        <div class="plan-title">For solo designers</div>
+        <div class="plan-price custom">
+          <span class="amount">Coming soon</span>
+        </div>
+        <div class="plan-meta">&nbsp;</div>
+        <div class="plan-tax">Price po starcie aplikacji</div>
+        <a href="https://app.veedeck.com/login" class="plan-cta primary">Choose Standard</a>
+        <div class="plan-divider"></div>
+        <ul class="plan-features">
+          <li><span class="check"><span class="material-symbols-rounded">check</span></span>Access to every module</li>
+          <li><span class="check"><span class="material-symbols-rounded">check</span></span>No limit on clients and projects</li>
+          <li class="muted"><span class="x"><span class="material-symbols-rounded">close</span></span>No option to add a team member</li>
+        </ul>
+      </article>
+
+      <!-- COMMERCIAL (featured) -->
+      <article class="plan featured" data-plan="commercial">
+        <span class="plan-badge">Most popular</span>
+        <div class="plan-name">Commercial</div>
+        <div class="plan-title">For studios</div>
+        <div class="plan-price custom">
+          <span class="amount">Coming soon</span>
+        </div>
+        <div class="plan-meta">&nbsp;</div>
+        <div class="plan-tax">Price po starcie aplikacji</div>
+        <a href="https://app.veedeck.com/login" class="plan-cta primary">Choose Commercial</a>
+        <div class="plan-divider"></div>
+        <ul class="plan-features">
+          <li><span class="check"><span class="material-symbols-rounded">check</span></span>Access to every module</li>
+          <li><span class="check"><span class="material-symbols-rounded">check</span></span>No limit on clients and projects</li>
+          <li><span class="check"><span class="material-symbols-rounded">check</span></span>Up to 5 team members free</li>
+        </ul>
+      </article>
+
+      <!-- ENTERPRISE -->
+      <article class="plan" data-plan="enterprise">
+        <div class="plan-name">Enterprise</div>
+        <div class="plan-title">For large teams</div>
+        <div class="plan-price custom">
+          <span class="amount">Custom pricing</span>
+        </div>
+        <div class="plan-meta">&nbsp;</div>
+        <div class="plan-tax">Get in touch</div>
+        <a href="/en/contact/" class="plan-cta outline">Let’s talk
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"></path></svg>
+        </a>
+        <div class="plan-divider"></div>
+        <ul class="plan-features">
+          <li><span class="check"><span class="material-symbols-rounded">check</span></span>Access to every module</li>
+          <li><span class="check"><span class="material-symbols-rounded">check</span></span>No limit on clients and projects</li>
+          <li><span class="check"><span class="material-symbols-rounded">check</span></span>Unlimited team members</li>
+          <li><span class="check"><span class="material-symbols-rounded">check</span></span>Custom system modifications for your needs</li>
+          <li><span class="check"><span class="material-symbols-rounded">check</span></span>Modules built on request</li>
+          <li><span class="check"><span class="material-symbols-rounded">check</span></span>Dedicated infrastructure</li>
+        </ul>
+      </article>
+
+    </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="faq-section">
+  <div class="container">
+    <div class="section-head center">
+      <div class="eyebrow">Frequently asked questions</div>
+      <h2>All clear?<br><em>If not — drop us a line.</em></h2>
+    </div>
+
+    <div class="faq-grid">
+      <div class="faq-item">
+        <h3>Can I change plan during my subscription?</h3>
+        <p>Yes, anytime. An upgrade takes effect immediately, a downgrade — from the next billing period. We pro-rate the unused part of the current period.</p>
+      </div>
+      <div class="faq-item">
+        <h3>Do the prices include VAT?</h3>
+        <p>By default we show net prices. The “Gross” toggle adds 23% VAT — that’s the amount that will appear on the invoice for clients in Poland.</p>
+      </div>
+      <div class="faq-item">
+        <h3>How does the 10% annual-billing discount work?</h3>
+        <p>With annual billing you pay upfront for 12 months at a price reduced by 10% per month. You get a single invoice and never have to remember to renew each month.</p>
+      </div>
+      <div class="faq-item">
+        <h3>Is there a trial period?</h3>
+        <p>Tak — przez pierwsze 30 dni veedeck jest bezpłatny. No credit card, bez zobowiązań. W każdej chwili możesz zrezygnować.</p>
+      </div>
+      <div class="faq-item">
+        <h3>What does “no limit on clients and projects” mean?</h3>
+        <p>Exactly that. On every plan you can run any number of projects for any number of clients. You only pay for team seats.</p>
+      </div>
+      <div class="faq-item">
+        <h3>What does the Enterprise plan include?</h3>
+        <p>Contact us to discuss the scope and pricing of the Agency plan.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="container">
+    <div class="cta-card">
+      <div class="eyebrow">Free demo</div>
+      <h2>Przetestuj veedeck przez 30 dni.<br><em>No card, no commitment.</em></h2>
+      <p>Zarejestruj się w 30 sekund. Jeśli po 30 dniach uznasz, że veedeck nie jest dla Ciebie — po prostu nie kontynuujesz.</p>
+      <div class="cta-buttons">
+        <a href="/en/demo/" class="btn btn-white btn-lg">
+          Start your free trial
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"></path></svg>
+        </a>
+        <a href="/en/contact/" class="btn btn-outline btn-lg">Talk to us</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="site">
+  <div class="container">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <a class="brand" href="/en/">
+          <img class="brand-icon" src="/vee-icon.png" alt="" style="height:28px;width:28px">
+          <img class="wordmark-img" src="/vee_black.png" alt="veedeck" style="height:22px">
+        </a>
+        <p>Visualize, Design, Deliver.</p>
+        <div>A platform for interior designers.</div>
+      </div>
+            <div class="footer-col">
+        <h4>Company</h4>
+        <ul>
+          <li><a href="/en/about/">About</a></li>
+          <li><a href="/en/demo/">Demo</a></li>
+          <li><a href="/en/contact/">Contact</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Product</h4>
+        <ul>
+          <li><a href="/en/modules/">Mołuły</a></li>
+          <li><a href="/en/plugin/">veepick plugin</a></li>
+          <li><a href="/en/pricing/">Pricing</a></li>
+          <li><a href="index.html#jak">How it works</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Zasoby</h4>
+        <ul>
+          <li><a href="/en/help/">Help</a></li>
+          <li><a href="pomoc/dla-projektantow/">Baza wiedzy</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Legal</h4>
+        <ul>
+          <li><a href="/en/privacy-policy/">Privacy Policy</a></li>
+          <li><a href="/en/privacy-policy-veepick/">veepick Privacy Policy</a></li>
+          <li><a href="/en/cookie-policy/">Cookie Policy</a></li>
+        </ul>
+      </div>
+</div>
+    <div class="footer-bottom">
+      <div>© 2026 veedeck. All rights reserved.</div>
+      <div>contact@veedeck.com</div>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // ===== Blokada cennika — e-mail składany w JS (obejście Cloudflare) =====
+  (function () {
+    var addr = 'contact' + '@' + 'veedeck' + '.com';
+    var subject = encodeURIComponent('Chcę wziąć udział w testach veedeck');
+    var body = encodeURIComponent('Cześć! Chcę dołączyć do testów veedeck.');
+    var a = document.getElementById('priceMail');
+    if (a) {
+      a.href = 'mailto:' + addr + '?subject=' + subject + '&body=' + body;
+      document.getElementById('priceMailText').textContent = addr;
+    }
+  })();
+
+  // ===== Pricing state =====
+  var state = { tax: 'net', cycle: 'monthly' };
+  var VAT = 0.23;
+  var ANNUAL_DISCOUNT = 0.10;
+
+  function plnFormat(value) {
+    // Polish-style: space thousands separator, comma decimal. Show 2 decimals only if needed.
+    var rounded = Math.round(value * 100) / 100;
+    var hasDec = Math.abs(rounded - Math.round(rounded)) > 0.0001;
+    var opts = hasDec
+      ? { minimumFractionDigits: 2, maximumFractionDigits: 2 }
+      : { maximumFractionDigits: 0 };
+    return rounded.toLocaleString('pl-PL', opts);
+  }
+
+  function computePrice(base) {
+    var p = base;
+    if (state.cycle === 'annual') p = p * (1 - ANNUAL_DISCOUNT);
+    if (state.tax === 'gross') p = p * (1 + VAT);
+    return p;
+  }
+
+  function updatePrices() {
+    document.querySelectorAll('.plan-price .amount[data-base]').forEach(function (el) {
+      var base = parseFloat(el.getAttribute('data-base'));
+      var newVal = plnFormat(computePrice(base));
+      if (el.textContent.trim() === newVal) return;
+      el.classList.add('flash');
+      setTimeout(function () {
+        el.textContent = newVal;
+        el.classList.remove('flash');
+      }, 140);
+    });
+
+    // Tax labels
+    document.querySelectorAll('[data-tax]').forEach(function (el) {
+      el.textContent = state.tax === 'gross' ? 'Cena brutto (z VAT 23%)' : 'Cena netto';
+    });
+
+    // Cycle meta
+    var metaText = state.cycle === 'annual'
+      ? 'Rozliczane rocznie · oszczędzasz 10%'
+      : 'Rozliczane miesięcznie';
+    document.querySelectorAll('[data-meta]').forEach(function (el) {
+      el.textContent = metaText;
+    });
+  }
+
+  function moveThumb(seg, thumb) {
+    var active = seg.querySelector('button.active');
+    if (!active) return;
+    var segRect = seg.getBoundingClientRect();
+    var aRect = active.getBoundingClientRect();
+    thumb.style.left = (aRect.left - segRect.left) + 'px';
+    thumb.style.width = aRect.width + 'px';
+  }
+
+  function setSeg(segEl, value) {
+    var key = segEl.id === 'taxSeg' ? 'tax' : 'cycle';
+    state[key] = value;
+    segEl.querySelectorAll('button').forEach(function (b) {
+      var on = b.getAttribute('data-val') === value;
+      b.classList.toggle('active', on);
+      b.setAttribute('aria-checked', on ? 'true' : 'false');
+    });
+    var thumb = segEl.querySelector('.seg-thumb');
+    moveThumb(segEl, thumb);
+    updatePrices();
+  }
+
+  function initSeg(segId) {
+    var seg = document.getElementById(segId);
+    seg.querySelectorAll('button').forEach(function (b) {
+      b.addEventListener('click', function () { setSeg(seg, b.getAttribute('data-val')); });
+    });
+    // Initial thumb position
+    requestAnimationFrame(function () { moveThumb(seg, seg.querySelector('.seg-thumb')); });
+  }
+
+  initSeg('taxSeg');
+  initSeg('cycleSeg');
+  updatePrices();
+
+  window.addEventListener('resize', function () {
+    moveThumb(document.getElementById('taxSeg'), document.getElementById('taxThumb'));
+    moveThumb(document.getElementById('cycleSeg'), document.getElementById('cycleThumb'));
+  });
+
+  // Re-measure once fonts settle
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(function () {
+      moveThumb(document.getElementById('taxSeg'), document.getElementById('taxThumb'));
+      moveThumb(document.getElementById('cycleSeg'), document.getElementById('cycleThumb'));
+    });
+  }
+</script>
+
+
+<script src="/veedeck-megamenu.js"></script>
+<script src="/veedeck-reveal.js"></script>
+
+<style>
+/* MFIX: off-canvas menu nie rozpycha strony w bok */
+@media (max-width: 900px) { html, body { overflow-x: clip; } }
+</style>
+</body>
+</html>

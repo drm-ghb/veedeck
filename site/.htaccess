@@ -1,0 +1,66 @@
+# veedeck.com — Apache rewrite rules (Cyber_Folks / cPanel hosting)
+# Wymaga: mod_rewrite (standardowo włączony)
+
+Options -Indexes
+DirectoryIndex index.html
+
+RewriteEngine On
+RewriteBase /
+
+# ── Ochrona .htaccess ───────────────────────────────────────────
+<Files .htaccess>
+  Order allow,deny
+  Deny from all
+</Files>
+
+# ── Root / → język na podstawie Accept-Language ─────────────────
+# Angielski → /en/ (302, bo zależy od headera, nie 301)
+RewriteCond %{REQUEST_URI} ^/?$
+RewriteCond %{HTTP:Accept-Language} ^en [NC]
+RewriteRule ^ /en/ [R=302,L]
+
+# Domyślnie → /pl/
+RewriteCond %{REQUEST_URI} ^/?$
+RewriteRule ^ /pl/ [R=302,L]
+
+# ── 301: Stare adresy PL → /pl/ ─────────────────────────────────
+RewriteRule ^cennik/?$ /pl/cennik/ [R=301,L]
+RewriteRule ^o-nas/?$ /pl/o-nas/ [R=301,L]
+RewriteRule ^wtyczka/?$ /pl/wtyczka/ [R=301,L]
+RewriteRule ^moduly/?$ /pl/moduly/ [R=301,L]
+RewriteRule ^kontakt/?$ /pl/kontakt/ [R=301,L]
+RewriteRule ^demo/?$ /pl/demo/ [R=301,L]
+RewriteRule ^polityka-prywatnosci/?$ /pl/polityka-prywatnosci/ [R=301,L]
+RewriteRule ^polityka-prywatnosci-veepick/?$ /pl/polityka-prywatnosci-veepick/ [R=301,L]
+RewriteRule ^polityka-cookies/?$ /pl/polityka-cookies/ [R=301,L]
+RewriteRule ^pomoc/?$ /pl/pomoc/ [R=301,L]
+RewriteRule ^pomoc/faq/?$ /pl/pomoc/faq/ [R=301,L]
+RewriteRule ^pomoc/jak-zaczac/?$ /pl/pomoc/jak-zaczac/ [R=301,L]
+RewriteRule ^pomoc/dla-projektantow/?$ /pl/pomoc/dla-projektantow/ [R=301,L]
+RewriteRule ^pomoc/dla-klientow-i-wykonawcow/?$ /pl/pomoc/dla-klientow-i-wykonawcow/ [R=301,L]
+RewriteRule ^pomoc/zglos-blad/?$ /pl/pomoc/zglos-blad/ [R=301,L]
+RewriteRule ^pomoc/rozwiazywanie-problemow/?$ /pl/pomoc/rozwiazywanie-problemow/ [R=301,L]
+
+# ── 301: Stare adresy EN → /en/ ─────────────────────────────────
+RewriteRule ^pricing/?$ /en/pricing/ [R=301,L]
+RewriteRule ^about/?$ /en/about/ [R=301,L]
+RewriteRule ^plugin/?$ /en/plugin/ [R=301,L]
+RewriteRule ^modules/?$ /en/modules/ [R=301,L]
+RewriteRule ^contact/?$ /en/contact/ [R=301,L]
+RewriteRule ^privacy-policy/?$ /en/privacy-policy/ [R=301,L]
+RewriteRule ^privacy-policy-veepick/?$ /en/privacy-policy-veepick/ [R=301,L]
+RewriteRule ^cookie-policy/?$ /en/cookie-policy/ [R=301,L]
+RewriteRule ^help/?$ /en/help/ [R=301,L]
+RewriteRule ^help/faq/?$ /en/help/faq/ [R=301,L]
+RewriteRule ^help/getting-started/?$ /en/help/getting-started/ [R=301,L]
+RewriteRule ^help/for-designers/?$ /en/help/for-designers/ [R=301,L]
+RewriteRule ^help/for-clients-and-contractors/?$ /en/help/for-clients-and-contractors/ [R=301,L]
+RewriteRule ^help/report-a-bug/?$ /en/help/report-a-bug/ [R=301,L]
+RewriteRule ^help/troubleshooting/?$ /en/help/troubleshooting/ [R=301,L]
+
+# ── Aplikacja ────────────────────────────────────────────────────
+RewriteRule ^login/?$ https://app.veedeck.com/login [R=301,L]
+RewriteRule ^dashboard/?$ https://app.veedeck.com/ [R=301,L]
+
+# ── Strona błędu ─────────────────────────────────────────────────
+ErrorDocument 404 /404.html

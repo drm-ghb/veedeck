@@ -18,7 +18,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 </script>
 <meta name="robots" content="index, follow">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="Zbieraj feedback klientów, zarządzaj renderami, listami zakupowymi i wykonawcami w jednym miejscu. Bezpłatne demo przez 14 dni.">
+<meta name="description" content="Zarządzaj projektami, listami zakupowymi i wykonawcami w jednym miejscu. Platforma dla projektantów wnętrz. 30 dni za darmo, bez karty kredytowej.">
 <link rel="alternate" hreflang="pl" href="https://veedeck.com/">
 <link rel="alternate" hreflang="en" href="https://veedeck.com/">
 <link rel="alternate" hreflang="x-default" href="https://veedeck.com/">
@@ -1507,7 +1507,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     font-size: 13.5px;
   }
   .footer-inner {
-    display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 40px;
+    display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr; gap: 32px;
   }
   @media (max-width: 860px) { .footer-inner { grid-template-columns: 1fr 1fr; } }
   .footer-brand { max-width: 300px; }
@@ -1526,44 +1526,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     font-size: 12px;
   }
 
-  /* ── Intro splash ── */
-  #intro-splash{
-    position: fixed; inset: 0; z-index: 9999;
-    background: #FFFFFF;
-    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px;
-    opacity: 1;
-    transition: opacity .5s ease, visibility .5s ease;
-  }
-  #intro-splash.intro-done{ opacity: 0; visibility: hidden; pointer-events: none; }
-  #intro-splash .intro-word{
-    display: flex;
-    font-family: "Nunito", ui-sans-serif, system-ui, sans-serif;
-    font-weight: 400;
-    font-size: clamp(40px, 6vw, 72px);
-    letter-spacing: -0.05em;
-    color: #4F46E5;
-  }
-  #intro-splash .intro-word span{
-    display: inline-block;
-    opacity: 0;
-    transform: translateY(14px);
-  }
-  @media (prefers-reduced-motion: no-preference){
-    #intro-splash .intro-word span{
-      animation: intro-letter-in .75s cubic-bezier(.22,.61,.36,1) forwards;
-    }
-    #intro-splash .intro-word span:nth-child(1){ animation-delay: 1.825s; }
-    #intro-splash .intro-word span:nth-child(2){ animation-delay: 1.93s; }
-    #intro-splash .intro-word span:nth-child(3){ animation-delay: 2.035s; }
-    #intro-splash .intro-word span:nth-child(4){ animation-delay: 2.14s; }
-    #intro-splash .intro-word span:nth-child(5){ animation-delay: 2.245s; }
-    #intro-splash .intro-word span:nth-child(6){ animation-delay: 2.35s; }
-    #intro-splash .intro-word span:nth-child(7){ animation-delay: 2.455s; }
-  }
-  @keyframes intro-letter-in{ to{ opacity: 1; transform: translateY(0); } }
-  @media (prefers-reduced-motion: reduce){
-    #intro-splash .intro-word span{ opacity: 1; transform: none; }
-  }
 </style>
 <script type="application/ld+json">
 {
@@ -1586,7 +1548,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     "@type": "Offer",
     "price": "0",
     "priceCurrency": "PLN",
-    "description": "14 dni bezpłatnego okresu próbnego, bez karty kredytowej"
+    "description": "30 dni bezpłatnego okresu próbnego, bez karty kredytowej"
   },
   "publisher": {
     "@type": "Organization",
@@ -1625,32 +1587,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W6PSBGLB"
 height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <!-- End Google Tag Manager (noscript) -->
-<!-- INTRO SPLASH -->
-<div id="intro-splash" data-no-reveal="">
-  <div class="intro-word" aria-label="veedeck">
-    <span>v</span><span>e</span><span>e</span><span>d</span><span>e</span><span>c</span><span>k</span>
-  </div>
-</div>
-<script>
-  (function(){
-    try {
-      if (sessionStorage.getItem('veedeck_intro_seen') === '1') {
-        var el = document.getElementById('intro-splash');
-        if (el) el.remove();
-        return;
-      }
-      sessionStorage.setItem('veedeck_intro_seen', '1');
-    } catch (e) {}
-    window.addEventListener('load', function () {
-      var el = document.getElementById('intro-splash');
-      if (!el) return;
-      setTimeout(function () {
-        el.classList.add('intro-done');
-        setTimeout(function () { el.remove(); }, 550);
-      }, 3425);
-    });
-  })();
-</script>
 
 
 <!-- NAV -->
@@ -1738,12 +1674,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <span class="badge-dot"></span>
         Już dostępny!
       </div>
-      <h1>Twoje studio projektowania wnętrz<br><em>w jednej zakładce</em></h1>
+      <h1>Twoje studio projektowania wnętrz <br><em>w jednej zakładce</em></h1>
       <p class="tagline">
         Mniej chaosu, więcej kreatywności.<br class="m-br"> Od wizualizacji,<br class="d-br"> przez listy zakupowe,<br class="m-br"> po feedback klienta i współpracę<br class="d-br"> z wykonawcą.
       </p>
       <div class="cta-row">
-        <a href="https://app.veedeck.com/login#register" class="btn btn-primary btn-lg">Wypróbuj 14 dni za darmo</a>
+        <a href="https://app.veedeck.com/login#register" class="btn btn-primary btn-lg">Wypróbuj 30 dni za darmo</a>
         <a href="moduly.html" class="btn btn-ghost btn-lg">Zobacz moduły</a>
       </div>
       <div class="meta" data-cc-id="cc-4">
@@ -1957,7 +1893,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <div class="container">
     <div class="section-head">
       <div class="eyebrow">JEDENAŚCIE MODUŁÓW · JEDNA PLATFORMA</div>
-      <h2>Wszystko, czego potrzebujesz<br>w&nbsp;jednej zakładce.</h2>
+      <h2>Wszystko, czego potrzebujesz <br>w&nbsp;jednej zakładce.</h2>
       <p>
         Włącz tylko te moduły, których używasz. Ukryj nieużywane.<br class="d-br"> Każdy klient dostaje tylko to, co ma widzieć.
       </p>
@@ -2303,7 +2239,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <div class="audience" data-cc-id="cc-82">
       <div>
         <div class="eyebrow">Dla projektantów wnętrz</div>
-        <h2>Mniej chaosu,<br>więcej kreatywności<br>Twoje biuro<br>w jednej zakładce.</h2>
+        <h2>Mniej chaosu, <br>więcej kreatywności <br>Twoje biuro <br>w jednej zakładce.</h2>
         <p data-cc-id="cc-11" style="">
           Niezależnie czy prowadzisz studio samodzielnie, czy z trzyosobowym zespołem -
           veedeck zabiera cały administracyjny chaos, żebyś mógł robić to, w czym jesteś najlepszy.
@@ -2403,7 +2339,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <summary>Ile kosztuje veedeck po okresie próbnym?
           <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg>
         </summary>
-        <div class="faq-a">Zaczynasz od 14 dni za darmo, bez karty kredytowej. Pełną ofertę planów i cen znajdziesz na <a href="cennik.html" style="color:var(--primary);font-weight:600;">stronie cennika</a>.</div>
+        <div class="faq-a">Zaczynasz od 30 dni za darmo, bez karty kredytowej. Pełną ofertę planów i cen znajdziesz na <a href="cennik.html" style="color:var(--primary);font-weight:600;">stronie cennika</a>.</div>
       </details>
 
       <details class="faq-item">
@@ -2514,9 +2450,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <div class="container">
     <div class="final-cta-band">
       <h2>Gotowy uporządkować swoje studio?</h2>
-      <p>Zacznij 14-dniowy okres próbny z pełnym dostępem do wszystkich modułów. Pierwszy projekt skonfigurujesz w kilka minut.</p>
+      <p>Zacznij 30-dniowy okres próbny z pełnym dostępem do wszystkich modułów. Pierwszy projekt skonfigurujesz w kilka minut.</p>
       <div class="cta-row">
-        <a href="https://app.veedeck.com/login#register" class="btn btn-lg btn-white">Wypróbuj 14 dni za darmo</a>
+        <a href="https://app.veedeck.com/login#register" class="btn btn-lg btn-white">Wypróbuj 30 dni za darmo</a>
         <a href="cennik.html" class="btn btn-lg btn-outline">Zobacz cennik</a>
       </div>
       <div class="micro">
@@ -2540,6 +2476,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <p data-cc-id="cc-96" style="">Visualize, Design, Deliver.&nbsp;</p><div>Platforma dla projektantów wnętrz.</div><p></p>
       </div>
       <div class="footer-col">
+        <h4>Firma</h4>
+        <ul>
+          <li><a href="o-nas.html">O nas</a></li>
+          <li><a href="demo.html">Demo</a></li>
+          <li><a href="kontakt.html">Kontakt</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
         <h4>Produkt</h4>
         <ul>
           <li><a href="moduly.html">Moduły</a></li>
@@ -2549,11 +2493,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         </ul>
       </div>
       <div class="footer-col">
-        <h4>Firma</h4>
+        <h4>Zasoby</h4>
         <ul>
-          <li><a href="o-nas.html">O nas</a></li>
-          <li><a href="demo.html">Demo</a></li>
-          <li><a href="kontakt.html">Kontakt</a></li>
+          <li><a href="pomoc/">Pomoc</a></li>
+          <li><a href="pomoc/dla-projektantow/">Baza wiedzy</a></li>
         </ul>
       </div>
       <div class="footer-col">
