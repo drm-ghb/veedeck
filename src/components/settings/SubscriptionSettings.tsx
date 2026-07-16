@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { CheckCircle2, X, Check, ChevronRight } from "@/components/ui/icons";
+import { CheckCircle2, X, Check, ChevronRight, Users, PushPin, LocalMall, ChatBubble, CheckSquare, Package, CalendarDays, NotebookText, ClipboardList, Engineering } from "@/components/ui/icons";
 import { useT } from "@/lib/i18n";
 
 /* ─── types ─────────────────────────────────────────────────────────────── */
@@ -33,112 +33,83 @@ interface Props {
 
 /* ─── plans data ─────────────────────────────────────────────────────────── */
 
-type PlanFeature = { text: string; available: boolean };
-type PlanSection = { label: string; features: PlanFeature[] };
+const PLAN_MODULES = [
+  { label: "Klienci",         icon: <Users size={13} /> },
+  { label: "ProjectFlow",     icon: <PushPin size={13} /> },
+  { label: "Listy zakupowe",  icon: <LocalMall size={13} /> },
+  { label: "Dyskusje",        icon: <ChatBubble size={13} /> },
+  { label: "Zadania",         icon: <CheckSquare size={13} /> },
+  { label: "Produkty",        icon: <Package size={13} /> },
+  { label: "Kalendarz",       icon: <CalendarDays size={13} /> },
+  { label: "Notatnik",        icon: <NotebookText size={13} /> },
+  { label: "Ankiety",         icon: <ClipboardList size={13} /> },
+  { label: "Wykonawcy",       icon: <Engineering size={13} /> },
+];
 
 const PLANS_DATA = [
   {
     id: "freelancer",
-    name: "Freelancer",
-    tagline: "Dla projektantów zaczynających z veedeck",
-    monthlyPLN: 79,
-    yearlyPLN: 71,
+    name: "Solo",
+    tagline: "Dla freelancera prowadzącego projekty samodzielnie",
+    monthlyPLN: 99,
+    regularMonthlyPLN: 129,
+    yearlyPLN: 89,
     customPricing: false,
     featured: false,
-    sections: [
-      { label: "Projekty i pliki", features: [
-        { text: "5 aktywnych projektów", available: true },
-        { text: "Historia wersji (5 wersji)", available: true },
-        { text: "Komentarze z pinezkami", available: true },
-        { text: "Panel klienta i wykonawcy", available: true },
-      ]},
-      { label: "Komunikacja", features: [
-        { text: "Czat z klientem", available: true },
-        { text: "Zaproszenia dla klientów", available: true },
-        { text: "Listy zakupowe", available: true },
-      ]},
-      { label: "Zarządzanie projektem", features: [
-        { text: "Zadania i podzadania", available: true },
-        { text: "Śledzenie płatności", available: false },
-        { text: "Dokumenty klienta", available: false },
-        { text: "Kalendarz z gośćmi", available: false },
-      ]},
-      { label: "Branding i narzędzia", features: [
-        { text: "Wtyczka Veepick", available: true },
-        { text: "Logo w brandingu", available: false },
-        { text: "Miejsca w zespole", available: false },
-      ]},
-    ] as PlanSection[],
-    upgradeNote: "Brak śledzenia płatności, dokumentów klienta i kalendarza — upgrade do Studio gdy zaczniesz zarządzać pełną dokumentacją projektów.",
+    teamSize: "1 użytkownik",
+    features: [
+      "Profesjonalny portal dla klienta i wykonawcy",
+      "Centrum komunikacji z klientami i wykonawcami",
+      "Akceptacja renderów i produktów bez chaosu",
+      "Harmonogram i płatności pod kontrolą",
+      "Własne logo i kolory w panelu klienta",
+      "Zapisuj produkty z sieci jednym klikiem (veepick)",
+      "Bez limitów · projekty, przestrzeń, historia wersji",
+      "Pomoc w przeniesieniu list zakupowych z innych narzędzi",
+    ],
+    upgradeNote: "Gdy dołączy współpracownik — przejdź na Studio.",
   },
   {
     id: "studio",
     name: "Studio",
-    tagline: "Pełne studio projektowe dla rosnących pracowni",
-    monthlyPLN: 199,
-    yearlyPLN: 179,
+    tagline: "Dla pracowni z małym zespołem i wieloma projektami",
+    monthlyPLN: 219,
+    regularMonthlyPLN: 269,
+    yearlyPLN: 197,
     customPricing: false,
     featured: true,
-    sections: [
-      { label: "Projekty i pliki", features: [
-        { text: "15 aktywnych projektów", available: true },
-        { text: "Pełna historia wersji", available: true },
-        { text: "Komentarze z pinezkami", available: true },
-        { text: "Panel klienta i wykonawcy", available: true },
-      ]},
-      { label: "Komunikacja", features: [
-        { text: "Czat z klientem", available: true },
-        { text: "Zaproszenia dla klientów", available: true },
-        { text: "Listy zakupowe", available: true },
-      ]},
-      { label: "Zarządzanie projektem", features: [
-        { text: "Zadania i podzadania", available: true },
-        { text: "Śledzenie płatności", available: true },
-        { text: "Dokumenty klienta z folderami", available: true },
-        { text: "Kalendarz z gośćmi", available: true },
-      ]},
-      { label: "Branding i narzędzia", features: [
-        { text: "Wtyczka Veepick", available: true },
-        { text: "Logo w brandingu portalu", available: true },
-        { text: "3 miejsca w zespole", available: true },
-      ]},
-    ] as PlanSection[],
-    upgradeNote: "Powyżej 3 osób w zespole lub potrzebujesz AI podsumowań i white label — upgrade do Agencja.",
+    teamSize: "3 użytkowników",
+    features: [
+      "Wszystko z Solo",
+      "Centrum komunikacji z zespołem, klientami i wykonawcami",
+      "Wspólna praca z zespołem · do 2 osób",
+      "Harmonogram i płatności",
+      "Zaawansowane uprawnienia dla członków zespołu",
+      "Szkolenie dla zespołu w cenie planu",
+      "Nielimitowane projekty i przestrzeń dyskowa",
+    ],
+    upgradeNote: "Potrzebujesz więcej miejsc? Przejdź na Biuro.",
   },
   {
     id: "agencja",
-    name: "Agencja",
+    name: "Biuro",
     tagline: "Dla dużych pracowni i agencji bez kompromisów",
     monthlyPLN: 0,
+    regularMonthlyPLN: 0,
     yearlyPLN: 0,
     customPricing: true,
     featured: false,
-    sections: [
-      { label: "Projekty i pliki", features: [
-        { text: "Bez limitu projektów", available: true },
-        { text: "Pełna historia wersji", available: true },
-        { text: "Komentarze z pinezkami", available: true },
-        { text: "Panel klienta i wykonawcy", available: true },
-      ]},
-      { label: "Komunikacja", features: [
-        { text: "Czat z klientem", available: true },
-        { text: "Zaproszenia dla klientów", available: true },
-        { text: "Listy zakupowe", available: true },
-      ]},
-      { label: "Zarządzanie projektem", features: [
-        { text: "Zadania i podzadania", available: true },
-        { text: "Śledzenie płatności", available: true },
-        { text: "Dokumenty klienta z folderami", available: true },
-        { text: "Kalendarz z gośćmi", available: true },
-      ]},
-      { label: "Branding i narzędzia", features: [
-        { text: "Wtyczka Veepick", available: true },
-        { text: "White label (własna domena)", available: true },
-        { text: "Logo + kolory brandingu", available: true },
-        { text: "AI podsumowania komentarzy", available: true },
-        { text: "Bez limitu miejsc w zespole", available: true },
-      ]},
-    ] as PlanSection[],
+    teamSize: "do ustalenia",
+    features: [
+      "Wszystko z Studio",
+      "Liczba członków zespołu · dopasowana do potrzeb",
+      "White label · panel klienta w pełni pod Twoją marką",
+      "Harmonogram i płatności w skali agencji",
+      "Dedykowane funkcje na potrzeby Twojego biura",
+      "Integracje z narzędziami zewnętrznymi",
+      "Integracje z systemami księgowymi",
+      "Dedykowane wsparcie i onboarding",
+    ],
     upgradeNote: null,
   },
 ];
@@ -146,7 +117,7 @@ const PLANS_DATA = [
 const CURRENCIES = ["PLN", "EUR", "USD", "GBP"] as const;
 type Currency = typeof CURRENCIES[number];
 const CURRENCY_SYMBOLS: Record<Currency, string> = { PLN: "zł", EUR: "€", USD: "$", GBP: "£" };
-const TRIAL_DAYS = 14;
+const TRIAL_DAYS = 30;
 
 /* ─── helpers ─────────────────────────────────────────────────────────────── */
 
@@ -218,7 +189,7 @@ function PlansModal({ onClose, subscription }: { onClose: () => void; subscripti
         <div className="flex items-center justify-between px-6 py-5 border-b border-border">
           <div>
             <h2 className="text-xl font-bold text-foreground">Wybierz plan</h2>
-            <p className="text-sm text-muted-foreground mt-0.5">14-dniowy trial bezpłatnie · Nie wymaga karty kredytowej</p>
+            <p className="text-sm text-muted-foreground mt-0.5">30-dniowy trial bezpłatnie · Nie wymaga karty kredytowej</p>
           </div>
           <button onClick={onClose} className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
             <X size={20} />
@@ -278,13 +249,21 @@ function PlansModal({ onClose, subscription }: { onClose: () => void; subscripti
           </div>
         )}
 
+        {/* Promo banner */}
+        <div className="mx-6 mt-4 mb-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 dark:bg-amber-950/30 dark:border-amber-800/40 dark:text-amber-300 text-xs font-medium">
+          🏷️ Ceny promocyjne przez pierwsze 6 miesięcy od startu — potem cena standardowa
+        </div>
+
         {/* Plans grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-0 divide-y md:divide-y-0 md:divide-x divide-border">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-0 divide-y md:divide-y-0 md:divide-x divide-border mt-4">
           {PLANS_DATA.map((plan) => {
             const isCurrentPlan = subscription?.status === "active" && subscription.plan === plan.id;
             const hasActiveSub = subscription?.status === "active";
             const vatYearly = vatMode === "brutto" ? Math.round(plan.yearlyPLN * 1.23) : plan.yearlyPLN;
             const priceStr = ratesLoading ? "…" : formatPrice(plan.monthlyPLN, plan.yearlyPLN, currency, rates, annual, vatMode);
+            const regularStr = !plan.customPricing && plan.regularMonthlyPLN > 0
+              ? formatPrice(plan.regularMonthlyPLN, Math.round(plan.regularMonthlyPLN * 0.9), currency, rates, annual, vatMode)
+              : null;
             const annualTotal = annual && !plan.customPricing
               ? (currency === "PLN"
                   ? `${vatYearly * 12} zł/rok`
@@ -300,27 +279,42 @@ function PlansModal({ onClose, subscription }: { onClose: () => void; subscripti
                   <div className="h-7 mb-3" />
                 )}
                 <h3 className="text-lg font-bold text-foreground text-center uppercase tracking-wide">{plan.name}</h3>
-                <p className="text-xs text-muted-foreground mt-1 mb-4 leading-snug text-center">{plan.tagline}</p>
+                <p className="text-xs text-muted-foreground mt-1 mb-3 leading-snug text-center">{plan.tagline}</p>
+
+                {/* Price */}
                 {plan.customPricing ? (
                   <>
                     <div className="mb-1 text-center">
-                      <span className="text-2xl font-bold text-foreground">Wycena indywidualna</span>
+                      <span className="text-xl font-semibold text-muted-foreground italic">Cena ustalana indywidualnie</span>
                     </div>
-                    <div className="h-5 mb-4" />
+                    <div className="h-5 mb-3" />
                   </>
                 ) : (
                   <>
-                    <div className="mb-1 text-center">
+                    <div className="mb-1 text-center flex items-baseline justify-center gap-2">
                       <span className="text-3xl font-bold text-foreground">{priceStr}</span>
+                      {regularStr && !ratesLoading && (
+                        <span className="text-sm text-muted-foreground line-through">{regularStr}</span>
+                      )}
                       <span className="text-sm text-muted-foreground">/mies.{vatMode === "brutto" ? " brutto" : " netto"}</span>
                     </div>
                     {annualTotal ? (
-                      <p className="text-xs text-muted-foreground mb-4 text-center">Rozliczane {annualTotal}</p>
+                      <p className="text-xs text-muted-foreground mb-3 text-center">Rozliczane {annualTotal}</p>
                     ) : (
-                      <div className="h-5 mb-4" />
+                      <div className="h-5 mb-3" />
                     )}
                   </>
                 )}
+
+                {/* Team size chip */}
+                <div className="flex justify-center mb-4">
+                  <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground bg-muted border border-border rounded-full px-3 py-1">
+                    <Users size={12} />
+                    {plan.teamSize}
+                  </span>
+                </div>
+
+                {/* CTA */}
                 {plan.customPricing ? (
                   <a href="https://veedeck.com/kontakt" target="_blank" rel="noopener noreferrer"
                     className="w-full py-2.5 rounded-xl text-sm font-semibold transition-colors mb-5 bg-muted text-foreground hover:bg-muted/70 border border-border text-center block">
@@ -344,28 +338,49 @@ function PlansModal({ onClose, subscription }: { onClose: () => void; subscripti
                   </button>
                 )}
 
-                <div className="space-y-4 flex-1">
-                  {plan.sections.map((section) => (
-                    <div key={section.label}>
-                      <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">{section.label}</p>
-                      <div className="space-y-1.5">
-                        {section.features.map((f) => (
-                          <div key={f.text} className={`flex items-start gap-2 text-xs ${f.available ? "text-foreground" : "text-muted-foreground/50 line-through"}`}>
-                            {f.available
-                              ? <Check size={13} className="text-emerald-500 shrink-0 mt-0.5" />
-                              : <X size={13} className="text-muted-foreground/40 shrink-0 mt-0.5" />
-                            }
-                            {f.text}
-                          </div>
-                        ))}
-                      </div>
+                {/* Modules grid */}
+                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Moduły</p>
+                <div className="grid grid-cols-2 gap-x-2 gap-y-1 mb-4">
+                  {PLAN_MODULES.map((mod) => (
+                    <div key={mod.label} className="flex items-center gap-1.5 text-xs text-muted-foreground py-0.5">
+                      <span className="text-muted-foreground/70 shrink-0">{mod.icon}</span>
+                      {mod.label}
                     </div>
                   ))}
                 </div>
 
+                <hr className="border-border mb-4" />
+
+                {/* Features */}
+                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Co zyskujesz</p>
+                <div className="space-y-1.5 flex-1">
+                  {plan.features.map((f) => (
+                    <div key={f} className="flex items-start gap-2 text-xs text-foreground">
+                      <Check size={13} className="text-emerald-500 shrink-0 mt-0.5" />
+                      {f}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Upgrade note */}
+                {plan.upgradeNote && (
+                  <div className="mt-4 pt-3 border-t border-border flex items-start gap-1.5 text-[11px] text-amber-700 dark:text-amber-400 leading-snug">
+                    <span className="shrink-0 mt-0.5">↑</span>
+                    {plan.upgradeNote}
+                  </div>
+                )}
               </div>
             );
           })}
+        </div>
+
+        {/* Veezard addon */}
+        <div className="mx-6 mb-6 mt-4 flex items-center gap-4 flex-wrap p-4 rounded-xl bg-muted/50 border border-border">
+          <div className="w-9 h-9 rounded-lg bg-violet-100 dark:bg-violet-950/50 flex items-center justify-center shrink-0 text-violet-600 dark:text-violet-400 font-bold text-sm">V</div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-foreground">Veezard — dodatek płatny osobno</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Rozszerzenie dostępne do każdego pakietu. Cena zostanie ogłoszona wkrótce.</p>
+          </div>
         </div>
       </div>
     </div>
