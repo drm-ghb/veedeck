@@ -1,7 +1,7 @@
 # veedeck.com — Apache rewrite rules (Cyber_Folks / cPanel hosting)
 # Wymaga: mod_rewrite (standardowo włączony)
 
-Options -Indexes
+Options -Indexes -MultiViews
 DirectoryIndex index.html
 
 RewriteEngine On
