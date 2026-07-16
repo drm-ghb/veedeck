@@ -410,7 +410,21 @@ export default function SubscriptionSettings({ trialEndsAt, isFree, subscription
   const [showPlansModal, setShowPlansModal] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  const [portalLoading, setPortalLoading] = useState(false);
   const [subscription, setSubscription] = useState(initialSub);
+
+  async function handleGoToPortal() {
+    setPortalLoading(true);
+    try {
+      const res = await fetch("/api/portal", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Nieznany błąd");
+      window.location.href = data.url;
+    } catch {
+      toast.error("Nie udało się otworzyć portalu płatności");
+      setPortalLoading(false);
+    }
+  }
 
   const trialDaysLeft = trialEndsAt
     ? Math.max(0, Math.ceil((new Date(trialEndsAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
@@ -499,7 +513,9 @@ export default function SubscriptionSettings({ trialEndsAt, isFree, subscription
                 )}
               </div>
               <div className="flex items-center gap-3">
-                <button onClick={() => setShowPlansModal(true)} className="text-xs text-primary hover:underline">{t.subscription.changePlanCard}</button>
+                <button onClick={handleGoToPortal} disabled={portalLoading} className="text-xs text-primary hover:underline disabled:opacity-60">
+                  {portalLoading ? "Przekierowuję…" : t.subscription.changePlanCard}
+                </button>
                 {!showCancelConfirm && (
                   <button onClick={() => setShowCancelConfirm(true)} className="text-xs text-destructive hover:underline">{t.subscription.cancelSub}</button>
                 )}
