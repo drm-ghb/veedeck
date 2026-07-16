@@ -12,10 +12,10 @@ type PriceTable = Record<PlanId, Record<BillingInterval, Record<Currency, string
 export const STRIPE_PRICES: PriceTable = {
   freelancer: {
     month: {
-      pln: "price_1TqumdGgpGzQ3j0ZQyiBiGeJ",
-      usd: "price_1TqvsqGgpGzQ3j0Zm6PxBF1T",
-      eur: "price_1TqvsuGgpGzQ3j0Z6EeFg5Cv",
-      gbp: "price_1TqvsxGgpGzQ3j0ZJjClsr7G",
+      pln: "price_1Ttvy6GgpGzQ3j0ZKFXcfJVY",
+      usd: "price_1TtvyFGgpGzQ3j0ZstQRfFun",
+      eur: "price_1TtvyIGgpGzQ3j0ZBLWJUFRN",
+      gbp: "price_1TtvyMGgpGzQ3j0ZVIjortqQ",
     },
     year: {
       pln: "price_1Tqvt1GgpGzQ3j0Z1P0OTS04",
@@ -26,10 +26,10 @@ export const STRIPE_PRICES: PriceTable = {
   },
   studio: {
     month: {
-      pln: "price_1TqutKGgpGzQ3j0ZivAQmysY",
-      usd: "price_1TqvtFGgpGzQ3j0ZsT5c8qFk",
-      eur: "price_1TqvtJGgpGzQ3j0ZE30tUAqq",
-      gbp: "price_1TqvtMGgpGzQ3j0ZrYNZY6q9",
+      pln: "price_1TtvyAGgpGzQ3j0ZIthRYfHA",
+      usd: "price_1TtvyQGgpGzQ3j0ZVwPnUKFM",
+      eur: "price_1TtvyUGgpGzQ3j0ZJUjUxyfC",
+      gbp: "price_1TtvyaGgpGzQ3j0ZJKGKXCQN",
     },
     year: {
       pln: "price_1TqvtPGgpGzQ3j0Z5juWk4Sx",
@@ -41,8 +41,15 @@ export const STRIPE_PRICES: PriceTable = {
 };
 
 export const PLAN_LABELS: Record<PlanId, string> = {
-  freelancer: "Freelancer",
+  freelancer: "Solo",
   studio: "Studio",
+};
+
+// Kupony promocyjne — aktywne przez pierwsze miesiące od startu.
+// Kontrolowane przez PROMO_ENDS_AT w env (ISO string). Jak nie ustawione → promo nieaktywne.
+export const PROMO_COUPONS: Record<PlanId, string> = {
+  freelancer: "SOLO_PROMO_6M",
+  studio:     "STUDIO_PROMO_6M",
 };
 
 // Agencja nie ma checkoutu — to plan "Wycena indywidualna" (kontakt sprzedażowy),

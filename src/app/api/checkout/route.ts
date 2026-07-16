@@ -5,7 +5,15 @@ import {
   isPlanId,
   isBillingInterval,
   isCurrency,
+  PROMO_COUPONS,
 } from "@/lib/stripe/prices";
+
+function getPromoCoupon(plan: string): string | null {
+  const endsAt = process.env.PROMO_ENDS_AT;
+  if (!endsAt) return null;
+  if (new Date() >= new Date(endsAt)) return null;
+  return PROMO_COUPONS[plan as keyof typeof PROMO_COUPONS] ?? null;
+}
 import { getCurrentUser } from "@/lib/auth/getCurrentUser";
 
 export async function POST(req: NextRequest) {
@@ -40,6 +48,8 @@ export async function POST(req: NextRequest) {
       ? { customer: user.stripeCustomerId }
       : { customer_email: user.email };
 
+    const promoCoupon = getPromoCoupon(plan);
+
     const session = await getStripe().checkout.sessions.create({
       mode: "subscription",
       line_items: [{ price: priceId, quantity: 1 }],
@@ -48,7 +58,10 @@ export async function POST(req: NextRequest) {
       billing_address_collection: "required",
       tax_id_collection: { enabled: true },
       payment_method_collection: "if_required",
-      allow_promotion_codes: true,
+      // Jeśli promo aktywne — dołącz kupon. discounts i allow_promotion_codes są wzajemnie wykluczające się.
+      ...(promoCoupon
+        ? { discounts: [{ coupon: promoCoupon }] }
+        : { allow_promotion_codes: true }),
       success_url: `${process.env.NEXT_PUBLIC_APP_URL}/ustawienia/subskrypcja?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/ustawienia/subskrypcja?checkout=cancelled`,
       metadata: {
