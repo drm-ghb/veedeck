@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
         stripeCustomerId: subscription.customer as string,
         status: subscription.status,
         plan: plan ?? undefined,
-        currentPeriodEnd: new Date(subscription.items.data[0].current_period_end * 1000),
+        cancelAt: subscription.cancel_at ? new Date(subscription.cancel_at * 1000) : null,
       });
       break;
     }
