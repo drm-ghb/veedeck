@@ -10,7 +10,7 @@ import {
   X, ChevronLeft, ChevronRight, BookOpen, Check,
 } from "@/components/ui/icons";
 
-const STORAGE_KEY = "onboarding-modal-v1";
+const storageKey = (userId: string) => `onboarding-modal-v1:${userId}`;
 const MODULE_COUNT = 11;
 const TOTAL_STEPS = MODULE_COUNT + 1; // 0 = welcome, 1-11 = modules
 
@@ -21,6 +21,24 @@ const CSS = `
 .ob-dialog { animation: ob-pop .38s cubic-bezier(.2,.7,.25,1) both; }
 .ob-fade { animation: ob-fade .3s ease both; }
 .ob-rise { animation: ob-rise .4s cubic-bezier(.2,.7,.25,1) both; }
+
+/* ── colour tokens — light / dark ─────────────────────────────── */
+.ob-dialog {
+  --ob-white:        #ffffff;
+  --ob-indigo-50:    #EEF2FF;
+  --ob-rail-from:    #F6F7FF;
+  --ob-rail-to:      #ECEEFB;
+  --ob-tip-bg:       linear-gradient(120deg, #EDE9FE, #F5F3FF);
+  --ob-tip-border:   color-mix(in srgb, var(--primary) 16%, transparent);
+}
+html.dark .ob-dialog {
+  --ob-white:        var(--muted);
+  --ob-indigo-50:    rgba(79, 70, 229, 0.18);
+  --ob-rail-from:    color-mix(in srgb, var(--muted) 70%, var(--background));
+  --ob-rail-to:      var(--background);
+  --ob-tip-bg:       rgba(79, 70, 229, 0.1);
+  --ob-tip-border:   rgba(79, 70, 229, 0.3);
+}
 @media (prefers-reduced-motion: reduce) {
   .ob-dialog, .ob-fade, .ob-rise { animation: none !important; }
 }
@@ -87,7 +105,7 @@ interface ModuleStepData {
   soon?: boolean;
 }
 
-export default function OnboardingModal({ show }: { show: boolean }) {
+export default function OnboardingModal({ show, userId }: { show: boolean; userId: string }) {
   const t = useT();
   const pathname = usePathname();
   const [step, setStep] = useState(0);
@@ -113,9 +131,9 @@ export default function OnboardingModal({ show }: { show: boolean }) {
   useEffect(() => {
     if (!show) return;
     if (pathname !== "/panel-glowny") return;
-    if (typeof window !== "undefined" && localStorage.getItem(STORAGE_KEY) === "true") return;
+    if (typeof window !== "undefined" && localStorage.getItem(storageKey(userId)) === "true") return;
     setVisible(true);
-  }, [show, pathname]);
+  }, [show, pathname, userId]);
 
   // Listen for manual open event (from "Jak zacząć" trigger)
   useEffect(() => {
@@ -150,7 +168,7 @@ export default function OnboardingModal({ show }: { show: boolean }) {
 
   function dismiss() {
     setVisible(false);
-    localStorage.setItem(STORAGE_KEY, "true");
+    localStorage.setItem(storageKey(userId), "true");
     fetch("/api/user", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -199,7 +217,7 @@ export default function OnboardingModal({ show }: { show: boolean }) {
             className="ob-rail relative flex-col border-r border-border overflow-hidden"
             style={{
               display: "flex",
-              background: "linear-gradient(180deg, #F6F7FF 0%, #ECEEFB 100%)",
+              background: "linear-gradient(180deg, var(--ob-rail-from) 0%, var(--ob-rail-to) 100%)",
               padding: "26px 22px 22px",
             }}
           >
@@ -217,7 +235,7 @@ export default function OnboardingModal({ show }: { show: boolean }) {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/vee-icon.png" alt="" style={{ height: 26, width: 26 }} />
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/vee_black.png" alt="veedeck" style={{ height: 18, width: "auto" }} />
+              <img src="/vee_black.png" alt="veedeck" style={{ height: 18, width: "auto", filter: "brightness(0) invert(1)" }} />
             </div>
             {/* kicker */}
             <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--primary)", marginBottom: 4 }}>
@@ -257,9 +275,9 @@ export default function OnboardingModal({ show }: { show: boolean }) {
                           className="flex-shrink-0 grid place-items-center"
                           style={{
                             width: 30, height: 30, borderRadius: 9,
-                            background: isActive
+                                            background: isActive
                               ? "linear-gradient(140deg, #4F46E5, #6B63F0)"
-                              : isDone ? "var(--indigo-50)" : "#fff",
+                              : isDone ? "var(--ob-indigo-50)" : "var(--ob-white)",
                             border: isActive || isDone ? "none" : "1px solid var(--border)",
                             color: isActive ? "#fff" : isDone ? "var(--primary)" : "var(--muted-foreground)",
                             boxShadow: isActive ? "0 6px 16px -6px rgba(79,70,229,0.7)" : "none",
@@ -366,7 +384,7 @@ export default function OnboardingModal({ show }: { show: boolean }) {
                   <h2 style={{ fontSize: 30, fontWeight: 800, lineHeight: 1.1, letterSpacing: "-0.03em", fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif" }}>
                     {t.onboarding.welcomeTitle}{" "}
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src="/vee_black.png" alt="veedeck" style={{ height: "1em", width: "auto", verticalAlign: "-0.16em" }} />
+                    <img src="/vee_black.png" alt="veedeck" style={{ height: "1em", width: "auto", verticalAlign: "-0.16em", filter: "brightness(0) invert(1)" }} />
                   </h2>
                   <p style={{ fontSize: 15.5, color: "var(--muted-foreground)", lineHeight: 1.62, maxWidth: 430, margin: "16px auto 26px" }}>
                     <RichText text={t.onboarding.welcomeDesc} />
@@ -381,7 +399,7 @@ export default function OnboardingModal({ show }: { show: boolean }) {
                         key={i}
                         className="inline-flex items-center"
                         style={{
-                          gap: 8, background: "#fff", border: "1px solid var(--border)",
+                          gap: 8, background: "var(--ob-white)", border: "1px solid var(--border)",
                           borderRadius: 999, padding: "9px 15px",
                           fontSize: 13, fontWeight: 600, color: "var(--foreground)",
                         }}
@@ -450,7 +468,7 @@ export default function OnboardingModal({ show }: { show: boolean }) {
                         className="ob-rise"
                         style={{
                           display: "flex", alignItems: "flex-start", gap: 13,
-                          background: "#fff", border: "1px solid var(--border)",
+                          background: "var(--ob-white)", border: "1px solid var(--border)",
                           borderRadius: 13, padding: "13px 15px",
                           animationDelay: `${0.05 + i * 0.06}s`,
                           transition: "border-color .18s, box-shadow .18s, transform .18s",
@@ -472,7 +490,7 @@ export default function OnboardingModal({ show }: { show: boolean }) {
                           className="flex-shrink-0 grid place-items-center"
                           style={{
                             width: 26, height: 26, borderRadius: 8,
-                            background: "var(--indigo-50)", color: "var(--primary)",
+                            background: "var(--ob-indigo-50)", color: "var(--primary)",
                             fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
                             fontWeight: 700, fontSize: 13, marginTop: 1,
                           }}
@@ -490,8 +508,8 @@ export default function OnboardingModal({ show }: { show: boolean }) {
                       style={{
                         display: "flex", alignItems: "flex-start", gap: 11,
                         marginTop: 16,
-                        background: "linear-gradient(120deg, #EDE9FE, #F5F3FF)",
-                        border: "1px solid color-mix(in srgb, var(--primary) 16%, transparent)",
+                        background: "var(--ob-tip-bg)",
+                        border: "1px solid var(--ob-tip-border)",
                         borderRadius: 13, padding: "13px 15px",
                       }}
                     >
@@ -535,13 +553,13 @@ export default function OnboardingModal({ show }: { show: boolean }) {
                   style={{
                     gap: 7, font: "inherit", fontSize: 14, fontWeight: 600,
                     padding: "10px 18px", borderRadius: 11,
-                    border: "1px solid var(--border)", background: "#fff", color: "var(--foreground)",
+                    border: "1px solid var(--border)", background: "var(--ob-white)", color: "var(--foreground)",
                     cursor: isFirst ? "default" : "pointer",
                     opacity: isFirst ? 0.35 : 1,
                     transition: "background .15s",
                   }}
                   onMouseEnter={e => { if (!isFirst) (e.currentTarget as HTMLButtonElement).style.background = "var(--muted)"; }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = "#fff"; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = "var(--ob-white)"; }}
                 >
                   <ChevronLeft size={17} />
                   {t.onboarding.back}

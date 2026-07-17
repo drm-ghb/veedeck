@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { UserPlus, Trash2, Loader2, Mail, Users, Clock, Shield } from "@/components/ui/icons";
+import { UserPlus, Trash2, Loader2, Mail, Users, Clock, Shield, ChevronRight } from "@/components/ui/icons";
 import { useT } from "@/lib/i18n";
+import Link from "next/link";
 import TeamMemberPermissionsDialog from "./TeamMemberPermissionsDialog";
 
 interface Member {
@@ -29,6 +30,8 @@ export default function TeamSettings() {
   const [sending, setSending] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [permsFor, setPermsFor] = useState<{ id: string; name: string } | null>(null);
+  const [plan, setPlan] = useState<string | null>(null);
+  const [memberLimit, setMemberLimit] = useState<number | null>(null);
 
   async function load() {
     const res = await fetch("/api/team/invite");
@@ -36,6 +39,8 @@ export default function TeamSettings() {
     const data = await res.json();
     setMembers(data.members);
     setInvitations(data.invitations);
+    setPlan(data.plan);
+    setMemberLimit(data.memberLimit);
     setLoading(false);
   }
 
@@ -67,9 +72,66 @@ export default function TeamSettings() {
     load();
   }
 
+  const totalUsed = members.length + invitations.length;
+  const atLimit = memberLimit !== null && totalUsed >= memberLimit;
+  const canInvite = plan === "studio" || plan === "agencja";
+
   return (
     <div className="space-y-8">
-      {/* Invite form */}
+
+      {/* Solo upsell — brak planu lub plan freelancer */}
+      {!loading && !canInvite && (
+        <div className="bg-card border border-border rounded-2xl p-6 flex flex-col gap-4">
+          <div className="flex items-start gap-3">
+            <Users size={18} className="text-muted-foreground shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-semibold text-foreground">Członkowie zespołu dostępni w planie Studio</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Plan Solo przeznaczony jest dla freelancerów pracujących samodzielnie. Aby dodać współpracowników, przejdź na plan Studio.
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/ustawienia/subskrypcja"
+            className="self-start flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity"
+          >
+            Przejdź na Studio
+            <ChevronRight size={14} />
+          </Link>
+        </div>
+      )}
+
+      {/* Studio — pasek limitu */}
+      {!loading && plan === "studio" && memberLimit !== null && (
+        <div className="bg-card border border-border rounded-2xl p-5 space-y-3">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-semibold text-foreground">Miejsca w zespole</p>
+            <span className="text-sm font-semibold text-foreground">{totalUsed}/{memberLimit}</span>
+          </div>
+          <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all duration-500 ${atLimit ? "bg-amber-500" : "bg-primary"}`}
+              style={{ width: `${Math.min(100, (totalUsed / memberLimit) * 100)}%` }}
+            />
+          </div>
+          {atLimit && (
+            <p className="text-xs text-muted-foreground">
+              Potrzebujesz dodać kolejnych członków zespołu?{" "}
+              <a
+                href="https://veedeck.com/kontakt"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline font-medium"
+              >
+                Skontaktuj się z nami i porozmawiajmy o planie Biuro ↗
+              </a>
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Invite form — tylko gdy plan pozwala i nie ma limitu */}
+      {canInvite && !atLimit && (
       <div>
         <h2 className="text-sm font-semibold mb-1">{t.team.inviteTitle}</h2>
         <p className="text-xs text-muted-foreground mb-4">
@@ -94,6 +156,7 @@ export default function TeamSettings() {
           </button>
         </div>
       </div>
+      )}
 
       {/* Pending invitations */}
       {!loading && invitations.length > 0 && (

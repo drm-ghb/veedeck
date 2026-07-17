@@ -11,7 +11,7 @@ export async function GET() {
 
   const ownerId = getWorkspaceUserId(session);
 
-  const [invitations, members] = await Promise.all([
+  const [invitations, members, owner] = await Promise.all([
     prisma.invitation.findMany({
       where: { designerId: ownerId, status: "PENDING" },
       orderBy: { createdAt: "desc" },
@@ -21,9 +21,17 @@ export async function GET() {
       select: { id: true, email: true, name: true, createdAt: true },
       orderBy: { createdAt: "asc" },
     }),
+    prisma.user.findUnique({
+      where: { id: ownerId },
+      select: { isFree: true, subscription: { select: { plan: true, status: true } } },
+    }),
   ]);
 
-  return NextResponse.json({ invitations, members });
+  const activePlan = owner?.subscription?.status === "active" ? owner.subscription.plan : null;
+  const isFree = owner?.isFree ?? false;
+  const memberLimit = activePlan === "studio" ? 2 : null;
+
+  return NextResponse.json({ invitations, members, plan: activePlan, isFree, memberLimit });
 }
 
 // POST — wyślij zaproszenie
@@ -47,21 +55,21 @@ export async function POST(req: NextRequest) {
   const activePlan = owner?.subscription?.status === "active" ? owner.subscription.plan : null;
   const isFree = owner?.isFree ?? false;
 
-  if (!isFree && activePlan !== "commercial" && activePlan !== "enterprise") {
+  if (!isFree && activePlan !== "studio" && activePlan !== "agencja") {
     return NextResponse.json(
-      { error: "Twój plan nie obejmuje możliwości dodawania członków zespołu. Wybierz plan Commercial lub Enterprise." },
+      { error: "Twój plan nie obejmuje możliwości dodawania członków zespołu. Przejdź na plan Studio." },
       { status: 403 }
     );
   }
 
-  if (activePlan === "commercial") {
+  if (activePlan === "studio") {
     const [memberCount, pendingCount] = await Promise.all([
       prisma.user.count({ where: { ownerId } }),
       prisma.invitation.count({ where: { designerId: ownerId, status: "PENDING" } }),
     ]);
-    if (memberCount + pendingCount >= 5) {
+    if (memberCount + pendingCount >= 2) {
       return NextResponse.json(
-        { error: "Plan Commercial pozwala na maksymalnie 5 członków zespołu." },
+        { error: "Plan Studio pozwala na maksymalnie 2 członków zespołu." },
         { status: 403 }
       );
     }

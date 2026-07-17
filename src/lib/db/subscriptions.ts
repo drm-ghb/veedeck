@@ -14,7 +14,7 @@ export async function updateSubscriptionStatus(params: {
   stripeCustomerId: string;
   status: string;
   plan?: string;
-  currentPeriodEnd?: Date;
+  cancelAt?: Date | null;
 }): Promise<void> {
   const user = await prisma.user.findUnique({
     where: { stripeCustomerId: params.stripeCustomerId },
@@ -31,13 +31,13 @@ export async function updateSubscriptionStatus(params: {
     update: {
       status: params.status,
       ...(params.plan ? { plan: params.plan } : {}),
-      ...(params.currentPeriodEnd ? { cancelAt: params.currentPeriodEnd } : {}),
+      ...("cancelAt" in params ? { cancelAt: params.cancelAt ?? null } : {}),
     },
     create: {
       userId: user.id,
       plan: params.plan ?? "unknown",
       status: params.status,
-      ...(params.currentPeriodEnd ? { cancelAt: params.currentPeriodEnd } : {}),
+      cancelAt: params.cancelAt ?? null,
     },
   });
 }

@@ -8,7 +8,7 @@ import { toast } from "sonner";
 type View = "login" | "register" | "forgot" | "forgotSent" | "registered";
 
 const CSS = `
-  :root {
+  .vd-body {
     --background: #FFFFFF;
     --foreground: #24252B;
     --primary: #4F46E5;
@@ -21,8 +21,6 @@ const CSS = `
     --destructive: #DC2626;
     --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
     --font-heading: "Inter", ui-sans-serif, system-ui, sans-serif;
-  }
-  .vd-body {
     font-family: var(--font-sans);
     color: var(--foreground);
     -webkit-font-smoothing: antialiased;
@@ -515,7 +513,7 @@ export default function LoginPage() {
                 <>
                   <div className="vd-panel-head">
                     <div className="vd-eyebrow"><span className="dot" />Załóż konto</div>
-                    <h1>Zacznij za darmo.<br /><em className="accent">14 dni bez karty.</em></h1>
+                    <h1>Zacznij za darmo.<br /><em className="accent">30 dni bez karty.</em></h1>
                     <p className="sub">Bez limitu klientów i projektów. Anuluj w każdej chwili.</p>
                   </div>
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { CheckCircle2, X, Check, ChevronRight, Users, PushPin, LocalMall, ChatBubble, CheckSquare, Package, CalendarDays, NotebookText, ClipboardList, Engineering } from "@/components/ui/icons";
 import { useT } from "@/lib/i18n";
@@ -14,9 +15,15 @@ interface Subscription {
   billingName: string | null; cancelAt: Date | string | null; createdAt: Date | string;
 }
 
-interface BillingRecord {
-  id: string; plan: string; interval: string;
-  amount: number; currency: string; paidAt: Date | string; invoiceUrl: string | null;
+interface StripeInvoice {
+  id: string;
+  paidAt: string;
+  plan: string | null;
+  previousPlan: string | null;
+  interval: string | null;
+  amount: number;
+  currency: string;
+  invoiceUrl: string | null;
 }
 
 interface Discount {
@@ -29,7 +36,7 @@ interface Props {
   isFree: boolean;
   subscription: Subscription | null;
   discounts: Discount[];
-  billingRecords: BillingRecord[];
+  stripeInvoices: StripeInvoice[];
 }
 
 /* ─── plans data ─────────────────────────────────────────────────────────── */
@@ -405,11 +412,11 @@ function PlansModal({ onClose, subscription }: { onClose: () => void; subscripti
 
 /* ─── main component ─────────────────────────────────────────────────────── */
 
-export default function SubscriptionSettings({ trialEndsAt, isFree, subscription: initialSub, discounts, billingRecords }: Props) {
+export default function SubscriptionSettings({ trialEndsAt, isFree, subscription: initialSub, discounts, stripeInvoices }: Props) {
   const t = useT();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [showPlansModal, setShowPlansModal] = useState(false);
-  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
-  const [cancelling, setCancelling] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
   const [subscription, setSubscription] = useState(initialSub);
 
@@ -426,6 +433,15 @@ export default function SubscriptionSettings({ trialEndsAt, isFree, subscription
     }
   }
 
+  useEffect(() => {
+    if (searchParams.get("checkout") === "success") {
+      toast.success("Subskrypcja aktywowana. Witaj w planie " + (initialSub ? (PLAN_LABELS[initialSub.plan as keyof typeof PLAN_LABELS] ?? initialSub.plan) : "") + "!");
+      router.replace("/ustawienia/subskrypcja");
+    } else if (searchParams.get("portal") === "return") {
+      router.replace("/ustawienia/subskrypcja");
+    }
+  }, []);
+
   const trialDaysLeft = trialEndsAt
     ? Math.max(0, Math.ceil((new Date(trialEndsAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
     : null;
@@ -435,20 +451,6 @@ export default function SubscriptionSettings({ trialEndsAt, isFree, subscription
     : trialDaysLeft <= 3 ? "bg-red-500"
     : trialDaysLeft <= 7 ? "bg-amber-500"
     : "bg-emerald-500";
-
-  async function handleCancel() {
-    setCancelling(true);
-    const res = await fetch("/api/subscription", { method: "DELETE" });
-    setCancelling(false);
-    if (res.ok) {
-      const data = await res.json();
-      setSubscription(data.subscription);
-      setShowCancelConfirm(false);
-      toast.success(t.subscription.cancelled);
-    } else {
-      toast.error(t.subscription.cancelError);
-    }
-  }
 
   const activeDiscount = discounts.find((d) => {
     const now = new Date();
@@ -505,6 +507,11 @@ export default function SubscriptionSettings({ trialEndsAt, isFree, subscription
               <div>
                 <p className="text-sm font-semibold text-foreground capitalize">Plan {PLAN_LABELS[subscription.plan as keyof typeof PLAN_LABELS] ?? subscription.plan}</p>
                 <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium mt-0.5">{t.subscription.statusActive}</p>
+                {subscription.cancelAt && new Date(subscription.cancelAt) > new Date() && (
+                  <p className="text-xs text-amber-600 dark:text-amber-400 font-medium mt-0.5">
+                    Anulowanie zaplanowane na {new Date(subscription.cancelAt).toLocaleDateString("pl-PL", { day: "numeric", month: "long", year: "numeric" })}
+                  </p>
+                )}
                 {subscription.cardLast4 && (
                   <p className="text-xs text-muted-foreground mt-1">
                     {subscription.cardBrand ?? t.subscription.cardFallback} •••• {subscription.cardLast4}
@@ -513,23 +520,25 @@ export default function SubscriptionSettings({ trialEndsAt, isFree, subscription
                 )}
               </div>
               <div className="flex items-center gap-3">
-                <button onClick={handleGoToPortal} disabled={portalLoading} className="text-xs text-primary hover:underline disabled:opacity-60">
-                  {portalLoading ? "Przekierowuję…" : t.subscription.changePlanCard}
+                <button onClick={() => setShowPlansModal(true)} className="text-xs text-muted-foreground hover:text-foreground hover:underline">
+                  Zobacz plany
                 </button>
-                {!showCancelConfirm && (
-                  <button onClick={() => setShowCancelConfirm(true)} className="text-xs text-destructive hover:underline">{t.subscription.cancelSub}</button>
+                {subscription.cancelAt && new Date(subscription.cancelAt) > new Date() ? (
+                  <button onClick={handleGoToPortal} disabled={portalLoading} className="text-xs text-primary hover:underline disabled:opacity-60">
+                    {portalLoading ? "Przekierowuję…" : t.subscription.renewSub}
+                  </button>
+                ) : (
+                  <>
+                    <button onClick={handleGoToPortal} disabled={portalLoading} className="text-xs text-primary hover:underline disabled:opacity-60">
+                      {portalLoading ? "Przekierowuję…" : t.subscription.changePlanCard}
+                    </button>
+                    <button onClick={handleGoToPortal} disabled={portalLoading} className="text-xs text-destructive hover:underline disabled:opacity-60">
+                      {t.subscription.cancelSub}
+                    </button>
+                  </>
                 )}
               </div>
             </div>
-            {showCancelConfirm && (
-              <div className="mt-4 pt-4 border-t border-border flex items-center gap-3">
-                <p className="text-sm text-foreground flex-1">{t.subscription.cancelConfirm}</p>
-                <button onClick={() => setShowCancelConfirm(false)} className="text-xs text-muted-foreground hover:underline">{t.subscription.cancelNo}</button>
-                <button onClick={handleCancel} disabled={cancelling} className="text-xs text-destructive font-medium hover:underline disabled:opacity-60">
-                  {cancelling ? t.subscription.cancelling : t.subscription.cancelYes}
-                </button>
-              </div>
-            )}
           </div>
         </div>
       )}
@@ -547,7 +556,7 @@ export default function SubscriptionSettings({ trialEndsAt, isFree, subscription
                 </p>
               )}
             </div>
-            <button onClick={() => setShowPlansModal(true)} className="text-xs text-primary hover:underline">{t.subscription.renewSub}</button>
+            <button onClick={handleGoToPortal} disabled={portalLoading} className="text-xs text-primary hover:underline disabled:opacity-60">{t.subscription.renewSub}</button>
           </div>
         </div>
       )}
@@ -577,7 +586,7 @@ export default function SubscriptionSettings({ trialEndsAt, isFree, subscription
           <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">Historia rozliczeń</h3>
           <div className="flex-1 h-px bg-border" />
         </div>
-        {billingRecords.length === 0 ? (
+        {stripeInvoices.length === 0 ? (
           <div className="bg-card border border-border rounded-2xl px-6 py-10 text-center">
             <p className="text-sm text-muted-foreground">Brak historii rozliczeń.</p>
             <p className="text-xs text-muted-foreground mt-1">Płatności pojawią się tutaj po aktywacji subskrypcji.</p>
@@ -595,19 +604,29 @@ export default function SubscriptionSettings({ trialEndsAt, isFree, subscription
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {billingRecords.map((r) => (
-                  <tr key={r.id} className="hover:bg-muted/30 transition-colors">
+                {stripeInvoices.map((inv) => (
+                  <tr key={inv.id} className="hover:bg-muted/30 transition-colors">
                     <td className="px-5 py-3 text-foreground">
-                      {new Date(r.paidAt).toLocaleDateString("pl-PL", { day: "numeric", month: "long", year: "numeric" })}
+                      {new Date(inv.paidAt).toLocaleDateString("pl-PL", { day: "numeric", month: "long", year: "numeric" })}
                     </td>
-                    <td className="px-5 py-3 capitalize text-foreground">{r.plan}</td>
-                    <td className="px-5 py-3 text-muted-foreground">{r.interval === "yearly" ? "Roczna" : "Miesięczna"}</td>
+                    <td className="px-5 py-3 text-foreground">
+                      {inv.previousPlan ? (
+                        <span className="flex items-center gap-1">
+                          <span className="capitalize text-muted-foreground">{PLAN_LABELS[inv.previousPlan as keyof typeof PLAN_LABELS] ?? inv.previousPlan}</span>
+                          <span className="text-muted-foreground">→</span>
+                          <span className="capitalize font-medium">{inv.plan ? (PLAN_LABELS[inv.plan as keyof typeof PLAN_LABELS] ?? inv.plan) : "—"}</span>
+                        </span>
+                      ) : (
+                        <span className="capitalize">{inv.plan ? (PLAN_LABELS[inv.plan as keyof typeof PLAN_LABELS] ?? inv.plan) : "—"}</span>
+                      )}
+                    </td>
+                    <td className="px-5 py-3 text-muted-foreground">{inv.interval === "yearly" ? "Roczna" : inv.interval === "monthly" ? "Miesięczna" : "—"}</td>
                     <td className="px-5 py-3 text-right font-semibold text-foreground">
-                      {r.amount.toFixed(2)} {r.currency}
+                      {inv.amount.toFixed(2)} {inv.currency}
                     </td>
                     <td className="px-5 py-3 text-right">
-                      {r.invoiceUrl && (
-                        <a href={r.invoiceUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">Faktura</a>
+                      {inv.invoiceUrl && (
+                        <a href={inv.invoiceUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">Faktura</a>
                       )}
                     </td>
                   </tr>

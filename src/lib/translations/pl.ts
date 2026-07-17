@@ -2356,9 +2356,9 @@ export const pl = {
     // Welcome
     welcomeBoard: "Witamy na pokładzie",
     welcomeTitle: "Witaj w",
-    welcomeDesc: "Cieszymy się, że tu jesteś! Masz <b>14 dni pełnego dostępu</b> — bez karty. W jedenastu krótkich krokach pokażemy Ci, od czego zacząć i jak najszybciej ogarnąć swoje biuro projektowe.",
+    welcomeDesc: "Cieszymy się, że tu jesteś! Masz <b>30 dni pełnego dostępu</b> — bez karty. W jedenastu krótkich krokach pokażemy Ci, od czego zacząć i jak najszybciej ogarnąć swoje biuro projektowe.",
     chip1: "11 modułów",
-    chip2: "14 dni za darmo",
+    chip2: "30 dni za darmo",
     chip3: "ok. 2 minuty",
     // Clients
     clientsLabel: "Klienci",

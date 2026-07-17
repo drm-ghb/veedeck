@@ -2354,9 +2354,9 @@ export const en: TranslationKeys = {
     // Welcome
     welcomeBoard: "Welcome on board",
     welcomeTitle: "Welcome to",
-    welcomeDesc: "We're glad you're here! You have <b>14 days of full access</b> — no card required. In eleven short steps we'll show you where to start and how to get your design office up and running.",
+    welcomeDesc: "We're glad you're here! You have <b>30 days of full access</b> — no card required. In eleven short steps we'll show you where to start and how to get your design office up and running.",
     chip1: "11 modules",
-    chip2: "14 days free",
+    chip2: "30 days free",
     chip3: "approx. 2 min",
     // Clients
     clientsLabel: "Clients",

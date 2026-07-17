@@ -8,6 +8,7 @@ import type { ColorTheme } from "@/lib/theme";
 import TrialCheck from "@/components/dashboard/TrialCheck";
 import OnboardingModal from "@/components/dashboard/OnboardingModal";
 import OnboardingTrigger from "@/components/dashboard/OnboardingTrigger";
+import CancelledBadge from "@/components/dashboard/CancelledBadge";
 import AppNavbar from "@/components/dashboard/AppNavbar";
 
 export default async function VeedeckLayout({
@@ -38,7 +39,11 @@ export default async function VeedeckLayout({
   const colorTheme = ((ownerSettings?.colorTheme ?? dbUser?.colorTheme) ?? "champagne") as ColorTheme;
   const viewPrefs = (dbUser?.viewPreferences ?? {}) as Record<string, unknown>;
   const sidebarOrder = (viewPrefs.sidebarOrder as string[]) ?? [];
-  const isTrial = !!(dbUser?.trialEndsAt && dbUser.trialEndsAt > new Date() && !dbUser.isFree && dbUser.subscription?.status !== "active");
+  const subStatus = dbUser?.subscription?.status ?? null;
+  const cancelAt = dbUser?.subscription?.cancelAt ?? null;
+  const isTrial = !!(dbUser?.trialEndsAt && dbUser.trialEndsAt > new Date() && !dbUser.isFree && !subStatus);
+  const isCancelled = subStatus === "cancelled" || subStatus === "canceled";
+  const isScheduledCancel = subStatus === "active" && !!cancelAt && new Date(cancelAt) > new Date();
   const showOnboarding = isTrial && !viewPrefs.onboardingSeen;
 
   return (
@@ -52,7 +57,7 @@ export default async function VeedeckLayout({
         trialEndsAt={isTrial ? dbUser!.trialEndsAt!.toISOString() : null}
         notificationUserId={dbUser?.ownerId ?? session.user.id!}
         sidebarCollapsed={sidebarCollapsed}
-        extraRight={isTrial ? <OnboardingTrigger /> : undefined}
+        extraRight={isCancelled ? <CancelledBadge /> : isScheduledCancel ? <CancelledBadge cancelAt={cancelAt!.toISOString()} /> : isTrial ? <OnboardingTrigger /> : undefined}
       />
       <div className="flex flex-1 min-h-0" style={{ backgroundColor: 'var(--sidebar)' }}>
         <NavSidebar hiddenModules={hiddenModules} sidebarOrder={sidebarOrder} userId={session.user.id!} isTrial={isTrial} initialCollapsed={sidebarCollapsed} />
@@ -61,7 +66,7 @@ export default async function VeedeckLayout({
         </main>
       </div>
       <TrialCheck />
-      <OnboardingModal show={showOnboarding} />
+      <OnboardingModal show={showOnboarding} userId={session.user.id!} />
     </div>
   );
 }
