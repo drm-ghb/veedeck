@@ -13,9 +13,11 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
 <link rel="icon" href="veedeckicon.png" type="image/png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&amp;family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+  <link rel="preload" as="font" type="font/woff2" href="/fonts/dm-sans-latin-ext.woff2" crossorigin>
+  <link rel="preload" as="font" type="font/woff2" href="/fonts/dm-sans-latin.woff2" crossorigin>
+  <link rel="preload" as="font" type="font/woff2" href="/fonts/inter-latin-ext.woff2" crossorigin>
+  <link rel="preload" as="font" type="font/woff2" href="/fonts/inter-latin.woff2" crossorigin>
+  <link rel="stylesheet" href="/fonts.css">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
 <style>
   :root {
@@ -31,16 +33,17 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; }
+  html { overflow-y: scroll; }
   html, body { min-height: 100%; }
   body {
-    font-family: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+    font-family: "DM Sans", "DM Sans Fallback", ui-sans-serif, system-ui, sans-serif;
     background: var(--background);
     color: var(--foreground);
     -webkit-font-smoothing: antialiased;
     line-height: 1.5;
     display: flex; flex-direction: column; min-height: 100vh;
   }
-  h1, h2, h3 { font-family: "Inter", ui-sans-serif, system-ui, sans-serif; font-weight: 600; letter-spacing: -0.022em; margin: 0; }
+  h1, h2, h3 { font-family: "Inter", "Inter Fallback", ui-sans-serif, system-ui, sans-serif; font-weight: 600; letter-spacing: -0.022em; margin: 0; }
   p { margin: 0; }
   a { color: inherit; text-decoration: none; }
   .container { max-width: 1200px; margin: 0 auto; padding: 0 32px; width: 100%; }
@@ -48,23 +51,31 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   /* ── NAV ── */
   nav.top {
     position: sticky; top: 0; z-index: 40;
-    background: rgba(255,255,255,0.82); backdrop-filter: blur(14px);
+    background: rgba(255,255,255,0.82);
+    backdrop-filter: blur(14px);
     border-bottom: 1px solid var(--border);
   }
-  .nav-inner { display: flex; align-items: center; justify-content: space-between; height: 68px; }
+  .nav-inner {
+    display: flex; align-items: center; justify-content: space-between;
+    height: 68px;
+  }
   .brand { display: flex; align-items: center; gap: 10px; }
   .brand img.brand-icon { height: 28px; width: 28px; display: block; }
   .brand img.wordmark-img { height: 22px; width: auto; display: block; }
-  .nav-links { display: flex; gap: 32px; font-size: 14px; color: var(--muted-foreground); font-weight: 500; }
+  .nav-links {
+    display: flex; gap: 32px; font-size: 14px;
+    color: var(--muted-foreground); font-weight: 500;
+  }
   .nav-links a { transition: color .15s; }
   .nav-links a:hover { color: var(--foreground); }
   @media (max-width: 900px) { .nav-links, .nav-cta { display: none; } }
 
   .btn {
-    display: inline-flex; align-items: center; gap: 8px;
+    display: inline-flex; align-items: center; gap: 6px;
     padding: 10px 18px; border-radius: 10px;
     font-size: 13.5px; font-weight: 600;
-    border: 1px solid transparent; cursor: pointer; transition: all .15s;
+    border: 1px solid transparent;
+    cursor: pointer; transition: all .15s;
     font-family: inherit; white-space: nowrap;
   }
   .btn-primary { background: var(--primary); color: var(--primary-foreground); box-shadow: 0 1px 2px rgba(79,70,229,0.15), 0 4px 12px -2px rgba(79,70,229,0.28); }
@@ -220,6 +231,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   gtag('js', new Date());
   gtag('config', 'G-TLPPBXZX1F');
 </script>
+<link rel="stylesheet" href="/nav.css">
 </head>
 <body>
 <!-- Google Tag Manager (noscript) -->

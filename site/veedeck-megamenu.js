@@ -10,9 +10,9 @@
 (function () {
   "use strict";
 
-  var MODULES_PAGE = "moduly.html";
-  var PLUGIN_PAGE  = "wtyczka.html";
-  var PANELS_LINK  = "index.html#panele";
+  var MODULES_PAGE = "/moduly";
+  var PLUGIN_PAGE  = "/wtyczka";
+  var PANELS_LINK  = "/#panele";
 
   var RF_SVG = '<svg class="vd-rf" viewBox="-22 -22 228 229" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M121.728 122.988L162.007 82.6681C166.445 78.2248 163.239 70.6362 156.959 70.7215L146.549 70.8628L119.786 71.2261C119.236 71.2336 118.707 71.014 118.324 70.6191L86.1743 37.4878L58.6215 8.66333C55.9075 5.82403 51.389 5.77308 48.6117 8.55045L8.55019 48.6119C5.84554 51.3166 5.81265 55.6914 8.47633 58.4364L36.4243 87.2378L68.6112 120.408C68.9724 120.78 69.1749 121.278 69.1759 121.796L69.2485 158.623C69.2607 164.855 76.7967 167.965 81.2007 163.557L121.728 122.988ZM121.728 122.988L177.228 178.488" stroke="currentColor" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"></path></svg>';
 
@@ -168,7 +168,7 @@
     document.head.appendChild(l);
   }
   function injectCSS() {
-    if (document.getElementById("vd-mm-css")) return;
+    if (document.getElementById("vd-mm-css") || document.querySelector('link[href*="veedeck-megamenu.css"]')) return;
     var st = document.createElement("style");
     st.id = "vd-mm-css";
     st.textContent = CSS;
@@ -211,7 +211,7 @@
             '<div class="vd-mm-views">' + views + "</div>" +
           "</div>" +
           '<a class="vd-mm-plugin" href="' + PLUGIN_PAGE + '">' +
-            '<span class="pp-ic"><img src="veepick-icon.png" alt="veepick"></span>' +
+            '<span class="pp-ic"><img src="/veepick-icon.png" alt="veepick"></span>' +
             '<div class="pp-bd"><div class="pp-name">' + STR.plugName[L] + "</div>" +
             '<div class="pp-desc">' + STR.plugDesc[L] + "</div>" +
             '<div class="pp-tag">Chrome · Edge · Firefox</div></div>' +
@@ -231,23 +231,24 @@
   // ── Desktop: wstaw trigger + panel ──
   function setupDesktop(nav) {
     var links = nav.querySelector(".nav-links");
-    if (!links || links.querySelector(".vd-mm-trigger")) return;
+    if (!links) return;
 
-    var modLink = links.querySelector('a[href="' + MODULES_PAGE + '"]');
-    var plugLink = links.querySelector('a[href="' + PLUGIN_PAGE + '"]');
-    var anchor = modLink || links.firstElementChild;
-
-    var trigger = document.createElement("button");
-    trigger.type = "button";
-    trigger.className = "vd-mm-trigger";
-    trigger.setAttribute("aria-haspopup", "true");
-    trigger.setAttribute("aria-expanded", "false");
-    trigger.innerHTML = '<span class="vd-mm-lbl">' + STR.funkcje[lang()] + "</span>" +
-      '<svg class="vd-mm-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>';
-
-    if (anchor) links.insertBefore(trigger, anchor);
-    if (modLink) modLink.remove();
-    if (plugLink) plugLink.remove();
+    var trigger = links.querySelector(".vd-mm-trigger");
+    if (!trigger) {
+      var modLink = links.querySelector('a[href="' + MODULES_PAGE + '"]');
+      var plugLink = links.querySelector('a[href="' + PLUGIN_PAGE + '"]');
+      var anchor = modLink || links.firstElementChild;
+      trigger = document.createElement("button");
+      trigger.type = "button";
+      trigger.className = "vd-mm-trigger";
+      trigger.setAttribute("aria-haspopup", "true");
+      trigger.setAttribute("aria-expanded", "false");
+      trigger.innerHTML = '<span class="vd-mm-lbl">' + STR.funkcje[lang()] + "</span>" +
+        '<svg class="vd-mm-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>';
+      if (anchor) links.insertBefore(trigger, anchor);
+      if (modLink) modLink.remove();
+      if (plugLink) plugLink.remove();
+    }
 
     var backdrop = document.createElement("div");
     backdrop.className = "vd-mm-backdrop";
@@ -342,7 +343,7 @@
       var views = VIEWS.map(function (v) {
         return row(PANELS_LINK, '<span class="material-symbols-rounded">' + v.icon + "</span>", v[l2], v["d" + l2]);
       }).join("");
-      var plug = row(PLUGIN_PAGE, '<img src="veepick-icon.png" alt="">', STR.plugName[l2], STR.plugDesc[l2]);
+      var plug = row(PLUGIN_PAGE, '<img src="/veepick-icon.png" alt="">', STR.plugName[l2], STR.plugDesc[l2]);
       sub.innerHTML =
         '<a class="sub-h sub-h--link" href="' + MODULES_PAGE + '">' + STR.moduly[l2] + ' <span class="ct">· 11</span></a>' + mods +
         '<div class="sub-h">' + STR.widoki[l2] + ' <span class="ct">· 3</span></div>' + views +
