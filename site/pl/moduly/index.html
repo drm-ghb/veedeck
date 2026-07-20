@@ -14,9 +14,12 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="ProjectFlow, listy zakupowe, wykonawcy, ankiety - 11 modułów do zarządzania całym projektem wnętrzarskim.">
 <link rel="icon" href="veedeck_ikona.svg" type="image/svg+xml"><link rel="icon" href="veedeck_ikona.png" type="image/png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&amp;family=Inter:wght@400;500;600;700;800&amp;family=Caveat:wght@500;600;700&amp;display=swap" rel="stylesheet">
+  <link rel="preload" as="font" type="font/woff2" href="/fonts/dm-sans-latin-ext.woff2" crossorigin>
+  <link rel="preload" as="font" type="font/woff2" href="/fonts/dm-sans-latin.woff2" crossorigin>
+  <link rel="preload" as="font" type="font/woff2" href="/fonts/inter-latin-ext.woff2" crossorigin>
+  <link rel="preload" as="font" type="font/woff2" href="/fonts/inter-latin.woff2" crossorigin>
+  <link rel="stylesheet" href="/fonts.css">
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&amp;display=block" rel="stylesheet">
 <style>
   :root {
@@ -36,8 +39,11 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; }
+  html { overflow-y: scroll; }
+  @view-transition { navigation: auto; }
+  nav.top { view-transition-name: site-nav; }
   body {
-    font-family: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+    font-family: "DM Sans", "DM Sans Fallback", ui-sans-serif, system-ui, sans-serif;
     background: var(--background);
     color: var(--foreground);
     -webkit-font-smoothing: antialiased;
@@ -67,25 +73,32 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
   /* NAV */
   nav.top {
-    position: sticky; top: 0; z-index: 50;
-    background: rgba(255,255,255,0.85);
-    backdrop-filter: saturate(180%) blur(14px);
+    position: sticky; top: 0; z-index: 40;
+    background: rgba(255,255,255,0.82);
+    backdrop-filter: blur(14px);
     border-bottom: 1px solid var(--border);
   }
-  .nav-inner { display: flex; align-items: center; justify-content: space-between; height: 68px; }
+  .nav-inner {
+    display: flex; align-items: center; justify-content: space-between;
+    height: 68px;
+  }
   .brand { display: flex; align-items: center; gap: 10px; }
-  .brand-icon { height: 28px; width: 28px; }
-  .wordmark-img { height: 22px; }
-  .nav-links { display: flex; align-items: center; gap: 28px; font-size: 14.5px; color: var(--muted-foreground); font-weight: 500; }
+  .brand img.brand-icon { height: 28px; width: 28px; display: block; }
+  .brand img.wordmark-img { height: 22px; width: auto; display: block; }
+  .nav-links {
+    display: flex; gap: 32px; font-size: 14px;
+    color: var(--muted-foreground); font-weight: 500;
+  }
   .nav-links a:hover { color: var(--foreground); }
   .nav-links a.active { color: var(--primary); }
   .nav-cta { display: flex; gap: 10px; align-items: center; }
   .btn {
-    display: inline-flex; align-items: center; gap: 8px;
-    height: 40px; padding: 0 18px; border-radius: 12px;
-    font-weight: 600; font-size: 14px; cursor: pointer;
-    border: 1px solid transparent; font-family: inherit;
-    transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 10px 18px; border-radius: 10px;
+    font-size: 13.5px; font-weight: 600;
+    border: 1px solid transparent;
+    cursor: pointer; transition: all .15s;
+    font-family: inherit; white-space: nowrap;
   }
   .btn-primary { background: var(--primary); color: var(--primary-foreground); box-shadow: 0 6px 20px -8px rgba(79, 70, 229, 0.45); }
   .btn-primary:hover { transform: translateY(-1px); }
@@ -1236,10 +1249,12 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     background: #FAFAFB;
   }
   .zd-modal .m-actions .btn {
-    font-size: 10.5px; padding: 7px 13px;
-    border-radius: 7px; font-weight: 600;
-    border: 1px solid var(--border); background: #fff;
-    color: var(--foreground);
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 10px 18px; border-radius: 10px;
+    font-size: 13.5px; font-weight: 600;
+    border: 1px solid transparent;
+    cursor: pointer; transition: all .15s;
+    font-family: inherit; white-space: nowrap;
   }
   .zd-modal .m-actions .btn.primary { background: var(--primary); color: #fff; border-color: var(--primary); }
 
@@ -1426,7 +1441,10 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   .footer-bottom { padding-top: 24px; display: flex; justify-content: space-between; color: var(--muted-foreground); font-size: 13px; }
 
   @media (max-width: 900px) {
-    .nav-links { display: none; }
+    .nav-links {
+    display: flex; gap: 32px; font-size: 14px;
+    color: var(--muted-foreground); font-weight: 500;
+  }
     .nav-cta { display: none !important; }
     .footer-inner { grid-template-columns: 1fr 1fr; gap: 32px; }
   }
@@ -1503,7 +1521,14 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   .mobile-menu a.menu-link:last-of-type { border-bottom: none; }
   .mobile-menu a.menu-link:hover, .mobile-menu a.menu-link.active { color: var(--primary); }
   .mobile-menu .mobile-cta { display: flex; flex-direction: column; gap: 10px; margin-top: 28px; }
-  .mobile-menu .mobile-cta .btn { width: 100%; justify-content: center; }
+  .mobile-menu .mobile-cta .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 10px 18px; border-radius: 10px;
+    font-size: 13.5px; font-weight: 600;
+    border: 1px solid transparent;
+    cursor: pointer; transition: all .15s;
+    font-family: inherit; white-space: nowrap;
+  }
 
   body.menu-locked { overflow: hidden; }
 
@@ -1622,6 +1647,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   gtag('js', new Date());
   gtag('config', 'G-TLPPBXZX1F');
 </script>
+<link rel="stylesheet" href="/veedeck-megamenu.css">
+<link rel="stylesheet" href="/nav.css">
 
 <link rel="canonical" href="https://veedeck.com/pl/moduly/"/>
 <link rel="alternate" hreflang="pl" href="https://veedeck.com/pl/moduly/"/>
@@ -1642,19 +1669,17 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <img class="wordmark-img" src="/vee_black.png" alt="veedeck">
     </a>
     <div class="nav-links">
-      <a href="/pl/moduly/" class="active">Moduły</a>
-      <a href="/pl/wtyczka/">Wtyczka</a>
-      <a href="/pl/cennik/">Cennik</a>
-      <a href="/pl/demo/">Demo</a>
-      <a href="/pl/o-nas/">O nas</a>
-      <a href="/pl/kontakt/">Kontakt</a>
+      <button type="button" class="vd-mm-trigger" aria-haspopup="true" aria-expanded="false"><span class="vd-mm-lbl">Funkcje</span><svg class="vd-mm-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+      <a href="/moduly" class="active">Moduły</a>
+      <a href="/cennik">Cennik</a>
+      <a href="/demo">Demo</a>
+      <a href="/o-nas">O nas</a>
+      <a href="/kontakt">Kontakt</a>
     </div>
     <div class="nav-cta">
       <a href="/en/modules/" class="btn btn-ghost" style="font-size:12px;padding:0 10px;letter-spacing:0.06em;font-weight:700;">EN</a>
       <a href="https://app.veedeck.com/login" class="btn btn-ghost" style="border: 1px solid #CBD1DC;">Zaloguj się</a>
-      <a href="https://app.veedeck.com/login#register" class="btn btn-primary">Bezpłatne demo
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"></path></svg>
-      </a>
+      <a href="https://app.veedeck.com/login#register" class="btn btn-primary">Bezpłatne demo<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"></path></svg></a>
     </div>
     <button class="nav-burger" aria-label="Otwórz menu" aria-expanded="false" aria-controls="mobileMenu" onclick="toggleMobileMenu(this)">
       <svg class="icon-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="3" y1="7" x2="21" y2="7"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="17" x2="21" y2="17"></line></svg>
@@ -1671,12 +1696,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       </button>
     </div>
     <div class="mobile-menu-inner">
-      <a class="menu-link active" href="/pl/moduly/">Moduły</a>
-      <a class="menu-link" href="/pl/wtyczka/">Wtyczka</a>
-      <a class="menu-link" href="/pl/cennik/">Cennik</a>
-      <a class="menu-link" href="/pl/demo/">Demo</a>
-      <a class="menu-link" href="/pl/o-nas/">O nas</a>
-      <a class="menu-link" href="/pl/kontakt/">Kontakt</a>
+      <a class="menu-link active" href="/moduly">Moduły</a>
+        <a class="menu-link" href="/cennik">Cennik</a>
+      <a class="menu-link" href="/demo">Demo</a>
+      <a class="menu-link" href="/o-nas">O nas</a>
+      <a class="menu-link" href="/kontakt">Kontakt</a>
       <div class="mobile-cta">
       <a href="/en/modules/" class="btn btn-ghost" style="width:100%;justify-content:center;font-size:12px;font-weight:700;letter-spacing:0.06em;">EN</a>
         <a href="https://app.veedeck.com/login" class="btn btn-ghost" style="border: 1px solid #CBD1DC;">Zaloguj się</a>
@@ -2723,17 +2747,17 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="footer-col">
         <h4>Firma</h4>
         <ul>
-          <li><a href="/pl/o-nas/">O nas</a></li>
-          <li><a href="/pl/demo/">Demo</a></li>
-          <li><a href="/pl/kontakt/">Kontakt</a></li>
+          <li><a href="/o-nas">O nas</a></li>
+          <li><a href="/demo">Demo</a></li>
+          <li><a href="/kontakt">Kontakt</a></li>
         </ul>
       </div>
       <div class="footer-col">
         <h4>Produkt</h4>
         <ul>
-          <li><a href="/pl/moduly/">Mołuły</a></li>
-          <li><a href="/pl/wtyczka/">Wtyczka veepick</a></li>
-          <li><a href="/pl/cennik/">Cennik</a></li>
+          <li><a href="/moduly">Mołuły</a></li>
+          <li><a href="/wtyczka">Wtyczka veepick</a></li>
+          <li><a href="/cennik">Cennik</a></li>
           <li><a href="index.html#jak">Jak to działa</a></li>
         </ul>
       </div>

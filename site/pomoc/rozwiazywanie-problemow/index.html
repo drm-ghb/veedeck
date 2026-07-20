@@ -35,6 +35,8 @@
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; }
   html { overflow-y: scroll; }
+  @view-transition { navigation: auto; }
+  nav.top { view-transition-name: site-nav; }
   body {
     font-family: "DM Sans", "DM Sans Fallback", ui-sans-serif, system-ui, sans-serif;
     background: var(--background);
