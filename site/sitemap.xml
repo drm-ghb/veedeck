@@ -135,6 +135,25 @@
     <priority>0.7</priority>
   </url>
 
+  <!-- ── Migracja / Migration ───────────────────────────────── -->
+  <url>
+    <loc>https://veedeck.com/pl/migracja/</loc>
+    <xhtml:link rel="alternate" hreflang="pl"        href="https://veedeck.com/pl/migracja/"/>
+    <xhtml:link rel="alternate" hreflang="en"        href="https://veedeck.com/en/migration/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://veedeck.com/pl/migracja/"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://veedeck.com/en/migration/</loc>
+    <xhtml:link rel="alternate" hreflang="pl"        href="https://veedeck.com/pl/migracja/"/>
+    <xhtml:link rel="alternate" hreflang="en"        href="https://veedeck.com/en/migration/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://veedeck.com/pl/migracja/"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
   <!-- ── Pomoc / Help Center ────────────────────────────────── -->
   <url>
     <loc>https://veedeck.com/pl/pomoc/</loc>

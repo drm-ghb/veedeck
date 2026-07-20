@@ -90,6 +90,14 @@ const PAGES = [
     type: 'marketing',
   },
   {
+    src: 'migracja.html',
+    plDir: 'pl/migracja', enDir: 'en/migration',
+    plUrl: '/pl/migracja/', enUrl: '/en/migration/',
+    enTitle: 'Migration to veedeck — we move your data for you | veedeck',
+    enDesc: 'Switching from another interior design tool? The veedeck team migrates your clients, projects, shopping lists and files — without manual retyping.',
+    type: 'migracja',
+  },
+  {
     src: 'polityka-prywatnosci.html',
     plDir: 'pl/polityka-prywatnosci', enDir: 'en/privacy-policy',
     plUrl: '/pl/polityka-prywatnosci/', enUrl: '/en/privacy-policy/',
@@ -837,6 +845,138 @@ ${FILTER_HELP_SCRIPT}`,
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// 3b. EN content template for Migracja page
+// ─────────────────────────────────────────────────────────────────────────────
+const MIGRACJA_EN_CONTENT = `<!-- HERO -->
+<section class="page-hero">
+  <div class="container">
+    <div class="eyebrow">Migration</div>
+    <h1>Switching tools? <em>We'll do it for you.</em></h1>
+    <p class="lead">Switching from another interior design project management system? The veedeck team helps you move lists, clients, projects and materials — without manual retyping and without disrupting your work.</p>
+    <div class="hero-ctas">
+      <a href="https://calendly.com/daniel-veedeck/" target="_blank" rel="noopener" class="btn btn-primary btn-lg">Book a free migration consultation
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"></path></svg>
+      </a>
+      <a href="/kontakt" class="btn btn-ghost btn-lg">Have a question? Write to us</a>
+    </div>
+  </div>
+</section>
+
+<!-- CO PRZENOSIMY -->
+<section class="migrate-section">
+  <div class="container">
+    <div class="section-head">
+      <div class="eyebrow">What we migrate</div>
+      <h2>Your data, in one place.</h2>
+      <p>We agree on the migration scope individually after a call — most commonly we transfer the elements below.</p>
+    </div>
+    <div class="migrate-grid">
+      <div class="migrate-card">
+        <div class="ic"><span class="material-symbols-rounded">group</span></div>
+        <h3>Clients &amp; projects</h3>
+        <p>Client database, active and completed projects including history.</p>
+      </div>
+      <div class="migrate-card">
+        <div class="ic"><span class="material-symbols-rounded">package_2</span></div>
+        <h3>Product library</h3>
+        <p>Furniture, materials and suppliers — migrated to the Products module.</p>
+      </div>
+      <div class="migrate-card">
+        <div class="ic"><span class="material-symbols-rounded">local_mall</span></div>
+        <h3>Shopping lists</h3>
+        <p>Existing product breakdowns with prices and links.</p>
+      </div>
+      <div class="migrate-card">
+        <div class="ic"><span class="material-symbols-rounded">photo_library</span></div>
+        <h3>Renders &amp; files</h3>
+        <p>Visualisations and project documents imported into ProjectFlow.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- JAK TO DZIAŁA -->
+<section class="process-section">
+  <div class="container">
+    <div class="section-head">
+      <div class="eyebrow">How it works</div>
+      <h2>Three steps to getting started in veedeck.</h2>
+    </div>
+    <div class="process-steps">
+      <div class="step">
+        <div class="num">01</div>
+        <h3>You book a meeting</h3>
+        <p>Reserve a short slot in the founder's calendar — you tell us which tool you're migrating from and how your studio is structured.</p>
+        <a class="step-link" href="https://calendly.com/daniel-veedeck/" target="_blank" rel="noopener">Open calendar
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"></path></svg>
+        </a>
+      </div>
+      <div class="step">
+        <div class="num">02</div>
+        <h3>We assess the scope and prepare a plan</h3>
+        <p>The veedeck team analyses the amount of data and the migration source, then presents you with a schedule and transfer scope.</p>
+      </div>
+      <div class="step">
+        <div class="num">03</div>
+        <h3>We migrate the data — you start working</h3>
+        <p>We move clients, projects and materials to veedeck. Once the migration is complete, you hit the ground running in the new system.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-band">
+  <div class="container">
+    <div class="cta-card">
+      <div>
+        <h2>Migration is included — you don't need to start from scratch.</h2>
+        <p>Don't waste time retyping clients and products manually. Book a short call and the veedeck team will take care of the rest.</p>
+      </div>
+      <div class="cta-founder">
+        <div class="who">
+          <img src="/team-founder.png" alt="">
+          <div>
+            <div class="n">Daniel Rychlik</div>
+            <div class="r">Founder of veedeck</div>
+          </div>
+        </div>
+        <a href="https://calendly.com/daniel-veedeck/" target="_blank" rel="noopener" class="btn btn-white">Book a migration consultation</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="faq-section">
+  <div class="container">
+    <div class="faq-head">
+      <div class="eyebrow">Migration FAQ</div>
+      <h2>What people ask most often.</h2>
+    </div>
+    <div class="faq-grid">
+      <details class="faq" open>
+        <summary>Which tools can I migrate from?</summary>
+        <p>We most commonly move data from spreadsheets, simple client databases, and other interior design project management systems. The scope and format are agreed individually during the consultation.</p>
+      </details>
+      <details class="faq">
+        <summary>How long does migration take?</summary>
+        <p>It depends on the amount of data. After assessing the scope you receive a concrete schedule — most migrations are completed within a few business days.</p>
+      </details>
+      <details class="faq">
+        <summary>Is data migration paid?</summary>
+        <p>The cost depends on the scope and source of the data — exact terms are presented after the assessment during the consultation.</p>
+      </details>
+      <details class="faq">
+        <summary>Will I lose access to my old tool during migration?</summary>
+        <p>No. We plan the migration so as not to interrupt your current work — you switch to veedeck only when everything is ready.</p>
+      </details>
+    </div>
+  </div>
+</section>
+`;
+
+// ─────────────────────────────────────────────────────────────────────────────
 // 4. Helper functions
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -888,12 +1028,13 @@ function fixLinks(html, lang) {
     .replace(/href="[.\/]*Kontakt\.html"/g,          isEn ? 'href="/en/contact/"'  : 'href="/pl/kontakt/"')
 
     // ── Lowercase filenames (some pages use these) ─────────────────
-    .replace(/href="([.\/]*)moduly\.html"/g,   isEn ? 'href="/en/modules/"'  : 'href="/pl/moduly/"')
-    .replace(/href="([.\/]*)wtyczka\.html"/g,  isEn ? 'href="/en/plugin/"'   : 'href="/pl/wtyczka/"')
-    .replace(/href="([.\/]*)cennik\.html"/g,   isEn ? 'href="/en/pricing/"'  : 'href="/pl/cennik/"')
-    .replace(/href="([.\/]*)demo\.html"/g,     isEn ? 'href="/en/demo/"'     : 'href="/pl/demo/"')
-    .replace(/href="([.\/]*)o-nas\.html"/g,    isEn ? 'href="/en/about/"'    : 'href="/pl/o-nas/"')
-    .replace(/href="([.\/]*)kontakt\.html"/g,  isEn ? 'href="/en/contact/"'  : 'href="/pl/kontakt/"')
+    .replace(/href="([.\/]*)moduly\.html"/g,    isEn ? 'href="/en/modules/"'   : 'href="/pl/moduly/"')
+    .replace(/href="([.\/]*)wtyczka\.html"/g,   isEn ? 'href="/en/plugin/"'    : 'href="/pl/wtyczka/"')
+    .replace(/href="([.\/]*)cennik\.html"/g,    isEn ? 'href="/en/pricing/"'   : 'href="/pl/cennik/"')
+    .replace(/href="([.\/]*)demo\.html"/g,      isEn ? 'href="/en/demo/"'      : 'href="/pl/demo/"')
+    .replace(/href="([.\/]*)o-nas\.html"/g,     isEn ? 'href="/en/about/"'     : 'href="/pl/o-nas/"')
+    .replace(/href="([.\/]*)kontakt\.html"/g,   isEn ? 'href="/en/contact/"'   : 'href="/pl/kontakt/"')
+    .replace(/href="([.\/]*)migracja\.html"/g,  isEn ? 'href="/en/migration/"' : 'href="/pl/migracja/"')
 
     // ── Login ──────────────────────────────────────────────────────
     .replace(/href="([.\/]*)login\.html"/g, 'href="https://app.veedeck.com/login"')
@@ -1095,8 +1236,12 @@ function translateFooterPomoc(html) {
   // Nav links text
   html = html.replace(/>Moduły</g, '>Modules<');
   html = html.replace(/>Wtyczka</g, '>Plugin<');
+  html = html.replace(/>Migracja</g, '>Migration<');
   html = html.replace(/>Zaloguj się</g, '>Log in<');
   html = html.replace(/>Bezpłatne demo</g, '>Free demo<');
+  // Zasoby section header
+  html = html.replace(/>Zasoby</g, '>Resources<');
+  html = html.replace(/>Baza wiedzy</g, '>Knowledge base<');
   return html;
 }
 
@@ -1142,6 +1287,13 @@ function processPage(page) {
   if (page.type === 'pomoc' && page.pomocKey && POMOC_EN_CONTENT[page.pomocKey]) {
     // Replace hero + content with EN template
     enHtml = injectPomocEN(enHtml, POMOC_EN_CONTENT[page.pomocKey]);
+    // Translate nav and footer text
+    enHtml = translateFooterPomoc(enHtml);
+    // Apply remaining dict for any stragglers
+    enHtml = applyDict(enHtml);
+  } else if (page.type === 'migracja') {
+    // Replace page content with EN template
+    enHtml = injectPomocEN(enHtml, MIGRACJA_EN_CONTENT);
     // Translate nav and footer text
     enHtml = translateFooterPomoc(enHtml);
     // Apply remaining dict for any stragglers

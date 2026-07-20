@@ -11,10 +11,15 @@ window.VEEDECK_I18N = {
   "Moduły": "Modules",
   "Wtyczka": "Plugin",
   "Cennik": "Pricing",
+  "Migracja": "Migration",
   "O nas": "About",
   "Kontakt": "Contact",
   "Zaloguj się": "Log in",
   "Bezpłatne demo": "Free demo",
+
+  // — Footer columns —
+  "Zasoby": "Resources",
+  "Baza wiedzy": "Knowledge base",
 
   // — Hero —
   "Dziewięć modułów · Jedna aplikacja": "Nine modules · One app",
