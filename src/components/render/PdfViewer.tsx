@@ -37,6 +37,7 @@ const PdfViewer = forwardRef<HTMLDivElement, PdfViewerProps>(function PdfViewer(
   const [totalPages, setTotalPages] = useState(0);
   const [status, setStatus] = useState<"loading" | "done" | "error">("loading");
   const renderTaskRef = useRef<{ cancel: () => void } | null>(null);
+  const pdfDocRef = useRef<import("pdfjs-dist").PDFDocumentProxy | null>(null);
 
   // Forward the wrapper div as ref (used by RenderViewer for getBoundingClientRect)
   useImperativeHandle(ref, () => wrapperRef.current!);
@@ -49,8 +50,9 @@ const PdfViewer = forwardRef<HTMLDivElement, PdfViewerProps>(function PdfViewer(
       try {
         const pdfjsLib = await getPdfJs();
         const pdf = await pdfjsLib.getDocument(url).promise;
-        if (cancelled) return;
+        if (cancelled) { pdf.destroy(); return; }
 
+        pdfDocRef.current = pdf;
         const total = pdf.numPages;
         setTotalPages(total);
         onTotalPages(total);
@@ -97,6 +99,8 @@ const PdfViewer = forwardRef<HTMLDivElement, PdfViewerProps>(function PdfViewer(
     return () => {
       cancelled = true;
       renderTaskRef.current?.cancel();
+      pdfDocRef.current?.destroy();
+      pdfDocRef.current = null;
     };
   }, [url, page, maxHeight, maxWidth, zoom]); // eslint-disable-line react-hooks/exhaustive-deps
 

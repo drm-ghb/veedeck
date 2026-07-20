@@ -723,90 +723,19 @@ export default function ClientProjectPage() {
     );
   }
 
-  // Render view — full screen
-  if (view === "render" && selectedRender && selectedRoom) {
-    // selectedFolder may be null when navigating directly via URL without folderId param.
-    // Fall back to the render's own folder reference so breadcrumbs and back navigation work correctly.
-    const effectiveFolder = selectedFolder
-      ?? (selectedRender.folder
+  // Compute render viewer data (used below when view === "render")
+  const isRenderView = view === "render" && !!selectedRender && !!selectedRoom;
+  const effectiveFolder = isRenderView && selectedRender && selectedRoom
+    ? (selectedFolder ?? (selectedRender.folder
         ? (selectedRoom.folders.find((f) => f.id === selectedRender.folder!.id) ?? selectedRender.folder)
-        : null);
-
-    const scopedRenders = effectiveFolder
-      ? selectedRoom.renders.filter((r) => r.folder?.id === effectiveFolder.id)
-      : selectedRoom.renders.filter((r) => !r.folder);
-    const roomRenders = scopedRenders.map((r) => ({ id: r.id, name: r.name, fileUrl: r.fileUrl, fileType: r.fileType }));
-
-    const renderViewer = (
-      <RenderViewer
-        key={selectedRender.id}
-        renderId={selectedRender.id}
-        renderName={selectedRender.name}
-        projectTitle={project.title}
-        roomName={selectedRoom.name}
-        folderName={selectedRender.folder?.name ?? undefined}
-        imageUrl={selectedRender.fileUrl}
-        fileType={selectedRender.fileType}
-        initialComments={selectedRender.comments}
-        authorName={authorName}
-        authorAvatarUrl={clientAvatarUrl}
-        isDesigner={false}
-        roomRenders={roomRenders}
-        initialRenderStatus={selectedRender.status}
-        allowDirectStatusChange={project.allowDirectStatusChange}
-        allowClientComments={project.allowClientComments}
-        allowClientAcceptance={project.allowClientAcceptance}
-        hideCommentCount={project.hideCommentCount}
-        versions={selectedRender.versions.map((v) => ({ ...v, archivedAt: typeof v.archivedAt === "string" ? v.archivedAt : new Date(v.archivedAt).toISOString() }))}
-        allowClientVersionRestore={project.allowClientVersionRestore}
-        onRenderStatusChange={(status) => handleRenderStatusChange(selectedRender.id, status)}
-        onBack={() => { if (effectiveFolder && !selectedFolder) setSelectedFolder(effectiveFolder); setView("room"); navigate({ view: "room", roomId: selectedRoom.id, folderId: effectiveFolder?.id ?? null }); }}
-        onBackToRooms={() => { setView("rooms"); setSelectedRoom(null); setSelectedFolder(null); navigate({ view: "rooms" }); }}
-        onBackToRoom={effectiveFolder ? () => { setSelectedFolder(null); setView("room"); navigate({ view: "room", roomId: selectedRoom.id }); } : undefined}
-        onRenderSelect={(r) => {
-          const full = selectedRoom.renders.find((render) => render.id === r.id);
-          if (full) { setSelectedRender(full); navigate({ view: "render", roomId: selectedRoom.id, folderId: selectedFolder?.id ?? null, renderId: r.id }); }
-          fetch(`/api/client/${activeProjectId}/renders/${r.id}/view`, { method: "POST" });
-        }}
-        onViewCounted={(renderId) => fetch(`/api/client/${activeProjectId}/renders/${renderId}/view`, { method: "POST" })}
-        shareToken=""
-        clientProjectId={activeProjectId}
-      />
-    );
-
-    return (
-      <div className="h-dvh flex flex-col bg-muted/60">
-        {themeApplier}
-        <ShareNavbar clientLogoUrl={project.clientLogoUrl} designerName={project.designerName ?? undefined} clientName={authorName} onLogoClick={() => { setView("home"); setSelectedRoom(null); setSelectedFolder(null); navigate({}); }} onMobileMenuOpen={() => setMobileSidebarOpen(true)} currentUserId={currentUserId} />
-        <div className="flex flex-1 min-h-0" style={{ backgroundColor: 'var(--sidebar)' }}>
-          <ShareSidebar
-            token=""
-            discussionId={project.discussionId}
-            showProjectFlow={!project.hiddenModules.includes("renderflow")}
-            showListy={!project.hiddenModules.includes("listy")}
-            showDyskusje={!project.hiddenModules.includes("dyskusje")}
-            shoppingLists={project.shoppingLists}
-            onHomeClick={() => { setView("home"); setSelectedRoom(null); setSelectedFolder(null); navigate({}); }}
-            onProjectFlowClick={() => { if (clientProjects.length > 1) { setView("projects"); setSelectedRoom(null); setSelectedFolder(null); navigate({ view: "projects" }); } else if (project.rooms.length === 1) { setActiveRooms(null); setActiveProjectId(projectId); setSelectedRoom(project.rooms[0]); setSelectedFolder(null); setView("room"); navigate({ view: "room", roomId: project.rooms[0].id }); } else { setActiveRooms(null); setActiveProjectId(projectId); setView("rooms"); navigate({ view: "rooms" }); }}}
-            onDiscussionClick={() => { setView("discussion"); navigate({ view: "discussion" }); }}
-            onSettingsClick={() => { setView("settings"); navigate({ view: "settings" }); }}
-            onListClick={() => { if (project.shoppingLists.length === 1) { openList(project.shoppingLists[0].id); } else { setView("lists"); navigate({ view: "lists" }); } }}
-            showPayments={project.paymentsSharedWithClient}
-            onPaymentsClick={() => { setView("payments"); navigate({ view: "payments" }); }}
-            showHarmonogram={project.scheduleSharedWithClient}
-            onHarmonogramClick={() => { setView("schedule"); navigate({ view: "schedule" }); }}
-            showAnkiety={project.hasSurveys}
-            onAnkietyClick={openAnkiety}
-            clientProjectId={projectId}
-            activeView={view}
-            currentUserId={currentUserId}
-            forceCollapsed={true}
-          />
-          <div className="flex-1 min-h-0 bg-background">{renderViewer}</div>
-        </div>
-      </div>
-    );
-  }
+        : null))
+    : null;
+  const scopedRenders = isRenderView && selectedRoom
+    ? (effectiveFolder
+        ? selectedRoom.renders.filter((r) => r.folder?.id === effectiveFolder.id)
+        : selectedRoom.renders.filter((r) => !r.folder))
+    : [];
+  const roomRenders = scopedRenders.map((r) => ({ id: r.id, name: r.name, fileUrl: r.fileUrl, fileType: r.fileType }));
 
   const pageContent = (
     <>
@@ -1178,7 +1107,7 @@ export default function ClientProjectPage() {
         </>
       )}
 
-      {view === "room" && selectedRoom && (() => {
+      {(view === "room" || view === "render") && selectedRoom && (() => {
         const sortedFolders = [...selectedRoom.folders].sort((a, b) => (a.pinned === b.pinned ? 0 : a.pinned ? -1 : 1));
         const ungrouped = selectedRoom.renders.filter((r) => !r.folder);
         const folderRenders = selectedFolder ? selectedRoom.renders.filter((r) => r.folder?.id === selectedFolder.id) : [];
@@ -1753,14 +1682,57 @@ export default function ClientProjectPage() {
           mobileOpen={mobileSidebarOpen}
           onMobileOpenChange={setMobileSidebarOpen}
         />
-        <main className="flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-6 bg-background rounded-tl-2xl flex flex-col">
-          <div className="flex-1">{pageContent}</div>
-          <div className="pt-10 pb-2 flex items-center justify-center gap-1.5 opacity-40 select-none">
-            <span className="text-xs text-muted-foreground">Powered by</span>
-            <Image src="/veedeck_ikona_vsg.svg" alt="veedeck" width={16} height={16} className="object-contain" />
-            <span className="text-xs text-muted-foreground">veedeck</span>
-          </div>
-        </main>
+        <div className="flex-1 min-h-0 relative bg-background rounded-tl-2xl">
+          {/* Folder/room grid — always mounted to keep PDF thumbnails in DOM */}
+          <main
+            className="absolute inset-0 overflow-y-auto px-4 py-4 sm:px-6 sm:py-6 flex flex-col"
+            style={isRenderView ? { display: "none" } : undefined}
+          >
+            <div className="flex-1">{pageContent}</div>
+            <div className="pt-10 pb-2 flex items-center justify-center gap-1.5 opacity-40 select-none">
+              <span className="text-xs text-muted-foreground">Powered by</span>
+              <Image src="/veedeck_ikona_vsg.svg" alt="veedeck" width={16} height={16} className="object-contain" />
+              <span className="text-xs text-muted-foreground">veedeck</span>
+            </div>
+          </main>
+          {/* Render viewer — mounted only when active, unmounts on back to free memory */}
+          {isRenderView && selectedRender && selectedRoom && (
+            <RenderViewer
+              key={selectedRender.id}
+              renderId={selectedRender.id}
+              renderName={selectedRender.name}
+              projectTitle={project.title}
+              roomName={selectedRoom.name}
+              folderName={selectedRender.folder?.name ?? undefined}
+              imageUrl={selectedRender.fileUrl}
+              fileType={selectedRender.fileType}
+              initialComments={selectedRender.comments}
+              authorName={authorName}
+              authorAvatarUrl={clientAvatarUrl}
+              isDesigner={false}
+              roomRenders={roomRenders}
+              initialRenderStatus={selectedRender.status}
+              allowDirectStatusChange={project.allowDirectStatusChange}
+              allowClientComments={project.allowClientComments}
+              allowClientAcceptance={project.allowClientAcceptance}
+              hideCommentCount={project.hideCommentCount}
+              versions={selectedRender.versions.map((v) => ({ ...v, archivedAt: typeof v.archivedAt === "string" ? v.archivedAt : new Date(v.archivedAt).toISOString() }))}
+              allowClientVersionRestore={project.allowClientVersionRestore}
+              onRenderStatusChange={(status) => handleRenderStatusChange(selectedRender.id, status)}
+              onBack={() => { if (effectiveFolder && !selectedFolder) setSelectedFolder(effectiveFolder); setView("room"); navigate({ view: "room", roomId: selectedRoom.id, folderId: effectiveFolder?.id ?? null }); }}
+              onBackToRooms={() => { setView("rooms"); setSelectedRoom(null); setSelectedFolder(null); navigate({ view: "rooms" }); }}
+              onBackToRoom={effectiveFolder ? () => { setSelectedFolder(null); setView("room"); navigate({ view: "room", roomId: selectedRoom.id }); } : undefined}
+              onRenderSelect={(r) => {
+                const full = selectedRoom.renders.find((render) => render.id === r.id);
+                if (full) { setSelectedRender(full); navigate({ view: "render", roomId: selectedRoom.id, folderId: selectedFolder?.id ?? null, renderId: r.id }); }
+                fetch(`/api/client/${activeProjectId}/renders/${r.id}/view`, { method: "POST" });
+              }}
+              onViewCounted={(renderId) => fetch(`/api/client/${activeProjectId}/renders/${renderId}/view`, { method: "POST" })}
+              shareToken=""
+              clientProjectId={activeProjectId}
+            />
+          )}
+        </div>
       </div>
     </div>
   );

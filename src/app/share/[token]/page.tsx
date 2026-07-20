@@ -616,95 +616,13 @@ export default function SharePage() {
   const themeApplier = <ClientThemeApplier colorTheme={project.colorTheme} />;
 
   // Render view — full screen
-  if (view === "render" && selectedRender && selectedRoom) {
-    // Scope navigation to current folder if one is selected, otherwise to renders without folder
-    const scopedRenders = selectedFolder
-      ? selectedRoom.renders.filter((r) => r.folder?.id === selectedFolder.id)
-      : selectedRoom.renders.filter((r) => !r.folder);
-    const roomRenders = scopedRenders.map((r) => ({
-      id: r.id,
-      name: r.name,
-      fileUrl: r.fileUrl,
-      fileType: r.fileType,
-    }));
-
-    const renderViewer = (
-      <RenderViewer
-        key={selectedRender.id}
-        renderId={selectedRender.id}
-        renderName={selectedRender.name}
-        projectTitle={project.title}
-        roomName={selectedRoom.name}
-        folderName={selectedRender.folder?.name ?? undefined}
-        imageUrl={selectedRender.fileUrl}
-        fileType={selectedRender.fileType}
-        initialComments={selectedRender.comments}
-        authorName={authorName}
-        isDesigner={false}
-        roomRenders={roomRenders}
-        initialRenderStatus={selectedRender.status}
-        allowDirectStatusChange={project.allowDirectStatusChange}
-        allowClientComments={project.allowClientComments}
-        allowClientAcceptance={project.allowClientAcceptance}
-        hideCommentCount={project.hideCommentCount}
-        versions={selectedRender.versions.map((v) => ({ ...v, archivedAt: typeof v.archivedAt === "string" ? v.archivedAt : new Date(v.archivedAt).toISOString() }))}
-        allowClientVersionRestore={project.allowClientVersionRestore}
-        onVersionRestore={
-          project.allowClientVersionRestore
-            ? (versionId) => handleVersionRestore(selectedRender.id, versionId)
-            : undefined
-        }
-        onVersionRestoreRequest={
-          !project.allowClientVersionRestore
-            ? (versionId) => handleVersionRestoreRequest(selectedRender.id, versionId)
-            : undefined
-        }
-        onRenderStatusChange={(status) => handleRenderStatusChange(selectedRender.id, status)}
-        onStatusRequest={
-          project.allowDirectStatusChange || pendingRequests.has(selectedRender.id)
-            ? undefined
-            : () => handleStatusRequest(selectedRender.id)
-        }
-        onBack={() => setView("room")}
-        onRenderSelect={(r) => {
-          const full = selectedRoom.renders.find((render) => render.id === r.id);
-          if (full) setSelectedRender(full);
-          fetch(`/api/share/${token}/renders/${r.id}/view`, { method: "POST" });
-        }}
-        onViewCounted={(renderId) => fetch(`/api/share/${token}/renders/${renderId}/view`, { method: "POST" })}
-        shareToken={token}
-      />
-    );
-
-    const renderNav = (
-      <ShareNavbar
-        clientLogoUrl={project.clientLogoUrl}
-        designerName={project.designerName ?? undefined}
-        projectShareToken={token}
-      />
-    );
-
-    return (
-      <div className="h-dvh flex flex-col bg-muted/60">
-        {themeApplier}
-        {renderNav}
-        <div className="flex flex-1 min-h-0">
-          <ShareSidebar
-            token={token}
-            discussionId={project.discussionId}
-            showProjectFlow={!project.hiddenModules.includes("renderflow")}
-            showListy={!project.hiddenModules.includes("listy")}
-            showDyskusje={!project.hiddenModules.includes("dyskusje")}
-            shoppingLists={project.shoppingLists}
-            onProjectFlowClick={() => setView("rooms")}
-          />
-          <div className="flex-1 min-h-0 bg-background">
-            {renderViewer}
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const isRenderView = view === "render" && !!selectedRender && !!selectedRoom;
+  const shareScopedRenders = isRenderView && selectedRoom
+    ? (selectedFolder
+        ? selectedRoom.renders.filter((r) => r.folder?.id === selectedFolder.id)
+        : selectedRoom.renders.filter((r) => !r.folder))
+    : [];
+  const shareRoomRenders = shareScopedRenders.map((r) => ({ id: r.id, name: r.name, fileUrl: r.fileUrl, fileType: r.fileType }));
 
   const pageContent = (
     <>
@@ -744,7 +662,7 @@ export default function SharePage() {
       )}
 
       {/* Room renders view */}
-      {view === "room" && selectedRoom && (() => {
+      {(view === "room" || view === "render") && selectedRoom && (() => {
         const sortedFolders = [...selectedRoom.folders].sort((a, b) => (a.pinned === b.pinned ? 0 : a.pinned ? -1 : 1));
         const ungrouped = selectedRoom.renders.filter((r) => !r.folder);
         const folderRenders = selectedFolder ? selectedRoom.renders.filter((r) => r.folder?.id === selectedFolder.id) : [];
@@ -992,9 +910,63 @@ export default function SharePage() {
           shoppingLists={project.shoppingLists}
           onProjectFlowClick={() => setView("rooms")}
         />
-        <main className="flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-6 bg-background rounded-tl-2xl">
-          {pageContent}
-        </main>
+        <div className="flex-1 min-h-0 relative bg-background rounded-tl-2xl">
+          {/* Folder/room grid — always mounted to keep PDF thumbnails in DOM */}
+          <main
+            className="absolute inset-0 overflow-y-auto px-4 py-4 sm:px-6 sm:py-6"
+            style={isRenderView ? { display: "none" } : undefined}
+          >
+            {pageContent}
+          </main>
+          {/* Render viewer — mounted only when active, unmounts on back to free PDF memory */}
+          {isRenderView && selectedRender && selectedRoom && (
+            <RenderViewer
+              key={selectedRender.id}
+              renderId={selectedRender.id}
+              renderName={selectedRender.name}
+              projectTitle={project.title}
+              roomName={selectedRoom.name}
+              folderName={selectedRender.folder?.name ?? undefined}
+              imageUrl={selectedRender.fileUrl}
+              fileType={selectedRender.fileType}
+              initialComments={selectedRender.comments}
+              authorName={authorName}
+              isDesigner={false}
+              roomRenders={shareRoomRenders}
+              initialRenderStatus={selectedRender.status}
+              allowDirectStatusChange={project.allowDirectStatusChange}
+              allowClientComments={project.allowClientComments}
+              allowClientAcceptance={project.allowClientAcceptance}
+              hideCommentCount={project.hideCommentCount}
+              versions={selectedRender.versions.map((v) => ({ ...v, archivedAt: typeof v.archivedAt === "string" ? v.archivedAt : new Date(v.archivedAt).toISOString() }))}
+              allowClientVersionRestore={project.allowClientVersionRestore}
+              onVersionRestore={
+                project.allowClientVersionRestore
+                  ? (versionId) => handleVersionRestore(selectedRender.id, versionId)
+                  : undefined
+              }
+              onVersionRestoreRequest={
+                !project.allowClientVersionRestore
+                  ? (versionId) => handleVersionRestoreRequest(selectedRender.id, versionId)
+                  : undefined
+              }
+              onRenderStatusChange={(status) => handleRenderStatusChange(selectedRender.id, status)}
+              onStatusRequest={
+                project.allowDirectStatusChange || pendingRequests.has(selectedRender.id)
+                  ? undefined
+                  : () => handleStatusRequest(selectedRender.id)
+              }
+              onBack={() => setView("room")}
+              onRenderSelect={(r) => {
+                const full = selectedRoom.renders.find((render) => render.id === r.id);
+                if (full) setSelectedRender(full);
+                fetch(`/api/share/${token}/renders/${r.id}/view`, { method: "POST" });
+              }}
+              onViewCounted={(renderId) => fetch(`/api/share/${token}/renders/${renderId}/view`, { method: "POST" })}
+              shareToken={token}
+            />
+          )}
+        </div>
       </div>
     </div>
   );

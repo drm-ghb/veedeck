@@ -1972,7 +1972,7 @@ export default function RenderViewer({
               </button>
             </div>
           )}
-          <div className={`absolute inset-0 z-0 flex items-center p-4 sm:p-6 ${isPdf ? "overflow-auto" : "overflow-hidden"}`}>
+          <div className={`absolute inset-0 z-0 flex items-center p-4 sm:p-6 ${isPdf ? "overflow-auto" : "overflow-hidden"}`} style={isPdf ? { overscrollBehavior: "contain" } : undefined}>
           <div
             ref={!isPdf ? imgRef : undefined}
             className={`relative select-none max-w-full mx-auto ${(mode === "pin" || productPinMode) && !isPdf ? "cursor-crosshair" : "cursor-default"}`}
@@ -3194,6 +3194,7 @@ export default function RenderViewer({
           <div
             ref={lightboxViewRef}
             className={`absolute inset-0 overflow-hidden flex items-center justify-center select-none ${(mode === "pin" || productPinMode) ? "cursor-crosshair" : isPanning ? "cursor-grabbing" : zoom > 1 ? "cursor-grab" : "cursor-default"}`}
+            style={{ touchAction: "none" }}
             onWheel={(e) => {
               e.preventDefault();
               const rect = lightboxViewRef.current!.getBoundingClientRect();

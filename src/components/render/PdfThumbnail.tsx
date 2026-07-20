@@ -18,6 +18,9 @@ function getPdfJs() {
   return pdfjsInitPromise;
 }
 
+// Cache rendered thumbnail images (dataURL) by file URL — avoids re-parsing PDF on re-mount
+const thumbnailCache = new Map<string, string>();
+
 interface PdfThumbnailProps {
   fileUrl: string;
   className?: string;
@@ -29,6 +32,7 @@ export default function PdfThumbnail({ fileUrl, className, iconSize = 36 }: PdfT
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [status, setStatus] = useState<"loading" | "done" | "error">("loading");
   const [retryKey, setRetryKey] = useState(0);
+  const pdfDocRef = useRef<import("pdfjs-dist").PDFDocumentProxy | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -36,10 +40,31 @@ export default function PdfThumbnail({ fileUrl, className, iconSize = 36 }: PdfT
 
     async function render() {
       try {
-        const pdfjsLib = await getPdfJs();
+        // Serve from cache — skips pdf.js entirely on re-mount
+        const cached = thumbnailCache.get(fileUrl);
+        if (cached) {
+          const canvas = canvasRef.current;
+          if (!canvas) return;
+          const ctx = canvas.getContext("2d");
+          if (!ctx) return;
+          const img = new Image();
+          img.onload = () => {
+            if (cancelled) return;
+            canvas.width = img.naturalWidth;
+            canvas.height = img.naturalHeight;
+            canvas.style.width = "100%";
+            canvas.style.height = "100%";
+            ctx.drawImage(img, 0, 0);
+            setStatus("done");
+          };
+          img.src = cached;
+          return;
+        }
 
+        const pdfjsLib = await getPdfJs();
         const pdf = await pdfjsLib.getDocument(fileUrl).promise;
-        if (cancelled) return;
+        if (cancelled) { pdf.destroy(); return; }
+        pdfDocRef.current = pdf;
 
         const page = await pdf.getPage(1);
         if (cancelled) return;
@@ -62,14 +87,21 @@ export default function PdfThumbnail({ fileUrl, className, iconSize = 36 }: PdfT
         canvas.style.height = "100%";
 
         await page.render({ canvas, canvasContext: ctx, viewport: scaled }).promise;
-        if (!cancelled) setStatus("done");
+        if (!cancelled) {
+          thumbnailCache.set(fileUrl, canvas.toDataURL("image/jpeg", 0.85));
+          setStatus("done");
+        }
       } catch {
         if (!cancelled) setStatus("error");
       }
     }
 
     render();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+      pdfDocRef.current?.destroy();
+      pdfDocRef.current = null;
+    };
   }, [fileUrl, retryKey]);
 
   if (status === "error") {
@@ -92,7 +124,7 @@ export default function PdfThumbnail({ fileUrl, className, iconSize = 36 }: PdfT
       )}
       <canvas
         ref={canvasRef}
-        className={`w-full h-full object-cover transition-opacity duration-300 ${status === "done" ? "opacity-100" : "opacity-0"}`}
+        className={`w-full h-full object-cover ${status === "done" ? "opacity-100" : "opacity-0"}`}
       />
     </div>
   );
