@@ -60,12 +60,24 @@ interface LibraryProduct {
   quantity: number;
 }
 
+interface ListProductOption {
+  id: string;
+  name: string;
+  imageUrl: string | null;
+  sectionId: string;
+  sectionName: string;
+  parentProductId: string | null;
+}
+
 interface AddProductDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   listId: string;
   sectionId?: string | null;
+  parentProductId?: string | null;
+  listProducts?: ListProductOption[];
   onAdded: (product: unknown) => void;
+  onVariantLinked?: (product: unknown) => void;
   customCategories?: string[];
 }
 
@@ -80,11 +92,21 @@ export default function AddProductDialog({
   onOpenChange,
   listId,
   sectionId,
+  parentProductId,
+  listProducts,
   onAdded,
+  onVariantLinked,
   customCategories = [],
 }: AddProductDialogProps) {
   const t = useT();
-  const [tab, setTab] = useState<"link" | "manual" | "library">("link");
+  const [tab, setTab] = useState<"ta-lista" | "link" | "manual" | "library">(parentProductId ? "ta-lista" : "link");
+  const [listSearch, setListSearch] = useState("");
+  const [linkingSavedId, setLinkingSavedId] = useState<string | null>(null);
+
+  // Reset tab when dialog opens with/without parentProductId
+  useEffect(() => {
+    if (open) setTab(parentProductId ? "ta-lista" : "link");
+  }, [open, parentProductId]);
   const [scrapeUrl, setScrapeUrl] = useState("");
   const [scraping, setScraping] = useState(false);
   const [form, setForm] = useState<ProductData>(empty());
@@ -191,7 +213,7 @@ export default function AddProductDialog({
       const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, ...(parentProductId ? { parentProductId } : {}) }),
       });
       if (!res.ok) throw new Error();
       const product = await res.json();
@@ -227,6 +249,7 @@ export default function AddProductDialog({
           category: lp.category || "",
           quantity: 1,
           productId: lp.id,
+          ...(parentProductId ? { parentProductId } : {}),
         }),
       });
       if (!res.ok) throw new Error();
@@ -241,25 +264,47 @@ export default function AddProductDialog({
     }
   }
 
+  async function handleSelectFromList(lp: ListProductOption) {
+    if (!parentProductId) return;
+    setLinkingSavedId(lp.id);
+    try {
+      const res = await fetch(`/api/lists/${listId}/sections/${lp.sectionId}/products/${lp.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ parentProductId }),
+      });
+      if (!res.ok) throw new Error();
+      const product = await res.json();
+      toast.success("Wariant został przypisany");
+      onVariantLinked?.(product);
+      handleClose();
+    } catch {
+      toast.error("Nie udało się przypisać wariantu");
+    } finally {
+      setLinkingSavedId(null);
+    }
+  }
+
   function handleClose() {
     onOpenChange(false);
     setScrapeUrl("");
     setForm(empty());
-    setTab("link");
+    setTab(parentProductId ? "ta-lista" : "link");
     setLibraryQuery("");
     setLibraryProducts([]);
+    setListSearch("");
   }
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-2xl overflow-x-hidden">
         <DialogHeader>
-          <DialogTitle>{t.products.addProduct}</DialogTitle>
+          <DialogTitle>{parentProductId ? "Dodaj wariant" : t.products.addProduct}</DialogTitle>
         </DialogHeader>
 
         {/* Tabs */}
-        <div className="flex gap-1 bg-muted rounded-lg p-1 mb-2 overflow-hidden">
-          {(["link", "library", "manual"] as const).map((tabKey) => (
+        <div className="flex gap-1 bg-muted rounded-lg p-1 mb-2">
+          {(parentProductId && listProducts ? ["ta-lista", "link", "library", "manual"] as const : ["link", "library", "manual"] as const).map((tabKey) => (
             <button
               key={tabKey}
               type="button"
@@ -270,10 +315,74 @@ export default function AddProductDialog({
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              {tabKey === "link" ? t.products.linkTab : tabKey === "library" ? t.products.libraryTab : t.products.manualTab}
+              {tabKey === "ta-lista" ? "Ta lista" : tabKey === "link" ? t.products.linkTab : tabKey === "library" ? t.products.libraryTab : t.products.manualTab}
             </button>
           ))}
         </div>
+
+        {tab === "ta-lista" && parentProductId && listProducts && (
+          <div className="w-full min-w-0 flex flex-col gap-3">
+            <div className="relative w-full">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={listSearch}
+                onChange={(e) => setListSearch(e.target.value)}
+                placeholder="Szukaj produktu na liście..."
+                className="pl-9"
+                autoFocus
+              />
+            </div>
+            <div className="w-full overflow-y-auto overflow-x-hidden space-y-1 h-[45dvh] sm:h-[55dvh]">
+              {(() => {
+                const q = listSearch.trim().toLowerCase();
+                const candidates = listProducts.filter(
+                  (p) => p.id !== parentProductId && !p.parentProductId &&
+                    (!q || p.name.toLowerCase().includes(q))
+                );
+                if (candidates.length === 0) {
+                  return (
+                    <div className="flex flex-col items-center justify-center py-10 text-muted-foreground gap-2">
+                      <Package size={32} className="opacity-30" />
+                      <p className="text-sm">Brak produktów do przypisania</p>
+                    </div>
+                  );
+                }
+                const sectionMap = new Map<string, { name: string; products: ListProductOption[] }>();
+                for (const p of candidates) {
+                  if (!sectionMap.has(p.sectionId)) sectionMap.set(p.sectionId, { name: p.sectionName, products: [] });
+                  sectionMap.get(p.sectionId)!.products.push(p);
+                }
+                return Array.from(sectionMap.entries()).map(([sid, sec]) => (
+                  <div key={sid} className="mb-2">
+                    <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide px-2 py-1">{sec.name}</p>
+                    {sec.products.map((p) => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        disabled={!!linkingSavedId}
+                        onClick={() => handleSelectFromList(p)}
+                        className="w-full max-w-full flex items-center gap-2 p-2 rounded-lg border border-border hover:bg-muted/60 transition-colors text-left disabled:opacity-50 overflow-hidden mb-1"
+                      >
+                        <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-md overflow-hidden border border-border bg-muted flex items-center justify-center shrink-0">
+                          {p.imageUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={p.imageUrl} alt={p.name} className="w-full h-full object-contain" />
+                          ) : (
+                            <Package size={14} className="text-muted-foreground/40 sm:w-[18px] sm:h-[18px]" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0 overflow-hidden">
+                          <p className="text-sm font-medium truncate">{p.name}</p>
+                        </div>
+                        {linkingSavedId === p.id && <Loader2 size={14} className="animate-spin text-muted-foreground shrink-0" />}
+                      </button>
+                    ))}
+                  </div>
+                ));
+              })()}
+            </div>
+          </div>
+        )}
 
         {tab === "link" && (
           <div className="space-y-4">

@@ -60,6 +60,7 @@ export async function GET(
         approval: p.approval,
         note: p.note,
         optional: p.optional,
+        parentProductId: p.parentProductId,
       })),
     })),
   });

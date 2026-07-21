@@ -76,6 +76,17 @@ export async function PATCH(
       return NextResponse.json(updated);
     }
 
+    if (body.parentProductId !== undefined) {
+      const updated = await prisma.listProduct.update({
+        where: { id: productId },
+        data: {
+          parentProductId: body.parentProductId ?? null,
+          ...(body.parentProductId ? { optional: true } : {}),
+        },
+      });
+      return NextResponse.json(updated);
+    }
+
     if (body.sectionId !== undefined) {
       const targetSection = await prisma.listSection.findFirst({
         where: { id: body.sectionId, listId: id, list: { userId: session.user.id } },

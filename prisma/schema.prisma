@@ -456,18 +456,21 @@ model ListProduct {
   createdAt     DateTime             @default(now())
   sectionId     String
   quantity      Int                  @default(1)
-  hidden        Boolean              @default(false)
-  optional      Boolean              @default(false)
-  approval      String?
-  productId     String?
-  catalogNumber String?
-  supplier      String?
-  dimensions    String?
-  category      String?
-  note          String?
-  product       Product?             @relation(fields: [productId], references: [id])
-  section       ListSection          @relation(fields: [sectionId], references: [id], onDelete: Cascade)
-  comments      ListProductComment[]
+  hidden          Boolean              @default(false)
+  optional        Boolean              @default(false)
+  approval        String?
+  productId       String?
+  catalogNumber   String?
+  supplier        String?
+  dimensions      String?
+  category        String?
+  note            String?
+  parentProductId String?
+  product         Product?             @relation(fields: [productId], references: [id])
+  parent          ListProduct?         @relation("ProductVariants", fields: [parentProductId], references: [id], onDelete: SetNull)
+  variants        ListProduct[]        @relation("ProductVariants")
+  section         ListSection          @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  comments        ListProductComment[]
 }
 
 model ListProductComment {

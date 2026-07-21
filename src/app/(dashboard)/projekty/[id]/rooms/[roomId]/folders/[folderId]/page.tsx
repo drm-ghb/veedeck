@@ -58,6 +58,7 @@ export default async function FolderPage({ params }: Props) {
           viewCount: r.viewCount,
           status: r.status,
           pinned: r.pinned,
+          createdAt: r.createdAt.toISOString(),
         }))}
       />
     </div>

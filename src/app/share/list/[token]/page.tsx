@@ -141,6 +141,7 @@ export default async function PublicListPage({ params }: { params: Promise<{ tok
     approval: p.approval,
     note: p.note,
     optional: p.optional,
+    parentProductId: p.parentProductId,
   });
 
   // Separate unsorted products — they will be shown as "Pozostałe" at the bottom

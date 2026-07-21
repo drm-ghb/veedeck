@@ -1,10 +1,10 @@
 ﻿"use client";
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, Fragment } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, ChevronDown, ChevronUp, Plus, ExternalLink, Minus, MoreHorizontal, Pencil, Trash2, GripVertical, FileDown, Sheet, ArrowDownUp, Eye, EyeOff, Check, X, RotateCcw, FolderInput, Wallet, AlertCircle, AlertTriangle, DollarSign, Copy, Comment, CheckCircle, RadioButtonUnchecked, Search, FileText } from "@/components/ui/icons";
+import { ChevronLeft, ChevronDown, ChevronUp, Plus, ExternalLink, Minus, MoreHorizontal, Pencil, Trash2, GripVertical, FileDown, Sheet, ArrowDownUp, Eye, EyeOff, Check, X, RotateCcw, FolderInput, Wallet, AlertCircle, AlertTriangle, DollarSign, Copy, Comment, CheckCircle, RadioButtonUnchecked, Search, FileText, Link2, Layers } from "@/components/ui/icons";
 import ProductCommentPanel from "./ProductCommentPanel";
 import ListSectionNav from "./ListSectionNav";
 import { pusherClient } from "@/lib/pusher";
@@ -85,6 +85,7 @@ interface Product {
   supplier: string | null;
   catalogNumber: string | null;
   note: string | null;
+  parentProductId: string | null;
   createdAt?: string;
   commentCount?: number;
 }
@@ -233,6 +234,55 @@ function CopySectionDialog({ open, onOpenChange, sections, currentSectionId, pro
   );
 }
 
+function AssignVariantDialog({
+  open,
+  onOpenChange,
+  product,
+  sectionProducts,
+  onAssign,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  product: Product;
+  sectionProducts: Product[];
+  onAssign: (parentId: string) => void;
+}) {
+  const candidates = sectionProducts.filter(
+    (p) => p.id !== product.id && !p.parentProductId
+  );
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Przypisz jako wariant</DialogTitle>
+          <DialogDescription>Wybierz produkt podstawowy, do którego chcesz przypisać „{product.name}"</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-1 max-h-64 overflow-y-auto">
+          {candidates.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-4 text-center">Brak produktów podstawowych w tej sekcji</p>
+          ) : (
+            candidates.map((p) => (
+              <button
+                key={p.id}
+                onClick={() => { onAssign(p.id); onOpenChange(false); }}
+                className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-muted transition-colors flex items-center gap-2"
+              >
+                {p.imageUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={p.imageUrl} alt={p.name} className="w-8 h-8 rounded object-contain bg-muted shrink-0" />
+                ) : (
+                  <span className="w-8 h-8 rounded bg-muted flex items-center justify-center text-base shrink-0">📦</span>
+                )}
+                <span className="truncate">{p.name}</span>
+              </button>
+            ))
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function ProductRow({
   product,
   index,
@@ -251,6 +301,9 @@ function ProductRow({
   onOpenCopyDialog,
   onApprovalChange,
   onFieldUpdate,
+  onAddVariant,
+  onAssignVariant,
+  onUnassignVariant,
   approval,
   commentCount,
   unreadCount,
@@ -259,6 +312,7 @@ function ProductRow({
   dragHandle,
   allCategories,
   sections,
+  isVariant,
 }: {
   product: Product;
   index: number;
@@ -277,6 +331,9 @@ function ProductRow({
   onOpenCopyDialog: () => void;
   onApprovalChange: (value: string | null) => void;
   onFieldUpdate: (productId: string, field: string, value: string | null) => void;
+  onAddVariant?: () => void;
+  onAssignVariant?: () => void;
+  onUnassignVariant?: () => void;
   sections: Section[];
   approval: string | null;
   commentCount: number;
@@ -285,6 +342,7 @@ function ProductRow({
   deleting?: boolean;
   dragHandle?: React.ReactNode;
   allCategories: { value: string; label: string }[];
+  isVariant?: boolean;
 }) {
   const [qty, setQty] = useState(product.quantity);
   const [saving, setSaving] = useState(false);
@@ -382,6 +440,24 @@ function ProductRow({
             : <RadioButtonUnchecked size={13} className="mr-2" />}
           {product.optional ? "Oznacz jako podstawowy" : "Oznacz jako opcjonalny"}
         </DropdownMenuItem>
+        {!product.parentProductId && onAddVariant && (
+          <DropdownMenuItem onClick={onAddVariant}>
+            <Layers size={13} className="mr-2" />
+            Dodaj wariant
+          </DropdownMenuItem>
+        )}
+        {product.optional && !product.parentProductId && onAssignVariant && (
+          <DropdownMenuItem onClick={onAssignVariant}>
+            <Link2 size={13} className="mr-2" />
+            Przypisz jako wariant
+          </DropdownMenuItem>
+        )}
+        {product.parentProductId && onUnassignVariant && (
+          <DropdownMenuItem onClick={onUnassignVariant}>
+            <Link2 size={13} className="mr-2 text-muted-foreground" />
+            Odepnij od produktu
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem onClick={onToggleHidden}>
           {product.hidden ? <Eye size={13} className="mr-2" /> : <EyeOff size={13} className="mr-2" />}
           {product.hidden ? t.render.showToClient : t.render.hideFromClient}
@@ -574,6 +650,12 @@ function ProductRow({
             ) : (
               <p className="font-medium text-sm text-foreground truncate">{product.name}</p>
             )}
+            {isVariant && (
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted text-muted-foreground shrink-0">
+                <Layers size={9} />
+                wariant
+              </span>
+            )}
             {/* Inline category badge */}
             <button
               onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); const estH = (allCategories.length + 1) * 28 + 8; const top = (window.innerHeight - r.bottom) >= estH + 8 ? r.bottom + 4 : Math.max(4, r.top - estH - 4); setCategoryMenuPos({ top, left: r.left }); setCategoryMenuOpen((v) => !v); }}
@@ -745,6 +827,12 @@ function ProductRow({
                 </a>
               ) : (
                 <p className="font-medium text-sm text-foreground leading-tight truncate">{product.name}</p>
+              )}
+              {isVariant && (
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted text-muted-foreground mt-0.5">
+                  <Layers size={9} />
+                  wariant
+                </span>
               )}
               {product.manufacturer && <p className="text-xs text-muted-foreground truncate">{t.listy.fieldManufacturer}: {product.manufacturer}</p>}
               {product.supplier && <p className="text-xs text-muted-foreground truncate">{t.listy.fieldSupplier}: {product.supplier}</p>}
@@ -977,7 +1065,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
   const [addingSection, setAddingSection] = useState(false);
   const [newSectionName, setNewSectionName] = useState("");
   const [savingSection, setSavingSection] = useState(false);
-  const [dialogState, setDialogState] = useState<{ open: boolean; sectionId: string | null }>({
+  const [dialogState, setDialogState] = useState<{ open: boolean; sectionId: string | null; parentProductId?: string | null }>({
     open: false,
     sectionId: null,
   });
@@ -985,6 +1073,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
   const [editState, setEditState] = useState<{ product: Product; sectionId: string } | null>(null);
   const [moveState, setMoveState] = useState<{ product: Product; sectionId: string } | null>(null);
   const [copyState, setCopyState] = useState<{ product: Product; sectionId: string } | null>(null);
+  const [assignVariantState, setAssignVariantState] = useState<{ product: Product; sectionId: string } | null>(null);
   const [activeDragProduct, setActiveDragProduct] = useState<Product | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [editingSectionId, setEditingSectionId] = useState<string | null>(null);
@@ -1622,6 +1711,56 @@ export default function ListDetail({ list, designerName, designerEmail, designer
     }
   }
 
+  function handleVariantLinked(updatedProduct: unknown) {
+    // An existing product was linked as variant via "Ta lista" tab — update it in state
+    const p = updatedProduct as { id: string; sectionId: string; parentProductId: string | null; optional: boolean };
+    setSections((prev) =>
+      prev.map((s) =>
+        s.id === p.sectionId
+          ? { ...s, products: s.products.map((prod) => prod.id === p.id ? { ...prod, parentProductId: p.parentProductId, optional: p.optional } : prod) }
+          : s
+      )
+    );
+  }
+
+  async function handleAssignVariant(sectionId: string, productId: string, parentProductId: string) {
+    setSections((prev) =>
+      prev.map((s) =>
+        s.id === sectionId
+          ? { ...s, products: s.products.map((p) => p.id === productId ? { ...p, parentProductId, optional: true } : p) }
+          : s
+      )
+    );
+    try {
+      await fetch(`/api/lists/${list.id}/sections/${sectionId}/products/${productId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ parentProductId }),
+      });
+    } catch {
+      toast.error("Nie udało się przypisać wariantu");
+    }
+  }
+
+  async function handleUnassignVariant(sectionId: string, productId: string) {
+    setSections((prev) =>
+      prev.map((s) =>
+        s.id === sectionId
+          ? { ...s, products: s.products.map((p) => p.id === productId ? { ...p, parentProductId: null } : p) }
+          : s
+      )
+    );
+    try {
+      await fetch(`/api/lists/${list.id}/sections/${sectionId}/products/${productId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ parentProductId: null }),
+      });
+    } catch {
+      toast.error("Nie udało się odpiąć wariantu");
+    }
+  }
+
   async function handleDeleteProduct(sectionId: string, productId: string) {
     setDeletingId(productId);
     try {
@@ -2031,41 +2170,95 @@ export default function ListDetail({ list, designerName, designerEmail, designer
             <div className="mb-8">
               <h2 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide">{t.listy.productsOutsideSection}</h2>
               <div className="bg-card border border-border rounded-xl overflow-hidden">
-                <SortableContext items={unsortedSection.products.map((p) => p.id)} strategy={verticalListSortingStrategy}>
-                  {unsortedSection.products.map((product, i) => (
-                    <SortableProduct key={product.id} id={product.id} sectionId={unsortedSection.id}>
-                      {(dragHandle) => (
-                        <ProductRow
-                          product={product}
-                          index={i}
-                          last={i === unsortedSection.products.length - 1}
-                          listId={list.id}
-                          sectionId={unsortedSection.id}
-                          onQuantityChange={(pid, qty) => handleQuantityChange(unsortedSection.id, pid, qty)}
-                          onEdit={() => setEditState({ product, sectionId: unsortedSection.id })}
-                          onDelete={() => handleDeleteProduct(unsortedSection.id, product.id)}
-                          onOpenComments={() => openCommentsPanel(product.id)}
-                          onToggleHidden={() => handleToggleHidden(unsortedSection.id, product.id)}
-                          onToggleOptional={() => handleToggleOptional(unsortedSection.id, product.id)}
-                          onMove={(targetSectionId) => handleMoveProduct(unsortedSection.id, product.id, targetSectionId)}
-                          onCopy={(targetSectionId) => handleCopyProduct(unsortedSection.id, product, targetSectionId)}
-                          onOpenMoveDialog={() => setMoveState({ product, sectionId: unsortedSection.id })}
-                          onOpenCopyDialog={() => setCopyState({ product, sectionId: unsortedSection.id })}
-                          onApprovalChange={(value) => handleApprovalChange(unsortedSection.id, product.id, value)}
-                          onFieldUpdate={(pid, field, value) => handleProductFieldUpdate(unsortedSection.id, pid, field, value)}
-                          approval={approvals[product.id] ?? null}
-                          commentCount={commentCounts[product.id] ?? 0}
-                          unreadCount={unreadProducts.has(product.id) ? Math.max(0, (commentCounts[product.id] ?? 0) - (seenCounts[product.id] ?? 0)) : 0}
-                          unread={unreadProducts.has(product.id)}
-                          deleting={deletingId === product.id}
-                          dragHandle={dragHandle}
-                          allCategories={allCategories}
-                          sections={sections}
-                        />
-                      )}
-                    </SortableProduct>
-                  ))}
-                </SortableContext>
+                {(() => {
+                  const topLevel = unsortedSection.products.filter((p) => !p.parentProductId);
+                  return (
+                    <SortableContext items={topLevel.map((p) => p.id)} strategy={verticalListSortingStrategy}>
+                      {topLevel.map((product, i) => {
+                        const variants = unsortedSection.products.filter((p) => p.parentProductId === product.id).sort((a, b) => a.order - b.order);
+                        const isLastTopLevel = i === topLevel.length - 1;
+                        return (
+                          <Fragment key={product.id}>
+                            <SortableProduct id={product.id} sectionId={unsortedSection.id}>
+                              {(dragHandle) => (
+                                <ProductRow
+                                  product={product}
+                                  index={i}
+                                  last={isLastTopLevel && variants.length === 0}
+                                  listId={list.id}
+                                  sectionId={unsortedSection.id}
+                                  onQuantityChange={(pid, qty) => handleQuantityChange(unsortedSection.id, pid, qty)}
+                                  onEdit={() => setEditState({ product, sectionId: unsortedSection.id })}
+                                  onDelete={() => handleDeleteProduct(unsortedSection.id, product.id)}
+                                  onOpenComments={() => openCommentsPanel(product.id)}
+                                  onToggleHidden={() => handleToggleHidden(unsortedSection.id, product.id)}
+                                  onToggleOptional={() => handleToggleOptional(unsortedSection.id, product.id)}
+                                  onMove={(targetSectionId) => handleMoveProduct(unsortedSection.id, product.id, targetSectionId)}
+                                  onCopy={(targetSectionId) => handleCopyProduct(unsortedSection.id, product, targetSectionId)}
+                                  onOpenMoveDialog={() => setMoveState({ product, sectionId: unsortedSection.id })}
+                                  onOpenCopyDialog={() => setCopyState({ product, sectionId: unsortedSection.id })}
+                                  onApprovalChange={(value) => handleApprovalChange(unsortedSection.id, product.id, value)}
+                                  onFieldUpdate={(pid, field, value) => handleProductFieldUpdate(unsortedSection.id, pid, field, value)}
+                                  onAddVariant={() => setDialogState({ open: true, sectionId: unsortedSection.id, parentProductId: product.id })}
+                                  onAssignVariant={() => setAssignVariantState({ product, sectionId: unsortedSection.id })}
+                                  onUnassignVariant={() => handleUnassignVariant(unsortedSection.id, product.id)}
+                                  approval={approvals[product.id] ?? null}
+                                  commentCount={commentCounts[product.id] ?? 0}
+                                  unreadCount={unreadProducts.has(product.id) ? Math.max(0, (commentCounts[product.id] ?? 0) - (seenCounts[product.id] ?? 0)) : 0}
+                                  unread={unreadProducts.has(product.id)}
+                                  deleting={deletingId === product.id}
+                                  dragHandle={dragHandle}
+                                  allCategories={allCategories}
+                                  sections={sections}
+                                />
+                              )}
+                            </SortableProduct>
+                            {variants.length > 0 && (
+                              <div className="relative h-3 pointer-events-none">
+                                <div className="absolute left-4 inset-y-0 w-0.5 bg-border/60" />
+                              </div>
+                            )}
+                            {variants.map((variant, vi) => (
+                              <div key={variant.id} className="relative pl-8">
+                                <div className={`absolute left-4 top-0 w-0.5 bg-border/60 pointer-events-none ${vi === variants.length - 1 ? 'h-1/2' : 'h-full'}`} />
+                                <div className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-0.5 bg-border/60 pointer-events-none" />
+                                <ProductRow
+                                  product={variant}
+                                  index={vi}
+                                  last={isLastTopLevel && vi === variants.length - 1}
+                                  listId={list.id}
+                                  sectionId={unsortedSection.id}
+                                  onQuantityChange={(pid, qty) => handleQuantityChange(unsortedSection.id, pid, qty)}
+                                  onEdit={() => setEditState({ product: variant, sectionId: unsortedSection.id })}
+                                  onDelete={() => handleDeleteProduct(unsortedSection.id, variant.id)}
+                                  onOpenComments={() => openCommentsPanel(variant.id)}
+                                  onToggleHidden={() => handleToggleHidden(unsortedSection.id, variant.id)}
+                                  onToggleOptional={() => handleToggleOptional(unsortedSection.id, variant.id)}
+                                  onMove={(targetSectionId) => handleMoveProduct(unsortedSection.id, variant.id, targetSectionId)}
+                                  onCopy={(targetSectionId) => handleCopyProduct(unsortedSection.id, variant, targetSectionId)}
+                                  onOpenMoveDialog={() => setMoveState({ product: variant, sectionId: unsortedSection.id })}
+                                  onOpenCopyDialog={() => setCopyState({ product: variant, sectionId: unsortedSection.id })}
+                                  onApprovalChange={(value) => handleApprovalChange(unsortedSection.id, variant.id, value)}
+                                  onFieldUpdate={(pid, field, value) => handleProductFieldUpdate(unsortedSection.id, pid, field, value)}
+                                  onAssignVariant={() => setAssignVariantState({ product: variant, sectionId: unsortedSection.id })}
+                                  onUnassignVariant={() => handleUnassignVariant(unsortedSection.id, variant.id)}
+                                  approval={approvals[variant.id] ?? null}
+                                  commentCount={commentCounts[variant.id] ?? 0}
+                                  unreadCount={unreadProducts.has(variant.id) ? Math.max(0, (commentCounts[variant.id] ?? 0) - (seenCounts[variant.id] ?? 0)) : 0}
+                                  unread={unreadProducts.has(variant.id)}
+                                  deleting={deletingId === variant.id}
+                                  allCategories={allCategories}
+                                  sections={sections}
+                                  isVariant
+                                />
+                              </div>
+                            ))}
+                          </Fragment>
+                        );
+                      })}
+                    </SortableContext>
+                  );
+                })()}
               </div>
             </div>
           );
@@ -2187,44 +2380,98 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                       </div>
                     ) : !isDraggingSection ? (
                       <div className="bg-card border border-border rounded-xl overflow-hidden">
-                          <SortableContext
-                            items={section.products.map((p) => p.id)}
-                            strategy={verticalListSortingStrategy}
-                          >
-                            {sortProducts(section.products, getSortBy(section.sortBy), categoryOrder).map((product, i) => (
-                              <SortableProduct key={product.id} id={product.id} sectionId={section.id}>
-                                {(dragHandle) => (
-                                  <ProductRow
-                                    product={product}
-                                    index={i}
-                                    last={i === section.products.length - 1}
-                                    listId={list.id}
-                                    sectionId={section.id}
-                                    onQuantityChange={(pid, qty) => handleQuantityChange(section.id, pid, qty)}
-                                    onEdit={() => setEditState({ product, sectionId: section.id })}
-                                    onDelete={() => handleDeleteProduct(section.id, product.id)}
-                                    onOpenComments={() => openCommentsPanel(product.id)}
-                                    onToggleHidden={() => handleToggleHidden(section.id, product.id)}
-                                    onToggleOptional={() => handleToggleOptional(section.id, product.id)}
-                                    onMove={(targetSectionId) => handleMoveProduct(section.id, product.id, targetSectionId)}
-                                    onCopy={(targetSectionId) => handleCopyProduct(section.id, product, targetSectionId)}
-                                    onOpenMoveDialog={() => setMoveState({ product, sectionId: section.id })}
-                                    onOpenCopyDialog={() => setCopyState({ product, sectionId: section.id })}
-                                    onApprovalChange={(value) => handleApprovalChange(section.id, product.id, value)}
-                                    onFieldUpdate={(pid, field, value) => handleProductFieldUpdate(section.id, pid, field, value)}
-                                    approval={approvals[product.id] ?? null}
-                                    commentCount={commentCounts[product.id] ?? 0}
-                                    unreadCount={unreadProducts.has(product.id) ? Math.max(0, (commentCounts[product.id] ?? 0) - (seenCounts[product.id] ?? 0)) : 0}
-                                    unread={unreadProducts.has(product.id)}
-                                    deleting={deletingId === product.id}
-                                    dragHandle={dragHandle}
-                                    allCategories={allCategories}
-                                    sections={sections}
-                                  />
-                                )}
-                              </SortableProduct>
-                            ))}
-                          </SortableContext>
+                          {(() => {
+                            const topLevel = sortProducts(section.products.filter((p) => !p.parentProductId), getSortBy(section.sortBy), categoryOrder);
+                            return (
+                              <SortableContext
+                                items={topLevel.map((p) => p.id)}
+                                strategy={verticalListSortingStrategy}
+                              >
+                                {topLevel.map((product, i) => {
+                                  const variants = section.products.filter((p) => p.parentProductId === product.id).sort((a, b) => a.order - b.order);
+                                  const isLastTopLevel = i === topLevel.length - 1;
+                                  return (
+                                    <Fragment key={product.id}>
+                                      <SortableProduct id={product.id} sectionId={section.id}>
+                                        {(dragHandle) => (
+                                          <ProductRow
+                                            product={product}
+                                            index={i}
+                                            last={isLastTopLevel && variants.length === 0}
+                                            listId={list.id}
+                                            sectionId={section.id}
+                                            onQuantityChange={(pid, qty) => handleQuantityChange(section.id, pid, qty)}
+                                            onEdit={() => setEditState({ product, sectionId: section.id })}
+                                            onDelete={() => handleDeleteProduct(section.id, product.id)}
+                                            onOpenComments={() => openCommentsPanel(product.id)}
+                                            onToggleHidden={() => handleToggleHidden(section.id, product.id)}
+                                            onToggleOptional={() => handleToggleOptional(section.id, product.id)}
+                                            onMove={(targetSectionId) => handleMoveProduct(section.id, product.id, targetSectionId)}
+                                            onCopy={(targetSectionId) => handleCopyProduct(section.id, product, targetSectionId)}
+                                            onOpenMoveDialog={() => setMoveState({ product, sectionId: section.id })}
+                                            onOpenCopyDialog={() => setCopyState({ product, sectionId: section.id })}
+                                            onApprovalChange={(value) => handleApprovalChange(section.id, product.id, value)}
+                                            onFieldUpdate={(pid, field, value) => handleProductFieldUpdate(section.id, pid, field, value)}
+                                            onAddVariant={() => setDialogState({ open: true, sectionId: section.id, parentProductId: product.id })}
+                                            onAssignVariant={() => setAssignVariantState({ product, sectionId: section.id })}
+                                            onUnassignVariant={() => handleUnassignVariant(section.id, product.id)}
+                                            approval={approvals[product.id] ?? null}
+                                            commentCount={commentCounts[product.id] ?? 0}
+                                            unreadCount={unreadProducts.has(product.id) ? Math.max(0, (commentCounts[product.id] ?? 0) - (seenCounts[product.id] ?? 0)) : 0}
+                                            unread={unreadProducts.has(product.id)}
+                                            deleting={deletingId === product.id}
+                                            dragHandle={dragHandle}
+                                            allCategories={allCategories}
+                                            sections={sections}
+                                          />
+                                        )}
+                                      </SortableProduct>
+                                      {variants.length > 0 && (
+                                        <div className="relative h-3 pointer-events-none">
+                                          <div className="absolute left-4 inset-y-0 w-0.5 bg-border/60" />
+                                        </div>
+                                      )}
+                                      {variants.map((variant, vi) => (
+                                        <div key={variant.id} className="relative pl-8">
+                                          <div className={`absolute left-4 top-0 w-0.5 bg-border/60 pointer-events-none ${vi === variants.length - 1 ? 'h-1/2' : 'h-full'}`} />
+                                          <div className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-0.5 bg-border/60 pointer-events-none" />
+                                          <ProductRow
+                                            product={variant}
+                                            index={vi}
+                                            last={isLastTopLevel && vi === variants.length - 1}
+                                            listId={list.id}
+                                            sectionId={section.id}
+                                            onQuantityChange={(pid, qty) => handleQuantityChange(section.id, pid, qty)}
+                                            onEdit={() => setEditState({ product: variant, sectionId: section.id })}
+                                            onDelete={() => handleDeleteProduct(section.id, variant.id)}
+                                            onOpenComments={() => openCommentsPanel(variant.id)}
+                                            onToggleHidden={() => handleToggleHidden(section.id, variant.id)}
+                                            onToggleOptional={() => handleToggleOptional(section.id, variant.id)}
+                                            onMove={(targetSectionId) => handleMoveProduct(section.id, variant.id, targetSectionId)}
+                                            onCopy={(targetSectionId) => handleCopyProduct(section.id, variant, targetSectionId)}
+                                            onOpenMoveDialog={() => setMoveState({ product: variant, sectionId: section.id })}
+                                            onOpenCopyDialog={() => setCopyState({ product: variant, sectionId: section.id })}
+                                            onApprovalChange={(value) => handleApprovalChange(section.id, variant.id, value)}
+                                            onFieldUpdate={(pid, field, value) => handleProductFieldUpdate(section.id, pid, field, value)}
+                                            onAssignVariant={() => setAssignVariantState({ product: variant, sectionId: section.id })}
+                                            onUnassignVariant={() => handleUnassignVariant(section.id, variant.id)}
+                                            approval={approvals[variant.id] ?? null}
+                                            commentCount={commentCounts[variant.id] ?? 0}
+                                            unreadCount={unreadProducts.has(variant.id) ? Math.max(0, (commentCounts[variant.id] ?? 0) - (seenCounts[variant.id] ?? 0)) : 0}
+                                            unread={unreadProducts.has(variant.id)}
+                                            deleting={deletingId === variant.id}
+                                            allCategories={allCategories}
+                                            sections={sections}
+                                            isVariant
+                                          />
+                                        </div>
+                                      ))}
+                                    </Fragment>
+                                  );
+                                })}
+                              </SortableContext>
+                            );
+                          })()}
                         <button
                           onClick={() => setDialogState({ open: true, sectionId: section.id })}
                           className="w-full flex items-center gap-1.5 px-4 py-2.5 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/30 border-t border-border transition-colors"
@@ -2268,12 +2515,25 @@ export default function ListDetail({ list, designerName, designerEmail, designer
 
       <AddProductDialog
         open={dialogState.open}
-        onOpenChange={(open) => setDialogState({ open, sectionId: open ? dialogState.sectionId : null })}
+        onOpenChange={(open) => setDialogState({ open, sectionId: open ? dialogState.sectionId : null, parentProductId: open ? dialogState.parentProductId : null })}
         listId={list.id}
         sectionId={dialogState.sectionId}
+        parentProductId={dialogState.parentProductId}
+        listProducts={dialogState.parentProductId ? sections.flatMap((s) => s.products.map((p) => ({ id: p.id, name: p.name, imageUrl: p.imageUrl, sectionId: s.id, sectionName: s.unsorted ? "Pozostałe" : s.name, parentProductId: p.parentProductId }))) : undefined}
         onAdded={(product) => handleProductAdded(dialogState.sectionId, product)}
+        onVariantLinked={handleVariantLinked}
         customCategories={customCategories}
       />
+
+      {assignVariantState && (
+        <AssignVariantDialog
+          open={!!assignVariantState}
+          onOpenChange={(v) => { if (!v) setAssignVariantState(null); }}
+          product={assignVariantState.product}
+          sectionProducts={sections.find((s) => s.id === assignVariantState.sectionId)?.products ?? []}
+          onAssign={(parentId) => handleAssignVariant(assignVariantState.sectionId, assignVariantState.product.id, parentId)}
+        />
+      )}
 
       {editState && (
         <EditProductDialog

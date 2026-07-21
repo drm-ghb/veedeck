@@ -58,6 +58,7 @@ interface Product {
   supplier?: string | null;
   quantity: number;
   hidden?: boolean;
+  parentProductId?: string | null;
 }
 
 interface Section {
@@ -412,11 +413,12 @@ async function renderViolet(
     doc.setTextColor(...ACCENT);
     doc.text(section.name.toUpperCase(), ML + 7, y + 6);
 
-    const secTotal = products.reduce((sum, p) => {
+    const topLevelProducts = products.filter((p) => !p.parentProductId);
+    const secTotal = topLevelProducts.reduce((sum, p) => {
       const n = parsePrice(p.price);
       return n !== null ? sum + n * p.quantity : sum;
     }, 0);
-    const secCur = getCurrency(products.find((p) => getCurrency(p.price))?.price ?? null);
+    const secCur = getCurrency(topLevelProducts.find((p) => getCurrency(p.price))?.price ?? null);
     if (secTotal > 0) {
       doc.setFont(FONT, "bold");
       doc.setFontSize(9);
@@ -432,19 +434,22 @@ async function renderViolet(
     const TEXT_W = CW - IMG - 4 - PRICE_COL - 4;
     const PRICE_X = ML + CW;
 
-    for (let i = 0; i < products.length; i++) {
-      const p = products[i];
+    function renderPdfProduct(p: Product, isVariant: boolean, isLast: boolean) {
+      const IML = isVariant ? ML + 8 : ML;
+      const IIMG = isVariant ? IMG - 4 : IMG;
+      const ITEXT_X = IML + IIMG + 4;
+      const ITEXT_W = CW - (IML - ML) - IIMG - 4 - PRICE_COL - 4;
 
-      // Pre-calculate row height based on content
-      const nameLines = (doc.splitTextToSize(p.name, TEXT_W) as string[]).slice(0, 2);
+      const nameLines = (doc.splitTextToSize(p.name, ITEXT_W) as string[]).slice(0, 2);
       const detailRows: [string, string][] = [];
       if (p.supplier) detailRows.push([s.supplier, p.supplier]);
       if (p.manufacturer) detailRows.push([s.manufacturer, p.manufacturer]);
       if (p.dimensions) detailRows.push([s.dimension, p.dimensions]);
       if (p.color) detailRows.push([s.color, p.color]);
       detailRows.push([s.qty, `${p.quantity} ${s.unit}`]);
-      const textH = 4 + nameLines.length * 5.2 + detailRows.length * 4.2 + 4;
-      const rowH = Math.max(IMG, textH);
+      const variantLabelH = isVariant ? 4 : 0;
+      const textH = 4 + variantLabelH + nameLines.length * 5.2 + detailRows.length * 4.2 + 4;
+      const rowH = Math.max(IIMG, textH);
 
       ensureSpace(rowH + 4);
 
@@ -452,38 +457,46 @@ async function renderViolet(
 
       // Image
       doc.setFillColor(...BORDER);
-      doc.rect(ML, rowY, IMG, IMG, "F");
+      doc.rect(IML, rowY, IIMG, IIMG, "F");
 
       if (imgCache[p.id]) {
         try {
-          doc.addImage(imgCache[p.id], "JPEG", ML, rowY, IMG, IMG);
+          doc.addImage(imgCache[p.id], "JPEG", IML, rowY, IIMG, IIMG);
         } catch { /* skip */ }
       } else {
         doc.setFont(FONT, "normal");
         doc.setFontSize(7);
         doc.setTextColor(...MUTED);
-        doc.text(s.noImage, ML + IMG / 2, rowY + IMG / 2 + 1, { align: "center" });
+        doc.text(s.noImage, IML + IIMG / 2, rowY + IIMG / 2 + 1, { align: "center" });
       }
 
-      if (p.url) doc.link(ML, rowY, IMG, IMG, { url: p.url });
+      if (p.url) doc.link(IML, rowY, IIMG, IIMG, { url: p.url });
 
       // Text column
       let cy = rowY + 4;
 
+      if (isVariant) {
+        doc.setFont(FONT, "normal");
+        doc.setFontSize(7);
+        doc.setTextColor(...MUTED);
+        doc.text("wariant", ITEXT_X, cy - 0.5);
+        cy += 4;
+      }
+
       doc.setFont(FONT, "bold");
-      doc.setFontSize(9.5);
+      doc.setFontSize(isVariant ? 8.5 : 9.5);
       doc.setTextColor(...DARK);
-      doc.text(nameLines, TEXT_X, cy);
+      doc.text(nameLines, ITEXT_X, cy);
       cy += nameLines.length * 5.2;
 
       doc.setFont(FONT, "normal");
       doc.setFontSize(7.5);
       for (const [label, value] of detailRows) {
         doc.setTextColor(...MUTED);
-        doc.text(`${label}: `, TEXT_X, cy);
+        doc.text(`${label}: `, ITEXT_X, cy);
         const labelW = doc.getTextWidth(`${label}: `);
         doc.setTextColor(...DARK);
-        doc.text(value, TEXT_X + labelW, cy, { maxWidth: TEXT_W - labelW });
+        doc.text(value, ITEXT_X + labelW, cy, { maxWidth: ITEXT_W - labelW });
         cy += 4.2;
       }
 
@@ -515,7 +528,7 @@ async function renderViolet(
         const ICO = 5;
         const PX = 32;
         const ix = PRICE_X - ICO;
-        const iy = rowY + IMG - ICO - 2;
+        const iy = rowY + IIMG - ICO - 2;
         try {
           const cv = document.createElement("canvas");
           cv.width = PX;
@@ -537,11 +550,21 @@ async function renderViolet(
 
       y = rowY + rowH + 5;
 
-      if (i < products.length - 1) {
+      if (!isLast) {
         doc.setDrawColor(...BORDER);
         doc.setLineWidth(0.2);
-        doc.line(TEXT_X, y, ML + CW, y);
+        doc.line(ITEXT_X, y, ML + CW, y);
         y += 2;
+      }
+    }
+
+    for (let i = 0; i < topLevelProducts.length; i++) {
+      const p = topLevelProducts[i];
+      const variants = products.filter((v) => v.parentProductId === p.id);
+      const isLastTopLevel = i === topLevelProducts.length - 1;
+      renderPdfProduct(p, false, isLastTopLevel && variants.length === 0);
+      for (let vi = 0; vi < variants.length; vi++) {
+        renderPdfProduct(variants[vi], true, isLastTopLevel && vi === variants.length - 1);
       }
     }
 

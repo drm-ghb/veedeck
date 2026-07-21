@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, Fragment } from "react";
 import Link from "next/link";
 import { ExternalLink, Comment, Check, X, RotateCcw } from "@/components/ui/icons";
 import ProductCommentPanel from "./ProductCommentPanel";
@@ -51,6 +51,7 @@ interface Product {
   approval: string | null;
   note: string | null;
   optional: boolean;
+  parentProductId: string | null;
 }
 
 interface Section {
@@ -281,11 +282,13 @@ export default function ShareListClient({
             </p>
           ) : (
             <div className="bg-card border border-border rounded-xl overflow-hidden">
-              {section.products.map((product, i) => {
+              {(() => {
+                const topLevel = section.products.filter((p) => !p.parentProductId);
+                const renderProduct = (product: Product, isVariant: boolean, isLast: boolean) => {
                 const unitPrice = parsePrice(product.price);
                 const currency = getCurrency(product.price);
                 const totalPrice = unitPrice !== null ? unitPrice * product.quantity : null;
-                const last = i === section.products.length - 1;
+                const last = isLast;
                 const unread = unreadProducts.has(product.id);
                 const count = unread ? Math.max(0, (commentCounts[product.id] ?? product.commentCount) - (seenCounts[product.id] ?? 0)) : 0;
                 const approval = approvals[product.id] ?? null;
@@ -312,7 +315,7 @@ export default function ShareListClient({
                   </button>
                 );
                 return (
-                  <div key={product.id} className={!last ? "border-b border-border" : ""}>
+                  <div key={product.id} className={`${!last ? "border-b border-border" : ""} ${isVariant ? "pl-8" : ""}`}>
                     {/* ── DESKTOP (md+) ── */}
                     <div className="hidden md:flex items-center gap-2 px-4 py-4 hover:bg-muted/30 transition-colors">
                       <div className="w-32 h-32 shrink-0 rounded-xl bg-muted flex items-center justify-center overflow-hidden">
@@ -326,7 +329,8 @@ export default function ShareListClient({
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <p className="font-medium text-sm truncate">{product.name}</p>
-                          {product.optional && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium border border-dashed border-muted-foreground/40 text-muted-foreground shrink-0 cursor-default" title="Produkt jest opcjonalny, jego cena nie jest wliczona do sumy kosztów">Opcjonalny</span>}
+                          {isVariant && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted text-muted-foreground shrink-0 cursor-default">Wariant</span>}
+                          {!isVariant && product.optional && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium border border-dashed border-muted-foreground/40 text-muted-foreground shrink-0 cursor-default" title="Produkt jest opcjonalny, jego cena nie jest wliczona do sumy kosztów">Opcjonalny</span>}
                         </div>
                         {product.manufacturer && <p className="text-xs text-muted-foreground mt-0.5">{product.manufacturer}</p>}
                         <div className="flex flex-col gap-y-0.5 mt-1">
@@ -378,7 +382,8 @@ export default function ShareListClient({
                         {/* Row 2: price + approval badge */}
                         <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                           {totalPrice !== null && !hidePrices && <span className="text-sm font-semibold text-foreground tabular-nums">{formatPriceNum(totalPrice)} {currency}</span>}
-                          {product.optional && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium border border-dashed border-muted-foreground/40 text-muted-foreground cursor-default" title="Produkt jest opcjonalny, jego cena nie jest wliczona do sumy kosztów">Opcjonalny</span>}
+                          {isVariant && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted text-muted-foreground cursor-default">Wariant</span>}
+                          {!isVariant && product.optional && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium border border-dashed border-muted-foreground/40 text-muted-foreground cursor-default" title="Produkt jest opcjonalny, jego cena nie jest wliczona do sumy kosztów">Opcjonalny</span>}
                         </div>
                         {/* Row 3: qty + link | comments */}
                         <div className="flex items-center justify-between mt-1.5">
@@ -392,7 +397,29 @@ export default function ShareListClient({
                     </div>
                   </div>
                 );
-              })}
+                };
+                return topLevel.map((product, i) => {
+                  const variants = section.products.filter((p) => p.parentProductId === product.id).sort((a, b) => a.order - b.order);
+                  const isLastTopLevel = i === topLevel.length - 1;
+                  return (
+                    <Fragment key={product.id}>
+                      {renderProduct(product, false, isLastTopLevel && variants.length === 0)}
+                      {variants.length > 0 && (
+                        <div className="relative h-3 pointer-events-none">
+                          <div className="absolute left-4 inset-y-0 w-0.5 bg-border/60" />
+                        </div>
+                      )}
+                      {variants.map((variant, vi) => (
+                        <div key={variant.id} className="relative">
+                          <div className={`absolute left-4 top-0 w-0.5 bg-border/60 pointer-events-none ${vi === variants.length - 1 ? 'h-1/2' : 'h-full'}`} />
+                          <div className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-0.5 bg-border/60 pointer-events-none" />
+                          {renderProduct(variant, true, isLastTopLevel && vi === variants.length - 1)}
+                        </div>
+                      ))}
+                    </Fragment>
+                  );
+                });
+              })()}
             </div>
           )}
         </div>

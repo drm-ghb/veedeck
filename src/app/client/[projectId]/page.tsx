@@ -34,7 +34,7 @@ interface ListProduct {
   id: string; name: string; url: string | null; imageUrl: string | null;
   price: string | null; manufacturer: string | null; color: string | null;
   dimensions: string | null; description: string | null; deliveryTime: string | null;
-  quantity: number; order: number; commentCount: number; approval: string | null; note: string | null; optional: boolean;
+  quantity: number; order: number; commentCount: number; approval: string | null; note: string | null; optional: boolean; parentProductId: string | null;
 }
 interface ListSection { id: string; name: string; order: number; unsorted: boolean; products: ListProduct[]; }
 interface ListData {

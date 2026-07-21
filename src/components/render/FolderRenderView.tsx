@@ -26,6 +26,11 @@ interface Render {
   viewCount: number;
   status: RenderStatus;
   pinned: boolean;
+  createdAt: string;
+}
+
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString("pl-PL", { day: "numeric", month: "short", year: "numeric" });
 }
 
 interface FolderRenderViewProps {
@@ -334,6 +339,7 @@ prevRenderIdsRef.current = currentIds;
                 </div>
                 <div className="p-3">
                   <p className="text-sm font-medium truncate mb-1">{render.name}</p>
+                  <p className="text-[10px] text-muted-foreground truncate mb-1.5">Dodano: {formatDate(render.createdAt)}</p>
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-1.5">
                       <span className={`flex-shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${render.status === "ACCEPTED" ? "bg-green-100 text-green-700" : render.status === "REJECTED" ? "bg-red-100 text-red-700" : "bg-blue-100 text-blue-700"}`}>
@@ -388,6 +394,7 @@ prevRenderIdsRef.current = currentIds;
                     <div className="flex items-center gap-2">
                       {render.commentCount > 0 && <span className="text-xs text-muted-foreground flex items-center gap-1"><Pin size={10} />{render.commentCount}</span>}
                       <span className="text-xs text-muted-foreground flex items-center gap-1"><Eye size={10} />{render.viewCount}</span>
+                      <span className="text-xs text-muted-foreground">Dodano: {formatDate(render.createdAt)}</span>
                     </div>
                   </div>
                 </div>
