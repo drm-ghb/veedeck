@@ -2380,6 +2380,7 @@ export const en: TranslationKeys = {
     listyStep1: "Install the veepick extension in your browser.",
     listyStep2: "On any store page, click the veepick icon to add a product.",
     listyStep3: "The product lands on the list with price, image and link — group it into sections and send it to your client.",
+    listyStep4: "Click the product menu (3 dots) → \"Add variant\" to group alternative versions under a single product.",
     listyTip: "The client approves the finished list with one click and <b>cannot see</b> your purchase prices or margin.",
     // Products
     produktyLabel: "Products",

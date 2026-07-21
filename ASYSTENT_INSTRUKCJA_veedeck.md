@@ -263,6 +263,17 @@ Nazwa (wymagana), URL, obraz (z URL lub wgrany ręcznie), cena, producent, kolor
 
 Produkty dodane "przez link" lub "ręcznie" są automatycznie zapisywane do biblioteki produktów bez tworzenia trwałego powiązania. Produkty dodane z biblioteki zachowują powiązanie z rekordem biblioteki.
 
+**Warianty produktu:**
+
+Produkt może mieć warianty — alternatywne opcje (np. różne kolory, rozmiary, producenci) wyświetlane jako wcięcie pod produktem głównym. Warianty są widoczne zarówno w widoku projektanta, jak i w panelu klienta, oznaczone graficznym drzewem połączeń.
+
+Jak zarządzać wariantami:
+- Kliknij menu produktu (3 kropki) → "Dodaj wariant" — otwiera formularz identyczny jak "Dodaj produkt", ale nowy produkt trafia jako wariant pod bieżącym.
+- "Przypisz jako wariant" — przenosi istniejący produkt z listy jako wariant wybranego produktu.
+- "Odepnij od produktu" — zamienia wariant z powrotem w samodzielny produkt.
+
+Warianty nie wliczają się do sumy sekcji — suma zawiera tylko produkty główne.
+
 **Statusy produktu (nadawane przez klienta):**
 - Brak statusu — jeszcze nie oceniony
 - Zaakceptowany

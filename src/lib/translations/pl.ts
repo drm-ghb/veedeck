@@ -2382,6 +2382,7 @@ export const pl = {
     listyStep1: "Zainstaluj wtyczkę veepick w swojej przeglądarce.",
     listyStep2: "Na stronie dowolnego sklepu kliknij ikonę veepick, aby dodać produkt.",
     listyStep3: "Produkt trafia na listę z ceną, zdjęciem i linkiem — pogrupuj go w sekcje i wyślij klientowi.",
+    listyStep4: "Kliknij menu produktu (3 kropki) → \"Dodaj wariant\", aby grupować alternatywne wersje pod jednym produktem.",
     listyTip: "Klient zatwierdza gotową listę jednym kliknięciem i <b>nie widzi</b> Twoich cen zakupu ani marży.",
     // Products
     produktyLabel: "Produkty",
