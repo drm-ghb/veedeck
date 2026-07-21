@@ -1714,13 +1714,25 @@ export default function ListDetail({ list, designerName, designerEmail, designer
   function handleVariantLinked(updatedProduct: unknown) {
     // An existing product was linked as variant via "Ta lista" tab — update it in state
     const p = updatedProduct as { id: string; sectionId: string; parentProductId: string | null; optional: boolean };
-    setSections((prev) =>
-      prev.map((s) =>
-        s.id === p.sectionId
-          ? { ...s, products: s.products.map((prod) => prod.id === p.id ? { ...prod, parentProductId: p.parentProductId, optional: p.optional } : prod) }
-          : s
-      )
-    );
+    setSections((prev) => {
+      const oldSection = prev.find((s) => s.products.some((prod) => prod.id === p.id));
+      if (!oldSection) return prev;
+      if (oldSection.id === p.sectionId) {
+        // Same section — just update the product fields
+        return prev.map((s) =>
+          s.id === p.sectionId
+            ? { ...s, products: s.products.map((prod) => prod.id === p.id ? { ...prod, parentProductId: p.parentProductId, optional: p.optional } : prod) }
+            : s
+        );
+      }
+      // Product moved to a different section — remove from old, add to new
+      const productData = oldSection.products.find((prod) => prod.id === p.id)!;
+      return prev.map((s) => {
+        if (s.id === oldSection.id) return { ...s, products: s.products.filter((prod) => prod.id !== p.id) };
+        if (s.id === p.sectionId) return { ...s, products: [...s.products, { ...productData, parentProductId: p.parentProductId, optional: p.optional }] };
+        return s;
+      });
+    });
   }
 
   async function handleAssignVariant(sectionId: string, productId: string, parentProductId: string) {
@@ -1796,8 +1808,8 @@ export default function ListDetail({ list, designerName, designerEmail, designer
       })).filter((s) => s.unsorted || s.products.length > 0)
     : sections;
 
-  // Grand total across all sections (excluding hidden and optional products)
-  const allProducts = sections.flatMap((s) => s.products.filter((p) => !p.hidden && !p.optional));
+  // Grand total across all sections (excluding hidden, optional, and variant products)
+  const allProducts = sections.flatMap((s) => s.products.filter((p) => !p.hidden && !p.optional && !p.parentProductId));
   const grandTotal = allProducts.reduce((sum, p) => {
     const n = parsePrice(p.price);
     return n !== null ? sum + n * p.quantity : sum;
@@ -1881,8 +1893,8 @@ export default function ListDetail({ list, designerName, designerEmail, designer
       logoDataUrl = await loadImgToDataUrl(designerLogoUrl);
     }
 
-    const pdfHasTotal = !hidePricesInPdf && allVisible.some((p) => parsePrice(p.price));
-    const pdfGrandTotal = hidePricesInPdf ? 0 : allVisible.reduce((sum, p) => {
+    const pdfHasTotal = !hidePricesInPdf && allVisible.filter((p) => !p.optional && !p.parentProductId).some((p) => parsePrice(p.price));
+    const pdfGrandTotal = hidePricesInPdf ? 0 : allVisible.filter((p) => !p.optional && !p.parentProductId).reduce((sum, p) => {
       const n = parsePrice(p.price);
       return n !== null ? sum + n * p.quantity : sum;
     }, 0);
@@ -1940,7 +1952,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
         ]);
       }
 
-      const sectionTotal = visibleProducts.filter((p) => !p.optional).reduce((s, p) => {
+      const sectionTotal = visibleProducts.filter((p) => !p.optional && !p.parentProductId).reduce((s, p) => {
         const n = parsePrice(p.price);
         return n !== null ? s + n * p.quantity : s;
       }, 0);

@@ -271,7 +271,10 @@ export default function AddProductDialog({
       const res = await fetch(`/api/lists/${listId}/sections/${lp.sectionId}/products/${lp.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ parentProductId }),
+        body: JSON.stringify({
+          parentProductId,
+          ...(sectionId && sectionId !== lp.sectionId ? { newSectionId: sectionId } : {}),
+        }),
       });
       if (!res.ok) throw new Error();
       const product = await res.json();

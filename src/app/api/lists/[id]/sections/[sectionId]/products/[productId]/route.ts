@@ -77,11 +77,21 @@ export async function PATCH(
     }
 
     if (body.parentProductId !== undefined) {
+      let sectionMove: { sectionId: string; order: number } | undefined;
+      if (body.parentProductId && body.newSectionId && body.newSectionId !== sectionId) {
+        const targetSection = await prisma.listSection.findFirst({
+          where: { id: body.newSectionId, listId: id, list: { userId: getWorkspaceUserId(session) } },
+        });
+        if (!targetSection) return NextResponse.json({ error: "Nie znaleziono sekcji" }, { status: 404 });
+        const agg = await prisma.listProduct.aggregate({ where: { sectionId: body.newSectionId }, _max: { order: true } });
+        sectionMove = { sectionId: body.newSectionId, order: (agg._max.order ?? -1) + 1 };
+      }
       const updated = await prisma.listProduct.update({
         where: { id: productId },
         data: {
           parentProductId: body.parentProductId ?? null,
           ...(body.parentProductId ? { optional: true } : {}),
+          ...(sectionMove ?? {}),
         },
       });
       return NextResponse.json(updated);

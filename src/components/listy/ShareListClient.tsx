@@ -271,7 +271,7 @@ export default function ShareListClient({
             </div>
             {(() => {
               let total = 0; let cur = ""; let has = false;
-              for (const p of section.products.filter((p) => !p.optional)) { const n = parsePrice(p.price); if (n !== null) { total += n * p.quantity; if (!cur) cur = getCurrency(p.price); has = true; } }
+              for (const p of section.products.filter((p) => !p.optional && !p.parentProductId)) { const n = parsePrice(p.price); if (n !== null) { total += n * p.quantity; if (!cur) cur = getCurrency(p.price); has = true; } }
               return has && !hidePrices ? <span className="text-sm font-semibold">{formatPriceNum(total)} {cur}</span> : null;
             })()}
           </div>
