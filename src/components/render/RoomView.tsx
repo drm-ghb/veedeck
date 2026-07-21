@@ -7,6 +7,8 @@ import { useViewPreference, useGridCols } from "@/hooks/useViewPreference";
 import { ArchiveRestore, ArrowUpDown, Check, CopyCheck, Eye, FileText, Folder, FolderPlus, LayoutGrid, List, Pin, Trash2, GripVertical, Upload } from "@/components/ui/icons";
 import AddFolderDialog from "./AddFolderDialog";
 import { useUploadThing } from "@/lib/uploadthing-client";
+import TrialGate from "@/components/ui/TrialGate";
+import { useIsTrialExpired } from "@/lib/trial-context";
 import {
   DndContext,
   closestCenter,
@@ -103,6 +105,7 @@ const GRID_COLS_CLASS: Record<number, string> = {
 
 export default function RoomView({ projectId, roomId, renders, archivedRenders, folders, archivedFolders }: RoomViewProps) {
   const t = useT();
+  const expired = useIsTrialExpired();
   const [tab, setTab] = useState<"active" | "archived">("active");
   const [viewMode, setViewMode] = useViewPreference("renderflow-room", "grid");
   const [gridCols, setGridCols] = useGridCols("renderflow-room");
@@ -744,18 +747,22 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
                       {folder.renderCount} {folder.renderCount === 1 ? t.render.fileSingular : folder.renderCount < 5 ? t.render.fileFew : t.render.fileMany}
                     </p>
                     <div className="flex gap-2">
-                      <Button size="sm" variant="outline" className="flex-1" onClick={() => handleRestoreFolder(folder.id)}>
-                        <ArchiveRestore size={14} />
-                        {t.common.restore}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="text-red-400 hover:text-red-600"
-                        onClick={() => handleDeleteFolder(folder.id, folder.name)}
-                      >
-                        <Trash2 size={14} />
-                      </Button>
+                      <TrialGate className="flex-1">
+                        <Button size="sm" variant="outline" className="flex-1" onClick={() => handleRestoreFolder(folder.id)}>
+                          <ArchiveRestore size={14} />
+                          {t.common.restore}
+                        </Button>
+                      </TrialGate>
+                      <TrialGate>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-red-400 hover:text-red-600"
+                          onClick={() => handleDeleteFolder(folder.id, folder.name)}
+                        >
+                          <Trash2 size={14} />
+                        </Button>
+                      </TrialGate>
                     </div>
                   </Card>
                 ))}
@@ -785,18 +792,22 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
                       <p className="text-sm font-medium truncate mb-1">{render.name}</p>
                       <p className="text-[10px] text-muted-foreground truncate mb-2">Dodano: {formatDate(render.createdAt)}</p>
                       <div className="flex gap-2">
-                        <Button size="sm" variant="outline" className="flex-1" onClick={() => handleRestore(render.id)}>
-                          <ArchiveRestore size={14} />
-                          {t.common.restore}
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="text-red-400 hover:text-red-600"
-                          onClick={() => handleDelete(render.id, render.name)}
-                        >
-                          <Trash2 size={14} />
-                        </Button>
+                        <TrialGate className="flex-1">
+                          <Button size="sm" variant="outline" className="flex-1" onClick={() => handleRestore(render.id)}>
+                            <ArchiveRestore size={14} />
+                            {t.common.restore}
+                          </Button>
+                        </TrialGate>
+                        <TrialGate>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-red-400 hover:text-red-600"
+                            onClick={() => handleDelete(render.id, render.name)}
+                          >
+                            <Trash2 size={14} />
+                          </Button>
+                        </TrialGate>
                       </div>
                     </div>
                   </Card>
@@ -852,16 +863,18 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
           className="fixed z-[150] bg-popover border border-border rounded-lg shadow-lg py-1 min-w-[200px] overflow-hidden"
         >
           <button
-            className="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors text-left"
-            onClick={() => { setContextMenu(null); fileInputRef.current?.click(); }}
+            className={`flex items-center gap-2.5 w-full px-3 py-2 text-sm text-left transition-colors ${expired ? "opacity-40 cursor-not-allowed text-muted-foreground" : "text-foreground hover:bg-muted"}`}
+            title={expired ? "Dostępne w płatnym planie" : undefined}
+            onClick={() => { if (expired) return; setContextMenu(null); fileInputRef.current?.click(); }}
           >
             <Upload size={14} className="text-muted-foreground shrink-0" />
             Dodaj pliki
           </button>
           <div className="h-px bg-border mx-2 my-0.5" />
           <button
-            className="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors text-left"
-            onClick={() => { setContextMenu(null); setAddFolderOpen(true); }}
+            className={`flex items-center gap-2.5 w-full px-3 py-2 text-sm text-left transition-colors ${expired ? "opacity-40 cursor-not-allowed text-muted-foreground" : "text-foreground hover:bg-muted"}`}
+            title={expired ? "Dostępne w płatnym planie" : undefined}
+            onClick={() => { if (expired) return; setContextMenu(null); setAddFolderOpen(true); }}
           >
             <FolderPlus size={14} className="text-muted-foreground shrink-0" />
             Nowy folder

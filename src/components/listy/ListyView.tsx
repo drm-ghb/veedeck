@@ -25,6 +25,8 @@ import { pusherClient } from "@/lib/pusher";
 import { getUnreadSet, syncListUnread } from "@/lib/list-unread-store";
 import NewListDialog from "./NewListDialog";
 import EditListDialog from "./EditListDialog";
+import TrialGate from "@/components/ui/TrialGate";
+import { useIsTrialExpired } from "@/lib/trial-context";
 import { toast } from "sonner";
 import {
   DropdownMenu,
@@ -213,6 +215,7 @@ export default function ListyView({ lists: initialLists }: ListyViewProps) {
     });
 
   function ListMenu({ list }: { list: ShoppingList }) {
+    const expired = useIsTrialExpired();
     return (
       <DropdownMenu>
         <DropdownMenuTrigger
@@ -223,21 +226,21 @@ export default function ListyView({ lists: initialLists }: ListyViewProps) {
           <MoreHorizontal size={15} />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-44">
-          <DropdownMenuItem onClick={() => togglePin(list)}>
+          <DropdownMenuItem disabled={expired} title={expired ? "Dostępne w płatnym planie" : undefined} onClick={() => togglePin(list)}>
             {list.pinned ? <PinOff size={13} className="mr-2" /> : <Pin size={13} className="mr-2" />}
             {list.pinned ? t.common.unpinAction : t.common.pinAction}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => setEditingList(list)}>
+          <DropdownMenuItem disabled={expired} title={expired ? "Dostępne w płatnym planie" : undefined} onClick={() => setEditingList(list)}>
             <Pencil size={13} className="mr-2" />
             {t.common.edit}
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => toggleArchive(list)}>
+          <DropdownMenuItem disabled={expired} title={expired ? "Dostępne w płatnym planie" : undefined} onClick={() => toggleArchive(list)}>
             {list.archived ? <ArchiveRestore size={13} className="mr-2" /> : <Archive size={13} className="mr-2" />}
             {list.archived ? t.common.restore : t.common.archive}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => deleteList(list.id)} className="text-destructive focus:text-destructive">
+          <DropdownMenuItem disabled={expired} title={expired ? "Dostępne w płatnym planie" : undefined} onClick={() => deleteList(list.id)} className="text-destructive focus:text-destructive">
             <Trash2 size={13} className="mr-2" />
             {t.common.delete}
           </DropdownMenuItem>
@@ -259,7 +262,7 @@ export default function ListyView({ lists: initialLists }: ListyViewProps) {
               : `${activeLists.length} ${t.listy.activeLabel}`}
           </p>
         </div>
-        <NewListDialog />
+        <TrialGate><NewListDialog /></TrialGate>
       </div>
 
       {/* Tabs */}

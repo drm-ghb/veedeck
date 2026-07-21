@@ -21,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import MoveFolderDialog from "./MoveFolderDialog";
 import { useT } from "@/lib/i18n";
+import { useIsTrialExpired } from "@/lib/trial-context";
 
 interface FolderMenuProps {
   folder: { id: string; name: string; pinned?: boolean; archived?: boolean };
@@ -31,6 +32,7 @@ interface FolderMenuProps {
 export default function FolderMenu({ folder, projectId, currentRoomId }: FolderMenuProps) {
   const router = useRouter();
   const t = useT();
+  const expired = useIsTrialExpired();
   const [renameOpen, setRenameOpen] = useState(false);
   const [moveOpen, setMoveOpen] = useState(false);
   const [name, setName] = useState(folder.name);
@@ -105,7 +107,7 @@ export default function FolderMenu({ folder, projectId, currentRoomId }: FolderM
           <MoreHorizontal size={16} />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={handlePin}>
+          <DropdownMenuItem disabled={expired} title={expired ? "Dostępne w płatnym planie" : undefined} onClick={handlePin}>
             {folder.pinned ? <PinOff size={14} /> : <Pin size={14} />}
             {folder.pinned ? t.common.unpin : t.common.pin}
           </DropdownMenuItem>
@@ -115,21 +117,21 @@ export default function FolderMenu({ folder, projectId, currentRoomId }: FolderM
             {t.render.download}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => { setName(folder.name); setRenameOpen(true); }}>
+          <DropdownMenuItem disabled={expired} title={expired ? "Dostępne w płatnym planie" : undefined} onClick={() => { setName(folder.name); setRenameOpen(true); }}>
             <Pencil size={14} />
             {t.render.rename}
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={(e) => { e.preventDefault(); setMoveOpen(true); }}>
+          <DropdownMenuItem disabled={expired} title={expired ? "Dostępne w płatnym planie" : undefined} onClick={(e) => { e.preventDefault(); setMoveOpen(true); }}>
             <FolderInput size={14} />
             {t.render.move}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={handleArchive}>
+          <DropdownMenuItem disabled={expired} title={expired ? "Dostępne w płatnym planie" : undefined} onClick={handleArchive}>
             <Archive size={14} />
             {t.common.archive}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem variant="destructive" onClick={handleDelete}>
+          <DropdownMenuItem variant="destructive" disabled={expired} title={expired ? "Dostępne w płatnym planie" : undefined} onClick={handleDelete}>
             <Trash2 size={14} />
             {t.render.deleteFolder}
           </DropdownMenuItem>

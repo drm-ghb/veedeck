@@ -42,6 +42,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { getUnreadSet, syncListUnread } from "@/lib/list-unread-store";
 import { generateListPDF, type PdfTemplate } from "@/lib/pdf-templates";
 import { useLang, useT } from "@/lib/i18n";
+import TrialGate from "@/components/ui/TrialGate";
+import { useIsTrialExpired } from "@/lib/trial-context";
 
 const BUILT_IN_CATEGORIES = [
   { value: "OSWIETLENIE", label: "Oświetlenie" },
@@ -356,6 +358,7 @@ function ProductRow({
   const [editingField, setEditingField] = useState<string | null>(null);
   const [editingValue, setEditingValue] = useState("");
   const t = useT();
+  const expired = useIsTrialExpired();
   const [collapsed, setCollapsed] = useState(false);
   const isCollapsed = collapsed && product.hidden;
 
@@ -406,72 +409,72 @@ function ProductRow({
         <MoreHorizontal size={15} />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-52">
-        <DropdownMenuItem onClick={onEdit}>
+        <DropdownMenuItem disabled={expired} title={expired ? "Dostępne w płatnym planie" : undefined} onClick={onEdit}>
           <Pencil size={13} className="mr-2" />
           {t.common.edit}
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => startFieldEdit("note", product.note)}>
+        <DropdownMenuItem disabled={expired} title={expired ? "Dostępne w płatnym planie" : undefined} onClick={() => startFieldEdit("note", product.note)}>
           <FileText size={13} className="mr-2" />
           {product.note ? t.listy.editNote : t.listy.addNote}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         {approval !== "accepted" && (
-          <DropdownMenuItem onClick={() => onApprovalChange("accepted")}>
+          <DropdownMenuItem disabled={expired} title={expired ? "Dostępne w płatnym planie" : undefined} onClick={() => onApprovalChange("accepted")}>
             <Check size={13} className="mr-2 text-green-600" />
             {t.render.acceptBtn}
           </DropdownMenuItem>
         )}
         {approval !== "rejected" && (
-          <DropdownMenuItem onClick={() => onApprovalChange("rejected")}>
+          <DropdownMenuItem disabled={expired} title={expired ? "Dostępne w płatnym planie" : undefined} onClick={() => onApprovalChange("rejected")}>
             <X size={13} className="mr-2 text-red-500" />
             {t.listy.rejectBtn}
           </DropdownMenuItem>
         )}
         {approval !== null && (
-          <DropdownMenuItem onClick={() => onApprovalChange(null)}>
+          <DropdownMenuItem disabled={expired} title={expired ? "Dostępne w płatnym planie" : undefined} onClick={() => onApprovalChange(null)}>
             <RotateCcw size={13} className="mr-2" />
             {t.listy.resetStatus}
           </DropdownMenuItem>
         )}
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={onToggleOptional}>
+        <DropdownMenuItem disabled={expired} title={expired ? "Dostępne w płatnym planie" : undefined} onClick={onToggleOptional}>
           {product.optional
             ? <CheckCircle size={13} className="mr-2 text-muted-foreground" />
             : <RadioButtonUnchecked size={13} className="mr-2" />}
           {product.optional ? "Oznacz jako podstawowy" : "Oznacz jako opcjonalny"}
         </DropdownMenuItem>
         {!product.parentProductId && onAddVariant && (
-          <DropdownMenuItem onClick={onAddVariant}>
+          <DropdownMenuItem disabled={expired} title={expired ? "Dostępne w płatnym planie" : undefined} onClick={onAddVariant}>
             <Layers size={13} className="mr-2" />
             Dodaj wariant
           </DropdownMenuItem>
         )}
         {product.optional && !product.parentProductId && onAssignVariant && (
-          <DropdownMenuItem onClick={onAssignVariant}>
+          <DropdownMenuItem disabled={expired} title={expired ? "Dostępne w płatnym planie" : undefined} onClick={onAssignVariant}>
             <Link2 size={13} className="mr-2" />
             Przypisz jako wariant
           </DropdownMenuItem>
         )}
         {product.parentProductId && onUnassignVariant && (
-          <DropdownMenuItem onClick={onUnassignVariant}>
+          <DropdownMenuItem disabled={expired} title={expired ? "Dostępne w płatnym planie" : undefined} onClick={onUnassignVariant}>
             <Link2 size={13} className="mr-2 text-muted-foreground" />
             Odepnij od produktu
           </DropdownMenuItem>
         )}
-        <DropdownMenuItem onClick={onToggleHidden}>
+        <DropdownMenuItem disabled={expired} title={expired ? "Dostępne w płatnym planie" : undefined} onClick={onToggleHidden}>
           {product.hidden ? <Eye size={13} className="mr-2" /> : <EyeOff size={13} className="mr-2" />}
           {product.hidden ? t.render.showToClient : t.render.hideFromClient}
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={onOpenMoveDialog}>
+        <DropdownMenuItem disabled={expired} title={expired ? "Dostępne w płatnym planie" : undefined} onClick={onOpenMoveDialog}>
           <FolderInput size={13} className="mr-2" />
           {t.listy.moveToSection}
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={onOpenCopyDialog}>
+        <DropdownMenuItem disabled={expired} title={expired ? "Dostępne w płatnym planie" : undefined} onClick={onOpenCopyDialog}>
           <Copy size={13} className="mr-2" />
           {t.listy.copyToSection}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={onDelete} className="text-destructive focus:text-destructive">
+        <DropdownMenuItem variant="destructive" disabled={expired} title={expired ? "Dostępne w płatnym planie" : undefined} onClick={onDelete} className="text-destructive focus:text-destructive">
           <Trash2 size={13} className="mr-2" />
           {t.render.deleteProduct}
         </DropdownMenuItem>
@@ -1014,6 +1017,7 @@ function sortProducts(products: Product[], sortBy: string, categoryOrder: string
 export default function ListDetail({ list, designerName, designerEmail, designerLogoUrl, initialOpenProductId, categoryOrder, customCategories, pdfTemplate }: ListDetailProps & { designerName?: string; designerEmail?: string; designerLogoUrl?: string; initialOpenProductId?: string }) {
   const { lang } = useLang();
   const t = useT();
+  const expired = useIsTrialExpired();
   const [currentPdfTemplate, setCurrentPdfTemplate] = useState<import("@/lib/pdf-templates").PdfTemplate>(pdfTemplate ?? "violet");
   useEffect(() => {
     fetch("/api/ustawienia/lists")
@@ -2023,19 +2027,23 @@ export default function ListDetail({ list, designerName, designerEmail, designer
         <div className="lg:max-w-[75%] lg:mx-auto">
           <div className="flex flex-wrap items-center justify-between gap-2 p-2 bg-muted/40 border border-border rounded-xl shadow-sm">
         <div className="flex items-center gap-1.5 flex-wrap">
-          <Button onClick={openAddSection} className="flex items-center gap-1.5 h-8 px-3 text-xs">
-            <Plus size={13} />
-            <span className="hidden xs:inline">{t.listy.addSection}</span>
-            <span className="xs:hidden">{t.listy.sectionLabel}</span>
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => setDialogState({ open: true, sectionId: null })}
-            className="flex items-center gap-1.5 h-8 px-3 text-xs"
-          >
-            <Plus size={13} />
-            {t.products.addProduct}
-          </Button>
+          <TrialGate>
+            <Button onClick={openAddSection} className="flex items-center gap-1.5 h-8 px-3 text-xs">
+              <Plus size={13} />
+              <span className="hidden xs:inline">{t.listy.addSection}</span>
+              <span className="xs:hidden">{t.listy.sectionLabel}</span>
+            </Button>
+          </TrialGate>
+          <TrialGate>
+            <Button
+              variant="outline"
+              onClick={() => setDialogState({ open: true, sectionId: null })}
+              className="flex items-center gap-1.5 h-8 px-3 text-xs"
+            >
+              <Plus size={13} />
+              {t.products.addProduct}
+            </Button>
+          </TrialGate>
           <div className="w-px h-5 bg-border mx-0.5 hidden sm:block" />
           <DropdownMenu>
             <DropdownMenuTrigger render={
@@ -2328,14 +2336,16 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                             {section.name}
                           </h2>
                         )}
-                        <button
-                          onClick={() => setDialogState({ open: true, sectionId: section.id })}
-                          className="hidden sm:flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground border border-border hover:border-foreground/30 rounded-md px-2 py-0.5 transition-colors shrink-0"
-                          title={t.products.addProduct}
-                        >
-                          <Plus size={13} />
-                          {t.products.addProduct}
-                        </button>
+                        {!expired && (
+                          <button
+                            onClick={() => setDialogState({ open: true, sectionId: section.id })}
+                            className="hidden sm:flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground border border-border hover:border-foreground/30 rounded-md px-2 py-0.5 transition-colors shrink-0"
+                            title={t.products.addProduct}
+                          >
+                            <Plus size={13} />
+                            {t.products.addProduct}
+                          </button>
+                        )}
                       </div>
                       <div className="flex items-center gap-3">
                         {/* Sort dropdown */}
@@ -2488,13 +2498,15 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                               </SortableContext>
                             );
                           })()}
-                        <button
-                          onClick={() => setDialogState({ open: true, sectionId: section.id })}
-                          className="w-full flex items-center gap-1.5 px-4 py-2.5 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/30 border-t border-border transition-colors"
-                        >
-                          <Plus size={13} />
-                          {t.products.addProduct}
-                        </button>
+                        {!expired && (
+                          <button
+                            onClick={() => setDialogState({ open: true, sectionId: section.id })}
+                            className="w-full flex items-center gap-1.5 px-4 py-2.5 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/30 border-t border-border transition-colors"
+                          >
+                            <Plus size={13} />
+                            {t.products.addProduct}
+                          </button>
+                        )}
                       </div>
                     ) : null}
                   </div>
@@ -2805,7 +2817,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
       )}
 
       {/* FAB — mobile only */}
-      {sections.filter((s) => !s.unsorted).length > 0 && (
+      {!expired && sections.filter((s) => !s.unsorted).length > 0 && (
         <div className="sm:hidden fixed bottom-6 right-5 z-40">
           {fabMenuOpen && (
             <>

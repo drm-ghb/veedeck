@@ -10,6 +10,7 @@ import OnboardingModal from "@/components/dashboard/OnboardingModal";
 import OnboardingTrigger from "@/components/dashboard/OnboardingTrigger";
 import CancelledBadge from "@/components/dashboard/CancelledBadge";
 import AppNavbar from "@/components/dashboard/AppNavbar";
+import { TrialContextProvider } from "@/lib/trial-context";
 
 export default async function VeedeckLayout({
   children,
@@ -42,6 +43,8 @@ export default async function VeedeckLayout({
   const subStatus = dbUser?.subscription?.status ?? null;
   const cancelAt = dbUser?.subscription?.cancelAt ?? null;
   const isTrial = !!(dbUser?.trialEndsAt && dbUser.trialEndsAt > new Date() && !dbUser.isFree && !subStatus);
+  const hasAccess = !!(dbUser?.isFree || subStatus === "active" || (subStatus === "cancelled" && !!cancelAt && new Date(cancelAt) > new Date()));
+  const isTrialExpired = !!(dbUser?.trialEndsAt && new Date(dbUser.trialEndsAt) < new Date() && !hasAccess && !dbUser?.ownerId);
   const isCancelled = subStatus === "cancelled" || subStatus === "canceled";
   const isScheduledCancel = subStatus === "active" && !!cancelAt && new Date(cancelAt) > new Date();
   const showOnboarding = isTrial && !viewPrefs.onboardingSeen;
@@ -62,7 +65,9 @@ export default async function VeedeckLayout({
       <div className="flex flex-1 min-h-0" style={{ backgroundColor: 'var(--sidebar)' }}>
         <NavSidebar hiddenModules={hiddenModules} sidebarOrder={sidebarOrder} userId={session.user.id!} isTrial={isTrial} initialCollapsed={sidebarCollapsed} />
         <main className="flex-1 flex flex-col min-h-0 px-6 py-6 overflow-y-auto overflow-x-hidden bg-background rounded-tl-2xl">
-          {children}
+          <TrialContextProvider value={isTrialExpired}>
+            {children}
+          </TrialContextProvider>
         </main>
       </div>
       <TrialCheck />

@@ -12,6 +12,7 @@ import ImageAnnotationModal from "./ImageAnnotationModal";
 import { SwipeableMessage } from "@/components/ui/swipeable-message";
 import { playMessageSound } from "@/lib/notification-sound";
 import { useT } from "@/lib/i18n";
+import { useIsTrialExpired } from "@/lib/trial-context";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -143,6 +144,7 @@ function dayLabel(iso: string) {
 export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, initialDiscussions, projects, teamMembers = [], isTeamMember = false }: Props) {
   const t = useT();
   const router = useRouter();
+  const expired = useIsTrialExpired();
   const [discussions, setDiscussions] = useState<DiscussionSummary[]>(initialDiscussions);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [messages, setMessages] = useState<DiscussionMessage[]>([]);
@@ -1662,9 +1664,9 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                 />
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  disabled={uploading || isRecording}
+                  disabled={uploading || isRecording || expired}
                   className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-primary text-white transition-colors disabled:opacity-40 hover:opacity-90"
-                  title={t.dyskusje.attachFiles}
+                  title={expired ? "Dostępne w płatnym planie" : t.dyskusje.attachFiles}
                 >
                   {uploading ? <Loader2 size={16} className="animate-spin" /> : <Paperclip size={16} />}
                 </button>
@@ -1677,15 +1679,17 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                     e.target.style.height = Math.min(e.target.scrollHeight, 160) + "px";
                     e.target.style.overflowY = e.target.scrollHeight > 160 ? "auto" : "hidden";
                   }}
-                  onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
-                  placeholder={t.dyskusje.messagePlaceholder}
+                  onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); if (!expired) sendMessage(); } }}
+                  placeholder={expired ? "Dostępne w płatnym planie" : t.dyskusje.messagePlaceholder}
+                  disabled={expired}
                   rows={1}
                   style={{ height: "40px", overflowY: "hidden" }}
-                  className="flex-1 min-h-10 max-h-40 px-3 py-2 text-sm resize-none rounded-2xl bg-muted focus:outline-none"
+                  className="flex-1 min-h-10 max-h-40 px-3 py-2 text-sm resize-none rounded-2xl bg-muted focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                 />
                 <button
                   onClick={isRecording ? stopRecording : (input.trim() || pendingAttachments.length > 0 ? sendMessage : startRecording)}
-                  disabled={sending || uploading}
+                  disabled={sending || uploading || expired}
+                  title={expired ? "Dostępne w płatnym planie" : undefined}
                   className="flex-shrink-0 flex items-center justify-center w-8 h-8 text-primary disabled:opacity-40 hover:opacity-90 transition-colors"
                 >
                   {sending ? (

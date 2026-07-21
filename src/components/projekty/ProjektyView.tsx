@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import NewProjectDialog from "@/components/dashboard/NewProjectDialog";
 import ProjektyMenu from "@/components/projekty/ProjektyMenu";
 import { useT } from "@/lib/i18n";
+import TrialGate from "@/components/ui/TrialGate";
 
 interface Project {
   id: string;
@@ -88,7 +89,7 @@ export default function ProjektyView({ projects, archivedProjects }: ProjektyVie
               : `${projects.length} ${projects.length === 1 ? t.projekty.projectCountUnit : projects.length < 5 ? t.projekty.projectCountUnitFew : t.projekty.projectCountUnitMany}`}
           </p>
         </div>
-        <NewProjectDialog label={t.projekty.newClient} clientMode />
+        <TrialGate><NewProjectDialog label={t.projekty.newClient} clientMode /></TrialGate>
       </div>
 
       {/* Tabs */}
@@ -257,14 +258,18 @@ export default function ProjektyView({ projects, archivedProjects }: ProjektyVie
                     </p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <Button size="sm" variant="outline" className="gap-1.5" onClick={() => handleRestore(p.id)}>
-                      <ArchiveRestore size={14} />
-                      <span className="hidden sm:inline">{t.common.restore}</span>
-                    </Button>
-                    <Button size="sm" variant="ghost" className="gap-1.5 text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => handleDelete(p.id, p.title)}>
-                      <Trash2 size={14} />
-                      <span className="hidden sm:inline">{t.common.delete}</span>
-                    </Button>
+                    <TrialGate>
+                      <Button size="sm" variant="outline" className="gap-1.5" onClick={() => handleRestore(p.id)}>
+                        <ArchiveRestore size={14} />
+                        <span className="hidden sm:inline">{t.common.restore}</span>
+                      </Button>
+                    </TrialGate>
+                    <TrialGate>
+                      <Button size="sm" variant="ghost" className="gap-1.5 text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => handleDelete(p.id, p.title)}>
+                        <Trash2 size={14} />
+                        <span className="hidden sm:inline">{t.common.delete}</span>
+                      </Button>
+                    </TrialGate>
                   </div>
                 </div>
               ))}

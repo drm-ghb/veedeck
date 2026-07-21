@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Plus } from "@/components/ui/icons";
 import { toast } from "sonner";
 import { useT } from "@/lib/i18n";
+import { useIsTrialExpired } from "@/lib/trial-context";
 import AddEventDialog from "./AddEventDialog";
 import EventDetailDialog from "./EventDetailDialog";
 
@@ -221,6 +222,7 @@ export default function CalendarView() {
     d.setHours(0, 0, 0, 0);
     return d;
   });
+  const expired = useIsTrialExpired();
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
@@ -362,8 +364,8 @@ export default function CalendarView() {
             return (
               <div
                 key={i}
-                onClick={() => { setAddDate(new Date(day)); setAddOpen(true); }}
-                className={`p-1.5 flex flex-col gap-0.5 cursor-pointer hover:bg-muted/40 transition-colors min-h-[90px] ${!inMonth ? "bg-muted/20" : ""}`}
+                onClick={() => { if (!expired) { setAddDate(new Date(day)); setAddOpen(true); } }}
+                className={`p-1.5 flex flex-col gap-0.5 ${expired ? "" : "cursor-pointer hover:bg-muted/40"} transition-colors min-h-[90px] ${!inMonth ? "bg-muted/20" : ""}`}
               >
                 <span
                   className={`text-xs font-medium w-6 h-6 flex items-center justify-center rounded-full self-start mb-0.5 ${
@@ -417,6 +419,7 @@ export default function CalendarView() {
         columns={columns}
         byDay={byDay}
         onCellClick={(date, hour) => {
+          if (expired) return;
           const d = new Date(date);
           d.setHours(hour, 0, 0, 0);
           setAddDate(d);
@@ -449,6 +452,7 @@ export default function CalendarView() {
         columns={columns}
         byDay={byDay}
         onCellClick={(date, hour) => {
+          if (expired) return;
           const d = new Date(date);
           d.setHours(hour, 0, 0, 0);
           setAddDate(d);
@@ -490,7 +494,7 @@ export default function CalendarView() {
         {/* Row 2: title + Push button + Dodaj */}
         <div className="flex items-center gap-2 mt-2">
           <h2 className="text-sm font-semibold capitalize truncate flex-1">{navTitle()}</h2>
-          <button onClick={() => { setAddDate(null); setAddOpen(true); }} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity flex-shrink-0">
+          <button onClick={() => { if (!expired) { setAddDate(null); setAddOpen(true); } }} disabled={expired} title={expired ? "Dostępne w płatnym planie" : undefined} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed">
             <Plus size={15} />
             {t.calendar.addBtn}
           </button>

@@ -32,6 +32,7 @@ import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import BulkActionBar from "@/components/render/BulkActionBar";
 import BulkMoveDialog from "@/components/render/BulkMoveDialog";
+import TrialGate from "@/components/ui/TrialGate";
 
 interface Room {
   id: string;
@@ -502,18 +503,22 @@ export default function ProjectView({ projectId, rooms, archivedRooms, allRender
                   </p>
                 </div>
                 <div className="flex gap-2">
-                  <Button size="sm" variant="outline" onClick={() => handleRestore(room.id)}>
-                    <ArchiveRestore size={14} />
-                    {t.common.restore}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="text-red-400 hover:text-red-600"
-                    onClick={() => handleDelete(room.id, room.name)}
-                  >
-                    <Trash2 size={14} />
-                  </Button>
+                  <TrialGate>
+                    <Button size="sm" variant="outline" onClick={() => handleRestore(room.id)}>
+                      <ArchiveRestore size={14} />
+                      {t.common.restore}
+                    </Button>
+                  </TrialGate>
+                  <TrialGate>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-red-400 hover:text-red-600"
+                      onClick={() => handleDelete(room.id, room.name)}
+                    >
+                      <Trash2 size={14} />
+                    </Button>
+                  </TrialGate>
                 </div>
               </div>
               );

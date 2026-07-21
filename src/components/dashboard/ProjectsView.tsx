@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useT } from "@/lib/i18n";
+import TrialGate from "@/components/ui/TrialGate";
 
 interface Project {
   id: string;
@@ -106,7 +107,7 @@ export default function ProjectsView({ projects, archivedProjects }: ProjectsVie
               : `${projects.length} ${projects.length === 1 ? t.projekty.projectSg : projects.length < 5 ? t.projekty.projectFw : t.projekty.projectMany}`}
           </p>
         </div>
-        <NewProjectDialog module="renderflow" />
+        <TrialGate><NewProjectDialog module="renderflow" /></TrialGate>
       </div>
 
       {/* Tabs */}
@@ -251,18 +252,22 @@ export default function ProjectsView({ projects, archivedProjects }: ProjectsVie
                   <Badge variant="secondary" className="text-xs mt-1">{p.renderCount} {t.projekty.renders}</Badge>
                 </div>
                 <div className="flex gap-2 ml-4 flex-shrink-0">
-                  <Button size="sm" variant="outline" onClick={() => handleRestore(p.id)}>
-                    <ArchiveRestore size={14} />
-                    {t.common.restore}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="text-red-400 hover:text-red-600"
-                    onClick={() => handleDelete(p.id, p.title)}
-                  >
-                    <Trash2 size={14} />
-                  </Button>
+                  <TrialGate>
+                    <Button size="sm" variant="outline" onClick={() => handleRestore(p.id)}>
+                      <ArchiveRestore size={14} />
+                      {t.common.restore}
+                    </Button>
+                  </TrialGate>
+                  <TrialGate>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-red-400 hover:text-red-600"
+                      onClick={() => handleDelete(p.id, p.title)}
+                    >
+                      <Trash2 size={14} />
+                    </Button>
+                  </TrialGate>
                 </div>
               </div>
             ))}

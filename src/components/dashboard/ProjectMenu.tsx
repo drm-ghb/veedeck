@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import EditProjectDialog from "./EditProjectDialog";
 import { useT } from "@/lib/i18n";
+import TrialGate from "@/components/ui/TrialGate";
 
 interface ProjectMenuProps {
   project: {
@@ -73,9 +74,11 @@ export default function ProjectMenu({ project }: ProjectMenuProps) {
   return (
     <>
       <DropdownMenu>
-        <DropdownMenuTrigger className="p-1.5 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
-          <MoreHorizontal size={16} />
-        </DropdownMenuTrigger>
+        <TrialGate>
+          <DropdownMenuTrigger className="p-1.5 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+            <MoreHorizontal size={16} />
+          </DropdownMenuTrigger>
+        </TrialGate>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={handlePin}>
             {project.pinned ? <PinOff size={14} /> : <Pin size={14} />}

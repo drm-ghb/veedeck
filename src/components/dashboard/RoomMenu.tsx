@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import EditRoomDialog from "./EditRoomDialog";
 import { useT } from "@/lib/i18n";
+import { useIsTrialExpired } from "@/lib/trial-context";
 
 interface RoomMenuProps {
   room: {
@@ -26,6 +27,7 @@ interface RoomMenuProps {
 
 export default function RoomMenu({ room }: RoomMenuProps) {
   const t = useT();
+  const expired = useIsTrialExpired();
   const [editOpen, setEditOpen] = useState(false);
   const router = useRouter();
 
@@ -78,7 +80,7 @@ export default function RoomMenu({ room }: RoomMenuProps) {
           <MoreHorizontal size={16} />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={handlePin}>
+          <DropdownMenuItem disabled={expired} title={expired ? "Dostępne w płatnym planie" : undefined} onClick={handlePin}>
             {room.pinned ? <PinOff size={14} /> : <Pin size={14} />}
             {room.pinned ? t.common.unpinAction : t.common.pinAction}
           </DropdownMenuItem>
@@ -88,16 +90,16 @@ export default function RoomMenu({ room }: RoomMenuProps) {
             {t.render.download}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => setEditOpen(true)}>
+          <DropdownMenuItem disabled={expired} title={expired ? "Dostępne w płatnym planie" : undefined} onClick={() => setEditOpen(true)}>
             <Pencil size={14} />
             {t.common.edit}
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleArchive}>
+          <DropdownMenuItem disabled={expired} title={expired ? "Dostępne w płatnym planie" : undefined} onClick={handleArchive}>
             <Archive size={14} />
             {t.common.archive}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem variant="destructive" onClick={handleDelete}>
+          <DropdownMenuItem variant="destructive" disabled={expired} title={expired ? "Dostępne w płatnym planie" : undefined} onClick={handleDelete}>
             <Trash2 size={14} />
             {t.common.delete}
           </DropdownMenuItem>

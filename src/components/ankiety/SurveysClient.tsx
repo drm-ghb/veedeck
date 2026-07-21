@@ -9,6 +9,7 @@ import {
 import NewSurveyDialog from "./NewSurveyDialog";
 import TemplatesTab from "./TemplatesTab";
 import { useT } from "@/lib/i18n";
+import { useIsTrialExpired } from "@/lib/trial-context";
 
 type Client = { id: string; name: string };
 type Survey = {
@@ -75,6 +76,7 @@ function StatusBadge({ status, completed }: { status: string; completed?: boolea
 export default function SurveysClient({ surveys: initial, clients, customTemplates }: Props) {
   const router = useRouter();
   const t = useT();
+  const expired = useIsTrialExpired();
   const [surveys, setSurveys] = useState<Survey[]>(initial);
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<SortMode>(() => {
@@ -179,8 +181,10 @@ export default function SurveysClient({ surveys: initial, clients, customTemplat
       <div className="flex items-center justify-between px-6 py-4">
         <h1 className="text-xl font-semibold">{t.ankiety.title}</h1>
         <button
-          onClick={() => setNewOpen(true)}
-          className="flex items-center gap-2 px-3 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity"
+          onClick={() => { if (!expired) setNewOpen(true); }}
+          disabled={expired}
+          title={expired ? "Dostępne w płatnym planie" : undefined}
+          className="flex items-center gap-2 px-3 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <Plus size={16} />
           {t.ankiety.newSurvey}
@@ -285,12 +289,14 @@ export default function SurveysClient({ surveys: initial, clients, customTemplat
               <div className="flex flex-col items-center justify-center py-20 text-center text-muted-foreground">
                 <p className="text-sm">{tab === "archived" ? t.ankiety.noArchived : t.ankiety.noActive}</p>
                 {tab === "active" && (
-                  <button
-                    onClick={() => setNewOpen(true)}
-                    className="mt-3 text-sm text-primary hover:underline"
-                  >
-                    {t.ankiety.createFirst}
-                  </button>
+                  {!expired && (
+                    <button
+                      onClick={() => setNewOpen(true)}
+                      className="mt-3 text-sm text-primary hover:underline"
+                    >
+                      {t.ankiety.createFirst}
+                    </button>
+                  )}
                 )}
               </div>
             ) : group === "status" ? (
@@ -516,6 +522,7 @@ function SurveyMenu({ survey, onClose, onArchive, onPin, onDelete, onCopyLink }:
   onCopyLink: (s: Survey) => void;
 }) {
   const t = useT();
+  const expired = useIsTrialExpired();
   const ref = useRef<HTMLDivElement>(null);
   const [above, setAbove] = useState(false);
   const [visible, setVisible] = useState(false);
@@ -556,23 +563,29 @@ function SurveyMenu({ survey, onClose, onArchive, onPin, onDelete, onCopyLink }:
         {t.common.edit}
       </a>
       <button
+        disabled={expired}
         onClick={() => onPin(survey)}
-        className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted transition-colors"
+        title={expired ? "Dostępne w płatnym planie" : undefined}
+        className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted transition-colors disabled:opacity-40 disabled:pointer-events-none"
       >
         {survey.pinned ? <PinOff size={14} /> : <Pin size={14} />}
         {survey.pinned ? t.common.unpinAction : t.common.pinAction}
       </button>
       <button
+        disabled={expired}
         onClick={() => onArchive(survey)}
-        className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted transition-colors"
+        title={expired ? "Dostępne w płatnym planie" : undefined}
+        className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted transition-colors disabled:opacity-40 disabled:pointer-events-none"
       >
         {survey.archived ? <ArchiveRestore size={14} /> : <Archive size={14} />}
         {survey.archived ? t.common.restore : t.common.archive}
       </button>
       <div className="border-t border-border my-1" />
       <button
+        disabled={expired}
         onClick={() => { onDelete(survey); onClose(); }}
-        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
+        title={expired ? "Dostępne w płatnym planie" : undefined}
+        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors disabled:opacity-40 disabled:pointer-events-none"
       >
         <Trash2 size={14} />
         {t.common.delete}

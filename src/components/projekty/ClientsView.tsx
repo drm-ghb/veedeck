@@ -9,6 +9,8 @@ import { toast } from "sonner";
 import AddClientDialog from "@/components/projekty/AddClientDialog";
 import EditClientDialog from "@/components/projekty/EditClientDialog";
 import { useT } from "@/lib/i18n";
+import TrialGate from "@/components/ui/TrialGate";
+import { useIsTrialExpired } from "@/lib/trial-context";
 
 interface ClientProject {
   id: string;
@@ -47,6 +49,7 @@ function sortClients(list: Client[], sortBy: SortBy): Client[] {
 export default function ClientsView({ clients, archivedClients }: Props) {
   const router = useRouter();
   const t = useT();
+  const expired = useIsTrialExpired();
   const SORT_LABELS: Record<SortBy, string> = {
     name: t.projekty.sortName,
     newest: t.projekty.sortNewest,
@@ -119,10 +122,12 @@ export default function ClientsView({ clients, archivedClients }: Props) {
               : `${clients.length} ${clients.length === 1 ? t.projekty.clientActiveSg : t.projekty.clientActivePl}`}
           </p>
         </div>
-        <Button onClick={() => setAddOpen(true)} className="flex items-center gap-2 sm:self-start">
-          <Plus size={16} />
-          {t.projekty.addClient}
-        </Button>
+        <TrialGate>
+          <Button onClick={() => setAddOpen(true)} className="flex items-center gap-2 sm:self-start">
+            <Plus size={16} />
+            {t.projekty.addClient}
+          </Button>
+        </TrialGate>
       </div>
 
       {/* Tabs */}
@@ -259,21 +264,27 @@ export default function ClientsView({ clients, archivedClients }: Props) {
                     <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(null)} />
                     <div className={`absolute right-0 z-20 bg-popover border border-border rounded-lg shadow-lg py-1 w-44 text-sm ${menuUp ? "bottom-8" : "top-8"}`}>
                       <button
+                        disabled={expired}
                         onClick={() => { setEditClient(client); setMenuOpen(null); }}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-muted transition-colors"
+                        className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-muted transition-colors disabled:opacity-40 disabled:pointer-events-none"
+                        title={expired ? "Dostępne w płatnym planie" : undefined}
                       >
                         <Pencil size={14} /> {t.projekty.editClientLabel}
                       </button>
                       <button
+                        disabled={expired}
                         onClick={() => handleArchive(client)}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-muted transition-colors"
+                        className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-muted transition-colors disabled:opacity-40 disabled:pointer-events-none"
+                        title={expired ? "Dostępne w płatnym planie" : undefined}
                       >
                         {client.archived ? <ArchiveRestore size={14} /> : <Archive size={14} />}
                         {client.archived ? t.projekty.restoreClientLabel : t.projekty.archiveClientLabel}
                       </button>
                       <button
+                        disabled={expired}
                         onClick={() => handleDelete(client)}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-muted text-destructive transition-colors"
+                        className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-muted text-destructive transition-colors disabled:opacity-40 disabled:pointer-events-none"
+                        title={expired ? "Dostępne w płatnym planie" : undefined}
                       >
                         <Trash2 size={14} /> {t.projekty.deleteClientLabel}
                       </button>

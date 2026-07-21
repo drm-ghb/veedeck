@@ -23,6 +23,7 @@ import {
 import { toast } from "sonner";
 import EditProjectDialog from "@/components/dashboard/EditProjectDialog";
 import { useT } from "@/lib/i18n";
+import { useIsTrialExpired } from "@/lib/trial-context";
 
 interface ProjektyMenuProps {
   project: {
@@ -38,6 +39,7 @@ interface ProjektyMenuProps {
 
 export default function ProjektyMenu({ project }: ProjektyMenuProps) {
   const t = useT();
+  const expired = useIsTrialExpired();
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -97,21 +99,21 @@ export default function ProjektyMenu({ project }: ProjektyMenuProps) {
           <MoreHorizontal size={16} />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={handlePin}>
+          <DropdownMenuItem disabled={expired} title={expired ? "Dostępne w płatnym planie" : undefined} onClick={handlePin}>
             {project.pinned ? <PinOff size={14} /> : <Pin size={14} />}
             {project.pinned ? t.common.unpinAction : t.common.pinAction}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => setEditOpen(true)}>
+          <DropdownMenuItem disabled={expired} title={expired ? "Dostępne w płatnym planie" : undefined} onClick={() => setEditOpen(true)}>
             <Pencil size={14} />
             {t.common.edit}
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleArchive}>
+          <DropdownMenuItem disabled={expired} title={expired ? "Dostępne w płatnym planie" : undefined} onClick={handleArchive}>
             <Archive size={14} />
             {t.common.archive}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem variant="destructive" onClick={() => setDeleteOpen(true)}>
+          <DropdownMenuItem variant="destructive" disabled={expired} title={expired ? "Dostępne w płatnym planie" : undefined} onClick={() => setDeleteOpen(true)}>
             <Trash2 size={14} />
             {t.common.delete}
           </DropdownMenuItem>

@@ -11,6 +11,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import ContractorCard from "./ContractorCard";
 import AddContractorDialog from "./AddContractorDialog";
+import TrialGate from "@/components/ui/TrialGate";
+import { useIsTrialExpired } from "@/lib/trial-context";
 
 interface Contractor {
   id: string;
@@ -25,6 +27,7 @@ type SortOption = "newest" | "oldest" | "az" | "za";
 export default function WykonawcyView({ contractors, unreadPerContractor = {} }: { contractors: Contractor[]; unreadPerContractor?: Record<string, number> }) {
   const t = useT();
   const router = useRouter();
+  const expired = useIsTrialExpired();
   const [addOpen, setAddOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<SortOption>("newest");
@@ -60,10 +63,12 @@ export default function WykonawcyView({ contractors, unreadPerContractor = {} }:
               : `${contractors.length} ${contractors.length === 1 ? t.wykonawcy.contractorCountUnit : contractors.length < 5 ? t.wykonawcy.contractorCountUnitFew : t.wykonawcy.contractorCountUnitMany}`}
           </p>
         </div>
-        <Button onClick={() => setAddOpen(true)} className="gap-2 sm:self-start">
-          <Plus size={16} />
-          {t.wykonawcy.addBtn}
-        </Button>
+        <TrialGate>
+          <Button onClick={() => setAddOpen(true)} className="gap-2 sm:self-start">
+            <Plus size={16} />
+            {t.wykonawcy.addBtn}
+          </Button>
+        </TrialGate>
       </div>
 
       {/* Search + controls */}
@@ -166,6 +171,7 @@ export default function WykonawcyView({ contractors, unreadPerContractor = {} }:
 function ContractorListView({ contractors, unreadPerContractor = {}, onDeleted }: { contractors: Contractor[]; unreadPerContractor?: Record<string, number>; onDeleted: () => void }) {
   const t = useT();
   const router = useRouter();
+  const expired = useIsTrialExpired();
 
   async function handleDelete(id: string, name: string) {
     if (!confirm(`${t.common.delete} "${name}"? ${t.wykonawcy.deleteConfirmMsg}`)) return;
@@ -229,14 +235,16 @@ function ContractorListView({ contractors, unreadPerContractor = {}, onDeleted }
                 <Edit2 size={14} />
               </Button>
             </Link>
-            <Button
-              size="sm"
-              variant="ghost"
-              className="text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30"
-              onClick={() => handleDelete(c.id, c.company ?? c.name)}
-            >
-              <Trash2 size={14} />
-            </Button>
+            <TrialGate>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30"
+                onClick={() => handleDelete(c.id, c.company ?? c.name)}
+              >
+                <Trash2 size={14} />
+              </Button>
+            </TrialGate>
           </div>
         </div>
       ))}

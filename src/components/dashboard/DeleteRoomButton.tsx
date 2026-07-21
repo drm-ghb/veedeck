@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { X } from "@/components/ui/icons";
 import { useT } from "@/lib/i18n";
+import TrialGate from "@/components/ui/TrialGate";
 
 interface DeleteRoomButtonProps {
   roomId: string;
@@ -28,12 +29,14 @@ export default function DeleteRoomButton({ roomId, roomName }: DeleteRoomButtonP
   }
 
   return (
-    <button
-      onClick={handleDelete}
-      className="text-gray-400 hover:text-red-500 transition-colors ml-1"
-      title={t.projekty.deleteRoom}
-    >
-      <X size={14} />
-    </button>
+    <TrialGate>
+      <button
+        onClick={handleDelete}
+        className="text-gray-400 hover:text-red-500 transition-colors ml-1"
+        title={t.projekty.deleteRoom}
+      >
+        <X size={14} />
+      </button>
+    </TrialGate>
   );
 }

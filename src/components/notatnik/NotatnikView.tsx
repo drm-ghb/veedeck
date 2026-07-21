@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect, useCallback } from "react";
 import { Plus, Search, Archive, Trash2, X, ArchiveRestore, ChevronDown, FileText, Paperclip, Download, ExternalLink } from "@/components/ui/icons";
 import { toast } from "sonner";
 import { useT } from "@/lib/i18n";
+import { useIsTrialExpired } from "@/lib/trial-context";
 import { NoteEditor } from "./NoteEditor";
 
 interface Note {
@@ -53,6 +54,7 @@ function hasText(html: string) {
 
 export default function NotatnikView({ initialNotes, initialArchivedNotes }: Props) {
   const t = useT();
+  const expired = useIsTrialExpired();
 
   const [notes, setNotes] = useState<Note[]>(initialNotes);
   const [archivedNotes, setArchivedNotes] = useState<Note[]>(initialArchivedNotes);
@@ -262,9 +264,10 @@ export default function NotatnikView({ initialNotes, initialArchivedNotes }: Pro
           <div className="flex items-center justify-between">
             <h1 className="font-semibold text-base">{t.notatnik.title}</h1>
             <button
-              onClick={handleNewNote}
-              title={t.notatnik.newNote}
-              className="p-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+              onClick={expired ? undefined : handleNewNote}
+              disabled={expired}
+              title={expired ? "Dostępne w płatnym planie" : t.notatnik.newNote}
+              className="p-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <Plus size={16} />
             </button>
