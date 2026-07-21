@@ -90,7 +90,7 @@ export async function PATCH(
         where: { id: productId },
         data: {
           parentProductId: body.parentProductId ?? null,
-          ...(body.parentProductId ? { optional: true } : {}),
+          optional: body.parentProductId ? true : false,
           ...(sectionMove ?? {}),
         },
       });

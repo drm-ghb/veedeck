@@ -1758,7 +1758,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
     setSections((prev) =>
       prev.map((s) =>
         s.id === sectionId
-          ? { ...s, products: s.products.map((p) => p.id === productId ? { ...p, parentProductId: null } : p) }
+          ? { ...s, products: s.products.map((p) => p.id === productId ? { ...p, parentProductId: null, optional: false } : p) }
           : s
       )
     );
