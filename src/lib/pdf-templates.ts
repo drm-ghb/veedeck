@@ -1742,7 +1742,8 @@ async function renderLinen(
   doc.setTextColor(...DARK);
   if (logoDataUrl) {
     try {
-      doc.addImage(logoDataUrl, "JPEG", ML, y, 12, 12);
+      const logoFmt = logoDataUrl.startsWith("data:image/png") ? "PNG" : "JPEG";
+      doc.addImage(logoDataUrl, logoFmt, ML, y, 12, 12);
       doc.text(opts.designerName ?? "Studio", ML + 14, y + 7);
     } catch {
       doc.text(opts.designerName ?? "Studio", ML, y + 5);
@@ -1754,9 +1755,17 @@ async function renderLinen(
   y += 12;
 
   // White rounded head-grid card
-  const leftContentLines = 1 + (opts.designerEmail ? 1 : 0);
-  const rightContentLines = (opts.list.project?.clientName ? 1 : 0) + addressLines.length;
-  const HEAD_CARD_H = Math.max(leftContentLines, rightContentLines) * 5.5 + 20;
+  // Pre-compute name line counts for accurate card height
+  doc.setFont(FONT, "bold");
+  doc.setFontSize(11);
+  const designerNameLines = doc.splitTextToSize(opts.designerName ?? "Projektant", COL_W) as string[];
+  const clientNameLines = opts.list.project?.clientName
+    ? (doc.splitTextToSize(opts.list.project.clientName, COL_W) as string[])
+    : [];
+
+  const leftH = 5 + 4 + designerNameLines.length * 5.5 + 2 + (opts.designerEmail ? 4.5 : 0);
+  const rightH = (clientNameLines.length > 0 ? 4 + clientNameLines.length * 5.5 + 2 : 0) + addressLines.length * 4.5;
+  const HEAD_CARD_H = Math.max(leftH, rightH) + 14;
 
   doc.setFillColor(...WHITE);
   doc.roundedRect(ML, y, CW, HEAD_CARD_H, 5, 5, "F");
@@ -1774,8 +1783,8 @@ async function renderLinen(
   doc.setFont(FONT, "bold");
   doc.setFontSize(11);
   doc.setTextColor(...DARK);
-  doc.text(opts.designerName ?? "Projektant", cardML, cardY + 4, { maxWidth: COL_W });
-  cardY += 6.5;
+  doc.text(designerNameLines, cardML, cardY + 4);
+  cardY += 4 + designerNameLines.length * 5.5 + 2;
   if (opts.designerEmail) {
     doc.setFont(FONT, "normal");
     doc.setFontSize(8.5);
@@ -1790,11 +1799,10 @@ async function renderLinen(
   doc.setTextColor(...STONE);
   doc.text(s.preparedFor.toUpperCase(), cardRX, cardRY);
   cardRY += 5;
-  if (opts.list.project?.clientName) {
+  if (clientNameLines.length > 0) {
     doc.setFont(FONT, "bold");
     doc.setFontSize(11);
     doc.setTextColor(...DARK);
-    const clientNameLines = doc.splitTextToSize(opts.list.project.clientName, COL_W) as string[];
     doc.text(clientNameLines, cardRX, cardRY + 4);
     cardRY += 4 + clientNameLines.length * 5.5 + 2;
   }
@@ -1913,6 +1921,7 @@ async function renderLinen(
       const ITEXT_W = cardCW - IOFFSET - IIMG - 4 - PRICE_COL;
       const rowH = rowHeightMap.get(p.id) ?? IMG;
 
+      ensureSpace(rowH + 6);
       const rowY = y;
       doc.setFillColor(...PROD_BG);
       doc.roundedRect(IML_IMG, rowY, IIMG, IIMG, 3, 3, "F");

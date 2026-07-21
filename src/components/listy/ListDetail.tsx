@@ -1840,7 +1840,11 @@ export default function ListDetail({ list, designerName, designerEmail, designer
               canvas.width = img.naturalWidth || 200;
               canvas.height = img.naturalHeight || 200;
               const ctx = canvas.getContext("2d");
-              ctx?.drawImage(img, 0, 0);
+              if (ctx) {
+                ctx.fillStyle = "#ffffff";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0);
+              }
               resolve(canvas.toDataURL("image/jpeg", 0.85));
             } catch { resolve(null); }
             finally { URL.revokeObjectURL(objectUrl); }
