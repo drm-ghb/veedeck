@@ -753,11 +753,12 @@ async function renderEditorial(
 
     ensureSpace(18);
 
-    const secTotal = products.reduce((sum, p) => {
+    const topLevelProducts = products.filter((p) => !p.parentProductId);
+    const secTotal = topLevelProducts.reduce((sum, p) => {
       const n = parsePrice(p.price);
       return n !== null ? sum + n * p.quantity : sum;
     }, 0);
-    const secCur = getCurrency(products.find((p) => getCurrency(p.price))?.price ?? null);
+    const secCur = getCurrency(topLevelProducts.find((p) => getCurrency(p.price))?.price ?? null);
 
     // Section header: Roman num | name | total
     const roman = toRoman(sectionIndex);
@@ -786,50 +787,62 @@ async function renderEditorial(
     y += 5;
 
     // Products
-    for (let i = 0; i < products.length; i++) {
-      const p = products[i];
+    function renderEditorialProduct(p: Product, isVariant: boolean, isLast: boolean) {
+      const IML = isVariant ? ML + 8 : ML;
+      const IIMG = isVariant ? IMG - 4 : IMG;
+      const ITEXT_X = IML + IIMG + 4;
+      const ITEXT_W = CW - (IML - ML) - IIMG - 4 - PRICE_COL - 4;
 
-      // Pre-calculate row height based on content
-      const nameLines = (doc.splitTextToSize(p.name, TEXT_W) as string[]).slice(0, 2);
+      const nameLines = (doc.splitTextToSize(p.name, ITEXT_W) as string[]).slice(0, 2);
       const detailRows: [string, string][] = [];
       if (p.supplier) detailRows.push([s.supplier, p.supplier]);
       if (p.manufacturer) detailRows.push([s.manufacturer, p.manufacturer]);
       if (p.dimensions) detailRows.push([s.dimension, p.dimensions]);
       if (p.color) detailRows.push([s.color, p.color]);
       detailRows.push([s.qty, `${p.quantity} ${s.unit}`]);
-      const textH = 5 + nameLines.length * 5.5 + detailRows.length * 4.2 + 4;
-      const rowH = Math.max(IMG, textH);
+      const variantLabelH = isVariant ? 4.5 : 0;
+      const textH = 5 + variantLabelH + nameLines.length * 5.5 + detailRows.length * 4.2 + 4;
+      const rowH = Math.max(IIMG, textH);
 
       ensureSpace(rowH + 6);
-
       const rowY = y;
+
       doc.setFillColor(240, 240, 238);
-      doc.rect(ML, rowY, IMG, IMG, "F");
+      doc.rect(IML, rowY, IIMG, IIMG, "F");
       if (imgCache[p.id]) {
-        try { doc.addImage(imgCache[p.id], "JPEG", ML, rowY, IMG, IMG); } catch { /* skip */ }
+        try { doc.addImage(imgCache[p.id], "JPEG", IML, rowY, IIMG, IIMG); } catch { /* skip */ }
       } else {
         doc.setFont(FONT, "normal");
         doc.setFontSize(7);
         doc.setTextColor(...MUTED);
-        doc.text(s.noImage, ML + IMG / 2, rowY + IMG / 2 + 1, { align: "center" });
+        doc.text(s.noImage, IML + IIMG / 2, rowY + IIMG / 2 + 1, { align: "center" });
       }
-      if (p.url) doc.link(ML, rowY, IMG, IMG, { url: p.url });
+      if (p.url) doc.link(IML, rowY, IIMG, IIMG, { url: p.url });
 
       let cy = rowY + 5;
+
+      if (isVariant) {
+        doc.setFont(FONT, "normal");
+        doc.setFontSize(7);
+        doc.setTextColor(...MUTED);
+        doc.text("wariant", ITEXT_X, cy - 0.5);
+        cy += 4.5;
+      }
+
       doc.setFont(FONT, "bold");
-      doc.setFontSize(10.5);
+      doc.setFontSize(isVariant ? 9 : 10.5);
       doc.setTextColor(...BLACK);
-      doc.text(nameLines, TEXT_X, cy);
+      doc.text(nameLines, ITEXT_X, cy);
       cy += nameLines.length * 5.5;
 
       doc.setFont(FONT, "normal");
       doc.setFontSize(7.5);
       for (const [label, value] of detailRows) {
         doc.setTextColor(...MUTED);
-        doc.text(`${label}: `, TEXT_X, cy);
+        doc.text(`${label}: `, ITEXT_X, cy);
         const labelW = doc.getTextWidth(`${label}: `);
         doc.setTextColor(...BLACK);
-        doc.text(value, TEXT_X + labelW, cy, { maxWidth: TEXT_W - labelW });
+        doc.text(value, ITEXT_X + labelW, cy, { maxWidth: ITEXT_W - labelW });
         cy += 4.2;
       }
 
@@ -856,11 +869,21 @@ async function renderEditorial(
 
       y = rowY + rowH + 4;
 
-      if (i < products.length - 1) {
+      if (!isLast) {
         doc.setDrawColor(...BORDER);
         doc.setLineWidth(0.2);
-        doc.line(TEXT_X, y, PAGE_W - MR, y);
+        doc.line(ITEXT_X, y, PAGE_W - MR, y);
         y += 2;
+      }
+    }
+
+    for (let i = 0; i < topLevelProducts.length; i++) {
+      const p = topLevelProducts[i];
+      const variants = products.filter((v) => v.parentProductId === p.id);
+      const isLastTopLevel = i === topLevelProducts.length - 1;
+      renderEditorialProduct(p, false, isLastTopLevel && variants.length === 0);
+      for (let vi = 0; vi < variants.length; vi++) {
+        renderEditorialProduct(variants[vi], true, isLastTopLevel && vi === variants.length - 1);
       }
     }
 
@@ -1070,11 +1093,12 @@ async function renderAtelier(
 
     ensureSpace(18);
 
-    const secTotal = products.reduce((sum, p) => {
+    const topLevelProducts = products.filter((p) => !p.parentProductId);
+    const secTotal = topLevelProducts.reduce((sum, p) => {
       const n = parsePrice(p.price);
       return n !== null ? sum + n * p.quantity : sum;
     }, 0);
-    const secCur = getCurrency(products.find((p) => getCurrency(p.price))?.price ?? null);
+    const secCur = getCurrency(topLevelProducts.find((p) => getCurrency(p.price))?.price ?? null);
 
     // Section header: filled circle + name + line + bronze total
     const CIRC_R = 4;
@@ -1118,50 +1142,62 @@ async function renderAtelier(
     y = CIRC_Y + CIRC_R + 5;
 
     // Products
-    for (let i = 0; i < products.length; i++) {
-      const p = products[i];
+    function renderAtelierProduct(p: Product, isVariant: boolean, isLast: boolean) {
+      const IML = isVariant ? ML + 8 : ML;
+      const IIMG = isVariant ? IMG - 4 : IMG;
+      const ITEXT_X = IML + IIMG + 4;
+      const ITEXT_W = CW - (IML - ML) - IIMG - 4 - PRICE_COL - 4;
 
-      // Pre-calculate row height
-      const nameLines = (doc.splitTextToSize(p.name, TEXT_W) as string[]).slice(0, 2);
+      const nameLines = (doc.splitTextToSize(p.name, ITEXT_W) as string[]).slice(0, 2);
       const detailRows: [string, string][] = [];
       if (p.supplier) detailRows.push([s.supplier, p.supplier]);
       if (p.manufacturer) detailRows.push([s.manufacturer, p.manufacturer]);
       if (p.dimensions) detailRows.push([s.dimension, p.dimensions]);
       if (p.color) detailRows.push([s.color, p.color]);
       detailRows.push([s.qty, `${p.quantity} ${s.unit}`]);
-      const textH = 5 + nameLines.length * 5.2 + detailRows.length * 4.2 + 4;
-      const rowH = Math.max(IMG, textH);
+      const variantLabelH = isVariant ? 4.5 : 0;
+      const textH = 5 + variantLabelH + nameLines.length * 5.2 + detailRows.length * 4.2 + 4;
+      const rowH = Math.max(IIMG, textH);
 
       ensureSpace(rowH + 6);
-
       const rowY = y;
+
       doc.setFillColor(...PROD_BG);
-      doc.roundedRect(ML, rowY, IMG, IMG, 2, 2, "F");
+      doc.roundedRect(IML, rowY, IIMG, IIMG, 2, 2, "F");
       if (imgCache[p.id]) {
-        try { doc.addImage(imgCache[p.id], "JPEG", ML, rowY, IMG, IMG); } catch { /* skip */ }
+        try { doc.addImage(imgCache[p.id], "JPEG", IML, rowY, IIMG, IIMG); } catch { /* skip */ }
       } else {
         doc.setFont(FONT, "normal");
         doc.setFontSize(7);
         doc.setTextColor(...MUTED);
-        doc.text(s.noImage, ML + IMG / 2, rowY + IMG / 2 + 1, { align: "center" });
+        doc.text(s.noImage, IML + IIMG / 2, rowY + IIMG / 2 + 1, { align: "center" });
       }
-      if (p.url) doc.link(ML, rowY, IMG, IMG, { url: p.url });
+      if (p.url) doc.link(IML, rowY, IIMG, IIMG, { url: p.url });
 
       let cy = rowY + 5;
+
+      if (isVariant) {
+        doc.setFont(FONT, "normal");
+        doc.setFontSize(7);
+        doc.setTextColor(...MUTED);
+        doc.text("wariant", ITEXT_X, cy - 0.5);
+        cy += 4.5;
+      }
+
       doc.setFont(FONT, "bold");
-      doc.setFontSize(10);
+      doc.setFontSize(isVariant ? 9 : 10);
       doc.setTextColor(...DARK);
-      doc.text(nameLines, TEXT_X, cy);
+      doc.text(nameLines, ITEXT_X, cy);
       cy += nameLines.length * 5.2;
 
       doc.setFont(FONT, "normal");
       doc.setFontSize(7.5);
       for (const [label, value] of detailRows) {
         doc.setTextColor(...MUTED);
-        doc.text(`${label}: `, TEXT_X, cy);
+        doc.text(`${label}: `, ITEXT_X, cy);
         const labelW = doc.getTextWidth(`${label}: `);
         doc.setTextColor(...DARK);
-        doc.text(value, TEXT_X + labelW, cy, { maxWidth: TEXT_W - labelW });
+        doc.text(value, ITEXT_X + labelW, cy, { maxWidth: ITEXT_W - labelW });
         cy += 4.2;
       }
 
@@ -1188,11 +1224,21 @@ async function renderAtelier(
 
       y = rowY + rowH + 4;
 
-      if (i < products.length - 1) {
+      if (!isLast) {
         doc.setDrawColor(...BORDER);
         doc.setLineWidth(0.2);
-        doc.line(TEXT_X, y, PAGE_W - MR, y);
+        doc.line(ITEXT_X, y, PAGE_W - MR, y);
         y += 2;
+      }
+    }
+
+    for (let i = 0; i < topLevelProducts.length; i++) {
+      const p = topLevelProducts[i];
+      const variants = products.filter((v) => v.parentProductId === p.id);
+      const isLastTopLevel = i === topLevelProducts.length - 1;
+      renderAtelierProduct(p, false, isLastTopLevel && variants.length === 0);
+      for (let vi = 0; vi < variants.length; vi++) {
+        renderAtelierProduct(variants[vi], true, isLastTopLevel && vi === variants.length - 1);
       }
     }
 
@@ -1402,7 +1448,8 @@ async function renderArchitect(
   const titleLines = doc.splitTextToSize(opts.list.name, CW * 0.72) as string[];
   doc.text(titleLines, ML, y);
 
-  // Item count (right)
+  // Item count (right) — top-level products only
+  const topLevelCount = exportSections.reduce((sum, sec) => sum + sec.products.filter((p) => !p.hidden && !p.parentProductId).length, 0);
   const countLabel = opts.lang === "pl" ? "POZYCJI" : "ITEMS";
   doc.setFont(FONT, "bold");
   doc.setFontSize(7.5);
@@ -1411,7 +1458,7 @@ async function renderArchitect(
   doc.setFont(FONT, "bold");
   doc.setFontSize(20);
   doc.setTextColor(...BLACK);
-  doc.text(String(allVisible.length).padStart(2, "0"), PAGE_W - MR, y + 9, { align: "right" });
+  doc.text(String(topLevelCount).padStart(2, "0"), PAGE_W - MR, y + 9, { align: "right" });
 
   y += titleLines.length * 10 + 10;
   doc.setDrawColor(...BLACK);
@@ -1433,11 +1480,12 @@ async function renderArchitect(
 
     ensureSpace(16);
 
-    const secTotal = products.reduce((sum, p) => {
+    const topLevelProducts = products.filter((p) => !p.parentProductId);
+    const secTotal = topLevelProducts.reduce((sum, p) => {
       const n = parsePrice(p.price);
       return n !== null ? sum + n * p.quantity : sum;
     }, 0);
-    const secCur = getCurrency(products.find((p) => getCurrency(p.price))?.price ?? null);
+    const secCur = getCurrency(topLevelProducts.find((p) => getCurrency(p.price))?.price ?? null);
 
     // Section header: § 01 | NAME | TOTAL
     doc.setFont(FONT, "normal");
@@ -1466,63 +1514,77 @@ async function renderArchitect(
     y += 5;
 
     // Products
-    for (let i = 0; i < products.length; i++) {
-      const p = products[i];
-      productIndex++;
+    const LABEL_COL = 18;
 
-      // Pre-calculate row height
-      const nameLines = (doc.splitTextToSize(p.name, TEXT_W) as string[]).slice(0, 2);
-      const LABEL_COL = 18;
+    function renderArchitectProduct(p: Product, isVariant: boolean, isLast: boolean) {
+      const IOFFSET = isVariant ? 8 : 0;
+      const IML_IMG = ML + IDX_W + IOFFSET;
+      const IIMG = isVariant ? IMG - 4 : IMG;
+      const ITEXT_X = IML_IMG + IIMG + 4;
+      const ITEXT_W = CW - IDX_W - IOFFSET - IIMG - 4 - PRICE_COL - 4;
+
+      const nameLines = (doc.splitTextToSize(p.name, ITEXT_W) as string[]).slice(0, 2);
       const metaRows: [string, string][] = [];
       if (p.supplier) metaRows.push(["supplier", p.supplier]);
       else if (p.manufacturer) metaRows.push(["producer", p.manufacturer]);
       if (p.dimensions) metaRows.push(["dim", p.dimensions]);
       if (p.color) metaRows.push(["finish", p.color]);
       metaRows.push(["qty", `${p.quantity} ${s.unit}`]);
-      const textH = 5 + nameLines.length * 5.2 + metaRows.length * 4 + 4;
-      const rowH = Math.max(IMG, textH);
+      const variantLabelH = isVariant ? 4.5 : 0;
+      const textH = 5 + variantLabelH + nameLines.length * 5.2 + metaRows.length * 4 + 4;
+      const rowH = Math.max(IIMG, textH);
 
       ensureSpace(rowH + 6);
-
       const rowY = y;
 
-      // Index
-      doc.setFont(FONT, "normal");
-      doc.setFontSize(8);
-      doc.setTextColor(...MUTED);
-      doc.text(String(productIndex).padStart(3, "0"), ML, rowY + 5);
+      // Index (top-level only)
+      if (!isVariant) {
+        doc.setFont(FONT, "normal");
+        doc.setFontSize(8);
+        doc.setTextColor(...MUTED);
+        doc.text(String(productIndex).padStart(3, "0"), ML, rowY + 5);
+      }
 
       // Image
       doc.setFillColor(...IMG_BG);
-      doc.rect(ML + IDX_W, rowY, IMG, IMG, "F");
+      doc.rect(IML_IMG, rowY, IIMG, IIMG, "F");
       doc.setDrawColor(...BORDER);
       doc.setLineWidth(0.2);
-      doc.rect(ML + IDX_W, rowY, IMG, IMG, "S");
+      doc.rect(IML_IMG, rowY, IIMG, IIMG, "S");
       if (imgCache[p.id]) {
-        try { doc.addImage(imgCache[p.id], "JPEG", ML + IDX_W, rowY, IMG, IMG); } catch { /* skip */ }
+        try { doc.addImage(imgCache[p.id], "JPEG", IML_IMG, rowY, IIMG, IIMG); } catch { /* skip */ }
       } else {
         doc.setFont(FONT, "normal");
         doc.setFontSize(7);
         doc.setTextColor(...MUTED);
-        doc.text(s.noImage, ML + IDX_W + IMG / 2, rowY + IMG / 2 + 1, { align: "center" });
+        doc.text(s.noImage, IML_IMG + IIMG / 2, rowY + IIMG / 2 + 1, { align: "center" });
       }
-      if (p.url) doc.link(ML + IDX_W, rowY, IMG, IMG, { url: p.url });
+      if (p.url) doc.link(IML_IMG, rowY, IIMG, IIMG, { url: p.url });
 
       let cy = rowY + 5;
+
+      if (isVariant) {
+        doc.setFont(FONT, "normal");
+        doc.setFontSize(7);
+        doc.setTextColor(...MUTED);
+        doc.text("wariant", ITEXT_X, cy - 0.5);
+        cy += 4.5;
+      }
+
       doc.setFont(FONT, "bold");
-      doc.setFontSize(9.5);
+      doc.setFontSize(isVariant ? 8.5 : 9.5);
       doc.setTextColor(...BLACK);
-      doc.text(nameLines, TEXT_X, cy);
+      doc.text(nameLines, ITEXT_X, cy);
       cy += nameLines.length * 5.2;
 
       doc.setFontSize(7.5);
       for (const [label, value] of metaRows) {
         doc.setFont(FONT, "bold");
         doc.setTextColor(...MUTED);
-        doc.text(label.toUpperCase(), TEXT_X, cy);
+        doc.text(label.toUpperCase(), ITEXT_X, cy);
         doc.setFont(FONT, "normal");
         doc.setTextColor(...BLACK);
-        doc.text(value, TEXT_X + LABEL_COL, cy, { maxWidth: TEXT_W - LABEL_COL });
+        doc.text(value, ITEXT_X + LABEL_COL, cy, { maxWidth: ITEXT_W - LABEL_COL });
         cy += 4;
       }
 
@@ -1549,11 +1611,22 @@ async function renderArchitect(
 
       y = rowY + rowH + 4;
 
-      if (i < products.length - 1) {
+      if (!isLast) {
         doc.setDrawColor(...BORDER);
         doc.setLineWidth(0.2);
         doc.line(ML + IDX_W, y, PAGE_W - MR, y);
         y += 2;
+      }
+    }
+
+    for (let i = 0; i < topLevelProducts.length; i++) {
+      const p = topLevelProducts[i];
+      const variants = products.filter((v) => v.parentProductId === p.id);
+      const isLastTopLevel = i === topLevelProducts.length - 1;
+      productIndex++;
+      renderArchitectProduct(p, false, isLastTopLevel && variants.length === 0);
+      for (let vi = 0; vi < variants.length; vi++) {
+        renderArchitectProduct(variants[vi], true, isLastTopLevel && vi === variants.length - 1);
       }
     }
 
@@ -1760,19 +1833,21 @@ async function renderLinen(
     const products = section.products.filter((p) => !p.hidden);
     if (products.length === 0) continue;
 
-    const secTotal = products.reduce((sum, p) => {
+    const topLevelProducts = products.filter((p) => !p.parentProductId);
+    const secTotal = topLevelProducts.reduce((sum, p) => {
       const n = parsePrice(p.price);
       return n !== null ? sum + n * p.quantity : sum;
     }, 0);
-    const secCur = getCurrency(products.find((p) => getCurrency(p.price))?.price ?? null);
+    const secCur = getCurrency(topLevelProducts.find((p) => getCurrency(p.price))?.price ?? null);
 
     const cardInnerML = ML + CARD_PAD;
     const cardCW = CW - CARD_PAD * 2;
     const TEXT_X = cardInnerML + IMG + 4;
     const TEXT_W = cardCW - IMG - 4 - PRICE_COL;
 
-    // Pre-calculate per-product row heights for accurate card size
-    const rowHeights = products.map((p) => {
+    // Pre-calculate per-product row heights (variants included, with label offset)
+    const rowHeightMap = new Map(products.map((p) => {
+      const isVar = !!p.parentProductId;
       const nl = (doc.splitTextToSize(p.name, TEXT_W) as string[]).slice(0, 2);
       const dr: unknown[] = [];
       if (p.supplier) dr.push(null);
@@ -1780,10 +1855,10 @@ async function renderLinen(
       if (p.dimensions) dr.push(null);
       if (p.color) dr.push(null);
       dr.push(null); // qty
-      const textH = 5 + nl.length * 5.2 + dr.length * 4 + 4;
-      return Math.max(IMG, textH);
-    });
-    const totalRowH = rowHeights.reduce((s, h) => s + h + 4, 0) + (products.length - 1) * 2;
+      const textH = 5 + (isVar ? 4.5 : 0) + nl.length * 5.2 + dr.length * 4 + 4;
+      return [p.id, Math.max(IMG, textH)] as [string, number];
+    }));
+    const totalRowH = Array.from(rowHeightMap.values()).reduce((s, h) => s + h + 4, 0) + (products.length - 1) * 2;
     const estCardH = 14 + totalRowH + CARD_PAD * 2 + 4;
     const maxCardH = PAGE_H - 28;
     const drawCard = estCardH <= maxCardH;
@@ -1830,29 +1905,42 @@ async function renderLinen(
     y += 4;
 
     // Products
-    for (let i = 0; i < products.length; i++) {
-      const p = products[i];
-      const rowH = rowHeights[i];
+    function renderLinenProduct(p: Product, isVariant: boolean, isLast: boolean) {
+      const IOFFSET = isVariant ? 8 : 0;
+      const IML_IMG = cardInnerML + IOFFSET;
+      const IIMG = isVariant ? IMG - 4 : IMG;
+      const ITEXT_X = IML_IMG + IIMG + 4;
+      const ITEXT_W = cardCW - IOFFSET - IIMG - 4 - PRICE_COL;
+      const rowH = rowHeightMap.get(p.id) ?? IMG;
 
       const rowY = y;
       doc.setFillColor(...PROD_BG);
-      doc.roundedRect(cardInnerML, rowY, IMG, IMG, 3, 3, "F");
+      doc.roundedRect(IML_IMG, rowY, IIMG, IIMG, 3, 3, "F");
       if (imgCache[p.id]) {
-        try { doc.addImage(imgCache[p.id], "JPEG", cardInnerML, rowY, IMG, IMG); } catch { /* skip */ }
+        try { doc.addImage(imgCache[p.id], "JPEG", IML_IMG, rowY, IIMG, IIMG); } catch { /* skip */ }
       } else {
         doc.setFont(FONT, "normal");
         doc.setFontSize(7);
         doc.setTextColor(...MUTED);
-        doc.text(s.noImage, cardInnerML + IMG / 2, rowY + IMG / 2 + 1, { align: "center" });
+        doc.text(s.noImage, IML_IMG + IIMG / 2, rowY + IIMG / 2 + 1, { align: "center" });
       }
-      if (p.url) doc.link(cardInnerML, rowY, IMG, IMG, { url: p.url });
+      if (p.url) doc.link(IML_IMG, rowY, IIMG, IIMG, { url: p.url });
 
       let cy = rowY + 5;
+
+      if (isVariant) {
+        doc.setFont(FONT, "normal");
+        doc.setFontSize(7);
+        doc.setTextColor(...MUTED);
+        doc.text("wariant", ITEXT_X, cy - 0.5);
+        cy += 4.5;
+      }
+
       doc.setFont(FONT, "bold");
-      doc.setFontSize(10);
+      doc.setFontSize(isVariant ? 9 : 10);
       doc.setTextColor(...DARK);
-      const nameLines = (doc.splitTextToSize(p.name, TEXT_W) as string[]).slice(0, 2);
-      doc.text(nameLines, TEXT_X, cy);
+      const nameLines = (doc.splitTextToSize(p.name, ITEXT_W) as string[]).slice(0, 2);
+      doc.text(nameLines, ITEXT_X, cy);
       cy += nameLines.length * 5.2;
 
       const detailRows: [string, string][] = [];
@@ -1866,10 +1954,10 @@ async function renderLinen(
       doc.setFontSize(7.5);
       for (const [label, value] of detailRows) {
         doc.setTextColor(...MUTED);
-        doc.text(`${label}: `, TEXT_X, cy);
+        doc.text(`${label}: `, ITEXT_X, cy);
         const labelW = doc.getTextWidth(`${label}: `);
         doc.setTextColor(...DARK);
-        doc.text(value, TEXT_X + labelW, cy, { maxWidth: TEXT_W - labelW });
+        doc.text(value, ITEXT_X + labelW, cy, { maxWidth: ITEXT_W - labelW });
         cy += 4;
       }
 
@@ -1896,11 +1984,21 @@ async function renderLinen(
 
       y = rowY + rowH + 4;
 
-      if (i < products.length - 1) {
+      if (!isLast) {
         doc.setDrawColor(...SEC_BORDER);
         doc.setLineWidth(0.2);
-        doc.line(TEXT_X, y, ML + CW - CARD_PAD, y);
+        doc.line(ITEXT_X, y, ML + CW - CARD_PAD, y);
         y += 2;
+      }
+    }
+
+    for (let i = 0; i < topLevelProducts.length; i++) {
+      const p = topLevelProducts[i];
+      const variants = products.filter((v) => v.parentProductId === p.id);
+      const isLastTopLevel = i === topLevelProducts.length - 1;
+      renderLinenProduct(p, false, isLastTopLevel && variants.length === 0);
+      for (let vi = 0; vi < variants.length; vi++) {
+        renderLinenProduct(variants[vi], true, isLastTopLevel && vi === variants.length - 1);
       }
     }
 
