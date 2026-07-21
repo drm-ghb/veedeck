@@ -216,6 +216,7 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
   const mobileActionsRef = useRef<HTMLDivElement>(null);
   const inputTextareaRef = useRef<HTMLTextAreaElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const firstUnreadRef = useRef<HTMLDivElement>(null);
   const firstUnreadIdRef = useRef<string | null>(null);
@@ -400,19 +401,27 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
 
   useEffect(() => {
     if (showResources || loadingMessages) return;
+    const container = messagesContainerRef.current;
     if (!isInitialScrollDoneRef.current) {
-      // Initial load: scroll to first unread or bottom
-      if (firstUnreadRef.current) {
-        firstUnreadRef.current.scrollIntoView({ behavior: "instant", block: "start" });
-      } else {
-        bottomRef.current?.scrollIntoView({ behavior: "instant" });
-      }
+      // Initial load: scroll to first unread or bottom — defer one frame so layout is settled
+      const frame = requestAnimationFrame(() => {
+        if (!container) return;
+        if (firstUnreadRef.current) {
+          container.scrollTop = firstUnreadRef.current.offsetTop - container.offsetTop;
+        } else {
+          container.scrollTop = container.scrollHeight;
+        }
+      });
       isInitialScrollDoneRef.current = true;
       prevMessageCountRef.current = messages.length;
+      return () => cancelAnimationFrame(frame);
     } else if (messages.length > prevMessageCountRef.current) {
       // New message arrived via Pusher — scroll to bottom
-      bottomRef.current?.scrollIntoView({ behavior: "instant" });
+      const frame = requestAnimationFrame(() => {
+        if (container) container.scrollTop = container.scrollHeight;
+      });
       prevMessageCountRef.current = messages.length;
+      return () => cancelAnimationFrame(frame);
     } else {
       // Existing message updated (reaction, edit) — don't scroll
       prevMessageCountRef.current = messages.length;
@@ -1525,7 +1534,7 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                     onImageClick={setAnnotatingImage}
                   />
                 ) : (
-                  <div className="flex-1 min-h-0 overflow-y-auto px-5 py-4 space-y-3 relative">
+                  <div ref={messagesContainerRef} className="flex-1 min-h-0 overflow-y-auto px-5 py-4 space-y-3 relative">
                 {loadingMessages ? (
                   <div className="flex items-center justify-center h-full text-muted-foreground text-sm">{t.common.loading}</div>
                 ) : messages.length === 0 ? (
