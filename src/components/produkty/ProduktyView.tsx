@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { useT } from "@/lib/i18n";
+import { useIsTrialExpired } from "@/lib/trial-context";
 import AddProductToLibraryDialog from "./AddProductToLibraryDialog";
 import { SearchProductDialog } from "./SearchProductDialog";
 
@@ -49,6 +50,7 @@ function extractPrice(price: string | null): number {
 
 export default function ProduktyView({ initialProducts }: Props) {
   const t = useT();
+  const expired = useIsTrialExpired();
   const router = useRouter();
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [query, setQuery] = useState("");
@@ -205,7 +207,12 @@ export default function ProduktyView({ initialProducts }: Props) {
           <h1 className="text-2xl font-bold">{t.products.libraryTitle}</h1>
           <p className="text-gray-500 mt-1">{t.products.libraryDesc} ({products.length})</p>
         </div>
-        <Button onClick={() => { setEditProduct(null); setAddOpen(true); }} className="gap-2 shrink-0">
+        <Button
+          onClick={() => { if (!expired) { setEditProduct(null); setAddOpen(true); } }}
+          disabled={expired}
+          title={expired ? "Dostępne w płatnym planie" : undefined}
+          className="gap-2 shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+        >
           <Plus size={15} />
           {t.products.addProduct}
         </Button>

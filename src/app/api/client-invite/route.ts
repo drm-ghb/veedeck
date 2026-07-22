@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const userId = session.user.id;
 
-    const { email, projectId } = await req.json();
+    const { email, projectId, clientEntityId } = await req.json();
     if (!email || typeof email !== "string") {
       return NextResponse.json({ error: "Podaj adres e-mail" }, { status: 400 });
     }
@@ -21,6 +21,16 @@ export async function POST(req: NextRequest) {
       });
       if (!project) {
         return NextResponse.json({ error: "Projekt nie istnieje" }, { status: 403 });
+      }
+    }
+
+    // Verify clientEntityId belongs to this designer
+    if (clientEntityId) {
+      const clientEntity = await prisma.client.findFirst({
+        where: { id: clientEntityId, designerId: userId },
+      });
+      if (!clientEntity) {
+        return NextResponse.json({ error: "Klient nie istnieje" }, { status: 403 });
       }
     }
 
@@ -51,6 +61,7 @@ export async function POST(req: NextRequest) {
         designerId: userId,
         type: "client",
         projectId: projectId ?? null,
+        clientEntityId: clientEntityId ?? null,
         status: "PENDING",
         expiresAt,
       },

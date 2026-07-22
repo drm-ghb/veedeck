@@ -25,6 +25,7 @@ async function reuploadImage(url: string): Promise<string> {
 export async function POST(req: NextRequest) {
   const user = await validateExtensionKey(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (user.isTrialExpired) return NextResponse.json({ error: "Trial wygasł — przejdź na plan płatny" }, { status: 403 });
 
   const body = await req.json();
   const {

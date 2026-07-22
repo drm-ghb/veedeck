@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import NavSidebar from "@/components/dashboard/NavSidebar";
 import { prisma } from "@/lib/prisma";
 import AppNavbar from "@/components/dashboard/AppNavbar";
+import { TrialContextProvider } from "@/lib/trial-context";
 
 export default async function ListyLayout({
   children,
@@ -17,7 +18,7 @@ export default async function ListyLayout({
 
   const dbUser = await prisma.user.findUnique({
     where: { id: session.user.id! },
-    select: { name: true, fullName: true, email: true, globalHiddenModules: true, clientLogoUrl: true, avatarUrl: true, ownerId: true, viewPreferences: true },
+    select: { name: true, fullName: true, email: true, globalHiddenModules: true, clientLogoUrl: true, avatarUrl: true, ownerId: true, viewPreferences: true, trialEndsAt: true, isFree: true, subscription: { select: { status: true, cancelAt: true } } },
   });
 
   const ownerId = dbUser?.ownerId;
@@ -31,6 +32,10 @@ export default async function ListyLayout({
   const avatarUrl = dbUser?.avatarUrl ?? null;
   const hiddenModules = [...new Set([...((ownerSettings ?? dbUser)?.globalHiddenModules ?? []), ...(memberPerms?.hiddenModules ?? [])])];
   const sidebarOrder = ((dbUser?.viewPreferences as Record<string, unknown>)?.sidebarOrder as string[]) ?? [];
+  const subStatus = dbUser?.subscription?.status ?? null;
+  const cancelAt = dbUser?.subscription?.cancelAt ?? null;
+  const hasAccess = !!(dbUser?.isFree || subStatus === "active" || (subStatus === "cancelled" && !!cancelAt && new Date(cancelAt) > new Date()));
+  const isTrialExpired = !!(dbUser?.trialEndsAt && new Date(dbUser.trialEndsAt) < new Date() && !hasAccess && !dbUser?.ownerId);
 
   return (
     <div className="h-dvh flex flex-col bg-muted/60">
@@ -44,7 +49,9 @@ export default async function ListyLayout({
       <div className="flex flex-1 min-h-0" style={{ backgroundColor: 'var(--sidebar)' }}>
         <NavSidebar hiddenModules={hiddenModules} sidebarOrder={sidebarOrder} userId={session.user.id!} initialCollapsed={sidebarCollapsed} />
         <main className="flex-1 px-6 py-6 overflow-y-auto overflow-x-hidden bg-background rounded-tl-2xl">
-          {children}
+          <TrialContextProvider value={isTrialExpired}>
+            {children}
+          </TrialContextProvider>
         </main>
       </div>
     </div>

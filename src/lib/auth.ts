@@ -22,8 +22,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Hasło", type: "password" },
+        impersonateToken: { label: "Impersonate Token", type: "text" },
       },
       async authorize(credentials) {
+        // Impersonation path — admin-generated one-time token
+        if (credentials?.impersonateToken) {
+          const rec = await prisma.impersonationToken.findUnique({
+            where: { token: credentials.impersonateToken },
+            include: { user: true },
+          });
+          if (!rec || rec.expiresAt < new Date()) return null;
+          await prisma.impersonationToken.delete({ where: { id: rec.id } });
+          const u = rec.user;
+          return { id: u.id, email: u.email, name: u.name, isAdmin: false, role: u.role };
+        }
+
         if (!credentials?.email || !credentials?.password) return null;
 
         const identifier = credentials.email as string;

@@ -77,6 +77,7 @@ export async function POST(
   const newUser = await prisma.user.create({
     data: {
       email: finalEmail,
+      name: fullName.trim(),
       fullName: fullName.trim(),
       password: hashed,
       phone: phone?.trim() || null,
@@ -85,8 +86,20 @@ export async function POST(
     },
   });
 
-  // If invitation is linked to a project, add as ProjectClient
-  if (invitation.projectId) {
+  // If invitation is linked to a Client entity, add as contact (ProjectClient)
+  if (invitation.clientEntityId) {
+    await prisma.projectClient.create({
+      data: {
+        name: fullName.trim(),
+        email: finalEmail,
+        phone: phone?.trim() || null,
+        clientId: invitation.clientEntityId,
+        userId: newUser.id,
+        order: 0,
+      },
+    });
+  } else if (invitation.projectId) {
+    // Fallback: linked to a project directly
     const project = await prisma.project.findUnique({ where: { id: invitation.projectId } });
     if (project) {
       await prisma.projectClient.create({

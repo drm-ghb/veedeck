@@ -9,10 +9,17 @@ export async function validateExtensionKey(req: Request) {
 
   const user = await prisma.user.findUnique({
     where: { extensionKey: key },
-    select: { id: true, name: true, email: true, ownerId: true },
+    select: { id: true, name: true, email: true, ownerId: true, trialEndsAt: true, isFree: true, subscription: { select: { status: true, cancelAt: true } } },
   });
   if (!user) return null;
 
-  // Respect workspace — team member's data lives under owner's account
-  return { ...user, workspaceId: user.ownerId ?? user.id };
+  const workspaceId = user.ownerId ?? user.id;
+
+  // Compute trial expiry (only for account owners — team members inherit owner's access)
+  const subStatus = user.subscription?.status ?? null;
+  const cancelAt = user.subscription?.cancelAt ?? null;
+  const hasAccess = !!(user.isFree || subStatus === "active" || (subStatus === "cancelled" && !!cancelAt && new Date(cancelAt) > new Date()));
+  const isTrialExpired = !!(user.trialEndsAt && new Date(user.trialEndsAt) < new Date() && !hasAccess && !user.ownerId);
+
+  return { ...user, workspaceId, isTrialExpired };
 }

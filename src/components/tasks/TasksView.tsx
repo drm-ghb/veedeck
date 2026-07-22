@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useT } from "@/lib/i18n";
+import { useIsTrialExpired } from "@/lib/trial-context";
 import {
   DndContext,
   DragOverlay,
@@ -223,6 +224,7 @@ function DroppableKanbanColumn({
 
 export default function TasksView() {
   const t = useT();
+  const expired = useIsTrialExpired();
   const router = useRouter();
 
   const PRIORITY_OPTIONS: TaskSelectOption[] = [
@@ -720,16 +722,27 @@ export default function TasksView() {
           <h1 className="text-xl font-semibold">{t.tasks.tasksTitle}</h1>
           <p className="text-sm text-muted-foreground">{tasks.length} {t.tasks.tasksTitle.toLowerCase()}</p>
         </div>
-        <AddTaskDialog
-          trigger={
-            <button className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity">
-              <Plus size={16} />
-              {t.tasks.addTask}
-            </button>
-          }
-          statusOptions={statusOptions}
-          onCreated={() => { fetchTasks(); router.refresh(); }}
-        />
+        {expired ? (
+          <button
+            disabled
+            title="Dostępne w płatnym planie"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-lg opacity-40 cursor-not-allowed"
+          >
+            <Plus size={16} />
+            {t.tasks.addTask}
+          </button>
+        ) : (
+          <AddTaskDialog
+            trigger={
+              <button className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity">
+                <Plus size={16} />
+                {t.tasks.addTask}
+              </button>
+            }
+            statusOptions={statusOptions}
+            onCreated={() => { fetchTasks(); router.refresh(); }}
+          />
+        )}
       </div>
 
       {/* Toolbar */}

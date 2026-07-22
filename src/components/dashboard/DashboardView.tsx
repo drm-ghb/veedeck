@@ -28,6 +28,8 @@ import NewProjectDialog from "./NewProjectDialog";
 import NewListDialog from "@/components/listy/NewListDialog";
 import PdfThumbnail from "@/components/render/PdfThumbnail";
 import { useT } from "@/lib/i18n";
+import TrialGate from "@/components/ui/TrialGate";
+import { useIsTrialExpired } from "@/lib/trial-context";
 
 interface Stats {
   clients: number;
@@ -293,6 +295,7 @@ export default function DashboardView({
   dueTasks,
 }: DashboardViewProps) {
   const t = useT();
+  const expired = useIsTrialExpired();
 
   const [notifCount, setNotifCount] = useState(stats.notificationCount);
   const [hiddenSections, setHiddenSections] = useState<string[]>([]);
@@ -463,10 +466,10 @@ export default function DashboardView({
         </h1>
         <div className="flex items-center gap-2 shrink-0">
           <div className="lg:hidden">
-            <NewProjectDialog clientMode iconOnly />
+            <TrialGate><NewProjectDialog clientMode iconOnly /></TrialGate>
           </div>
           <div className="hidden lg:block">
-            <NewProjectDialog label={t.projekty.newClient} clientMode />
+            <TrialGate><NewProjectDialog label={t.projekty.newClient} clientMode /></TrialGate>
           </div>
           <div className="relative">
             <button
@@ -591,7 +594,7 @@ export default function DashboardView({
               <div className="rounded-xl border border-dashed border-border bg-card p-8 text-center">
                 <Layers size={32} className="mx-auto mb-3 text-muted-foreground/40" />
                 <p className="text-sm text-muted-foreground mb-3">{t.home.noProjectsYet}</p>
-                <NewProjectDialog module="renderflow" />
+                <TrialGate><NewProjectDialog module="renderflow" /></TrialGate>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -664,7 +667,7 @@ export default function DashboardView({
               <div className="rounded-xl border border-dashed border-border bg-card p-8 text-center">
                 <LocalMall size={32} className="mx-auto mb-3 text-muted-foreground/40" />
                 <p className="text-sm text-muted-foreground mb-3">{t.home.noListsYet}</p>
-                <NewListDialog />
+                <TrialGate><NewListDialog /></TrialGate>
               </div>
             ) : (
               <div className="rounded-xl border border-border bg-card divide-y divide-border overflow-hidden">

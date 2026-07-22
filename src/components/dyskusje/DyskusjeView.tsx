@@ -1124,7 +1124,9 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
               {!isTeamMember && (
                 <Button
                   size="sm"
-                  onClick={() => { setShowNewModal(true); setNewTitle(""); setNewType("internal"); setNewProjectId(null); setNewParticipantIds([]); }}
+                  onClick={() => { if (!expired) { setShowNewModal(true); setNewTitle(""); setNewType("internal"); setNewProjectId(null); setNewParticipantIds([]); } }}
+                  disabled={expired}
+                  title={expired ? "Dostępne w płatnym planie" : undefined}
                 >
                   <Plus size={14} />
                   {t.dyskusje.newThread}

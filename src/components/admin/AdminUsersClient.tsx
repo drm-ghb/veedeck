@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
-import { Trash2, ShieldCheck, FolderOpen, KeyRound, X, Clock, Gift, Plus } from "lucide-react";
+import { Trash2, ShieldCheck, FolderOpen, KeyRound, X, Clock, Gift, Plus, Search, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useT } from "@/lib/i18n";
 
@@ -42,6 +42,8 @@ export default function AdminUsersClient({
   const t = useT();
   const [list, setList] = useState(initialUsers);
   const [roleFilter, setRoleFilter] = useState<"all" | "designer" | "client" | "contractor">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "trial" | "trial_expired" | "free" | "solo" | "studio" | "biuro">("all");
+  const [search, setSearch] = useState("");
   const [passwordModal, setPasswordModal] = useState<{ id: string; name: string | null } | null>(null);
   const [newPassword, setNewPassword] = useState("");
   const [savingPassword, setSavingPassword] = useState(false);
@@ -166,6 +168,7 @@ export default function AdminUsersClient({
   }
 
   function trialLabel(user: User) {
+    if (user.role === "client" || user.role === "contractor") return { text: "Nie dotyczy", color: "text-white/20" };
     if (user.isFree) return { text: t.admin.freeBadge, color: "text-emerald-400" };
     if (user.subscription?.status === "active") return { text: `${t.admin.subscriptionLabel} ${user.subscription.plan}`, color: "text-violet-400" };
     if (!user.trialEndsAt) return { text: t.admin.noTrial, color: "text-white/20" };
@@ -174,25 +177,84 @@ export default function AdminUsersClient({
     return { text: `${t.admin.trialDaysLabel2} ${days}d`, color: days <= 5 ? "text-amber-400" : "text-white/50" };
   }
 
-  const FILTERS: { key: typeof roleFilter; label: string }[] = [
+  const ROLE_FILTERS: { key: typeof roleFilter; label: string }[] = [
     { key: "all", label: "Wszyscy" },
     { key: "designer", label: "Projektant" },
     { key: "client", label: "Klient" },
     { key: "contractor", label: "Wykonawca" },
   ];
 
-  const filtered = roleFilter === "all" ? list : list.filter((u) => u.role === roleFilter);
+  const STATUS_FILTERS: { key: typeof statusFilter; label: string }[] = [
+    { key: "all", label: "Wszystkie statusy" },
+    { key: "trial", label: "Trial aktywny" },
+    { key: "trial_expired", label: "Trial wygasł" },
+    { key: "free", label: "Free" },
+    { key: "solo", label: "Solo" },
+    { key: "studio", label: "Studio" },
+    { key: "biuro", label: "Biuro" },
+  ];
+
+  function matchesStatus(u: User) {
+    const now = Date.now();
+    switch (statusFilter) {
+      case "trial":
+        return !u.isFree && !u.subscription && !!u.trialEndsAt && new Date(u.trialEndsAt).getTime() > now;
+      case "trial_expired":
+        return !u.isFree && !u.subscription && (!u.trialEndsAt || new Date(u.trialEndsAt).getTime() <= now);
+      case "free":
+        return u.isFree;
+      case "solo":
+        return u.subscription?.status === "active" && u.subscription?.plan?.toLowerCase() === "solo";
+      case "studio":
+        return u.subscription?.status === "active" && u.subscription?.plan?.toLowerCase() === "studio";
+      case "biuro":
+        return u.subscription?.status === "active" && u.subscription?.plan?.toLowerCase() === "biuro";
+      default:
+        return true;
+    }
+  }
+
+  const q = search.trim().toLowerCase();
+  const filtered = list.filter((u) => {
+    if (roleFilter !== "all" && u.role !== roleFilter) return false;
+    if (!matchesStatus(u)) return false;
+    if (q) {
+      const name = (u.fullName ?? u.name ?? "").toLowerCase();
+      const email = u.email.toLowerCase();
+      if (!name.includes(q) && !email.includes(q)) return false;
+    }
+    return true;
+  });
 
   return (
     <>
+      {/* Search */}
+      <div className="relative mb-3">
+        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/25 pointer-events-none" />
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Szukaj po imieniu lub e-mailu…"
+          className="w-full pl-8 pr-4 py-2 text-sm rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/20 focus:outline-none focus:border-white/25 transition-colors"
+        />
+        {search && (
+          <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/25 hover:text-white/60 transition-colors">
+            <X size={13} />
+          </button>
+        )}
+      </div>
+
       {/* Role filter tabs */}
-      <div className="flex gap-1 mb-4">
-        {FILTERS.map(({ key, label }) => {
+      <div className="flex gap-1 mb-2">
+        {ROLE_FILTERS.map(({ key, label }) => {
           const count = key === "all" ? list.length : list.filter((u) => u.role === key).length;
           return (
             <button
               key={key}
-              onClick={() => setRoleFilter(key)}
+              onClick={() => {
+                setRoleFilter(key);
+                if (key !== "designer" && key !== "all") setStatusFilter("all");
+              }}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                 roleFilter === key
                   ? "bg-white/12 text-white"
@@ -201,6 +263,31 @@ export default function AdminUsersClient({
             >
               {label}
               <span className={`ml-1.5 text-[10px] ${roleFilter === key ? "text-white/50" : "text-white/20"}`}>{count}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Status filter tabs */}
+      <div className="flex gap-1 flex-wrap mb-4">
+        {STATUS_FILTERS.map(({ key, label }) => {
+          const isPlan = ["solo", "studio", "biuro"].includes(key);
+          return (
+            <button
+              key={key}
+              onClick={() => {
+                setStatusFilter(key);
+                if (key !== "all") setRoleFilter("designer");
+              }}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                statusFilter === key
+                  ? isPlan
+                    ? "bg-violet-500/20 text-violet-300"
+                    : "bg-white/12 text-white"
+                  : "text-white/35 hover:text-white/60 hover:bg-white/5"
+              }`}
+            >
+              {label}
             </button>
           );
         })}
@@ -306,6 +393,22 @@ export default function AdminUsersClient({
                       <Plus size={14} />
                     </Button>
                   </>
+                )}
+                {!user.isAdmin && (
+                  <Button
+                    size="icon-sm"
+                    variant="ghost"
+                    title="Zaloguj się jako ten użytkownik"
+                    className="text-white/25 hover:text-sky-400 hover:bg-white/8"
+                    onClick={async () => {
+                      const res = await fetch(`/api/admin/users/${user.id}/impersonate`, { method: "POST" });
+                      if (!res.ok) { toast.error("Nie udało się wygenerować tokenu"); return; }
+                      const { token } = await res.json();
+                      window.open(`/admin/impersonate?token=${token}`, "_blank");
+                    }}
+                  >
+                    <LogIn size={14} />
+                  </Button>
                 )}
                 <Button
                   size="icon-sm"

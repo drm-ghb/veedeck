@@ -55,6 +55,10 @@ model User {
   pdfListTemplate            String                  @default("violet")
   isFree                     Boolean                 @default(false)
   trialEndsAt                DateTime?
+  trialMidpointSentAt        DateTime?
+  trialDay7SentAt            DateTime?
+  trialDay3SentAt            DateTime?
+  trialEndedSentAt           DateTime?
   contactEmail               String?
   emailNotifEnabled          Boolean                 @default(false)
   emailNotifModules          String[]                @default(["renderflow", "listy", "dyskusje", "ankiety", "wykonawcy"])
@@ -96,6 +100,16 @@ model User {
   helpRequests               HelpRequest[]
   passwordResetTokens        PasswordResetToken[]
   emailNotifQueue            EmailNotifQueue[]
+  impersonationTokens        ImpersonationToken[]
+}
+
+model ImpersonationToken {
+  id        String   @id @default(cuid())
+  token     String   @unique @default(cuid())
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model EmailNotifQueue {
@@ -161,16 +175,17 @@ model TeamMemberPermission {
 }
 
 model Invitation {
-  id         String   @id @default(cuid())
-  email      String
-  token      String   @unique @default(cuid())
-  designerId String
-  status     String   @default("PENDING")
-  expiresAt  DateTime
-  createdAt  DateTime @default(now())
-  projectId  String?
-  type       String   @default("team")
-  designer   User     @relation("InvitationDesigner", fields: [designerId], references: [id], onDelete: Cascade)
+  id             String   @id @default(cuid())
+  email          String
+  token          String   @unique @default(cuid())
+  designerId     String
+  status         String   @default("PENDING")
+  expiresAt      DateTime
+  createdAt      DateTime @default(now())
+  projectId      String?
+  clientEntityId String?
+  type           String   @default("team")
+  designer       User     @relation("InvitationDesigner", fields: [designerId], references: [id], onDelete: Cascade)
 }
 
 model BillingRecord {

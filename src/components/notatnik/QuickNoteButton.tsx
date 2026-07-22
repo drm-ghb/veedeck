@@ -5,8 +5,10 @@ import { NotebookPen, X } from "@/components/ui/icons";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useT } from "@/lib/i18n";
+import { useIsTrialExpired } from "@/lib/trial-context";
 
 export function QuickNoteButton() {
+  const expired = useIsTrialExpired();
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -43,9 +45,10 @@ export function QuickNoteButton() {
   return (
     <>
       <button
-        onClick={() => setOpen(true)}
-        title={t.notatnik.quickNote}
-        className="p-1.5 rounded-md opacity-60 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/10 transition-opacity"
+        onClick={() => { if (!expired) setOpen(true); }}
+        disabled={expired}
+        title={expired ? "Dostępne w płatnym planie" : t.notatnik.quickNote}
+        className="p-1.5 rounded-md opacity-60 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/10 transition-opacity disabled:opacity-30 disabled:cursor-not-allowed disabled:pointer-events-none"
       >
         <NotebookPen size={18} />
       </button>

@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { ICON_OPTIONS, getRoomIcon } from "@/lib/roomIcons";
 import { useT } from "@/lib/i18n";
+import { useIsTrialExpired } from "@/lib/trial-context";
 
 interface Room {
   id: string;
@@ -34,6 +35,7 @@ interface AddRoomDialogProps {
 
 export default function AddRoomDialog({ projectId, onRoomAdded, open: externalOpen, onOpenChange: externalOnOpenChange }: AddRoomDialogProps) {
   const t = useT();
+  const expired = useIsTrialExpired();
   const isControlled = externalOpen !== undefined;
   const [internalOpen, setInternalOpen] = useState(false);
   const open = isControlled ? externalOpen! : internalOpen;
@@ -85,9 +87,15 @@ export default function AddRoomDialog({ projectId, onRoomAdded, open: externalOp
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       {!isControlled && (
-        <DialogTrigger render={<Button />}>
-          {t.projekty.addRoom}
-        </DialogTrigger>
+        expired ? (
+          <Button disabled title="Dostępne w płatnym planie" className="opacity-40 cursor-not-allowed">
+            {t.projekty.addRoom}
+          </Button>
+        ) : (
+          <DialogTrigger render={<Button />}>
+            {t.projekty.addRoom}
+          </DialogTrigger>
+        )
       )}
       <DialogContent>
         <DialogHeader>
