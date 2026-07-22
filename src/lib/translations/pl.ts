@@ -2213,7 +2213,7 @@ export const pl = {
     discountDeleted: "Rabat usunięty",
     deleteError: "Błąd usuwania",
     changePassword: "Zmień hasło",
-    freeBadge: "Darmowy",
+    freeBadge: "Darmowy dostęp",
     noTrial: "Brak trialu",
     trialExpired: "Wygasł",
     joined: "Dołączył",

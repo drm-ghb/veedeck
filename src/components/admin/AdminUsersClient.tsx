@@ -188,7 +188,7 @@ export default function AdminUsersClient({
     { key: "all", label: "Wszystkie statusy" },
     { key: "trial", label: "Trial aktywny" },
     { key: "trial_expired", label: "Trial wygasł" },
-    { key: "free", label: "Free" },
+    { key: "free", label: "Darmowy dostęp" },
     { key: "solo", label: "Solo" },
     { key: "studio", label: "Studio" },
     { key: "biuro", label: "Biuro" },
