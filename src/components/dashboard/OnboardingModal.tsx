@@ -39,6 +39,10 @@ html.dark .ob-dialog {
   --ob-tip-bg:       rgba(79, 70, 229, 0.1);
   --ob-tip-border:   rgba(79, 70, 229, 0.3);
 }
+/* logo text: black in light, white in dark */
+.ob-logo-text { filter: brightness(0); }
+html.dark .ob-logo-text { filter: brightness(0) invert(1); }
+
 @media (prefers-reduced-motion: reduce) {
   .ob-dialog, .ob-fade, .ob-rise { animation: none !important; }
 }
@@ -235,7 +239,7 @@ export default function OnboardingModal({ show, userId }: { show: boolean; userI
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/vee-icon.png" alt="" style={{ height: 26, width: 26 }} />
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/vee_black.png" alt="veedeck" style={{ height: 18, width: "auto", filter: "brightness(0) invert(1)" }} />
+              <img src="/vee_black.png" alt="veedeck" className="ob-logo-text" style={{ height: 18, width: "auto" }} />
             </div>
             {/* kicker */}
             <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--primary)", marginBottom: 4 }}>
@@ -323,7 +327,7 @@ export default function OnboardingModal({ show, userId }: { show: boolean; userI
           </aside>
 
           {/* ── RIGHT PANEL ── */}
-          <section className="relative flex flex-col min-w-0">
+          <section className="relative flex flex-col min-w-0 min-h-0 overflow-hidden">
 
             {/* Panel head */}
             <div className="ob-head flex items-center justify-between" style={{ padding: "22px 24px 0" }}>
@@ -384,7 +388,7 @@ export default function OnboardingModal({ show, userId }: { show: boolean; userI
                   <h2 style={{ fontSize: 30, fontWeight: 800, lineHeight: 1.1, letterSpacing: "-0.03em", fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif" }}>
                     {t.onboarding.welcomeTitle}{" "}
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src="/vee_black.png" alt="veedeck" style={{ height: "1em", width: "auto", verticalAlign: "-0.16em", filter: "brightness(0) invert(1)" }} />
+                    <img src="/vee_black.png" alt="veedeck" className="ob-logo-text" style={{ height: "1em", width: "auto", verticalAlign: "-0.16em" }} />
                   </h2>
                   <p style={{ fontSize: 15.5, color: "var(--muted-foreground)", lineHeight: 1.62, maxWidth: 430, margin: "16px auto 26px" }}>
                     <RichText text={t.onboarding.welcomeDesc} />
