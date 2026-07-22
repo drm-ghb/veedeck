@@ -45,9 +45,9 @@ export default async function DashboardLayout({
   const memberHidden = memberPerms?.hiddenModules ?? [];
   const hiddenModules = [...new Set([...baseHidden, ...memberHidden])];
   const sidebarOrder = ((dbUser?.viewPreferences as Record<string, unknown>)?.sidebarOrder as string[]) ?? [];
-  const isTrial = !!(dbUser?.trialEndsAt && dbUser.trialEndsAt > new Date() && !dbUser.isFree && !subStatus);
   const subStatus = dbUser?.subscription?.status ?? null;
   const cancelAt = dbUser?.subscription?.cancelAt ?? null;
+  const isTrial = !!(dbUser?.trialEndsAt && dbUser.trialEndsAt > new Date() && !dbUser.isFree && !subStatus);
   const hasAccess = !!(dbUser?.isFree || subStatus === "active" || (subStatus === "cancelled" && !!cancelAt && new Date(cancelAt) > new Date()));
   const isTrialExpired = !!(dbUser?.trialEndsAt && new Date(dbUser.trialEndsAt) < new Date() && !hasAccess && !dbUser?.ownerId);
 
