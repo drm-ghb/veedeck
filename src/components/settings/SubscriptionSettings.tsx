@@ -433,9 +433,9 @@ export default function SubscriptionSettings({ trialEndsAt, isFree, subscription
   useEffect(() => {
     if (searchParams.get("checkout") === "success") {
       toast.success("Subskrypcja aktywowana. Witaj w planie " + (initialSub ? (PLAN_LABELS[initialSub.plan as keyof typeof PLAN_LABELS] ?? initialSub.plan) : "") + "!");
-      router.replace("/ustawienia/subskrypcja");
+      router.replace("/ustawienia/plan-i-rozliczenia");
     } else if (searchParams.get("portal") === "return") {
-      router.replace("/ustawienia/subskrypcja");
+      router.replace("/ustawienia/plan-i-rozliczenia");
     }
   }, []);
 
