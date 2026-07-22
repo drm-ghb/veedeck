@@ -5,7 +5,12 @@ import {
   saveStripeCustomerForUser,
   updateSubscriptionStatus,
 } from "@/lib/db/subscriptions";
-import { getPlanFromPriceId } from "@/lib/stripe/prices";
+import { getPlanFromPriceId, PLAN_LABELS } from "@/lib/stripe/prices";
+
+function planLabel(id: string | null | undefined): string {
+  if (!id) return "nieznany";
+  return PLAN_LABELS[id as keyof typeof PLAN_LABELS] ?? id;
+}
 import { prisma } from "@/lib/prisma";
 import { notifyAdminNewPayment, sendPaymentFailedEmail, notifyAdminSubscriptionChanged } from "@/lib/email";
 
@@ -44,7 +49,7 @@ export async function POST(req: NextRequest) {
       await notifyAdminNewPayment({
         userEmail: user?.email ?? session.customer_details?.email ?? "nieznany",
         userName: user?.fullName ?? null,
-        plan: session.metadata?.plan ?? "nieznany",
+        plan: planLabel(session.metadata?.plan),
         interval: session.metadata?.interval ?? "nieznany",
         amountTotal: session.amount_total,
         currency: session.currency,
@@ -82,15 +87,15 @@ export async function POST(req: NextRequest) {
             userEmail: user?.email ?? "nieznany",
             userName: user?.fullName ?? null,
             changeType: "plan_change",
-            oldPlan: prevPlan,
-            newPlan: planFromPrice,
+            oldPlan: planLabel(prevPlan),
+            newPlan: planLabel(planFromPrice),
           });
         } else if (prev?.cancel_at !== undefined && !prev.cancel_at && subscription.cancel_at) {
           await notifyAdminSubscriptionChanged({
             userEmail: user?.email ?? "nieznany",
             userName: user?.fullName ?? null,
             changeType: "cancel_scheduled",
-            newPlan: plan ?? "nieznany",
+            newPlan: planLabel(plan),
             cancelAt: new Date(subscription.cancel_at * 1000),
           });
         } else if (prev?.cancel_at !== undefined && prev.cancel_at && !subscription.cancel_at) {
@@ -98,7 +103,7 @@ export async function POST(req: NextRequest) {
             userEmail: user?.email ?? "nieznany",
             userName: user?.fullName ?? null,
             changeType: "cancel_revoked",
-            newPlan: plan ?? "nieznany",
+            newPlan: planLabel(plan),
           });
         }
       }
