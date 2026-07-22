@@ -2026,3 +2026,153 @@ export function activationEmailEN(activationUrl: string): string {
 </body>
 </html>`;
 }
+
+export function paymentFailedEmailPL(billingUrl: string): string {
+  return `<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nie udało się pobrać płatności</title>
+</head>
+<body style="margin:0;padding:0;background-color:#F4F6F9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#F4F6F9;padding:32px 16px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background-color:#FFFFFF;border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+
+          <!-- Header -->
+          <tr>
+            <td style="padding:32px 24px 24px;text-align:center;background-color:#FFE9E9;">
+              <p style="margin:0 0 12px;font-size:32px;">⚠️</p>
+              <h1 style="margin:0;font-size:22px;font-weight:700;color:#1A1D23;line-height:1.3;">Nie udało się pobrać płatności</h1>
+              <p style="margin:10px 0 0;font-size:15px;color:#6B7280;line-height:1.5;">Wystąpił problem z Twoją kartą płatniczą.</p>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding:28px 24px 8px;">
+
+              <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#374151;">Próbowaliśmy pobrać płatność za Twoją subskrypcję veedeck, ale transakcja nie powiodła się.</p>
+
+              <!-- Info box -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#FFF5F5;border:1px solid #FCA5A5;border-radius:10px;margin:0 0 24px;">
+                <tr>
+                  <td style="padding:16px 18px;">
+                    <p style="margin:0 0 8px;font-size:13px;font-weight:600;color:#B91C1C;text-transform:uppercase;letter-spacing:0.5px;">Co oznacza ta wiadomość?</p>
+                    <p style="margin:0;font-size:14px;line-height:1.6;color:#6B7280;">Stripe automatycznie ponowi próbę pobrania płatności w ciągu kilku dni. Jeśli kolejne próby również się nie powiodą, Twój dostęp do veedeck może zostać zawieszony. Sprawdź dane swojej karty i upewnij się, że masz wystarczające środki.</p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- CTA Button -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 8px;">
+                <tr>
+                  <td align="center">
+                    <a href="${billingUrl}" style="display:inline-block;background-color:#EF4444;color:#FFFFFF;text-decoration:none;font-size:15px;font-weight:600;padding:13px 28px;border-radius:10px;">Zaktualizuj dane płatności</a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:20px 0 0;font-size:13px;line-height:1.6;color:#9CA3AF;text-align:center;">Jeśli uważasz, że to pomyłka, skontaktuj się z nami: <a href="mailto:${CONTACT_EMAIL}" style="color:#6B7280;text-decoration:none;">${CONTACT_EMAIL}</a></p>
+
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding:26px 24px 8px;text-align:center;">
+              <p style="margin:0;font-size:13px;line-height:1.6;color:#8A8D9A;">veedeck — platforma dla projektantów wnętrz.</p>
+              <p style="margin:10px 0 0;font-size:13px;line-height:1.6;color:#A0A3AE;">
+                <a href="${PRIVACY_URL_PL}" style="color:#8A8D9A;text-decoration:none;">Polityka prywatności</a>
+                &nbsp;·&nbsp;
+                <a href="${COOKIES_URL_PL}" style="color:#8A8D9A;text-decoration:none;">Cookies</a>
+                &nbsp;·&nbsp;
+                <a href="mailto:${CONTACT_EMAIL}" style="color:#8A8D9A;text-decoration:none;">${CONTACT_EMAIL}</a>
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
+
+export function paymentFailedEmailEN(billingUrl: string): string {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Payment failed</title>
+</head>
+<body style="margin:0;padding:0;background-color:#F4F6F9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#F4F6F9;padding:32px 16px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background-color:#FFFFFF;border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+
+          <!-- Header -->
+          <tr>
+            <td style="padding:32px 24px 24px;text-align:center;background-color:#FFE9E9;">
+              <p style="margin:0 0 12px;font-size:32px;">⚠️</p>
+              <h1 style="margin:0;font-size:22px;font-weight:700;color:#1A1D23;line-height:1.3;">Your payment could not be processed</h1>
+              <p style="margin:10px 0 0;font-size:15px;color:#6B7280;line-height:1.5;">There was a problem with your payment method.</p>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding:28px 24px 8px;">
+
+              <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#374151;">We attempted to charge your veedeck subscription but the transaction failed.</p>
+
+              <!-- Info box -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#FFF5F5;border:1px solid #FCA5A5;border-radius:10px;margin:0 0 24px;">
+                <tr>
+                  <td style="padding:16px 18px;">
+                    <p style="margin:0 0 8px;font-size:13px;font-weight:600;color:#B91C1C;text-transform:uppercase;letter-spacing:0.5px;">What does this mean?</p>
+                    <p style="margin:0;font-size:14px;line-height:1.6;color:#6B7280;">Stripe will automatically retry the payment over the next few days. If all retries fail, your access to veedeck may be suspended. Please check your card details and make sure you have sufficient funds.</p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- CTA Button -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 8px;">
+                <tr>
+                  <td align="center">
+                    <a href="${billingUrl}" style="display:inline-block;background-color:#EF4444;color:#FFFFFF;text-decoration:none;font-size:15px;font-weight:600;padding:13px 28px;border-radius:10px;">Update payment details</a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:20px 0 0;font-size:13px;line-height:1.6;color:#9CA3AF;text-align:center;">If you think this is a mistake, contact us: <a href="mailto:${CONTACT_EMAIL}" style="color:#6B7280;text-decoration:none;">${CONTACT_EMAIL}</a></p>
+
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding:26px 24px 8px;text-align:center;">
+              <p style="margin:0;font-size:13px;line-height:1.6;color:#8A8D9A;">veedeck - Visualize, Design, Deliver. The platform for interior designers.</p>
+              <p style="margin:10px 0 0;font-size:13px;line-height:1.6;color:#A0A3AE;">
+                <a href="${PRIVACY_URL_EN}" style="color:#8A8D9A;text-decoration:none;">Privacy Policy</a>
+                &nbsp;·&nbsp;
+                <a href="${COOKIES_URL_EN}" style="color:#8A8D9A;text-decoration:none;">Cookies</a>
+                &nbsp;·&nbsp;
+                <a href="mailto:${CONTACT_EMAIL}" style="color:#8A8D9A;text-decoration:none;">${CONTACT_EMAIL}</a>
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}

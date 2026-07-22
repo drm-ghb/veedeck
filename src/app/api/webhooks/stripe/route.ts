@@ -7,7 +7,7 @@ import {
 } from "@/lib/db/subscriptions";
 import { getPlanFromPriceId } from "@/lib/stripe/prices";
 import { prisma } from "@/lib/prisma";
-import { notifyAdminNewPayment } from "@/lib/email";
+import { notifyAdminNewPayment, sendPaymentFailedEmail, notifyAdminSubscriptionChanged } from "@/lib/email";
 
 export const runtime = "nodejs"; // wymagane, Stripe SDK nie działa na edge runtime
 
@@ -68,6 +68,40 @@ export async function POST(req: NextRequest) {
         plan: plan ?? undefined,
         cancelAt: subscription.cancel_at ? new Date(subscription.cancel_at * 1000) : null,
       });
+
+      if (event.type === "customer.subscription.updated") {
+        const prev = event.data.previous_attributes as Partial<Stripe.Subscription> | undefined;
+        const user = await prisma.user.findUnique({
+          where: { stripeCustomerId: subscription.customer as string },
+          select: { email: true, fullName: true },
+        });
+        const prevPriceId = (prev?.items as any)?.data?.[0]?.price?.id;
+        const prevPlan = prevPriceId ? getPlanFromPriceId(prevPriceId) : null;
+        if (prevPlan && planFromPrice && prevPlan !== planFromPrice) {
+          await notifyAdminSubscriptionChanged({
+            userEmail: user?.email ?? "nieznany",
+            userName: user?.fullName ?? null,
+            changeType: "plan_change",
+            oldPlan: prevPlan,
+            newPlan: planFromPrice,
+          });
+        } else if (prev?.cancel_at !== undefined && !prev.cancel_at && subscription.cancel_at) {
+          await notifyAdminSubscriptionChanged({
+            userEmail: user?.email ?? "nieznany",
+            userName: user?.fullName ?? null,
+            changeType: "cancel_scheduled",
+            newPlan: plan ?? "nieznany",
+            cancelAt: new Date(subscription.cancel_at * 1000),
+          });
+        } else if (prev?.cancel_at !== undefined && prev.cancel_at && !subscription.cancel_at) {
+          await notifyAdminSubscriptionChanged({
+            userEmail: user?.email ?? "nieznany",
+            userName: user?.fullName ?? null,
+            changeType: "cancel_revoked",
+            newPlan: plan ?? "nieznany",
+          });
+        }
+      }
       break;
     }
 
@@ -112,7 +146,16 @@ export async function POST(req: NextRequest) {
 
     case "invoice.payment_failed": {
       const invoice = event.data.object as Stripe.Invoice;
-      console.warn("Nieudana płatność dla klienta:", invoice.customer);
+      if (!invoice.customer) break;
+      const user = await prisma.user.findUnique({
+        where: { stripeCustomerId: invoice.customer as string },
+        select: { email: true },
+      });
+      if (user?.email) {
+        await sendPaymentFailedEmail({ to: user.email }).catch((err) =>
+          console.error("[webhook] sendPaymentFailedEmail failed:", err)
+        );
+      }
       break;
     }
 

@@ -9,6 +9,7 @@ import {
   trialEndedEmailPL, trialEndedEmailEN,
   teamInvitationEmailPL, teamInvitationEmailEN,
   clientInvitationEmailPL, clientInvitationEmailEN,
+  paymentFailedEmailPL, paymentFailedEmailEN,
 } from "@/lib/email-templates";
 
 const transporter = nodemailer.createTransport({
@@ -811,4 +812,70 @@ export async function notifyDesignerSurveySubmitted(opts: {
       ${emailBtn("Zobacz odpowiedzi", link)}
     `),
   );
+}
+
+export async function sendPaymentFailedEmail({
+  to,
+  locale = "pl",
+}: {
+  to: string;
+  locale?: "pl" | "en";
+}) {
+  const billingUrl = `${APP_URL}/ustawienia/plan-i-rozliczenia`;
+  const isPL = locale !== "en";
+  await transporter.sendMail({
+    from: FROM,
+    to,
+    subject: isPL
+      ? "Nie udało się pobrać płatności za veedeck"
+      : "Your veedeck payment could not be processed",
+    html: isPL ? paymentFailedEmailPL(billingUrl) : paymentFailedEmailEN(billingUrl),
+  });
+}
+
+export async function notifyAdminSubscriptionChanged(opts: {
+  userEmail: string;
+  userName: string | null;
+  changeType: "plan_change" | "cancel_scheduled" | "cancel_revoked";
+  oldPlan?: string;
+  newPlan?: string;
+  cancelAt?: Date;
+}) {
+  const safe = (s: string) => escapeHtml(s);
+  const subjects: Record<string, string> = {
+    plan_change: `Zmiana planu: ${opts.oldPlan} → ${opts.newPlan}`,
+    cancel_scheduled: `Anulowanie subskrypcji: ${opts.userEmail}`,
+    cancel_revoked: `Cofnięcie anulowania: ${opts.userEmail}`,
+  };
+  const bodies: Record<string, string> = {
+    plan_change: `
+      <h2 style="margin:0 0 8px;font-size:18px;color:#111;">Zmiana planu subskrypcji</h2>
+      <table style="width:100%;border-collapse:collapse;margin-top:16px;font-size:14px;">
+        <tr><td style="padding:6px 0;color:#6b7280;width:140px;">Użytkownik</td><td style="padding:6px 0;color:#111;font-weight:600;">${opts.userName ? safe(opts.userName) : "—"}</td></tr>
+        <tr><td style="padding:6px 0;color:#6b7280;">Email</td><td style="padding:6px 0;color:#111;">${safe(opts.userEmail)}</td></tr>
+        <tr><td style="padding:6px 0;color:#6b7280;">Stary plan</td><td style="padding:6px 0;color:#111;">${safe(opts.oldPlan ?? "—")}</td></tr>
+        <tr><td style="padding:6px 0;color:#111;font-weight:600;">Nowy plan</td><td style="padding:6px 0;color:#111;font-weight:600;">${safe(opts.newPlan ?? "—")}</td></tr>
+      </table>`,
+    cancel_scheduled: `
+      <h2 style="margin:0 0 8px;font-size:18px;color:#111;">Subskrypcja zaplanowana do anulowania</h2>
+      <table style="width:100%;border-collapse:collapse;margin-top:16px;font-size:14px;">
+        <tr><td style="padding:6px 0;color:#6b7280;width:140px;">Użytkownik</td><td style="padding:6px 0;color:#111;font-weight:600;">${opts.userName ? safe(opts.userName) : "—"}</td></tr>
+        <tr><td style="padding:6px 0;color:#6b7280;">Email</td><td style="padding:6px 0;color:#111;">${safe(opts.userEmail)}</td></tr>
+        <tr><td style="padding:6px 0;color:#6b7280;">Plan</td><td style="padding:6px 0;color:#111;">${safe(opts.newPlan ?? "—")}</td></tr>
+        <tr><td style="padding:6px 0;color:#6b7280;">Koniec dostępu</td><td style="padding:6px 0;color:#D6473C;font-weight:600;">${opts.cancelAt?.toLocaleString("pl-PL", { timeZone: "Europe/Warsaw" }) ?? "—"}</td></tr>
+      </table>`,
+    cancel_revoked: `
+      <h2 style="margin:0 0 8px;font-size:18px;color:#111;">Cofnięcie anulowania subskrypcji</h2>
+      <table style="width:100%;border-collapse:collapse;margin-top:16px;font-size:14px;">
+        <tr><td style="padding:6px 0;color:#6b7280;width:140px;">Użytkownik</td><td style="padding:6px 0;color:#111;font-weight:600;">${opts.userName ? safe(opts.userName) : "—"}</td></tr>
+        <tr><td style="padding:6px 0;color:#6b7280;">Email</td><td style="padding:6px 0;color:#111;">${safe(opts.userEmail)}</td></tr>
+        <tr><td style="padding:6px 0;color:#6b7280;">Plan</td><td style="padding:6px 0;color:#111;">${safe(opts.newPlan ?? "—")}</td></tr>
+      </table>`,
+  };
+  await transporter.sendMail({
+    from: FROM,
+    to: "veedeck@veedeck.com",
+    subject: subjects[opts.changeType],
+    html: emailBase(bodies[opts.changeType]),
+  }).catch((err) => console.error("[EMAIL] notifyAdminSubscriptionChanged failed:", err));
 }
