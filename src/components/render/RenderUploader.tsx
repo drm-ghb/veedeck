@@ -15,6 +15,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useT } from "@/lib/i18n";
+import { useIsTrialExpired } from "@/lib/trial-context";
 
 interface Folder {
   id: string;
@@ -31,6 +32,7 @@ interface RenderUploaderProps {
 
 export default function RenderUploader({ projectId, roomId, folderId: fixedFolderId, compact, folders = [] }: RenderUploaderProps) {
   const t = useT();
+  const expired = useIsTrialExpired();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [folderId, setFolderId] = useState<string>("");
@@ -43,9 +45,15 @@ export default function RenderUploader({ projectId, roomId, folderId: fixedFolde
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger render={<Button size={compact ? "icon-sm" : "default"} variant="default" className={compact ? "bg-gray-900 hover:bg-gray-700 dark:bg-white dark:hover:bg-gray-200 text-white dark:text-gray-900 h-6 w-6 rounded-md p-0 flex-shrink-0" : ""} title={t.render.addFiles} />}>
-        {compact ? <span className="text-base leading-none">+</span> : `+ ${t.render.addFiles}`}
-      </DialogTrigger>
+      {expired ? (
+        <Button disabled size={compact ? "icon-sm" : "default"} variant="default" title="Dostępne w płatnym planie" className={`opacity-40 cursor-not-allowed ${compact ? "bg-gray-900 dark:bg-white text-white dark:text-gray-900 h-6 w-6 rounded-md p-0 flex-shrink-0" : ""}`}>
+          {compact ? <span className="text-base leading-none">+</span> : `+ ${t.render.addFiles}`}
+        </Button>
+      ) : (
+        <DialogTrigger render={<Button size={compact ? "icon-sm" : "default"} variant="default" className={compact ? "bg-gray-900 hover:bg-gray-700 dark:bg-white dark:hover:bg-gray-200 text-white dark:text-gray-900 h-6 w-6 rounded-md p-0 flex-shrink-0" : ""} title={t.render.addFiles} />}>
+          {compact ? <span className="text-base leading-none">+</span> : `+ ${t.render.addFiles}`}
+        </DialogTrigger>
+      )}
 
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>

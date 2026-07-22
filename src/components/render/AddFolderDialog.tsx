@@ -15,6 +15,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useT } from "@/lib/i18n";
+import { useIsTrialExpired } from "@/lib/trial-context";
 
 export default function AddFolderDialog({
   roomId,
@@ -27,6 +28,7 @@ export default function AddFolderDialog({
 }) {
   const router = useRouter();
   const t = useT();
+  const expired = useIsTrialExpired();
   const isControlled = externalOpen !== undefined;
   const [internalOpen, setInternalOpen] = useState(false);
   const open = isControlled ? externalOpen! : internalOpen;
@@ -67,10 +69,17 @@ export default function AddFolderDialog({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       {!isControlled && (
-        <DialogTrigger render={<Button variant="outline" />}>
-          <FolderPlus size={15} />
-          {t.render.newFolder}
-        </DialogTrigger>
+        expired ? (
+          <Button disabled variant="outline" title="Dostępne w płatnym planie" className="opacity-40 cursor-not-allowed">
+            <FolderPlus size={15} />
+            {t.render.newFolder}
+          </Button>
+        ) : (
+          <DialogTrigger render={<Button variant="outline" />}>
+            <FolderPlus size={15} />
+            {t.render.newFolder}
+          </DialogTrigger>
+        )
       )}
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
