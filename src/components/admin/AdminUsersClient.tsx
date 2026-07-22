@@ -4,18 +4,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
-import { Trash2, ShieldCheck, FolderOpen, KeyRound, X, Clock, Gift, Plus, Search, LogIn } from "lucide-react";
+import { Trash2, ShieldCheck, FolderOpen, KeyRound, X, Clock, Gift, Search, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useT } from "@/lib/i18n";
-
-interface Discount {
-  id: string;
-  type: string;
-  value: number;
-  validFrom: Date | string;
-  validUntil: Date | string | null;
-  note: string | null;
-}
 
 interface User {
   id: string;
@@ -28,7 +19,6 @@ interface User {
   trialEndsAt: Date | string | null;
   isFree: boolean;
   subscription: { plan: string; status: string } | null;
-  discounts: Discount[];
   _count: { projects: number };
 }
 
@@ -50,13 +40,6 @@ export default function AdminUsersClient({
   const [trialModal, setTrialModal] = useState<User | null>(null);
   const [extraDays, setExtraDays] = useState("");
   const [savingTrial, setSavingTrial] = useState(false);
-  const [discountModal, setDiscountModal] = useState<User | null>(null);
-  const [discountType, setDiscountType] = useState<"percent" | "amount">("percent");
-  const [discountValue, setDiscountValue] = useState("");
-  const [discountFrom, setDiscountFrom] = useState("");
-  const [discountUntil, setDiscountUntil] = useState("");
-  const [discountNote, setDiscountNote] = useState("");
-  const [savingDiscount, setSavingDiscount] = useState(false);
   const router = useRouter();
 
   async function handleDelete(id: string, name: string | null) {
@@ -126,47 +109,6 @@ export default function AdminUsersClient({
     }
   }
 
-  async function handleAddDiscount() {
-    if (!discountModal) return;
-    const val = parseFloat(discountValue);
-    if (!val || val <= 0) { toast.error(t.admin.discountRequired); return; }
-    setSavingDiscount(true);
-    const res = await fetch(`/api/admin/users/${discountModal.id}/discount`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        type: discountType,
-        value: val,
-        validFrom: discountFrom || undefined,
-        validUntil: discountUntil || undefined,
-        note: discountNote || undefined,
-      }),
-    });
-    setSavingDiscount(false);
-    if (res.ok) {
-      const newDiscount = await res.json();
-      setList((prev) => prev.map((u) => u.id === discountModal.id ? { ...u, discounts: [newDiscount, ...u.discounts] } : u));
-      setDiscountModal((prev) => prev ? { ...prev, discounts: [newDiscount, ...prev.discounts] } : prev);
-      toast.success(t.admin.discountAdded);
-      setDiscountValue(""); setDiscountFrom(""); setDiscountUntil(""); setDiscountNote("");
-    } else {
-      toast.error(t.admin.discountError);
-    }
-  }
-
-  async function handleDeleteDiscount(userId: string, discountId: string) {
-    const res = await fetch(`/api/admin/users/${userId}/discount`, {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ discountId }),
-    });
-    if (res.ok) {
-      setList((prev) => prev.map((u) => u.id === userId ? { ...u, discounts: u.discounts.filter((d) => d.id !== discountId) } : u));
-      setDiscountModal((prev) => prev ? { ...prev, discounts: prev.discounts.filter((d) => d.id !== discountId) } : prev);
-      toast.success(t.admin.discountDeleted);
-    }
-  }
-
   function trialLabel(user: User) {
     if (user.role === "client" || user.role === "contractor") return { text: "Nie dotyczy", color: "text-white/20" };
     if (user.isFree) return { text: t.admin.freeBadge, color: "text-emerald-400" };
@@ -188,7 +130,7 @@ export default function AdminUsersClient({
     { key: "all", label: "Wszystkie statusy" },
     { key: "trial", label: "Trial aktywny" },
     { key: "trial_expired", label: "Trial wygasł" },
-    { key: "free", label: "Darmowy dostęp" },
+    { key: "free", label: "Free" },
     { key: "solo", label: "Solo" },
     { key: "studio", label: "Studio" },
     { key: "biuro", label: "Biuro" },
@@ -294,7 +236,7 @@ export default function AdminUsersClient({
       </div>
 
       <div className="bg-white/3 border border-white/8 rounded-xl overflow-hidden">
-        <div className="grid grid-cols-[1fr_140px_100px_60px_120px] gap-4 px-5 py-3 bg-white/3 border-b border-white/8 text-xs font-medium text-white/30 uppercase tracking-wide">
+        <div className="grid grid-cols-[1fr_140px_100px_60px_160px] gap-4 px-5 py-3 bg-white/3 border-b border-white/8 text-xs font-medium text-white/30 uppercase tracking-wide">
           <span>{t.admin.usersNav}</span>
           <span>{t.admin.joined}</span>
           <span>{t.admin.trialPlan}</span>
@@ -311,7 +253,7 @@ export default function AdminUsersClient({
           return (
             <div
               key={user.id}
-              className={`grid grid-cols-[1fr_140px_100px_60px_120px] gap-4 px-5 py-4 items-center ${
+              className={`grid grid-cols-[1fr_140px_100px_60px_160px] gap-4 px-5 py-4 items-center ${
                 i !== filtered.length - 1 ? "border-b border-white/5" : ""
               } ${user.id === currentUserId ? "bg-blue-500/5" : ""}`}
             >
@@ -382,15 +324,6 @@ export default function AdminUsersClient({
                       onClick={() => { setTrialModal(user); setExtraDays(""); }}
                     >
                       <Clock size={14} />
-                    </Button>
-                    <Button
-                      size="icon-sm"
-                      variant="ghost"
-                      title={t.admin.discountsTitle}
-                      className="text-white/25 hover:text-violet-400 hover:bg-white/8"
-                      onClick={() => setDiscountModal(user)}
-                    >
-                      <Plus size={14} />
                     </Button>
                   </>
                 )}
@@ -499,86 +432,6 @@ export default function AdminUsersClient({
         </div>
       )}
 
-      {/* Discount modal */}
-      {discountModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onClick={() => setDiscountModal(null)}>
-          <div className="bg-[#1a1d24] border border-white/10 rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="text-base font-semibold text-white">{t.admin.discountsTitle} — {discountModal.fullName ?? discountModal.name ?? discountModal.email}</h2>
-              <button onClick={() => setDiscountModal(null)} className="text-white/30 hover:text-white/70"><X size={18} /></button>
-            </div>
-
-            {/* Existing discounts */}
-            {discountModal.discounts.length > 0 && (
-              <div className="mb-5 space-y-2">
-                {discountModal.discounts.map((d) => (
-                  <div key={d.id} className="flex items-center justify-between px-3 py-2 rounded-lg bg-white/5 border border-white/8">
-                    <div className="text-sm">
-                      <span className="text-violet-400 font-semibold">
-                        {d.type === "percent" ? `${d.value}%` : `${d.value} zł`}
-                      </span>
-                      <span className="text-white/40 text-xs ml-2">
-                        {new Date(d.validFrom).toLocaleDateString("pl-PL")}
-                        {d.validUntil && ` – ${new Date(d.validUntil).toLocaleDateString("pl-PL")}`}
-                      </span>
-                      {d.note && <span className="text-white/30 text-xs ml-1">({d.note})</span>}
-                    </div>
-                    <button onClick={() => handleDeleteDiscount(discountModal.id, d.id)} className="text-red-400/50 hover:text-red-400 ml-3">
-                      <X size={14} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            <div className="space-y-3">
-              <p className="text-xs text-white/40 font-medium uppercase tracking-wide">{t.admin.addDiscount}</p>
-
-              <div className="flex gap-2">
-                <button onClick={() => setDiscountType("percent")} className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors ${discountType === "percent" ? "bg-violet-600/20 border-violet-500/40 text-violet-300" : "bg-white/5 border-white/10 text-white/40 hover:text-white/60"}`}>
-                  {t.admin.percentDiscount}
-                </button>
-                <button onClick={() => setDiscountType("amount")} className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors ${discountType === "amount" ? "bg-violet-600/20 border-violet-500/40 text-violet-300" : "bg-white/5 border-white/10 text-white/40 hover:text-white/60"}`}>
-                  {t.admin.amountDiscount}
-                </button>
-              </div>
-
-              <input
-                type="number"
-                value={discountValue}
-                onChange={(e) => setDiscountValue(e.target.value)}
-                placeholder={discountType === "percent" ? t.admin.percentPlaceholder : t.admin.amountPlaceholder}
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/20 focus:outline-none focus:border-violet-500/40"
-              />
-
-              <div className="flex gap-2">
-                <div className="flex-1">
-                  <label className="block text-xs text-white/30 mb-1">{t.admin.validFrom}</label>
-                  <input type="date" value={discountFrom} onChange={(e) => setDiscountFrom(e.target.value)} className="w-full px-3 py-2 text-sm rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-violet-500/40" />
-                </div>
-                <div className="flex-1">
-                  <label className="block text-xs text-white/30 mb-1">{t.admin.validUntil}</label>
-                  <input type="date" value={discountUntil} onChange={(e) => setDiscountUntil(e.target.value)} className="w-full px-3 py-2 text-sm rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-violet-500/40" />
-                </div>
-              </div>
-
-              <input
-                value={discountNote}
-                onChange={(e) => setDiscountNote(e.target.value)}
-                placeholder={t.admin.notePlaceholder}
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/20 focus:outline-none focus:border-violet-500/40"
-              />
-
-              <div className="flex gap-2 justify-end pt-1">
-                <Button variant="ghost" size="sm" className="text-white/40 hover:text-white/80" onClick={() => setDiscountModal(null)}>{t.common.close}</Button>
-                <Button size="sm" className="bg-violet-600 hover:bg-violet-500 text-white border-0" onClick={handleAddDiscount} disabled={savingDiscount || !discountValue}>
-                  {savingDiscount ? t.admin.addingDiscount : t.admin.addDiscount}
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 }
