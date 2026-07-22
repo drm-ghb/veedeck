@@ -58,6 +58,7 @@ export default async function VeedeckLayout({
         hiddenModules={hiddenModules}
         isTrial={isTrial}
         trialEndsAt={isTrial ? dbUser!.trialEndsAt!.toISOString() : null}
+        isTrialExpired={isTrialExpired}
         notificationUserId={dbUser?.ownerId ?? session.user.id!}
         sidebarCollapsed={sidebarCollapsed}
         extraRight={isCancelled ? <CancelledBadge /> : isScheduledCancel ? <CancelledBadge cancelAt={cancelAt!.toISOString()} /> : isTrial ? <OnboardingTrigger /> : undefined}

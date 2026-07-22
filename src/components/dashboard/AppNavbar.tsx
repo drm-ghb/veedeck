@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ShieldCheck } from "@/components/ui/icons";
+import { ShieldCheck, AlertCircle } from "@/components/ui/icons";
 import { LogoBrand } from "@/components/dashboard/LogoBrand";
 import { SignOutButton } from "@/components/dashboard/SignOutButton";
 import NotificationBell from "@/components/dashboard/NotificationBell";
@@ -16,6 +16,7 @@ interface AppNavbarProps {
   isAdmin?: boolean;
   isTrial?: boolean;
   trialEndsAt?: string | null;
+  isTrialExpired?: boolean;
   notificationUserId: string;
   sidebarCollapsed?: boolean;
   extraRight?: React.ReactNode;
@@ -28,6 +29,7 @@ export default function AppNavbar({
   isAdmin = false,
   isTrial = false,
   trialEndsAt,
+  isTrialExpired = false,
   notificationUserId,
   sidebarCollapsed = false,
   extraRight,
@@ -55,7 +57,15 @@ export default function AppNavbar({
 
         {/* Right */}
         <div className="ml-auto sm:ml-0 shrink-0 sm:flex-1 flex items-center gap-2 justify-end">
-          {isTrial && trialEndsAt && <TrialBadge trialEndsAt={trialEndsAt} />}
+          {isTrialExpired ? (
+            <Link
+              href="/ustawienia/plan-i-rozliczenia"
+              className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border bg-red-500/10 text-red-600 border-red-500/20 hover:bg-red-500/15 dark:text-red-400 transition-colors"
+            >
+              <AlertCircle size={12} className="flex-shrink-0" />
+              Trial wygasł
+            </Link>
+          ) : (isTrial && trialEndsAt && <TrialBadge trialEndsAt={trialEndsAt} />)}
           {extraRight}
           <div className="md:hidden"><MobileSearch /></div>
           <QuickNoteButton />

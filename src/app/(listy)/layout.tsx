@@ -36,6 +36,7 @@ export default async function ListyLayout({
   const cancelAt = dbUser?.subscription?.cancelAt ?? null;
   const hasAccess = !!(dbUser?.isFree || subStatus === "active" || (subStatus === "cancelled" && !!cancelAt && new Date(cancelAt) > new Date()));
   const isTrialExpired = !!(dbUser?.trialEndsAt && new Date(dbUser.trialEndsAt) < new Date() && !hasAccess && !dbUser?.ownerId);
+  const isTrial = !!(dbUser?.trialEndsAt && dbUser.trialEndsAt > new Date() && !dbUser.isFree && !subStatus);
 
   return (
     <div className="h-dvh flex flex-col bg-muted/60">
@@ -43,6 +44,9 @@ export default async function ListyLayout({
         firstName={displayName}
         avatarUrl={avatarUrl}
         hiddenModules={hiddenModules}
+        isTrial={isTrial}
+        trialEndsAt={isTrial ? dbUser!.trialEndsAt!.toISOString() : null}
+        isTrialExpired={isTrialExpired}
         notificationUserId={dbUser?.ownerId ?? session.user.id!}
         sidebarCollapsed={sidebarCollapsed}
       />
