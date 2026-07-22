@@ -14,6 +14,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useUploadThing } from "@/lib/uploadthing-client";
 import { useT } from "@/lib/i18n";
+import { useIsTrialExpired } from "@/lib/trial-context";
 
 type RenderStatus = "REVIEW" | "ACCEPTED" | "REJECTED";
 
@@ -64,6 +65,7 @@ export default function FolderRenderView({ projectId, roomId, folderId, renders 
   const dragCounterRef = useRef(0);
   const router = useRouter();
 
+  const expired = useIsTrialExpired();
   const { startUpload } = useUploadThing("renderUploader");
 
   const uploadFiles = useCallback(async (files: File[]) => {
@@ -150,6 +152,7 @@ prevRenderIdsRef.current = currentIds;
   }
 
   async function handleBulkAction(action: "archive" | "delete") {
+    if (expired) return;
     if (action === "delete" && !confirm(t.render.confirmDeleteSelectedFiles)) return;
     setBulkLoading(true);
     try {
@@ -208,12 +211,12 @@ prevRenderIdsRef.current = currentIds;
     return () => document.removeEventListener("contextmenu", onCtxMenu);
   }, []);
 
-  const dragProps = {
+  const dragProps = !expired ? {
     onDragEnter: handleDragEnter,
     onDragLeave: handleDragLeave,
     onDragOver: (e: React.DragEvent) => e.preventDefault(),
     onDrop: handleDrop,
-  };
+  } : {};
 
   const dropOverlay = (isDragOver || isUploading) && (
     <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-primary/10 backdrop-blur-[1px] pointer-events-none rounded-xl">
@@ -244,7 +247,7 @@ prevRenderIdsRef.current = currentIds;
         />
         {contextMenu && createPortal(
           <div onMouseDown={(e) => e.stopPropagation()} style={{ left: contextMenu.x, top: contextMenu.y }} className="fixed z-[150] bg-popover border border-border rounded-lg shadow-lg py-1 min-w-[200px] overflow-hidden">
-            <button className="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors text-left" onClick={() => { setContextMenu(null); fileInputRef.current?.click(); }}>
+            <button disabled={expired} className="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors text-left disabled:opacity-40 disabled:cursor-not-allowed" onClick={() => { if (expired) return; setContextMenu(null); fileInputRef.current?.click(); }}>
               <Upload size={14} className="text-muted-foreground shrink-0" />
               Dodaj pliki
             </button>
@@ -422,7 +425,7 @@ prevRenderIdsRef.current = currentIds;
           count={selectedIds.size}
           loading={bulkLoading}
           onArchive={() => handleBulkAction("archive")}
-          onMove={() => setMoveOpen(true)}
+          onMove={() => { if (!expired) setMoveOpen(true); }}
           onDelete={() => handleBulkAction("delete")}
           onCancel={exitSelection}
         />
@@ -446,7 +449,7 @@ prevRenderIdsRef.current = currentIds;
 
       {contextMenu && createPortal(
         <div onMouseDown={(e) => e.stopPropagation()} style={{ left: contextMenu.x, top: contextMenu.y }} className="fixed z-[150] bg-popover border border-border rounded-lg shadow-lg py-1 min-w-[200px] overflow-hidden">
-          <button className="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors text-left" onClick={() => { setContextMenu(null); fileInputRef.current?.click(); }}>
+          <button disabled={expired} className="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors text-left disabled:opacity-40 disabled:cursor-not-allowed" onClick={() => { if (expired) return; setContextMenu(null); fileInputRef.current?.click(); }}>
             <Upload size={14} className="text-muted-foreground shrink-0" />
             Dodaj pliki
           </button>

@@ -19,6 +19,7 @@ import PdfThumbnail from "./PdfThumbnail";
 import { SwipeableMessage } from "@/components/ui/swipeable-message";
 import SearchProductDialog from "./SearchProductDialog";
 import { useUploadThing } from "@/lib/uploadthing-client";
+import { useIsTrialExpired } from "@/lib/trial-context";
 
 type CommentStatus = "NEW" | "IN_PROGRESS" | "DONE";
 
@@ -247,6 +248,7 @@ export default function RenderViewer({
   authorAvatarUrl,
 }: RenderViewerProps) {
   const t = useT();
+  const expired = useIsTrialExpired();
   const isPdf = fileType === "pdf";
 
   const [comments, setComments] = useState<Comment[]>(initialComments);
@@ -1671,12 +1673,12 @@ export default function RenderViewer({
           <div className="hidden sm:flex ml-auto items-center gap-1 flex-shrink-0">
             {/* Zone 1: Primary actions */}
             {(isDesigner || allowClientComments) && (
-              <button onClick={() => { setMode(mode === "pin" ? "view" : "pin"); setProductPinMode(false); setPendingProductPos(null); }} className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md border transition-colors ${mode === "pin" ? "bg-primary text-primary-foreground border-primary" : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted"}`}>
+              <button disabled={isDesigner && expired} onClick={() => { if (isDesigner && expired) return; setMode(mode === "pin" ? "view" : "pin"); setProductPinMode(false); setPendingProductPos(null); }} className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md border transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${mode === "pin" ? "bg-primary text-primary-foreground border-primary" : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted"}`}>
                 <Pin size={14} /> Dodaj pin
               </button>
             )}
             {isDesigner && (
-              <button onClick={() => { setProductPinMode((v) => !v); setMode("view"); setPending(null); setPendingProductPos(null); }} className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md border transition-colors ${productPinMode ? "bg-primary text-primary-foreground border-primary" : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted"}`}>
+              <button disabled={expired} onClick={() => { if (expired) return; setProductPinMode((v) => !v); setMode("view"); setPending(null); setPendingProductPos(null); }} className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md border transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${productPinMode ? "bg-primary text-primary-foreground border-primary" : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted"}`}>
                 <Package size={14} /> Dodaj produkt
               </button>
             )}
@@ -1706,7 +1708,7 @@ export default function RenderViewer({
               <Download size={15} />
             </button>
             {isDesigner && (
-              <button onClick={() => setShowDeleteConfirm(true)} title={t.render.deleteFile} className="flex items-center justify-center w-8 h-8 rounded-md border border-transparent text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors">
+              <button disabled={expired} onClick={() => { if (!expired) setShowDeleteConfirm(true); }} title={t.render.deleteFile} className="flex items-center justify-center w-8 h-8 rounded-md border border-transparent text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
                 <Trash2 size={15} />
               </button>
             )}
@@ -1717,7 +1719,7 @@ export default function RenderViewer({
             {/* Zone 3: Render status */}
             {isDesigner ? (
               <DropdownMenu>
-                <DropdownMenuTrigger className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-md border transition-colors ${renderStatus === "ACCEPTED" ? "bg-green-500 text-white border-green-600" : renderStatus === "REJECTED" ? "bg-red-500 text-white border-red-600" : "bg-blue-500 text-white border-blue-600"}`}>
+                <DropdownMenuTrigger className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-md border transition-colors ${expired ? "pointer-events-none opacity-40" : ""} ${renderStatus === "ACCEPTED" ? "bg-green-500 text-white border-green-600" : renderStatus === "REJECTED" ? "bg-red-500 text-white border-red-600" : "bg-blue-500 text-white border-blue-600"}`}>
                   {renderStatus === "ACCEPTED" ? "Zaakceptowany" : renderStatus === "REJECTED" ? "Odrzucony" : "Do weryfikacji"}
                   <ChevronDown size={11} />
                 </DropdownMenuTrigger>
@@ -1810,7 +1812,7 @@ export default function RenderViewer({
         </button>
         {/* Delete (designer only) */}
         {isDesigner && (
-          <button onClick={() => setShowDeleteConfirm(true)} className="flex items-center justify-center w-9 h-9 rounded-md border border-transparent text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors flex-shrink-0" title={t.render.deleteFile}>
+          <button disabled={expired} onClick={() => { if (!expired) setShowDeleteConfirm(true); }} className="flex items-center justify-center w-9 h-9 rounded-md border border-transparent text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed" title={t.render.deleteFile}>
             <Trash2 size={16} />
           </button>
         )}
@@ -1818,7 +1820,7 @@ export default function RenderViewer({
         {/* Status */}
         {isDesigner ? (
           <DropdownMenu>
-            <DropdownMenuTrigger className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-md border transition-colors flex-shrink-0 ${renderStatus === "ACCEPTED" ? "bg-green-500 text-white border-green-600" : renderStatus === "REJECTED" ? "bg-red-500 text-white border-red-600" : "bg-blue-500 text-white border-blue-600"}`}>
+            <DropdownMenuTrigger className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-md border transition-colors flex-shrink-0 ${expired ? "pointer-events-none opacity-40" : ""} ${renderStatus === "ACCEPTED" ? "bg-green-500 text-white border-green-600" : renderStatus === "REJECTED" ? "bg-red-500 text-white border-red-600" : "bg-blue-500 text-white border-blue-600"}`}>
               {renderStatus === "ACCEPTED" ? "Zaakceptowany" : renderStatus === "REJECTED" ? "Odrzucony" : "Do weryfikacji"}
               <ChevronDown size={10} />
             </DropdownMenuTrigger>
@@ -1842,10 +1844,10 @@ export default function RenderViewer({
         {(isDesigner || (onRenderSelect && roomRenders.length > 0)) && (
           <div
             className="hidden md:flex w-44 border-r bg-card flex-col flex-shrink-0 overflow-hidden relative"
-            onDragEnter={isDesigner && projectId && roomId ? handleSidebarDragEnter : undefined}
-            onDragLeave={isDesigner && projectId && roomId ? handleSidebarDragLeave : undefined}
-            onDragOver={isDesigner && projectId && roomId ? handleSidebarDragOver : undefined}
-            onDrop={isDesigner && projectId && roomId ? handleSidebarDrop : undefined}
+            onDragEnter={isDesigner && !expired && projectId && roomId ? handleSidebarDragEnter : undefined}
+            onDragLeave={isDesigner && !expired && projectId && roomId ? handleSidebarDragLeave : undefined}
+            onDragOver={isDesigner && !expired && projectId && roomId ? handleSidebarDragOver : undefined}
+            onDrop={isDesigner && !expired && projectId && roomId ? handleSidebarDrop : undefined}
           >
             {/* Drag-over overlay */}
             {isDragOverSidebar && (
@@ -1865,7 +1867,7 @@ export default function RenderViewer({
               <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                 Pliki ({roomRenders.length})
               </p>
-              {isDesigner && projectId && roomId && (
+              {isDesigner && !expired && projectId && roomId && (
                 <RenderUploader projectId={projectId} roomId={roomId} folderId={folderId} compact />
               )}
             </div>
@@ -3025,7 +3027,7 @@ export default function RenderViewer({
                           {/* Attachment button */}
                           <button
                             type="button"
-                            disabled={chatUploadingImage || sendingChatMessage}
+                            disabled={chatUploadingImage || sendingChatMessage || (isDesigner && expired)}
                             onClick={() => chatImageInputRef.current?.click()}
                             title={t.render.addPhoto}
                             className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-primary text-white transition-colors disabled:opacity-40 hover:opacity-90"
@@ -3059,7 +3061,7 @@ export default function RenderViewer({
                           />
                           <button
                             type="button"
-                            disabled={chatUploadingVoice || chatUploadingImage || sendingChatMessage}
+                            disabled={chatUploadingVoice || chatUploadingImage || sendingChatMessage || (isDesigner && expired)}
                             onClick={
                               chatMessage.trim() || chatPendingVoiceUrl || chatPendingImageUrl
                                 ? submitChatMessage
@@ -3122,26 +3124,30 @@ export default function RenderViewer({
             <div className="flex items-center gap-2 flex-shrink-0">
               {(isDesigner || allowClientComments) && (
                 <button
+                  disabled={isDesigner && expired}
                   onClick={() => {
+                    if (isDesigner && expired) return;
                     setMode(mode === "pin" ? "view" : "pin");
                     setProductPinMode(false);
                     cancelPending();
                     setPendingProductPos(null);
                   }}
-                  className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md font-medium transition-colors ${mode === "pin" ? "bg-white/20 text-white" : "bg-white text-black hover:bg-white/90"}`}
+                  className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${mode === "pin" ? "bg-white/20 text-white" : "bg-white text-black hover:bg-white/90"}`}
                 >
                   <Pin size={14} /> {mode === "pin" ? "Anuluj" : "Dodaj pin"}
                 </button>
               )}
               {isDesigner && (
                 <button
+                  disabled={expired}
                   onClick={() => {
+                    if (expired) return;
                     setProductPinMode((v) => !v);
                     setMode("view");
                     cancelPending();
                     setPendingProductPos(null);
                   }}
-                  className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md font-medium transition-colors ${productPinMode ? "bg-white/20 text-white" : "bg-white text-black hover:bg-white/90"}`}
+                  className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${productPinMode ? "bg-white/20 text-white" : "bg-white text-black hover:bg-white/90"}`}
                 >
                   <Package size={14} /> {productPinMode ? "Anuluj" : "Dodaj produkt"}
                 </button>
@@ -4020,7 +4026,7 @@ export default function RenderViewer({
                     />
                     <button
                       onClick={() => versionFileInputRef.current?.click()}
-                      disabled={isVersionUploading}
+                      disabled={isVersionUploading || expired}
                       className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md bg-muted text-gray-700 dark:text-gray-300 hover:bg-muted/80 transition-colors disabled:opacity-50"
                     >
                       <Upload size={14} />
