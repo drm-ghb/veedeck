@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { X, Lock, CreditCard } from "@/components/ui/icons";
+import { X, Lock, Payments } from "@/components/ui/icons";
 
 export default function TrialExpiredModal() {
   const [open, setOpen] = useState(true);
@@ -48,10 +48,10 @@ export default function TrialExpiredModal() {
           </div>
 
           <button
-            onClick={() => { setOpen(false); router.push("/ustawienia/subskrypcja"); }}
+            onClick={() => { setOpen(false); router.push("/ustawienia/plan-i-rozliczenia"); }}
             className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-semibold transition-colors"
           >
-            <CreditCard size={16} />
+            <Payments size={16} />
             Ulepsz plan
           </button>
 

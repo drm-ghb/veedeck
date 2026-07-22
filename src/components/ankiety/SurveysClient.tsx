@@ -288,15 +288,13 @@ export default function SurveysClient({ surveys: initial, clients, customTemplat
             {filtered.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 text-center text-muted-foreground">
                 <p className="text-sm">{tab === "archived" ? t.ankiety.noArchived : t.ankiety.noActive}</p>
-                {tab === "active" && (
-                  {!expired && (
-                    <button
-                      onClick={() => setNewOpen(true)}
-                      className="mt-3 text-sm text-primary hover:underline"
-                    >
-                      {t.ankiety.createFirst}
-                    </button>
-                  )}
+                {tab === "active" && !expired && (
+                  <button
+                    onClick={() => setNewOpen(true)}
+                    className="mt-3 text-sm text-primary hover:underline"
+                  >
+                    {t.ankiety.createFirst}
+                  </button>
                 )}
               </div>
             ) : group === "status" ? (
