@@ -132,8 +132,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           token.needsNameSetup = false;
           token.ownerId = null;
         }
-      } else if (token.ownerId === undefined) {
-        // Stary token bez ownerId — jednorazowe doładowanie z bazy
+      } else if (token.ownerId === undefined || token.isAdmin === undefined) {
+        // Stary token bez ownerId/isAdmin — jednorazowe doładowanie z bazy
         const userId = (token.id ?? token.sub) as string;
         try {
           const dbUser = await prisma.user.findUnique({
