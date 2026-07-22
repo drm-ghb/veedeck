@@ -11,9 +11,10 @@ export default function ImpersonatePage() {
 
   useEffect(() => {
     if (!token) { setError("Brak tokenu."); return; }
-    signIn("credentials", { impersonateToken: token, redirect: true, callbackUrl: "/panel-glowny" })
+    signIn("credentials", { impersonateToken: token, redirect: false, callbackUrl: "/panel-glowny" })
       .then((res) => {
         if (res?.error) setError("Token wygasł lub jest nieprawidłowy.");
+        else if (res?.ok) window.location.href = "/panel-glowny";
       });
   }, [token]);
 
