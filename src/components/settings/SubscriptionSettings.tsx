@@ -237,9 +237,6 @@ function PlansModal({ onClose, subscription }: { onClose: () => void; subscripti
 
           {/* Currency */}
           <div className="flex items-center gap-2">
-            {rateDate && currency !== "PLN" && (
-              <span className="text-xs text-muted-foreground">kurs z {rateDate}</span>
-            )}
             <div className="flex gap-1">
               {CURRENCIES.map((c) => (
                 <button key={c} onClick={() => setCurrency(c)}
