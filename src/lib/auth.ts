@@ -28,7 +28,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         // Impersonation path — admin-generated one-time token
         if (credentials?.impersonateToken) {
           const rec = await prisma.impersonationToken.findUnique({
-            where: { token: credentials.impersonateToken },
+            where: { token: credentials.impersonateToken as string },
             include: { user: true },
           });
           if (!rec || rec.expiresAt < new Date()) return null;
