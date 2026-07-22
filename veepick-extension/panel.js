@@ -1,7 +1,155 @@
 // Veepick Panel — injected into the page on extension icon click
 (function () {
   const PANEL_ID = "veepick-panel";
-  const PANEL_VERSION = "3.2";
+  const PANEL_VERSION = "3.3";
+
+  // ── i18n ──────────────────────────────────────────────────────────────────
+  const lang = (navigator.language || "").startsWith("pl") ? "pl" : "en";
+  const T = {
+    pl: {
+      titleSettings: "Ustawienia",
+      titleRefresh: "Odśwież dane strony",
+      titleCollapse: "Zwiń panel",
+      titleExpand: "Rozwiń panel",
+      titleClose: "Zamknij",
+      setupTitle: "Połącz z veedeck",
+      setupDesc: "Wklej swój klucz API z ustawień konta w veedeck (Ustawienia → Wtyczka).",
+      labelAppUrl: "Adres aplikacji",
+      labelApiKey: "Klucz API",
+      placeholderUrl: "np. https://veedeck.vercel.app",
+      placeholderKey: "vp_...",
+      btnConnect: "Połącz",
+      btnBack: "← Wróć",
+      btnSave: "Zapisz",
+      btnDisconnect: "Rozłącz konto",
+      settingRemember: "Zapamiętuj listę i sekcję",
+      settingRememberTooltip: "Gdy włączone, wtyczka zapamiętuje ostatnio wybraną listę zakupową i sekcję i przywraca je przy kolejnym otwarciu panelu. Gdy wyłączone, musisz wybrać listę i sekcję za każdym razem od nowa.",
+      tabAdd: "Dodaj produkt",
+      tabHistory: "Ostatnio dodane",
+      hintHover: "Najedź na zdjęcie na stronie aby wybrać inne",
+      hintPicked: "✓ Zdjęcie wybrane",
+      labelList: "Lista zakupowa",
+      placeholderList: "Wybierz listę...",
+      labelSection: "Sekcja",
+      placeholderSection: "Wybierz sekcję...",
+      btnSectionPreview: "Podgląd sekcji",
+      btnSectionHide: "Ukryj listę",
+      labelName: "Nazwa *",
+      placeholderName: "Nazwa produktu",
+      labelCategory: "Kategoria",
+      placeholderCategory: "Brak kategorii",
+      labelNote: "Notatka",
+      placeholderNote: "Dodatkowe uwagi dla klienta...",
+      labelPrice: "Cena",
+      placeholderPrice: "np. 299 PLN",
+      labelQty: "Ilość",
+      labelDimensions: "Wymiar",
+      placeholderDimensions: "np. 60x80 cm",
+      labelManufacturer: "Producent",
+      placeholderManufacturer: "np. Sklum",
+      labelColor: "Kolor",
+      placeholderColor: "np. Biały",
+      btnAdd: "Dodaj do listy",
+      historyEmpty: "Brak historii.<br/>Dodane produkty pojawią się tutaj.",
+      sidebarTitle: "Produkty w sekcji",
+      sidebarEmpty: "Wybierz sekcję aby zobaczyć produkty.",
+      sidebarSectionEmpty: "Sekcja jest pusta.",
+      productCount: (n) => `${n} ${n === 1 ? "produkt" : n < 5 ? "produkty" : "produktów"}`,
+      errFillFields: "Uzupełnij wszystkie pola.",
+      statusChecking: "Sprawdzanie...",
+      errInvalidKey: "Nieprawidłowy klucz lub adres.",
+      successConnected: (name) => `Połączono jako ${name}`,
+      errConnection: "Błąd połączenia.",
+      successSaved: "Zapisano.",
+      loadingData: "Pobieranie danych...",
+      loggedAs: (name) => `Zalogowany: ${name}`,
+      errLoadingLists: "Błąd pobierania list. Sprawdź połączenie.",
+      errFillNameSection: "Uzupełnij nazwę produktu i wybierz sekcję.",
+      statusAdding: "Dodawanie...",
+      errServer: "Błąd serwera",
+      successAdded: "✓ Produkt dodany do listy!",
+      errAdding: "Błąd dodawania.",
+      duplicateWarning: (sectionName) => `Ten produkt jest już na tej liście w sekcji „${sectionName}"`,
+      statusRefreshed: "Odświeżono dane strony.",
+      noName: "Bez nazwy",
+      timeJustNow: "przed chwilą",
+      timeMinutes: (n) => `${n} min temu`,
+      timeHours: (n) => `${n} godz. temu`,
+      timeDays: (n) => `${n} dni temu`,
+    },
+    en: {
+      titleSettings: "Settings",
+      titleRefresh: "Refresh page data",
+      titleCollapse: "Collapse panel",
+      titleExpand: "Expand panel",
+      titleClose: "Close",
+      setupTitle: "Connect to veedeck",
+      setupDesc: "Paste your API key from your veedeck account settings (Settings → Plugin).",
+      labelAppUrl: "App URL",
+      labelApiKey: "API Key",
+      placeholderUrl: "e.g. https://veedeck.vercel.app",
+      placeholderKey: "vp_...",
+      btnConnect: "Connect",
+      btnBack: "← Back",
+      btnSave: "Save",
+      btnDisconnect: "Disconnect account",
+      settingRemember: "Remember list and section",
+      settingRememberTooltip: "When enabled, the plugin remembers the last selected shopping list and section and restores them on next open. When disabled, you need to select a list and section each time.",
+      tabAdd: "Add product",
+      tabHistory: "Recently added",
+      hintHover: "Hover over an image on the page to select a different one",
+      hintPicked: "✓ Image selected",
+      labelList: "Shopping list",
+      placeholderList: "Select list...",
+      labelSection: "Section",
+      placeholderSection: "Select section...",
+      btnSectionPreview: "Section preview",
+      btnSectionHide: "Hide list",
+      labelName: "Name *",
+      placeholderName: "Product name",
+      labelCategory: "Category",
+      placeholderCategory: "No category",
+      labelNote: "Note",
+      placeholderNote: "Additional notes for the client...",
+      labelPrice: "Price",
+      placeholderPrice: "e.g. $299",
+      labelQty: "Qty",
+      labelDimensions: "Dimensions",
+      placeholderDimensions: "e.g. 60x80 cm",
+      labelManufacturer: "Manufacturer",
+      placeholderManufacturer: "e.g. Sklum",
+      labelColor: "Color",
+      placeholderColor: "e.g. White",
+      btnAdd: "Add to list",
+      historyEmpty: "No history.<br/>Added products will appear here.",
+      sidebarTitle: "Products in section",
+      sidebarEmpty: "Select a section to see products.",
+      sidebarSectionEmpty: "Section is empty.",
+      productCount: (n) => `${n} ${n === 1 ? "product" : "products"}`,
+      errFillFields: "Please fill in all fields.",
+      statusChecking: "Checking...",
+      errInvalidKey: "Invalid key or URL.",
+      successConnected: (name) => `Connected as ${name}`,
+      errConnection: "Connection error.",
+      successSaved: "Saved.",
+      loadingData: "Loading data...",
+      loggedAs: (name) => `Logged in as: ${name}`,
+      errLoadingLists: "Error loading lists. Check your connection.",
+      errFillNameSection: "Please enter a product name and select a section.",
+      statusAdding: "Adding...",
+      errServer: "Server error",
+      successAdded: "✓ Product added to list!",
+      errAdding: "Error adding product.",
+      duplicateWarning: (sectionName) => `This product is already on this list in section "${sectionName}"`,
+      statusRefreshed: "Page data refreshed.",
+      noName: "No name",
+      timeJustNow: "just now",
+      timeMinutes: (n) => `${n} min ago`,
+      timeHours: (n) => `${n} h ago`,
+      timeDays: (n) => `${n} days ago`,
+    },
+  };
+  const t = T[lang];
 
   // Toggle if already exists and version matches; replace if outdated
   const existing = document.getElementById(PANEL_ID);
@@ -163,8 +311,8 @@
     /* ── Info icon + tooltip ── */
     #veepick-panel .vp-info-wrap { position: relative; display: inline-flex; align-items: center; }
     #veepick-panel .vp-info-icon { width: 15px; height: 15px; border-radius: 50%; background: #e5e7eb; color: #6b7280; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; cursor: default; font-style: normal; line-height: 1; }
-    #veepick-panel .vp-info-tooltip { display: none; position: absolute; left: 0; top: 20px; background: #1f2937; color: #fff; font-size: 11px; line-height: 1.5; padding: 8px 10px; border-radius: 6px; width: 220px; z-index: 10; pointer-events: none; }
-    #veepick-panel .vp-info-wrap:hover .vp-info-tooltip { display: block; }
+    #veepick-panel .vp-info-tooltip { display: none; position: fixed; background: #1f2937; color: #fff; font-size: 11px; line-height: 1.5; padding: 8px 10px; border-radius: 6px; width: 220px; z-index: 2147483647; pointer-events: none; }
+    #veepick-panel .vp-info-tooltip.vp-tooltip-visible { display: block; }
 
     /* ── Tabs ── */
     #veepick-panel .vp-tabs { display: flex; border-bottom: 1px solid #f0f0f0; flex-shrink: 0; }
@@ -241,34 +389,34 @@
     <div class="vp-header">
       <img src="${chrome.runtime.getURL("icons/icon48.png")}" alt="Veepick" />
       <h1>veepick</h1>
-      <button class="vp-icon-btn vp-hidden" id="vp-settingsBtn" title="Ustawienia">⚙</button>
-      <button class="vp-icon-btn vp-hidden" id="vp-refreshBtn" title="Odśwież dane strony">↺</button>
-      <button class="vp-icon-btn vp-hidden" id="vp-collapseBtn" title="Zwiń panel"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
-      <button class="vp-icon-btn" id="vp-close" title="Zamknij">✕</button>
+      <button class="vp-icon-btn vp-hidden" id="vp-settingsBtn" title="${t.titleSettings}">⚙</button>
+      <button class="vp-icon-btn vp-hidden" id="vp-refreshBtn" title="${t.titleRefresh}">↺</button>
+      <button class="vp-icon-btn vp-hidden" id="vp-collapseBtn" title="${t.titleCollapse}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
+      <button class="vp-icon-btn" id="vp-close" title="${t.titleClose}">✕</button>
     </div>
 
     <div id="vp-screenSetup" class="vp-screen">
-      <p class="vp-setup-title">Połącz z veedeck</p>
-      <p class="vp-setup-desc">Wklej swój klucz API z ustawień konta w veedeck (Ustawienia → Wtyczka).</p>
-      <div class="vp-field"><label>Adres aplikacji</label><input id="vp-inputBaseUrl" type="url" placeholder="np. https://veedeck.vercel.app" /></div>
-      <div class="vp-field"><label>Klucz API</label><input id="vp-inputApiKey" type="text" placeholder="vp_..." /></div>
-      <button class="vp-btn vp-btn-primary" id="vp-btnConnect">Połącz</button>
+      <p class="vp-setup-title">${t.setupTitle}</p>
+      <p class="vp-setup-desc">${t.setupDesc}</p>
+      <div class="vp-field"><label>${t.labelAppUrl}</label><input id="vp-inputBaseUrl" type="url" placeholder="${t.placeholderUrl}" /></div>
+      <div class="vp-field"><label>${t.labelApiKey}</label><input id="vp-inputApiKey" type="text" placeholder="${t.placeholderKey}" /></div>
+      <button class="vp-btn vp-btn-primary" id="vp-btnConnect">${t.btnConnect}</button>
       <div id="vp-setupStatus"></div>
     </div>
 
     <div id="vp-screenSettings" class="vp-screen vp-hidden">
-      <button class="vp-back-btn" id="vp-btnBackFromSettings">← Wróć</button>
-      <div class="vp-field"><label>Adres aplikacji</label><input id="vp-settingsBaseUrl" type="url" /></div>
-      <div class="vp-field"><label>Klucz API</label><input id="vp-settingsApiKey" type="text" /></div>
-      <button class="vp-btn vp-btn-primary" id="vp-btnSaveSettings">Zapisz</button>
-      <button class="vp-btn vp-btn-outline" id="vp-btnDisconnect">Rozłącz konto</button>
+      <button class="vp-back-btn" id="vp-btnBackFromSettings">${t.btnBack}</button>
+      <div class="vp-field"><label>${t.labelAppUrl}</label><input id="vp-settingsBaseUrl" type="url" /></div>
+      <div class="vp-field"><label>${t.labelApiKey}</label><input id="vp-settingsApiKey" type="text" /></div>
+      <button class="vp-btn vp-btn-primary" id="vp-btnSaveSettings">${t.btnSave}</button>
+      <button class="vp-btn vp-btn-outline" id="vp-btnDisconnect">${t.btnDisconnect}</button>
       <div id="vp-settingsStatus"></div>
       <div class="vp-setting-row">
         <div class="vp-setting-label">
-          <span>Zapamiętuj listę i sekcję</span>
+          <span>${t.settingRemember}</span>
           <div class="vp-info-wrap">
             <span class="vp-info-icon">i</span>
-            <div class="vp-info-tooltip">Gdy włączone, wtyczka zapamiętuje ostatnio wybraną listę zakupową i sekcję i przywraca je przy kolejnym otwarciu panelu. Gdy wyłączone, musisz wybrać listę i sekcję za każdym razem od nowa.</div>
+            <div class="vp-info-tooltip">${t.settingRememberTooltip}</div>
           </div>
         </div>
         <label class="vp-switch">
@@ -281,8 +429,8 @@
     <div id="vp-screenMain" class="vp-screen vp-hidden">
       <!-- Tabs -->
       <div class="vp-tabs">
-        <button class="vp-tab vp-tab-active" id="vp-tabAdd">Dodaj produkt</button>
-        <button class="vp-tab" id="vp-tabHistory">Ostatnio dodane<span id="vp-historyBadge" class="vp-tab-badge vp-hidden">0</span></button>
+        <button class="vp-tab vp-tab-active" id="vp-tabAdd">${t.tabAdd}</button>
+        <button class="vp-tab" id="vp-tabHistory">${t.tabHistory}<span id="vp-historyBadge" class="vp-tab-badge vp-hidden">0</span></button>
       </div>
 
       <!-- Add product tab -->
@@ -295,50 +443,50 @@
           <div class="vp-pname vp-hidden" id="vp-previewName"></div>
           <div class="vp-pprice vp-hidden" id="vp-previewPrice"></div>
         </div>
-        <p class="vp-hint" id="vp-imagePickerHint">Najedź na zdjęcie na stronie aby wybrać inne</p>
-        <div class="vp-field"><label>Lista zakupowa</label>
+        <p class="vp-hint" id="vp-imagePickerHint">${t.hintHover}</p>
+        <div class="vp-field"><label>${t.labelList}</label>
           <div class="vp-dd" id="vp-selectList" data-value="">
-            <button type="button" class="vp-dd-trigger"><span class="vp-dd-label vp-dd-ph">Wybierz listę...</span><svg class="vp-dd-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>
+            <button type="button" class="vp-dd-trigger"><span class="vp-dd-label vp-dd-ph">${t.placeholderList}</span><svg class="vp-dd-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>
             <div class="vp-dd-list"></div>
           </div>
         </div>
         <div class="vp-field">
-          <label>Sekcja</label>
+          <label>${t.labelSection}</label>
           <div class="vp-dd vp-dd-disabled" id="vp-selectSection" data-value="">
-            <button type="button" class="vp-dd-trigger" disabled><span class="vp-dd-label vp-dd-ph">Wybierz sekcję...</span><svg class="vp-dd-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>
+            <button type="button" class="vp-dd-trigger" disabled><span class="vp-dd-label vp-dd-ph">${t.placeholderSection}</span><svg class="vp-dd-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>
             <div class="vp-dd-list"></div>
           </div>
-          <button class="vp-preview-btn" id="vp-sidebarToggle" disabled>Podgląd sekcji</button>
+          <button class="vp-preview-btn" id="vp-sidebarToggle" disabled>${t.btnSectionPreview}</button>
         </div>
         <div class="vp-divider"></div>
-        <div class="vp-field"><label>Nazwa *</label><input id="vp-fieldName" type="text" placeholder="Nazwa produktu" /></div>
-        <div class="vp-field"><label>Kategoria</label>
+        <div class="vp-field"><label>${t.labelName}</label><input id="vp-fieldName" type="text" placeholder="${t.placeholderName}" /></div>
+        <div class="vp-field"><label>${t.labelCategory}</label>
           <div class="vp-dd" id="vp-fieldCategory" data-value="">
-            <button type="button" class="vp-dd-trigger"><span class="vp-dd-label vp-dd-ph">Brak kategorii</span><svg class="vp-dd-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>
+            <button type="button" class="vp-dd-trigger"><span class="vp-dd-label vp-dd-ph">${t.placeholderCategory}</span><svg class="vp-dd-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>
             <div class="vp-dd-list"></div>
           </div>
         </div>
-        <div class="vp-field"><label>Notatka</label><input id="vp-fieldNote" type="text" placeholder="Dodatkowe uwagi dla klienta..." /></div>
+        <div class="vp-field"><label>${t.labelNote}</label><input id="vp-fieldNote" type="text" placeholder="${t.placeholderNote}" /></div>
         <div class="vp-row3">
-          <div class="vp-field"><label>Cena</label><input id="vp-fieldPrice" type="text" placeholder="np. 299 PLN" /></div>
-          <div class="vp-field"><label>Ilość</label><input id="vp-fieldQty" type="number" min="1" value="1" /></div>
-          <div class="vp-field"><label>Wymiar</label><input id="vp-fieldDimensions" type="text" placeholder="np. 60x80 cm" /></div>
+          <div class="vp-field"><label>${t.labelPrice}</label><input id="vp-fieldPrice" type="text" placeholder="${t.placeholderPrice}" /></div>
+          <div class="vp-field"><label>${t.labelQty}</label><input id="vp-fieldQty" type="number" min="1" value="1" /></div>
+          <div class="vp-field"><label>${t.labelDimensions}</label><input id="vp-fieldDimensions" type="text" placeholder="${t.placeholderDimensions}" /></div>
         </div>
         <div class="vp-row2">
-          <div class="vp-field"><label>Producent</label><input id="vp-fieldManufacturer" type="text" placeholder="np. Sklum" /></div>
-          <div class="vp-field"><label>Kolor</label><input id="vp-fieldColor" type="text" placeholder="np. Biały" /></div>
+          <div class="vp-field"><label>${t.labelManufacturer}</label><input id="vp-fieldManufacturer" type="text" placeholder="${t.placeholderManufacturer}" /></div>
+          <div class="vp-field"><label>${t.labelColor}</label><input id="vp-fieldColor" type="text" placeholder="${t.placeholderColor}" /></div>
         </div>
       </div>
       <div id="vp-footerAdd" class="vp-footer">
         <div id="vp-duplicateWarning" class="vp-status error vp-hidden"></div>
-        <button class="vp-btn vp-btn-primary vp-btn-inactive" id="vp-btnAdd">Dodaj do listy</button>
+        <button class="vp-btn vp-btn-primary vp-btn-inactive" id="vp-btnAdd">${t.btnAdd}</button>
         <div id="vp-mainStatus"></div>
         <div class="vp-user-info" id="vp-userInfo"></div>
       </div>
 
       <!-- History tab -->
       <div id="vp-contentHistory" class="vp-history vp-hidden">
-        <div class="vp-history-empty">Brak historii.<br/>Dodane produkty pojawią się tutaj.</div>
+        <div class="vp-history-empty">${t.historyEmpty}</div>
       </div>
     </div>
   `;
@@ -349,11 +497,11 @@
   sidebar.id = "veepick-sidebar";
   sidebar.innerHTML = `
     <div class="vp-sb-header">
-      <span class="vp-sb-title" id="vp-sb-title">Produkty w sekcji</span>
-      <button class="vp-sb-close" id="vp-sb-close" title="Zamknij">✕</button>
+      <span class="vp-sb-title" id="vp-sb-title">${t.sidebarTitle}</span>
+      <button class="vp-sb-close" id="vp-sb-close" title="${t.titleClose}">✕</button>
     </div>
     <div class="vp-sb-list" id="vp-sb-list">
-      <div class="vp-sb-empty">Wybierz sekcję aby zobaczyć produkty.</div>
+      <div class="vp-sb-empty">${t.sidebarEmpty}</div>
     </div>
   `;
   document.body.appendChild(sidebar);
@@ -397,7 +545,7 @@
     vp("vp-collapseBtn").innerHTML = collapsed
       ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>'
       : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>';
-    vp("vp-collapseBtn").title = collapsed ? "Rozwiń panel" : "Zwiń panel";
+    vp("vp-collapseBtn").title = collapsed ? t.titleExpand : t.titleCollapse;
     if (collapsed) closeSidebar();
   }
 
@@ -410,17 +558,17 @@
   function showPickedHint() {
     const hint = vp("vp-imagePickerHint");
     if (!hint) return;
-    hint.textContent = "✓ Zdjęcie wybrane";
+    hint.textContent = t.hintPicked;
     hint.style.color = "#4f46e5";
-    setTimeout(() => { hint.textContent = "Najedź na zdjęcie na stronie aby wybrać inne"; hint.style.color = ""; }, 2500);
+    setTimeout(() => { hint.textContent = t.hintHover; hint.style.color = ""; }, 2500);
   }
 
   function formatRelativeTime(ts) {
     const diff = Date.now() - ts;
-    if (diff < 60000) return "przed chwilą";
-    if (diff < 3600000) return `${Math.floor(diff / 60000)} min temu`;
-    if (diff < 86400000) return `${Math.floor(diff / 3600000)} godz. temu`;
-    return `${Math.floor(diff / 86400000)} dni temu`;
+    if (diff < 60000) return t.timeJustNow;
+    if (diff < 3600000) return t.timeMinutes(Math.floor(diff / 60000));
+    if (diff < 86400000) return t.timeHours(Math.floor(diff / 3600000));
+    return t.timeDays(Math.floor(diff / 86400000));
   }
 
   // ── Tabs ──────────────────────────────────────────────────────────────────
@@ -461,7 +609,7 @@
     const container = vp("vp-contentHistory");
 
     if (history.length === 0) {
-      container.innerHTML = `<div class="vp-history-empty">Brak historii.<br/>Dodane produkty pojawią się tutaj.</div>`;
+      container.innerHTML = `<div class="vp-history-empty">${t.historyEmpty}</div>`;
       return;
     }
 
@@ -473,7 +621,7 @@
           <div class="vp-history-meta">${esc(item.listName)} · ${esc(item.sectionName)}</div>
           <div class="vp-history-meta">${formatRelativeTime(item.addedAt)}</div>
         </div>
-        <button class="vp-history-del" title="Usuń z listy" data-pid="${esc(item.productId)}" data-lid="${esc(item.listId)}" data-sid="${esc(item.sectionId)}">🗑</button>
+        <button class="vp-history-del" title="${t.titleClose}" data-pid="${esc(item.productId)}" data-lid="${esc(item.listId)}" data-sid="${esc(item.sectionId)}">🗑</button>
       </div>
     `).join("");
 
@@ -512,7 +660,7 @@
     sidebar.classList.add("vp-sb-shown");
     sidebar.offsetHeight; // force reflow so transition fires
     sidebar.classList.add("vp-sb-open");
-    vp("vp-sidebarToggle").textContent = "Ukryj listę";
+    vp("vp-sidebarToggle").textContent = t.btnSectionHide;
     populateSidebar();
   }
 
@@ -520,7 +668,7 @@
     sidebarOpen = false;
     sidebar.classList.remove("vp-sb-open");
     setTimeout(() => { if (!sidebarOpen) sidebar.classList.remove("vp-sb-shown"); }, 230);
-    if (vp("vp-sidebarToggle")) vp("vp-sidebarToggle").textContent = "Podgląd sekcji";
+    if (vp("vp-sidebarToggle")) vp("vp-sidebarToggle").textContent = t.btnSectionPreview;
   }
 
   function toggleSidebar() {
@@ -531,23 +679,23 @@
     const sectionId = getDropdownValue("vp-selectSection");
     const listId = getDropdownValue("vp-selectList");
     if (!sectionId || !listId) {
-      vp("vp-sb-title").textContent = "Produkty w sekcji";
-      vp("vp-sb-list").innerHTML = `<div class="vp-sb-empty">Wybierz sekcję aby zobaczyć produkty.</div>`;
+      vp("vp-sb-title").textContent = t.sidebarTitle;
+      vp("vp-sb-list").innerHTML = `<div class="vp-sb-empty">${t.sidebarEmpty}</div>`;
       return;
     }
     const list = lists.find((l) => l.id === listId);
     const section = list?.sections.find((s) => s.id === sectionId);
     const products = section?.products || [];
 
-    vp("vp-sb-title").textContent = section?.name || "Sekcja";
+    vp("vp-sb-title").textContent = section?.name || t.labelSection;
     const listEl = vp("vp-sb-list");
 
     if (products.length === 0) {
-      listEl.innerHTML = `<div class="vp-sb-empty">Sekcja jest pusta.</div>`;
+      listEl.innerHTML = `<div class="vp-sb-empty">${t.sidebarSectionEmpty}</div>`;
       return;
     }
 
-    listEl.innerHTML = `<div class="vp-sb-count">${products.length} ${products.length === 1 ? "produkt" : products.length < 5 ? "produkty" : "produktów"}</div>` +
+    listEl.innerHTML = `<div class="vp-sb-count">${t.productCount(products.length)}</div>` +
       products.map((p) => `
         <div class="vp-sb-item">
           <div class="vp-sb-img">${p.imageUrl ? "" : "🛍"}</div>
@@ -628,7 +776,11 @@
       for (const s of document.querySelectorAll('script[type="application/ld+json"]')) {
         try {
           const data = JSON.parse(s.textContent);
-          const items = Array.isArray(data) ? data : [data];
+          // Support top-level array, @graph wrapper, and plain object
+          const graph = data["@graph"];
+          const items = graph
+            ? (Array.isArray(graph) ? graph : [graph])
+            : (Array.isArray(data) ? data : [data]);
           for (const item of items) {
             if (item["@type"] === "Product" || (Array.isArray(item["@type"]) && item["@type"].includes("Product"))) return item;
           }
@@ -719,13 +871,28 @@
     if (!manufacturer) manufacturer = queryText(['[itemprop="brand"] [itemprop="name"]', '[itemprop="brand"]', '[itemprop="manufacturer"]', '.product-brand', '.product__brand', '.brand-name', '.manufacturer-name', '[data-testid="brand"]', '.product-manufacturer', 'a[class*="brand"]']);
     if (!manufacturer) manufacturer = findAttributeValue([/producent/i, /marka/i, /brand/i, /manufacturer/i]);
     if (!manufacturer) {
-      // Fallback: use og:site_name (reliable for single-brand shops like artera.pl)
       manufacturer = getMeta("og:site_name") || null;
     }
 
     let color = ld?.color || getMeta("product:color") || null;
-    if (!color) color = queryText(['[itemprop="color"]', '.product-color', '.color-name', '.selected-color', '[data-testid="color"]']);
+    if (!color) color = queryText(['[itemprop="color"]', '.product-color', '.color-name', '.selected-color', '[data-testid="color"]', 'p.font-caption-1.text-raven-50']);
     if (!color) color = findAttributeValue([/kolor/i, /color/i, /barwa/i]);
+    // Fallback: alt text of selected/active color swatch image
+    if (!color) {
+      const swatchSelectors = [
+        '[aria-selected="true"] img[alt]',
+        '[class*="selected"] img[alt]',
+        '[class*="active"] img[alt]',
+        '[class*="Selected"] img[alt]',
+        '[class*="Active"] img[alt]',
+        '[class*="current"] img[alt]',
+      ];
+      for (const sel of swatchSelectors) {
+        const el = document.querySelector(sel);
+        const alt = el?.alt?.trim();
+        if (alt && alt.length > 0 && alt.length < 80) { color = alt; break; }
+      }
+    }
 
     let dimensions = findAttributeValue([/wymiary/i, /wymiar/i, /dimensions/i, /rozmiar/i, /gabaryty/i, /długość.*szerokość/i, /dl\..*szer\./i]);
 
@@ -743,7 +910,7 @@
 
   // ── Render preview ─────────────────────────────────────────────────────────
   function renderPreview(p) {
-    vp("vp-previewName").textContent = p.name || "Bez nazwy";
+    vp("vp-previewName").textContent = p.name || t.noName;
     vp("vp-previewPrice").textContent = p.price || "";
     if (p.imageUrl) {
       vp("vp-previewImg").src = p.imageUrl;
@@ -828,7 +995,7 @@
   // ── Lists / sections ───────────────────────────────────────────────────────
   async function populateLists() {
     const items = [
-      { value: "", label: "Wybierz listę..." },
+      { value: "", label: t.placeholderList },
       ...lists.map(l => ({ value: l.id, label: l.name + (l.project?.title ? ` (${l.project.title})` : "") }))
     ];
     buildDropdownItems("vp-selectList", items, (value) => {
@@ -852,17 +1019,17 @@
 
   function populateCategories(categories) {
     const items = [
-      { value: "", label: "Brak kategorii" },
+      { value: "", label: t.placeholderCategory },
       ...categories.map(c => ({ value: c.value, label: c.label }))
     ];
     buildDropdownItems("vp-fieldCategory", items, () => {});
   }
 
   function populateSections(listId, restoreSectionId = null) {
-    setDropdownValue("vp-selectSection", "", "Wybierz sekcję...", true);
+    setDropdownValue("vp-selectSection", "", t.placeholderSection, true);
     setDropdownEnabled("vp-selectSection", !!listId);
     if (!listId) {
-      buildDropdownItems("vp-selectSection", [{ value: "", label: "Wybierz sekcję..." }], () => {});
+      buildDropdownItems("vp-selectSection", [{ value: "", label: t.placeholderSection }], () => {});
       vp("vp-sidebarToggle").disabled = true;
       updateAddBtn();
       return;
@@ -870,7 +1037,7 @@
     const list = lists.find((l) => l.id === listId);
     if (!list) { updateAddBtn(); return; }
     const items = [
-      { value: "", label: "Wybierz sekcję..." },
+      { value: "", label: t.placeholderSection },
       ...list.sections.filter(s => !s.unsorted).map(s => ({ value: s.id, label: s.name }))
     ];
     buildDropdownItems("vp-selectSection", items, (value) => {
@@ -899,7 +1066,7 @@
 
     if (!sectionId || !name) {
       vp("vp-btnAdd").classList.add("vp-btn-inactive");
-      vp("vp-btnAdd").textContent = "Dodaj do listy";
+      vp("vp-btnAdd").textContent = t.btnAdd;
       return;
     }
 
@@ -915,7 +1082,7 @@
         : section.products.some((p) => p.name.toLowerCase() === name.toLowerCase());
       if (warning) {
         if (isDuplicate) {
-          warning.textContent = `Ten produkt jest już na tej liście w sekcji „${section.name}"`;
+          warning.textContent = t.duplicateWarning(section.name);
           warning.classList.remove("vp-hidden");
         } else {
           warning.classList.add("vp-hidden");
@@ -926,26 +1093,26 @@
     }
 
     vp("vp-btnAdd").classList.remove("vp-btn-inactive");
-    vp("vp-btnAdd").textContent = "Dodaj do listy";
+    vp("vp-btnAdd").textContent = t.btnAdd;
   }
 
   // ── Connect ────────────────────────────────────────────────────────────────
   async function connect() {
     const key = vp("vp-inputApiKey").value.trim();
     const url = vp("vp-inputBaseUrl").value.trim().replace(/\/$/, "");
-    if (!key || !url) { setStatus("vp-setupStatus", "Uzupełnij wszystkie pola.", "error"); return; }
-    setStatus("vp-setupStatus", "Sprawdzanie...", "info");
+    if (!key || !url) { setStatus("vp-setupStatus", t.errFillFields, "error"); return; }
+    setStatus("vp-setupStatus", t.statusChecking, "info");
     try {
       const tempApiKey = apiKey; const tempBaseUrl = baseUrl;
       apiKey = key; baseUrl = url;
       const res = await apiFetch("/api/extension/me");
-      if (!res.ok) { apiKey = tempApiKey; baseUrl = tempBaseUrl; throw new Error("Nieprawidłowy klucz lub adres."); }
+      if (!res.ok) { apiKey = tempApiKey; baseUrl = tempBaseUrl; throw new Error(t.errInvalidKey); }
       const user = await res.json();
       await chrome.storage.local.set({ apiKey: key, baseUrl: url });
-      setStatus("vp-setupStatus", `Połączono jako ${user.name || user.email}`, "success");
+      setStatus("vp-setupStatus", t.successConnected(user.name || user.email), "success");
       setTimeout(() => initMain(), 800);
     } catch (e) {
-      setStatus("vp-setupStatus", e.message || "Błąd połączenia.", "error");
+      setStatus("vp-setupStatus", e.message || t.errConnection, "error");
     }
   }
 
@@ -953,17 +1120,17 @@
   async function saveSettings() {
     const key = vp("vp-settingsApiKey").value.trim();
     const url = vp("vp-settingsBaseUrl").value.trim().replace(/\/$/, "");
-    if (!key || !url) { setStatus("vp-settingsStatus", "Uzupełnij wszystkie pola.", "error"); return; }
+    if (!key || !url) { setStatus("vp-settingsStatus", t.errFillFields, "error"); return; }
     try {
       const tempApiKey = apiKey; const tempBaseUrl = baseUrl;
       apiKey = key; baseUrl = url;
       const res = await apiFetch("/api/extension/me");
-      if (!res.ok) { apiKey = tempApiKey; baseUrl = tempBaseUrl; throw new Error("Nieprawidłowy klucz lub adres."); }
+      if (!res.ok) { apiKey = tempApiKey; baseUrl = tempBaseUrl; throw new Error(t.errInvalidKey); }
       await chrome.storage.local.set({ apiKey: key, baseUrl: url });
-      setStatus("vp-settingsStatus", "Zapisano.", "success");
+      setStatus("vp-settingsStatus", t.successSaved, "success");
       setTimeout(() => { setStatus("vp-settingsStatus", "", ""); showScreen("vp-screenMain"); initMain(); }, 800);
     } catch (e) {
-      setStatus("vp-settingsStatus", e.message || "Błąd.", "error");
+      setStatus("vp-settingsStatus", e.message || t.errConnection, "error");
     }
   }
 
@@ -978,13 +1145,13 @@
   async function initMain() {
     showScreen("vp-screenMain");
     switchTab("add");
-    vp("vp-previewName").textContent = "Pobieranie danych...";
+    vp("vp-previewName").textContent = t.loadingData;
 
     try {
       const res = await apiFetch("/api/extension/me");
       if (!res.ok) throw new Error();
       const me = await res.json();
-      vp("vp-userInfo").textContent = `Zalogowany: ${me.name || me.email}`;
+      vp("vp-userInfo").textContent = t.loggedAs(me.name || me.email);
     } catch { vp("vp-userInfo").textContent = ""; }
 
     productData = extractProductData();
@@ -1008,7 +1175,7 @@
       await populateLists();
       populateCategories(data.categories || []);
       updateAddBtn();
-    } catch { setStatus("vp-mainStatus", "Błąd pobierania list. Sprawdź połączenie.", "error"); }
+    } catch { setStatus("vp-mainStatus", t.errLoadingLists, "error"); }
   }
 
   // ── Add product ────────────────────────────────────────────────────────────
@@ -1024,12 +1191,12 @@
     const note = vp("vp-fieldNote").value.trim();
     const category = getDropdownValue("vp-fieldCategory") || null;
     if (!name || !sectionId) {
-      setStatus("vp-mainStatus", "Uzupełnij nazwę produktu i wybierz sekcję.", "error");
+      setStatus("vp-mainStatus", t.errFillNameSection, "error");
       return;
     }
 
     vp("vp-btnAdd").disabled = true;
-    vp("vp-btnAdd").innerHTML = '<span class="vp-spinner"></span> Dodawanie...';
+    vp("vp-btnAdd").innerHTML = `<span class="vp-spinner"></span> ${t.statusAdding}`;
     setStatus("vp-mainStatus", "", "");
 
     try {
@@ -1037,14 +1204,14 @@
         method: "POST",
         body: JSON.stringify({ listId, sectionId, name, url: productData.url || null, imageUrl: productData.imageUrl || null, price: price || null, manufacturer: manufacturer || null, color: color || null, dimensions: dimensions || null, note: note || null, category: category || null, supplier: productData.supplier || null, description: productData.description || null, quantity }),
       });
-      if (!res.ok) { const err = await res.json(); throw new Error(err.error || "Błąd serwera"); }
+      if (!res.ok) { const err = await res.json(); throw new Error(err.error || t.errServer); }
       const added = await res.json();
 
       const addedList = lists.find((l) => l.id === listId);
       const addedSection = addedList?.sections.find((s) => s.id === sectionId);
       if (addedSection?.products) addedSection.products.push({ id: added.id, url: productData.url?.trim() || null, name, imageUrl: productData.imageUrl || null, price: price || null });
 
-      setStatus("vp-mainStatus", "✓ Produkt dodany do listy!", "success");
+      setStatus("vp-mainStatus", t.successAdded, "success");
       updateSidebarIfOpen();
 
       // Save to history
@@ -1067,10 +1234,10 @@
         panel.style.setProperty("display", "none", "important");
       }, 1200);
     } catch (e) {
-      setStatus("vp-mainStatus", e.message || "Błąd dodawania.", "error");
+      setStatus("vp-mainStatus", e.message || t.errAdding, "error");
     } finally {
       vp("vp-btnAdd").disabled = false;
-      vp("vp-btnAdd").innerHTML = "Dodaj do listy";
+      vp("vp-btnAdd").innerHTML = t.btnAdd;
     }
   }
 
@@ -1103,7 +1270,7 @@
   vp("vp-refreshBtn").addEventListener("click", () => {
     productData = extractProductData();
     renderPreview(productData);
-    setStatus("vp-mainStatus", "Odświeżono dane strony.", "info");
+    setStatus("vp-mainStatus", t.statusRefreshed, "info");
     setTimeout(() => setStatus("vp-mainStatus", "", ""), 2000);
   });
   vp("vp-settingsBtn").addEventListener("click", () => {
@@ -1136,6 +1303,24 @@
     ["vp-selectList", "vp-selectSection", "vp-fieldCategory"].forEach(closeDropdownMenu);
   }, true);
   vp("vp-fieldName").addEventListener("input", () => { nameEditedByUser = true; updateAddBtn(); });
+
+  // ── Info tooltip positioning ───────────────────────────────────────────────
+  panel.querySelectorAll(".vp-info-wrap").forEach((wrap) => {
+    const tooltip = wrap.querySelector(".vp-info-tooltip");
+    if (!tooltip) return;
+    wrap.addEventListener("mouseenter", () => {
+      const iconRect = wrap.querySelector(".vp-info-icon").getBoundingClientRect();
+      const panelRect = panel.getBoundingClientRect();
+      const TW = 220;
+      let left = iconRect.left;
+      if (left + TW > panelRect.right - 4) left = panelRect.right - TW - 4;
+      if (left < panelRect.left + 4) left = panelRect.left + 4;
+      tooltip.style.top = (iconRect.bottom + 4) + "px";
+      tooltip.style.left = left + "px";
+      tooltip.classList.add("vp-tooltip-visible");
+    });
+    wrap.addEventListener("mouseleave", () => tooltip.classList.remove("vp-tooltip-visible"));
+  });
 
   // ── Boot ───────────────────────────────────────────────────────────────────
   chrome.storage.local.get(["apiKey", "baseUrl", "rememberListSection"], (stored) => {
