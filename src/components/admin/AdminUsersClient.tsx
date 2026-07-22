@@ -19,7 +19,7 @@ interface User {
   trialEndsAt: Date | string | null;
   isFree: boolean;
   subscription: { plan: string; status: string } | null;
-  _count: { projects: number };
+  _count: { projects: number; shoppingLists: number; clients: number };
 }
 
 export default function AdminUsersClient({
@@ -112,10 +112,13 @@ export default function AdminUsersClient({
   function trialLabel(user: User) {
     if (user.role === "client" || user.role === "contractor") return { text: "Nie dotyczy", color: "text-white/20" };
     if (user.isFree) return { text: t.admin.freeBadge, color: "text-emerald-400" };
-    if (user.subscription?.status === "active") return { text: `${t.admin.subscriptionLabel} ${user.subscription.plan}`, color: "text-violet-400" };
+    if (user.subscription?.status === "active") {
+      const planLabel = user.subscription.plan === "freelancer" ? "Solo" : user.subscription.plan === "studio" ? "Studio" : user.subscription.plan === "agencja" ? "Biuro" : user.subscription.plan;
+      return { text: planLabel, color: "text-violet-400" };
+    }
     if (!user.trialEndsAt) return { text: t.admin.noTrial, color: "text-white/20" };
     const days = Math.ceil((new Date(user.trialEndsAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-    if (days < 0) return { text: t.admin.trialExpired, color: "text-red-400" };
+    if (days <= 0) return { text: t.admin.trialExpired, color: "text-red-400" };
     return { text: `${t.admin.trialDaysLabel2} ${days}d`, color: days <= 5 ? "text-amber-400" : "text-white/50" };
   }
 
@@ -236,11 +239,13 @@ export default function AdminUsersClient({
       </div>
 
       <div className="bg-white/3 border border-white/8 rounded-xl overflow-hidden">
-        <div className="grid grid-cols-[1fr_140px_100px_60px_160px] gap-4 px-5 py-3 bg-white/3 border-b border-white/8 text-xs font-medium text-white/30 uppercase tracking-wide">
+        <div className="grid grid-cols-[1fr_140px_100px_60px_60px_60px_160px] gap-4 px-5 py-3 bg-white/3 border-b border-white/8 text-xs font-medium text-white/30 uppercase tracking-wide">
           <span>{t.admin.usersNav}</span>
           <span>{t.admin.joined}</span>
           <span>{t.admin.trialPlan}</span>
           <span>{t.admin.projects}</span>
+          <span>Listy</span>
+          <span>Klien.</span>
           <span></span>
         </div>
 
@@ -253,7 +258,7 @@ export default function AdminUsersClient({
           return (
             <div
               key={user.id}
-              className={`grid grid-cols-[1fr_140px_100px_60px_160px] gap-4 px-5 py-4 items-center ${
+              className={`grid grid-cols-[1fr_140px_100px_60px_60px_60px_160px] gap-4 px-5 py-4 items-center ${
                 i !== filtered.length - 1 ? "border-b border-white/5" : ""
               } ${user.id === currentUserId ? "bg-blue-500/5" : ""}`}
             >
@@ -301,6 +306,16 @@ export default function AdminUsersClient({
               <div className="flex items-center gap-1 text-sm text-white/30">
                 <FolderOpen size={13} />
                 {user._count.projects}
+              </div>
+
+              {/* Lists */}
+              <div className="text-sm text-white/30">
+                {user._count.shoppingLists}
+              </div>
+
+              {/* Clients */}
+              <div className="text-sm text-white/30">
+                {user._count.clients}
               </div>
 
               {/* Actions */}

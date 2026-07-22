@@ -4,19 +4,10 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
-  ShieldCheck, FolderOpen, KeyRound, Clock, Gift, Plus, Trash2, X,
+  ShieldCheck, FolderOpen, KeyRound, Clock, Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useT } from "@/lib/i18n";
-
-interface Discount {
-  id: string;
-  type: string;
-  value: number;
-  validFrom: Date | string;
-  validUntil: Date | string | null;
-  note: string | null;
-}
 
 interface User {
   id: string;
@@ -37,8 +28,8 @@ interface User {
     cardBrand: string | null;
     createdAt: Date | string;
   } | null;
-  discounts: Discount[];
-  _count: { projects: number };
+  billingRecords: { amount: number }[];
+  _count: { projects: number; shoppingLists: number; clients: number };
 }
 
 export default function AdminUserDetailClient({
@@ -60,14 +51,6 @@ export default function AdminUserDetailClient({
   const [extraDays, setExtraDays] = useState("");
   const [savingTrial, setSavingTrial] = useState(false);
 
-  // Discount
-  const [discountType, setDiscountType] = useState<"percent" | "amount">("percent");
-  const [discountValue, setDiscountValue] = useState("");
-  const [discountFrom, setDiscountFrom] = useState("");
-  const [discountUntil, setDiscountUntil] = useState("");
-  const [discountNote, setDiscountNote] = useState("");
-  const [savingDiscount, setSavingDiscount] = useState(false);
-
   // Delete confirm
   const [confirmDelete, setConfirmDelete] = useState(false);
 
@@ -76,7 +59,7 @@ export default function AdminUserDetailClient({
     if (user.subscription?.status === "active") return { text: `${t.admin.subscriptionSection}: ${user.subscription.plan}`, color: "text-violet-400" };
     if (!user.trialEndsAt) return { text: t.admin.noTrial, color: "text-white/30" };
     const days = Math.ceil((new Date(user.trialEndsAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-    if (days < 0) return { text: t.admin.trialExpired, color: "text-red-400" };
+    if (days <= 0) return { text: t.admin.trialExpired, color: "text-red-400" };
     return { text: `${t.admin.trialSection}: ${days}d`, color: days <= 5 ? "text-amber-400" : "text-white/60" };
   }
 
@@ -127,44 +110,6 @@ export default function AdminUserDetailClient({
       toast.success(t.admin.trialUpdated);
     } else {
       toast.error(t.admin.trialUpdateError);
-    }
-  }
-
-  async function handleAddDiscount() {
-    const val = parseFloat(discountValue);
-    if (!val || val <= 0) { toast.error(t.admin.discountRequired); return; }
-    setSavingDiscount(true);
-    const res = await fetch(`/api/admin/users/${user.id}/discount`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        type: discountType,
-        value: val,
-        validFrom: discountFrom || undefined,
-        validUntil: discountUntil || undefined,
-        note: discountNote || undefined,
-      }),
-    });
-    setSavingDiscount(false);
-    if (res.ok) {
-      const d = await res.json();
-      setUser((u) => ({ ...u, discounts: [d, ...u.discounts] }));
-      setDiscountValue(""); setDiscountFrom(""); setDiscountUntil(""); setDiscountNote("");
-      toast.success(t.admin.discountAdded);
-    } else {
-      toast.error(t.admin.discountError);
-    }
-  }
-
-  async function handleDeleteDiscount(discountId: string) {
-    const res = await fetch(`/api/admin/users/${user.id}/discount`, {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ discountId }),
-    });
-    if (res.ok) {
-      setUser((u) => ({ ...u, discounts: u.discounts.filter((d) => d.id !== discountId) }));
-      toast.success(t.admin.discountDeleted);
     }
   }
 
@@ -234,6 +179,14 @@ export default function AdminUserDetailClient({
               </p>
             </div>
             <div>
+              <p className="text-xs text-white/30 mb-0.5">Listy</p>
+              <p className="text-sm text-white">{user._count.shoppingLists}</p>
+            </div>
+            <div>
+              <p className="text-xs text-white/30 mb-0.5">Klienci</p>
+              <p className="text-sm text-white">{user._count.clients}</p>
+            </div>
+            <div>
               <p className="text-xs text-white/30 mb-0.5">{t.admin.accessStatus}</p>
               <p className={`text-sm font-medium ${trialColor}`}>{trialText}</p>
             </div>
@@ -247,7 +200,9 @@ export default function AdminUserDetailClient({
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <p className="text-xs text-white/30 mb-0.5">{t.admin.planLabel}</p>
-                <p className="text-sm text-white capitalize">{user.subscription.plan}</p>
+                <p className="text-sm text-white capitalize">
+                  {user.subscription.plan === "freelancer" ? "Solo" : user.subscription.plan === "studio" ? "Studio" : user.subscription.plan === "agencja" ? "Biuro" : user.subscription.plan}
+                </p>
               </div>
               <div>
                 <p className="text-xs text-white/30 mb-0.5">{t.admin.statusLabel}</p>
@@ -258,6 +213,24 @@ export default function AdminUserDetailClient({
                 }`}>
                   {user.subscription.status}
                 </span>
+              </div>
+              <div>
+                <p className="text-xs text-white/30 mb-0.5">Aktywna od</p>
+                <p className="text-sm text-white">
+                  {new Date(user.subscription.createdAt).toLocaleDateString("pl-PL", { day: "2-digit", month: "long", year: "numeric" })}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-white/30 mb-0.5">Długość subskrypcji</p>
+                <p className="text-sm text-white">
+                  {Math.max(1, Math.floor((Date.now() - new Date(user.subscription.createdAt).getTime()) / (1000 * 60 * 60 * 24 * 30)))} mies.
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-white/30 mb-0.5">Łącznie zapłacono</p>
+                <p className="text-sm text-white font-medium">
+                  {user.billingRecords.reduce((s, r) => s + r.amount, 0).toFixed(2)} zł
+                </p>
               </div>
               {user.subscription.billingName && (
                 <div>
@@ -279,93 +252,6 @@ export default function AdminUserDetailClient({
             </div>
           </section>
         )}
-
-        {/* Discounts */}
-        <section className="bg-white/3 border border-white/8 rounded-xl p-6">
-          <h2 className="text-xs font-semibold text-white/30 uppercase tracking-wide mb-4">{t.admin.discountsTitle}</h2>
-
-          {user.discounts.length === 0 && (
-            <p className="text-sm text-white/20 mb-5">{t.admin.noDiscounts}</p>
-          )}
-
-          {user.discounts.length > 0 && (
-            <div className="space-y-2 mb-5">
-              {user.discounts.map((d) => (
-                <div key={d.id} className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-white/4 border border-white/8">
-                  <div>
-                    <span className="text-sm font-semibold text-violet-400">
-                      {d.type === "percent" ? `${d.value}%` : `${d.value} zł`}
-                    </span>
-                    <span className="text-white/40 text-xs ml-2">
-                      {new Date(d.validFrom).toLocaleDateString("pl-PL")}
-                      {d.validUntil && ` – ${new Date(d.validUntil).toLocaleDateString("pl-PL")}`}
-                    </span>
-                    {d.note && <span className="text-white/30 text-xs ml-1.5">({d.note})</span>}
-                  </div>
-                  <button
-                    onClick={() => handleDeleteDiscount(d.id)}
-                    className="text-red-400/40 hover:text-red-400 transition-colors ml-3"
-                  >
-                    <X size={14} />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Add discount form */}
-          <div className="space-y-3 pt-4 border-t border-white/6">
-            <p className="text-xs text-white/30 font-medium uppercase tracking-wide">{t.admin.addDiscount}</p>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setDiscountType("percent")}
-                className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors ${discountType === "percent" ? "bg-violet-600/20 border-violet-500/40 text-violet-300" : "bg-white/5 border-white/10 text-white/40 hover:text-white/60"}`}
-              >
-                {t.admin.percentDiscount}
-              </button>
-              <button
-                onClick={() => setDiscountType("amount")}
-                className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors ${discountType === "amount" ? "bg-violet-600/20 border-violet-500/40 text-violet-300" : "bg-white/5 border-white/10 text-white/40 hover:text-white/60"}`}
-              >
-                {t.admin.amountDiscount}
-              </button>
-            </div>
-            <input
-              type="number"
-              value={discountValue}
-              onChange={(e) => setDiscountValue(e.target.value)}
-              placeholder={discountType === "percent" ? t.admin.percentPlaceholder : t.admin.amountPlaceholder}
-              className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/20 focus:outline-none focus:border-violet-500/40"
-            />
-            <div className="flex gap-2">
-              <div className="flex-1">
-                <label className="block text-xs text-white/30 mb-1">{t.admin.validFrom}</label>
-                <input type="date" value={discountFrom} onChange={(e) => setDiscountFrom(e.target.value)} className="w-full px-3 py-2 text-sm rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-violet-500/40" />
-              </div>
-              <div className="flex-1">
-                <label className="block text-xs text-white/30 mb-1">{t.admin.validUntil}</label>
-                <input type="date" value={discountUntil} onChange={(e) => setDiscountUntil(e.target.value)} className="w-full px-3 py-2 text-sm rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-violet-500/40" />
-              </div>
-            </div>
-            <input
-              value={discountNote}
-              onChange={(e) => setDiscountNote(e.target.value)}
-              placeholder={t.admin.notePlaceholder}
-              className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/20 focus:outline-none focus:border-violet-500/40"
-            />
-            <div className="flex justify-end">
-              <Button
-                size="sm"
-                className="bg-violet-600 hover:bg-violet-500 text-white border-0"
-                onClick={handleAddDiscount}
-                disabled={savingDiscount || !discountValue}
-              >
-                <Plus size={14} className="mr-1" />
-                {savingDiscount ? t.admin.addingDiscount : t.admin.addDiscount}
-              </Button>
-            </div>
-          </div>
-        </section>
       </div>
 
       {/* Right column — actions */}

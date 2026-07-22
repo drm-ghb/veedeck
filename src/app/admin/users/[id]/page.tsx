@@ -28,8 +28,8 @@ export default async function AdminUserDetailPage({
       trialEndsAt: true,
       isFree: true,
       subscription: { select: { plan: true, status: true, billingName: true, billingEmail: true, cardLast4: true, cardBrand: true, createdAt: true } },
-      discounts: { orderBy: { createdAt: "desc" } },
-      _count: { select: { projects: true } },
+      billingRecords: { select: { amount: true } },
+      _count: { select: { projects: true, shoppingLists: true, clients: true } },
     },
   });
 

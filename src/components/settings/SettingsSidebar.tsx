@@ -22,7 +22,7 @@ export default function SettingsSidebar() {
     { href: "/ustawienia/powiadomienia", label: "Powiadomienia",             icon: <Bell size={16} /> },
     { href: "/ustawienia/wtyczka",       label: t.settings.pluginNav,       icon: <Puzzle size={16} /> },
     { href: "/ustawienia/instrukcja",    label: t.settings.guideNav,        icon: <BookOpen size={16} /> },
-    { href: "/ustawienia/subskrypcja",   label: "Plan i rozliczenia",       icon: <Payments size={16} /> },
+    { href: "/ustawienia/plan-i-rozliczenia",   label: "Plan i rozliczenia",       icon: <Payments size={16} /> },
     { href: "/ustawienia/konto",         label: "Konto",                    icon: <UserMinus size={16} /> },
   ];
 

@@ -62,8 +62,8 @@ export async function POST(req: NextRequest) {
       ...(promoCoupon
         ? { discounts: [{ coupon: promoCoupon }] }
         : { allow_promotion_codes: true }),
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/ustawienia/subskrypcja?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/ustawienia/subskrypcja?checkout=cancelled`,
+      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/ustawienia/plan-i-rozliczenia?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/ustawienia/plan-i-rozliczenia?checkout=cancelled`,
       metadata: {
         userId: user.id,
         plan,

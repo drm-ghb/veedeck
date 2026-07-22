@@ -1,6 +1,15 @@
 import nodemailer from "nodemailer";
 import { escapeHtml } from "@/lib/validation";
-import { activationEmailPL, activationEmailEN, resetEmailPL, resetEmailEN } from "@/lib/email-templates";
+import {
+  activationEmailPL, activationEmailEN,
+  resetEmailPL, resetEmailEN,
+  trialMidpointEmailPL, trialMidpointEmailEN,
+  trialDay7EmailPL, trialDay7EmailEN,
+  trialDay3EmailPL, trialDay3EmailEN,
+  trialEndedEmailPL, trialEndedEmailEN,
+  teamInvitationEmailPL, teamInvitationEmailEN,
+  clientInvitationEmailPL, clientInvitationEmailEN,
+} from "@/lib/email-templates";
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
@@ -55,40 +64,106 @@ export async function sendPasswordResetEmail({
   });
 }
 
+export async function sendTrialMidpointEmail({
+  to,
+  locale = "pl",
+}: {
+  to: string;
+  locale?: "pl" | "en";
+}) {
+  const upgradeUrl = `${APP_URL}/ustawienia/plan-i-rozliczenia`;
+  const isPL = locale !== "en";
+  await transporter.sendMail({
+    from: FROM,
+    to,
+    subject: isPL
+      ? "Zostało 15 dni okresu próbnego veedeck"
+      : "Your veedeck trial ends in 15 days",
+    html: isPL ? trialMidpointEmailPL(upgradeUrl) : trialMidpointEmailEN(upgradeUrl),
+  });
+}
+
+export async function sendTrialDay7Email({
+  to,
+  locale = "pl",
+}: {
+  to: string;
+  locale?: "pl" | "en";
+}) {
+  const upgradeUrl = `${APP_URL}/ustawienia/plan-i-rozliczenia`;
+  const isPL = locale !== "en";
+  await transporter.sendMail({
+    from: FROM,
+    to,
+    subject: isPL
+      ? "Został Ci tylko tydzień z veedeck"
+      : "Only one week left with veedeck",
+    html: isPL ? trialDay7EmailPL(upgradeUrl) : trialDay7EmailEN(upgradeUrl),
+  });
+}
+
+export async function sendTrialDay3Email({
+  to,
+  locale = "pl",
+}: {
+  to: string;
+  locale?: "pl" | "en";
+}) {
+  const upgradeUrl = `${APP_URL}/ustawienia/plan-i-rozliczenia`;
+  const isPL = locale !== "en";
+  await transporter.sendMail({
+    from: FROM,
+    to,
+    subject: isPL
+      ? "Zostały Ci tylko 3 dni z veedeck"
+      : "Only 3 days left with veedeck",
+    html: isPL ? trialDay3EmailPL(upgradeUrl) : trialDay3EmailEN(upgradeUrl),
+  });
+}
+
+export async function sendTrialEndedEmail({
+  to,
+  locale = "pl",
+}: {
+  to: string;
+  locale?: "pl" | "en";
+}) {
+  const upgradeUrl = `${APP_URL}/ustawienia/plan-i-rozliczenia`;
+  const isPL = locale !== "en";
+  await transporter.sendMail({
+    from: FROM,
+    to,
+    subject: isPL
+      ? "Twój okres próbny veedeck się zakończył"
+      : "Your veedeck trial has ended",
+    html: isPL ? trialEndedEmailPL(upgradeUrl) : trialEndedEmailEN(upgradeUrl),
+  });
+}
+
 export async function sendClientInvitationEmail({
   to,
   designerName,
   token,
+  locale = "pl",
 }: {
   to: string;
   designerName: string;
   token: string;
+  locale?: "pl" | "en";
 }) {
   const link = `${APP_URL}/client-invite/${token}`;
   const safeDesignerName = escapeHtml(designerName);
+  const isPL = locale !== "en";
 
   await transporter.sendMail({
     from: FROM,
     to,
-    subject: `Zaproszenie od projektanta — ${safeDesignerName}`,
-    html: `
-      <div style="font-family: sans-serif; max-width: 520px; margin: 0 auto; padding: 32px 24px; color: #111;">
-        <h2 style="margin-bottom: 8px;">Zaproszenie do projektu</h2>
-        <p style="color: #555; margin-bottom: 24px;">
-          <strong>${safeDesignerName}</strong> zaprasza Cię do swojego panelu klienta.
-          Kliknij poniższy przycisk, aby założyć konto i zobaczyć swój projekt.
-        </p>
-        <a href="${link}"
-          style="display: inline-block; background: #6366f1; color: #fff; padding: 12px 24px;
-                 border-radius: 8px; text-decoration: none; font-weight: 600;">
-          Załóż konto klienta
-        </a>
-        <p style="margin-top: 24px; font-size: 13px; color: #888;">
-          Link wygaśnie za 7 dni. Jeśli nie spodziewałeś się tego zaproszenia, zignoruj tę wiadomość.
-        </p>
-        <p style="margin-top: 4px; font-size: 12px; color: #bbb;">${link}</p>
-      </div>
-    `,
+    subject: isPL
+      ? `Zaproszenie od projektanta — ${safeDesignerName}`
+      : `Project invitation from ${safeDesignerName}`,
+    html: isPL
+      ? clientInvitationEmailPL({ inviteUrl: link, designerName: safeDesignerName })
+      : clientInvitationEmailEN({ inviteUrl: link, designerName: safeDesignerName }),
   });
 }
 
@@ -96,36 +171,26 @@ export async function sendInvitationEmail({
   to,
   designerName,
   token,
+  locale = "pl",
 }: {
   to: string;
   designerName: string;
   token: string;
+  locale?: "pl" | "en";
 }) {
   const link = `${APP_URL}/invite/${token}`;
   const safeDesignerName = escapeHtml(designerName);
+  const isPL = locale !== "en";
 
   await transporter.sendMail({
     from: FROM,
     to,
-    subject: `Zaproszenie do panelu projektanta — ${safeDesignerName}`,
-    html: `
-      <div style="font-family: sans-serif; max-width: 520px; margin: 0 auto; padding: 32px 24px; color: #111;">
-        <h2 style="margin-bottom: 8px;">Zaproszenie do współpracy</h2>
-        <p style="color: #555; margin-bottom: 24px;">
-          <strong>${safeDesignerName}</strong> zaprasza Cię do swojego panelu projektanta.
-          Kliknij poniższy przycisk, aby ustawić hasło i rozpocząć współpracę.
-        </p>
-        <a href="${link}"
-          style="display: inline-block; background: #6366f1; color: #fff; padding: 12px 24px;
-                 border-radius: 8px; text-decoration: none; font-weight: 600;">
-          Przyjmij zaproszenie
-        </a>
-        <p style="margin-top: 24px; font-size: 13px; color: #888;">
-          Link wygaśnie za 7 dni. Jeśli nie spodziewałeś się tego zaproszenia, zignoruj tę wiadomość.
-        </p>
-        <p style="margin-top: 4px; font-size: 12px; color: #bbb;">${link}</p>
-      </div>
-    `,
+    subject: isPL
+      ? `Zaproszenie do panelu projektanta — ${safeDesignerName}`
+      : `Designer panel invitation — ${safeDesignerName}`,
+    html: isPL
+      ? teamInvitationEmailPL({ inviteUrl: link, designerName: safeDesignerName })
+      : teamInvitationEmailEN({ inviteUrl: link, designerName: safeDesignerName }),
   });
 }
 
@@ -164,7 +229,7 @@ function emailBase(content: string): string {
         <tr><td style="background:#4F46E5;padding:20px 32px;">
           <table role="presentation" cellpadding="0" cellspacing="0" border="0">
             <tr>
-              <td style="vertical-align:middle;padding-right:8px;"><img src="https://veedeck.com/veedeck_ikona_vsg.svg" alt="veedeck" width="20" height="20" style="display:block;width:20px;height:20px;"></td>
+              <td style="vertical-align:middle;padding-right:8px;"><img src="https://veedeck.com/logo.png" alt="veedeck" width="20" height="20" style="display:block;width:20px;height:20px;"></td>
               <td style="vertical-align:middle;color:#fff;font-size:18px;font-weight:700;letter-spacing:-.3px;">veedeck</td>
             </tr>
           </table>
@@ -445,7 +510,7 @@ function buildDigestHtml(
                     <table role="presentation" cellpadding="0" cellspacing="0" border="0">
                       <tr>
                         <td style="vertical-align:middle;padding-right:8px;">
-                          <img src="https://veedeck.com/veedeck_ikona_vsg.svg" alt="veedeck" width="22" height="22" style="display:block;width:22px;height:22px;">
+                          <img src="https://veedeck.com/logo.png" alt="veedeck" width="22" height="22" style="display:block;width:22px;height:22px;">
                         </td>
                         <td style="vertical-align:middle;font-family:'Nunito',Arial,sans-serif;font-size:19px;font-weight:300;letter-spacing:-0.05em;color:#24252B;">
                           veedeck

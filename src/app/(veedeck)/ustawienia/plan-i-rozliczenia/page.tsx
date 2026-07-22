@@ -1,4 +1,4 @@
-﻿export const dynamic = "force-dynamic";
+export const dynamic = "force-dynamic";
 
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
@@ -9,7 +9,7 @@ import { syncPortalReturn } from "@/lib/stripe/syncPortalReturn";
 import { getStripe } from "@/lib/stripe/client";
 import { getPlanFromPriceId } from "@/lib/stripe/prices";
 
-export default async function SubskrypcjaPage({
+export default async function PlanIRozliczeniaPage({
   searchParams,
 }: {
   searchParams: Promise<{ checkout?: string; session_id?: string; portal?: string }>;
@@ -22,7 +22,7 @@ export default async function SubskrypcjaPage({
     try {
       await syncCheckoutSession(params.session_id, session.user.id);
     } catch (err) {
-      console.error("[SubskrypcjaPage] sync checkout error:", err);
+      console.error("[PlanIRozliczeniaPage] sync checkout error:", err);
     }
   }
 
@@ -30,7 +30,7 @@ export default async function SubskrypcjaPage({
     try {
       await syncPortalReturn(session.user.id);
     } catch (err) {
-      console.error("[SubskrypcjaPage] sync portal error:", err);
+      console.error("[PlanIRozliczeniaPage] sync portal error:", err);
     }
   }
 
@@ -119,7 +119,7 @@ export default async function SubskrypcjaPage({
         };
       }).filter((inv) => inv.amount > 0);
     } catch (err) {
-      console.error("[SubskrypcjaPage] stripe invoices error:", String(err));
+      console.error("[PlanIRozliczeniaPage] stripe invoices error:", String(err));
     }
   }
 

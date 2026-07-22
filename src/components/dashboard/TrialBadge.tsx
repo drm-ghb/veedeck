@@ -25,7 +25,7 @@ export default function TrialBadge({ trialEndsAt }: Props) {
 
   return (
     <Link
-      href="/ustawienia/subskrypcja"
+      href="/ustawienia/plan-i-rozliczenia"
       className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border transition-colors ${
         urgent
           ? "bg-red-500/10 text-red-600 border-red-500/20 hover:bg-red-500/15 dark:text-red-400"

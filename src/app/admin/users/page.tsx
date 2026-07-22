@@ -19,8 +19,7 @@ export default async function AdminUsersPage() {
       trialEndsAt: true,
       isFree: true,
       subscription: { select: { plan: true, status: true } },
-      discounts: { orderBy: { createdAt: "desc" } },
-      _count: { select: { projects: true } },
+      _count: { select: { projects: true, shoppingLists: true, clients: true } },
     },
     orderBy: { createdAt: "desc" },
   });

@@ -92,7 +92,7 @@ export default function TeamSettings() {
             </div>
           </div>
           <Link
-            href="/ustawienia/subskrypcja"
+            href="/ustawienia/plan-i-rozliczenia"
             className="self-start flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity"
           >
             Przejdź na Studio
