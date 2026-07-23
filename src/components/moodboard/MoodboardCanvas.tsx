@@ -1131,20 +1131,30 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
   function doExportJpg() {
     if (!exportRect || !stageRef.current) return;
     const { x, y, w, h } = exportRect;
-    const stageX = (x - stagePos.x) / stageScale;
-    const stageY = (y - stagePos.y) / stageScale;
-    const stageW = w / stageScale;
-    const stageH = h / stageScale;
-    const dataURL = stageRef.current.toDataURL({
-      x: stageX, y: stageY, width: stageW, height: stageH,
-      pixelRatio: 2, mimeType: "image/jpeg", quality: 0.92,
+    const pixelRatio = 2;
+    // toDataURL x/y/w/h are in canvas pixel space (not Konva element coords)
+    const konvaUrl = stageRef.current.toDataURL({
+      x, y, width: w, height: h, pixelRatio,
     } as Parameters<typeof stageRef.current.toDataURL>[0]);
-    const link = document.createElement("a");
-    link.download = `${title || "moodboard"}.jpg`;
-    link.href = dataURL;
-    link.click();
-    setExportMode(false);
-    setExportRect(null);
+    // JPEG has no transparency — composite onto white canvas
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(w * pixelRatio);
+    canvas.height = Math.round(h * pixelRatio);
+    const ctx = canvas.getContext("2d")!;
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    const img = new window.Image();
+    img.onload = () => {
+      ctx.drawImage(img, 0, 0);
+      const finalUrl = canvas.toDataURL("image/jpeg", 0.92);
+      const link = document.createElement("a");
+      link.download = `${title || "moodboard"}.jpg`;
+      link.href = finalUrl;
+      link.click();
+      setExportMode(false);
+      setExportRect(null);
+    };
+    img.src = konvaUrl;
   }
 
   async function toggleShare() {
