@@ -693,7 +693,10 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
     note: "crosshair",
     image: "crosshair",
   };
-  const activeCursor = spaceDown ? (isPanning ? "grabbing" : "grab") : cursorMap[tool];
+  const [anchorHovered, setAnchorHovered] = useState(false);
+  const activeCursor = spaceDown
+    ? (isPanning ? "grabbing" : "grab")
+    : anchorHovered ? "crosshair" : cursorMap[tool];
 
   const q = sidebarQuery.toLowerCase();
   const filteredRooms = q
@@ -936,8 +939,8 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                         draggingConnRef.current = conn;
                         setDraggingConn(conn);
                       }}
-                      onMouseEnter={(e) => { const s = e.target.getStage(); if (s) s.container().style.cursor = "crosshair"; }}
-                      onMouseLeave={(e) => { const s = e.target.getStage(); if (s) s.container().style.cursor = activeCursor; }}
+                      onMouseEnter={() => setAnchorHovered(true)}
+                      onMouseLeave={() => setAnchorHovered(false)}
                     />
                   );
                 });
