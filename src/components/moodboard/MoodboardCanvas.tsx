@@ -177,6 +177,8 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
   const [sidebarQuery, setSidebarQuery] = useState("");
   const [containerSize, setContainerSize] = useState({ w: 800, h: 600 });
   const containerRef = useRef<HTMLDivElement>(null);
+  const [spaceDown, setSpaceDown] = useState(false);
+  const spaceDownRef = useRef(false);
 
   // Measure container
   useEffect(() => {
@@ -261,6 +263,19 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
   // Keyboard shortcuts
   useEffect(() => {
     function onKey(e: globalThis.KeyboardEvent) {
+      // Space = temporary hand/pan mode
+      if (e.key === " " && !editingTextId) {
+        const tag = (e.target as HTMLElement).tagName;
+        if (tag !== "INPUT" && tag !== "TEXTAREA") {
+          e.preventDefault();
+          if (!spaceDownRef.current) {
+            spaceDownRef.current = true;
+            setSpaceDown(true);
+          }
+          return;
+        }
+      }
+
       if (editingTextId) return;
       const tag = (e.target as HTMLElement).tagName;
       if (tag === "INPUT" || tag === "TEXTAREA") return;
@@ -287,8 +302,18 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
         if (e.key === "n") setTool("note");
       }
     }
+    function onKeyUp(e: globalThis.KeyboardEvent) {
+      if (e.key === " ") {
+        spaceDownRef.current = false;
+        setSpaceDown(false);
+      }
+    }
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    window.addEventListener("keyup", onKeyUp);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("keyup", onKeyUp);
+    };
   }, [selectedIds, elements, editingTextId, historyIndex, history]);
 
   // Update transformer when selection changes
@@ -323,8 +348,8 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
   function handleMouseDown(e: Konva.KonvaEventObject<MouseEvent>) {
     const isStage = e.target === e.target.getStage();
 
-    // Middle mouse or hand tool = pan
-    if (e.evt.button === 1 || tool === "hand") {
+    // Middle mouse, hand tool, or space held = pan
+    if (e.evt.button === 1 || tool === "hand" || spaceDownRef.current) {
       setIsPanning(true);
       return;
     }
@@ -528,6 +553,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
     note: "crosshair",
     image: "crosshair",
   };
+  const activeCursor = spaceDown ? (isPanning ? "grabbing" : "grab") : cursorMap[tool];
 
   const filteredRenders = renders.filter(r => r.name.toLowerCase().includes(sidebarQuery.toLowerCase()));
   const filteredProducts = products.filter(p => p.name.toLowerCase().includes(sidebarQuery.toLowerCase()));
@@ -581,45 +607,8 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
 
       {/* Body */}
       <div className="flex flex-1 min-h-0">
-        {/* Left toolbar */}
-        <div className="flex flex-col items-center gap-1 p-1.5 border-r border-border bg-background shrink-0 z-10">
-          {(
-            [
-              { t: "select", icon: <MousePointer size={18} />, label: "Zaznaczanie (V)" },
-              { t: "hand", icon: <Hand size={18} />, label: "Przesuwanie (H)" },
-              null,
-              { t: "rect", icon: <Square size={18} />, label: "Prostokąt (R)" },
-              { t: "ellipse", icon: <Circle size={18} />, label: "Elipsa (O)" },
-              { t: "note", icon: <StickyNote size={18} />, label: "Notka (N)" },
-              null,
-              { t: "text", icon: <Type size={18} />, label: "Tekst (T)" },
-              { t: "arrow", icon: <ArrowRight size={18} />, label: "Strzałka (A)" },
-              { t: "line", icon: <Minus size={18} />, label: "Linia (L)" },
-              null,
-              { t: "image", icon: <Image size={18} />, label: "Obraz" },
-            ] as (null | { t: Tool; icon: React.ReactNode; label: string })[]
-          ).map((item, idx) =>
-            item === null ? (
-              <div key={idx} className="w-8 h-px bg-border my-0.5" />
-            ) : (
-              <button
-                key={item.t}
-                onClick={() => {
-                  if (item.t === "image") { fileInputRef.current?.click(); return; }
-                  setTool(item.t as Tool);
-                }}
-                title={item.label}
-                className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors ${tool === item.t ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
-              >
-                {item.icon}
-              </button>
-            )
-          )}
-          <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImageUpload(f); e.target.value = ""; }} />
-        </div>
-
         {/* Canvas */}
-        <div ref={containerRef} className="flex-1 relative overflow-hidden" style={{ cursor: cursorMap[tool] }}>
+        <div ref={containerRef} className="flex-1 relative overflow-hidden" style={{ cursor: activeCursor }}>
           {/* Dot grid background */}
           <svg className="absolute inset-0 w-full h-full pointer-events-none" xmlns="http://www.w3.org/2000/svg">
             <defs>
@@ -785,98 +774,134 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
           })()}
 
           {/* Zoom controls */}
-          <div className="absolute bottom-4 right-4 flex items-center gap-1 bg-card border border-border rounded-xl shadow-sm px-1 py-1">
+          <div className="absolute bottom-4 right-4 flex items-center gap-1 bg-card border border-border rounded-xl shadow-sm px-1 py-1 z-20">
             <button onClick={() => setStageScale((s) => Math.max(0.1, s / 1.2))} className="w-7 h-7 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"><ZoomOut size={15} /></button>
             <button onClick={() => setStageScale(1)} className="text-xs font-medium text-muted-foreground hover:text-foreground px-2 py-1 rounded-lg hover:bg-muted transition-colors min-w-[48px] text-center">{zoomPct}%</button>
             <button onClick={() => setStageScale((s) => Math.min(5, s * 1.2))} className="w-7 h-7 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"><ZoomIn size={15} /></button>
           </div>
-        </div>
 
-        {/* Properties panel — shown below canvas when element selected */}
-        {firstSelected && !editingTextId && (
-          <div className="absolute bottom-14 left-1/2 -translate-x-1/2 flex items-center gap-3 bg-card border border-border rounded-2xl shadow-lg px-4 py-2.5 z-20 pointer-events-auto"
-            style={{ position: "absolute", bottom: "56px", left: "50%", transform: "translateX(-50%)" }}>
-            {/* Fill color */}
-            {(firstSelected.type === "rect" || firstSelected.type === "ellipse" || firstSelected.type === "note") && (
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs text-muted-foreground">Wypełnienie</span>
-                <div className="flex gap-1 flex-wrap max-w-[180px]">
-                  {(firstSelected.type === "note" ? NOTE_COLORS.map(n => n.bg) : FILL_COLORS.slice(0, 12)).map((c) => (
-                    <button key={c} onClick={() => updateSelected(firstSelected.type === "note" ? { fill: c, noteColor: c } : { fill: c })}
-                      style={{ background: c === "transparent" ? "repeating-linear-gradient(45deg,#ccc 0,#ccc 1px,#fff 0,#fff 50%)" : c }}
-                      className={`w-5 h-5 rounded border-2 transition-all ${(firstSelected.fill === c || firstSelected.noteColor === c) ? "border-primary scale-110" : "border-border"}`}
-                    />
+          {/* Properties panel — shown above toolbar when element selected */}
+          {firstSelected && !editingTextId && (
+            <div className="absolute bottom-[76px] left-1/2 -translate-x-1/2 flex items-center gap-3 bg-card border border-border rounded-2xl shadow-lg px-4 py-2.5 z-20 pointer-events-auto">
+              {/* Fill color */}
+              {(firstSelected.type === "rect" || firstSelected.type === "ellipse" || firstSelected.type === "note") && (
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs text-muted-foreground">Wypełnienie</span>
+                  <div className="flex gap-1 flex-wrap max-w-[180px]">
+                    {(firstSelected.type === "note" ? NOTE_COLORS.map(n => n.bg) : FILL_COLORS.slice(0, 12)).map((c) => (
+                      <button key={c} onClick={() => updateSelected(firstSelected.type === "note" ? { fill: c, noteColor: c } : { fill: c })}
+                        style={{ background: c === "transparent" ? "repeating-linear-gradient(45deg,#ccc 0,#ccc 1px,#fff 0,#fff 50%)" : c }}
+                        className={`w-5 h-5 rounded border-2 transition-all ${(firstSelected.fill === c || firstSelected.noteColor === c) ? "border-primary scale-110" : "border-border"}`}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+              {/* Stroke color */}
+              {firstSelected.type !== "text" && firstSelected.type !== "image" && (
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs text-muted-foreground">Obramowanie</span>
+                  <div className="flex gap-1">
+                    {STROKE_COLORS.slice(0, 8).map((c) => (
+                      <button key={c} onClick={() => updateSelected({ stroke: c })}
+                        style={{ background: c }}
+                        className={`w-5 h-5 rounded border-2 transition-all ${firstSelected.stroke === c ? "border-primary scale-110" : "border-border"}`}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+              {/* Stroke width */}
+              {(firstSelected.type === "arrow" || firstSelected.type === "line" || firstSelected.type === "rect" || firstSelected.type === "ellipse") && (
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs text-muted-foreground">Grubość</span>
+                  {[1, 2, 4, 6].map((w) => (
+                    <button key={w} onClick={() => updateSelected({ strokeWidth: w })}
+                      className={`w-8 h-6 rounded border transition-all text-xs ${firstSelected.strokeWidth === w ? "bg-primary/10 border-primary text-primary" : "border-border text-muted-foreground hover:bg-muted"}`}>
+                      {w}
+                    </button>
                   ))}
                 </div>
-              </div>
-            )}
-            {/* Stroke color */}
-            {firstSelected.type !== "text" && firstSelected.type !== "image" && (
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs text-muted-foreground">Obramowanie</span>
-                <div className="flex gap-1">
-                  {STROKE_COLORS.slice(0, 8).map((c) => (
-                    <button key={c} onClick={() => updateSelected({ stroke: c })}
-                      style={{ background: c }}
-                      className={`w-5 h-5 rounded border-2 transition-all ${firstSelected.stroke === c ? "border-primary scale-110" : "border-border"}`}
-                    />
+              )}
+              {/* Font size */}
+              {(firstSelected.type === "text") && (
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs text-muted-foreground">Rozmiar</span>
+                  {[12, 16, 20, 28, 36, 48].map((s) => (
+                    <button key={s} onClick={() => updateSelected({ fontSize: s })}
+                      className={`w-8 h-6 rounded border transition-all text-xs ${firstSelected.fontSize === s ? "bg-primary/10 border-primary text-primary" : "border-border text-muted-foreground hover:bg-muted"}`}>
+                      {s}
+                    </button>
                   ))}
                 </div>
-              </div>
-            )}
-            {/* Stroke width */}
-            {(firstSelected.type === "arrow" || firstSelected.type === "line" || firstSelected.type === "rect" || firstSelected.type === "ellipse") && (
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs text-muted-foreground">Grubość</span>
-                {[1, 2, 4, 6].map((w) => (
-                  <button key={w} onClick={() => updateSelected({ strokeWidth: w })}
-                    className={`w-8 h-6 rounded border transition-all text-xs ${firstSelected.strokeWidth === w ? "bg-primary/10 border-primary text-primary" : "border-border text-muted-foreground hover:bg-muted"}`}>
-                    {w}
-                  </button>
-                ))}
-              </div>
-            )}
-            {/* Font size */}
-            {(firstSelected.type === "text") && (
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs text-muted-foreground">Rozmiar</span>
-                {[12, 16, 20, 28, 36, 48].map((s) => (
-                  <button key={s} onClick={() => updateSelected({ fontSize: s })}
-                    className={`w-8 h-6 rounded border transition-all text-xs ${firstSelected.fontSize === s ? "bg-primary/10 border-primary text-primary" : "border-border text-muted-foreground hover:bg-muted"}`}>
-                    {s}
-                  </button>
-                ))}
-              </div>
-            )}
-            {/* Text color */}
-            {firstSelected.type === "text" && (
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs text-muted-foreground">Kolor</span>
-                <div className="flex gap-1">
-                  {STROKE_COLORS.slice(0, 8).map((c) => (
-                    <button key={c} onClick={() => updateSelected({ fill: c })}
-                      style={{ background: c }}
-                      className={`w-5 h-5 rounded border-2 transition-all ${firstSelected.fill === c ? "border-primary scale-110" : "border-border"}`}
-                    />
-                  ))}
+              )}
+              {/* Text color */}
+              {firstSelected.type === "text" && (
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs text-muted-foreground">Kolor</span>
+                  <div className="flex gap-1">
+                    {STROKE_COLORS.slice(0, 8).map((c) => (
+                      <button key={c} onClick={() => updateSelected({ fill: c })}
+                        style={{ background: c }}
+                        className={`w-5 h-5 rounded border-2 transition-all ${firstSelected.fill === c ? "border-primary scale-110" : "border-border"}`}
+                      />
+                    ))}
+                  </div>
                 </div>
+              )}
+              {/* Opacity */}
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs text-muted-foreground">Przezroczystość</span>
+                <input type="range" min={0.1} max={1} step={0.05} value={firstSelected.opacity ?? 1}
+                  onChange={(e) => updateSelected({ opacity: parseFloat(e.target.value) })}
+                  className="w-20 accent-primary" />
+                <span className="text-xs text-muted-foreground w-7">{Math.round((firstSelected.opacity ?? 1) * 100)}%</span>
               </div>
-            )}
-            {/* Opacity */}
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs text-muted-foreground">Przezroczystość</span>
-              <input type="range" min={0.1} max={1} step={0.05} value={firstSelected.opacity ?? 1}
-                onChange={(e) => updateSelected({ opacity: parseFloat(e.target.value) })}
-                className="w-20 accent-primary" />
-              <span className="text-xs text-muted-foreground w-7">{Math.round((firstSelected.opacity ?? 1) * 100)}%</span>
+              {/* Delete */}
+              <button onClick={() => { updateElements(elements.filter(e => !selectedIds.includes(e.id))); setSelectedIds([]); }}
+                className="w-7 h-7 flex items-center justify-center rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors">
+                <Trash2 size={15} />
+              </button>
             </div>
-            {/* Delete */}
-            <button onClick={() => { updateElements(elements.filter(e => !selectedIds.includes(e.id))); setSelectedIds([]); }}
-              className="w-7 h-7 flex items-center justify-center rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors">
-              <Trash2 size={15} />
-            </button>
+          )}
+
+          {/* Floating toolbar */}
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-0.5 bg-card border border-border rounded-2xl shadow-lg px-2 py-1.5 z-20">
+            {(
+              [
+                { t: "select", icon: <MousePointer size={18} />, label: "Zaznaczanie (V)" },
+                { t: "hand", icon: <Hand size={18} />, label: "Przesuwanie (H)" },
+                null,
+                { t: "rect", icon: <Square size={18} />, label: "Prostokąt (R)" },
+                { t: "ellipse", icon: <Circle size={18} />, label: "Elipsa (O)" },
+                { t: "note", icon: <StickyNote size={18} />, label: "Notka (N)" },
+                null,
+                { t: "text", icon: <Type size={18} />, label: "Tekst (T)" },
+                { t: "arrow", icon: <ArrowRight size={18} />, label: "Strzałka (A)" },
+                { t: "line", icon: <Minus size={18} />, label: "Linia (L)" },
+                null,
+                { t: "image", icon: <Image size={18} />, label: "Obraz" },
+              ] as (null | { t: Tool; icon: React.ReactNode; label: string })[]
+            ).map((item, idx) =>
+              item === null ? (
+                <div key={idx} className="w-px h-6 bg-border mx-1" />
+              ) : (
+                <button
+                  key={item.t}
+                  onClick={() => {
+                    if (item.t === "image") { fileInputRef.current?.click(); return; }
+                    setTool(item.t as Tool);
+                  }}
+                  title={item.label}
+                  className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors ${tool === item.t ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
+                >
+                  {item.icon}
+                </button>
+              )
+            )}
+            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImageUpload(f); e.target.value = ""; }} />
           </div>
-        )}
+        </div>
 
         {/* Right sidebar */}
         {rightSidebarOpen && (
