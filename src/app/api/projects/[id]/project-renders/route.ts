@@ -15,7 +15,7 @@ export async function GET(
 
   // Verify the project belongs to this user (or their workspace owner)
   const project = await prisma.project.findFirst({
-    where: { id, designerId: userId },
+    where: { id, userId },
     select: { id: true },
   });
   if (!project) return NextResponse.json({ error: "Not found" }, { status: 404 });
