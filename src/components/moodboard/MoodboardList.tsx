@@ -107,7 +107,7 @@ export default function MoodboardList({ moodboards: initial, clients }: Props) {
       {/* Header */}
       <div className="flex items-center justify-between gap-3 mb-6">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Moodboard</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Moodboardy</h1>
           <p className="text-sm text-muted-foreground mt-0.5">Tablice inspiracji dla projektów</p>
         </div>
         <NewMoodboardDialog clients={clients} />
@@ -163,7 +163,7 @@ export default function MoodboardList({ moodboards: initial, clients }: Props) {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {filtered.map((m) => (
             <div key={m.id} className="group relative rounded-2xl border border-border bg-card overflow-hidden hover:border-primary/30 hover:shadow-md transition-all">
-              <Link href={`/moodboard/${m.id}`} className="block">
+              <Link href={`/moodboardy/${m.id}`} className="block">
                 <div className="aspect-video bg-gradient-to-br from-primary/5 to-primary/15 flex items-center justify-center">
                   <Interests size={36} className="text-primary/30" />
                 </div>
@@ -234,7 +234,7 @@ export default function MoodboardList({ moodboards: initial, clients }: Props) {
               <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
                 <Interests size={18} className="text-primary" />
               </div>
-              <Link href={`/moodboard/${m.id}`} className="min-w-0 flex-1">
+              <Link href={`/moodboardy/${m.id}`} className="min-w-0 flex-1">
                 <p className="text-sm font-medium truncate">{m.title}</p>
                 {m.client && (
                   <p className="text-xs text-muted-foreground truncate">

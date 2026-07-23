@@ -47,7 +47,7 @@ export default function NewMoodboardDialog({ clients }: Props) {
       setTitle("");
       setClientId("");
       setProjectId("");
-      router.push(`/moodboard/${data.id}`);
+      router.push(`/moodboardy/${data.id}`);
     } catch {
       toast.error("Błąd podczas tworzenia tablicy");
     } finally {

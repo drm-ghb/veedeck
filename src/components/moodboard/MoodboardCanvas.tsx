@@ -391,6 +391,8 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
   const [editProjectId, setEditProjectId] = useState<string>(project?.id ?? "");
   const [editClients, setEditClients] = useState<{ id: string; name: string; projects: { id: string; title: string }[] }[]>([]);
   const [editSaving, setEditSaving] = useState(false);
+  // Transformer visibility (React-controlled to avoid react-konva prop override)
+  const [transformerVisible, setTransformerVisible] = useState(false);
   // Export
   const [exportMode, setExportMode] = useState(false);
   const [exportRect, setExportRect] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
@@ -699,6 +701,9 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
     };
   }, [selectedIds, elements, editingTextId, historyIndex, history]);
 
+  // Types that get transformer handles
+  const TRANSFORMABLE = new Set(["rect", "ellipse", "note", "image", "arrow", "line"]);
+
   // Update transformer when selection changes
   useEffect(() => {
     const tr = transformerRef.current;
@@ -708,12 +713,13 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
     const nodes = selectedIds
       .filter(sid => {
         const t = elements.find(el => el.id === sid)?.type;
-        return t !== "connection" && t !== "freehand";
+        return t !== undefined && TRANSFORMABLE.has(t);
       })
       .map((sid) => stage.findOne("#" + sid)).filter(Boolean) as Konva.Node[];
     tr.nodes(nodes);
-    tr.visible(nodes.length > 0);
+    setTransformerVisible(nodes.length > 0);
     tr.getLayer()?.batchDraw();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedIds, elements]);
 
   // Zoom with wheel
@@ -909,6 +915,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
         };
         const next = [...elements, newEl];
         updateElements(next);
+        setTool("select");
       }
       setPenPoints([]);
       penStartRef.current = null;
@@ -1290,8 +1297,8 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
     <div className="flex flex-col h-full select-none">
       {/* Top bar */}
       <div className="flex items-center gap-2 px-3 py-2 border-b border-border bg-background shrink-0 z-10">
-        <Link href="/moodboard" className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors shrink-0">
-          <ChevronLeft size={16} /> Moodboard
+        <Link href="/moodboardy" className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors shrink-0">
+          <ChevronLeft size={16} /> Moodboardy
         </Link>
         <div className="w-px h-4 bg-border mx-1" />
         {/* Auto-sizing title input */}
@@ -1764,28 +1771,12 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                 );
 
                 if (el.type === "freehand") return (
-                  <Line key={el.id}
-                    id={el.id}
-                    opacity={el.opacity ?? 1}
-                    x={el.x} y={el.y}
+                  <Line key={el.id} {...commonProps} x={el.x} y={el.y}
                     points={el.points ?? [0, 0]}
-                    stroke={el.stroke ?? "#334155"}
+                    stroke={isSel ? "#6366f1" : (el.stroke ?? "#334155")}
                     strokeWidth={el.strokeWidth ?? 2}
-                    tension={0.4} lineCap="round" lineJoin="round"
-                    draggable={tool === "select"}
-                    onDragStart={() => { isDragging.current = true; }}
-                    onDragEnd={(e: Konva.KonvaEventObject<DragEvent>) => {
-                      isDragging.current = false;
-                      updateEl(el.id, { x: e.target.x(), y: e.target.y() });
-                    }}
-                    onContextMenu={(e: Konva.KonvaEventObject<MouseEvent>) => {
-                      e.evt.preventDefault();
-                      if (tool === "select") {
-                        setSelectedIds([el.id]);
-                        setContextMenu({ screenX: e.evt.clientX, screenY: e.evt.clientY, elementId: el.id });
-                      }
-                    }}
-                  />
+                    hitStrokeWidth={Math.max(20, (el.strokeWidth ?? 2) + 10)}
+                    tension={0.4} lineCap="round" lineJoin="round" />
                 );
 
                 if (el.type === "image") return (
@@ -1833,8 +1824,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                   fill="#e2e8f040" stroke="#94a3b8" strokeWidth={1} dash={[4, 4]} />
               )}
 
-              <Transformer ref={transformerRef} rotateEnabled keepRatio={false} borderStroke="#6366f1" anchorStroke="#6366f1" anchorFill="#fff" anchorSize={8} borderStrokeWidth={1.5}
-                enabledAnchors={firstSelected?.type === "text" ? ["middle-left", "middle-right"] : undefined} />
+              <Transformer ref={transformerRef} visible={transformerVisible} rotateEnabled keepRatio={false} borderStroke="#6366f1" anchorStroke="#6366f1" anchorFill="#fff" anchorSize={8} borderStrokeWidth={1.5} />
 
               {/* Rubber-band selection rectangle */}
               {selBox && selBox.w > 2 && selBox.h > 2 && (

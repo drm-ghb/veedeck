@@ -67,7 +67,7 @@ export const pl = {
     discussions: "Dyskusje",
     tasks: "Zadania",
     surveys: "Ankiety",
-    moodboard: "Moodboard",
+    moodboard: "Moodboardy",
     veezard: "Veezard",
     help: "Pomoc",
     settings: "Ustawienia",
