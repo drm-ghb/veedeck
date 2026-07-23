@@ -37,6 +37,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (body.canvasData !== undefined) data.canvasData = body.canvasData;
   if (body.isSharedWithClient !== undefined) data.isSharedWithClient = body.isSharedWithClient;
   if (body.archived !== undefined) data.archived = body.archived;
+  if (body.clientId !== undefined) data.clientId = body.clientId || null;
+  if (body.projectId !== undefined) data.projectId = body.projectId || null;
 
   const updated = await prisma.moodboard.update({ where: { id }, data });
   return NextResponse.json(updated);

@@ -4,8 +4,9 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Interests, LayoutGrid, List, Search, MoreVertical, Trash2, Share2, Users } from "@/components/ui/icons";
+import { Interests, LayoutGrid, List, Search, MoreVertical, Trash2, Share2, Users, Edit2 } from "@/components/ui/icons";
 import NewMoodboardDialog from "./NewMoodboardDialog";
+import EditMoodboardDialog from "./EditMoodboardDialog";
 
 type Client = {
   id: string;
@@ -53,6 +54,7 @@ export default function MoodboardList({ moodboards: initial, clients }: Props) {
   });
   const [query, setQuery] = useState("");
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
+  const [editingMoodboard, setEditingMoodboard] = useState<Moodboard | null>(null);
 
   function setViewMode(v: "grid" | "list") {
     setView(v);
@@ -83,6 +85,10 @@ export default function MoodboardList({ moodboards: initial, clients }: Props) {
     setMenuOpen(null);
   }
 
+  function handleEditSave(id: string, updated: { title: string; client: { id: string; name: string } | null; project: { id: string; title: string } | null }) {
+    setMoodboards((prev) => prev.map((m) => m.id === id ? { ...m, ...updated } : m));
+  }
+
   const filtered = moodboards.filter((m) =>
     m.title.toLowerCase().includes(query.toLowerCase()) ||
     (m.client?.name ?? "").toLowerCase().includes(query.toLowerCase())
@@ -90,6 +96,14 @@ export default function MoodboardList({ moodboards: initial, clients }: Props) {
 
   return (
     <div>
+      {editingMoodboard && (
+        <EditMoodboardDialog
+          moodboard={editingMoodboard}
+          clients={clients}
+          onClose={() => setEditingMoodboard(null)}
+          onSave={(updated) => handleEditSave(editingMoodboard.id, updated)}
+        />
+      )}
       {/* Header */}
       <div className="flex items-center justify-between gap-3 mb-6">
         <div>
@@ -182,6 +196,12 @@ export default function MoodboardList({ moodboards: initial, clients }: Props) {
                   <>
                     <div className="fixed inset-0 z-[5]" onClick={() => setMenuOpen(null)} />
                     <div className="absolute right-0 top-[calc(100%+4px)] z-10 w-44 bg-card border border-border rounded-xl shadow-lg overflow-hidden p-1">
+                      <button
+                        onClick={() => { setEditingMoodboard(m); setMenuOpen(null); }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg hover:bg-muted transition-colors text-left"
+                      >
+                        <Edit2 size={14} /> Edytuj
+                      </button>
                       {m.client && (
                         <button
                           onClick={() => handleToggleShare(m.id, m.isSharedWithClient)}
@@ -239,6 +259,12 @@ export default function MoodboardList({ moodboards: initial, clients }: Props) {
                   <>
                     <div className="fixed inset-0 z-[5]" onClick={() => setMenuOpen(null)} />
                     <div className="absolute right-0 top-[calc(100%+4px)] z-10 w-44 bg-card border border-border rounded-xl shadow-lg overflow-hidden p-1">
+                      <button
+                        onClick={() => { setEditingMoodboard(m); setMenuOpen(null); }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg hover:bg-muted transition-colors text-left"
+                      >
+                        <Edit2 size={14} /> Edytuj
+                      </button>
                       {m.client && (
                         <button
                           onClick={() => handleToggleShare(m.id, m.isSharedWithClient)}
