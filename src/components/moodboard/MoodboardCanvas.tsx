@@ -61,6 +61,25 @@ interface CanvasData {
 
 // ── Constants ──────────────────────────────────────────────────────────────
 
+const GOOGLE_FONTS = [
+  "Inter", "Roboto", "Open Sans", "Lato", "Montserrat", "Nunito", "Poppins", "Raleway",
+  "DM Sans", "Work Sans", "Outfit", "Manrope", "Plus Jakarta Sans", "Figtree",
+  "Playfair Display", "Merriweather", "Lora", "PT Serif", "Libre Baskerville", "EB Garamond",
+  "Oswald", "Bebas Neue", "Anton", "Righteous", "Barlow Condensed",
+  "Dancing Script", "Pacifico", "Satisfy", "Caveat", "Kalam",
+  "Space Mono", "Source Code Pro", "JetBrains Mono",
+];
+
+const _loadedFonts = new Set<string>();
+function loadGoogleFont(family: string) {
+  if (_loadedFonts.has(family) || typeof document === "undefined") return;
+  _loadedFonts.add(family);
+  const link = document.createElement("link");
+  link.rel = "stylesheet";
+  link.href = `https://fonts.googleapis.com/css2?family=${family.replace(/ /g, "+")}&display=swap`;
+  document.head.appendChild(link);
+}
+
 const FILL_COLORS = [
   "transparent", "#ffffff", "#f8fafc", "#e2e8f0",
   "#fef2f2", "#fee2e2", "#fca5a5",
@@ -360,6 +379,8 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
   const [penWidth, setPenWidth] = useState(2);
   const [isDragOver, setIsDragOver] = useState(false);
   const dragCounterRef2 = useRef(0);
+  const [fontPickerOpen, setFontPickerOpen] = useState(false);
+  const [fontSearch, setFontSearch] = useState("");
   // Clipboard for copy/paste
   const clipboardRef = useRef<CanvasElement[]>([]);
 
@@ -401,6 +422,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
 
       const resultBlob = await removeBackground(imageSource, {
         debug: false,
+        publicPath: `https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.7.0/dist/`,
       });
       const url = URL.createObjectURL(resultBlob);
       imageCache.delete(el.imageUrl);
@@ -1182,7 +1204,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
         {client && (
           <button
             onClick={toggleShare}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${isSharedWithClient ? "bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400" : "bg-primary text-primary-foreground hover:bg-primary/90"}`}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${isSharedWithClient ? "bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400" : "bg-muted text-muted-foreground hover:bg-muted/80 border border-border"}`}
           >
             {isSharedWithClient ? <Check size={14} /> : <Share2 size={14} />}
             {isSharedWithClient ? "Udostępnione" : "Udostępnij klientowi"}
@@ -1301,6 +1323,17 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
             </>
           )}
         </div>
+
+        {/* Zasoby button — top bar, rightmost */}
+        <button
+          onClick={() => setRightSidebarOpen((v) => !v)}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${rightSidebarOpen ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
+          title="Zasoby"
+        >
+          <Package size={15} />
+          Zasoby
+          {rightSidebarOpen ? <ChevronRight size={13} /> : <ChevronLeft size={13} />}
+        </button>
       </div>
 
       {/* Body */}
@@ -1711,25 +1744,65 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
           })()}
 
           {/* Zoom controls */}
-          <div className="absolute bottom-4 left-4 flex items-center gap-1 bg-card border border-border rounded-xl shadow-sm px-1 py-1 z-20">
+          <div className="absolute bottom-4 right-4 flex items-center gap-1 bg-card border border-border rounded-xl shadow-sm px-1 py-1 z-20">
             <button onClick={() => setStageScale((s) => Math.max(0.1, s / 1.2))} className="w-7 h-7 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"><ZoomOut size={15} /></button>
             <button onClick={() => setStageScale(1)} className="text-xs font-medium text-muted-foreground hover:text-foreground px-2 py-1 rounded-lg hover:bg-muted transition-colors min-w-[48px] text-center">{zoomPct}%</button>
             <button onClick={() => setStageScale((s) => Math.min(5, s * 1.2))} className="w-7 h-7 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"><ZoomIn size={15} /></button>
           </div>
 
-          {/* Zasoby pill — bottom-right */}
-          <button
-            onClick={() => setRightSidebarOpen((v) => !v)}
-            className={`absolute bottom-4 right-4 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium shadow-sm border transition-colors z-20 ${rightSidebarOpen ? "bg-primary/10 border-primary text-primary" : "bg-card border-border text-muted-foreground hover:text-foreground hover:bg-muted"}`}
-          >
-            <Package size={15} />
-            Zasoby
-            {rightSidebarOpen ? <ChevronRight size={13} /> : <ChevronLeft size={13} />}
-          </button>
-
           {/* Properties panel — shown above toolbar when element selected */}
           {firstSelected && !editingTextId && (
             <div className="absolute bottom-[76px] left-1/2 -translate-x-1/2 flex flex-col gap-2 bg-card border border-border rounded-2xl shadow-lg px-4 py-3 z-20 pointer-events-auto min-w-max">
+              {/* Font family picker — text only */}
+              {firstSelected.type === "text" && (
+                <div className="flex items-center gap-2 relative">
+                  <span className="text-xs text-muted-foreground shrink-0">Czcionka</span>
+                  <button
+                    onClick={() => { setFontPickerOpen((v) => !v); setFontSearch(""); }}
+                    className="flex items-center justify-between gap-2 px-2.5 py-1 rounded-lg border border-border bg-background hover:bg-muted text-xs min-w-[160px] transition-colors"
+                    style={{ fontFamily: firstSelected.fontFamily ?? "Inter, sans-serif" }}
+                  >
+                    <span className="truncate">{firstSelected.fontFamily ?? "Inter"}</span>
+                    <ChevronDown size={12} className="shrink-0 text-muted-foreground" />
+                  </button>
+                  {fontPickerOpen && (
+                    <>
+                      <div className="fixed inset-0 z-[60]" onClick={() => setFontPickerOpen(false)} />
+                      <div className="absolute left-[72px] bottom-[calc(100%+4px)] z-[70] w-56 bg-card border border-border rounded-xl shadow-xl overflow-hidden flex flex-col">
+                        <div className="p-2 border-b border-border">
+                          <input
+                            autoFocus
+                            value={fontSearch}
+                            onChange={(e) => setFontSearch(e.target.value)}
+                            placeholder="Szukaj czcionki…"
+                            className="w-full text-xs px-2.5 py-1.5 rounded-lg border border-border bg-background outline-none focus:ring-2 focus:ring-primary/30"
+                          />
+                        </div>
+                        <div className="overflow-y-auto max-h-60 p-1">
+                          {GOOGLE_FONTS
+                            .filter((f) => f.toLowerCase().includes(fontSearch.toLowerCase()))
+                            .map((font) => (
+                              <button
+                                key={font}
+                                onMouseEnter={() => loadGoogleFont(font)}
+                                onClick={() => {
+                                  loadGoogleFont(font);
+                                  updateSelected({ fontFamily: font });
+                                  setFontPickerOpen(false);
+                                }}
+                                className={`w-full text-left px-3 py-1.5 rounded-lg text-sm hover:bg-muted transition-colors ${(firstSelected.fontFamily ?? "Inter") === font ? "bg-primary/10 text-primary font-medium" : "text-foreground"}`}
+                                style={{ fontFamily: font }}
+                              >
+                                {font}
+                              </button>
+                            ))}
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+
               {/* Row 1: Fill + Stroke colors */}
               <div className="flex items-center gap-3">
               {/* Fill color */}
