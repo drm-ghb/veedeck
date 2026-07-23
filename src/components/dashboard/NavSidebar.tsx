@@ -235,7 +235,7 @@ export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userI
 
   return (
     <>
-    <aside className={`hidden md:flex flex-col flex-shrink-0 h-full ${mounted ? "transition-all duration-200" : ""} ${isCollapsed ? "w-14" : "w-52"}`} style={{ backgroundColor: 'var(--sidebar)', color: 'var(--sidebar-foreground)' }}>
+    <aside className={`hidden md:flex flex-col flex-shrink-0 h-full ${mounted ? "transition-all duration-200" : ""} ${isCollapsed ? "w-14" : "w-60"}`} style={{ backgroundColor: 'var(--sidebar)', color: 'var(--sidebar-foreground)' }}>
       <nav className="sidebar-nav flex-1 p-2 space-y-0.5 overflow-y-auto">
         {visible.map((item) => {
           const active = pathname === item.href || pathname.startsWith(item.href + "/") || item.matchPrefixes.some((p) => pathname.startsWith(p));

@@ -8,16 +8,18 @@ import { toast } from "sonner";
 import {
   ChevronLeft, MousePointer, Hand, Square, Circle, Type, ArrowRight, Minus,
   Trash2, ZoomIn, ZoomOut, Undo2, Redo2, Share2, Check, Image, StickyNote,
-  ChevronRight, ChevronDown, Search, Package, PushPin, X, Folder, RefreshCw,
+  ChevronRight, ChevronDown, Search, Package, PushPin, X, Folder, RefreshCw, LocalMall,
+  ArrowUp, ArrowDown, Layers, Palette, Crop, Eraser, Check as CheckIcon, Copy,
+  Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, HelpCircle, Pen,
 } from "@/components/ui/icons";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
-type Tool = "select" | "hand" | "rect" | "ellipse" | "text" | "arrow" | "line" | "note" | "image";
+type Tool = "select" | "hand" | "rect" | "ellipse" | "text" | "arrow" | "line" | "note" | "image" | "pen";
 
 export interface CanvasElement {
   id: string;
-  type: "rect" | "ellipse" | "text" | "arrow" | "line" | "note" | "image" | "connection";
+  type: "rect" | "ellipse" | "text" | "arrow" | "line" | "note" | "image" | "connection" | "freehand";
   x: number;
   y: number;
   width?: number;
@@ -32,12 +34,18 @@ export interface CanvasElement {
   fontSize?: number;
   fontFamily?: string;
   fontStyle?: string;
+  textDecoration?: string;
   textAlign?: string;
   noteColor?: string;
   // arrow / line (relative points from x,y)
   points?: number[];
   // image
   imageUrl?: string;
+  // image crop (0–1 fractions of display size, converted to px when applying to Konva)
+  cropLeft?: number;
+  cropTop?: number;
+  cropRight?: number;
+  cropBottom?: number;
   zIndex?: number;
   // connection (bezier connector between elements)
   sourceId?: string;
@@ -88,16 +96,43 @@ function getElementBounds(el: CanvasElement) {
     const w = el.width ?? 120, h = el.height ?? 80;
     return { x: el.x - w / 2, y: el.y - h / 2, width: w, height: h };
   }
+  if (el.type === "freehand" && el.points && el.points.length >= 2) {
+    let minX = 0, minY = 0, maxX = 0, maxY = 0;
+    for (let i = 0; i < el.points.length; i += 2) {
+      const px = el.points[i], py = el.points[i + 1];
+      if (px < minX) minX = px; if (px > maxX) maxX = px;
+      if (py < minY) minY = py; if (py > maxY) maxY = py;
+    }
+    return { x: el.x + minX, y: el.y + minY, width: maxX - minX || 10, height: maxY - minY || 10 };
+  }
   return { x: el.x, y: el.y, width: el.width ?? 120, height: el.height ?? 80 };
 }
 
 function getAnchorPoint(el: CanvasElement, anchor: Anchor) {
-  const b = getElementBounds(el);
-  const cx = b.x + b.width / 2, cy = b.y + b.height / 2;
-  if (anchor === "top")    return { x: cx, y: b.y };
-  if (anchor === "right")  return { x: b.x + b.width, y: cy };
-  if (anchor === "bottom") return { x: cx, y: b.y + b.height };
-  return { x: b.x, y: cy };
+  const w = el.width ?? 120, h = el.height ?? 80;
+  const rad = ((el.rotation ?? 0) * Math.PI) / 180;
+  const cos = Math.cos(rad), sin = Math.sin(rad);
+
+  // For ellipse: el.x/el.y is the center (Konva Ellipse origin = center).
+  // For all others: el.x/el.y is the top-left (Konva Rect/Group/Text origin = top-left).
+  // Anchor in local space, then world = (el.x, el.y) + R(rotation) × local
+  let lx: number, ly: number;
+  if (el.type === "ellipse") {
+    if (anchor === "top")         { lx =    0;  ly = -h / 2; }
+    else if (anchor === "right")  { lx =  w/2;  ly =  0;     }
+    else if (anchor === "bottom") { lx =    0;  ly =  h / 2; }
+    else                          { lx = -w/2;  ly =  0;     }
+  } else {
+    if (anchor === "top")         { lx = w / 2; ly = 0;     }
+    else if (anchor === "right")  { lx = w;     ly = h / 2; }
+    else if (anchor === "bottom") { lx = w / 2; ly = h;     }
+    else                          { lx = 0;     ly = h / 2; }
+  }
+
+  return {
+    x: el.x + lx * cos - ly * sin,
+    y: el.y + lx * sin + ly * cos,
+  };
 }
 
 function getBezierData(p1: {x:number;y:number}, a1: Anchor, p2: {x:number;y:number}, a2: Anchor) {
@@ -129,16 +164,16 @@ function RenderSidebarItem({ render, onClick }: { render: RenderItem; onClick: (
   return (
     <button
       onClick={() => onClick(render.fileUrl, render.name)}
-      className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-muted transition-colors text-left"
+      className="flex flex-col rounded-xl border border-border overflow-hidden hover:border-primary/40 hover:shadow-sm transition-all text-left"
       title={render.name}
     >
-      <div className="w-8 h-8 rounded bg-muted shrink-0 overflow-hidden border border-border flex items-center justify-center">
+      <div className="aspect-square bg-muted w-full overflow-hidden flex items-center justify-center">
         {isImage
           // eslint-disable-next-line @next/next/no-img-element
           ? <img src={render.fileUrl} alt={render.name} className="w-full h-full object-cover" />
-          : <Image size={14} className="text-muted-foreground" />}
+          : <Image size={24} className="text-muted-foreground" />}
       </div>
-      <span className="text-xs truncate flex-1">{render.name}</span>
+      <p className="text-[11px] font-medium truncate px-2 py-1.5">{render.name}</p>
     </button>
   );
 }
@@ -163,12 +198,18 @@ function loadImage(url: string, cb: (img: HTMLImageElement) => void) {
 
 // ── Sub-components ─────────────────────────────────────────────────────────
 
-function CanvasImageNode({ el, isSelected, onSelect, onDragEnd, onTransformEnd }: {
+function CanvasImageNode({ el, isSelected, onSelect, onDragEnd, onTransformEnd, onMouseEnter, onMouseLeave, onDragStarted, onDragEnded, onContextMenu, onDragMove }: {
   el: CanvasElement;
   isSelected: boolean;
   onSelect: () => void;
   onDragEnd: (x: number, y: number) => void;
   onTransformEnd: (attrs: Partial<CanvasElement>) => void;
+  onMouseEnter: () => void;
+  onMouseLeave: () => void;
+  onDragStarted: () => void;
+  onDragEnded: () => void;
+  onContextMenu: (e: Konva.KonvaEventObject<MouseEvent>) => void;
+  onDragMove?: (e: Konva.KonvaEventObject<DragEvent>) => void;
 }) {
   const [img, setImg] = useState<HTMLImageElement | null>(null);
   useEffect(() => {
@@ -176,17 +217,37 @@ function CanvasImageNode({ el, isSelected, onSelect, onDragEnd, onTransformEnd }
   }, [el.imageUrl]);
 
   if (!img) return null;
+
+  const w = el.width ?? 200;
+  const h = el.height ?? 150;
+  const hasCrop = el.cropLeft !== undefined;
+  const cropProp = hasCrop ? {
+    x: (el.cropLeft ?? 0) * img.naturalWidth,
+    y: (el.cropTop ?? 0) * img.naturalHeight,
+    width: ((el.cropRight ?? 1) - (el.cropLeft ?? 0)) * img.naturalWidth,
+    height: ((el.cropBottom ?? 1) - (el.cropTop ?? 0)) * img.naturalHeight,
+  } : undefined;
+
   return (
     <KonvaImage
+      id={el.id}
       image={img}
       x={el.x} y={el.y}
-      width={el.width ?? 200} height={el.height ?? 150}
+      width={w} height={h}
+      crop={cropProp}
       rotation={el.rotation ?? 0}
       opacity={el.opacity ?? 1}
       draggable
+      stroke={isSelected ? "#6366f1" : undefined}
+      strokeWidth={isSelected ? 2 : 0}
       onClick={onSelect}
       onTap={onSelect}
-      onDragEnd={(e) => onDragEnd(e.target.x(), e.target.y())}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+      onDragStart={onDragStarted}
+      onDragMove={onDragMove}
+      onDragEnd={(e) => { onDragEnded(); onDragEnd(e.target.x(), e.target.y()); }}
+      onContextMenu={onContextMenu}
       onTransformEnd={(e) => {
         const node = e.target;
         onTransformEnd({
@@ -242,11 +303,17 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
   const [history, setHistory] = useState<CanvasElement[][]>([initElements]);
   const [historyIndex, setHistoryIndex] = useState(0);
   const [rightSidebarOpen, setRightSidebarOpen] = useState(false);
-  const [rightTab, setRightTab] = useState<"projectflow" | "products">("projectflow");
+  const [rightTab, setRightTab] = useState<"projectflow" | "products" | "lists">("projectflow");
   const [rooms, setRooms] = useState<RoomItem[]>([]);
   const [expandedRooms, setExpandedRooms] = useState<Set<string>>(new Set());
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const [products, setProducts] = useState<{ id: string; name: string; imageUrl: string | null }[]>([]);
+  type ListProduct = { id: string; name: string; imageUrl: string | null; price: string | null };
+  type ListSection = { id: string; name: string; products: ListProduct[] };
+  type ShoppingListItem = { id: string; name: string; sections: ListSection[] };
+  const [lists, setLists] = useState<ShoppingListItem[]>([]);
+  const [expandedLists, setExpandedLists] = useState<Set<string>>(new Set());
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
   const [sidebarQuery, setSidebarQuery] = useState("");
   const [containerSize, setContainerSize] = useState({ w: 800, h: 600 });
   const containerRef = useRef<HTMLDivElement>(null);
@@ -260,6 +327,38 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
   const nearestAnchorRef = useRef<{ elementId: string; anchor: Anchor } | null>(null);
   const [nearestAnchor, setNearestAnchor] = useState<{ elementId: string; anchor: Anchor } | null>(null);
   const isConnecting = useRef(false);
+  const isDragging = useRef(false);
+  // Rubber-band (marquee) selection
+  const isSelBoxing = useRef(false);
+  const selBoxStartRef = useRef<{ x: number; y: number } | null>(null);
+  const [selBox, setSelBox] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
+  const [contextMenu, setContextMenu] = useState<{ screenX: number; screenY: number; elementId: string } | null>(null);
+  const [customFillColor, setCustomFillColor] = useState("");
+  const [customStrokeColor, setCustomStrokeColor] = useState("");
+  // Crop mode
+  const [cropMode, setCropMode] = useState<string | null>(null);
+  type CropRect = { left: number; top: number; right: number; bottom: number };
+  const [cropRect, setCropRect] = useState<CropRect>({ left: 0, top: 0, right: 1, bottom: 1 });
+  const cropDragRef = useRef<{ handle: string; startX: number; startY: number; startRect: CropRect } | null>(null);
+  // Remove background
+  const [removingBgId, setRemovingBgId] = useState<string | null>(null);
+  // Snap guide lines (canvas coords)
+  const [snapLines, setSnapLines] = useState<Array<{ x1: number; y1: number; x2: number; y2: number }>>([]);
+  const [helpOpen, setHelpOpen] = useState(false);
+  const [penPoints, setPenPoints] = useState<number[]>([]);
+  const penStartRef = useRef<{ x: number; y: number } | null>(null);
+  const isPenDrawingRef = useRef(false);
+  const [penColor, setPenColor] = useState("#334155");
+  const [penWidth, setPenWidth] = useState(2);
+  // Clipboard for copy/paste
+  const clipboardRef = useRef<CanvasElement[]>([]);
+
+  // Reset custom colors when selection changes
+  const firstSelectedId = selectedIds[0] ?? null;
+  useEffect(() => {
+    setCustomFillColor("");
+    setCustomStrokeColor("");
+  }, [firstSelectedId]);
 
   // Measure container
   useEffect(() => {
@@ -273,6 +372,128 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
     if (containerRef.current) ro.observe(containerRef.current);
     return () => ro.disconnect();
   }, []);
+
+  // ── Remove background ──────────────────────────────────────────────────────
+  async function handleRemoveBg(el: CanvasElement) {
+    if (!el.imageUrl || removingBgId) return;
+    setRemovingBgId(el.id);
+    try {
+      const { removeBackground } = await import("@imgly/background-removal");
+
+      // Fetch image as Blob first to avoid CORS issues inside the library's worker
+      let imageSource: Blob | string = el.imageUrl;
+      try {
+        const resp = await fetch(el.imageUrl, { mode: "cors" });
+        if (resp.ok) imageSource = await resp.blob();
+      } catch {
+        // If prefetch fails, fall back to passing URL directly
+      }
+
+      const resultBlob = await removeBackground(imageSource, {
+        debug: false,
+      });
+      const url = URL.createObjectURL(resultBlob);
+      imageCache.delete(el.imageUrl);
+      updateEl(el.id, { imageUrl: url, cropLeft: undefined, cropTop: undefined, cropRight: undefined, cropBottom: undefined });
+      toast.success("Tło usunięte");
+    } catch (err) {
+      console.error("[removeBg]", err);
+      toast.error("Błąd podczas usuwania tła");
+    } finally {
+      setRemovingBgId(null);
+    }
+  }
+
+  // ── Crop ───────────────────────────────────────────────────────────────────
+  function enterCropMode(el: CanvasElement) {
+    setCropRect({
+      left: el.cropLeft ?? 0,
+      top: el.cropTop ?? 0,
+      right: el.cropRight ?? 1,
+      bottom: el.cropBottom ?? 1,
+    });
+    setCropMode(el.id);
+  }
+
+  function confirmCrop() {
+    if (!cropMode) return;
+    const el = elements.find(e => e.id === cropMode);
+    if (!el || !el.imageUrl) return;
+    const elW = el.width ?? 200;
+    const elH = el.height ?? 150;
+    const img = imageCache.get(el.imageUrl);
+
+    // New display size must match the crop region's natural aspect ratio to avoid distortion.
+    // We keep the display width proportional to how much of the element width was selected,
+    // then derive height from the crop's natural aspect ratio.
+    let newW: number;
+    let newH: number;
+    if (img && img.naturalWidth > 0 && img.naturalHeight > 0) {
+      const cropNatW = (cropRect.right - cropRect.left) * img.naturalWidth;
+      const cropNatH = (cropRect.bottom - cropRect.top) * img.naturalHeight;
+      const cropAspect = cropNatW / cropNatH;
+      // Keep width proportional to selection width, derive height from natural aspect ratio
+      newW = (cropRect.right - cropRect.left) * elW;
+      newH = newW / cropAspect;
+    } else {
+      newW = (cropRect.right - cropRect.left) * elW;
+      newH = (cropRect.bottom - cropRect.top) * elH;
+    }
+
+    updateEl(cropMode, {
+      cropLeft: cropRect.left,
+      cropTop: cropRect.top,
+      cropRight: cropRect.right,
+      cropBottom: cropRect.bottom,
+      width: Math.max(10, newW),
+      height: Math.max(10, newH),
+    });
+    setCropMode(null);
+  }
+
+  function resetCrop() {
+    const targetId = cropMode ?? firstSelectedId;
+    if (!targetId) return;
+    updateEl(targetId, { cropLeft: undefined, cropTop: undefined, cropRight: undefined, cropBottom: undefined });
+    setCropMode(null);
+  }
+
+  // ── Duplicate / Copy / Paste ───────────────────────────────────────────────
+  function duplicateElements(ids: string[]) {
+    const targets = elements.filter(e => ids.includes(e.id) && e.type !== "connection");
+    if (targets.length === 0) return;
+    const OFFSET = 20;
+    const newEls: CanvasElement[] = targets.map(el => ({
+      ...el,
+      id: Math.random().toString(36).slice(2),
+      x: el.x + OFFSET,
+      y: el.y + OFFSET,
+    }));
+    const next = [...elements, ...newEls];
+    updateElements(next);
+    setSelectedIds(newEls.map(e => e.id));
+  }
+
+  function copySelected() {
+    const targets = elements.filter(e => selectedIds.includes(e.id) && e.type !== "connection");
+    clipboardRef.current = targets;
+  }
+
+  function pasteClipboard() {
+    if (clipboardRef.current.length === 0) return;
+    const OFFSET = 20;
+    const newEls: CanvasElement[] = clipboardRef.current.map(el => ({
+      ...el,
+      id: Math.random().toString(36).slice(2),
+      x: el.x + OFFSET,
+      y: el.y + OFFSET,
+    }));
+    // Shift clipboard so repeated pastes don't stack on the same spot
+    clipboardRef.current = newEls;
+    const next = [...elements, ...newEls];
+    updateElements(next);
+    setSelectedIds(newEls.map(e => e.id));
+  }
 
   // Load sidebar data when opened
   function loadRooms() {
@@ -293,8 +514,18 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
     if (rightTab === "products") {
       fetch("/api/products").then(r => r.ok ? r.json() : []).then((data: { id: string; name: string; imageUrl: string | null }[]) => setProducts(data)).catch(() => {});
     }
+    if (rightTab === "lists" && client?.id) {
+      fetch(`/api/clients/${client.id}/shopping-lists`)
+        .then(r => r.ok ? r.json() : [])
+        .then((data: ShoppingListItem[]) => {
+          setLists(data);
+          setExpandedLists(new Set(data.map(l => l.id)));
+          setExpandedSections(new Set(data.flatMap(l => l.sections.map(s => s.id))));
+        })
+        .catch(() => {});
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rightSidebarOpen, rightTab, project?.id]);
+  }, [rightSidebarOpen, rightTab, project?.id, client?.id]);
 
   // Push history
   function pushHistory(els: CanvasElement[]) {
@@ -328,16 +559,20 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
   function undo() {
     if (historyIndex <= 0) return;
     const ni = historyIndex - 1;
+    const snapshot = history[ni];
+    if (!Array.isArray(snapshot)) return;
     setHistoryIndex(ni);
-    setElements(history[ni]);
+    setElements(snapshot);
     setSelectedIds([]);
   }
 
   function redo() {
     if (historyIndex >= history.length - 1) return;
     const ni = historyIndex + 1;
+    const snapshot = history[ni];
+    if (!Array.isArray(snapshot)) return;
     setHistoryIndex(ni);
-    setElements(history[ni]);
+    setElements(snapshot);
     setSelectedIds([]);
   }
 
@@ -386,6 +621,9 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
       if (e.ctrlKey || e.metaKey) {
         if (e.key === "z" && !e.shiftKey) { e.preventDefault(); undo(); }
         if ((e.key === "y") || (e.key === "z" && e.shiftKey)) { e.preventDefault(); redo(); }
+        if (e.key === "c") { e.preventDefault(); copySelected(); }
+        if (e.key === "v") { e.preventDefault(); pasteClipboard(); }
+        if (e.key === "d") { e.preventDefault(); duplicateElements(selectedIds); }
       }
       // Tool shortcuts
       if (!e.ctrlKey && !e.metaKey && !e.altKey) {
@@ -397,6 +635,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
         if (e.key === "a") setTool("arrow");
         if (e.key === "l") setTool("line");
         if (e.key === "n") setTool("note");
+        if (e.key === "p") setTool("pen");
       }
     }
     function onKeyUp(e: globalThis.KeyboardEvent) {
@@ -420,7 +659,10 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
     const stage = stageRef.current;
     if (!stage) return;
     const nodes = selectedIds
-      .filter(sid => elements.find(el => el.id === sid)?.type !== "connection")
+      .filter(sid => {
+        const t = elements.find(el => el.id === sid)?.type;
+        return t !== "connection" && t !== "freehand";
+      })
       .map((sid) => stage.findOne("#" + sid)).filter(Boolean) as Konva.Node[];
     tr.nodes(nodes);
     tr.getLayer()?.batchDraw();
@@ -455,7 +697,14 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
     }
 
     if (tool === "select") {
-      if (isStage) setSelectedIds([]);
+      if (isStage) {
+        // Left-click drag on empty canvas = rubber-band selection
+        const pos = stagePoint(e.evt.clientX, e.evt.clientY);
+        isSelBoxing.current = true;
+        selBoxStartRef.current = pos;
+        setSelBox({ x: pos.x, y: pos.y, w: 0, h: 0 });
+        setSelectedIds([]);
+      }
       return;
     }
 
@@ -474,6 +723,14 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
       return;
     }
 
+    if (tool === "pen") {
+      const pos = stagePoint(e.evt.clientX, e.evt.clientY);
+      isPenDrawingRef.current = true;
+      penStartRef.current = pos;
+      setPenPoints([0, 0]);
+      return;
+    }
+
     if (!isStage) return;
     const pos = stagePoint(e.evt.clientX, e.evt.clientY);
     setIsDrawing(true);
@@ -482,6 +739,13 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
   }
 
   function handleMouseMove(e: Konva.KonvaEventObject<MouseEvent>) {
+    updateHoverFromPosition(e.evt.clientX, e.evt.clientY);
+    if (isSelBoxing.current && selBoxStartRef.current) {
+      const pos = stagePoint(e.evt.clientX, e.evt.clientY);
+      const start = selBoxStartRef.current;
+      setSelBox({ x: Math.min(pos.x, start.x), y: Math.min(pos.y, start.y), w: Math.abs(pos.x - start.x), h: Math.abs(pos.y - start.y) });
+      return;
+    }
     if (draggingConnRef.current) {
       const pos = stagePoint(e.evt.clientX, e.evt.clientY);
       const updated = { ...draggingConnRef.current, currentX: pos.x, currentY: pos.y };
@@ -511,12 +775,62 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
       scheduleSave(elements, { ...newPos, scale: stageScale });
       return;
     }
+    if (isPenDrawingRef.current && penStartRef.current) {
+      const pos = stagePoint(e.evt.clientX, e.evt.clientY);
+      const dx = pos.x - penStartRef.current.x;
+      const dy = pos.y - penStartRef.current.y;
+      setPenPoints((prev) => [...prev, dx, dy]);
+      return;
+    }
     if (!isDrawing || !drawStart) return;
     const pos = stagePoint(e.evt.clientX, e.evt.clientY);
-    setDrawRect({ x: Math.min(pos.x, drawStart.x), y: Math.min(pos.y, drawStart.y), w: Math.abs(pos.x - drawStart.x), h: Math.abs(pos.y - drawStart.y) });
+    let rawW = Math.abs(pos.x - drawStart.x);
+    let rawH = Math.abs(pos.y - drawStart.y);
+    if (e.evt.shiftKey && (tool === "rect" || tool === "ellipse")) {
+      const side = Math.max(rawW, rawH);
+      rawW = side; rawH = side;
+    }
+    const rx = pos.x >= drawStart.x ? drawStart.x : drawStart.x - rawW;
+    const ry = pos.y >= drawStart.y ? drawStart.y : drawStart.y - rawH;
+    setDrawRect({ x: rx, y: ry, w: rawW, h: rawH });
+  }
+
+  function updateHoverFromPosition(clientX: number, clientY: number) {
+    if (tool !== "select" || draggingConnRef.current || isSelBoxing.current || isPanning || isDragging.current) return;
+    const pos = stagePoint(clientX, clientY);
+    const threshold = 20 / stageScale;
+    let found: string | null = null;
+    for (const el of elements) {
+      if (el.type === "connection") continue;
+      const b = getElementBounds(el);
+      const cx = Math.max(b.x, Math.min(pos.x, b.x + b.width));
+      const cy = Math.max(b.y, Math.min(pos.y, b.y + b.height));
+      if (Math.sqrt((pos.x - cx) ** 2 + (pos.y - cy) ** 2) < threshold) {
+        found = el.id;
+        break;
+      }
+    }
+    setHoveredElementId(found);
   }
 
   function handleMouseUp(e: Konva.KonvaEventObject<MouseEvent>) {
+    if (isSelBoxing.current) {
+      isSelBoxing.current = false;
+      const box = selBox;
+      if (box && box.w > 4 && box.h > 4) {
+        const hit = elements
+          .filter(el => el.type !== "connection")
+          .filter(el => {
+            const b = getElementBounds(el);
+            return b.x < box.x + box.w && b.x + b.width > box.x && b.y < box.y + box.h && b.y + b.height > box.y;
+          })
+          .map(el => el.id);
+        setSelectedIds(hit);
+      }
+      setSelBox(null);
+      selBoxStartRef.current = null;
+      return;
+    }
     if (draggingConnRef.current) {
       isConnecting.current = false;
       const dc = draggingConnRef.current;
@@ -534,6 +848,23 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
       nearestAnchorRef.current = null;
       setDraggingConn(null);
       setNearestAnchor(null);
+      return;
+    }
+    if (isPenDrawingRef.current && penStartRef.current) {
+      isPenDrawingRef.current = false;
+      if (penPoints.length >= 4) {
+        const newEl: CanvasElement = {
+          id: uid(), type: "freehand",
+          x: penStartRef.current.x, y: penStartRef.current.y,
+          points: penPoints,
+          stroke: penColor, strokeWidth: penWidth, opacity: 1,
+        };
+        const next = [...elements, newEl];
+        updateElements(next);
+        setSelectedIds([newEl.id]);
+      }
+      setPenPoints([]);
+      penStartRef.current = null;
       return;
     }
     if (isPanning) { setIsPanning(false); return; }
@@ -601,6 +932,52 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
     setEditingTextId(null);
   }
 
+  // ── Snap helper — called from onDragMove for any draggable element ──────────
+  function applySnap(e: Konva.KonvaEventObject<DragEvent>, el: CanvasElement) {
+    if (selectedIds.length > 1) { setSnapLines([]); return; }
+    const nx = e.target.x();
+    const ny = e.target.y();
+    const w = el.width ?? 120;
+    const h = el.height ?? 80;
+    const threshold = 8 / stageScale;
+    const newLines: Array<{ x1: number; y1: number; x2: number; y2: number }> = [];
+    let bestDX = threshold + 1;
+    let bestDY = threshold + 1;
+    let snappedX = nx;
+    let snappedY = ny;
+    for (const other of elements) {
+      if (other.id === el.id || other.type === "connection" || selectedIds.includes(other.id)) continue;
+      const ow = other.width ?? 120;
+      const oh = other.height ?? 80;
+      const ox = other.type === "ellipse" ? other.x - ow / 2 : other.x;
+      const oy = other.type === "ellipse" ? other.y - oh / 2 : other.y;
+      for (const [dxc, oxc] of [
+        [nx, ox], [nx, ox + ow / 2], [nx, ox + ow],
+        [nx + w / 2, ox], [nx + w / 2, ox + ow / 2], [nx + w / 2, ox + ow],
+        [nx + w, ox], [nx + w, ox + ow / 2], [nx + w, ox + ow],
+      ]) {
+        const dist = Math.abs(dxc - oxc);
+        if (dist < threshold && dist < bestDX) {
+          bestDX = dist; snappedX = nx + (oxc - dxc);
+          newLines.push({ x1: oxc, y1: -9999, x2: oxc, y2: 9999 });
+        }
+      }
+      for (const [dyc, oyc] of [
+        [ny, oy], [ny, oy + oh / 2], [ny, oy + oh],
+        [ny + h / 2, oy], [ny + h / 2, oy + oh / 2], [ny + h / 2, oy + oh],
+        [ny + h, oy], [ny + h, oy + oh / 2], [ny + h, oy + oh],
+      ]) {
+        const dist = Math.abs(dyc - oyc);
+        if (dist < threshold && dist < bestDY) {
+          bestDY = dist; snappedY = ny + (oyc - dyc);
+          newLines.push({ x1: -9999, y1: oyc, x2: 9999, y2: oyc });
+        }
+      }
+    }
+    if (snappedX !== nx || snappedY !== ny) e.target.position({ x: snappedX, y: snappedY });
+    setSnapLines(newLines);
+  }
+
   // Update element property
   function updateEl(elId: string, patch: Partial<CanvasElement>) {
     const next = elements.map((el) => el.id === elId ? { ...el, ...patch } : el);
@@ -612,7 +989,34 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
     updateElements(next);
   }
 
-  const selected = elements.filter((el) => selectedIds.includes(el.id));
+  // Z-order operations (elements array order = render order; last = on top)
+  function moveForward(elId: string) {
+    const idx = elements.findIndex(e => e.id === elId);
+    if (idx < 0 || idx >= elements.length - 1) return;
+    const next = [...elements];
+    [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
+    updateElements(next);
+  }
+  function moveBackward(elId: string) {
+    const idx = elements.findIndex(e => e.id === elId);
+    if (idx <= 0) return;
+    const next = [...elements];
+    [next[idx], next[idx - 1]] = [next[idx - 1], next[idx]];
+    updateElements(next);
+  }
+  function bringToFront(elId: string) {
+    const el = elements.find(e => e.id === elId);
+    if (!el) return;
+    updateElements([...elements.filter(e => e.id !== elId), el]);
+  }
+  function sendToBack(elId: string) {
+    const el = elements.find(e => e.id === elId);
+    if (!el) return;
+    updateElements([el, ...elements.filter(e => e.id !== elId)]);
+  }
+
+  const safeElements = Array.isArray(elements) ? elements : [];
+  const selected = safeElements.filter((el) => selectedIds.includes(el.id));
   const firstSelected = selected[0];
 
   // Share toggle
@@ -692,6 +1096,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
     line: "crosshair",
     note: "crosshair",
     image: "crosshair",
+    pen: "crosshair",
   };
   const [anchorHovered, setAnchorHovered] = useState(false);
   const activeCursor = spaceDown
@@ -729,14 +1134,6 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
           className="text-sm font-medium bg-transparent focus:outline-none focus:ring-2 focus:ring-primary/30 rounded px-1.5 py-0.5 min-w-[120px] max-w-[280px]"
         />
         <div className="flex-1" />
-        {/* Undo / Redo */}
-        <button onClick={undo} disabled={historyIndex <= 0} title="Cofnij (Ctrl+Z)" className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30 transition-colors">
-          <Undo2 size={16} />
-        </button>
-        <button onClick={redo} disabled={historyIndex >= history.length - 1} title="Ponów (Ctrl+Y)" className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30 transition-colors">
-          <Redo2 size={16} />
-        </button>
-        <div className="w-px h-4 bg-border mx-1" />
         {/* Share */}
         {client && (
           <button
@@ -747,13 +1144,92 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
             {isSharedWithClient ? "Udostępnione" : "Udostępnij klientowi"}
           </button>
         )}
+        {/* Help / shortcuts */}
+        <div className="relative">
+          <button
+            onClick={() => setHelpOpen((v) => !v)}
+            className={`w-8 h-8 flex items-center justify-center rounded-lg transition-colors ${helpOpen ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
+            title="Skróty klawiszowe i instrukcja"
+          >
+            <HelpCircle size={17} />
+          </button>
+          {helpOpen && (
+            <>
+              <div className="fixed inset-0 z-[40]" onClick={() => setHelpOpen(false)} />
+              <div className="absolute right-0 top-[calc(100%+6px)] z-[50] w-[520px] bg-card border border-border rounded-2xl shadow-xl overflow-hidden">
+                <div className="px-4 py-3 border-b border-border">
+                  <p className="text-sm font-semibold">Skróty klawiszowe</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Tablica Moodboard</p>
+                </div>
+                <div className="grid grid-cols-2 gap-x-4 p-3 max-h-[70vh] overflow-y-auto">
+                  {/* Column 1 */}
+                  <div className="space-y-0.5">
+                    <p className="text-xs font-bold text-foreground pt-1 pb-1 px-1">Narzędzia</p>
+                    {([
+                      ["V", "Zaznaczanie"],
+                      ["H", "Przesuwanie widoku"],
+                      ["R", "Prostokąt"],
+                      ["O", "Elipsa"],
+                      ["T", "Tekst"],
+                      ["A", "Strzałka"],
+                      ["L", "Linia"],
+                      ["N", "Notatka"],
+                    ["P", "Pisanie ręczne"],
+                    ] as [string, string][]).map(([key, desc]) => (
+                      <div key={key} className="flex items-center justify-between gap-2 px-2 py-1.5 rounded-lg hover:bg-muted/50">
+                        <span className="text-xs text-muted-foreground">{desc}</span>
+                        <kbd className="text-[10px] font-mono bg-muted border border-border rounded px-1.5 py-0.5 text-foreground whitespace-nowrap">{key}</kbd>
+                      </div>
+                    ))}
+                    <p className="text-xs font-bold text-foreground pt-3 pb-1 px-1">Rysowanie</p>
+                    <div className="flex items-center justify-between gap-2 px-2 py-1.5 rounded-lg hover:bg-muted/50">
+                      <span className="text-xs text-muted-foreground">Idealny kwadrat / koło</span>
+                      <kbd className="text-[10px] font-mono bg-muted border border-border rounded px-1.5 py-0.5 text-foreground whitespace-nowrap">Shift</kbd>
+                    </div>
+                  </div>
+                  {/* Column 2 */}
+                  <div className="space-y-0.5">
+                    <p className="text-xs font-bold text-foreground pt-1 pb-1 px-1">Edycja</p>
+                    {([
+                      ["Ctrl + Z", "Cofnij"],
+                      ["Ctrl + Y", "Ponów"],
+                      ["Ctrl + C", "Kopiuj"],
+                      ["Ctrl + V", "Wklej"],
+                      ["Ctrl + D", "Duplikuj"],
+                      ["Del / Backspace", "Usuń"],
+                      ["Escape", "Odznacz / anuluj"],
+                    ] as [string, string][]).map(([key, desc]) => (
+                      <div key={key} className="flex items-center justify-between gap-2 px-2 py-1.5 rounded-lg hover:bg-muted/50">
+                        <span className="text-xs text-muted-foreground">{desc}</span>
+                        <kbd className="text-[10px] font-mono bg-muted border border-border rounded px-1.5 py-0.5 text-foreground whitespace-nowrap">{key}</kbd>
+                      </div>
+                    ))}
+                    <p className="text-xs font-bold text-foreground pt-3 pb-1 px-1">Widok</p>
+                    {([
+                      ["Scroll", "Przybliż / oddal"],
+                      ["Spacja + drag", "Przesuń widok"],
+                      ["+  /  −", "Zoom in / out"],
+                    ] as [string, string][]).map(([key, desc]) => (
+                      <div key={key} className="flex items-center justify-between gap-2 px-2 py-1.5 rounded-lg hover:bg-muted/50">
+                        <span className="text-xs text-muted-foreground">{desc}</span>
+                        <kbd className="text-[10px] font-mono bg-muted border border-border rounded px-1.5 py-0.5 text-foreground whitespace-nowrap">{key}</kbd>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
         {/* Right sidebar toggle */}
         <button
           onClick={() => setRightSidebarOpen((v) => !v)}
-          className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${rightSidebarOpen ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
-          title="Panel zasobów"
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${rightSidebarOpen ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
+          title="Zasoby"
         >
-          {rightSidebarOpen ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+          <Package size={15} />
+          Zasoby
+          {rightSidebarOpen ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
         </button>
       </div>
 
@@ -786,9 +1262,9 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
           >
             <Layer>
               {/* ── Connections (bezier curves, rendered behind elements) ── */}
-              {elements.filter(el => el.type === "connection").map(el => {
-                const srcEl = elements.find(e => e.id === el.sourceId);
-                const tgtEl = elements.find(e => e.id === el.targetId);
+              {safeElements.filter(el => el.type === "connection").map(el => {
+                const srcEl = safeElements.find(e => e.id === el.sourceId);
+                const tgtEl = safeElements.find(e => e.id === el.targetId);
                 if (!srcEl || !tgtEl || !el.sourceAnchor || !el.targetAnchor) return null;
                 const p1 = getAnchorPoint(srcEl, el.sourceAnchor as Anchor);
                 const p2 = getAnchorPoint(tgtEl, el.targetAnchor as Anchor);
@@ -820,7 +1296,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                 );
               })}
 
-              {elements.map((el) => {
+              {safeElements.map((el) => {
                 if (el.type === "connection") return null; // rendered separately above
                 const isSel = selectedIds.includes(el.id);
                 const commonProps = {
@@ -828,10 +1304,22 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                   opacity: el.opacity ?? 1,
                   rotation: el.rotation ?? 0,
                   draggable: tool === "select" && !draggingConnRef.current,
-                  onMouseEnter: () => { if (tool === "select") setHoveredElementId(el.id); },
-                  onMouseLeave: () => setHoveredElementId(null),
-                  onClick: () => {
-                    if (tool === "select") setSelectedIds([el.id]);
+                  onContextMenu: (e: Konva.KonvaEventObject<MouseEvent>) => {
+                    e.evt.preventDefault();
+                    if (tool === "select") {
+                      setSelectedIds([el.id]);
+                      setContextMenu({ screenX: e.evt.clientX, screenY: e.evt.clientY, elementId: el.id });
+                    }
+                  },
+                  onDragStart: () => { isDragging.current = true; setHoveredElementId(null); },
+                  onClick: (e: Konva.KonvaEventObject<MouseEvent>) => {
+                    if (tool !== "select") return;
+                    if (e.evt.shiftKey) {
+                      // Shift+click: toggle this element in selection
+                      setSelectedIds(prev => prev.includes(el.id) ? prev.filter(id => id !== el.id) : [...prev, el.id]);
+                    } else {
+                      setSelectedIds([el.id]);
+                    }
                   },
                   onTap: () => {
                     if (tool === "select") setSelectedIds([el.id]);
@@ -839,8 +1327,42 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                   onDblClick: () => {
                     if (el.type === "text" || el.type === "note") startTextEdit(el);
                   },
+                  onDragMove: (e: Konva.KonvaEventObject<DragEvent>) => {
+                    // Multi-select: move all other selected nodes by the same delta
+                    if (selectedIds.length > 1) {
+                      const dx = e.target.x() - el.x;
+                      const dy = e.target.y() - el.y;
+                      const stage = stageRef.current;
+                      if (stage) {
+                        selectedIds.forEach(sid => {
+                          if (sid === el.id) return;
+                          const srcEl = elements.find(e2 => e2.id === sid);
+                          if (!srcEl || srcEl.type === "connection") return;
+                          const node = stage.findOne("#" + sid);
+                          if (node) { node.x(srcEl.x + dx); node.y(srcEl.y + dy); }
+                        });
+                      }
+                      setSnapLines([]);
+                      return;
+                    }
+                    applySnap(e, el);
+                  },
                   onDragEnd: (e: Konva.KonvaEventObject<DragEvent>) => {
-                    updateEl(el.id, { x: e.target.x(), y: e.target.y() });
+                    isDragging.current = false;
+                    setHoveredElementId(null);
+                    setSnapLines([]);
+                    if (selectedIds.length > 1) {
+                      const dx = e.target.x() - el.x;
+                      const dy = e.target.y() - el.y;
+                      const next = elements.map(elem =>
+                        selectedIds.includes(elem.id) && elem.type !== "connection"
+                          ? { ...elem, x: elem.x + dx, y: elem.y + dy }
+                          : elem
+                      );
+                      updateElements(next);
+                    } else {
+                      updateEl(el.id, { x: e.target.x(), y: e.target.y() });
+                    }
                   },
                   onTransformEnd: (e: Konva.KonvaEventObject<Event>) => {
                     const node = e.target;
@@ -848,9 +1370,12 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                       x: node.x(), y: node.y(),
                       rotation: node.rotation(),
                     };
-                    if (el.type !== "arrow" && el.type !== "line") {
-                      patch.width = Math.max(5, (el.width ?? 100) * node.scaleX());
-                      patch.height = Math.max(5, (el.height ?? 40) * node.scaleY());
+                    if (el.type === "text") {
+                      patch.width = Math.max(50, node.width() * node.scaleX());
+                      node.scaleX(1); node.scaleY(1);
+                    } else if (el.type !== "arrow" && el.type !== "line" && el.type !== "freehand") {
+                      patch.width = Math.max(5, node.width() * node.scaleX());
+                      patch.height = Math.max(5, node.height() * node.scaleY());
                       node.scaleX(1); node.scaleY(1);
                     }
                     updateEl(el.id, patch);
@@ -859,12 +1384,16 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
 
                 if (el.type === "rect") return (
                   <Rect key={el.id} {...commonProps} x={el.x} y={el.y} width={el.width ?? 120} height={el.height ?? 80}
-                    fill={el.fill ?? "#e2e8f0"} stroke={el.stroke ?? "#94a3b8"} strokeWidth={el.strokeWidth ?? 1.5} cornerRadius={4} />
+                    fill={el.fill ?? "#e2e8f0"}
+                    stroke={isSel ? "#6366f1" : (el.stroke ?? "#94a3b8")}
+                    strokeWidth={isSel ? 2 : (el.strokeWidth ?? 1.5)} cornerRadius={4} />
                 );
 
                 if (el.type === "ellipse") return (
                   <Ellipse key={el.id} {...commonProps} x={el.x} y={el.y} radiusX={(el.width ?? 120) / 2} radiusY={(el.height ?? 80) / 2}
-                    fill={el.fill ?? "#e2e8f0"} stroke={el.stroke ?? "#94a3b8"} strokeWidth={el.strokeWidth ?? 1.5} />
+                    fill={el.fill ?? "#e2e8f0"}
+                    stroke={isSel ? "#6366f1" : (el.stroke ?? "#94a3b8")}
+                    strokeWidth={isSel ? 2 : (el.strokeWidth ?? 1.5)} />
                 );
 
                 if (el.type === "text") return (
@@ -872,13 +1401,17 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                     text={el.id === editingTextId ? "" : (el.text || "Text")}
                     fontSize={el.fontSize ?? 16} fill={el.fill ?? "#1e293b"}
                     fontFamily={el.fontFamily ?? "Inter, sans-serif"}
-                    fontStyle={el.fontStyle ?? "normal"} />
+                    fontStyle={el.fontStyle ?? "normal"}
+                    textDecoration={el.textDecoration ?? ""}
+                    align={el.textAlign ?? "left"} />
                 );
 
                 if (el.type === "note") return (
                   <Group key={el.id} {...commonProps} x={el.x} y={el.y}>
                     <Rect width={el.width ?? 150} height={el.height ?? 150}
-                      fill={el.noteColor ?? "#fef08a"} stroke={el.stroke ?? "#ca8a04"} strokeWidth={1} cornerRadius={6} />
+                      fill={el.noteColor ?? "#fef08a"}
+                      stroke={isSel ? "#6366f1" : (el.stroke ?? "#ca8a04")}
+                      strokeWidth={isSel ? 2 : 1} cornerRadius={6} />
                     <Text x={8} y={8} width={(el.width ?? 150) - 16} height={(el.height ?? 150) - 16}
                       text={el.id === editingTextId ? "" : (el.text || "")}
                       fontSize={el.fontSize ?? 13} fill="#1e293b" wrap="word" />
@@ -888,25 +1421,59 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                 if (el.type === "arrow") return (
                   <Arrow key={el.id} {...commonProps} x={el.x} y={el.y}
                     points={el.points ?? [0, 0, 80, 0]}
-                    stroke={el.stroke ?? "#334155"} strokeWidth={el.strokeWidth ?? 2}
-                    fill={el.stroke ?? "#334155"} pointerLength={10} pointerWidth={8} />
+                    stroke={isSel ? "#6366f1" : (el.stroke ?? "#334155")}
+                    strokeWidth={el.strokeWidth ?? 2}
+                    fill={isSel ? "#6366f1" : (el.stroke ?? "#334155")} pointerLength={10} pointerWidth={8} />
                 );
 
                 if (el.type === "line") return (
                   <Line key={el.id} {...commonProps} x={el.x} y={el.y}
                     points={el.points ?? [0, 0, 80, 0]}
-                    stroke={el.stroke ?? "#334155"} strokeWidth={el.strokeWidth ?? 2} lineCap="round" />
+                    stroke={isSel ? "#6366f1" : (el.stroke ?? "#334155")}
+                    strokeWidth={el.strokeWidth ?? 2} lineCap="round" />
+                );
+
+                if (el.type === "freehand") return (
+                  <Line key={el.id} {...commonProps} x={el.x} y={el.y}
+                    points={el.points ?? [0, 0]}
+                    stroke={isSel ? "#6366f1" : (el.stroke ?? "#334155")}
+                    strokeWidth={el.strokeWidth ?? 2}
+                    tension={0.4} lineCap="round" lineJoin="round" />
                 );
 
                 if (el.type === "image") return (
                   <CanvasImageNode key={el.id} el={el} isSelected={isSel}
                     onSelect={() => setSelectedIds([el.id])}
                     onDragEnd={(x, y) => updateEl(el.id, { x, y })}
-                    onTransformEnd={(attrs) => updateEl(el.id, attrs)} />
+                    onTransformEnd={(attrs) => updateEl(el.id, attrs)}
+                    onMouseEnter={() => { if (tool === "select") setHoveredElementId(el.id); }}
+                    onMouseLeave={() => setHoveredElementId(null)}
+                    onDragStarted={() => { isDragging.current = true; setHoveredElementId(null); }}
+                    onDragEnded={() => { isDragging.current = false; setHoveredElementId(null); setSnapLines([]); }}
+                    onDragMove={(e) => applySnap(e, el)}
+                    onContextMenu={(e) => { e.evt.preventDefault(); setSelectedIds([el.id]); setContextMenu({ screenX: e.evt.clientX, screenY: e.evt.clientY, elementId: el.id }); }} />
                 );
 
                 return null;
               })}
+
+              {/* Snap guide lines */}
+              {snapLines.map((ln, i) => (
+                <Line key={i} points={[ln.x1, ln.y1, ln.x2, ln.y2]}
+                  stroke="#6366f1" strokeWidth={1 / stageScale} dash={[4 / stageScale, 4 / stageScale]}
+                  opacity={0.7} listening={false} />
+              ))}
+
+              {/* Live pen preview */}
+              {isPenDrawingRef.current && penStartRef.current && penPoints.length >= 4 && (
+                <Line
+                  x={penStartRef.current.x} y={penStartRef.current.y}
+                  points={penPoints}
+                  stroke={penColor} strokeWidth={penWidth}
+                  tension={0.4} lineCap="round" lineJoin="round"
+                  listening={false}
+                />
+              )}
 
               {/* Preview rect while drawing */}
               {isDrawing && drawRect && (tool === "rect" || tool === "note") && (
@@ -919,11 +1486,21 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                   fill="#e2e8f040" stroke="#94a3b8" strokeWidth={1} dash={[4, 4]} />
               )}
 
-              <Transformer ref={transformerRef} rotateEnabled keepRatio={false} borderStroke="#6366f1" anchorStroke="#6366f1" anchorFill="#fff" anchorSize={8} borderStrokeWidth={1.5} />
+              <Transformer ref={transformerRef} rotateEnabled keepRatio={false} borderStroke="#6366f1" anchorStroke="#6366f1" anchorFill="#fff" anchorSize={8} borderStrokeWidth={1.5}
+                enabledAnchors={firstSelected?.type === "text" ? ["middle-left", "middle-right"] : undefined} />
 
-              {/* ── Anchor handles on hovered element ── */}
-              {tool === "select" && !draggingConn && hoveredElementId && (() => {
-                const el = elements.find(e => e.id === hoveredElementId && e.type !== "connection");
+              {/* Rubber-band selection rectangle */}
+              {selBox && selBox.w > 2 && selBox.h > 2 && (
+                <Rect
+                  x={selBox.x} y={selBox.y} width={selBox.w} height={selBox.h}
+                  fill="#6366f120" stroke="#6366f1" strokeWidth={1} dash={[4, 4]}
+                  listening={false}
+                />
+              )}
+
+              {/* ── Anchor handles on hovered element (hidden in multi-select) ── */}
+              {tool === "select" && !draggingConn && hoveredElementId && selectedIds.length <= 1 && (() => {
+                const el = safeElements.find(e => e.id === hoveredElementId && e.type !== "connection");
                 if (!el) return null;
                 return (["top", "right", "bottom", "left"] as Anchor[]).map(anchor => {
                   const pt = getAnchorPoint(el, anchor);
@@ -969,11 +1546,11 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
 
               {/* ── Live connection preview while dragging ── */}
               {draggingConn && (() => {
-                const srcEl = elements.find(e => e.id === draggingConn.sourceId);
+                const srcEl = safeElements.find(e => e.id === draggingConn.sourceId);
                 if (!srcEl) return null;
                 const p1 = getAnchorPoint(srcEl, draggingConn.sourceAnchor);
                 const endPt = nearestAnchor
-                  ? (() => { const t = elements.find(e => e.id === nearestAnchor.elementId); return t ? getAnchorPoint(t, nearestAnchor.anchor) : { x: draggingConn.currentX, y: draggingConn.currentY }; })()
+                  ? (() => { const t = safeElements.find(e => e.id === nearestAnchor.elementId); return t ? getAnchorPoint(t, nearestAnchor.anchor) : { x: draggingConn.currentX, y: draggingConn.currentY }; })()
                   : { x: draggingConn.currentX, y: draggingConn.currentY };
                 const dist = Math.sqrt((endPt.x - p1.x) ** 2 + (endPt.y - p1.y) ** 2);
                 const off = Math.max(40, Math.min(200, dist * 0.45));
@@ -997,7 +1574,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
 
           {/* Text editing overlay */}
           {editingTextId && (() => {
-            const el = elements.find(e => e.id === editingTextId);
+            const el = safeElements.find(e => e.id === editingTextId);
             if (!el) return null;
             const stageRect = stageRef.current?.container().getBoundingClientRect();
             if (!stageRect) return null;
@@ -1044,91 +1621,413 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
 
           {/* Properties panel — shown above toolbar when element selected */}
           {firstSelected && !editingTextId && (
-            <div className="absolute bottom-[76px] left-1/2 -translate-x-1/2 flex items-center gap-3 bg-card border border-border rounded-2xl shadow-lg px-4 py-2.5 z-20 pointer-events-auto">
+            <div className="absolute bottom-[76px] left-1/2 -translate-x-1/2 flex flex-col gap-2 bg-card border border-border rounded-2xl shadow-lg px-4 py-3 z-20 pointer-events-auto min-w-max">
+              {/* Row 1: Fill + Stroke colors */}
+              <div className="flex items-center gap-3">
               {/* Fill color */}
               {(firstSelected.type === "rect" || firstSelected.type === "ellipse" || firstSelected.type === "note") && (
                 <div className="flex items-center gap-1.5">
-                  <span className="text-xs text-muted-foreground">Wypełnienie</span>
-                  <div className="flex gap-1 flex-wrap max-w-[180px]">
-                    {(firstSelected.type === "note" ? NOTE_COLORS.map(n => n.bg) : FILL_COLORS.slice(0, 12)).map((c) => (
+                  <span className="text-xs text-muted-foreground w-10 shrink-0">Kolor</span>
+                  <div className="flex gap-1">
+                    {(firstSelected.type === "note" ? NOTE_COLORS.map(n => n.bg) : FILL_COLORS.slice(0, 9)).map((c) => (
                       <button key={c} onClick={() => updateSelected(firstSelected.type === "note" ? { fill: c, noteColor: c } : { fill: c })}
                         style={{ background: c === "transparent" ? "repeating-linear-gradient(45deg,#ccc 0,#ccc 1px,#fff 0,#fff 50%)" : c }}
                         className={`w-5 h-5 rounded border-2 transition-all ${(firstSelected.fill === c || firstSelected.noteColor === c) ? "border-primary scale-110" : "border-border"}`}
                       />
                     ))}
                   </div>
+                  <input
+                    type="color"
+                    value={customFillColor || (firstSelected.fill && firstSelected.fill !== "transparent" ? firstSelected.fill : "#ffffff")}
+                    onChange={(e) => {
+                      setCustomFillColor(e.target.value);
+                      updateSelected(firstSelected.type === "note" ? { fill: e.target.value, noteColor: e.target.value } : { fill: e.target.value });
+                    }}
+                    title="Własny kolor"
+                    className="w-6 h-6 rounded cursor-pointer border border-border p-0 bg-transparent"
+                    style={{ minWidth: 24 }}
+                  />
+                  <input
+                    type="text"
+                    value={customFillColor || (firstSelected.fill && firstSelected.fill !== "transparent" ? firstSelected.fill : "")}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setCustomFillColor(v);
+                      if (/^#[0-9a-fA-F]{6}$/.test(v)) updateSelected(firstSelected.type === "note" ? { fill: v, noteColor: v } : { fill: v });
+                    }}
+                    placeholder="#hex"
+                    maxLength={7}
+                    className="w-16 text-xs border border-border rounded-lg px-2 py-1 bg-background text-foreground outline-none focus:ring-2 focus:ring-primary/30"
+                  />
                 </div>
               )}
               {/* Stroke color */}
               {firstSelected.type !== "text" && firstSelected.type !== "image" && (
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs text-muted-foreground">Obramowanie</span>
-                  <div className="flex gap-1">
-                    {STROKE_COLORS.slice(0, 8).map((c) => (
-                      <button key={c} onClick={() => updateSelected({ stroke: c })}
-                        style={{ background: c }}
-                        className={`w-5 h-5 rounded border-2 transition-all ${firstSelected.stroke === c ? "border-primary scale-110" : "border-border"}`}
-                      />
-                    ))}
+                <>
+                  {(firstSelected.type === "rect" || firstSelected.type === "ellipse" || firstSelected.type === "note") && (
+                    <div className="w-px h-5 bg-border shrink-0" />
+                  )}
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs text-muted-foreground w-10 shrink-0">Obr.</span>
+                    <div className="flex gap-1">
+                      {/* No stroke option */}
+                      <button
+                        onClick={() => updateSelected({ stroke: "transparent", strokeWidth: 0 })}
+                        title="Brak koloru"
+                        className={`w-5 h-5 rounded border-2 transition-all relative overflow-hidden ${(firstSelected.stroke === "transparent" || firstSelected.strokeWidth === 0) ? "border-primary scale-110" : "border-border"}`}
+                      >
+                        <div className="absolute inset-0 bg-white dark:bg-zinc-800" />
+                        <div className="absolute left-0 right-0 top-1/2 h-px rotate-45 origin-center" style={{ background: "#ef4444", transform: "rotate(45deg)" }} />
+                      </button>
+                      {STROKE_COLORS.slice(0, 6).map((c) => (
+                        <button key={c} onClick={() => updateSelected({ stroke: c })}
+                          style={{ background: c }}
+                          className={`w-5 h-5 rounded border-2 transition-all ${firstSelected.stroke === c ? "border-primary scale-110" : "border-border"}`}
+                        />
+                      ))}
+                    </div>
+                    <input
+                      type="color"
+                      value={customStrokeColor || (firstSelected.stroke ?? "#334155")}
+                      onChange={(e) => {
+                        setCustomStrokeColor(e.target.value);
+                        updateSelected({ stroke: e.target.value });
+                      }}
+                      title="Własny kolor obramowania"
+                      className="w-6 h-6 rounded cursor-pointer border border-border p-0 bg-transparent"
+                      style={{ minWidth: 24 }}
+                    />
+                    <input
+                      type="text"
+                      value={customStrokeColor || (firstSelected.stroke ?? "")}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        setCustomStrokeColor(v);
+                        if (/^#[0-9a-fA-F]{6}$/.test(v)) updateSelected({ stroke: v });
+                      }}
+                      placeholder="#hex"
+                      maxLength={7}
+                      className="w-16 text-xs border border-border rounded-lg px-2 py-1 bg-background text-foreground outline-none focus:ring-2 focus:ring-primary/30"
+                    />
                   </div>
-                </div>
-              )}
-              {/* Stroke width */}
-              {(firstSelected.type === "arrow" || firstSelected.type === "line" || firstSelected.type === "rect" || firstSelected.type === "ellipse") && (
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs text-muted-foreground">Grubość</span>
-                  {[1, 2, 4, 6].map((w) => (
-                    <button key={w} onClick={() => updateSelected({ strokeWidth: w })}
-                      className={`w-8 h-6 rounded border transition-all text-xs ${firstSelected.strokeWidth === w ? "bg-primary/10 border-primary text-primary" : "border-border text-muted-foreground hover:bg-muted"}`}>
-                      {w}
-                    </button>
-                  ))}
-                </div>
-              )}
-              {/* Font size */}
-              {(firstSelected.type === "text") && (
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs text-muted-foreground">Rozmiar</span>
-                  {[12, 16, 20, 28, 36, 48].map((s) => (
-                    <button key={s} onClick={() => updateSelected({ fontSize: s })}
-                      className={`w-8 h-6 rounded border transition-all text-xs ${firstSelected.fontSize === s ? "bg-primary/10 border-primary text-primary" : "border-border text-muted-foreground hover:bg-muted"}`}>
-                      {s}
-                    </button>
-                  ))}
-                </div>
+                </>
               )}
               {/* Text color */}
               {firstSelected.type === "text" && (
                 <div className="flex items-center gap-1.5">
-                  <span className="text-xs text-muted-foreground">Kolor</span>
+                  <span className="text-xs text-muted-foreground w-10 shrink-0">Kolor</span>
                   <div className="flex gap-1">
-                    {STROKE_COLORS.slice(0, 8).map((c) => (
+                    {STROKE_COLORS.slice(0, 6).map((c) => (
                       <button key={c} onClick={() => updateSelected({ fill: c })}
                         style={{ background: c }}
                         className={`w-5 h-5 rounded border-2 transition-all ${firstSelected.fill === c ? "border-primary scale-110" : "border-border"}`}
                       />
                     ))}
                   </div>
+                  <input
+                    type="color"
+                    value={customFillColor || (firstSelected.fill ?? "#1e293b")}
+                    onChange={(e) => { setCustomFillColor(e.target.value); updateSelected({ fill: e.target.value }); }}
+                    title="Własny kolor tekstu"
+                    className="w-6 h-6 rounded cursor-pointer border border-border p-0 bg-transparent"
+                    style={{ minWidth: 24 }}
+                  />
+                  <input
+                    type="text"
+                    value={customFillColor || (firstSelected.fill ?? "")}
+                    onChange={(e) => { const v = e.target.value; setCustomFillColor(v); if (/^#[0-9a-fA-F]{6}$/.test(v)) updateSelected({ fill: v }); }}
+                    placeholder="#hex"
+                    maxLength={7}
+                    className="w-16 text-xs border border-border rounded-lg px-2 py-1 bg-background text-foreground outline-none focus:ring-2 focus:ring-primary/30"
+                  />
                 </div>
               )}
-              {/* Opacity */}
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs text-muted-foreground">Przezroczystość</span>
-                <input type="range" min={0.1} max={1} step={0.05} value={firstSelected.opacity ?? 1}
-                  onChange={(e) => updateSelected({ opacity: parseFloat(e.target.value) })}
-                  className="w-20 accent-primary" />
-                <span className="text-xs text-muted-foreground w-7">{Math.round((firstSelected.opacity ?? 1) * 100)}%</span>
               </div>
-              {/* Delete */}
-              <button onClick={() => { updateElements(elements.filter(e => !selectedIds.includes(e.id))); setSelectedIds([]); }}
-                className="w-7 h-7 flex items-center justify-center rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors">
-                <Trash2 size={15} />
-              </button>
+
+              {/* Row 2: Stroke width, font size, opacity, delete */}
+              <div className="flex items-center gap-3">
+                {/* Stroke width */}
+                {(firstSelected.type === "arrow" || firstSelected.type === "line" || firstSelected.type === "rect" || firstSelected.type === "ellipse") && (
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs text-muted-foreground shrink-0">Grubość</span>
+                    {[1, 2, 4, 6].map((w) => (
+                      <button key={w} onClick={() => updateSelected({ strokeWidth: w })}
+                        className={`w-8 h-6 rounded-lg border transition-all text-xs ${firstSelected.strokeWidth === w ? "bg-primary/10 border-primary text-primary" : "border-border text-muted-foreground hover:bg-muted"}`}>
+                        {w}
+                      </button>
+                    ))}
+                    <div className="w-px h-5 bg-border shrink-0" />
+                  </div>
+                )}
+                {/* Font size + formatting */}
+                {firstSelected.type === "text" && (
+                  <>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs text-muted-foreground shrink-0">Rozmiar</span>
+                      <input
+                        type="number"
+                        min={6} max={200}
+                        value={firstSelected.fontSize ?? 16}
+                        onChange={(e) => { const v = parseInt(e.target.value); if (v >= 6 && v <= 200) updateSelected({ fontSize: v }); }}
+                        className="w-16 text-xs border border-border rounded-lg px-2 py-1 bg-background text-foreground outline-none focus:ring-2 focus:ring-primary/30 text-center"
+                      />
+                      <div className="w-px h-5 bg-border shrink-0" />
+                      {/* Bold / Italic / Underline */}
+                      {([
+                        { label: "Pogrubienie", icon: <Bold size={14} />, toggle: () => {
+                          const cur = firstSelected.fontStyle ?? "normal";
+                          const isBold = cur.includes("bold");
+                          const isItalic = cur.includes("italic");
+                          updateSelected({ fontStyle: (isBold ? (isItalic ? "italic" : "normal") : (isItalic ? "bold italic" : "bold")) });
+                        }, active: (firstSelected.fontStyle ?? "").includes("bold") },
+                        { label: "Kursywa", icon: <Italic size={14} />, toggle: () => {
+                          const cur = firstSelected.fontStyle ?? "normal";
+                          const isBold = cur.includes("bold");
+                          const isItalic = cur.includes("italic");
+                          updateSelected({ fontStyle: (isItalic ? (isBold ? "bold" : "normal") : (isBold ? "bold italic" : "italic")) });
+                        }, active: (firstSelected.fontStyle ?? "").includes("italic") },
+                        { label: "Podkreślenie", icon: <Underline size={14} />, toggle: () => {
+                          updateSelected({ textDecoration: firstSelected.textDecoration === "underline" ? "" : "underline" });
+                        }, active: firstSelected.textDecoration === "underline" },
+                      ] as { label: string; icon: React.ReactNode; toggle: () => void; active: boolean }[]).map(btn => (
+                        <button key={btn.label} onClick={btn.toggle} title={btn.label}
+                          className={`w-8 h-6 rounded-lg border transition-all flex items-center justify-center ${btn.active ? "bg-primary/10 border-primary text-primary" : "border-border text-muted-foreground hover:bg-muted"}`}>
+                          {btn.icon}
+                        </button>
+                      ))}
+                      <div className="w-px h-5 bg-border shrink-0" />
+                      {/* Align */}
+                      {([
+                        { label: "Wyrównaj do lewej", icon: <AlignLeft size={14} />, align: "left" },
+                        { label: "Wyśrodkuj", icon: <AlignCenter size={14} />, align: "center" },
+                        { label: "Wyrównaj do prawej", icon: <AlignRight size={14} />, align: "right" },
+                      ] as { label: string; icon: React.ReactNode; align: string }[]).map(btn => (
+                        <button key={btn.align} onClick={() => updateSelected({ textAlign: btn.align })} title={btn.label}
+                          className={`w-8 h-6 rounded-lg border transition-all flex items-center justify-center ${(firstSelected.textAlign ?? "left") === btn.align ? "bg-primary/10 border-primary text-primary" : "border-border text-muted-foreground hover:bg-muted"}`}>
+                          {btn.icon}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+                {/* Opacity */}
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs text-muted-foreground shrink-0">Krycie</span>
+                  <input type="range" min={0.1} max={1} step={0.05} value={firstSelected.opacity ?? 1}
+                    onChange={(e) => updateSelected({ opacity: parseFloat(e.target.value) })}
+                    className="w-20 accent-primary" />
+                  <span className="text-xs text-muted-foreground w-7">{Math.round((firstSelected.opacity ?? 1) * 100)}%</span>
+                </div>
+                <div className="w-px h-5 bg-border shrink-0" />
+                {/* Delete */}
+                <button onClick={() => { updateElements(safeElements.filter(e => !selectedIds.includes(e.id))); setSelectedIds([]); }}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors">
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Image toolbar — appears below selected image */}
+          {firstSelected?.type === "image" && !cropMode && !editingTextId && (() => {
+            const el = firstSelected;
+            const cr = containerRef.current?.getBoundingClientRect();
+            if (!cr) return null;
+            const screenCx = cr.left + stagePos.x + (el.x + (el.width ?? 200) / 2) * stageScale;
+            const screenBy = cr.top + stagePos.y + (el.y + (el.height ?? 150)) * stageScale + 10;
+            return (
+              <div className="fixed z-30 flex items-center gap-1 bg-card border border-border rounded-xl shadow-md px-2 py-1.5 -translate-x-1/2 pointer-events-auto"
+                style={{ left: screenCx, top: screenBy }}>
+                <button
+                  onClick={() => enterCropMode(el)}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+                >
+                  <Crop size={14} /> Kadruj
+                </button>
+                {el.cropLeft !== undefined && (
+                  <button
+                    onClick={resetCrop}
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+                  >
+                    <X size={14} /> Resetuj kadr
+                  </button>
+                )}
+                <div className="w-px h-4 bg-border" />
+                <button
+                  onClick={() => handleRemoveBg(el)}
+                  disabled={!!removingBgId}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground disabled:opacity-50"
+                >
+                  <Eraser size={14} />
+                  {removingBgId === el.id ? "Usuwam..." : "Usuń tło"}
+                </button>
+              </div>
+            );
+          })()}
+
+          {/* Crop overlay */}
+          {cropMode && (() => {
+            const el = safeElements.find(e => e.id === cropMode);
+            if (!el) return null;
+            const cr = containerRef.current?.getBoundingClientRect();
+            if (!cr) return null;
+            const sx = cr.left + stagePos.x + el.x * stageScale;
+            const sy = cr.top + stagePos.y + el.y * stageScale;
+            const sw = (el.width ?? 200) * stageScale;
+            const sh = (el.height ?? 150) * stageScale;
+            const cx = sx + cropRect.left * sw;
+            const cy = sy + cropRect.top * sh;
+            const cw = (cropRect.right - cropRect.left) * sw;
+            const ch = (cropRect.bottom - cropRect.top) * sh;
+
+            function startHandleDrag(handle: string, e: React.MouseEvent) {
+              e.preventDefault();
+              cropDragRef.current = { handle, startX: e.clientX, startY: e.clientY, startRect: { ...cropRect } };
+              function onMove(me: MouseEvent) {
+                if (!cropDragRef.current) return;
+                const { handle: h, startX, startY, startRect: sr } = cropDragRef.current;
+                const ddx = (me.clientX - startX) / sw;
+                const ddy = (me.clientY - startY) / sh;
+                let { left, top, right, bottom } = sr;
+                const minSize = 0.05;
+                if (h.includes("l")) left = Math.max(0, Math.min(right - minSize, sr.left + ddx));
+                if (h.includes("r")) right = Math.min(1, Math.max(left + minSize, sr.right + ddx));
+                if (h.includes("t")) top = Math.max(0, Math.min(bottom - minSize, sr.top + ddy));
+                if (h.includes("b")) bottom = Math.min(1, Math.max(top + minSize, sr.bottom + ddy));
+                if (h === "move") {
+                  const dw = right - left; const dh = bottom - top;
+                  left = Math.max(0, Math.min(1 - dw, sr.left + ddx));
+                  top = Math.max(0, Math.min(1 - dh, sr.top + ddy));
+                  right = left + dw; bottom = top + dh;
+                }
+                setCropRect({ left, top, right, bottom });
+              }
+              function onUp() {
+                cropDragRef.current = null;
+                window.removeEventListener("mousemove", onMove);
+                window.removeEventListener("mouseup", onUp);
+              }
+              window.addEventListener("mousemove", onMove);
+              window.addEventListener("mouseup", onUp);
+            }
+
+            const handles = [
+              { id: "tl", style: { left: cx - 5, top: cy - 5 } },
+              { id: "tr", style: { left: cx + cw - 5, top: cy - 5 } },
+              { id: "bl", style: { left: cx - 5, top: cy + ch - 5 } },
+              { id: "br", style: { left: cx + cw - 5, top: cy + ch - 5 } },
+              { id: "t",  style: { left: cx + cw / 2 - 5, top: cy - 5 } },
+              { id: "b",  style: { left: cx + cw / 2 - 5, top: cy + ch - 5 } },
+              { id: "l",  style: { left: cx - 5, top: cy + ch / 2 - 5 } },
+              { id: "r",  style: { left: cx + cw - 5, top: cy + ch / 2 - 5 } },
+            ];
+
+            return (
+              <div className="fixed inset-0 z-40 select-none" style={{ cursor: "crosshair" }}>
+                {/* Dark overlay outside crop — use clip path */}
+                <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ overflow: "visible" }}>
+                  <defs>
+                    <mask id="crop-hole">
+                      <rect x="0" y="0" width="100%" height="100%" fill="white" />
+                      <rect x={cx} y={cy} width={cw} height={ch} fill="black" />
+                    </mask>
+                  </defs>
+                  <rect x="0" y="0" width="100%" height="100%" fill="rgba(0,0,0,0.55)" mask="url(#crop-hole)" />
+                  <rect x={cx} y={cy} width={cw} height={ch} fill="none" stroke="white" strokeWidth="1.5" />
+                  {/* Rule-of-thirds lines */}
+                  <line x1={cx + cw / 3} y1={cy} x2={cx + cw / 3} y2={cy + ch} stroke="rgba(255,255,255,0.3)" strokeWidth="0.5" />
+                  <line x1={cx + 2 * cw / 3} y1={cy} x2={cx + 2 * cw / 3} y2={cy + ch} stroke="rgba(255,255,255,0.3)" strokeWidth="0.5" />
+                  <line x1={cx} y1={cy + ch / 3} x2={cx + cw} y2={cy + ch / 3} stroke="rgba(255,255,255,0.3)" strokeWidth="0.5" />
+                  <line x1={cx} y1={cy + 2 * ch / 3} x2={cx + cw} y2={cy + 2 * ch / 3} stroke="rgba(255,255,255,0.3)" strokeWidth="0.5" />
+                </svg>
+                {/* Move handle (interior of crop rect) */}
+                <div className="absolute" style={{ left: cx, top: cy, width: cw, height: ch, cursor: "move" }}
+                  onMouseDown={(e) => startHandleDrag("move", e)} />
+                {/* Corner/edge handles */}
+                {handles.map(h => (
+                  <div key={h.id} className="absolute w-3 h-3 bg-white rounded-sm border border-gray-400 shadow"
+                    style={{ ...h.style, cursor: h.id === "t" || h.id === "b" ? "ns-resize" : h.id === "l" || h.id === "r" ? "ew-resize" : h.id.includes("t") && h.id.includes("l") || h.id.includes("b") && h.id.includes("r") ? "nwse-resize" : "nesw-resize" }}
+                    onMouseDown={(e) => startHandleDrag(h.id, e)} />
+                ))}
+                {/* Buttons */}
+                <div className="fixed z-50 flex gap-2" style={{ left: cx + cw / 2, top: cy + ch + 12, transform: "translateX(-50%)" }}>
+                  <button onClick={confirmCrop}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors shadow">
+                    <CheckIcon size={14} /> Zatwierdź
+                  </button>
+                  <button onClick={() => setCropMode(null)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-card border border-border rounded-lg hover:bg-muted transition-colors shadow">
+                    <X size={14} /> Anuluj
+                  </button>
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* Context menu (right-click on element) */}
+          {contextMenu && (
+            <>
+              <div className="fixed inset-0 z-[49]" onClick={() => setContextMenu(null)} onContextMenu={(e) => { e.preventDefault(); setContextMenu(null); }} />
+              <div className="fixed z-50 bg-card border border-border rounded-xl shadow-lg py-1 min-w-[168px] text-sm"
+                style={{ left: contextMenu.screenX, top: contextMenu.screenY }}>
+                {[
+                  { label: "Duplikuj", icon: <Copy size={13} />, action: () => duplicateElements([contextMenu.elementId]) },
+                  null,
+                  { label: "Na wierzch", icon: <Layers size={13} />, action: () => bringToFront(contextMenu.elementId) },
+                  { label: "Przesuń w górę", icon: <ArrowUp size={13} />, action: () => moveForward(contextMenu.elementId) },
+                  { label: "Przesuń w dół", icon: <ArrowDown size={13} />, action: () => moveBackward(contextMenu.elementId) },
+                  { label: "Na spód", icon: <Layers size={13} className="rotate-180" />, action: () => sendToBack(contextMenu.elementId) },
+                ].map((item, i) => item === null
+                  ? <div key={i} className="my-1 mx-2 h-px bg-border" />
+                  : (
+                  <button key={item.label} onClick={() => { item.action(); setContextMenu(null); }}
+                    className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-muted transition-colors text-left">
+                    {item.icon} {item.label}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+
+          {/* Pen options — shown above toolbar when pen is active */}
+          {tool === "pen" && (
+            <div className="absolute bottom-[72px] left-1/2 -translate-x-1/2 flex items-center gap-3 bg-card border border-border rounded-2xl shadow-lg px-4 py-2.5 z-20">
+              <span className="text-xs text-muted-foreground shrink-0">Kolor</span>
+              <div className="flex gap-1">
+                {["#334155","#ef4444","#f97316","#eab308","#22c55e","#3b82f6","#8b5cf6","#ec4899","#ffffff"].map((c) => (
+                  <button key={c} onClick={() => setPenColor(c)}
+                    style={{ background: c, boxShadow: c === "#ffffff" ? "inset 0 0 0 1px #cbd5e1" : undefined }}
+                    className={`w-5 h-5 rounded-full border-2 transition-all ${penColor === c ? "border-primary scale-110" : "border-transparent"}`}
+                  />
+                ))}
+                <input type="color" value={penColor} onChange={(e) => setPenColor(e.target.value)}
+                  className="w-5 h-5 rounded-full cursor-pointer border border-border p-0 bg-transparent" style={{ minWidth: 20 }} />
+              </div>
+              <div className="w-px h-5 bg-border" />
+              <span className="text-xs text-muted-foreground shrink-0">Grubość</span>
+              <div className="flex gap-1">
+                {[1, 2, 4, 8].map((w) => (
+                  <button key={w} onClick={() => setPenWidth(w)}
+                    className={`w-7 h-7 rounded-lg border flex items-center justify-center transition-all ${penWidth === w ? "bg-primary/10 border-primary text-primary" : "border-border text-muted-foreground hover:bg-muted"}`}>
+                    <div className="rounded-full bg-current" style={{ width: Math.min(w * 3, 20), height: Math.min(w * 3, 20) }} />
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
           {/* Floating toolbar */}
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-0.5 bg-card border border-border rounded-2xl shadow-lg px-2 py-1.5 z-20">
+            {/* Undo / Redo */}
+            <button onClick={undo} disabled={historyIndex <= 0} title="Cofnij (Ctrl+Z)"
+              className="w-9 h-9 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30 transition-colors">
+              <Undo2 size={18} />
+            </button>
+            <button onClick={redo} disabled={historyIndex >= history.length - 1} title="Ponów (Ctrl+Y)"
+              className="w-9 h-9 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30 transition-colors">
+              <Redo2 size={18} />
+            </button>
+            <div className="w-px h-6 bg-border mx-1" />
             {(
               [
                 { t: "select", icon: <MousePointer size={18} />, label: "Zaznaczanie (V)" },
@@ -1143,6 +2042,8 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                 { t: "line", icon: <Minus size={18} />, label: "Linia (L)" },
                 null,
                 { t: "image", icon: <Image size={18} />, label: "Obraz" },
+                null,
+                { t: "pen", icon: <Pen size={18} />, label: "Pisanie ręczne (P)" },
               ] as (null | { t: Tool; icon: React.ReactNode; label: string })[]
             ).map((item, idx) =>
               item === null ? (
@@ -1167,12 +2068,11 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
 
         {/* Right sidebar */}
         {rightSidebarOpen && (
-          <div className="w-64 border-l border-border bg-background flex flex-col shrink-0">
+          <div className="w-96 border-l border-border bg-background flex flex-col shrink-0">
             {/* Tabs */}
             <div className="flex border-b border-border">
-              <button
+              <div className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-colors cursor-pointer ${rightTab === "projectflow" ? "border-b-2 border-primary text-primary" : "text-muted-foreground hover:text-foreground"}`}
                 onClick={() => { setRightTab("projectflow"); setSidebarQuery(""); }}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-colors ${rightTab === "projectflow" ? "border-b-2 border-primary text-primary" : "text-muted-foreground hover:text-foreground"}`}
               >
                 <PushPin size={13} /> ProjectFlow
                 {rightTab === "projectflow" && project && (
@@ -1184,12 +2084,18 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                     <RefreshCw size={11} />
                   </button>
                 )}
-              </button>
+              </div>
               <button
                 onClick={() => { setRightTab("products"); setSidebarQuery(""); }}
                 className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-colors ${rightTab === "products" ? "border-b-2 border-primary text-primary" : "text-muted-foreground hover:text-foreground"}`}
               >
                 <Package size={13} /> Produkty
+              </button>
+              <button
+                onClick={() => { setRightTab("lists"); setSidebarQuery(""); }}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-colors ${rightTab === "lists" ? "border-b-2 border-primary text-primary" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                <LocalMall size={13} /> Listy
               </button>
             </div>
             {/* Search */}
@@ -1229,9 +2135,13 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                           {expandedRooms.has(room.id) && (
                             <div className="ml-1">
                               {/* Renders outside folders */}
-                              {room.renders.map(r => (
-                                <RenderSidebarItem key={r.id} render={r} onClick={addRenderToCanvas} />
-                              ))}
+                              {room.renders.length > 0 && (
+                                <div className="grid grid-cols-2 gap-1.5 mb-1">
+                                  {room.renders.map(r => (
+                                    <RenderSidebarItem key={r.id} render={r} onClick={addRenderToCanvas} />
+                                  ))}
+                                </div>
+                              )}
                               {/* Folders */}
                               {room.folders.map(folder => (
                                 <div key={folder.id}>
@@ -1245,7 +2155,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                                     <span className="ml-auto text-muted-foreground/60">{folder.renders.length}</span>
                                   </button>
                                   {expandedFolders.has(folder.id) && (
-                                    <div className="ml-2">
+                                    <div className="ml-2 grid grid-cols-2 gap-1.5 mt-1 mb-1">
                                       {folder.renders.map(r => (
                                         <RenderSidebarItem key={r.id} render={r} onClick={addRenderToCanvas} />
                                       ))}
@@ -1266,22 +2176,88 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                   {filteredProducts.length === 0 && (
                     <p className="text-xs text-muted-foreground text-center py-8">Brak produktów{sidebarQuery ? " dla tej frazy" : ""}</p>
                   )}
-                  <div className="space-y-1">
+                  <div className="grid grid-cols-2 gap-2">
                     {filteredProducts.map((p) => (
                       <button key={p.id} onClick={() => p.imageUrl && addProductToCanvas(p.imageUrl, p.name)}
                         disabled={!p.imageUrl}
-                        className="w-full flex items-center gap-2 p-2 rounded-lg border border-transparent hover:border-border hover:bg-muted/50 transition-colors text-left disabled:opacity-40"
+                        className="flex flex-col rounded-xl border border-border overflow-hidden hover:border-primary/40 hover:shadow-sm transition-all text-left disabled:opacity-40"
                         title={p.name}>
-                        <div className="w-9 h-9 rounded-lg bg-muted shrink-0 overflow-hidden">
+                        <div className="aspect-square bg-muted w-full overflow-hidden">
                           {p.imageUrl
                             // eslint-disable-next-line @next/next/no-img-element
                             ? <img src={p.imageUrl} alt={p.name} className="w-full h-full object-cover" />
-                            : <Package size={16} className="text-muted-foreground m-auto mt-2.5" />}
+                            : <Package size={24} className="text-muted-foreground m-auto mt-8" />}
                         </div>
-                        <p className="text-xs font-medium truncate">{p.name}</p>
+                        <p className="text-[11px] font-medium truncate px-2 py-1.5">{p.name}</p>
                       </button>
                     ))}
                   </div>
+                </>
+              )}
+              {rightTab === "lists" && (
+                <>
+                  {!client && (
+                    <p className="text-xs text-muted-foreground text-center py-8">Ta tablica nie ma przypisanego klienta</p>
+                  )}
+                  {client && lists.length === 0 && (
+                    <p className="text-xs text-muted-foreground text-center py-8">Brak list zakupowych dla tego klienta</p>
+                  )}
+                  {client && lists.length > 0 && (
+                    <div className="space-y-0.5">
+                      {lists.map((list) => (
+                        <div key={list.id}>
+                          <button
+                            onClick={() => setExpandedLists(prev => { const n = new Set(prev); n.has(list.id) ? n.delete(list.id) : n.add(list.id); return n; })}
+                            className="w-full flex items-center gap-1.5 px-2 py-1.5 text-xs font-medium hover:bg-muted rounded-lg transition-colors"
+                          >
+                            {expandedLists.has(list.id) ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+                            <LocalMall size={11} className="text-muted-foreground shrink-0" />
+                            <span className="truncate">{list.name}</span>
+                          </button>
+                          {expandedLists.has(list.id) && (
+                            <div className="ml-1">
+                              {list.sections.map(section => (
+                                <div key={section.id}>
+                                  <button
+                                    onClick={() => setExpandedSections(prev => { const n = new Set(prev); n.has(section.id) ? n.delete(section.id) : n.add(section.id); return n; })}
+                                    className="w-full flex items-center gap-1.5 px-2 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
+                                  >
+                                    {expandedSections.has(section.id) ? <ChevronDown size={11} /> : <ChevronRight size={11} />}
+                                    <span className="truncate">{section.name}</span>
+                                    <span className="ml-auto text-muted-foreground/60">{section.products.length}</span>
+                                  </button>
+                                  {expandedSections.has(section.id) && (
+                                    <div className="ml-2 mt-1 grid grid-cols-2 gap-1.5">
+                                      {section.products.filter(p => !sidebarQuery || p.name.toLowerCase().includes(sidebarQuery.toLowerCase())).map(product => (
+                                        <button
+                                          key={product.id}
+                                          onClick={() => product.imageUrl && addProductToCanvas(product.imageUrl, product.name)}
+                                          disabled={!product.imageUrl}
+                                          className="flex flex-col rounded-xl border border-border overflow-hidden hover:border-primary/40 hover:shadow-sm transition-all text-left disabled:opacity-40"
+                                          title={product.name}
+                                        >
+                                          <div className="aspect-square bg-muted w-full overflow-hidden">
+                                            {product.imageUrl
+                                              // eslint-disable-next-line @next/next/no-img-element
+                                              ? <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" />
+                                              : <Package size={20} className="text-muted-foreground m-auto mt-6" />}
+                                          </div>
+                                          <div className="px-1.5 py-1">
+                                            <p className="text-[11px] font-medium truncate">{product.name}</p>
+                                            {product.price && <p className="text-[10px] text-muted-foreground">{product.price}</p>}
+                                          </div>
+                                        </button>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </>
               )}
             </div>
