@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import {
   ChevronLeft, MousePointer, Hand, Square, Circle, Type, ArrowRight, Minus,
   Trash2, ZoomIn, ZoomOut, Undo2, Redo2, Share2, Check, Image, StickyNote,
-  ChevronRight, ChevronDown, Search, Package, PushPin, X, Folder, RefreshCw, LocalMall,
+  ChevronRight, ChevronDown, Search, Package, PushPin, X, Folder, RefreshCw, LocalMall, LayoutGrid,
   ArrowUp, ArrowDown, Layers, Palette, Crop, Eraser, Check as CheckIcon, Copy,
   Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, HelpCircle, Pen,
 } from "@/components/ui/icons";
@@ -345,11 +345,21 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
   // Snap guide lines (canvas coords)
   const [snapLines, setSnapLines] = useState<Array<{ x1: number; y1: number; x2: number; y2: number }>>([]);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [gridMode, setGridMode] = useState<"dots" | "grid" | "none">(() => {
+    if (typeof window !== "undefined") {
+      const s = localStorage.getItem("moodboard-grid");
+      if (s === "dots" || s === "grid" || s === "none") return s;
+    }
+    return "dots";
+  });
+  const [gridMenuOpen, setGridMenuOpen] = useState(false);
   const [penPoints, setPenPoints] = useState<number[]>([]);
   const penStartRef = useRef<{ x: number; y: number } | null>(null);
   const isPenDrawingRef = useRef(false);
   const [penColor, setPenColor] = useState("#334155");
   const [penWidth, setPenWidth] = useState(2);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const dragCounterRef2 = useRef(0);
   // Clipboard for copy/paste
   const clipboardRef = useRef<CanvasElement[]>([]);
 
@@ -1034,6 +1044,40 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
   }
 
   // Image upload
+  function handleFileDrop(e: React.DragEvent) {
+    e.preventDefault();
+    dragCounterRef2.current = 0;
+    setIsDragOver(false);
+    const files = Array.from(e.dataTransfer.files).filter((f) => f.type.startsWith("image/"));
+    if (files.length === 0) return;
+    const dropX = e.clientX;
+    const dropY = e.clientY;
+    files.forEach((file, i) => {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const url = ev.target?.result as string;
+        const img = new window.Image();
+        img.onload = () => {
+          const maxW = 400, maxH = 300;
+          const ratio = Math.min(maxW / img.naturalWidth, maxH / img.naturalHeight, 1);
+          const w = img.naturalWidth * ratio, h = img.naturalHeight * ratio;
+          const OFFSET = i * 20;
+          const pos = stagePoint(dropX + OFFSET, dropY + OFFSET);
+          const newEl: CanvasElement = { id: uid(), type: "image", x: pos.x - w / 2, y: pos.y - h / 2, width: w, height: h, imageUrl: url, opacity: 1, rotation: 0 };
+          setElements((prev) => {
+            const next = [...prev, newEl];
+            pushHistory(next);
+            scheduleSave(next);
+            return next;
+          });
+          setSelectedIds((prev) => [...prev, newEl.id]);
+        };
+        img.src = url;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
   async function handleImageUpload(file: File) {
     const fd = new FormData();
     fd.append("file", file);
@@ -1144,6 +1188,42 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
             {isSharedWithClient ? "Udostępnione" : "Udostępnij klientowi"}
           </button>
         )}
+        {/* Grid background picker */}
+        <div className="relative">
+          <button
+            onClick={() => setGridMenuOpen((v) => !v)}
+            className={`w-8 h-8 flex items-center justify-center rounded-lg transition-colors ${gridMenuOpen ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
+            title="Tło tablicy"
+          >
+            <LayoutGrid size={16} />
+          </button>
+          {gridMenuOpen && (
+            <>
+              <div className="fixed inset-0 z-[40]" onClick={() => setGridMenuOpen(false)} />
+              <div className="absolute right-0 top-[calc(100%+6px)] z-[50] bg-card border border-border rounded-xl shadow-xl overflow-hidden p-1 w-36">
+                {([
+                  { value: "dots", label: "Kropki" },
+                  { value: "grid", label: "Kratka" },
+                  { value: "none", label: "Brak" },
+                ] as { value: "dots" | "grid" | "none"; label: string }[]).map(({ value, label }) => (
+                  <button
+                    key={value}
+                    onClick={() => { setGridMode(value); localStorage.setItem("moodboard-grid", value); setGridMenuOpen(false); }}
+                    className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm rounded-lg transition-colors text-left ${gridMode === value ? "bg-primary/10 text-primary font-medium" : "hover:bg-muted text-foreground"}`}
+                  >
+                    <span className="w-4 h-4 rounded border border-border flex items-center justify-center shrink-0 bg-background">
+                      {value === "dots" && <span className="w-1 h-1 rounded-full bg-current" />}
+                      {value === "grid" && <svg width="10" height="10" viewBox="0 0 10 10"><path d="M5 0v10M0 5h10" stroke="currentColor" strokeWidth="1" opacity="0.6" /></svg>}
+                    </span>
+                    {label}
+                    {gridMode === value && <Check size={13} className="ml-auto" />}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+
         {/* Help / shortcuts */}
         <div className="relative">
           <button
@@ -1221,31 +1301,49 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
             </>
           )}
         </div>
-        {/* Right sidebar toggle */}
-        <button
-          onClick={() => setRightSidebarOpen((v) => !v)}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${rightSidebarOpen ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
-          title="Zasoby"
-        >
-          <Package size={15} />
-          Zasoby
-          {rightSidebarOpen ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
-        </button>
       </div>
 
       {/* Body */}
       <div className="flex flex-1 min-h-0">
         {/* Canvas */}
-        <div ref={containerRef} className="flex-1 relative overflow-hidden" style={{ cursor: activeCursor }}>
-          {/* Dot grid background */}
-          <svg className="absolute inset-0 w-full h-full pointer-events-none" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <pattern id="dots" x={stagePos.x % (20 * stageScale)} y={stagePos.y % (20 * stageScale)} width={20 * stageScale} height={20 * stageScale} patternUnits="userSpaceOnUse">
-                <circle cx={1} cy={1} r={1} fill="currentColor" className="text-border" opacity={0.5} />
-              </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#dots)" />
-          </svg>
+        <div
+          ref={containerRef}
+          className="flex-1 relative overflow-hidden"
+          style={{ cursor: activeCursor }}
+          onDragEnter={(e) => { e.preventDefault(); dragCounterRef2.current++; setIsDragOver(true); }}
+          onDragOver={(e) => { e.preventDefault(); }}
+          onDragLeave={() => { dragCounterRef2.current--; if (dragCounterRef2.current === 0) setIsDragOver(false); }}
+          onDrop={handleFileDrop}
+        >
+          {/* Drop overlay */}
+          {isDragOver && (
+            <div className="absolute inset-0 z-50 pointer-events-none flex items-center justify-center">
+              <div className="absolute inset-2 rounded-2xl border-2 border-dashed border-primary bg-primary/5" />
+              <div className="relative flex flex-col items-center gap-2 text-primary">
+                <Image size={32} />
+                <p className="text-sm font-semibold">Upuść zdjęcia na tablicę</p>
+              </div>
+            </div>
+          )}
+
+          {/* Canvas background pattern */}
+          {gridMode !== "none" && (
+            <svg className="absolute inset-0 w-full h-full pointer-events-none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                {gridMode === "dots" && (
+                  <pattern id="bg-pattern" x={stagePos.x % (20 * stageScale)} y={stagePos.y % (20 * stageScale)} width={20 * stageScale} height={20 * stageScale} patternUnits="userSpaceOnUse">
+                    <circle cx={1} cy={1} r={1} fill="currentColor" className="text-border" opacity={0.5} />
+                  </pattern>
+                )}
+                {gridMode === "grid" && (
+                  <pattern id="bg-pattern" x={stagePos.x % (40 * stageScale)} y={stagePos.y % (40 * stageScale)} width={40 * stageScale} height={40 * stageScale} patternUnits="userSpaceOnUse">
+                    <path d={`M ${40 * stageScale} 0 L 0 0 0 ${40 * stageScale}`} fill="none" stroke="currentColor" strokeWidth="0.5" className="text-border" opacity={0.6} />
+                  </pattern>
+                )}
+              </defs>
+              <rect width="100%" height="100%" fill="url(#bg-pattern)" />
+            </svg>
+          )}
 
           <Stage
             ref={stageRef}
@@ -1613,11 +1711,21 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
           })()}
 
           {/* Zoom controls */}
-          <div className="absolute bottom-4 right-4 flex items-center gap-1 bg-card border border-border rounded-xl shadow-sm px-1 py-1 z-20">
+          <div className="absolute bottom-4 left-4 flex items-center gap-1 bg-card border border-border rounded-xl shadow-sm px-1 py-1 z-20">
             <button onClick={() => setStageScale((s) => Math.max(0.1, s / 1.2))} className="w-7 h-7 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"><ZoomOut size={15} /></button>
             <button onClick={() => setStageScale(1)} className="text-xs font-medium text-muted-foreground hover:text-foreground px-2 py-1 rounded-lg hover:bg-muted transition-colors min-w-[48px] text-center">{zoomPct}%</button>
             <button onClick={() => setStageScale((s) => Math.min(5, s * 1.2))} className="w-7 h-7 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"><ZoomIn size={15} /></button>
           </div>
+
+          {/* Zasoby pill — bottom-right */}
+          <button
+            onClick={() => setRightSidebarOpen((v) => !v)}
+            className={`absolute bottom-4 right-4 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium shadow-sm border transition-colors z-20 ${rightSidebarOpen ? "bg-primary/10 border-primary text-primary" : "bg-card border-border text-muted-foreground hover:text-foreground hover:bg-muted"}`}
+          >
+            <Package size={15} />
+            Zasoby
+            {rightSidebarOpen ? <ChevronRight size={13} /> : <ChevronLeft size={13} />}
+          </button>
 
           {/* Properties panel — shown above toolbar when element selected */}
           {firstSelected && !editingTextId && (
