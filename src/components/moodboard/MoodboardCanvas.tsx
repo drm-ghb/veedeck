@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import {
   ChevronLeft, MousePointer, Hand, Square, Circle, Type, ArrowRight, Minus,
   Trash2, ZoomIn, ZoomOut, Undo2, Redo2, Share2, Check, Image, StickyNote,
-  ChevronRight, Search, Package, PushPin, X,
+  ChevronRight, ChevronDown, Search, Package, PushPin, X, Folder, RefreshCw,
 } from "@/components/ui/icons";
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -73,6 +73,33 @@ const NOTE_COLORS = [
   { bg: "#e9d5ff", stroke: "#7c3aed", label: "Fioletowy" },
   { bg: "#fed7aa", stroke: "#ea580c", label: "Pomarańczowy" },
 ];
+
+// ── ProjectFlow types ──────────────────────────────────────────────────────
+
+type RenderItem = { id: string; name: string; fileUrl: string; fileType: string };
+type FolderItem = { id: string; name: string; renders: RenderItem[] };
+type RoomItem   = { id: string; name: string; folders: FolderItem[]; renders: RenderItem[] };
+
+function RenderSidebarItem({ render, onClick }: { render: RenderItem; onClick: (url: string, name: string) => void }) {
+  const isImage = render.fileType?.startsWith("image") || /\.(jpe?g|png|webp|gif|heic|avif)$/i.test(render.fileUrl);
+  return (
+    <button
+      onClick={() => onClick(render.fileUrl, render.name)}
+      className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-muted transition-colors text-left"
+      title={render.name}
+    >
+      <div className="w-8 h-8 rounded bg-muted shrink-0 overflow-hidden border border-border flex items-center justify-center">
+        {isImage
+          // eslint-disable-next-line @next/next/no-img-element
+          ? <img src={render.fileUrl} alt={render.name} className="w-full h-full object-cover" />
+          : <Image size={14} className="text-muted-foreground" />}
+      </div>
+      <span className="text-xs truncate flex-1">{render.name}</span>
+    </button>
+  );
+}
+
+// ───────────────────────────────────────────────────────────────────────────
 
 function uid() {
   return Math.random().toString(36).slice(2, 10);
@@ -172,7 +199,9 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
   const [historyIndex, setHistoryIndex] = useState(0);
   const [rightSidebarOpen, setRightSidebarOpen] = useState(false);
   const [rightTab, setRightTab] = useState<"projectflow" | "products">("projectflow");
-  const [renders, setRenders] = useState<{ id: string; name: string; fileUrl: string; fileType: string }[]>([]);
+  const [rooms, setRooms] = useState<RoomItem[]>([]);
+  const [expandedRooms, setExpandedRooms] = useState<Set<string>>(new Set());
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const [products, setProducts] = useState<{ id: string; name: string; imageUrl: string | null }[]>([]);
   const [sidebarQuery, setSidebarQuery] = useState("");
   const [containerSize, setContainerSize] = useState({ w: 800, h: 600 });
@@ -194,14 +223,25 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
   }, []);
 
   // Load sidebar data when opened
+  function loadRooms() {
+    if (!project?.id) return;
+    fetch(`/api/projects/${project.id}/project-renders`)
+      .then(r => r.ok ? r.json() : [])
+      .then((data: RoomItem[]) => {
+        setRooms(data);
+        setExpandedRooms(new Set(data.map((r) => r.id)));
+        setExpandedFolders(new Set(data.flatMap((r) => r.folders.map((f) => f.id))));
+      })
+      .catch(() => {});
+  }
+
   useEffect(() => {
     if (!rightSidebarOpen) return;
-    if (rightTab === "projectflow" && project?.id) {
-      fetch(`/api/projects/${project.id}/project-renders`).then(r => r.ok ? r.json() : []).then(setRenders).catch(() => {});
-    }
+    if (rightTab === "projectflow") loadRooms();
     if (rightTab === "products") {
       fetch("/api/products").then(r => r.ok ? r.json() : []).then((data: { id: string; name: string; imageUrl: string | null }[]) => setProducts(data)).catch(() => {});
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rightSidebarOpen, rightTab, project?.id]);
 
   // Push history
@@ -555,7 +595,16 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
   };
   const activeCursor = spaceDown ? (isPanning ? "grabbing" : "grab") : cursorMap[tool];
 
-  const filteredRenders = renders.filter(r => r.name.toLowerCase().includes(sidebarQuery.toLowerCase()));
+  const q = sidebarQuery.toLowerCase();
+  const filteredRooms = q
+    ? rooms.map(room => ({
+        ...room,
+        folders: room.folders
+          .map(f => ({ ...f, renders: f.renders.filter(r => r.name.toLowerCase().includes(q)) }))
+          .filter(f => f.renders.length > 0 || f.name.toLowerCase().includes(q)),
+        renders: room.renders.filter(r => r.name.toLowerCase().includes(q)),
+      })).filter(room => room.renders.length > 0 || room.folders.length > 0 || room.name.toLowerCase().includes(q))
+    : rooms;
   const filteredProducts = products.filter(p => p.name.toLowerCase().includes(sidebarQuery.toLowerCase()));
 
   return (
@@ -913,6 +962,15 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                 className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-colors ${rightTab === "projectflow" ? "border-b-2 border-primary text-primary" : "text-muted-foreground hover:text-foreground"}`}
               >
                 <PushPin size={13} /> ProjectFlow
+                {rightTab === "projectflow" && project && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); loadRooms(); }}
+                    title="Odśwież"
+                    className="ml-1 text-muted-foreground hover:text-foreground"
+                  >
+                    <RefreshCw size={11} />
+                  </button>
+                )}
               </button>
               <button
                 onClick={() => { setRightTab("products"); setSidebarQuery(""); }}
@@ -940,22 +998,54 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                   {!project && (
                     <p className="text-xs text-muted-foreground text-center py-8">Ta tablica nie ma przypisanego projektu</p>
                   )}
-                  {project && filteredRenders.length === 0 && (
+                  {project && filteredRooms.length === 0 && (
                     <p className="text-xs text-muted-foreground text-center py-8">Brak renderów{sidebarQuery ? " dla tej frazy" : ""}</p>
                   )}
-                  <div className="grid grid-cols-2 gap-1.5">
-                    {filteredRenders.map((r) => (
-                      <button key={r.id} onClick={() => addRenderToCanvas(r.fileUrl, r.name)}
-                        className="group relative aspect-square rounded-lg overflow-hidden border border-border hover:border-primary/50 transition-all bg-muted"
-                        title={r.name}>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={r.fileUrl} alt={r.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-end">
-                          <p className="text-white text-[10px] font-medium px-1.5 py-1 truncate opacity-0 group-hover:opacity-100 transition-opacity">{r.name}</p>
+                  {project && filteredRooms.length > 0 && (
+                    <div className="space-y-0.5">
+                      {filteredRooms.map((room) => (
+                        <div key={room.id}>
+                          {/* Room row */}
+                          <button
+                            onClick={() => setExpandedRooms(prev => { const n = new Set(prev); n.has(room.id) ? n.delete(room.id) : n.add(room.id); return n; })}
+                            className="w-full flex items-center gap-1.5 px-2 py-1.5 text-xs font-medium hover:bg-muted rounded-lg transition-colors"
+                          >
+                            {expandedRooms.has(room.id) ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+                            <span className="truncate">{room.name}</span>
+                          </button>
+                          {expandedRooms.has(room.id) && (
+                            <div className="ml-1">
+                              {/* Renders outside folders */}
+                              {room.renders.map(r => (
+                                <RenderSidebarItem key={r.id} render={r} onClick={addRenderToCanvas} />
+                              ))}
+                              {/* Folders */}
+                              {room.folders.map(folder => (
+                                <div key={folder.id}>
+                                  <button
+                                    onClick={() => setExpandedFolders(prev => { const n = new Set(prev); n.has(folder.id) ? n.delete(folder.id) : n.add(folder.id); return n; })}
+                                    className="w-full flex items-center gap-1.5 px-2 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
+                                  >
+                                    {expandedFolders.has(folder.id) ? <ChevronDown size={11} /> : <ChevronRight size={11} />}
+                                    <Folder size={11} />
+                                    <span className="truncate">{folder.name}</span>
+                                    <span className="ml-auto text-muted-foreground/60">{folder.renders.length}</span>
+                                  </button>
+                                  {expandedFolders.has(folder.id) && (
+                                    <div className="ml-2">
+                                      {folder.renders.map(r => (
+                                        <RenderSidebarItem key={r.id} render={r} onClick={addRenderToCanvas} />
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </div>
-                      </button>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  )}
                 </>
               )}
               {rightTab === "products" && (
