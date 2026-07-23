@@ -712,6 +712,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
       })
       .map((sid) => stage.findOne("#" + sid)).filter(Boolean) as Konva.Node[];
     tr.nodes(nodes);
+    tr.visible(nodes.length > 0);
     tr.getLayer()?.batchDraw();
   }, [selectedIds, elements]);
 
@@ -866,7 +867,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
       const box = selBox;
       if (box && box.w > 4 && box.h > 4) {
         const hit = elements
-          .filter(el => el.type !== "connection")
+          .filter(el => el.type !== "connection" && el.type !== "freehand")
           .filter(el => {
             const b = getElementBounds(el);
             return b.x < box.x + box.w && b.x + b.width > box.x && b.y < box.y + box.h && b.y + b.height > box.y;
@@ -2004,6 +2005,10 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                                   loadGoogleFont(font);
                                   updateSelected({ fontFamily: font });
                                   setFontPickerOpen(false);
+                                  // Wait for the font to load, then force Konva to re-render
+                                  document.fonts.load(`16px "${font}"`).then(() => {
+                                    stageRef.current?.getLayers().forEach(l => l.batchDraw());
+                                  }).catch(() => {});
                                 }}
                                 className={`w-full text-left px-3 py-1.5 rounded-lg text-sm hover:bg-muted transition-colors ${(firstSelected.fontFamily ?? "Inter") === font ? "bg-primary/10 text-primary font-medium" : "text-foreground"}`}
                                 style={{ fontFamily: font }}
