@@ -46,6 +46,7 @@ export const Maximize2        = icon("open_in_full");
 
 // ── Modules (user-specified) ───────────────────────────────────────────────
 export const Users            = icon("group");
+export const Interests        = icon("interests");
 
 export function PictureInPicture({ size = 20, className, color, style }: IconProps): ReactElement {
   const px = typeof size === "number" ? size : parseInt(size as string, 10) || 20;
@@ -235,6 +236,15 @@ export const DollarSign       = icon("attach_money");
 export const Sheet            = icon("table_chart");
 export const Payments         = icon("payments");
 export const CalendarNote     = icon("event_note");
+
+// ── Moodboard / Canvas ────────────────────────────────────────────────────
+export const MousePointer     = icon("arrow_selector_tool");
+export const Hand             = icon("pan_tool");
+export const Type             = icon("title");
+export const ArrowRight       = icon("arrow_forward");
+export const Undo2            = icon("undo");
+export const Redo2            = icon("redo");
+export const StickyNote       = icon("sticky_note_2");
 
 // ── Misc ──────────────────────────────────────────────────────────────────
 export const Home             = icon("home");

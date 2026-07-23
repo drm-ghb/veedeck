@@ -69,6 +69,7 @@ export const en: TranslationKeys = {
     discussions: "Discussions",
     tasks: "Tasks",
     surveys: "Surveys",
+    moodboard: "Moodboard",
     veezard: "Veezard",
     help: "Help",
     settings: "Settings",

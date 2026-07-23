@@ -4,12 +4,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import Pusher from "pusher-js";
-import { LayoutDashboard, Users, LocalMall, Package, PanelLeftClose, PanelLeftOpen, Settings, Sun, Moon, HelpCircle, PushPin, ShieldCheck, CalendarDays, NotebookText, ChatBubble, CheckSquare, VeezardIcon, BookOpen, ClipboardList, Engineering } from "@/components/ui/icons";
+import { LayoutDashboard, Users, LocalMall, Package, PanelLeftClose, PanelLeftOpen, Settings, Sun, Moon, HelpCircle, PushPin, ShieldCheck, CalendarDays, NotebookText, ChatBubble, CheckSquare, VeezardIcon, BookOpen, ClipboardList, Engineering, Interests } from "@/components/ui/icons";
 import { useTheme } from "@/lib/theme";
 import { useT } from "@/lib/i18n";
 import HelpWidget from "@/components/dashboard/HelpWidget";
 
-const DEFAULT_SIDEBAR_ORDER = ["klienci", "projectflow", "listy-zakupowe", "zadania", "ankiety", "produkty", "wykonawcy", "kalendarz", "notatnik", "dyskusje", "veezard"];
+const DEFAULT_SIDEBAR_ORDER = ["klienci", "projectflow", "listy-zakupowe", "moodboard", "zadania", "ankiety", "produkty", "wykonawcy", "kalendarz", "notatnik", "dyskusje", "veezard"];
 
 interface NavSidebarProps {
   hiddenModules: string[];
@@ -31,6 +31,7 @@ const HIDDEN_ON: RegExp[] = [
   /^\/projekty\/[^/]+\/renders\//,
   /^\/listy-zakupowe\/.+/,
   /^\/wykonawcy\/[^/]+\/projekty\/[^/]+\/foldery\//,
+  /^\/moodboard\/.+/,
 ];
 
 export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userId, isTrial, initialCollapsed = false }: NavSidebarProps) {
@@ -195,6 +196,7 @@ export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userI
     { label: t.nav.projects, href: "/klienci", icon: <Users size={18} />, slug: null, badge: 0, matchPrefixes: [] as string[] },
     { label: t.nav.renderflow, href: "/projectflow", icon: <PushPin size={18} />, slug: "renderflow", badge: 0, matchPrefixes: ["/projekty/"] },
     { label: t.nav.lists, href: "/listy-zakupowe", icon: <LocalMall size={18} />, slug: "listy", badge: 0, matchPrefixes: [] as string[] },
+    { label: t.nav.moodboard, href: "/moodboard", icon: <Interests size={18} />, slug: "moodboard", badge: 0, matchPrefixes: [] as string[] },
     { label: t.nav.contractors, href: "/wykonawcy", icon: <Engineering size={18} />, slug: null, badge: contractorUnread, matchPrefixes: [] as string[] },
     { label: t.nav.tasks, href: "/zadania", icon: <CheckSquare size={18} />, slug: null, badge: 0, matchPrefixes: [] as string[] },
     { label: t.nav.surveys, href: "/ankiety", icon: <ClipboardList size={18} />, slug: null, badge: 0, matchPrefixes: [] as string[] },
