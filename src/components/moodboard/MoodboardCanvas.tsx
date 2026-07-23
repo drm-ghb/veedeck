@@ -1285,19 +1285,17 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
         </Link>
         <div className="w-px h-4 bg-border mx-1" />
         {/* Auto-sizing title input */}
-        <div className="inline-grid max-w-[280px] min-w-[60px]">
-          <span className="[grid-area:1/1] invisible text-sm font-medium px-1.5 py-0.5 whitespace-pre pointer-events-none select-none">{title || " "}</span>
-          <input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            onBlur={async () => {
-              if (title.trim()) {
-                await fetch(`/api/moodboards/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ title }) });
-              }
-            }}
-            className="[grid-area:1/1] text-sm font-medium bg-transparent focus:outline-none focus:ring-2 focus:ring-primary/30 rounded px-1.5 py-0.5 w-full"
-          />
-        </div>
+        <input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          onBlur={async () => {
+            if (title.trim()) {
+              await fetch(`/api/moodboards/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ title }) });
+            }
+          }}
+          size={Math.max(4, title.length + 1)}
+          className="text-sm font-medium bg-transparent focus:outline-none focus:ring-2 focus:ring-primary/30 rounded px-1.5 py-0.5 max-w-[280px] shrink-0"
+        />
         <div className="w-px h-4 bg-border mx-1 shrink-0" />
         {/* 3-dots menu */}
         <div className="relative shrink-0">
