@@ -219,9 +219,22 @@ export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userI
   const isCollapsed = forceCollapsed || collapsed;
 
   const normalizedSidebarOrder = sidebarOrder?.map((k) => k === "renderflow" ? "projectflow" : k === "listy" ? "listy-zakupowe" : k);
-  const order = normalizedSidebarOrder && normalizedSidebarOrder.length > 0
-    ? [...normalizedSidebarOrder, ...DEFAULT_SIDEBAR_ORDER.filter((k) => !normalizedSidebarOrder.includes(k))]
-    : DEFAULT_SIDEBAR_ORDER;
+  const order = (() => {
+    if (!normalizedSidebarOrder || normalizedSidebarOrder.length === 0) return DEFAULT_SIDEBAR_ORDER;
+    const result = [...normalizedSidebarOrder];
+    const missing = DEFAULT_SIDEBAR_ORDER.filter((k) => !normalizedSidebarOrder.includes(k));
+    for (const mod of missing) {
+      const defaultIdx = DEFAULT_SIDEBAR_ORDER.indexOf(mod);
+      // Find the closest predecessor (in default order) that exists in result
+      let insertAfter = -1;
+      for (let i = defaultIdx - 1; i >= 0; i--) {
+        const pos = result.indexOf(DEFAULT_SIDEBAR_ORDER[i]);
+        if (pos !== -1) { insertAfter = pos; break; }
+      }
+      result.splice(insertAfter + 1, 0, mod);
+    }
+    return result;
+  })();
   const [dashboard, ...rest] = items;
   const sortedRest = [...rest].sort((a, b) => {
     const keyA = a.href.replace("/", "");
