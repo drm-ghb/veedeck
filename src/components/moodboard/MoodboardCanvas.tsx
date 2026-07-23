@@ -422,7 +422,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
 
       const resultBlob = await removeBackground(imageSource, {
         debug: false,
-        publicPath: `https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.7.0/dist/`,
+        publicPath: `https://staticimgly.com/@imgly/background-removal-data/1.7.0/dist/`,
       });
       const url = URL.createObjectURL(resultBlob);
       imageCache.delete(el.imageUrl);
