@@ -35,6 +35,9 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  outputFileTracingIncludes: {
+    "/**": ["./node_modules/.prisma/**", "./node_modules/@prisma/client/**"],
+  },
   turbopack: {
     root: path.resolve(__dirname),
   },
