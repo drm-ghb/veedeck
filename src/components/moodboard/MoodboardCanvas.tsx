@@ -908,7 +908,6 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
         };
         const next = [...elements, newEl];
         updateElements(next);
-        setSelectedIds([newEl.id]);
       }
       setPenPoints([]);
       penStartRef.current = null;
@@ -1334,7 +1333,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
         {/* Export */}
         <button
           onClick={() => { setExportMode(true); setExportRect(null); }}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:text-foreground hover:bg-muted border border-border"
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border ${exportMode ? "bg-primary/10 text-primary border-primary/30" : "text-muted-foreground hover:text-foreground hover:bg-muted border-border"}`}
           title="Eksportuj jako JPG"
         >
           <Download size={14} />
@@ -1764,11 +1763,28 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                 );
 
                 if (el.type === "freehand") return (
-                  <Line key={el.id} {...commonProps} x={el.x} y={el.y}
+                  <Line key={el.id}
+                    id={el.id}
+                    opacity={el.opacity ?? 1}
+                    x={el.x} y={el.y}
                     points={el.points ?? [0, 0]}
-                    stroke={isSel ? "#6366f1" : (el.stroke ?? "#334155")}
+                    stroke={el.stroke ?? "#334155"}
                     strokeWidth={el.strokeWidth ?? 2}
-                    tension={0.4} lineCap="round" lineJoin="round" />
+                    tension={0.4} lineCap="round" lineJoin="round"
+                    draggable={tool === "select"}
+                    onDragStart={() => { isDragging.current = true; }}
+                    onDragEnd={(e: Konva.KonvaEventObject<DragEvent>) => {
+                      isDragging.current = false;
+                      updateEl(el.id, { x: e.target.x(), y: e.target.y() });
+                    }}
+                    onContextMenu={(e: Konva.KonvaEventObject<MouseEvent>) => {
+                      e.evt.preventDefault();
+                      if (tool === "select") {
+                        setSelectedIds([el.id]);
+                        setContextMenu({ screenX: e.evt.clientX, screenY: e.evt.clientY, elementId: el.id });
+                      }
+                    }}
+                  />
                 );
 
                 if (el.type === "image") return (
