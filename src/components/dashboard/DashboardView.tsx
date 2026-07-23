@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect, type ReactNode } from "react";
+import { useState, useEffect, type ReactNode, type CSSProperties } from "react";
 import { pusherClient } from "@/lib/pusher";
 import {
   Users,
@@ -23,7 +23,28 @@ import {
   CalendarDays,
   CheckSquare,
   MoreVertical,
+  GripVertical,
+  LayoutGrid,
 } from "@/components/ui/icons";
+import {
+  DndContext,
+  DragOverlay,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  closestCenter,
+  type DragStartEvent,
+  type DragEndEvent,
+  type DragOverEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  useSortable,
+  arrayMove,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import NewProjectDialog from "./NewProjectDialog";
 import NewListDialog from "@/components/listy/NewListDialog";
 import PdfThumbnail from "@/components/render/PdfThumbnail";
@@ -158,6 +179,7 @@ interface DueTask {
   title: string;
   dueDate: string;
   status: string;
+  priority: "LOW" | "MEDIUM" | "HIGH";
   projectTitle: string | null;
 }
 
@@ -269,13 +291,63 @@ function SectionCollapse({ hidden, children }: { hidden: boolean; children: Reac
   );
 }
 
+type SectionKey = "projekty" | "listy" | "kalendarz" | "wiadomosci" | "zadania";
+type DesktopLayout = { left: SectionKey[]; right: SectionKey[] };
+
+const DEFAULT_DESKTOP_LAYOUT: DesktopLayout = {
+  left: ["projekty", "listy"],
+  right: ["kalendarz", "wiadomosci", "zadania"],
+};
+const DEFAULT_MOBILE_LAYOUT: SectionKey[] = ["kalendarz", "wiadomosci", "listy", "zadania", "projekty"];
+
 const SECTION_CONFIG = [
-  { key: "projekty", label: "Projekty" },
-  { key: "listy", label: "Listy" },
-  { key: "kalendarz", label: "Kalendarz" },
-  { key: "wiadomosci", label: "Wiadomości" },
-  { key: "zadania", label: "Zadania" },
-] as const;
+  { key: "projekty" as SectionKey, label: "Projekty" },
+  { key: "listy" as SectionKey, label: "Listy" },
+  { key: "kalendarz" as SectionKey, label: "Kalendarz" },
+  { key: "wiadomosci" as SectionKey, label: "Wiadomości" },
+  { key: "zadania" as SectionKey, label: "Zadania" },
+];
+
+function SortableSection({
+  id,
+  isEditMode,
+  delay = 0,
+  children,
+}: {
+  id: string;
+  isEditMode: boolean;
+  delay?: number;
+  children: ReactNode;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const outerStyle: CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition: transition ?? undefined,
+    opacity: isDragging ? 0.35 : 1,
+  };
+  const innerStyle: CSSProperties =
+    isEditMode && !isDragging ? { animationDelay: `${delay}ms` } : {};
+  return (
+    <div ref={setNodeRef} style={outerStyle}>
+      <div
+        className={isEditMode && !isDragging ? "dashboard-section-wiggle" : ""}
+        style={innerStyle}
+      >
+        {isEditMode && (
+          <div
+            {...attributes}
+            {...listeners}
+            className="flex items-center gap-1.5 mb-2 px-0.5 py-1 text-muted-foreground/50 hover:text-muted-foreground cursor-grab active:cursor-grabbing select-none transition-colors"
+          >
+            <GripVertical size={14} className="shrink-0" />
+            <span className="text-xs">Przesuń sekcję</span>
+          </div>
+        )}
+        {children}
+      </div>
+    </div>
+  );
+}
 
 export default function DashboardView({
   displayName,
@@ -301,6 +373,13 @@ export default function DashboardView({
   const [hiddenSections, setHiddenSections] = useState<string[]>([]);
   const [sectionMenuOpen, setSectionMenuOpen] = useState(false);
 
+  // Layout editor state
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(true);
+  const [desktopLayout, setDesktopLayout] = useState<DesktopLayout>(DEFAULT_DESKTOP_LAYOUT);
+  const [mobileLayout, setMobileLayout] = useState<SectionKey[]>(DEFAULT_MOBILE_LAYOUT);
+  const [activeId, setActiveId] = useState<string | null>(null);
+
   useEffect(() => {
     try {
       const stored = localStorage.getItem("dashboard-hidden-sections");
@@ -317,6 +396,87 @@ export default function DashboardView({
   }
 
   const isSectionHidden = (key: string) => hiddenSections.includes(key);
+
+  // Breakpoint detection (desktop = lg = 1024px)
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    setIsDesktop(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+
+  // Load layout from localStorage
+  useEffect(() => {
+    try {
+      const d = localStorage.getItem("dashboard-desktop-layout");
+      if (d) setDesktopLayout(JSON.parse(d));
+      const m = localStorage.getItem("dashboard-mobile-layout");
+      if (m) setMobileLayout(JSON.parse(m));
+    } catch {}
+  }, []);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } }),
+  );
+
+  function handleDragStart({ active }: DragStartEvent) {
+    setActiveId(active.id as string);
+  }
+
+  function handleDragOver({ active, over }: DragOverEvent) {
+    if (!over || !isDesktop) return;
+    const aId = active.id as SectionKey;
+    const oId = over.id as SectionKey;
+    if (aId === oId) return;
+    setDesktopLayout(prev => {
+      const activeCol = prev.left.includes(aId) ? "left" : prev.right.includes(aId) ? "right" : null;
+      const overCol = prev.left.includes(oId) ? "left" : prev.right.includes(oId) ? "right" : null;
+      if (!activeCol || !overCol || activeCol === overCol) return prev;
+      const next = { left: [...prev.left], right: [...prev.right] };
+      next[activeCol] = next[activeCol].filter(id => id !== aId);
+      const insertAt = next[overCol].indexOf(oId);
+      next[overCol].splice(insertAt >= 0 ? insertAt : next[overCol].length, 0, aId);
+      return next;
+    });
+  }
+
+  function handleDragEnd({ active, over }: DragEndEvent) {
+    setActiveId(null);
+    if (!over) return;
+    const aId = active.id as SectionKey;
+    const oId = over.id as SectionKey;
+    if (!isDesktop) {
+      setMobileLayout(prev => {
+        const oldIdx = prev.indexOf(aId);
+        const newIdx = prev.indexOf(oId);
+        if (oldIdx === -1 || newIdx === -1 || oldIdx === newIdx) {
+          try { localStorage.setItem("dashboard-mobile-layout", JSON.stringify(prev)); } catch {}
+          return prev;
+        }
+        const next = arrayMove(prev, oldIdx, newIdx);
+        try { localStorage.setItem("dashboard-mobile-layout", JSON.stringify(next)); } catch {}
+        return next;
+      });
+    } else {
+      setDesktopLayout(prev => {
+        const col = prev.left.includes(aId) ? "left" : prev.right.includes(aId) ? "right" : null;
+        if (!col) {
+          try { localStorage.setItem("dashboard-desktop-layout", JSON.stringify(prev)); } catch {}
+          return prev;
+        }
+        const items = prev[col];
+        const oldIdx = items.indexOf(aId);
+        const newIdx = items.indexOf(oId);
+        const next = oldIdx !== -1 && newIdx !== -1 && oldIdx !== newIdx
+          ? { ...prev, [col]: arrayMove([...items], oldIdx, newIdx) }
+          : prev;
+        try { localStorage.setItem("dashboard-desktop-layout", JSON.stringify(next)); } catch {}
+        return next;
+      });
+    }
+  }
 
   useEffect(() => {
     function onUpdated() {
@@ -412,9 +572,12 @@ export default function DashboardView({
     | { type: "version"; data: VersionRequest }
     | { type: "task"; data: DueTask };
 
-  const sortedTasks = [...dueTasks].sort(
-    (a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
-  );
+  const priorityOrder = { HIGH: 0, MEDIUM: 1, LOW: 2 };
+  const sortedTasks = [...dueTasks].sort((a, b) => {
+    const pDiff = priorityOrder[a.priority] - priorityOrder[b.priority];
+    if (pDiff !== 0) return pDiff;
+    return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+  });
 
   const allTodoItems: TodoItem[] = [
     ...sortedTasks.map((t) => ({ type: "task" as const, data: t })),
@@ -452,6 +615,380 @@ export default function DashboardView({
       }
     } finally {
       setActingOn(null);
+    }
+  }
+
+  function renderSectionContent(key: SectionKey): ReactNode {
+    switch (key) {
+      case "projekty": return (
+        <SectionCollapse hidden={isSectionHidden("projekty")}>
+        <div className="space-y-3 lg:space-y-0">
+            <div className="flex items-center justify-between mb-0 lg:mb-[10px]">
+              <h2 className="text-sm lg:text-[13px] font-semibold lg:font-bold text-foreground">{t.home.recentProjectsTitle}</h2>
+              <Link href="/projectflow" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-0.5 transition-colors">
+                {t.home.allLabel} <ChevronRight size={13} />
+              </Link>
+            </div>
+            {recentProjects.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-border bg-card p-8 text-center">
+                <Layers size={32} className="mx-auto mb-3 text-muted-foreground/40" />
+                <p className="text-sm text-muted-foreground mb-3">{t.home.noProjectsYet}</p>
+                <TrialGate><NewProjectDialog module="renderflow" /></TrialGate>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {recentProjects.map((project, i) => (
+                  <Link key={project.id} href={`/projekty/${project.id}`} className={`group flex flex-col rounded-xl border border-border bg-card overflow-hidden hover:border-primary/30 hover:shadow-md transition-all${i > 0 ? " hidden sm:flex" : ""}`}>
+                    <div className="w-full aspect-[4/3] bg-muted flex items-center justify-center overflow-hidden">
+                      {project.lastRenderUrl ? (
+                        project.lastRenderFileType === "pdf" ? (
+                          <PdfThumbnail fileUrl={project.lastRenderUrl} className="w-full h-full group-hover:scale-105 transition-transform duration-300" />
+                        ) : (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={project.lastRenderUrl} alt={project.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                        )
+                      ) : (
+                        <PushPin size={28} className="text-muted-foreground/30" />
+                      )}
+                    </div>
+                    <div className="p-3">
+                      <p className="text-sm font-medium truncate flex items-center gap-1.5">
+                        {project.pinned && <Pin size={11} className="text-red-500 fill-red-500 shrink-0" />}
+                        {project.title}
+                      </p>
+                      {project.clientName && <p className="text-xs text-muted-foreground truncate mt-0.5">{t.home.clientPrefix} {project.clientName}</p>}
+                      <div className="flex items-center justify-between mt-2">
+                        <span className="text-xs text-muted-foreground">
+                          {project.renderCount > 0 ? `${project.renderCount} ${project.renderCount === 1 ? t.home.renderSg : t.home.renderPl}` : t.home.noRenders}
+                        </span>
+                        <div className="flex items-center gap-1.5">
+                          {project.unreadPins > 0 && (
+                            <span className="flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300">
+                              <MapPin size={9} />{project.unreadPins}
+                            </span>
+                          )}
+                          {project.unreadChat > 0 && (
+                            <span className="flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">
+                              <ChatBubble size={9} />{project.unreadChat}
+                            </span>
+                          )}
+                          {project.unreadPins === 0 && project.unreadChat === 0 && (
+                            <span className="text-xs text-muted-foreground">{timeAgo(project.updatedAt, t)}</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+        </div>
+        </SectionCollapse>
+      );
+      case "listy": return (
+        <SectionCollapse hidden={isSectionHidden("listy")}>
+        <div className="space-y-3 lg:space-y-0">
+            <div className="flex items-center justify-between mb-0 lg:mb-[10px]">
+              <h2 className="text-sm lg:text-[13px] font-semibold lg:font-bold text-foreground">{t.home.recentListsTitle}</h2>
+              <Link href="/listy-zakupowe" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-0.5 transition-colors">
+                {t.home.allLabel} <ChevronRight size={13} />
+              </Link>
+            </div>
+            {recentLists.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-border bg-card p-8 text-center">
+                <LocalMall size={32} className="mx-auto mb-3 text-muted-foreground/40" />
+                <p className="text-sm text-muted-foreground mb-3">{t.home.noListsYet}</p>
+                <TrialGate><NewListDialog /></TrialGate>
+              </div>
+            ) : (
+              <div className="rounded-xl border border-border bg-card divide-y divide-border overflow-hidden">
+                {recentLists.map((list) => (
+                  <Link key={list.id} href={`/listy-zakupowe/${list.slug ?? list.id}`} className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors">
+                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                      <LocalMall size={18} className="text-primary" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium truncate flex items-center gap-1.5">
+                        {list.pinned && <Pin size={10} className="text-red-500 fill-red-500 shrink-0" />}
+                        {list.name}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {list.clientName ? `${t.home.clientPrefix} ${list.clientName}` : list.projectTitle ?? (list.sectionCount > 0 ? `${list.sectionCount} ${list.sectionCount === 1 ? t.home.sectionSg : list.sectionCount < 5 ? t.home.sectionFw : t.home.sectionPl}` : t.home.noSections)}
+                      </p>
+                    </div>
+                    <span className="shrink-0 text-xs text-muted-foreground">{timeAgo(list.updatedAt, t)}</span>
+                  </Link>
+                ))}
+              </div>
+            )}
+        </div>
+        </SectionCollapse>
+      );
+      case "kalendarz": return (
+        <SectionCollapse hidden={isSectionHidden("kalendarz")}>
+        <div className="space-y-3 lg:space-y-0">
+          <div className="flex items-center justify-between mb-0 lg:mb-[10px]">
+            <h2 className="text-sm lg:text-[13px] font-semibold lg:font-bold text-foreground">{t.home.calendarTitle}</h2>
+            <Link href="/kalendarz" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-0.5 transition-colors">
+              {t.home.openLabel} <ChevronRight size={13} />
+            </Link>
+          </div>
+          <div className="rounded-xl border border-border bg-card overflow-hidden">
+            <div className="px-4 py-3 border-b border-border flex items-center justify-between bg-primary/5">
+              <div>
+                <p className="text-[11px] text-muted-foreground capitalize">{new Date().toLocaleDateString("pl-PL", { weekday: "long" })}</p>
+                <p className="text-base font-bold leading-tight">{new Date().toLocaleDateString("pl-PL", { day: "numeric", month: "long" })}</p>
+              </div>
+              <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center shrink-0">
+                <span className="text-primary-foreground text-sm font-bold">{new Date().getDate()}</span>
+              </div>
+            </div>
+            {localTodayEvents.length === 0 ? (
+              <div className="px-4 py-5 flex flex-col items-center gap-1.5 text-center">
+                <CalendarDays size={24} className="text-muted-foreground/30" />
+                <p className="text-sm text-muted-foreground">{t.home.noEvents}</p>
+                <Link href="/kalendarz" className="text-xs text-primary hover:underline">{t.home.scheduleEvent}</Link>
+              </div>
+            ) : (
+              <div className="divide-y divide-border">
+                {localTodayEvents.map((ev) => {
+                  const c = EVENT_TYPE_COLORS[ev.type] ?? EVENT_TYPE_COLORS["WYDARZENIE"];
+                  const timeStr = new Date(ev.startAt).toLocaleTimeString("pl-PL", { hour: "2-digit", minute: "2-digit" });
+                  return (
+                    <div key={ev.id} className="flex items-center gap-3 px-4 py-2.5">
+                      <div className={`w-1 h-8 rounded-full shrink-0 ${c.bar}`} />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium truncate">{ev.title}</p>
+                        <p className="text-xs text-muted-foreground">{timeStr}</p>
+                      </div>
+                      <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-md ${c.bg} ${c.text} shrink-0`}>
+                        {ev.type === "WYDARZENIE" ? t.home.eventTypeEvent : ev.type === "ZADANIE" ? t.home.eventTypeTask : t.home.eventTypeReminder}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+        </SectionCollapse>
+      );
+      case "wiadomosci": return (
+        <>
+          {!isSectionHidden("wiadomosci") && (
+            <div className="flex items-center gap-1.5 mb-3 lg:mb-[10px]">
+              <h2 className="text-sm lg:text-[13px] font-semibold lg:font-bold text-foreground">{t.home.unreadMessages}</h2>
+              <InfoTooltip items={[t.home.unreadTip1, t.home.unreadTip2]} />
+            </div>
+          )}
+          <SectionCollapse hidden={isSectionHidden("wiadomosci")}>
+          <div className="space-y-3 lg:space-y-0">
+              {(() => {
+                const visibleD = renderDiscussions.filter((c) => !viewedMessageIds.has(c.id));
+                const visibleL = listMessages.filter((c) => !viewedMessageIds.has(c.id));
+                const visibleRR = renderReplies.filter((r) => !viewedMessageIds.has(r.id));
+                const visibleLR = listReplies.filter((r) => !viewedMessageIds.has(r.id));
+                type MI =
+                  | { type: "discussion"; data: RenderDiscussion }
+                  | { type: "list"; data: ListMessage }
+                  | { type: "renderReply"; data: RenderReply }
+                  | { type: "listReply"; data: ListReply };
+                const msgs: MI[] = [
+                  ...visibleD.map((d) => ({ type: "discussion" as const, data: d })),
+                  ...visibleL.map((m) => ({ type: "list" as const, data: m })),
+                  ...visibleRR.map((r) => ({ type: "renderReply" as const, data: r })),
+                  ...visibleLR.map((r) => ({ type: "listReply" as const, data: r })),
+                ].sort((a, b) => new Date(b.data.createdAt).getTime() - new Date(a.data.createdAt).getTime());
+                if (msgs.length === 0) return (
+                  <div className="rounded-xl border border-border bg-card p-6 text-center">
+                    <CheckCircle2 size={28} className="mx-auto mb-2 text-green-500" />
+                    <p className="text-sm font-medium text-foreground">{t.home.upToDate}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{t.home.noUnread}</p>
+                  </div>
+                );
+                return (
+                  <div className="rounded-xl border border-border bg-card overflow-hidden">
+                    <div className="divide-y divide-border max-h-[260px] overflow-y-auto">
+                      {msgs.map((item) => {
+                        if (item.type === "discussion") {
+                          const d = item.data;
+                          return (
+                            <div key={d.id} className="flex items-center hover:bg-muted/50 transition-colors">
+                              <Link href={`/projekty/${d.projectId}/renders/${d.renderId}`} onClick={() => markDiscussionViewed(d.id)} className="flex items-start gap-3 px-4 py-3 flex-1 min-w-0">
+                                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5"><Comment size={15} className="text-primary" /></div>
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-sm font-medium truncate">{d.content}</p>
+                                  <p className="text-xs text-muted-foreground truncate">{d.author} · {d.renderName} · {d.projectTitle}</p>
+                                </div>
+                                <span className="shrink-0 text-xs text-muted-foreground mr-2">{timeAgo(d.createdAt, t)}</span>
+                              </Link>
+                              <button onClick={() => markDiscussionViewed(d.id)} title={t.home.markAsRead} className="shrink-0 mr-3 p-1 rounded-md text-muted-foreground/40 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-950/30 transition-colors"><CheckCircle2 size={16} /></button>
+                            </div>
+                          );
+                        }
+                        if (item.type === "listReply") {
+                          const r = item.data;
+                          return (
+                            <div key={r.id} className="flex items-center hover:bg-muted/50 transition-colors">
+                              <Link href={`/listy-zakupowe/${r.listSlug ?? r.listId}?product=${r.productId}`} onClick={() => markListReplyViewed(r)} className="flex items-start gap-3 px-4 py-3 flex-1 min-w-0">
+                                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5"><Comment size={15} className="text-primary" /></div>
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-sm font-medium truncate">{r.content}</p>
+                                  <p className="text-xs text-muted-foreground truncate">{r.author} · {r.productName} · {r.listName}</p>
+                                </div>
+                                <span className="shrink-0 text-xs text-muted-foreground mr-2">{timeAgo(r.createdAt, t)}</span>
+                              </Link>
+                              <button onClick={() => markListReplyViewed(r)} title={t.home.markAsRead} className="shrink-0 mr-3 p-1 rounded-md text-muted-foreground/40 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-950/30 transition-colors"><CheckCircle2 size={16} /></button>
+                            </div>
+                          );
+                        }
+                        if (item.type === "renderReply") {
+                          const r = item.data;
+                          return (
+                            <div key={r.id} className="flex items-center hover:bg-muted/50 transition-colors">
+                              <Link href={`/projekty/${r.projectId}/renders/${r.renderId}`} onClick={() => markRenderReplyViewed(r)} className="flex items-start gap-3 px-4 py-3 flex-1 min-w-0">
+                                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5"><Comment size={15} className="text-primary" /></div>
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-sm font-medium truncate">{r.content}</p>
+                                  <p className="text-xs text-muted-foreground truncate">{r.author} · {r.renderName} · {r.projectTitle}</p>
+                                </div>
+                                <span className="shrink-0 text-xs text-muted-foreground mr-2">{timeAgo(r.createdAt, t)}</span>
+                              </Link>
+                              <button onClick={() => markRenderReplyViewed(r)} title={t.home.markAsRead} className="shrink-0 mr-3 p-1 rounded-md text-muted-foreground/40 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-950/30 transition-colors"><CheckCircle2 size={16} /></button>
+                            </div>
+                          );
+                        }
+                        const m = item.data;
+                        return (
+                          <div key={m.id} className="flex items-center hover:bg-muted/50 transition-colors">
+                            <Link href={`/listy-zakupowe/${m.listSlug ?? m.listId}?product=${m.productId}`} onClick={() => markListMessageViewed(m.id)} className="flex items-start gap-3 px-4 py-3 flex-1 min-w-0">
+                              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5"><Comment size={15} className="text-primary" /></div>
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm font-medium truncate">{m.content}</p>
+                                <p className="text-xs text-muted-foreground truncate">{m.author} · {m.productName} · {m.listName}</p>
+                              </div>
+                              <span className="shrink-0 text-xs text-muted-foreground mr-2">{timeAgo(m.createdAt, t)}</span>
+                            </Link>
+                            <button onClick={() => markListMessageViewed(m.id)} title={t.home.markAsRead} className="shrink-0 mr-3 p-1 rounded-md text-muted-foreground/40 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-950/30 transition-colors"><CheckCircle2 size={16} /></button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()}
+          </div>
+          </SectionCollapse>
+        </>
+      );
+      case "zadania": return (
+        <>
+          {!isSectionHidden("zadania") && (
+            <div className="flex items-center gap-1.5 mb-3 lg:mb-[10px]">
+              <h2 className="text-sm lg:text-[13px] font-semibold lg:font-bold text-foreground">{t.home.todoTitle}</h2>
+              <InfoTooltip items={[t.home.todoTip1, t.home.todoTip2, t.home.todoTip3, t.home.todoTip4]} />
+            </div>
+          )}
+          <SectionCollapse hidden={isSectionHidden("zadania")}>
+          <div className="space-y-3 lg:space-y-0">
+            {todoCount === 0 ? (
+              <div className="rounded-xl border border-border bg-card p-6 text-center">
+                <CheckCircle2 size={28} className="mx-auto mb-2 text-green-500" />
+                <p className="text-sm font-medium text-foreground">{t.home.upToDate}</p>
+                <p className="text-xs text-muted-foreground mt-1">{t.home.noTodo}</p>
+              </div>
+            ) : (
+              <div className="rounded-xl border border-border bg-card overflow-hidden">
+              <div className="divide-y divide-border max-h-[192px] overflow-y-auto">
+                {allTodoItems.map((item) => {
+                  if (item.type === "task") {
+                    const task = item.data;
+                    const due = new Date(task.dueDate);
+                    const todayDate = new Date();
+                    const isToday = due.getFullYear() === todayDate.getFullYear() && due.getMonth() === todayDate.getMonth() && due.getDate() === todayDate.getDate();
+                    const isOverdue = due < todayDate && !isToday;
+                    const dueDateLabel = due.toLocaleDateString("pl-PL", { day: "numeric", month: "short" });
+                    return (
+                      <Link key={task.id} href="/zadania" className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors">
+                        <div className="w-8 h-8 rounded-lg bg-violet-100 dark:bg-violet-900/40 flex items-center justify-center shrink-0">
+                          <CheckSquare size={15} className="text-violet-600 dark:text-violet-400" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium truncate">{task.title}</p>
+                          <p className="text-xs text-muted-foreground truncate">{task.projectTitle ? `${task.projectTitle} · ` : ""}{t.home.todoTaskLabel}</p>
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          {task.priority === "HIGH" && <span className="text-xs font-medium px-1.5 py-0.5 rounded-md bg-red-100 text-red-600 dark:bg-red-950/40 dark:text-red-400">{t.tasks.priorityHigh}</span>}
+                          {task.priority === "MEDIUM" && <span className="text-xs font-medium px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400">{t.tasks.priorityMedium}</span>}
+                          {task.priority === "LOW" && <span className="text-xs font-medium px-1.5 py-0.5 rounded-md bg-muted text-muted-foreground">{t.tasks.priorityLow}</span>}
+                          {(isToday || isOverdue) && <span className="text-xs font-medium px-1.5 py-0.5 rounded-md bg-red-100 text-red-600 dark:bg-red-950/40 dark:text-red-400">{dueDateLabel}</span>}
+                        </div>
+                      </Link>
+                    );
+                  }
+                  if (item.type === "pin") {
+                    const pin = item.data;
+                    return (
+                      <div key={pin.id} className="flex items-center hover:bg-muted/50 transition-colors">
+                        <Link href={`/projekty/${pin.projectId}/renders/${pin.renderId}?pinId=${pin.id}`} onClick={() => markPinViewed(pin.id)} className="flex items-start gap-3 px-4 py-3 flex-1 min-w-0">
+                          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5"><MapPin size={15} className="text-primary" /></div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium truncate">{pin.title ?? pin.content}</p>
+                            <p className="text-xs text-muted-foreground truncate">{pin.author} · {pin.renderName}</p>
+                          </div>
+                          <span className="shrink-0 text-xs text-muted-foreground mr-2">{timeAgo(pin.createdAt, t)}</span>
+                        </Link>
+                        <button onClick={() => markPinViewed(pin.id)} title={t.home.markAsViewed} className="shrink-0 mr-3 p-1 rounded-md text-muted-foreground/40 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-950/30 transition-colors"><CheckCircle2 size={16} /></button>
+                      </div>
+                    );
+                  }
+                  if (item.type === "status") {
+                    const req = item.data;
+                    return (
+                      <div key={req.id} className="flex items-start gap-3 px-4 py-3">
+                        <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center shrink-0 mt-0.5"><Bell size={15} className="text-amber-600 dark:text-amber-400" /></div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium truncate">{req.renderName}</p>
+                          <p className="text-xs text-muted-foreground truncate">{req.clientName ? `${req.clientName} · ` : ""}{t.home.statusChangeLabel} · {req.projectTitle}</p>
+                          <div className="flex gap-1.5 mt-2">
+                            <button onClick={() => handleRequest(req.id, "status", "confirm")} disabled={actingOn !== null} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium bg-green-600 hover:bg-green-700 text-white disabled:opacity-50 transition-colors"><Check size={11} />{t.common.confirm}</button>
+                            <button onClick={() => handleRequest(req.id, "status", "reject")} disabled={actingOn !== null} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium border border-red-200 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 disabled:opacity-50 transition-colors"><X size={11} />{t.home.rejectBtn}</button>
+                          </div>
+                        </div>
+                        <div className="flex flex-col items-end gap-1 shrink-0">
+                          <span className="text-xs text-muted-foreground">{timeAgo(req.createdAt, t)}</span>
+                          <button onClick={() => setResolvedIds((prev) => new Set([...prev, req.id]))} title={t.home.removeFromList} className="p-1 rounded-md text-muted-foreground/40 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-950/30 transition-colors"><CheckCircle2 size={16} /></button>
+                        </div>
+                      </div>
+                    );
+                  }
+                  const req = item.data;
+                  return (
+                    <div key={req.id} className="flex items-start gap-3 px-4 py-3">
+                      <div className="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900/40 flex items-center justify-center shrink-0 mt-0.5"><RotateCcw size={15} className="text-purple-600 dark:text-purple-400" /></div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium truncate">{req.renderName}</p>
+                        <p className="text-xs text-muted-foreground truncate">{req.clientName ? `${req.clientName} · ` : ""}{t.home.versionRestoreLabel} · {req.projectTitle}</p>
+                        <div className="flex gap-1.5 mt-2">
+                          <button onClick={() => handleRequest(req.id, "version", "confirm")} disabled={actingOn !== null} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium bg-green-600 hover:bg-green-700 text-white disabled:opacity-50 transition-colors"><Check size={11} />{t.common.restore}</button>
+                          <button onClick={() => handleRequest(req.id, "version", "reject")} disabled={actingOn !== null} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium border border-red-200 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 disabled:opacity-50 transition-colors"><X size={11} />{t.home.rejectBtn}</button>
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end gap-1 shrink-0">
+                        <span className="text-xs text-muted-foreground">{timeAgo(req.createdAt, t)}</span>
+                        <button onClick={() => setResolvedIds((prev) => new Set([...prev, req.id]))} title={t.home.removeFromList} className="p-1 rounded-md text-muted-foreground/40 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-950/30 transition-colors"><CheckCircle2 size={16} /></button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              </div>
+            )}
+          </div>
+          </SectionCollapse>
+        </>
+      );
+      default: return null;
     }
   }
 
@@ -499,6 +1036,24 @@ export default function DashboardView({
                       <span className="text-foreground">{label}</span>
                     </button>
                   ))}
+                  <div className="my-1 mx-1 border-t border-border" />
+                  {isEditMode ? (
+                    <button
+                      onClick={() => { setIsEditMode(false); setSectionMenuOpen(false); }}
+                      className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm text-left hover:bg-muted transition-colors text-green-600"
+                    >
+                      <Check size={14} className="shrink-0" />
+                      <span>Zakończ edycję układu</span>
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => { setIsEditMode(true); setSectionMenuOpen(false); }}
+                      className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm text-left hover:bg-muted transition-colors"
+                    >
+                      <LayoutGrid size={14} className="shrink-0 text-muted-foreground" />
+                      <span className="text-foreground">Edytuj układ panelu</span>
+                    </button>
+                  )}
                 </div>
               </>
             )}
@@ -574,479 +1129,73 @@ export default function DashboardView({
         </Link>
       </div>
 
-      {/* Main grid — 50/50 on desktop */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 lg:items-start">
-
-        {/* Left column: Projekty → Listy */}
-        <div className="contents lg:flex lg:flex-col">
-
-        {/* Projekty */}
-        <div className="order-5 lg:order-1">
-        <SectionCollapse hidden={isSectionHidden("projekty")}>
-        <div className="space-y-3 lg:space-y-0 lg:pb-[22px]">
-            <div className="flex items-center justify-between mb-0 lg:mb-[10px]">
-              <h2 className="text-sm lg:text-[13px] font-semibold lg:font-bold text-foreground">{t.home.recentProjectsTitle}</h2>
-              <Link href="/projectflow" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-0.5 transition-colors">
-                {t.home.allLabel} <ChevronRight size={13} />
-              </Link>
-            </div>
-            {recentProjects.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-border bg-card p-8 text-center">
-                <Layers size={32} className="mx-auto mb-3 text-muted-foreground/40" />
-                <p className="text-sm text-muted-foreground mb-3">{t.home.noProjectsYet}</p>
-                <TrialGate><NewProjectDialog module="renderflow" /></TrialGate>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {recentProjects.map((project, i) => (
-                  <Link
-                    key={project.id}
-                    href={`/projekty/${project.id}`}
-                    className={`group flex flex-col rounded-xl border border-border bg-card overflow-hidden hover:border-primary/30 hover:shadow-md transition-all${i > 0 ? " hidden sm:flex" : ""}`}
-                  >
-                    <div className="w-full aspect-[4/3] bg-muted flex items-center justify-center overflow-hidden">
-                      {project.lastRenderUrl ? (
-                        project.lastRenderFileType === "pdf" ? (
-                          <PdfThumbnail fileUrl={project.lastRenderUrl} className="w-full h-full group-hover:scale-105 transition-transform duration-300" />
-                        ) : (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={project.lastRenderUrl} alt={project.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                        )
-                      ) : (
-                        <PushPin size={28} className="text-muted-foreground/30" />
-                      )}
-                    </div>
-                    <div className="p-3">
-                      <p className="text-sm font-medium truncate flex items-center gap-1.5">
-                        {project.pinned && <Pin size={11} className="text-red-500 fill-red-500 shrink-0" />}
-                        {project.title}
-                      </p>
-                      {project.clientName && <p className="text-xs text-muted-foreground truncate mt-0.5">{t.home.clientPrefix} {project.clientName}</p>}
-                      <div className="flex items-center justify-between mt-2">
-                        <span className="text-xs text-muted-foreground">
-                          {project.renderCount > 0 ? `${project.renderCount} ${project.renderCount === 1 ? t.home.renderSg : t.home.renderPl}` : t.home.noRenders}
-                        </span>
-                        <div className="flex items-center gap-1.5">
-                          {project.unreadPins > 0 && (
-                            <span className="flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300">
-                              <MapPin size={9} />
-                              {project.unreadPins}
-                            </span>
-                          )}
-                          {project.unreadChat > 0 && (
-                            <span className="flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">
-                              <ChatBubble size={9} />
-                              {project.unreadChat}
-                            </span>
-                          )}
-                          {project.unreadPins === 0 && project.unreadChat === 0 && (
-                            <span className="text-xs text-muted-foreground">{timeAgo(project.updatedAt, t)}</span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            )}
-        </div>
-        </SectionCollapse>
-        </div>{/* end Projekty */}
-
-        {/* Listy */}
-        <div className="order-4 lg:order-2">
-        <SectionCollapse hidden={isSectionHidden("listy")}>
-        <div className="space-y-3 lg:space-y-0">
-            <div className="flex items-center justify-between mb-0 lg:mb-[10px]">
-              <h2 className="text-sm lg:text-[13px] font-semibold lg:font-bold text-foreground">{t.home.recentListsTitle}</h2>
-              <Link href="/listy-zakupowe" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-0.5 transition-colors">
-                {t.home.allLabel} <ChevronRight size={13} />
-              </Link>
-            </div>
-            {recentLists.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-border bg-card p-8 text-center">
-                <LocalMall size={32} className="mx-auto mb-3 text-muted-foreground/40" />
-                <p className="text-sm text-muted-foreground mb-3">{t.home.noListsYet}</p>
-                <TrialGate><NewListDialog /></TrialGate>
-              </div>
-            ) : (
-              <div className="rounded-xl border border-border bg-card divide-y divide-border overflow-hidden">
-                {recentLists.map((list) => (
-                  <Link key={list.id} href={`/listy-zakupowe/${list.slug ?? list.id}`} className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors">
-                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                      <LocalMall size={18} className="text-primary" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium truncate flex items-center gap-1.5">
-                        {list.pinned && <Pin size={10} className="text-red-500 fill-red-500 shrink-0" />}
-                        {list.name}
-                      </p>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {list.clientName ? `${t.home.clientPrefix} ${list.clientName}` : list.projectTitle ?? (list.sectionCount > 0 ? `${list.sectionCount} ${list.sectionCount === 1 ? t.home.sectionSg : list.sectionCount < 5 ? t.home.sectionFw : t.home.sectionPl}` : t.home.noSections)}
-                      </p>
-                    </div>
-                    <span className="shrink-0 text-xs text-muted-foreground">{timeAgo(list.updatedAt, t)}</span>
-                  </Link>
-                ))}
-              </div>
-            )}
-        </div>
-        </SectionCollapse>
-        </div>{/* end Listy */}
-
-        </div>{/* end left column */}
-
-        {/* Right column: Kalendarz → Nieprzeczytane → Do zrobienia */}
-        <div className="contents lg:flex lg:flex-col">
-
-        {/* Kalendarz dziś */}
-        <div className="order-1">
-        <SectionCollapse hidden={isSectionHidden("kalendarz")}>
-        <div className="space-y-3 lg:space-y-0 lg:pb-5">
-          <div className="flex items-center justify-between mb-0 lg:mb-[10px]">
-            <h2 className="text-sm lg:text-[13px] font-semibold lg:font-bold text-foreground">{t.home.calendarTitle}</h2>
-            <Link href="/kalendarz" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-0.5 transition-colors">
-              {t.home.openLabel} <ChevronRight size={13} />
-            </Link>
-          </div>
-          <div className="rounded-xl border border-border bg-card overflow-hidden">
-            {/* Date header */}
-            <div className="px-4 py-3 border-b border-border flex items-center justify-between bg-primary/5">
-              <div>
-                <p className="text-[11px] text-muted-foreground capitalize">
-                  {new Date().toLocaleDateString("pl-PL", { weekday: "long" })}
-                </p>
-                <p className="text-base font-bold leading-tight">
-                  {new Date().toLocaleDateString("pl-PL", { day: "numeric", month: "long" })}
-                </p>
-              </div>
-              <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center shrink-0">
-                <span className="text-primary-foreground text-sm font-bold">{new Date().getDate()}</span>
-              </div>
-            </div>
-            {/* Events list */}
-            {localTodayEvents.length === 0 ? (
-              <div className="px-4 py-5 flex flex-col items-center gap-1.5 text-center">
-                <CalendarDays size={24} className="text-muted-foreground/30" />
-                <p className="text-sm text-muted-foreground">{t.home.noEvents}</p>
-                <Link href="/kalendarz" className="text-xs text-primary hover:underline">{t.home.scheduleEvent}</Link>
-              </div>
-            ) : (
-              <div className="divide-y divide-border">
-                {localTodayEvents.map((ev) => {
-                  const c = EVENT_TYPE_COLORS[ev.type] ?? EVENT_TYPE_COLORS["WYDARZENIE"];
-                  const timeStr = new Date(ev.startAt).toLocaleTimeString("pl-PL", { hour: "2-digit", minute: "2-digit" });
-                  return (
-                    <div key={ev.id} className="flex items-center gap-3 px-4 py-2.5">
-                      <div className={`w-1 h-8 rounded-full shrink-0 ${c.bar}`} />
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium truncate">{ev.title}</p>
-                        <p className="text-xs text-muted-foreground">{timeStr}</p>
-                      </div>
-                      <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-md ${c.bg} ${c.text} shrink-0`}>
-                        {ev.type === "WYDARZENIE" ? t.home.eventTypeEvent : ev.type === "ZADANIE" ? t.home.eventTypeTask : t.home.eventTypeReminder}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+      {/* Edit mode banner */}
+      {isEditMode && (
+        <div className="flex items-center justify-between gap-3 mb-4 px-4 py-2.5 bg-primary/10 border border-primary/20 rounded-xl">
+          <p className="text-sm text-primary font-medium">Przeciągnij sekcje aby zmienić układ panelu</p>
+          <div className="flex items-center gap-3 shrink-0">
+            <button
+              onClick={() => {
+                setDesktopLayout(DEFAULT_DESKTOP_LAYOUT);
+                setMobileLayout(DEFAULT_MOBILE_LAYOUT);
+                try {
+                  localStorage.removeItem("dashboard-desktop-layout");
+                  localStorage.removeItem("dashboard-mobile-layout");
+                } catch {}
+              }}
+              className="text-xs text-primary/70 hover:text-primary hover:underline transition-colors"
+            >
+              Przywróć domyślne
+            </button>
+            <button onClick={() => setIsEditMode(false)} className="text-xs text-primary hover:underline font-medium">Zakończ edycję</button>
           </div>
         </div>
-        </SectionCollapse>
-        </div>{/* end Kalendarz */}
+      )}
 
-        {/* Nieprzeczytane */}
-        <div className="order-3">
-        <SectionCollapse hidden={isSectionHidden("wiadomosci")}>
-        <div className="space-y-3 lg:space-y-0 lg:pb-5">
-            <div className="flex items-center gap-1.5 mb-0 lg:mb-[10px]">
-              <h2 className="text-sm lg:text-[13px] font-semibold lg:font-bold text-foreground">{t.home.unreadMessages}</h2>
-              <InfoTooltip items={[t.home.unreadTip1, t.home.unreadTip2]} />
+      {/* Main grid — DnD controlled */}
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragOver={handleDragOver} onDragEnd={handleDragEnd}>
+        {isDesktop ? (
+          <div className="grid grid-cols-2 gap-5 items-start">
+            <SortableContext items={desktopLayout.left} strategy={verticalListSortingStrategy}>
+              <div className="flex flex-col gap-[22px]">
+                {desktopLayout.left.map((key, i) => (
+                  <SortableSection key={key} id={key} isEditMode={isEditMode} delay={i * 80}>
+                    {renderSectionContent(key)}
+                  </SortableSection>
+                ))}
+              </div>
+            </SortableContext>
+            <SortableContext items={desktopLayout.right} strategy={verticalListSortingStrategy}>
+              <div className="flex flex-col gap-[22px]">
+                {desktopLayout.right.map((key, i) => (
+                  <SortableSection key={key} id={key} isEditMode={isEditMode} delay={(i + 2) * 80}>
+                    {renderSectionContent(key)}
+                  </SortableSection>
+                ))}
+              </div>
+            </SortableContext>
+          </div>
+        ) : (
+          <SortableContext items={mobileLayout} strategy={verticalListSortingStrategy}>
+            <div className="flex flex-col gap-5">
+              {mobileLayout.map((key, i) => (
+                <SortableSection key={key} id={key} isEditMode={isEditMode} delay={i * 80}>
+                  {renderSectionContent(key)}
+                </SortableSection>
+              ))}
             </div>
-
-            {(() => {
-              const visibleD = renderDiscussions.filter((c) => !viewedMessageIds.has(c.id));
-              const visibleL = listMessages.filter((c) => !viewedMessageIds.has(c.id));
-              const visibleRR = renderReplies.filter((r) => !viewedMessageIds.has(r.id));
-              const visibleLR = listReplies.filter((r) => !viewedMessageIds.has(r.id));
-              type MI =
-                | { type: "discussion"; data: RenderDiscussion }
-                | { type: "list"; data: ListMessage }
-                | { type: "renderReply"; data: RenderReply }
-                | { type: "listReply"; data: ListReply };
-              const msgs: MI[] = [
-                ...visibleD.map((d) => ({ type: "discussion" as const, data: d })),
-                ...visibleL.map((m) => ({ type: "list" as const, data: m })),
-                ...visibleRR.map((r) => ({ type: "renderReply" as const, data: r })),
-                ...visibleLR.map((r) => ({ type: "listReply" as const, data: r })),
-              ].sort((a, b) => new Date(b.data.createdAt).getTime() - new Date(a.data.createdAt).getTime());
-              if (msgs.length === 0) return (
-                <div className="rounded-xl border border-border bg-card p-6 text-center">
-                  <CheckCircle2 size={28} className="mx-auto mb-2 text-green-500" />
-                  <p className="text-sm font-medium text-foreground">{t.home.upToDate}</p>
-                  <p className="text-xs text-muted-foreground mt-1">{t.home.noUnread}</p>
-                </div>
-              );
-              return (
-                <div className="rounded-xl border border-border bg-card overflow-hidden">
-                  <div className="divide-y divide-border max-h-[260px] overflow-y-auto">
-                    {msgs.map((item) => {
-                      if (item.type === "discussion") {
-                        const d = item.data;
-                        return (
-                          <div key={d.id} className="flex items-center hover:bg-muted/50 transition-colors">
-                            <Link href={`/projekty/${d.projectId}/renders/${d.renderId}`} onClick={() => markDiscussionViewed(d.id)} className="flex items-start gap-3 px-4 py-3 flex-1 min-w-0">
-                              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5"><Comment size={15} className="text-primary" /></div>
-                              <div className="min-w-0 flex-1">
-                                <p className="text-sm font-medium truncate">{d.content}</p>
-                                <p className="text-xs text-muted-foreground truncate">{d.author} · {d.renderName} · {d.projectTitle}</p>
-                              </div>
-                              <span className="shrink-0 text-xs text-muted-foreground mr-2">{timeAgo(d.createdAt, t)}</span>
-                            </Link>
-                            <button onClick={() => markDiscussionViewed(d.id)} title={t.home.markAsRead} className="shrink-0 mr-3 p-1 rounded-md text-muted-foreground/40 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-950/30 transition-colors"><CheckCircle2 size={16} /></button>
-                          </div>
-                        );
-                      }
-                      if (item.type === "listReply") {
-                        const r = item.data;
-                        return (
-                          <div key={r.id} className="flex items-center hover:bg-muted/50 transition-colors">
-                            <Link href={`/listy-zakupowe/${r.listSlug ?? r.listId}?product=${r.productId}`} onClick={() => markListReplyViewed(r)} className="flex items-start gap-3 px-4 py-3 flex-1 min-w-0">
-                              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5"><Comment size={15} className="text-primary" /></div>
-                              <div className="min-w-0 flex-1">
-                                <p className="text-sm font-medium truncate">{r.content}</p>
-                                <p className="text-xs text-muted-foreground truncate">{r.author} · {r.productName} · {r.listName}</p>
-                              </div>
-                              <span className="shrink-0 text-xs text-muted-foreground mr-2">{timeAgo(r.createdAt, t)}</span>
-                            </Link>
-                            <button onClick={() => markListReplyViewed(r)} title={t.home.markAsRead} className="shrink-0 mr-3 p-1 rounded-md text-muted-foreground/40 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-950/30 transition-colors"><CheckCircle2 size={16} /></button>
-                          </div>
-                        );
-                      }
-                      if (item.type === "renderReply") {
-                        const r = item.data;
-                        return (
-                          <div key={r.id} className="flex items-center hover:bg-muted/50 transition-colors">
-                            <Link href={`/projekty/${r.projectId}/renders/${r.renderId}`} onClick={() => markRenderReplyViewed(r)} className="flex items-start gap-3 px-4 py-3 flex-1 min-w-0">
-                              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5"><Comment size={15} className="text-primary" /></div>
-                              <div className="min-w-0 flex-1">
-                                <p className="text-sm font-medium truncate">{r.content}</p>
-                                <p className="text-xs text-muted-foreground truncate">{r.author} · {r.renderName} · {r.projectTitle}</p>
-                              </div>
-                              <span className="shrink-0 text-xs text-muted-foreground mr-2">{timeAgo(r.createdAt, t)}</span>
-                            </Link>
-                            <button onClick={() => markRenderReplyViewed(r)} title={t.home.markAsRead} className="shrink-0 mr-3 p-1 rounded-md text-muted-foreground/40 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-950/30 transition-colors"><CheckCircle2 size={16} /></button>
-                          </div>
-                        );
-                      }
-                      const m = item.data;
-                      return (
-                        <div key={m.id} className="flex items-center hover:bg-muted/50 transition-colors">
-                          <Link href={`/listy-zakupowe/${m.listSlug ?? m.listId}?product=${m.productId}`} onClick={() => markListMessageViewed(m.id)} className="flex items-start gap-3 px-4 py-3 flex-1 min-w-0">
-                            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5"><Comment size={15} className="text-primary" /></div>
-                            <div className="min-w-0 flex-1">
-                              <p className="text-sm font-medium truncate">{m.content}</p>
-                              <p className="text-xs text-muted-foreground truncate">{m.author} · {m.productName} · {m.listName}</p>
-                            </div>
-                            <span className="shrink-0 text-xs text-muted-foreground mr-2">{timeAgo(m.createdAt, t)}</span>
-                          </Link>
-                          <button onClick={() => markListMessageViewed(m.id)} title={t.home.markAsRead} className="shrink-0 mr-3 p-1 rounded-md text-muted-foreground/40 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-950/30 transition-colors"><CheckCircle2 size={16} /></button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })()}
-        </div>
-        </SectionCollapse>
-        </div>{/* end Nieprzeczytane */}
-
-        {/* Do zrobienia */}
-        <div className="order-4">
-        <SectionCollapse hidden={isSectionHidden("zadania")}>
-        <div className="space-y-3 lg:space-y-0">
-            <div className="flex items-center gap-1.5 mb-0 lg:mb-[10px]">
-              <h2 className="text-sm lg:text-[13px] font-semibold lg:font-bold text-foreground">{t.home.todoTitle}</h2>
-              <InfoTooltip items={[t.home.todoTip1, t.home.todoTip2, t.home.todoTip3, t.home.todoTip4]} />
+          </SortableContext>
+        )}
+        <DragOverlay>
+          {activeId ? (
+            <div className="opacity-90 shadow-2xl rounded-xl pointer-events-none ring-2 ring-primary/30">
+              {renderSectionContent(activeId as SectionKey)}
             </div>
+          ) : null}
+        </DragOverlay>
+      </DndContext>
 
-          {todoCount === 0 ? (
-            <div className="rounded-xl border border-border bg-card p-6 text-center">
-              <CheckCircle2 size={28} className="mx-auto mb-2 text-green-500" />
-              <p className="text-sm font-medium text-foreground">{t.home.upToDate}</p>
-              <p className="text-xs text-muted-foreground mt-1">{t.home.noTodo}</p>
-            </div>
-          ) : (
-            <div className="rounded-xl border border-border bg-card overflow-hidden">
-            <div className="divide-y divide-border max-h-[192px] overflow-y-auto">
-
-              {allTodoItems.map((item) => {
-                if (item.type === "task") {
-                  const task = item.data;
-                  const due = new Date(task.dueDate);
-                  const todayDate = new Date();
-                  const isToday =
-                    due.getFullYear() === todayDate.getFullYear() &&
-                    due.getMonth() === todayDate.getMonth() &&
-                    due.getDate() === todayDate.getDate();
-                  const isOverdue = due < todayDate && !isToday;
-                  const dueDateLabel = due.toLocaleDateString("pl-PL", { day: "numeric", month: "short" });
-                  return (
-                    <Link
-                      key={task.id}
-                      href="/zadania"
-                      className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors"
-                    >
-                      <div className="w-8 h-8 rounded-lg bg-violet-100 dark:bg-violet-900/40 flex items-center justify-center shrink-0">
-                        <CheckSquare size={15} className="text-violet-600 dark:text-violet-400" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium truncate">{task.title}</p>
-                        <p className="text-xs text-muted-foreground truncate">
-                          {task.projectTitle ? `${task.projectTitle} · ` : ""}{t.home.todoTaskLabel}
-                        </p>
-                      </div>
-                      {(isToday || isOverdue) && (
-                        <span className="shrink-0 text-xs font-medium px-1.5 py-0.5 rounded-md bg-red-100 text-red-600 dark:bg-red-950/40 dark:text-red-400">
-                          {dueDateLabel}
-                        </span>
-                      )}
-                    </Link>
-                  );
-                }
-
-                if (item.type === "pin") {
-                  const pin = item.data;
-                  return (
-                    <div key={pin.id} className="flex items-center hover:bg-muted/50 transition-colors">
-                      <Link
-                        href={`/projekty/${pin.projectId}/renders/${pin.renderId}?pinId=${pin.id}`}
-                        onClick={() => markPinViewed(pin.id)}
-                        className="flex items-start gap-3 px-4 py-3 flex-1 min-w-0"
-                      >
-                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-                          <MapPin size={15} className="text-primary" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium truncate">{pin.title ?? pin.content}</p>
-                          <p className="text-xs text-muted-foreground truncate">
-                            {pin.author} · {pin.renderName}
-                          </p>
-                        </div>
-                        <span className="shrink-0 text-xs text-muted-foreground mr-2">{timeAgo(pin.createdAt, t)}</span>
-                      </Link>
-                      <button
-                        onClick={() => markPinViewed(pin.id)}
-                        title={t.home.markAsViewed}
-                        className="shrink-0 mr-3 p-1 rounded-md text-muted-foreground/40 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-950/30 transition-colors"
-                      >
-                        <CheckCircle2 size={16} />
-                      </button>
-                    </div>
-                  );
-                }
-
-                if (item.type === "status") {
-                  const req = item.data;
-                  return (
-                    <div key={req.id} className="flex items-start gap-3 px-4 py-3">
-                      <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center shrink-0 mt-0.5">
-                        <Bell size={15} className="text-amber-600 dark:text-amber-400" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium truncate">{req.renderName}</p>
-                        <p className="text-xs text-muted-foreground truncate">
-                          {req.clientName ? `${req.clientName} · ` : ""}{t.home.statusChangeLabel} · {req.projectTitle}
-                        </p>
-                        <div className="flex gap-1.5 mt-2">
-                          <button
-                            onClick={() => handleRequest(req.id, "status", "confirm")}
-                            disabled={actingOn !== null}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium bg-green-600 hover:bg-green-700 text-white disabled:opacity-50 transition-colors"
-                          >
-                            <Check size={11} />
-                            {t.common.confirm}
-                          </button>
-                          <button
-                            onClick={() => handleRequest(req.id, "status", "reject")}
-                            disabled={actingOn !== null}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium border border-red-200 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 disabled:opacity-50 transition-colors"
-                          >
-                            <X size={11} />
-                            {t.home.rejectBtn}
-                          </button>
-                        </div>
-                      </div>
-                      <div className="flex flex-col items-end gap-1 shrink-0">
-                        <span className="text-xs text-muted-foreground">{timeAgo(req.createdAt, t)}</span>
-                        <button
-                          onClick={() => setResolvedIds((prev) => new Set([...prev, req.id]))}
-                          title={t.home.removeFromList}
-                          className="p-1 rounded-md text-muted-foreground/40 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-950/30 transition-colors"
-                        >
-                          <CheckCircle2 size={16} />
-                        </button>
-                      </div>
-                    </div>
-                  );
-                }
-
-                const req = item.data;
-                return (
-                  <div key={req.id} className="flex items-start gap-3 px-4 py-3">
-                    <div className="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900/40 flex items-center justify-center shrink-0 mt-0.5">
-                      <RotateCcw size={15} className="text-purple-600 dark:text-purple-400" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium truncate">{req.renderName}</p>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {req.clientName ? `${req.clientName} · ` : ""}{t.home.versionRestoreLabel} · {req.projectTitle}
-                      </p>
-                      <div className="flex gap-1.5 mt-2">
-                        <button
-                          onClick={() => handleRequest(req.id, "version", "confirm")}
-                          disabled={actingOn !== null}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium bg-green-600 hover:bg-green-700 text-white disabled:opacity-50 transition-colors"
-                        >
-                          <Check size={11} />
-                          {t.common.restore}
-                        </button>
-                        <button
-                          onClick={() => handleRequest(req.id, "version", "reject")}
-                          disabled={actingOn !== null}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium border border-red-200 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 disabled:opacity-50 transition-colors"
-                        >
-                          <X size={11} />
-                          {t.home.rejectBtn}
-                        </button>
-                      </div>
-                    </div>
-                    <div className="flex flex-col items-end gap-1 shrink-0">
-                      <span className="text-xs text-muted-foreground">{timeAgo(req.createdAt, t)}</span>
-                      <button
-                        onClick={() => setResolvedIds((prev) => new Set([...prev, req.id]))}
-                        title={t.home.removeFromList}
-                        className="p-1 rounded-md text-muted-foreground/40 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-950/30 transition-colors"
-                      >
-                        <CheckCircle2 size={16} />
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-
-            </div>
-            </div>
-          )}
-        </div>
-        </SectionCollapse>
-        </div>{/* end Do zrobienia */}
-
-        </div>{/* end right column */}
-
-      </div>{/* end main grid */}
+      {/* end main grid */}
     </div>
   );
 }

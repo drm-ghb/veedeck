@@ -172,7 +172,7 @@ export const en: TranslationKeys = {
     sectionSg: "section",
     sectionFw: "sections",
     sectionPl: "sections",
-    calendarTitle: "Calendar — today",
+    calendarTitle: "Calendar - today",
     openLabel: "Open",
     noEvents: "No events today",
     scheduleEvent: "Schedule a meeting \u2192",

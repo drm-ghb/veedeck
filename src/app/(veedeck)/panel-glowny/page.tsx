@@ -290,6 +290,7 @@ export default async function DashboardPage() {
           title: true,
           dueDate: true,
           status: true,
+          priority: true,
           project: { select: { title: true } },
         },
         orderBy: { dueDate: "asc" },
@@ -446,6 +447,7 @@ export default async function DashboardPage() {
         title: t.title,
         dueDate: t.dueDate!.toISOString(),
         status: t.status,
+        priority: t.priority,
         projectTitle: t.project?.title ?? null,
       }))}
     />

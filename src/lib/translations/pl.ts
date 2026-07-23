@@ -170,7 +170,7 @@ export const pl = {
     sectionSg: "sekcja",
     sectionFw: "sekcje",
     sectionPl: "sekcji",
-    calendarTitle: "Kalendarz — dziś",
+    calendarTitle: "Kalendarz - dziś",
     openLabel: "Otwórz",
     noEvents: "Brak wydarzeń na dziś",
     scheduleEvent: "Zaplanuj spotkanie →",

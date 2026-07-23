@@ -642,3 +642,13 @@ body.lightbox-open #app-navbar { display: none; }
   pointer-events: none;
   height: 0;
 }
+
+/* Dashboard section wiggle animation (edit mode) */
+@keyframes dashboard-section-wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  20%       { transform: rotate(-0.4deg); }
+  60%       { transform: rotate(0.4deg); }
+}
+.dashboard-section-wiggle {
+  animation: dashboard-section-wiggle 0.45s ease-in-out infinite;
+}
