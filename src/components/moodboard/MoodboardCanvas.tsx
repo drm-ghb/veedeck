@@ -1500,11 +1500,20 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                   }}
                 />
               )}
-              {/* Info banner */}
-              <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-3 bg-card border border-border rounded-xl shadow-lg px-4 py-2 pointer-events-none">
-                <span className="text-sm text-muted-foreground">Zaznacz obszar do eksportu jako JPG</span>
+              {/* Info banner + Anuluj — top center */}
+              <div
+                className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-card border border-border rounded-xl shadow-lg px-3 py-2 pointer-events-auto"
+                onMouseDown={(e) => e.stopPropagation()}
+              >
+                <span className="text-sm text-muted-foreground whitespace-nowrap">Zaznacz obszar do eksportu jako JPG</span>
+                <button
+                  onClick={() => { setExportMode(false); setExportRect(null); }}
+                  className="px-3 py-1 rounded-lg text-sm text-muted-foreground hover:bg-muted transition-colors border border-border shrink-0"
+                >
+                  Anuluj
+                </button>
               </div>
-              {/* Confirm / cancel — shown when selection is finished */}
+              {/* Confirm — shown below selection when finished */}
               {exportRect && exportRect.w > 20 && exportRect.h > 20 && !isExportDrawing && (
                 <div
                   style={{
@@ -1514,20 +1523,13 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                     transform: "translateX(-50%)",
                   }}
                   className="flex items-center gap-2 bg-card border border-border rounded-xl shadow-lg px-3 py-2 pointer-events-auto"
+                  onMouseDown={(e) => e.stopPropagation()}
                 >
                   <button onClick={doExportJpg} className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">
                     <Download size={14} />
                     Pobierz JPG
                   </button>
                   <button onClick={() => { setExportMode(false); setExportRect(null); }} className="px-3 py-1.5 rounded-lg text-sm text-muted-foreground hover:bg-muted transition-colors">
-                    Anuluj
-                  </button>
-                </div>
-              )}
-              {/* Cancel if no selection yet */}
-              {(!exportRect || (exportRect.w <= 20 || exportRect.h <= 20)) && (
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 pointer-events-auto">
-                  <button onClick={() => { setExportMode(false); setExportRect(null); }} className="px-3 py-1.5 rounded-lg text-sm text-muted-foreground bg-card border border-border hover:bg-muted shadow-lg transition-colors">
                     Anuluj
                   </button>
                 </div>
