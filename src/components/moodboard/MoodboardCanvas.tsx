@@ -1,7 +1,7 @@
 "use client";
 
-import { useRef, useState, useCallback, useEffect, type KeyboardEvent } from "react";
-import { Stage, Layer, Rect, Ellipse, Text, Arrow, Line, Image as KonvaImage, Transformer, Group } from "react-konva";
+import { useRef, useState, useCallback, useEffect, Fragment, type KeyboardEvent } from "react";
+import { Stage, Layer, Rect, Ellipse, Text, Arrow, Line, Image as KonvaImage, Transformer, Group, Path as KonvaPath, Circle as KonvaCircle } from "react-konva";
 import type Konva from "konva";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -17,7 +17,7 @@ type Tool = "select" | "hand" | "rect" | "ellipse" | "text" | "arrow" | "line" |
 
 export interface CanvasElement {
   id: string;
-  type: "rect" | "ellipse" | "text" | "arrow" | "line" | "note" | "image";
+  type: "rect" | "ellipse" | "text" | "arrow" | "line" | "note" | "image" | "connection";
   x: number;
   y: number;
   width?: number;
@@ -39,6 +39,11 @@ export interface CanvasElement {
   // image
   imageUrl?: string;
   zIndex?: number;
+  // connection (bezier connector between elements)
+  sourceId?: string;
+  sourceAnchor?: "top" | "right" | "bottom" | "left";
+  targetId?: string;
+  targetAnchor?: "top" | "right" | "bottom" | "left";
 }
 
 interface CanvasData {
@@ -73,6 +78,45 @@ const NOTE_COLORS = [
   { bg: "#e9d5ff", stroke: "#7c3aed", label: "Fioletowy" },
   { bg: "#fed7aa", stroke: "#ea580c", label: "Pomarańczowy" },
 ];
+
+// ── Connection helpers ──────────────────────────────────────────────────────
+
+type Anchor = "top" | "right" | "bottom" | "left";
+
+function getElementBounds(el: CanvasElement) {
+  if (el.type === "ellipse") {
+    const w = el.width ?? 120, h = el.height ?? 80;
+    return { x: el.x - w / 2, y: el.y - h / 2, width: w, height: h };
+  }
+  return { x: el.x, y: el.y, width: el.width ?? 120, height: el.height ?? 80 };
+}
+
+function getAnchorPoint(el: CanvasElement, anchor: Anchor) {
+  const b = getElementBounds(el);
+  const cx = b.x + b.width / 2, cy = b.y + b.height / 2;
+  if (anchor === "top")    return { x: cx, y: b.y };
+  if (anchor === "right")  return { x: b.x + b.width, y: cy };
+  if (anchor === "bottom") return { x: cx, y: b.y + b.height };
+  return { x: b.x, y: cy };
+}
+
+function getBezierData(p1: {x:number;y:number}, a1: Anchor, p2: {x:number;y:number}, a2: Anchor) {
+  const dist = Math.sqrt((p2.x - p1.x) ** 2 + (p2.y - p1.y) ** 2);
+  const off = Math.max(40, Math.min(200, dist * 0.45));
+  let cx1 = p1.x, cy1 = p1.y, cx2 = p2.x, cy2 = p2.y;
+  if (a1 === "right")  cx1 += off; else if (a1 === "left")   cx1 -= off;
+  if (a1 === "bottom") cy1 += off; else if (a1 === "top")    cy1 -= off;
+  if (a2 === "left")   cx2 -= off; else if (a2 === "right")  cx2 += off;
+  if (a2 === "top")    cy2 -= off; else if (a2 === "bottom") cy2 += off;
+  return { path: `M ${p1.x} ${p1.y} C ${cx1} ${cy1} ${cx2} ${cy2} ${p2.x} ${p2.y}`, cx2, cy2 };
+}
+
+function arrowheadPath(px: number, py: number, cpx: number, cpy: number, size = 10) {
+  const angle = Math.atan2(py - cpy, px - cpx);
+  const a1 = angle - (Math.PI * 5) / 6;
+  const a2 = angle + (Math.PI * 5) / 6;
+  return `M ${px} ${py} L ${(px + size * Math.cos(a1)).toFixed(2)} ${(py + size * Math.sin(a1)).toFixed(2)} L ${(px + size * Math.cos(a2)).toFixed(2)} ${(py + size * Math.sin(a2)).toFixed(2)} Z`;
+}
 
 // ── ProjectFlow types ──────────────────────────────────────────────────────
 
@@ -208,6 +252,14 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
   const containerRef = useRef<HTMLDivElement>(null);
   const [spaceDown, setSpaceDown] = useState(false);
   const spaceDownRef = useRef(false);
+  // Connection dragging — refs for use in event handlers (avoid stale closures)
+  const [hoveredElementId, setHoveredElementId] = useState<string | null>(null);
+  type DraggingConn = { sourceId: string; sourceAnchor: Anchor; currentX: number; currentY: number };
+  const draggingConnRef = useRef<DraggingConn | null>(null);
+  const [draggingConn, setDraggingConn] = useState<DraggingConn | null>(null);
+  const nearestAnchorRef = useRef<{ elementId: string; anchor: Anchor } | null>(null);
+  const [nearestAnchor, setNearestAnchor] = useState<{ elementId: string; anchor: Anchor } | null>(null);
+  const isConnecting = useRef(false);
 
   // Measure container
   useEffect(() => {
@@ -322,7 +374,12 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
 
       if (e.key === "Delete" || e.key === "Backspace") {
         if (selectedIds.length > 0) {
-          updateElements(elements.filter((el) => !selectedIds.includes(el.id)));
+          updateElements(elements.filter((el) => {
+            if (selectedIds.includes(el.id)) return false;
+            // also remove connections attached to deleted elements
+            if (el.type === "connection" && (selectedIds.includes(el.sourceId ?? "") || selectedIds.includes(el.targetId ?? ""))) return false;
+            return true;
+          }));
           setSelectedIds([]);
         }
       }
@@ -362,7 +419,9 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
     if (!tr) return;
     const stage = stageRef.current;
     if (!stage) return;
-    const nodes = selectedIds.map((sid) => stage.findOne("#" + sid)).filter(Boolean) as Konva.Node[];
+    const nodes = selectedIds
+      .filter(sid => elements.find(el => el.id === sid)?.type !== "connection")
+      .map((sid) => stage.findOne("#" + sid)).filter(Boolean) as Konva.Node[];
     tr.nodes(nodes);
     tr.getLayer()?.batchDraw();
   }, [selectedIds, elements]);
@@ -386,6 +445,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
 
   // Stage mouse events
   function handleMouseDown(e: Konva.KonvaEventObject<MouseEvent>) {
+    if (isConnecting.current) return;
     const isStage = e.target === e.target.getStage();
 
     // Middle mouse, hand tool, or space held = pan
@@ -422,6 +482,27 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
   }
 
   function handleMouseMove(e: Konva.KonvaEventObject<MouseEvent>) {
+    if (draggingConnRef.current) {
+      const pos = stagePoint(e.evt.clientX, e.evt.clientY);
+      const updated = { ...draggingConnRef.current, currentX: pos.x, currentY: pos.y };
+      draggingConnRef.current = updated;
+      setDraggingConn({ ...updated });
+      // Find nearest anchor within 30px screen-space
+      const threshold = 30 / stageScale;
+      let nearest: { elementId: string; anchor: Anchor } | null = null;
+      let minDist = threshold;
+      for (const el of elements) {
+        if (el.id === draggingConnRef.current.sourceId || el.type === "connection") continue;
+        for (const anchor of ["top", "right", "bottom", "left"] as Anchor[]) {
+          const pt = getAnchorPoint(el, anchor);
+          const dist = Math.sqrt((pt.x - pos.x) ** 2 + (pt.y - pos.y) ** 2);
+          if (dist < minDist) { minDist = dist; nearest = { elementId: el.id, anchor }; }
+        }
+      }
+      nearestAnchorRef.current = nearest;
+      setNearestAnchor(nearest);
+      return;
+    }
     if (isPanning) {
       const stage = stageRef.current;
       if (!stage) return;
@@ -436,6 +517,25 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
   }
 
   function handleMouseUp(e: Konva.KonvaEventObject<MouseEvent>) {
+    if (draggingConnRef.current) {
+      isConnecting.current = false;
+      const dc = draggingConnRef.current;
+      const na = nearestAnchorRef.current;
+      if (na && na.elementId !== dc.sourceId) {
+        const newEl: CanvasElement = {
+          id: uid(), type: "connection", x: 0, y: 0,
+          sourceId: dc.sourceId, sourceAnchor: dc.sourceAnchor,
+          targetId: na.elementId, targetAnchor: na.anchor,
+          stroke: "#334155", strokeWidth: 2, opacity: 1,
+        };
+        updateElements([...elements, newEl]);
+      }
+      draggingConnRef.current = null;
+      nearestAnchorRef.current = null;
+      setDraggingConn(null);
+      setNearestAnchor(null);
+      return;
+    }
     if (isPanning) { setIsPanning(false); return; }
     if (!isDrawing || !drawStart || !drawRect) { setIsDrawing(false); return; }
     setIsDrawing(false);
@@ -682,13 +782,51 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
             onMouseUp={handleMouseUp}
           >
             <Layer>
+              {/* ── Connections (bezier curves, rendered behind elements) ── */}
+              {elements.filter(el => el.type === "connection").map(el => {
+                const srcEl = elements.find(e => e.id === el.sourceId);
+                const tgtEl = elements.find(e => e.id === el.targetId);
+                if (!srcEl || !tgtEl || !el.sourceAnchor || !el.targetAnchor) return null;
+                const p1 = getAnchorPoint(srcEl, el.sourceAnchor as Anchor);
+                const p2 = getAnchorPoint(tgtEl, el.targetAnchor as Anchor);
+                const { path, cx2, cy2 } = getBezierData(p1, el.sourceAnchor as Anchor, p2, el.targetAnchor as Anchor);
+                const headData = arrowheadPath(p2.x, p2.y, cx2, cy2);
+                const isSel = selectedIds.includes(el.id);
+                const color = isSel ? "#6366f1" : (el.stroke ?? "#334155");
+                return (
+                  <Fragment key={el.id}>
+                    <KonvaPath
+                      id={el.id}
+                      data={path}
+                      stroke={color}
+                      strokeWidth={(el.strokeWidth ?? 2) + (isSel ? 1 : 0)}
+                      fill="transparent"
+                      opacity={el.opacity ?? 1}
+                      hitStrokeWidth={14}
+                      onClick={() => { if (tool === "select") setSelectedIds([el.id]); }}
+                      onTap={() => { if (tool === "select") setSelectedIds([el.id]); }}
+                    />
+                    <KonvaPath
+                      data={headData}
+                      fill={color}
+                      stroke="transparent"
+                      opacity={el.opacity ?? 1}
+                      listening={false}
+                    />
+                  </Fragment>
+                );
+              })}
+
               {elements.map((el) => {
+                if (el.type === "connection") return null; // rendered separately above
                 const isSel = selectedIds.includes(el.id);
                 const commonProps = {
                   id: el.id,
                   opacity: el.opacity ?? 1,
                   rotation: el.rotation ?? 0,
-                  draggable: tool === "select",
+                  draggable: tool === "select" && !draggingConnRef.current,
+                  onMouseEnter: () => { if (tool === "select") setHoveredElementId(el.id); },
+                  onMouseLeave: () => setHoveredElementId(null),
                   onClick: () => {
                     if (tool === "select") setSelectedIds([el.id]);
                   },
@@ -779,6 +917,78 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
               )}
 
               <Transformer ref={transformerRef} rotateEnabled keepRatio={false} borderStroke="#6366f1" anchorStroke="#6366f1" anchorFill="#fff" anchorSize={8} borderStrokeWidth={1.5} />
+
+              {/* ── Anchor handles on hovered element ── */}
+              {tool === "select" && !draggingConn && hoveredElementId && (() => {
+                const el = elements.find(e => e.id === hoveredElementId && e.type !== "connection");
+                if (!el) return null;
+                return (["top", "right", "bottom", "left"] as Anchor[]).map(anchor => {
+                  const pt = getAnchorPoint(el, anchor);
+                  return (
+                    <KonvaCircle
+                      key={anchor}
+                      x={pt.x} y={pt.y} radius={6}
+                      fill="white" stroke="#6366f1" strokeWidth={2}
+                      onMouseDown={(e) => {
+                        e.cancelBubble = true;
+                        isConnecting.current = true;
+                        const conn = { sourceId: el.id, sourceAnchor: anchor, currentX: pt.x, currentY: pt.y };
+                        draggingConnRef.current = conn;
+                        setDraggingConn(conn);
+                      }}
+                      onMouseEnter={(e) => { const s = e.target.getStage(); if (s) s.container().style.cursor = "crosshair"; }}
+                      onMouseLeave={(e) => { const s = e.target.getStage(); if (s) s.container().style.cursor = activeCursor; }}
+                    />
+                  );
+                });
+              })()}
+
+              {/* ── All target anchors visible during connection drag ── */}
+              {draggingConn && elements
+                .filter(el => el.id !== draggingConn.sourceId && el.type !== "connection")
+                .flatMap(el =>
+                  (["top", "right", "bottom", "left"] as Anchor[]).map(anchor => {
+                    const pt = getAnchorPoint(el, anchor);
+                    const isNearest = nearestAnchor?.elementId === el.id && nearestAnchor?.anchor === anchor;
+                    return (
+                      <KonvaCircle
+                        key={`${el.id}-${anchor}`}
+                        x={pt.x} y={pt.y}
+                        radius={isNearest ? 8 : 5}
+                        fill={isNearest ? "#6366f1" : "white"}
+                        stroke="#6366f1" strokeWidth={2}
+                        listening={false}
+                      />
+                    );
+                  })
+                )
+              }
+
+              {/* ── Live connection preview while dragging ── */}
+              {draggingConn && (() => {
+                const srcEl = elements.find(e => e.id === draggingConn.sourceId);
+                if (!srcEl) return null;
+                const p1 = getAnchorPoint(srcEl, draggingConn.sourceAnchor);
+                const endPt = nearestAnchor
+                  ? (() => { const t = elements.find(e => e.id === nearestAnchor.elementId); return t ? getAnchorPoint(t, nearestAnchor.anchor) : { x: draggingConn.currentX, y: draggingConn.currentY }; })()
+                  : { x: draggingConn.currentX, y: draggingConn.currentY };
+                const dist = Math.sqrt((endPt.x - p1.x) ** 2 + (endPt.y - p1.y) ** 2);
+                const off = Math.max(40, Math.min(200, dist * 0.45));
+                let cx1 = p1.x, cy1 = p1.y;
+                if (draggingConn.sourceAnchor === "right")  cx1 += off;
+                else if (draggingConn.sourceAnchor === "left")   cx1 -= off;
+                if (draggingConn.sourceAnchor === "bottom") cy1 += off;
+                else if (draggingConn.sourceAnchor === "top")    cy1 -= off;
+                const cx2 = endPt.x + (p1.x - endPt.x) * 0.3;
+                const cy2 = endPt.y + (p1.y - endPt.y) * 0.3;
+                return (
+                  <KonvaPath
+                    data={`M ${p1.x} ${p1.y} C ${cx1} ${cy1} ${cx2} ${cy2} ${endPt.x} ${endPt.y}`}
+                    stroke="#6366f1" strokeWidth={2} fill="transparent"
+                    dash={[6, 4]} listening={false} opacity={0.8}
+                  />
+                );
+              })()}
             </Layer>
           </Stage>
 
