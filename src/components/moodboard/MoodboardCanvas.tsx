@@ -10,8 +10,9 @@ import {
   Trash2, ZoomIn, ZoomOut, Undo2, Redo2, Share2, Check, Image, StickyNote,
   ChevronRight, ChevronDown, Search, Package, PushPin, X, Folder, RefreshCw, LocalMall, LayoutGrid,
   ArrowUp, ArrowDown, Layers, Palette, Crop, Eraser, Check as CheckIcon, Copy,
-  Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, HelpCircle, Pen,
+  Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, HelpCircle, Pen, MoreVertical, Download,
 } from "@/components/ui/icons";
+import { useRouter } from "next/navigation";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -381,6 +382,20 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
   const dragCounterRef2 = useRef(0);
   const [fontPickerOpen, setFontPickerOpen] = useState(false);
   const [fontSearch, setFontSearch] = useState("");
+  // Edit modal
+  const router = useRouter();
+  const [editMenuOpen, setEditMenuOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editTitle, setEditTitle] = useState(initialTitle);
+  const [editClientId, setEditClientId] = useState<string>(client?.id ?? "");
+  const [editProjectId, setEditProjectId] = useState<string>(project?.id ?? "");
+  const [editClients, setEditClients] = useState<{ id: string; name: string; projects: { id: string; title: string }[] }[]>([]);
+  const [editSaving, setEditSaving] = useState(false);
+  // Export
+  const [exportMode, setExportMode] = useState(false);
+  const [exportRect, setExportRect] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
+  const [isExportDrawing, setIsExportDrawing] = useState(false);
+  const exportDrawStartRef = useRef<{ x: number; y: number } | null>(null);
   // Clipboard for copy/paste
   const clipboardRef = useRef<CanvasElement[]>([]);
 
@@ -1052,6 +1067,86 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
   const firstSelected = selected[0];
 
   // Share toggle
+  async function openEditModal() {
+    setEditMenuOpen(false);
+    setEditTitle(title);
+    setEditClientId(client?.id ?? "");
+    setEditProjectId(project?.id ?? "");
+    setEditModalOpen(true);
+    const res = await fetch("/api/clients");
+    if (res.ok) setEditClients(await res.json());
+  }
+
+  async function handleSaveEdit() {
+    if (editSaving) return;
+    setEditSaving(true);
+    try {
+      const res = await fetch(`/api/moodboards/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: editTitle.trim() || title,
+          clientId: editClientId || null,
+          projectId: editProjectId || null,
+        }),
+      });
+      if (res.ok) {
+        if (editTitle.trim()) setTitle(editTitle.trim());
+        setEditModalOpen(false);
+        router.refresh();
+        toast.success("Zapisano zmiany");
+      } else {
+        toast.error("Błąd zapisu");
+      }
+    } finally {
+      setEditSaving(false);
+    }
+  }
+
+  function handleExportMouseDown(e: React.MouseEvent) {
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    exportDrawStartRef.current = { x, y };
+    setIsExportDrawing(true);
+    setExportRect({ x, y, w: 0, h: 0 });
+  }
+
+  function handleExportMouseMove(e: React.MouseEvent) {
+    if (!isExportDrawing || !exportDrawStartRef.current) return;
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const cx = e.clientX - rect.left;
+    const cy = e.clientY - rect.top;
+    const x = Math.min(cx, exportDrawStartRef.current.x);
+    const y = Math.min(cy, exportDrawStartRef.current.y);
+    setExportRect({ x, y, w: Math.abs(cx - exportDrawStartRef.current.x), h: Math.abs(cy - exportDrawStartRef.current.y) });
+  }
+
+  function handleExportMouseUp() {
+    setIsExportDrawing(false);
+  }
+
+  function doExportJpg() {
+    if (!exportRect || !stageRef.current) return;
+    const { x, y, w, h } = exportRect;
+    const stageX = (x - stagePos.x) / stageScale;
+    const stageY = (y - stagePos.y) / stageScale;
+    const stageW = w / stageScale;
+    const stageH = h / stageScale;
+    const dataURL = stageRef.current.toDataURL({
+      x: stageX, y: stageY, width: stageW, height: stageH,
+      pixelRatio: 2, mimeType: "image/jpeg", quality: 0.92,
+    } as Parameters<typeof stageRef.current.toDataURL>[0]);
+    const link = document.createElement("a");
+    link.download = `${title || "moodboard"}.jpg`;
+    link.href = dataURL;
+    link.click();
+    setExportMode(false);
+    setExportRect(null);
+  }
+
   async function toggleShare() {
     const next = !isSharedWithClient;
     const res = await fetch(`/api/moodboards/${id}`, {
@@ -1189,17 +1284,54 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
           <ChevronLeft size={16} /> Moodboard
         </Link>
         <div className="w-px h-4 bg-border mx-1" />
-        <input
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          onBlur={async () => {
-            if (title.trim()) {
-              await fetch(`/api/moodboards/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ title }) });
-            }
-          }}
-          className="text-sm font-medium bg-transparent focus:outline-none focus:ring-2 focus:ring-primary/30 rounded px-1.5 py-0.5 min-w-[120px] max-w-[280px]"
-        />
+        {/* Auto-sizing title input */}
+        <div className="inline-grid max-w-[280px] min-w-[60px]">
+          <span className="[grid-area:1/1] invisible text-sm font-medium px-1.5 py-0.5 whitespace-pre pointer-events-none select-none">{title || " "}</span>
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            onBlur={async () => {
+              if (title.trim()) {
+                await fetch(`/api/moodboards/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ title }) });
+              }
+            }}
+            className="[grid-area:1/1] text-sm font-medium bg-transparent focus:outline-none focus:ring-2 focus:ring-primary/30 rounded px-1.5 py-0.5 w-full"
+          />
+        </div>
+        <div className="w-px h-4 bg-border mx-1 shrink-0" />
+        {/* 3-dots menu */}
+        <div className="relative shrink-0">
+          <button
+            onClick={() => setEditMenuOpen((v) => !v)}
+            className={`w-7 h-7 flex items-center justify-center rounded-lg transition-colors ${editMenuOpen ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
+            title="Opcje tablicy"
+          >
+            <MoreVertical size={15} />
+          </button>
+          {editMenuOpen && (
+            <>
+              <div className="fixed inset-0 z-[40]" onClick={() => setEditMenuOpen(false)} />
+              <div className="absolute left-0 top-[calc(100%+4px)] z-[50] bg-card border border-border rounded-xl shadow-xl overflow-hidden p-1 w-32">
+                <button
+                  onClick={openEditModal}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg hover:bg-muted text-foreground transition-colors text-left"
+                >
+                  Edytuj
+                </button>
+              </div>
+            </>
+          )}
+        </div>
         <div className="flex-1" />
+        {/* Export */}
+        <button
+          onClick={() => { setExportMode(true); setExportRect(null); }}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:text-foreground hover:bg-muted border border-border"
+          title="Eksportuj jako JPG"
+        >
+          <Download size={14} />
+          Eksportuj
+        </button>
         {/* Share */}
         {client && (
           <button
@@ -1348,6 +1480,63 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
           onDragLeave={() => { dragCounterRef2.current--; if (dragCounterRef2.current === 0) setIsDragOver(false); }}
           onDrop={handleFileDrop}
         >
+          {/* Export selection overlay */}
+          {exportMode && (
+            <div
+              className="absolute inset-0 z-30"
+              style={{ cursor: "crosshair" }}
+              onMouseDown={handleExportMouseDown}
+              onMouseMove={handleExportMouseMove}
+              onMouseUp={handleExportMouseUp}
+            >
+              {/* Selection rect */}
+              {exportRect && exportRect.w > 4 && exportRect.h > 4 && (
+                <div
+                  style={{
+                    position: "absolute",
+                    left: exportRect.x, top: exportRect.y,
+                    width: exportRect.w, height: exportRect.h,
+                    border: "2px dashed #6366f1",
+                    background: "rgba(99,102,241,0.06)",
+                    pointerEvents: "none",
+                  }}
+                />
+              )}
+              {/* Info banner */}
+              <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-3 bg-card border border-border rounded-xl shadow-lg px-4 py-2 pointer-events-none">
+                <span className="text-sm text-muted-foreground">Zaznacz obszar do eksportu jako JPG</span>
+              </div>
+              {/* Confirm / cancel — shown when selection is finished */}
+              {exportRect && exportRect.w > 20 && exportRect.h > 20 && !isExportDrawing && (
+                <div
+                  style={{
+                    position: "absolute",
+                    left: exportRect.x + exportRect.w / 2,
+                    top: Math.min(exportRect.y + exportRect.h + 10, window.innerHeight - 80),
+                    transform: "translateX(-50%)",
+                  }}
+                  className="flex items-center gap-2 bg-card border border-border rounded-xl shadow-lg px-3 py-2 pointer-events-auto"
+                >
+                  <button onClick={doExportJpg} className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">
+                    <Download size={14} />
+                    Pobierz JPG
+                  </button>
+                  <button onClick={() => { setExportMode(false); setExportRect(null); }} className="px-3 py-1.5 rounded-lg text-sm text-muted-foreground hover:bg-muted transition-colors">
+                    Anuluj
+                  </button>
+                </div>
+              )}
+              {/* Cancel if no selection yet */}
+              {(!exportRect || (exportRect.w <= 20 || exportRect.h <= 20)) && (
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 pointer-events-auto">
+                  <button onClick={() => { setExportMode(false); setExportRect(null); }} className="px-3 py-1.5 rounded-lg text-sm text-muted-foreground bg-card border border-border hover:bg-muted shadow-lg transition-colors">
+                    Anuluj
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Drop overlay */}
           {isDragOver && (
             <div className="absolute inset-0 z-50 pointer-events-none flex items-center justify-center">
@@ -2445,6 +2634,79 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
           </div>
         )}
       </div>
+
+      {/* Edit modal */}
+      {editModalOpen && (
+        <>
+          <div className="fixed inset-0 z-[80] bg-black/40" onClick={() => setEditModalOpen(false)} />
+          <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[90] w-full max-w-md bg-card border border-border rounded-2xl shadow-2xl p-6 flex flex-col gap-5">
+            <div>
+              <h2 className="text-base font-semibold">Edytuj tablicę</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">Zmień nazwę, klienta i projekt przypisane do tablicy.</p>
+            </div>
+
+            {/* Name */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-medium text-foreground">Nazwa</label>
+              <input
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSaveEdit()}
+                className="w-full text-sm px-3 py-2 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
+                placeholder="Nazwa tablicy"
+                autoFocus
+              />
+            </div>
+
+            {/* Client */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-medium text-foreground">Klient</label>
+              <select
+                value={editClientId}
+                onChange={(e) => { setEditClientId(e.target.value); setEditProjectId(""); }}
+                className="w-full text-sm px-3 py-2 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
+              >
+                <option value="">— brak klienta —</option>
+                {editClients.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Project */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-medium text-foreground">Projekt</label>
+              <select
+                value={editProjectId}
+                onChange={(e) => setEditProjectId(e.target.value)}
+                disabled={!editClientId}
+                className="w-full text-sm px-3 py-2 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50"
+              >
+                <option value="">— brak projektu —</option>
+                {(editClients.find((c) => c.id === editClientId)?.projects ?? []).map((p) => (
+                  <option key={p.id} value={p.id}>{p.title}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-1">
+              <button
+                onClick={() => setEditModalOpen(false)}
+                className="px-4 py-2 text-sm rounded-xl border border-border hover:bg-muted transition-colors"
+              >
+                Anuluj
+              </button>
+              <button
+                onClick={handleSaveEdit}
+                disabled={editSaving}
+                className="px-4 py-2 text-sm font-medium rounded-xl bg-primary text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-60"
+              >
+                {editSaving ? "Zapisywanie…" : "Zapisz"}
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
