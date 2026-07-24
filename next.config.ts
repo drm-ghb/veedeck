@@ -42,7 +42,7 @@ const nextConfig: NextConfig = {
     root: path.resolve(__dirname),
   },
   // Required for @imgly/background-removal (WASM + module workers) in production builds
-  webpack: (config: import('webpack').Configuration) => {
+  webpack: (config: { experiments?: Record<string, unknown> }) => {
     config.experiments = { ...config.experiments, asyncWebAssembly: true, layers: true };
     return config;
   },
