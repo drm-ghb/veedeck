@@ -1146,8 +1146,8 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
       const el = elements[i];
       if (el.type === "connection" || el.type === "frame") continue;
       const b = getElementBounds(el);
-      const cx = Math.max(b.x, Math.min(pos.x, b.x + b.width));
-      const cy = Math.max(b.y, Math.min(pos.y, b.y + b.height));
+      const cx = Math.max(b.minX, Math.min(pos.x, b.maxX));
+      const cy = Math.max(b.minY, Math.min(pos.y, b.maxY));
       if (Math.sqrt((pos.x - cx) ** 2 + (pos.y - cy) ** 2) < threshold) {
         found = el.id;
         break;
