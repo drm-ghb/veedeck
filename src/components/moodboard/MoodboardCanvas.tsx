@@ -8,19 +8,24 @@ import { toast } from "sonner";
 import {
   ChevronLeft, MousePointer, Hand, Square, Circle, Type, ArrowRight, Minus,
   Trash2, ZoomIn, ZoomOut, Undo2, Redo2, Share2, Check, Image, StickyNote,
-  ChevronRight, ChevronDown, Search, Package, PushPin, X, Folder, RefreshCw, LocalMall, LayoutGrid,
+  ChevronRight, ChevronDown, Search, Package, PushPin, X, Folder, RefreshCw, LocalMall, LayoutGrid, DashboardAdd,
   ArrowUp, ArrowDown, Layers, Palette, Crop, Eraser, Check as CheckIcon, Copy,
   Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, HelpCircle, Pen, MoreVertical, Download,
+  Frame as FrameIcon,
 } from "@/components/ui/icons";
 import { useRouter } from "next/navigation";
+import { MOODBOARD_TEMPLATES } from "@/components/moodboard/data/templates";
+import type { MoodboardTemplate } from "@/components/moodboard/data/templates";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
-type Tool = "select" | "hand" | "rect" | "ellipse" | "text" | "arrow" | "line" | "note" | "image" | "pen";
+type Tool = "select" | "hand" | "rect" | "ellipse" | "text" | "arrow" | "line" | "note" | "image" | "pen" | "frame";
+
+type FramePresetId = "custom" | "a4" | "16:9" | "4:3" | "1:1";
 
 export interface CanvasElement {
   id: string;
-  type: "rect" | "ellipse" | "text" | "arrow" | "line" | "note" | "image" | "connection" | "freehand";
+  type: "rect" | "ellipse" | "text" | "arrow" | "line" | "note" | "image" | "connection" | "freehand" | "frame";
   x: number;
   y: number;
   width?: number;
@@ -42,6 +47,8 @@ export interface CanvasElement {
   points?: number[];
   // image
   imageUrl?: string;
+  // corner radius (image and rect)
+  cornerRadius?: number;
   // image crop (0–1 fractions of display size, converted to px when applying to Konva)
   cropLeft?: number;
   cropTop?: number;
@@ -53,11 +60,27 @@ export interface CanvasElement {
   sourceAnchor?: "top" | "right" | "bottom" | "left";
   targetId?: string;
   targetAnchor?: "top" | "right" | "bottom" | "left";
+  // frame
+  frameName?: string;
+  frameId?: string; // id of the frame this element belongs to
+  // template placeholder
+  templateRole?: 'image' | 'swatch' | 'text';
+  templateLabel?: string;
+  // masked image (template slot filled with photo — inner pan/zoom)
+  maskShape?: 'rect' | 'ellipse';
+  innerScale?: number;
+  innerOffsetX?: number;
+  innerOffsetY?: number;
+  naturalW?: number;
+  naturalH?: number;
+  // template category (carried from template for flat lay styling)
+  templateCategory?: 'flatlay';
 }
 
 interface CanvasData {
   elements: CanvasElement[];
   viewport?: { x: number; y: number; scale: number };
+  background?: string;
 }
 
 // ── Constants ──────────────────────────────────────────────────────────────
@@ -107,6 +130,16 @@ const NOTE_COLORS = [
   { bg: "#fed7aa", stroke: "#ea580c", label: "Pomarańczowy" },
 ];
 
+// ── Frame presets ───────────────────────────────────────────────────────────
+
+const FRAME_PRESETS: { id: FramePresetId; label: string; w: number; h: number; aspect?: string }[] = [
+  { id: "custom",  label: "Custom",  w: 0,    h: 0    },
+  { id: "a4",      label: "A4",      w: 794,  h: 1123 },
+  { id: "16:9",    label: "16:9",    w: 960,  h: 540  },
+  { id: "4:3",     label: "4:3",     w: 960,  h: 720  },
+  { id: "1:1",     label: "1:1",     w: 800,  h: 800  },
+];
+
 // ── Connection helpers ──────────────────────────────────────────────────────
 
 type Anchor = "top" | "right" | "bottom" | "left";
@@ -115,6 +148,12 @@ function getElementBounds(el: CanvasElement) {
   if (el.type === "ellipse") {
     const w = el.width ?? 120, h = el.height ?? 80;
     return { x: el.x - w / 2, y: el.y - h / 2, width: w, height: h };
+  }
+  if ((el.type === "line" || el.type === "arrow") && el.points && el.points.length >= 4) {
+    const pts = el.points;
+    const x0 = el.x + (pts[0] ?? 0), y0 = el.y + (pts[1] ?? 0);
+    const x1 = el.x + (pts[2] ?? 80), y1 = el.y + (pts[3] ?? 0);
+    return { x: Math.min(x0, x1), y: Math.min(y0, y1), width: Math.abs(x1 - x0) || 8, height: Math.abs(y1 - y0) || 8 };
   }
   if (el.type === "freehand" && el.points && el.points.length >= 2) {
     let minX = 0, minY = 0, maxX = 0, maxY = 0;
@@ -204,6 +243,39 @@ function uid() {
   return Math.random().toString(36).slice(2, 10);
 }
 
+// ── Template thumbnail ─────────────────────────────────────────────────────
+
+function TemplateThumbnail({ template }: { template: MoodboardTemplate }) {
+  const TW = 116;
+  const TH = Math.round(TW / template.aspectRatio);
+  const sortedSlots = [...template.slots].sort((a, b) => (a.z ?? 0) - (b.z ?? 0));
+  return (
+    <svg width={TW} height={TH} viewBox={`0 0 ${TW} ${TH}`} className="block rounded overflow-hidden">
+      <rect width={TW} height={TH} fill={template.background ?? "#F2F3F7"} />
+      {sortedSlots.map(slot => {
+        const sx = slot.x * TW;
+        const sy = slot.y * TH;
+        const sw = slot.w * TW;
+        if (slot.shape === 'circle') {
+          const r = sw / 2;
+          const cx = sx + r;
+          const cy = sy + r;
+          const fill = slot.role === 'swatch' ? '#C7CAD6' : '#D8DCE8';
+          return <circle key={slot.id} cx={cx} cy={cy} r={r} fill={fill} />;
+        }
+        const sh = (slot.h ?? slot.w) * TH;
+        const cx = sx + sw / 2;
+        const cy = sy + sh / 2;
+        const fill = slot.role === 'text' ? '#E8EDF5' : slot.role === 'swatch' ? '#C7CAD6' : slot.role === 'cutout' ? '#B8B0A8' : '#D8DCE8';
+        const transform = slot.rotation
+          ? `rotate(${slot.rotation} ${cx} ${cy})`
+          : undefined;
+        return <rect key={slot.id} x={sx} y={sy} width={sw} height={sh} rx="2" fill={fill} transform={transform} />;
+      })}
+    </svg>
+  );
+}
+
 // ── Image cache ────────────────────────────────────────────────────────────
 
 const imageCache = new Map<string, HTMLImageElement>();
@@ -255,6 +327,7 @@ function CanvasImageNode({ el, isSelected, onSelect, onDragEnd, onTransformEnd, 
       x={el.x} y={el.y}
       width={w} height={h}
       crop={cropProp}
+      cornerRadius={el.cornerRadius ?? 0}
       rotation={el.rotation ?? 0}
       opacity={el.opacity ?? 1}
       draggable
@@ -282,6 +355,110 @@ function CanvasImageNode({ el, isSelected, onSelect, onDragEnd, onTransformEnd, 
   );
 }
 
+// ── Masked image (template slot filled with photo, inner pan/zoom) ─────────
+
+function MaskedInnerImage({ el, isSelected, isInnerEdit, onSelect, onDblClick, onInnerDragEnd, onOuterDragEnd, onTransformEnd, onContextMenu, onMouseEnter, onMouseLeave, onDragStarted, onDragEnded, onDragMove }: {
+  el: CanvasElement;
+  isSelected: boolean;
+  isInnerEdit: boolean;
+  onSelect: () => void;
+  onDblClick: () => void;
+  onInnerDragEnd: (offX: number, offY: number) => void;
+  onOuterDragEnd: (x: number, y: number) => void;
+  onTransformEnd: (attrs: Partial<CanvasElement>) => void;
+  onContextMenu: (e: Konva.KonvaEventObject<MouseEvent>) => void;
+  onMouseEnter: () => void;
+  onMouseLeave: () => void;
+  onDragStarted: () => void;
+  onDragEnded: () => void;
+  onDragMove?: (e: Konva.KonvaEventObject<DragEvent>) => void;
+}) {
+  const [img, setImg] = useState<HTMLImageElement | null>(null);
+  useEffect(() => {
+    if (el.imageUrl) loadImage(el.imageUrl, setImg);
+  }, [el.imageUrl]);
+  if (!img) return null;
+
+  const maskW = el.width ?? 200;
+  const maskH = el.height ?? 150;
+  const scale = el.innerScale ?? 1;
+  const offX = el.innerOffsetX ?? 0;
+  const offY = el.innerOffsetY ?? 0;
+  const natW = el.naturalW ?? img.naturalWidth;
+  const natH = el.naturalH ?? img.naturalHeight;
+  const imgW = natW * scale;
+  const imgH = natH * scale;
+  const isCircle = el.maskShape === 'ellipse';
+
+  const r = isCircle ? 0 : Math.min(el.cornerRadius ?? 0, maskW / 2, maskH / 2);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const clipFn = (ctx: any) => {
+    ctx.beginPath();
+    if (isCircle) {
+      ctx.ellipse(maskW / 2, maskH / 2, maskW / 2, maskH / 2, 0, 0, Math.PI * 2);
+    } else if (r > 0) {
+      ctx.roundRect(0, 0, maskW, maskH, r);
+    } else {
+      ctx.rect(0, 0, maskW, maskH);
+    }
+    ctx.closePath();
+  };
+
+  return (
+    <Group
+      id={el.id}
+      x={el.x} y={el.y}
+      rotation={el.rotation ?? 0}
+      opacity={el.opacity ?? 1}
+      clipFunc={clipFn}
+      draggable={!isInnerEdit}
+      onClick={onSelect}
+      onTap={onSelect}
+      onDblClick={onDblClick}
+      onDblTap={onDblClick}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+      onDragStart={onDragStarted}
+      onDragMove={onDragMove}
+      onDragEnd={(e) => { if (isInnerEdit) return; onDragEnded(); onOuterDragEnd(e.target.x(), e.target.y()); }}
+      onContextMenu={onContextMenu}
+      onTransformEnd={(e) => {
+        const node = e.target;
+        onTransformEnd({
+          x: node.x(), y: node.y(),
+          width: Math.max(10, node.width() * node.scaleX()),
+          height: Math.max(10, node.height() * node.scaleY()),
+          rotation: node.rotation(),
+        });
+        node.scaleX(1); node.scaleY(1);
+      }}
+    >
+      <KonvaImage
+        image={img}
+        x={offX} y={offY}
+        width={imgW} height={imgH}
+        draggable={isInnerEdit}
+        onDragEnd={(e) => {
+          e.cancelBubble = true; // prevent bubbling to Group's onDragEnd
+          const nx = Math.max(maskW - imgW, Math.min(0, e.target.x()));
+          const ny = Math.max(maskH - imgH, Math.min(0, e.target.y()));
+          e.target.position({ x: nx, y: ny });
+          onInnerDragEnd(nx, ny);
+        }}
+      />
+      {/* Border overlay (shown when selected or in inner edit mode) */}
+      <Rect
+        width={maskW} height={maskH}
+        fill="transparent"
+        stroke={isInnerEdit ? "#6366f1" : isSelected ? "#6366f1" : undefined}
+        strokeWidth={isInnerEdit ? 2 : isSelected ? 2 : 0}
+        dash={isInnerEdit ? [6, 3] : undefined}
+        listening={false}
+      />
+    </Group>
+  );
+}
+
 // ── Main component ─────────────────────────────────────────────────────────
 
 interface Props {
@@ -304,10 +481,12 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
   const parsed = initial as CanvasData;
   const initElements: CanvasElement[] = parsed?.elements ?? [];
   const initViewport = parsed?.viewport ?? { x: 0, y: 0, scale: 1 };
+  const initBg = parsed?.background ?? '#FFFFFF';
 
   // State
   const [tool, setTool] = useState<Tool>("select");
   const [elements, setElements] = useState<CanvasElement[]>(initElements);
+  const [canvasBg, setCanvasBg] = useState<string>(initBg);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [stagePos, setStagePos] = useState({ x: initViewport.x, y: initViewport.y });
   const [stageScale, setStageScale] = useState(initViewport.scale);
@@ -364,6 +543,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
   const [removingBgId, setRemovingBgId] = useState<string | null>(null);
   // Snap guide lines (canvas coords)
   const [snapLines, setSnapLines] = useState<Array<{ x1: number; y1: number; x2: number; y2: number }>>([]);
+  const [rotationGuide, setRotationGuide] = useState<{ cx: number; cy: number; angle: number } | null>(null);
   const [helpOpen, setHelpOpen] = useState(false);
   const [gridMode, setGridMode] = useState<"dots" | "grid" | "none">(() => {
     if (typeof window !== "undefined") {
@@ -382,6 +562,19 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
   const dragCounterRef2 = useRef(0);
   const [fontPickerOpen, setFontPickerOpen] = useState(false);
   const [fontSearch, setFontSearch] = useState("");
+  // Template gallery
+  const [templateGalleryOpen, setTemplateGalleryOpen] = useState(false);
+  // Template placeholder pick mode — id of placeholder waiting to be filled from canvas
+  const [templatePickModeId, setTemplatePickModeId] = useState<string | null>(null);
+  // Inner edit mode — id of masked image currently being panned/zoomed inside its mask
+  const [innerEditId, setInnerEditId] = useState<string | null>(null);
+  // Frame tool
+  const [framePreset, setFramePreset] = useState<FramePresetId>("custom");
+  const [framePickerOpen, setFramePickerOpen] = useState(false);
+  const [renameFrameId, setRenameFrameId] = useState<string | null>(null);
+  const [renameFrameValue, setRenameFrameValue] = useState("");
+  const [frameMenuId, setFrameMenuId] = useState<string | null>(null);
+  const [exportFrameId, setExportFrameId] = useState<string | null>(null);
   // Edit modal
   const router = useRouter();
   const [editMenuOpen, setEditMenuOpen] = useState(false);
@@ -592,16 +785,22 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
   }
 
   // Auto-save
-  function scheduleSave(els: CanvasElement[], vp?: { x: number; y: number; scale: number }) {
+  function scheduleSave(els: CanvasElement[], vp?: { x: number; y: number; scale: number }, bg?: string) {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(() => {
       const viewport = vp ?? { x: stagePos.x, y: stagePos.y, scale: stageScale };
+      const background = bg ?? canvasBg;
       fetch(`/api/moodboards/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ canvasData: { elements: els, viewport } }),
+        body: JSON.stringify({ canvasData: { elements: els, viewport, background } }),
       }).catch(() => {});
     }, 800);
+  }
+
+  function updateCanvasBg(color: string) {
+    setCanvasBg(color);
+    scheduleSave(elements, undefined, color);
   }
 
   // Undo / Redo
@@ -660,10 +859,9 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
         if (selectedIds.length > 0) {
           updateElements(elements.filter((el) => {
             if (selectedIds.includes(el.id)) return false;
-            // also remove connections attached to deleted elements
             if (el.type === "connection" && (selectedIds.includes(el.sourceId ?? "") || selectedIds.includes(el.targetId ?? ""))) return false;
             return true;
-          }));
+          }).map(el => selectedIds.includes(el.frameId ?? "") ? { ...el, frameId: undefined } : el));
           setSelectedIds([]);
         }
       }
@@ -676,6 +874,8 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
       }
       // Tool shortcuts
       if (!e.ctrlKey && !e.metaKey && !e.altKey) {
+        if (e.key === "Escape" && innerEditId) { setInnerEditId(null); return; }
+        if (e.key === "Escape" && templatePickModeId) { setTemplatePickModeId(null); return; }
         if (e.key === "v" || e.key === "Escape") setTool("select");
         if (e.key === "h") setTool("hand");
         if (e.key === "r") setTool("rect");
@@ -685,6 +885,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
         if (e.key === "l") setTool("line");
         if (e.key === "n") setTool("note");
         if (e.key === "p") setTool("pen");
+        if (e.key === "f") setTool("frame");
       }
     }
     function onKeyUp(e: globalThis.KeyboardEvent) {
@@ -699,10 +900,10 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
       window.removeEventListener("keydown", onKey);
       window.removeEventListener("keyup", onKeyUp);
     };
-  }, [selectedIds, elements, editingTextId, historyIndex, history]);
+  }, [selectedIds, elements, editingTextId, historyIndex, history, innerEditId, templatePickModeId]);
 
   // Types that get transformer handles
-  const TRANSFORMABLE = new Set(["rect", "ellipse", "note", "image", "arrow", "line"]);
+  const TRANSFORMABLE = new Set(["rect", "ellipse", "note", "image", "frame"]);
 
   // Update transformer when selection changes
   useEffect(() => {
@@ -712,8 +913,11 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
     if (!stage) return;
     const nodes = selectedIds
       .filter(sid => {
-        const t = elements.find(el => el.id === sid)?.type;
-        return t !== undefined && TRANSFORMABLE.has(t);
+        const el = elements.find(e => e.id === sid);
+        if (!el) return false;
+        if (!TRANSFORMABLE.has(el.type)) return false;
+        if (el.innerScale !== undefined) return false; // masked images: no standard transformer
+        return true;
       })
       .map((sid) => stage.findOne("#" + sid)).filter(Boolean) as Konva.Node[];
     tr.nodes(nodes);
@@ -725,6 +929,28 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
   // Zoom with wheel
   function handleWheel(e: Konva.KonvaEventObject<WheelEvent>) {
     e.evt.preventDefault();
+
+    // Inner edit mode: zoom the masked image instead of the stage
+    if (innerEditId) {
+      const masked = elements.find(el => el.id === innerEditId);
+      if (masked && masked.innerScale !== undefined) {
+        const scaleBy = 1.05;
+        const newScale = e.evt.deltaY < 0 ? masked.innerScale * scaleBy : masked.innerScale / scaleBy;
+        const maskW = masked.width ?? 200;
+        const maskH = masked.height ?? 150;
+        const natW = masked.naturalW ?? 1;
+        const natH = masked.naturalH ?? 1;
+        const minScale = Math.max(maskW / natW, maskH / natH);
+        const clampedScale = Math.max(minScale, newScale);
+        const imgW = natW * clampedScale;
+        const imgH = natH * clampedScale;
+        const offX = Math.max(maskW - imgW, Math.min(0, masked.innerOffsetX ?? 0));
+        const offY = Math.max(maskH - imgH, Math.min(0, masked.innerOffsetY ?? 0));
+        updateEl(innerEditId, { innerScale: clampedScale, innerOffsetX: offX, innerOffsetY: offY });
+        return;
+      }
+    }
+
     const stage = stageRef.current;
     if (!stage) return;
     const oldScale = stageScale;
@@ -752,6 +978,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
 
     if (tool === "select") {
       if (isStage) {
+        if (innerEditId) { setInnerEditId(null); return; }
         // Left-click drag on empty canvas = rubber-band selection
         const pos = stagePoint(e.evt.clientX, e.evt.clientY);
         isSelBoxing.current = true;
@@ -782,6 +1009,32 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
       isPenDrawingRef.current = true;
       penStartRef.current = pos;
       setPenPoints([0, 0]);
+      return;
+    }
+
+    if (tool === "frame") {
+      if (!isStage) return;
+      const pos = stagePoint(e.evt.clientX, e.evt.clientY);
+      if (framePreset === "custom") {
+        // freehand draw
+        setIsDrawing(true);
+        setDrawStart(pos);
+        setDrawRect({ x: pos.x, y: pos.y, w: 0, h: 0 });
+      } else {
+        // click-to-place preset
+        const preset = FRAME_PRESETS.find(p => p.id === framePreset)!;
+        const newEl: CanvasElement = {
+          id: uid(), type: "frame",
+          x: pos.x - preset.w / 2, y: pos.y - preset.h / 2,
+          width: preset.w, height: preset.h,
+          frameName: `Frame`,
+          fill: "#ffffff", stroke: "#94a3b8", strokeWidth: 1, opacity: 1,
+        };
+        const next = [...elements, newEl];
+        updateElements(next);
+        setSelectedIds([newEl.id]);
+        setTool("select");
+      }
       return;
     }
 
@@ -854,8 +1107,12 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
     const pos = stagePoint(clientX, clientY);
     const threshold = 20 / stageScale;
     let found: string | null = null;
-    for (const el of elements) {
-      if (el.type === "connection") continue;
+    // Iterate in reverse so topmost (last rendered) element wins over elements below it.
+    // Skip connections and frames — frames have no anchor hooks and their large bounds
+    // would block hover detection of elements inside them.
+    for (let i = elements.length - 1; i >= 0; i--) {
+      const el = elements[i];
+      if (el.type === "connection" || el.type === "frame") continue;
       const b = getElementBounds(el);
       const cx = Math.max(b.x, Math.min(pos.x, b.x + b.width));
       const cy = Math.max(b.y, Math.min(pos.y, b.y + b.height));
@@ -873,7 +1130,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
       const box = selBox;
       if (box && box.w > 4 && box.h > 4) {
         const hit = elements
-          .filter(el => el.type !== "connection" && el.type !== "freehand")
+          .filter(el => el.type !== "connection")
           .filter(el => {
             const b = getElementBounds(el);
             return b.x < box.x + box.w && b.x + b.width > box.x && b.y < box.y + box.h && b.y + b.height > box.y;
@@ -932,7 +1189,9 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
     const pos = { x: drawRect.x, y: drawRect.y };
     let newEl: CanvasElement | null = null;
 
-    if (tool === "rect") {
+    if (tool === "frame") {
+      newEl = { id: uid(), type: "frame", x: pos.x, y: pos.y, width: w, height: h, frameName: "Frame", fill: "#ffffff", stroke: "#94a3b8", strokeWidth: 1, opacity: 1 };
+    } else if (tool === "rect") {
       newEl = { id: uid(), type: "rect", x: pos.x, y: pos.y, width: w, height: h, fill: "#e2e8f0", stroke: "#94a3b8", strokeWidth: 1.5, opacity: 1, rotation: 0 };
     } else if (tool === "ellipse") {
       newEl = { id: uid(), type: "ellipse", x: pos.x + w / 2, y: pos.y + h / 2, width: w, height: h, fill: "#e2e8f0", stroke: "#94a3b8", strokeWidth: 1.5, opacity: 1, rotation: 0 };
@@ -1036,6 +1295,96 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
   function updateEl(elId: string, patch: Partial<CanvasElement>) {
     const next = elements.map((el) => el.id === elId ? { ...el, ...patch } : el);
     updateElements(next);
+  }
+
+  function applyTemplate(template: MoodboardTemplate) {
+    // Base canvas size: 700px wide, height derived from aspect ratio
+    const canvasW = 700;
+    const canvasH = Math.round(canvasW / template.aspectRatio);
+
+    // Center on current viewport
+    const vpCx = (containerSize.w / 2 - stagePos.x) / stageScale;
+    const vpCy = (containerSize.h / 2 - stagePos.y) / stageScale;
+    const originX = vpCx - canvasW / 2;
+    const originY = vpCy - canvasH / 2;
+
+    const newEls: CanvasElement[] = template.slots.map(slot => {
+      const isCircle = slot.shape === 'circle';
+      const slotX = originX + slot.x * canvasW;
+      const slotY = originY + slot.y * canvasH;
+      const diamPx = slot.w * canvasW;
+
+      const isFlatlay = template.category === 'flatlay';
+      const placeholderFill = isFlatlay ? 'rgba(255,255,255,0.55)' : (slot.role === 'swatch' ? '#E2E8F0' : '#F2F3F7');
+      const tplCat: 'flatlay' | undefined = isFlatlay ? 'flatlay' : undefined;
+
+      if (isCircle) {
+        // Ellipse: x/y is center in Konva
+        return {
+          id: uid(),
+          type: 'ellipse' as const,
+          x: slotX + diamPx / 2,
+          y: slotY + diamPx / 2,
+          width: diamPx,
+          height: diamPx,
+          fill: placeholderFill,
+          stroke: '#C7CAD6',
+          strokeWidth: 1,
+          rotation: 0,
+          zIndex: slot.z ?? 0,
+          templateRole: slot.role,
+          templateLabel: slot.label?.pl,
+          templateCategory: tplCat,
+        };
+      }
+
+      if (slot.role === 'text') {
+        loadGoogleFont('Caveat');
+        return {
+          id: uid(),
+          type: 'text' as const,
+          x: slotX,
+          y: slotY,
+          width: slot.w * canvasW,
+          height: (slot.h ?? 0.1) * canvasH,
+          text: slot.label?.pl ?? 'Tekst',
+          fontSize: 16,
+          fontFamily: 'Caveat',
+          fill: '#6B6F80',
+          rotation: slot.rotation ?? 0,
+          zIndex: slot.z ?? 0,
+          templateRole: 'text' as const,
+          templateLabel: slot.label?.pl,
+          templateCategory: tplCat,
+        };
+      }
+
+      return {
+        id: uid(),
+        type: 'rect' as const,
+        x: slotX,
+        y: slotY,
+        width: slot.w * canvasW,
+        height: (slot.h ?? slot.w) * canvasH,
+        fill: placeholderFill,
+        stroke: '#C7CAD6',
+        strokeWidth: 1,
+        rotation: slot.rotation ?? 0,
+        zIndex: slot.z ?? 0,
+        templateRole: slot.role,
+        templateLabel: slot.label?.pl,
+        templateCategory: tplCat,
+      };
+    });
+
+    // Sort by zIndex ascending so higher-z elements render last (on top)
+    newEls.sort((a, b) => (a.zIndex ?? 0) - (b.zIndex ?? 0));
+
+    updateElements([...elements, ...newEls]);
+    setSelectedIds(newEls.map(e => e.id));
+    if (template.background) updateCanvasBg(template.background);
+    setTemplateGalleryOpen(false);
+    setTool('select');
   }
 
   function updateSelected(patch: Partial<CanvasElement>) {
@@ -1143,12 +1492,12 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
     const konvaUrl = stageRef.current.toDataURL({
       x, y, width: w, height: h, pixelRatio,
     } as Parameters<typeof stageRef.current.toDataURL>[0]);
-    // JPEG has no transparency — composite onto white canvas
+    // Composite onto background-colored canvas (JPEG has no transparency)
     const canvas = document.createElement("canvas");
     canvas.width = Math.round(w * pixelRatio);
     canvas.height = Math.round(h * pixelRatio);
     const ctx = canvas.getContext("2d")!;
-    ctx.fillStyle = "#ffffff";
+    ctx.fillStyle = canvasBg ?? "#ffffff";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     const img = new window.Image();
     img.onload = () => {
@@ -1162,6 +1511,68 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
       setExportRect(null);
     };
     img.src = konvaUrl;
+  }
+
+  async function exportFrame(frameElId: string, format: "png" | "jpg" | "pdf") {
+    const frameEl = elements.find(e => e.id === frameElId);
+    if (!frameEl || !stageRef.current) return;
+    const pixelRatio = 2;
+    // Convert frame canvas coords to screen pixel coords
+    const sx = frameEl.x * stageScale + stagePos.x;
+    const sy = frameEl.y * stageScale + stagePos.y;
+    const sw = (frameEl.width ?? 0) * stageScale;
+    const sh = (frameEl.height ?? 0) * stageScale;
+    // Hide UI-only Konva nodes that must not appear in the export:
+    // anchor hook circles and the transformer handles
+    const layer = stageRef.current.getLayers()[0];
+    const uiCircles = layer?.find("Circle") ?? [];
+    uiCircles.forEach((n: Konva.Node) => n.hide());
+    transformerRef.current?.visible(false);
+    layer?.batchDraw();
+
+    const konvaUrl = stageRef.current.toDataURL({ x: sx, y: sy, width: sw, height: sh, pixelRatio } as Parameters<typeof stageRef.current.toDataURL>[0]);
+
+    // Restore hidden nodes
+    uiCircles.forEach((n: Konva.Node) => n.show());
+    transformerRef.current?.visible(transformerVisible);
+    layer?.batchDraw();
+    const baseName = (frameEl.frameName || title || "frame").replace(/[^a-z0-9_\-]/gi, "_");
+
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(sw * pixelRatio);
+    canvas.height = Math.round(sh * pixelRatio);
+    const ctx = canvas.getContext("2d")!;
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    await new Promise<void>(resolve => {
+      const img = new window.Image();
+      img.onload = () => { ctx.drawImage(img, 0, 0); resolve(); };
+      img.src = konvaUrl;
+    });
+
+    if (format === "pdf") {
+      const { jsPDF } = await import("jspdf");
+      const wMm = (canvas.width / pixelRatio / 96) * 25.4;
+      const hMm = (canvas.height / pixelRatio / 96) * 25.4;
+      const pdf = new jsPDF({ orientation: wMm > hMm ? "landscape" : "portrait", unit: "mm", format: [wMm, hMm] });
+      const imgData = canvas.toDataURL("image/jpeg", 0.92);
+      pdf.addImage(imgData, "JPEG", 0, 0, wMm, hMm);
+      pdf.save(`${baseName}.pdf`);
+    } else if (format === "png") {
+      const url = canvas.toDataURL("image/png");
+      const link = document.createElement("a");
+      link.download = `${baseName}.png`;
+      link.href = url;
+      link.click();
+    } else {
+      const url = canvas.toDataURL("image/jpeg", 0.92);
+      const link = document.createElement("a");
+      link.download = `${baseName}.jpg`;
+      link.href = url;
+      link.click();
+    }
+    setExportFrameId(null);
   }
 
   async function toggleShare() {
@@ -1235,6 +1646,50 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
     reader.readAsDataURL(file);
   }
 
+  function fillPlaceholderWithImage(placeholderId: string, sourceEl: CanvasElement) {
+    if (!sourceEl.imageUrl) return;
+    const placeholder = elements.find(el => el.id === placeholderId);
+    if (!placeholder) return;
+
+    const maskW = placeholder.width ?? 200;
+    const maskH = placeholder.height ?? 150;
+    const maskShape: 'rect' | 'ellipse' = placeholder.type === 'ellipse' ? 'ellipse' : 'rect';
+    const maskX = placeholder.type === 'ellipse' ? placeholder.x - maskW / 2 : placeholder.x;
+    const maskY = placeholder.type === 'ellipse' ? placeholder.y - maskH / 2 : placeholder.y;
+
+    loadImage(sourceEl.imageUrl, (img) => {
+      const natW = img.naturalWidth;
+      const natH = img.naturalHeight;
+      const coverScale = Math.max(maskW / natW, maskH / natH);
+      const imgW = natW * coverScale;
+      const imgH = natH * coverScale;
+      const innerOffsetX = (maskW - imgW) / 2;
+      const innerOffsetY = (maskH - imgH) / 2;
+
+      updateEl(placeholderId, {
+        type: 'image' as const,
+        imageUrl: sourceEl.imageUrl!,
+        x: maskX,
+        y: maskY,
+        width: maskW,
+        height: maskH,
+        fill: undefined,
+        stroke: undefined,
+        strokeWidth: undefined,
+        templateRole: undefined,
+        templateLabel: undefined,
+        maskShape,
+        naturalW: natW,
+        naturalH: natH,
+        innerScale: coverScale,
+        innerOffsetX,
+        innerOffsetY,
+      });
+      setTemplatePickModeId(null);
+      setSelectedIds([placeholderId]);
+    });
+  }
+
   // Add render from sidebar
   function addRenderToCanvas(url: string, name: string) {
     const img = new window.Image();
@@ -1275,6 +1730,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
     note: "crosshair",
     image: "crosshair",
     pen: "crosshair",
+    frame: framePreset === "custom" ? "crosshair" : "copy",
   };
   const [anchorHovered, setAnchorHovered] = useState(false);
   const activeCursor = spaceDown
@@ -1295,6 +1751,87 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
 
   return (
     <div className="flex flex-col h-full select-none">
+      {/* Template gallery modal */}
+      {templateGalleryOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/40">
+          <div className="relative bg-card border border-border rounded-2xl shadow-2xl w-full max-w-[760px] max-h-[85vh] flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-border shrink-0">
+              <div>
+                <h2 className="text-base font-semibold tracking-tight">Szablony moodboardu</h2>
+                <p className="text-xs text-muted-foreground mt-0.5">Wybierz szablon jako punkt startowy — każdy element możesz potem dowolnie edytować</p>
+              </div>
+              <button
+                onClick={() => setTemplateGalleryOpen(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="overflow-y-auto px-6 py-5 space-y-6">
+              {/* Grid section */}
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground mb-3">Siatki klasyczne</p>
+                <div className="grid grid-cols-5 gap-3">
+                  {MOODBOARD_TEMPLATES.filter(t => t.category === 'grid').map(t => (
+                    <button
+                      key={t.id}
+                      onClick={() => applyTemplate(t)}
+                      className="flex flex-col items-center gap-2 p-2.5 rounded-[14px] border-2 border-border hover:border-primary/60 hover:bg-primary/[0.03] transition-all text-left group"
+                    >
+                      <div className="rounded-lg overflow-hidden border border-border/60 group-hover:border-primary/30 transition-colors">
+                        <TemplateThumbnail template={t} />
+                      </div>
+                      <span className="text-[11.5px] font-medium text-foreground leading-tight text-center w-full">{t.name.pl}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Freeform section */}
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground mb-3">Kolaże swobodne</p>
+                <div className="grid grid-cols-5 gap-3">
+                  {MOODBOARD_TEMPLATES.filter(t => t.category === 'freeform').map(t => (
+                    <button
+                      key={t.id}
+                      onClick={() => applyTemplate(t)}
+                      className="flex flex-col items-center gap-2 p-2.5 rounded-[14px] border-2 border-border hover:border-primary/60 hover:bg-primary/[0.03] transition-all text-left group"
+                    >
+                      <div className="rounded-lg overflow-hidden border border-border/60 group-hover:border-primary/30 transition-colors">
+                        <TemplateThumbnail template={t} />
+                      </div>
+                      <span className="text-[11.5px] font-medium text-foreground leading-tight text-center w-full">{t.name.pl}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Flat lay section */}
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground mb-3">Flat lay</p>
+                <div className="grid grid-cols-5 gap-3">
+                  {MOODBOARD_TEMPLATES.filter(t => t.category === 'flatlay').map(t => (
+                    <button
+                      key={t.id}
+                      onClick={() => applyTemplate(t)}
+                      className="flex flex-col items-center gap-2 p-2.5 rounded-[14px] border-2 border-border hover:border-primary/60 hover:bg-primary/[0.03] transition-all text-left group"
+                    >
+                      <div className="rounded-lg overflow-hidden border border-border/60 group-hover:border-primary/30 transition-colors">
+                        <TemplateThumbnail template={t} />
+                      </div>
+                      <span className="text-[11.5px] font-medium text-foreground leading-tight text-center w-full">{t.name.pl}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Top bar */}
       <div className="flex items-center gap-2 px-3 py-2 border-b border-border bg-background shrink-0 z-10">
         <Link href="/moodboardy" className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors shrink-0">
@@ -1338,6 +1875,20 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
           )}
         </div>
         <div className="flex-1" />
+        {/* Canvas background color */}
+        <label
+          className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors border border-border cursor-pointer"
+          title="Kolor tła planszy"
+        >
+          <span className="text-xs">Tło</span>
+          <span className="inline-block w-4 h-4 rounded-sm border border-border/60 flex-shrink-0" style={{ background: canvasBg }} />
+          <input
+            type="color"
+            value={canvasBg}
+            onChange={(e) => updateCanvasBg(e.target.value)}
+            className="sr-only"
+          />
+        </label>
         {/* Export */}
         <button
           onClick={() => { setExportMode(true); setExportRect(null); }}
@@ -1417,13 +1968,14 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                     {([
                       ["V", "Zaznaczanie"],
                       ["H", "Przesuwanie widoku"],
+                      ["F", "Frame"],
                       ["R", "Prostokąt"],
                       ["O", "Elipsa"],
                       ["T", "Tekst"],
                       ["A", "Strzałka"],
                       ["L", "Linia"],
                       ["N", "Notatka"],
-                    ["P", "Pisanie ręczne"],
+                      ["P", "Pisanie ręczne"],
                     ] as [string, string][]).map(([key, desc]) => (
                       <div key={key} className="flex items-center justify-between gap-2 px-2 py-1.5 rounded-lg hover:bg-muted/50">
                         <span className="text-xs text-muted-foreground">{desc}</span>
@@ -1495,6 +2047,32 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
           onDragLeave={() => { dragCounterRef2.current--; if (dragCounterRef2.current === 0) setIsDragOver(false); }}
           onDrop={handleFileDrop}
         >
+          {/* Inner edit mode banner */}
+          {innerEditId && (
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3 bg-foreground/90 backdrop-blur-sm text-background px-4 py-2.5 rounded-2xl shadow-xl pointer-events-auto">
+              <span className="text-sm font-medium">Przeciągnij zdjęcie lub scrolluj aby zmienić przybliżenie. Esc aby wyjść.</span>
+              <button
+                onClick={() => setInnerEditId(null)}
+                className="text-background/60 hover:text-background transition-colors"
+              >
+                <X size={14} />
+              </button>
+            </div>
+          )}
+
+          {/* Template pick mode banner */}
+          {templatePickModeId && (
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3 bg-foreground/90 backdrop-blur-sm text-background px-4 py-2.5 rounded-2xl shadow-xl pointer-events-auto">
+              <span className="text-sm font-medium">Kliknij zdjęcie na tablicy aby wstawić je do slotu</span>
+              <button
+                onClick={() => setTemplatePickModeId(null)}
+                className="text-background/60 hover:text-background transition-colors"
+              >
+                <X size={14} />
+              </button>
+            </div>
+          )}
+
           {/* Export selection overlay */}
           {exportMode && (
             <div
@@ -1598,49 +2176,86 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
             onMouseUp={handleMouseUp}
           >
             <Layer>
-              {/* ── Connections (bezier curves, rendered behind elements) ── */}
-              {safeElements.filter(el => el.type === "connection").map(el => {
-                const srcEl = safeElements.find(e => e.id === el.sourceId);
-                const tgtEl = safeElements.find(e => e.id === el.targetId);
-                if (!srcEl || !tgtEl || !el.sourceAnchor || !el.targetAnchor) return null;
-                const p1 = getAnchorPoint(srcEl, el.sourceAnchor as Anchor);
-                const p2 = getAnchorPoint(tgtEl, el.targetAnchor as Anchor);
-                const { path, cx2, cy2 } = getBezierData(p1, el.sourceAnchor as Anchor, p2, el.targetAnchor as Anchor);
-                const headData = arrowheadPath(p2.x, p2.y, cx2, cy2);
-                const isSel = selectedIds.includes(el.id);
-                const color = isSel ? "#6366f1" : (el.stroke ?? "#334155");
+
+              {/* ── Canvas background ── */}
+              {canvasBg !== '#FFFFFF' && canvasBg !== '#ffffff' && (
+                <Rect
+                  x={-stagePos.x / stageScale}
+                  y={-stagePos.y / stageScale}
+                  width={containerSize.w / stageScale}
+                  height={containerSize.h / stageScale}
+                  fill={canvasBg}
+                  listening={false}
+                />
+              )}
+
+              {/* ── Frames (rendered before other elements as white-background rects) ── */}
+              {safeElements.filter(el => el.type === "frame").map(frameEl => {
+                const fw = frameEl.width ?? 400;
+                const fh = frameEl.height ?? 300;
+                const isSel = selectedIds.includes(frameEl.id);
                 return (
-                  <Fragment key={el.id}>
-                    <KonvaPath
-                      id={el.id}
-                      data={path}
-                      stroke={color}
-                      strokeWidth={(el.strokeWidth ?? 2) + (isSel ? 1 : 0)}
+                  <Group key={frameEl.id}>
+                    {/* White background (not draggable, not interactive) */}
+                    <Rect x={frameEl.x} y={frameEl.y} width={fw} height={fh} fill={frameEl.fill ?? "#ffffff"} listening={false} />
+                    {/* Frame border — interactive, draggable */}
+                    <Rect
+                      id={frameEl.id}
+                      x={frameEl.x} y={frameEl.y} width={fw} height={fh}
                       fill="transparent"
-                      opacity={el.opacity ?? 1}
-                      hitStrokeWidth={14}
-                      onClick={() => { if (tool === "select") setSelectedIds([el.id]); }}
-                      onTap={() => { if (tool === "select") setSelectedIds([el.id]); }}
+                      stroke={isSel ? "#6366f1" : (frameEl.stroke ?? "#94a3b8")}
+                      strokeWidth={isSel ? 2 : (frameEl.strokeWidth ?? 1)}
+                      draggable={tool === "select"}
+                      onClick={(e) => {
+                        if (tool !== "select") return;
+                        if (e.evt.shiftKey) setSelectedIds(prev => prev.includes(frameEl.id) ? prev.filter(x => x !== frameEl.id) : [...prev, frameEl.id]);
+                        else setSelectedIds([frameEl.id]);
+                      }}
+                      onTap={() => { if (tool === "select") setSelectedIds([frameEl.id]); }}
+                      onDragStart={() => { isDragging.current = true; setHoveredElementId(null); }}
+                      onDragEnd={(e) => {
+                        isDragging.current = false;
+                        const dx = e.target.x() - frameEl.x;
+                        const dy = e.target.y() - frameEl.y;
+                        const next = elements.map(elem => {
+                          if (elem.id === frameEl.id) return { ...elem, x: e.target.x(), y: e.target.y() };
+                          if (elem.frameId === frameEl.id) return { ...elem, x: elem.x + dx, y: elem.y + dy };
+                          return elem;
+                        });
+                        updateElements(next);
+                      }}
+                      onTransformEnd={(e) => {
+                        const node = e.target;
+                        const patch: Partial<CanvasElement> = {
+                          x: node.x(), y: node.y(),
+                          width: Math.max(50, node.width() * node.scaleX()),
+                          height: Math.max(50, node.height() * node.scaleY()),
+                        };
+                        node.scaleX(1); node.scaleY(1);
+                        updateEl(frameEl.id, patch);
+                      }}
+                      onContextMenu={(e) => { e.evt.preventDefault(); setSelectedIds([frameEl.id]); setContextMenu({ screenX: e.evt.clientX, screenY: e.evt.clientY, elementId: frameEl.id }); }}
                     />
-                    <KonvaPath
-                      data={headData}
-                      fill={color}
-                      stroke="transparent"
-                      opacity={el.opacity ?? 1}
-                      listening={false}
-                    />
-                  </Fragment>
+                  </Group>
                 );
               })}
 
               {safeElements.map((el) => {
-                if (el.type === "connection") return null; // rendered separately above
+                if (el.type === "connection") return null; // rendered separately below (always on top)
+                if (el.type === "frame") return null; // rendered separately above
                 const isSel = selectedIds.includes(el.id);
+                // Build clipFunc if this element belongs to a frame
+                const parentFrame = el.frameId ? safeElements.find(f => f.id === el.frameId) : undefined;
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const clipFunc = parentFrame
+                  ? (ctx: any) => { ctx.rect(parentFrame.x, parentFrame.y, parentFrame.width ?? 400, parentFrame.height ?? 300); }
+                  : undefined;
                 const commonProps = {
                   id: el.id,
                   opacity: el.opacity ?? 1,
                   rotation: el.rotation ?? 0,
                   draggable: tool === "select" && !draggingConnRef.current,
+                  ...(clipFunc ? { clipFunc } : {}),
                   onContextMenu: (e: Konva.KonvaEventObject<MouseEvent>) => {
                     e.evt.preventDefault();
                     if (tool === "select") {
@@ -1698,7 +2313,23 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                       );
                       updateElements(next);
                     } else {
-                      updateEl(el.id, { x: e.target.x(), y: e.target.y() });
+                      const nx = e.target.x();
+                      const ny = e.target.y();
+                      // Auto-assign to frame: if element center is inside a frame, set frameId
+                      if (el.type !== "frame" && el.type !== "connection") {
+                        const elW = el.width ?? 120;
+                        const elH = el.height ?? 80;
+                        const cx = nx + elW / 2;
+                        const cy = ny + elH / 2;
+                        const containingFrame = elements.find(f =>
+                          f.type === "frame" && f.id !== el.id &&
+                          cx >= f.x && cx <= f.x + (f.width ?? 0) &&
+                          cy >= f.y && cy <= f.y + (f.height ?? 0)
+                        );
+                        updateEl(el.id, { x: nx, y: ny, frameId: containingFrame?.id ?? undefined });
+                      } else {
+                        updateEl(el.id, { x: nx, y: ny });
+                      }
                     }
                   },
                   onTransformEnd: (e: Konva.KonvaEventObject<Event>) => {
@@ -1719,19 +2350,90 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                   },
                 };
 
-                if (el.type === "rect") return (
-                  <Rect key={el.id} {...commonProps} x={el.x} y={el.y} width={el.width ?? 120} height={el.height ?? 80}
-                    fill={el.fill ?? "#e2e8f0"}
-                    stroke={isSel ? "#6366f1" : (el.stroke ?? "#94a3b8")}
-                    strokeWidth={isSel ? 2 : (el.strokeWidth ?? 1.5)} cornerRadius={4} />
-                );
+                if (el.type === "rect") {
+                  const rw = el.width ?? 120, rh = el.height ?? 80;
+                  const isTemplate = !!el.templateRole;
+                  const rot = el.rotation ?? 0;
+                  const rad = (rot * Math.PI) / 180;
+                  // Center of element in canvas coords (accounting for rotation around top-left)
+                  const ecx = el.x + (rw / 2) * Math.cos(rad) - (rh / 2) * Math.sin(rad);
+                  const ecy = el.y + (rw / 2) * Math.sin(rad) + (rh / 2) * Math.cos(rad);
+                  const showPlus = rw > 24 && rh > 24 && !exportMode;
+                  return (
+                    <Fragment key={el.id}>
+                      <Rect {...commonProps} x={el.x} y={el.y} width={rw} height={rh}
+                        fill={el.fill ?? (isTemplate ? "#F2F3F7" : "#e2e8f0")}
+                        stroke={isSel ? "#6366f1" : (isTemplate ? "#C7CAD6" : (el.stroke ?? "#94a3b8"))}
+                        strokeWidth={isSel ? 2 : (isTemplate ? 1 : (el.strokeWidth ?? 1.5))}
+                        cornerRadius={el.cornerRadius ?? (el.templateCategory === 'flatlay' ? 3 : isTemplate ? 8 : 0)}
+                      />
+                      {showPlus && (
+                        <Text
+                          x={ecx} y={ecy}
+                          offsetX={14} offsetY={14}
+                          width={28} height={28}
+                          text="+"
+                          fontSize={22}
+                          fontFamily="Inter, sans-serif"
+                          fill={templatePickModeId === el.id ? "#6366f1" : "#7C3AED"}
+                          align="center"
+                          verticalAlign="middle"
+                          rotation={rot}
+                          opacity={el.opacity ?? 1}
+                          onClick={(e) => {
+                            e.cancelBubble = true;
+                            setTemplatePickModeId(prev => prev === el.id ? null : el.id);
+                          }}
+                          onTap={(e) => {
+                            e.cancelBubble = true;
+                            setTemplatePickModeId(prev => prev === el.id ? null : el.id);
+                          }}
+                          onMouseEnter={() => { if (stageRef.current) stageRef.current.container().style.cursor = "pointer"; }}
+                          onMouseLeave={() => { if (stageRef.current) stageRef.current.container().style.cursor = ""; }}
+                        />
+                      )}
+                    </Fragment>
+                  );
+                }
 
-                if (el.type === "ellipse") return (
-                  <Ellipse key={el.id} {...commonProps} x={el.x} y={el.y} radiusX={(el.width ?? 120) / 2} radiusY={(el.height ?? 80) / 2}
-                    fill={el.fill ?? "#e2e8f0"}
-                    stroke={isSel ? "#6366f1" : (el.stroke ?? "#94a3b8")}
-                    strokeWidth={isSel ? 2 : (el.strokeWidth ?? 1.5)} />
-                );
+                if (el.type === "ellipse") {
+                  const ew = el.width ?? 120, eh = el.height ?? 80;
+                  const isTemplate = !!el.templateRole;
+                  const showPlus = ew > 24 && eh > 24 && !exportMode;
+                  return (
+                    <Fragment key={el.id}>
+                      <Ellipse {...commonProps} x={el.x} y={el.y} radiusX={ew / 2} radiusY={eh / 2}
+                        fill={el.fill ?? (isTemplate ? "#F2F3F7" : "#e2e8f0")}
+                        stroke={isSel ? "#6366f1" : (isTemplate ? "#C7CAD6" : (el.stroke ?? "#94a3b8"))}
+                        strokeWidth={isSel ? 2 : (isTemplate ? 1 : (el.strokeWidth ?? 1.5))}
+                      />
+                      {showPlus && (
+                        <Text
+                          x={el.x} y={el.y}
+                          offsetX={14} offsetY={14}
+                          width={28} height={28}
+                          text="+"
+                          fontSize={22}
+                          fontFamily="Inter, sans-serif"
+                          fill={templatePickModeId === el.id ? "#6366f1" : "#7C3AED"}
+                          align="center"
+                          verticalAlign="middle"
+                          opacity={el.opacity ?? 1}
+                          onClick={(e) => {
+                            e.cancelBubble = true;
+                            setTemplatePickModeId(prev => prev === el.id ? null : el.id);
+                          }}
+                          onTap={(e) => {
+                            e.cancelBubble = true;
+                            setTemplatePickModeId(prev => prev === el.id ? null : el.id);
+                          }}
+                          onMouseEnter={() => { if (stageRef.current) stageRef.current.container().style.cursor = "pointer"; }}
+                          onMouseLeave={() => { if (stageRef.current) stageRef.current.container().style.cursor = ""; }}
+                        />
+                      )}
+                    </Fragment>
+                  );
+                }
 
                 if (el.type === "text") return (
                   <Text key={el.id} {...commonProps} x={el.x} y={el.y} width={el.width ?? 200}
@@ -1779,20 +2481,113 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                     tension={0.4} lineCap="round" lineJoin="round" />
                 );
 
-                if (el.type === "image") return (
-                  <CanvasImageNode key={el.id} el={el} isSelected={isSel}
-                    onSelect={() => setSelectedIds([el.id])}
-                    onDragEnd={(x, y) => updateEl(el.id, { x, y })}
-                    onTransformEnd={(attrs) => updateEl(el.id, attrs)}
-                    onMouseEnter={() => { if (tool === "select") setHoveredElementId(el.id); }}
-                    onMouseLeave={() => setHoveredElementId(null)}
-                    onDragStarted={() => { isDragging.current = true; setHoveredElementId(null); }}
-                    onDragEnded={() => { isDragging.current = false; setHoveredElementId(null); setSnapLines([]); }}
-                    onDragMove={(e) => applySnap(e, el)}
-                    onContextMenu={(e) => { e.evt.preventDefault(); setSelectedIds([el.id]); setContextMenu({ screenX: e.evt.clientX, screenY: e.evt.clientY, elementId: el.id }); }} />
-                );
+                if (el.type === "image" && el.innerScale !== undefined) {
+                  const isInnerEdit = innerEditId === el.id;
+                  return (
+                    <MaskedInnerImage
+                      key={el.id}
+                      el={el}
+                      isSelected={isSel}
+                      isInnerEdit={isInnerEdit}
+                      onSelect={() => {
+                        if (templatePickModeId) { fillPlaceholderWithImage(templatePickModeId, el); return; }
+                        if (innerEditId && innerEditId !== el.id) setInnerEditId(null);
+                        setSelectedIds([el.id]);
+                      }}
+                      onDblClick={() => setInnerEditId(el.id)}
+                      onInnerDragEnd={(offX, offY) => updateEl(el.id, { innerOffsetX: offX, innerOffsetY: offY })}
+                      onOuterDragEnd={(x, y) => {
+                        const elW = el.width ?? 120; const elH = el.height ?? 80;
+                        const cx = x + elW / 2; const cy = y + elH / 2;
+                        const containingFrame = elements.find(f =>
+                          f.type === "frame" && f.id !== el.id &&
+                          cx >= f.x && cx <= f.x + (f.width ?? 0) &&
+                          cy >= f.y && cy <= f.y + (f.height ?? 0)
+                        );
+                        updateEl(el.id, { x, y, frameId: containingFrame?.id ?? undefined });
+                      }}
+                      onTransformEnd={(attrs) => updateEl(el.id, attrs)}
+                      onMouseEnter={() => { if (tool === "select") setHoveredElementId(el.id); }}
+                      onMouseLeave={() => setHoveredElementId(null)}
+                      onDragStarted={() => { isDragging.current = true; setHoveredElementId(null); }}
+                      onDragEnded={() => { isDragging.current = false; setHoveredElementId(null); setSnapLines([]); }}
+                      onDragMove={(e) => applySnap(e, el)}
+                      onContextMenu={(e) => { e.evt.preventDefault(); setSelectedIds([el.id]); setContextMenu({ screenX: e.evt.clientX, screenY: e.evt.clientY, elementId: el.id }); }}
+                    />
+                  );
+                }
+
+                if (el.type === "image") {
+                  const imageNode = (
+                    <CanvasImageNode key={el.id} el={el} isSelected={isSel || (templatePickModeId !== null && !!el.imageUrl)}
+                      onSelect={() => {
+                        if (templatePickModeId) { fillPlaceholderWithImage(templatePickModeId, el); return; }
+                        setSelectedIds([el.id]);
+                      }}
+                      onDragEnd={(x, y) => {
+                        const nx = x, ny = y;
+                        if (el.type !== "frame" && el.type !== "connection") {
+                          const elW = el.width ?? 120; const elH = el.height ?? 80;
+                          const cx = nx + elW / 2; const cy = ny + elH / 2;
+                          const containingFrame = elements.find(f =>
+                            f.type === "frame" && f.id !== el.id &&
+                            cx >= f.x && cx <= f.x + (f.width ?? 0) &&
+                            cy >= f.y && cy <= f.y + (f.height ?? 0)
+                          );
+                          updateEl(el.id, { x: nx, y: ny, frameId: containingFrame?.id ?? undefined });
+                        } else {
+                          updateEl(el.id, { x: nx, y: ny });
+                        }
+                      }}
+                      onTransformEnd={(attrs) => updateEl(el.id, attrs)}
+                      onMouseEnter={() => { if (tool === "select") setHoveredElementId(el.id); }}
+                      onMouseLeave={() => setHoveredElementId(null)}
+                      onDragStarted={() => { isDragging.current = true; setHoveredElementId(null); }}
+                      onDragEnded={() => { isDragging.current = false; setHoveredElementId(null); setSnapLines([]); }}
+                      onDragMove={(e) => applySnap(e, el)}
+                      onContextMenu={(e) => { e.evt.preventDefault(); setSelectedIds([el.id]); setContextMenu({ screenX: e.evt.clientX, screenY: e.evt.clientY, elementId: el.id }); }} />
+                  );
+                  return clipFunc
+                    ? <Group key={el.id + "_cg"} clipFunc={clipFunc}>{imageNode}</Group>
+                    : imageNode;
+                }
 
                 return null;
+              })}
+
+              {/* ── Connections (bezier curves, always on top of elements) ── */}
+              {safeElements.filter(el => el.type === "connection").map(el => {
+                const srcEl = safeElements.find(e => e.id === el.sourceId);
+                const tgtEl = safeElements.find(e => e.id === el.targetId);
+                if (!srcEl || !tgtEl || !el.sourceAnchor || !el.targetAnchor) return null;
+                const p1 = getAnchorPoint(srcEl, el.sourceAnchor as Anchor);
+                const p2 = getAnchorPoint(tgtEl, el.targetAnchor as Anchor);
+                const { path, cx2, cy2 } = getBezierData(p1, el.sourceAnchor as Anchor, p2, el.targetAnchor as Anchor);
+                const headData = arrowheadPath(p2.x, p2.y, cx2, cy2);
+                const isSel = selectedIds.includes(el.id);
+                const color = isSel ? "#6366f1" : (el.stroke ?? "#334155");
+                return (
+                  <Fragment key={el.id}>
+                    <KonvaPath
+                      id={el.id}
+                      data={path}
+                      stroke={color}
+                      strokeWidth={(el.strokeWidth ?? 2) + (isSel ? 1 : 0)}
+                      fill="transparent"
+                      opacity={el.opacity ?? 1}
+                      hitStrokeWidth={14}
+                      onClick={() => { if (tool === "select") setSelectedIds([el.id]); }}
+                      onTap={() => { if (tool === "select") setSelectedIds([el.id]); }}
+                    />
+                    <KonvaPath
+                      data={headData}
+                      fill={color}
+                      stroke="transparent"
+                      opacity={el.opacity ?? 1}
+                      listening={false}
+                    />
+                  </Fragment>
+                );
               })}
 
               {/* Snap guide lines */}
@@ -1801,6 +2596,38 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                   stroke="#6366f1" strokeWidth={1 / stageScale} dash={[4 / stageScale, 4 / stageScale]}
                   opacity={0.7} listening={false} />
               ))}
+
+              {/* Rotation snap guide lines */}
+              {rotationGuide && (() => {
+                const { cx, cy, angle } = rotationGuide;
+                const sw = 1 / stageScale;
+                const dashLen = 6 / stageScale;
+                const gapLen = 4 / stageScale;
+                const isCardinal = angle % 90 === 0;
+                const isDiag = angle % 45 === 0 && !isCardinal;
+                const span = 9999;
+                // Cardinal angles: H and V crosshair
+                // Diagonal angles: diagonal lines
+                if (isCardinal) {
+                  return (
+                    <>
+                      <Line points={[-span, cy, span, cy]} stroke="#f59e0b" strokeWidth={sw} dash={[dashLen, gapLen]} opacity={0.85} listening={false} />
+                      <Line points={[cx, -span, cx, span]} stroke="#f59e0b" strokeWidth={sw} dash={[dashLen, gapLen]} opacity={0.85} listening={false} />
+                    </>
+                  );
+                }
+                if (isDiag) {
+                  // 45° or 135°: show two diagonal lines
+                  const sign = (angle === 45 || angle === 225) ? 1 : -1;
+                  return (
+                    <Line
+                      points={[cx - span * sign, cy - span, cx + span * sign, cy + span]}
+                      stroke="#f59e0b" strokeWidth={sw} dash={[dashLen, gapLen]} opacity={0.7} listening={false}
+                    />
+                  );
+                }
+                return null;
+              })()}
 
               {/* Live pen preview */}
               {isPenDrawingRef.current && penStartRef.current && penPoints.length >= 4 && (
@@ -1818,13 +2645,91 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                 <Rect x={drawRect.x} y={drawRect.y} width={drawRect.w} height={drawRect.h}
                   fill={tool === "note" ? "#fef08a40" : "#e2e8f040"} stroke="#94a3b8" strokeWidth={1} dash={[4, 4]} />
               )}
+              {isDrawing && drawRect && tool === "frame" && (
+                <Rect x={drawRect.x} y={drawRect.y} width={drawRect.w} height={drawRect.h}
+                  fill="#f8fafc40" stroke="#6366f1" strokeWidth={1.5} dash={[6, 4]} />
+              )}
               {isDrawing && drawRect && tool === "ellipse" && (
                 <Ellipse x={drawRect.x + drawRect.w / 2} y={drawRect.y + drawRect.h / 2}
                   radiusX={drawRect.w / 2} radiusY={drawRect.h / 2}
                   fill="#e2e8f040" stroke="#94a3b8" strokeWidth={1} dash={[4, 4]} />
               )}
 
-              <Transformer ref={transformerRef} visible={transformerVisible} rotateEnabled keepRatio={false} borderStroke="#6366f1" anchorStroke="#6366f1" anchorFill="#fff" anchorSize={8} borderStrokeWidth={1.5} />
+              {/* ── Line / Arrow endpoint handles ── */}
+              {(() => {
+                if (selectedIds.length !== 1) return null;
+                const el = elements.find(e => e.id === selectedIds[0]);
+                if (!el || (el.type !== "line" && el.type !== "arrow")) return null;
+                const pts = el.points ?? [0, 0, 80, 0];
+                const sx = el.x + (pts[0] ?? 0);
+                const sy = el.y + (pts[1] ?? 0);
+                const ex = el.x + (pts[2] ?? 80);
+                const ey = el.y + (pts[3] ?? 0);
+                const handleProps = {
+                  radius: 5,
+                  fill: "#fff",
+                  stroke: "#6366f1",
+                  strokeWidth: 2,
+                  draggable: true,
+                  hitStrokeWidth: 12,
+                  onMouseEnter: () => { if (stageRef.current) stageRef.current.container().style.cursor = "crosshair"; },
+                  onMouseLeave: () => { if (stageRef.current) stageRef.current.container().style.cursor = ""; },
+                };
+                return (
+                  <>
+                    {/* Start handle */}
+                    <KonvaCircle
+                      {...handleProps}
+                      x={sx} y={sy}
+                      onDragEnd={(e) => {
+                        const nx = e.target.x(), ny = e.target.y();
+                        const absEndX = el.x + (pts[2] ?? 80);
+                        const absEndY = el.y + (pts[3] ?? 0);
+                        updateEl(el.id, { x: nx, y: ny, points: [0, 0, absEndX - nx, absEndY - ny] });
+                      }}
+                    />
+                    {/* End handle */}
+                    <KonvaCircle
+                      {...handleProps}
+                      x={ex} y={ey}
+                      onDragEnd={(e) => {
+                        const nx = e.target.x(), ny = e.target.y();
+                        updateEl(el.id, { points: [0, 0, nx - el.x, ny - el.y] });
+                      }}
+                    />
+                  </>
+                );
+              })()}
+
+              <Transformer
+                ref={transformerRef}
+                visible={transformerVisible}
+                rotateEnabled
+                keepRatio={false}
+                borderStroke="#6366f1"
+                anchorStroke="#6366f1"
+                anchorFill="#fff"
+                anchorSize={8}
+                borderStrokeWidth={1.5}
+                rotationSnaps={[0, 45, 90, 135, 180, 225, 270, 315]}
+                rotationSnapTolerance={6}
+                onTransform={(e) => {
+                  const node = e.target;
+                  const rot = ((node.rotation() % 360) + 360) % 360;
+                  const SNAP_ANGLES = [0, 45, 90, 135, 180, 225, 270, 315];
+                  const isSnapped = SNAP_ANGLES.some(a => Math.abs(rot - a) < 1.5);
+                  if (isSnapped) {
+                    // Get center in canvas (world) coordinates via getClientRect
+                    const box = node.getClientRect({ skipTransform: false });
+                    const cx = (box.x + box.width / 2 - stagePos.x) / stageScale;
+                    const cy = (box.y + box.height / 2 - stagePos.y) / stageScale;
+                    setRotationGuide({ cx, cy, angle: Math.round(rot) });
+                  } else {
+                    setRotationGuide(null);
+                  }
+                }}
+                onTransformEnd={() => setRotationGuide(null)}
+              />
 
               {/* Rubber-band selection rectangle */}
               {selBox && selBox.w > 2 && selBox.h > 2 && (
@@ -1908,6 +2813,65 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
               })()}
             </Layer>
           </Stage>
+
+          {/* Frame name labels (HTML overlay, above canvas, below text editing) */}
+          {safeElements.filter(el => el.type === "frame").map(frameEl => {
+            const sx = frameEl.x * stageScale + stagePos.x;
+            const sy = frameEl.y * stageScale + stagePos.y;
+            const isSel = selectedIds.includes(frameEl.id);
+            return (
+              <div
+                key={`label-${frameEl.id}`}
+                style={{ position: "absolute", left: sx, top: sy - 22, pointerEvents: "none", zIndex: 15 }}
+                className="flex items-center gap-1"
+              >
+                <span
+                  onDoubleClick={() => { setRenameFrameId(frameEl.id); setRenameFrameValue(frameEl.frameName ?? "Frame"); }}
+                  className={`text-[11px] font-semibold leading-none px-1.5 py-0.5 rounded cursor-text select-none ${isSel ? "text-primary" : "text-muted-foreground"} hover:bg-muted/60 transition-colors`}
+                  style={{ fontFamily: "Inter, sans-serif", pointerEvents: "auto" }}
+                >
+                  {frameEl.frameName || "Frame"}
+                </span>
+                {/* 3-dot rename/export menu — pointer-events: auto */}
+                <div className="relative" style={{ pointerEvents: "auto" }}>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setFrameMenuId(prev => prev === frameEl.id ? null : frameEl.id); }}
+                    className="w-5 h-5 flex items-center justify-center rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <MoreVertical size={11} />
+                  </button>
+                  {frameMenuId === frameEl.id && (
+                    <>
+                      <div className="fixed inset-0 z-[45]" onClick={() => setFrameMenuId(null)} />
+                      <div className="absolute left-0 top-[calc(100%+2px)] z-[50] bg-card border border-border rounded-xl shadow-xl overflow-hidden p-1 w-36">
+                        <button
+                          onClick={() => { setRenameFrameId(frameEl.id); setRenameFrameValue(frameEl.frameName ?? "Frame"); setFrameMenuId(null); }}
+                          className="w-full flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg hover:bg-muted text-foreground transition-colors text-left"
+                        >
+                          Zmień nazwę
+                        </button>
+                        <div className="h-px bg-border my-1" />
+                        <button onClick={() => { exportFrame(frameEl.id, "png"); setFrameMenuId(null); }} className="w-full flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg hover:bg-muted text-foreground transition-colors text-left">Eksportuj PNG</button>
+                        <button onClick={() => { exportFrame(frameEl.id, "jpg"); setFrameMenuId(null); }} className="w-full flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg hover:bg-muted text-foreground transition-colors text-left">Eksportuj JPG</button>
+                        <button onClick={() => { exportFrame(frameEl.id, "pdf"); setFrameMenuId(null); }} className="w-full flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg hover:bg-muted text-foreground transition-colors text-left">Eksportuj PDF</button>
+                        <div className="h-px bg-border my-1" />
+                        <button
+                          onClick={() => {
+                            updateElements(elements.filter(e => e.id !== frameEl.id).map(e => e.frameId === frameEl.id ? { ...e, frameId: undefined } : e));
+                            setSelectedIds([]);
+                            setFrameMenuId(null);
+                          }}
+                          className="w-full flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg hover:bg-red-50 text-red-600 transition-colors text-left"
+                        >
+                          Usuń frame
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            );
+          })}
 
           {/* Text editing overlay */}
           {editingTextId && (() => {
@@ -2201,6 +3165,53 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                     </div>
                   </>
                 )}
+                {/* Image controls */}
+                {firstSelected.type === "image" && !cropMode && (
+                  <>
+                    <button
+                      onClick={() => enterCropMode(firstSelected)}
+                      className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+                    >
+                      <Crop size={14} /> Kadruj
+                    </button>
+                    {firstSelected.cropLeft !== undefined && (
+                      <button
+                        onClick={resetCrop}
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+                      >
+                        <X size={14} /> Resetuj kadr
+                      </button>
+                    )}
+                    <button
+                      onClick={() => handleRemoveBg(firstSelected)}
+                      disabled={!!removingBgId}
+                      className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground disabled:opacity-50"
+                    >
+                      <Eraser size={14} />
+                      {removingBgId === firstSelected.id ? "Usuwam..." : "Usuń tło"}
+                    </button>
+                    <div className="w-px h-5 bg-border shrink-0" />
+                  </>
+                )}
+                {/* Corner radius — rect and image */}
+                {(firstSelected.type === "rect" || firstSelected.type === "image") && (
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs text-muted-foreground shrink-0">Zaokrąglenie</span>
+                    <div className="flex items-center border border-border rounded-lg bg-background overflow-hidden">
+                      <input
+                        type="number"
+                        min={0}
+                        max={500}
+                        step={1}
+                        value={Math.round(firstSelected.cornerRadius ?? 0)}
+                        onChange={(e) => updateSelected({ cornerRadius: Math.max(0, parseInt(e.target.value) || 0) })}
+                        onMouseDown={(e) => e.stopPropagation()}
+                        className="w-12 text-xs bg-transparent focus:outline-none text-center py-1 px-1"
+                      />
+                      <span className="text-xs text-muted-foreground pr-2">px</span>
+                    </div>
+                  </div>
+                )}
                 {/* Opacity */}
                 <div className="flex items-center gap-1.5">
                   <span className="text-xs text-muted-foreground shrink-0">Krycie</span>
@@ -2219,42 +3230,6 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
             </div>
           )}
 
-          {/* Image toolbar — appears below selected image */}
-          {firstSelected?.type === "image" && !cropMode && !editingTextId && (() => {
-            const el = firstSelected;
-            const cr = containerRef.current?.getBoundingClientRect();
-            if (!cr) return null;
-            const screenCx = cr.left + stagePos.x + (el.x + (el.width ?? 200) / 2) * stageScale;
-            const screenBy = cr.top + stagePos.y + (el.y + (el.height ?? 150)) * stageScale + 10;
-            return (
-              <div className="fixed z-30 flex items-center gap-1 bg-card border border-border rounded-xl shadow-md px-2 py-1.5 -translate-x-1/2 pointer-events-auto"
-                style={{ left: screenCx, top: screenBy }}>
-                <button
-                  onClick={() => enterCropMode(el)}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
-                >
-                  <Crop size={14} /> Kadruj
-                </button>
-                {el.cropLeft !== undefined && (
-                  <button
-                    onClick={resetCrop}
-                    className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
-                  >
-                    <X size={14} /> Resetuj kadr
-                  </button>
-                )}
-                <div className="w-px h-4 bg-border" />
-                <button
-                  onClick={() => handleRemoveBg(el)}
-                  disabled={!!removingBgId}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground disabled:opacity-50"
-                >
-                  <Eraser size={14} />
-                  {removingBgId === el.id ? "Usuwam..." : "Usuń tło"}
-                </button>
-              </div>
-            );
-          })()}
 
           {/* Crop overlay */}
           {cropMode && (() => {
@@ -2424,6 +3399,8 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                 { t: "select", icon: <MousePointer size={18} />, label: "Zaznaczanie (V)" },
                 { t: "hand", icon: <Hand size={18} />, label: "Przesuwanie (H)" },
                 null,
+                { t: "frame", icon: <FrameIcon size={18} />, label: "Frame (F)", hasDropdown: true },
+                null,
                 { t: "rect", icon: <Square size={18} />, label: "Prostokąt (R)" },
                 { t: "ellipse", icon: <Circle size={18} />, label: "Elipsa (O)" },
                 { t: "note", icon: <StickyNote size={18} />, label: "Notka (N)" },
@@ -2435,10 +3412,83 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                 { t: "image", icon: <Image size={18} />, label: "Obraz" },
                 null,
                 { t: "pen", icon: <Pen size={18} />, label: "Pisanie ręczne (P)" },
-              ] as (null | { t: Tool; icon: React.ReactNode; label: string })[]
+              ] as (null | { t: Tool; icon: React.ReactNode; label: string; hasDropdown?: boolean })[]
             ).map((item, idx) =>
               item === null ? (
                 <div key={idx} className="w-px h-6 bg-border mx-1" />
+              ) : item.hasDropdown ? (
+                /* Frame button with preset picker */
+                <div key={item.t} className="relative">
+                  <div className={`flex items-center rounded-xl overflow-hidden transition-colors ${tool === item.t ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}>
+                    <button
+                      onClick={() => setTool(item.t as Tool)}
+                      title={item.label}
+                      className="w-9 h-9 flex items-center justify-center transition-colors"
+                    >
+                      {item.icon}
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setFramePickerOpen(v => !v); }}
+                      className="h-9 px-0.5 flex items-center justify-center transition-colors hover:opacity-70"
+                      title="Wybierz format"
+                    >
+                      {framePickerOpen ? <ChevronDown size={12} /> : <ChevronDown size={12} className="rotate-180" />}
+                    </button>
+                  </div>
+                  {/* Preset picker popup */}
+                  {framePickerOpen && (
+                    <>
+                      <div className="fixed inset-0 z-[40]" onClick={() => setFramePickerOpen(false)} />
+                      <div className="absolute left-1/2 -translate-x-1/2 bottom-[calc(100%+8px)] z-[50] bg-card border border-border rounded-2xl shadow-xl p-3 w-56">
+                        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-1">Format frame</p>
+                        <div className="grid grid-cols-3 gap-2">
+                          {FRAME_PRESETS.map(preset => (
+                            <button
+                              key={preset.id}
+                              onClick={() => { setFramePreset(preset.id); setTool("frame"); setFramePickerOpen(false); }}
+                              className={`flex flex-col items-center gap-1.5 p-2 rounded-xl border-2 transition-all ${framePreset === preset.id ? "border-primary bg-primary/5 text-primary" : "border-border hover:border-primary/40 text-muted-foreground hover:text-foreground"}`}
+                            >
+                              {/* Format icon preview */}
+                              <div className="w-8 h-7 flex items-center justify-center">
+                                {preset.id === "custom" && (
+                                  <svg width="26" height="22" viewBox="0 0 26 22" fill="none">
+                                    <rect x="1" y="1" width="10" height="20" rx="1.5" stroke="currentColor" strokeWidth="1.5" strokeDasharray="3 2" />
+                                    <rect x="15" y="5" width="10" height="12" rx="1.5" stroke="currentColor" strokeWidth="1.5" strokeDasharray="3 2" />
+                                  </svg>
+                                )}
+                                {preset.id === "a4" && (
+                                  <svg width="18" height="24" viewBox="0 0 18 24" fill="none">
+                                    <rect x="1" y="1" width="16" height="22" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
+                                    <path d="M4 7h10M4 11h10M4 15h6" stroke="currentColor" strokeWidth="1" opacity="0.4" />
+                                  </svg>
+                                )}
+                                {preset.id === "16:9" && (
+                                  <svg width="28" height="16" viewBox="0 0 28 16" fill="none">
+                                    <rect x="1" y="1" width="26" height="14" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
+                                  </svg>
+                                )}
+                                {preset.id === "4:3" && (
+                                  <svg width="24" height="18" viewBox="0 0 24 18" fill="none">
+                                    <rect x="1" y="1" width="22" height="16" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
+                                  </svg>
+                                )}
+                                {preset.id === "1:1" && (
+                                  <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+                                    <rect x="1" y="1" width="20" height="20" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
+                                  </svg>
+                                )}
+                              </div>
+                              <span className="text-[11px] font-medium leading-none">{preset.label}</span>
+                              {preset.id !== "custom" && (
+                                <span className="text-[9px] text-muted-foreground leading-none">{preset.w}×{preset.h}</span>
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
               ) : (
                 <button
                   key={item.t}
@@ -2453,6 +3503,14 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                 </button>
               )
             )}
+            <div className="w-px h-6 bg-border mx-1" />
+            <button
+              onClick={() => setTemplateGalleryOpen(v => !v)}
+              title="Szablony"
+              className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors ${templateGalleryOpen ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
+            >
+              <DashboardAdd size={18} />
+            </button>
             <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImageUpload(f); e.target.value = ""; }} />
           </div>
         </div>
@@ -2655,6 +3713,41 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
           </div>
         )}
       </div>
+
+      {/* Rename frame dialog */}
+      {renameFrameId && (() => {
+        const frameEl = safeElements.find(e => e.id === renameFrameId);
+        if (!frameEl) return null;
+        const sx = frameEl.x * stageScale + stagePos.x;
+        const sy = frameEl.y * stageScale + stagePos.y;
+        return (
+          <>
+            <div className="fixed inset-0 z-[80]" onClick={() => setRenameFrameId(null)} />
+            <div
+              style={{ position: "absolute", left: sx, top: sy - 46, zIndex: 90, pointerEvents: "auto" }}
+              className="flex items-center gap-1.5 bg-card border border-border rounded-xl shadow-xl px-2 py-1.5"
+              onClick={e => e.stopPropagation()}
+            >
+              <input
+                autoFocus
+                value={renameFrameValue}
+                onChange={e => setRenameFrameValue(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === "Enter") { updateEl(renameFrameId!, { frameName: renameFrameValue || "Frame" }); setRenameFrameId(null); }
+                  if (e.key === "Escape") setRenameFrameId(null);
+                }}
+                className="text-xs font-semibold bg-background border border-border rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary/30 min-w-[120px]"
+              />
+              <button
+                onClick={() => { updateEl(renameFrameId!, { frameName: renameFrameValue || "Frame" }); setRenameFrameId(null); }}
+                className="text-xs px-2 py-1 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity"
+              >
+                OK
+              </button>
+            </div>
+          </>
+        );
+      })()}
 
       {/* Edit modal */}
       {editModalOpen && (

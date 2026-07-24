@@ -41,6 +41,11 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: path.resolve(__dirname),
   },
+  // Required for @imgly/background-removal (WASM + module workers) in production builds
+  webpack: (config: import('webpack').Configuration) => {
+    config.experiments = { ...config.experiments, asyncWebAssembly: true, layers: true };
+    return config;
+  },
   async headers() {
     return [
       {
