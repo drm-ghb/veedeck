@@ -645,7 +645,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
 
       const resultBlob = await removeBackground(imageSource, {
         debug: false,
-        model: 'large',
+        model: 'isnet',
         publicPath: `https://staticimgly.com/@imgly/background-removal-data/1.7.0/dist/`,
         progress: (_key: string, current: number, total: number) => {
           if (total > 0) setRemoveBgProgress(Math.round((current / total) * 100));
