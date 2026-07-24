@@ -1570,11 +1570,31 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
       .map(e => stageRef.current!.findOne("#" + e.id))
       .filter(Boolean) as Konva.Node[];
     frameBorderNodes.forEach(n => n.hide());
+    // Hide "+" template slot icons (Konva Text nodes with text="+")
+    const plusTexts = ((layer?.find("Text") ?? []) as Konva.Node[]).filter(n => (n as unknown as { text: () => string }).text?.() === "+");
+    plusTexts.forEach(n => n.hide());
+    // Clear selection strokes from selected nodes (save originals for restore)
+    const selStrokeBackup: { node: Konva.Node; stroke: string; sw: number }[] = [];
+    for (const sid of selectedIds) {
+      const el = elements.find(e => e.id === sid);
+      if (!el) continue;
+      const node = stageRef.current.findOne("#" + sid);
+      if (!node) continue;
+      const origStroke: string = node.getAttr("stroke") || "";
+      const origSW: number = node.getAttr("strokeWidth") || 0;
+      selStrokeBackup.push({ node, stroke: origStroke, sw: origSW });
+      const natStroke = el.type === "image" ? "" : (el.stroke && el.stroke !== "transparent" ? el.stroke : "");
+      const natSW = el.type === "image" ? 0 : (el.strokeWidth ?? 0);
+      node.setAttr("stroke", natStroke);
+      node.setAttr("strokeWidth", natSW);
+    }
     layer?.batchDraw();
     const konvaUrl = stageRef.current.toDataURL({ x: sx, y: sy, width: sw, height: sh, pixelRatio } as Parameters<typeof stageRef.current.toDataURL>[0]);
     uiCircles.forEach((n: Konva.Node) => n.show());
     transformerRef.current?.visible(transformerVisible);
     frameBorderNodes.forEach(n => n.show());
+    plusTexts.forEach(n => n.show());
+    selStrokeBackup.forEach(({ node, stroke, sw }) => { node.setAttr("stroke", stroke); node.setAttr("strokeWidth", sw); });
     layer?.batchDraw();
     const canvas = document.createElement("canvas");
     canvas.width = Math.round(sw * pixelRatio);
