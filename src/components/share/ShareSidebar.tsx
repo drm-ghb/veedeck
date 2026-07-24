@@ -3,7 +3,7 @@
 import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { LayoutDashboard, LocalMall, PanelLeftClose, PanelLeftOpen, PushPin, Sun, Moon, HelpCircle, Settings, UserRound, X, CheckCircle, ChatBubble, LogOut, Payments, CalendarNote, ClipboardList } from "@/components/ui/icons";
+import { LayoutDashboard, LocalMall, PanelLeftClose, PanelLeftOpen, PushPin, Sun, Moon, HelpCircle, Settings, UserRound, X, CheckCircle, ChatBubble, LogOut, Payments, CalendarNote, ClipboardList, Interests } from "@/components/ui/icons";
 import { signOut } from "next-auth/react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -45,6 +45,8 @@ interface ShareSidebarProps {
   showAnkiety?: boolean;
   /** When provided, clicking Ankiety calls this instead of navigating */
   onAnkietyClick?: () => void;
+  /** When true, show Moodboard item in sidebar */
+  showMoodboard?: boolean;
   /** When provided, clicking Ustawienia calls this instead of navigating (client mode) */
   onSettingsClick?: () => void;
   /** When provided, use /client/[projectId] links instead of /share/[token] links */
@@ -71,6 +73,7 @@ export default function ShareSidebar({
   showHarmonogram = false,
   showAnkiety = false,
   onAnkietyClick,
+  showMoodboard = false,
   shoppingLists = [],
   onHomeClick,
   onProjectFlowClick,
@@ -452,6 +455,35 @@ export default function ShareSidebar({
                 <LocalMall size={18} />
               </span>
               {showLabels && t.share.lists}
+            </Link>
+          )
+        )}
+
+        {/* Moodboard */}
+        {showMoodboard && (
+          clientProjectId ? (
+            <Link
+              href={`/client/${clientProjectId}/moodboard`}
+              title={isCollapsed ? "Moodboard" : undefined}
+              className={linkCls(activeView === "moodboard")}
+              onClick={() => setMobileSidebarOpen(false)}
+            >
+              <span className="flex-shrink-0 w-5 flex items-center justify-center">
+                <Interests size={18} />
+              </span>
+              {showLabels && t.nav.moodboard}
+            </Link>
+          ) : (
+            <Link
+              href={`/share/${token}/moodboard`}
+              title={isCollapsed ? "Moodboard" : undefined}
+              className={linkCls(pathname === `/share/${token}/moodboard`)}
+              onClick={() => setMobileSidebarOpen(false)}
+            >
+              <span className="flex-shrink-0 w-5 flex items-center justify-center">
+                <Interests size={18} />
+              </span>
+              {showLabels && t.nav.moodboard}
             </Link>
           )
         )}

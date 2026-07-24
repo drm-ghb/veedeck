@@ -16,6 +16,11 @@ export default async function ShareDyskusjePage({ params }: { params: Promise<{ 
       renders: { where: { archived: false }, select: { id: true }, take: 1 },
       shoppingLists: { select: { id: true, name: true, shareToken: true } },
       user: { select: { clientLogoUrl: true, name: true, navMode: true, showProfileName: true, showClientLogo: true, requireClientEmail: true, colorTheme: true } },
+      moodboards: {
+        where: { isSharedWithClient: true, archived: false },
+        select: { id: true },
+        take: 1,
+      },
       discussion: {
         select: {
           id: true,
@@ -38,6 +43,7 @@ export default async function ShareDyskusjePage({ params }: { params: Promise<{ 
   }
 
   const hasRenders = project.renders.length > 0;
+  const showMoodboard = project.moodboards.length > 0;
 
   const clientAvatarUrl = session?.user?.id
     ? (await prisma.user.findUnique({ where: { id: session.user.id }, select: { avatarUrl: true } }))?.avatarUrl ?? null
@@ -64,6 +70,7 @@ export default async function ShareDyskusjePage({ params }: { params: Promise<{ 
           showProjectFlow={!project.hiddenModules.includes("renderflow") && hasRenders}
           showListy={!project.hiddenModules.includes("listy")}
           showDyskusje={true}
+          showMoodboard={showMoodboard}
           shoppingLists={project.shoppingLists}
         />
         <main className="flex-1 overflow-hidden bg-background rounded-tl-2xl flex flex-col">

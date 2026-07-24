@@ -95,6 +95,10 @@ export async function GET(
       }).then((n) => n > 0)
     : false;
 
+  const hasMoodboard = await prisma.moodboard.count({
+    where: { projectId, isSharedWithClient: true, archived: false },
+  }).then((n) => n > 0);
+
   const { user, sharePassword, shareExpiresAt, ...rest } = project;
   const { name, showProfileName, showClientLogo, clientLogoUrl, ...userSettings } = user;
 
@@ -108,5 +112,6 @@ export async function GET(
     hasDiscussion: !!discussion,
     discussionId: discussion?.id ?? null,
     hasSurveys,
+    hasMoodboard,
   });
 }

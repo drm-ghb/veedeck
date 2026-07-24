@@ -3,11 +3,11 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import ShareNavbar from "@/components/share/ShareNavbar";
 import ShareSidebar from "@/components/share/ShareSidebar";
-import ClientGreeting from "@/components/share/ClientGreeting";
 import ClientNameGate from "@/components/share/ClientNameGate";
 import ClientThemeApplier from "@/components/share/ClientThemeApplier";
+import MoodboardCanvas from "@/components/moodboard/MoodboardCanvas";
 
-export default async function ProjectHomePage({ params }: { params: Promise<{ token: string }> }) {
+export default async function ShareMoodboardPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
 
   const project = await prisma.project.findUnique({
@@ -15,11 +15,11 @@ export default async function ProjectHomePage({ params }: { params: Promise<{ to
     include: {
       renders: { where: { archived: false }, select: { id: true }, take: 1 },
       shoppingLists: { select: { id: true, name: true, shareToken: true } },
-      user: { select: { clientLogoUrl: true, name: true, navMode: true, clientWelcomeMessage: true, showProfileName: true, showClientLogo: true, requireClientEmail: true, colorTheme: true } },
+      user: { select: { clientLogoUrl: true, name: true, navMode: true, showProfileName: true, showClientLogo: true, requireClientEmail: true, colorTheme: true } },
       discussion: { select: { id: true } },
       moodboards: {
         where: { isSharedWithClient: true, archived: false },
-        select: { id: true },
+        select: { id: true, title: true, canvasData: true, clientId: true, projectId: true },
         take: 1,
       },
     },
@@ -27,7 +27,9 @@ export default async function ProjectHomePage({ params }: { params: Promise<{ to
 
   if (!project || project.archived) notFound();
 
-  // If project has client accounts → non-logged-in visitors must log in
+  const moodboard = project.moodboards[0];
+  if (!moodboard) notFound();
+
   const session = await auth();
   if (!session?.user) {
     const hasClientAccounts = await prisma.projectClient.findFirst({
@@ -37,12 +39,6 @@ export default async function ProjectHomePage({ params }: { params: Promise<{ to
   }
 
   const hasRenders = project.renders.length > 0;
-  const showProjectFlow = !project.hiddenModules.includes("renderflow");
-  const showListy = !project.hiddenModules.includes("listy");
-  const hasDyskusje = !project.hiddenModules.includes("dyskusje");
-  const showMoodboard = project.moodboards.length > 0;
-  const welcomeMessage = project.user.clientWelcomeMessage?.trim() || null;
-  const greeting = project.clientName ? `Witamy, ${project.clientName}!` : "Witaj w projekcie!";
 
   return (
     <ClientNameGate
@@ -62,19 +58,22 @@ export default async function ProjectHomePage({ params }: { params: Promise<{ to
         <ShareSidebar
           token={token}
           discussionId={project.discussion?.id}
-          showProjectFlow={showProjectFlow && hasRenders}
-          showListy={showListy}
-          showDyskusje={hasDyskusje}
-          showMoodboard={showMoodboard}
+          showProjectFlow={!project.hiddenModules.includes("renderflow") && hasRenders}
+          showListy={!project.hiddenModules.includes("listy")}
+          showDyskusje={!project.hiddenModules.includes("dyskusje")}
+          showMoodboard={true}
           shoppingLists={project.shoppingLists}
         />
-        <main className="flex-1 overflow-y-auto px-6 py-6 bg-background rounded-tl-2xl">
-          <div className="flex flex-col items-start justify-start">
-            <ClientGreeting projectShareToken={token} fallbackGreeting={greeting} className="text-2xl font-bold text-gray-900 dark:text-gray-100" />
-            <p className="text-sm text-muted-foreground mt-2">
-              {welcomeMessage ?? "Wybierz moduł z paska bocznego, aby przeglądać projekt."}
-            </p>
-          </div>
+        <main className="flex-1 min-h-0 overflow-hidden bg-background rounded-tl-2xl">
+          <MoodboardCanvas
+            id={moodboard.id}
+            title={moodboard.title}
+            canvasData={moodboard.canvasData as object}
+            isSharedWithClient={true}
+            client={null}
+            project={null}
+            readOnly={true}
+          />
         </main>
       </div>
     </div>

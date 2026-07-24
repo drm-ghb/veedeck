@@ -471,9 +471,10 @@ interface Props {
   isSharedWithClient: boolean;
   client: { id: string; name: string } | null;
   project: { id: string; title: string } | null;
+  readOnly?: boolean;
 }
 
-export default function MoodboardCanvas({ id, title: initialTitle, canvasData: initial, isSharedWithClient: initialShared, client, project }: Props) {
+export default function MoodboardCanvas({ id, title: initialTitle, canvasData: initial, isSharedWithClient: initialShared, client, project, readOnly = false }: Props) {
   const stageRef = useRef<Konva.Stage>(null);
   const transformerRef = useRef<Konva.Transformer>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -489,7 +490,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
   const { startUpload: startImageUpload } = useUploadThing("moodboardImageUploader");
 
   // State
-  const [tool, setTool] = useState<Tool>("select");
+  const [tool, setTool] = useState<Tool>(readOnly ? "hand" : "select");
   const [elements, setElements] = useState<CanvasElement[]>(initElements);
   const [canvasBg, setCanvasBg] = useState<string>(initBg);
   // Always-fresh refs — safe to read from async callbacks and stale closures
@@ -811,6 +812,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
 
   // Auto-save
   function scheduleSave(els: CanvasElement[], vp?: { x: number; y: number; scale: number }, bg?: string) {
+    if (readOnly) return;
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(() => {
       const viewport = vp ?? { x: stagePos.x, y: stagePos.y, scale: stageScale };
@@ -882,6 +884,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
         }
       }
 
+      if (readOnly) return;
       if (editingTextId) return;
       const tag = (e.target as HTMLElement).tagName;
       if (tag === "INPUT" || tag === "TEXTAREA") return;
@@ -2256,7 +2259,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
         </div>
 
         {/* Zasoby button — top bar, rightmost */}
-        <button
+        {!readOnly && <button
           onClick={() => setRightSidebarOpen((v) => !v)}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${rightSidebarOpen ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
           title="Zasoby"
@@ -2264,7 +2267,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
           <Package size={15} />
           Zasoby
           {rightSidebarOpen ? <ChevronRight size={13} /> : <ChevronLeft size={13} />}
-        </button>
+        </button>}
       </div>
 
       {/* Body */}
@@ -3175,7 +3178,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
           </div>
 
           {/* Properties panel — shown above toolbar when element selected */}
-          {firstSelected && !editingTextId && (
+          {!readOnly && firstSelected && !editingTextId && (
             <div className="absolute bottom-[76px] left-1/2 -translate-x-1/2 flex flex-col gap-2 bg-card border border-border rounded-2xl shadow-lg px-4 py-3 z-20 pointer-events-auto min-w-max">
               {/* Font family picker — text only */}
               {firstSelected.type === "text" && (
@@ -3629,7 +3632,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
           )}
 
           {/* Floating toolbar */}
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-0.5 bg-card border border-border rounded-2xl shadow-lg px-2 py-1.5 z-20">
+          {!readOnly && <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-0.5 bg-card border border-border rounded-2xl shadow-lg px-2 py-1.5 z-20">
             {/* Undo / Redo */}
             <button onClick={undo} disabled={historyIndex <= 0} title="Cofnij (Ctrl+Z)"
               className="w-9 h-9 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30 transition-colors">
@@ -3759,7 +3762,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
               <DashboardAdd size={18} />
             </button>
             <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImageUpload(f); e.target.value = ""; }} />
-          </div>
+          </div>}
         </div>
 
         {/* Right sidebar */}

@@ -60,6 +60,7 @@ interface Project {
   paymentsSharedWithClient: boolean;
   scheduleSharedWithClient: boolean;
   hasSurveys: boolean;
+  hasMoodboard: boolean;
 }
 
 interface HomeData {
@@ -629,6 +630,7 @@ export default function ClientProjectPage() {
     showHarmonogram: project.scheduleSharedWithClient,
     showAnkiety: project.hasSurveys,
     onAnkietyClick: openAnkiety,
+    showMoodboard: project.hasMoodboard,
     shoppingLists: project.shoppingLists,
     onHomeClick: () => { setView("home"); setSelectedRoom(null); setSelectedFolder(null); navigate({}); },
     onProjectFlowClick: () => { if (clientProjects.length > 1) { setView("projects"); setSelectedRoom(null); setSelectedFolder(null); navigate({ view: "projects" }); } else if (project.rooms.length === 1) { setActiveRooms(null); setActiveProjectId(projectId); setSelectedRoom(project.rooms[0]); setSelectedFolder(null); setView("room"); navigate({ view: "room", roomId: project.rooms[0].id }); } else { setActiveRooms(null); setActiveProjectId(projectId); setView("rooms"); navigate({ view: "rooms" }); }},
@@ -713,6 +715,7 @@ export default function ClientProjectPage() {
             onHarmonogramClick={() => { setView("schedule"); navigate({ view: "schedule" }); }}
             showAnkiety={project.hasSurveys}
             onAnkietyClick={openAnkiety}
+            showMoodboard={project.hasMoodboard}
             clientProjectId={projectId}
             activeView={view}
             currentUserId={currentUserId}
@@ -1676,6 +1679,7 @@ export default function ClientProjectPage() {
           onHarmonogramClick={() => { setView("schedule"); navigate({ view: "schedule" }); }}
           showAnkiety={project.hasSurveys}
           onAnkietyClick={openAnkiety}
+          showMoodboard={project.hasMoodboard}
           clientProjectId={projectId}
           activeView={view}
           currentUserId={currentUserId}

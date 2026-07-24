@@ -38,6 +38,11 @@ export async function GET(
         select: { id: true, name: true, shareToken: true },
       },
       discussion: { select: { id: true } },
+      moodboards: {
+        where: { isSharedWithClient: true, archived: false },
+        select: { id: true },
+        take: 1,
+      },
       rooms: {
         where: { archived: false },
         orderBy: { order: "asc" },
@@ -104,7 +109,7 @@ export async function GET(
     return NextResponse.json({ error: "Brak dostępu", moduleHidden: true }, { status: 403 });
   }
 
-  const { user, sharePassword, shareExpiresAt, discussion, ...rest } = project;
+  const { user, sharePassword, shareExpiresAt, discussion, moodboards, ...rest } = project;
   const { name, showProfileName, showClientLogo, clientLogoUrl, ...userSettings } = user;
   return NextResponse.json({
     ...rest,
@@ -115,5 +120,6 @@ export async function GET(
     shareExpiresAt: project.shareExpiresAt?.toISOString() ?? null,
     hasDiscussion: !!discussion,
     discussionId: discussion?.id ?? null,
+    hasMoodboard: moodboards.length > 0,
   });
 }

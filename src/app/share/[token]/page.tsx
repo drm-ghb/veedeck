@@ -101,6 +101,7 @@ interface Project {
   hasDiscussion: boolean;
   discussionId: string | null;
   colorTheme: string;
+  hasMoodboard?: boolean;
 }
 
 const SHARE_GRID_COLS_CLASS: Record<number, string> = {
@@ -907,6 +908,7 @@ export default function SharePage() {
           showProjectFlow={!project.hiddenModules.includes("renderflow")}
           showListy={!project.hiddenModules.includes("listy")}
           showDyskusje={!project.hiddenModules.includes("dyskusje")}
+          showMoodboard={project.hasMoodboard}
           shoppingLists={project.shoppingLists}
           onProjectFlowClick={() => setView("rooms")}
         />

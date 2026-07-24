@@ -43,6 +43,11 @@ export default async function PublicListPage({ params }: { params: Promise<{ tok
           shoppingLists: { where: { archived: false }, select: { id: true, name: true, shareToken: true } },
           user: { select: { clientLogoUrl: true, name: true, navMode: true, showProfileName: true, showClientLogo: true, colorTheme: true, requireClientEmail: true, listsCategoryOrder: true } },
           discussion: { select: { id: true } },
+          moodboards: {
+            where: { isSharedWithClient: true, archived: false },
+            select: { id: true },
+            take: 1,
+          },
         },
       },
       sections: {
@@ -82,6 +87,7 @@ export default async function PublicListPage({ params }: { params: Promise<{ tok
   const showProjectFlow = !list.project?.hiddenModules.includes("renderflow");
   const showListy = !list.project?.hiddenModules.includes("listy");
   const hasRenders = (list.project?.renders.length ?? 0) > 0;
+  const showMoodboard = (list.project?.moodboards?.length ?? 0) > 0;
 
   const BUILT_IN_CATEGORY_ORDER = [
     "oswietlenie","sofy","fotele","stoliki","dywany","szafy","kuchnia","lozka","lampy","dekoracje","inne",
@@ -239,6 +245,7 @@ export default async function PublicListPage({ params }: { params: Promise<{ tok
             showProjectFlow={showProjectFlow && hasRenders}
             showListy={showListy}
             showDyskusje={!list.project?.hiddenModules.includes("dyskusje")}
+            showMoodboard={showMoodboard}
             shoppingLists={list.project?.shoppingLists ?? []}
           />
           {mainContent}
