@@ -21,6 +21,7 @@
     { icon: "group",          pl: "Klienci",        en: "Clients",        dpl: "Klienci, projekty, płatności",          den: "Clients, projects, payments",          href: "#klienci" },
     { icon: "renderflow",     pl: "ProjectFlow",    en: "ProjectFlow",    dpl: "Rendery z pinami komentarzy klienta",   den: "Renders with client comment pins",     href: "#projectflow" },
     { icon: "local_mall",     pl: "Listy zakupowe", en: "Shopping lists", dpl: "Produkty z cenami i linkami",           den: "Products with prices and links",        href: "#listy" },
+    { icon: "interests",      pl: "Moodboardy",     en: "Moodboards",     dpl: "Zbieraj inspiracje i wizualne koncepcje", den: "Collect inspiration and visual concepts", href: "#moodboardy" },
     { icon: "check_box",      pl: "Zadania",        en: "Tasks",          dpl: "Lista do zrobienia z terminami",        den: "A to-do list with deadlines",          href: "#zadania" },
     { icon: "assignment",     pl: "Ankiety",        en: "Surveys",        dpl: "Briefy i ankiety dla klienta",          den: "Briefs and surveys for the client",    href: "#ankiety" },
     { icon: "package_2",      pl: "Produkty",       en: "Products",       dpl: "Twoja kartoteka mebli i materiałów",    den: "Your furniture & materials library",   href: "#produkty" },
@@ -28,7 +29,7 @@
     { icon: "calendar_month", pl: "Kalendarz",      en: "Calendar",       dpl: "Spotkania, dostawy, deadline'y",        den: "Meetings, deliveries, deadlines",      href: "#kalendarz" },
     { icon: "note_stack",     pl: "Notatnik",       en: "Notes",          dpl: "Szybkie notatki i szkice",              den: "Quick notes and sketches",             href: "#notatnik" },
     { icon: "chat_bubble",    pl: "Dyskusje",       en: "Discussions",    dpl: "Komentowanie renderów z klientem",      den: "Discuss renders with the client",      href: "#dyskusje" },
-    { icon: "wand_stars",     pl: "Veezard",        en: "Veezard",        dpl: "Twój osobisty czarodziej AI. Oszczędzaj czas dzięki magii sztucznej inteligencji.",       den: "Your personal AI wizard. Save time with the magic of artificial intelligence.",  soon: true, ai: true, href: "#generator3d" }
+    { icon: "wand_stars",     pl: "Veezard",        en: "Veezard",        dpl: "Twój osobisty czarodziej AI.",       den: "Your personal AI wizard.",  soon: true, ai: true, href: "#generator3d" }
   ];
   var VIEWS = [
     { icon: "design_services", pl: "Panel Projektanta", en: "Designer Panel",   dpl: "Pełna kontrola — tworzysz i udostępniasz", den: "Full control — you create and share" },
@@ -94,7 +95,7 @@
     ".vd-mm-name{font-family:'Inter',sans-serif;font-weight:600;font-size:14px;color:var(--foreground,#24252B);letter-spacing:-.01em;display:flex;align-items:center;gap:7px;line-height:1.3;}",
     ".vd-mm-desc{font-size:12.5px;color:var(--muted-foreground,#6B6F80);line-height:1.4;margin-top:2px;}",
     ".vd-mm-soon{font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--primary,#4F46E5);background:var(--indigo-50,#EEF2FF);border-radius:999px;padding:2px 6px;}",
-    ".vd-mm-mi--ai{grid-column:1 / -1;align-items:center;margin-top:6px;background:linear-gradient(100deg,rgba(124,58,237,.07),rgba(79,70,229,.05));border:1px solid rgba(124,58,237,.18);}",
+    ".vd-mm-mi--ai{align-items:center;background:linear-gradient(100deg,rgba(124,58,237,.07),rgba(79,70,229,.05));border:1px solid rgba(124,58,237,.18);}",
     ".vd-mm-mi--ai:hover{background:linear-gradient(100deg,rgba(124,58,237,.12),rgba(79,70,229,.08));border-color:rgba(124,58,237,.30);}",
     ".vd-mm-ic--ai,.vd-mm-srow .sic.vd-mm-ic--ai{background:linear-gradient(135deg,#8B5CF6,#4F46E5);color:#fff;box-shadow:0 4px 12px -4px rgba(124,58,237,.5);}",
     ".vd-mm-ic--ai .material-symbols-rounded{color:#fff;}",
@@ -200,7 +201,7 @@
     panel.innerHTML =
       '<div class="vd-mm-grid">' +
         '<div class="vd-mm-mods">' +
-          '<a class="vd-mm-eyebrow vd-mm-eyebrow--link" href="' + MODULES_PAGE + '">' + STR.moduly[L] + ' <span class="ct">· 11</span></a>' +
+          '<a class="vd-mm-eyebrow vd-mm-eyebrow--link" href="' + MODULES_PAGE + '">' + STR.moduly[L] + ' <span class="ct">· 12</span></a>' +
           '<div class="vd-mm-mgrid">' + mods + "</div>" +
         "</div>" +
         '<div class="vd-mm-promo">' +
@@ -345,7 +346,7 @@
       }).join("");
       var plug = row(PLUGIN_PAGE, '<img src="/veepick-icon.png" alt="">', STR.plugName[l2], STR.plugDesc[l2]);
       sub.innerHTML =
-        '<a class="sub-h sub-h--link" href="' + MODULES_PAGE + '">' + STR.moduly[l2] + ' <span class="ct">· 11</span></a>' + mods +
+        '<a class="sub-h sub-h--link" href="' + MODULES_PAGE + '">' + STR.moduly[l2] + ' <span class="ct">· 12</span></a>' + mods +
         '<div class="sub-h">' + STR.widoki[l2] + ' <span class="ct">· 3</span></div>' + views +
         '<div class="sub-h">' + STR.plugName[l2] + "</div>" + plug;
     }

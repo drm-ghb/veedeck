@@ -44,11 +44,28 @@ window.VEEDECK_I18N = {
   // — Tytuły modułów / chipy —
   "Klienci": "Clients",
   "Listy zakupowe": "Shopping lists",
+  "Moodboardy": "Moodboards",
   "Zadania": "Tasks",
   "Produkty": "Products",
   "Kalendarz": "Calendar",
   "Notatnik": "Notes",
   "Dyskusje": "Discussions",
+
+  // — Tagline + cechy modułu Moodboardy —
+  "Zbieraj inspiracje i buduj koncepcję wizualną projektu na swobodnym canvasie - zdjęcia, próbki materiałów, notatki i produkty z Twojej biblioteki w jednym miejscu.":
+    "Collect inspiration and build your project's visual concept on a free-form canvas — photos, material samples, notes and products from your library, all in one place.",
+  "Swobodny canvas z inspiracjami, próbkami materiałów i produktami z Twojej biblioteki.":
+    "A free-form canvas with inspiration, material samples and products from your library.",
+  "Swobodny canvas - układaj zdjęcia, próbki tkanin i notatki dokładnie tak, jak chcesz.":
+    "Free-form canvas — arrange photos, fabric samples and notes exactly as you want.",
+  "Panel „Zasoby" - przeciągaj produkty prosto z listy zakupowej lub bazy produktów na moodboard. Wrzucaj rendery z ProjectFlow oraz grafiki dodane przez wtyczkę veepick.":
+    "\"Assets\" panel — drag products straight from your shopping list or product library onto the moodboard. Add renders from ProjectFlow and images added via the veepick extension.",
+  "Paleta kolorów i próbki materiałów - spójna narracja wizualna projektu.":
+    "Colour palette and material samples — a cohesive visual narrative for the project.",
+  "Udostępnij klientowi - udostępniony moodboard będzie widoczny w panelu klienta.":
+    "Share with your client — the shared moodboard will be visible in the client panel.",
+  "Eksport do PDF lub JPG jednym kliknięciem, do dołączenia w wycenie lub prezentacji.":
+    "Export to PDF or JPG in one click, ready to attach to a quote or presentation.",
 
   // — Taglines modułów —
   "Wizualizacje, rysunki techniczne i feedback w jednym miejscu. Klient przypina pinezki z uwagami bezpośrednio na pliku. Akceptuje lub odrzuca wersje, a Ty trzymasz wszystko w ryzach - z pełną historią zmian.":
@@ -786,7 +803,7 @@ window.VEEDECK_I18N = {
   "Każdy widzi to, co mu udostępnisz.": "Everyone sees only what you share with them.",
   "Jeden projekt, trzy perspektywy - bez chaosu i bez przypadkowych przecieków.": "One project, three perspectives - no chaos and no accidental leaks.",
   "— bez chaosu i bez przypadkowych przecieków.": "- no chaos and no accidental leaks.",
-  "JEDENAŚCIE MODUŁÓW · JEDNA PLATFORMA": "ELEVEN MODULES · ONE PLATFORM",
+  "DWANAŚCIE MODUŁÓW · JEDNA PLATFORMA": "TWELVE MODULES · ONE PLATFORM",
   "w jednej zakładce.": "in a single tab.",
   "Włącz tylko te moduły, których używasz. Ukryj nieużywane. Każdy klient dostaje tylko to, co ma widzieć.":
     "Turn on only the modules you use. Hide the ones you don’t. Each client sees only what they’re meant to.",
@@ -914,7 +931,7 @@ window.VEEDECK_I18N = {
   "Wtyczka veepick": "veepick plugin",
 
   // ===== Veedeck Moduly.html (strona modułów) =====
-  "Jedenaście modułów · Jedna platforma": "Eleven modules · One platform",
+  "Dwanaście modułów · Jedna platforma": "Twelve modules · One platform",
   "Przypinanie komentarzy": "Pinning comments",
   "bezpośrednio na pliki.": "directly on files.",
   "Wersje wizualizacji": "Visualization versions",
@@ -1165,6 +1182,7 @@ window.VEEDECK_I18N = {
   "12 pytań": "12 questions",
   "Wypełnia: klient": "Filled in by: the client",
   "Moduł 11": "Module 11",
+  "Moduł 12": "Module 12",
 
   // ===== O nas — sekcja „Misja i wizja" =====
   "Misja i wizja": "Mission & vision",

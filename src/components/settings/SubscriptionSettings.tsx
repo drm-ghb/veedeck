@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { CheckCircle2, X, Check, ChevronRight, Users, PushPin, LocalMall, ChatBubble, CheckSquare, Package, CalendarDays, NotebookText, ClipboardList, Engineering } from "@/components/ui/icons";
+import { CheckCircle2, X, Check, ChevronRight, Users, PushPin, LocalMall, ChatBubble, CheckSquare, Package, CalendarDays, NotebookText, ClipboardList, Engineering, Interests, VeezardIcon } from "@/components/ui/icons";
 import { useT } from "@/lib/i18n";
 import { PLAN_LABELS } from "@/lib/stripe/prices";
 
@@ -45,6 +45,7 @@ const PLAN_MODULES = [
   { label: "Klienci",         icon: <Users size={13} /> },
   { label: "ProjectFlow",     icon: <PushPin size={13} /> },
   { label: "Listy zakupowe",  icon: <LocalMall size={13} /> },
+  { label: "Moodboardy",      icon: <Interests size={13} /> },
   { label: "Dyskusje",        icon: <ChatBubble size={13} /> },
   { label: "Zadania",         icon: <CheckSquare size={13} /> },
   { label: "Produkty",        icon: <Package size={13} /> },
@@ -52,6 +53,7 @@ const PLAN_MODULES = [
   { label: "Notatnik",        icon: <NotebookText size={13} /> },
   { label: "Ankiety",         icon: <ClipboardList size={13} /> },
   { label: "Wykonawcy",       icon: <Engineering size={13} /> },
+  { label: "Veezard",         icon: <VeezardIcon size={13} /> },
 ];
 
 const PLANS_DATA = [
@@ -394,14 +396,6 @@ function PlansModal({ onClose, subscription }: { onClose: () => void; subscripti
           })}
         </div>
 
-        {/* Veezard addon */}
-        <div className="mx-6 mb-6 mt-4 flex items-center gap-4 flex-wrap p-4 rounded-xl bg-muted/50 border border-border">
-          <div className="w-9 h-9 rounded-lg bg-violet-100 dark:bg-violet-950/50 flex items-center justify-center shrink-0 text-violet-600 dark:text-violet-400 font-bold text-sm">V</div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-foreground">Veezard — dodatek płatny osobno</p>
-            <p className="text-xs text-muted-foreground mt-0.5">Rozszerzenie dostępne do każdego pakietu. Cena zostanie ogłoszona wkrótce.</p>
-          </div>
-        </div>
       </div>
     </div>
   );

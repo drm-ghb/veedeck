@@ -12,7 +12,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <title>Moduły veedeck - wszystkie narzędzia dla projektanta wnętrz w jednym miejscu</title>
 <meta name="robots" content="index, follow">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="ProjectFlow, listy zakupowe, wykonawcy, ankiety - 11 modułów do zarządzania całym projektem wnętrzarskim.">
+<meta name="description" content="ProjectFlow, listy zakupowe, wykonawcy, ankiety - 12 modułów do zarządzania całym projektem wnętrzarskim.">
 <link rel="alternate" hreflang="pl" href="https://veedeck.com/veedeck-moduly">
 <link rel="alternate" hreflang="en" href="https://veedeck.com/modules">
 <link rel="alternate" hreflang="x-default" href="https://veedeck.com/veedeck-moduly">
@@ -258,7 +258,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   /* KALENDARZ STAGE - moduł 08 (widok tygodnia) */
   #kalendarz .container { max-width: 1320px; }
   #kalendarz .module-row {
-    grid-template-columns: minmax(0, 1.45fr) minmax(0, 0.82fr);
+    grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.45fr);
     gap: 56px;
   }
   .kal-stage { position: relative; width: 100%; max-width: 820px; }
@@ -386,7 +386,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   /* DYSKUSJE STAGE - moduł 10 (lista · czat · pliki) */
   #dyskusje .container { max-width: 1320px; }
   #dyskusje .module-row {
-    grid-template-columns: minmax(0, 1.45fr) minmax(0, 0.82fr);
+    grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.45fr);
     gap: 56px;
   }
   #dyskusje .dy-frame {
@@ -486,6 +486,24 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   /* SCREENSHOT PLACEHOLDER */
   .module-shot {
     position: relative;
+  }
+  /* Moodboardy - wider visual */
+  #moodboardy .container { max-width: 1320px; }
+  #moodboardy .module-row {
+    grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.45fr);
+    gap: 56px;
+  }
+  .mb-shot {
+    width: 100%;
+    border-radius: 18px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    box-shadow: 0 24px 64px -32px rgba(36, 37, 43, .28);
+  }
+  .mb-shot img {
+    width: 100%;
+    height: auto;
+    display: block;
   }
   .shot-frame {
     position: relative;
@@ -763,7 +781,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   /* KLIENCI DECK - 4 pochylone karty (Info · Kontakty · Płatności · Dokumenty) */
   #klienci .container { max-width: 1320px; }
   #klienci .module-row {
-    grid-template-columns: minmax(0, 1.45fr) minmax(0, 0.82fr);
+    grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.45fr);
     gap: 56px;
   }
   .kl-deck {
@@ -907,6 +925,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   #listy .module-row {
     grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.45fr);
     gap: 56px;
+  }
+  #listy .module-row.reverse {
+    grid-template-columns: minmax(0, 1.45fr) minmax(0, 0.82fr);
   }
   .lz-card {
     position: relative;
@@ -1075,14 +1096,14 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   }
   @media (max-width: 920px) {
     #listy .module-row { grid-template-columns: 1fr; }
-    .lz-card { grid-template-columns: 1fr; max-width: 100%; }
+    .lz-card { grid-template-columns: 1fr; }
     .lz-card .lz-chat { border-left: 0; border-top: 1px solid var(--border); }
   }
 
   /* ZADANIA - tabela zadań + modal "Nowe zadanie" */
   #zadania .container { max-width: 1320px; }
   #zadania .module-row {
-    grid-template-columns: minmax(0, 1.45fr) minmax(0, 0.82fr);
+    grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.45fr);
     gap: 56px;
   }
   .zd-stage {
@@ -1370,7 +1391,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   }
   @media (max-width: 920px) {
     #produkty .module-row { grid-template-columns: 1fr; }
-    .pr-stage { max-width: 100%; height: auto; }
+    .pr-stage { height: auto; }
     .pr-gallery { width: 100%; top: auto; transform: none; padding: 12px 0; grid-template-columns: repeat(2, 1fr); }
     .pr-chip { position: relative; display: inline-flex; }
   }
@@ -1545,6 +1566,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   /* WYKONAWCY STAGE - moduł 07 (podgląd pliku z pinami) */
   #wykonawcy .container { max-width: 1320px; }
   #wykonawcy .module-row { grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.45fr); gap: 56px; }
+  #wykonawcy .module-row.reverse { grid-template-columns: minmax(0, 1.45fr) minmax(0, 0.82fr); }
   .wk-frame {
     position: relative; background: #fff; border: 1px solid var(--border);
     border-radius: 16px; overflow: hidden; display: grid; grid-template-columns: 172px 1fr;
@@ -1622,7 +1644,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   "name": "veedeck",
   "applicationCategory": "BusinessApplication",
   "operatingSystem": "Web",
-  "description": "11 modułów do zarządzania projektami wnętrzarskimi - ProjectFlow, listy zakupowe, wykonawcy, ankiety, dyskusje i więcej w jednej platformie.",
+  "description": "12 modułów do zarządzania projektami wnętrzarskimi - ProjectFlow, listy zakupowe, wykonawcy, ankiety, dyskusje i więcej w jednej platformie.",
   "url": "https://veedeck.com",
   "featureList": [
     "ProjectFlow - wizualizacje i feedback klienta",
@@ -1756,6 +1778,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       ProjectFlow
     </a>
     <a href="#listy" class="module-chip"><span class="material-symbols-rounded">local_mall</span>Listy zakupowe</a>
+    <a href="#moodboardy" class="module-chip"><span class="material-symbols-rounded">interests</span>Moodboardy</a>
     <a href="#zadania" class="module-chip"><span class="material-symbols-rounded">check_box</span>Zadania</a>
     <a href="#ankiety" class="module-chip"><span class="material-symbols-rounded">assignment</span>Ankiety</a>
     <a href="#produkty" class="module-chip"><span class="material-symbols-rounded">package_2</span>Produkty</a>
@@ -1807,7 +1830,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <!-- ───────── 01 · KLIENCI ───────── -->
 <section class="module-section" id="klienci">
   <div class="container">
-    <div class="module-row reverse">
+    <div class="module-row">
       <div class="module-text">
         <div class="module-eyebrow"><span class="num">Moduł 01</span></div>
         <div class="module-head-row">
@@ -2094,12 +2117,40 @@ document.addEventListener('DOMContentLoaded', function() {
   </div>
 </section>
 
-<!-- ───────── 04 · ZADANIA ───────── -->
-<section class="module-section" id="zadania">
+<!-- ───────── 04 · MOODBOARDY ───────── -->
+<section class="module-section" id="moodboardy">
   <div class="container">
-    <div class="module-row reverse">
+    <div class="module-row">
       <div class="module-text">
         <div class="module-eyebrow"><span class="num">Moduł 04</span></div>
+        <div class="module-head-row">
+          <div class="module-glyph"><span class="material-symbols-rounded">interests</span></div>
+          <h2 class="module-title">Moodboardy</h2>
+        </div>
+        <p class="module-tagline">
+          Zbieraj inspiracje i buduj koncepcję wizualną projektu na swobodnym canvasie - zdjęcia, próbki materiałów, notatki i produkty z Twojej biblioteki w jednym miejscu.
+        </p>
+        <ul class="module-features">
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Swobodny canvas</strong> - układaj zdjęcia, próbki tkanin i notatki dokładnie tak, jak chcesz.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Panel „Zasoby"</strong> - przeciągaj produkty prosto z listy zakupowej lub bazy produktów na moodboard. Wrzucaj rendery z ProjectFlow oraz grafiki dodane przez wtyczkę veepick.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Paleta kolorów i próbki materiałów</strong> - spójna narracja wizualna projektu.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Udostępnij klientowi</strong> - udostępniony moodboard będzie widoczny w panelu klienta.</span></li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><span><strong>Eksport</strong> do PDF lub JPG jednym kliknięciem, do dołączenia w wycenie lub prezentacji.</span></li>
+        </ul>
+      </div>
+      <div class="module-shot">
+        <div class="mb-shot"><img src="moodboard-module-shot.png" alt="Moodboard w Veedeck"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───────── 05 · ZADANIA ───────── -->
+<section class="module-section" id="zadania">
+  <div class="container">
+    <div class="module-row">
+      <div class="module-text">
+        <div class="module-eyebrow"><span class="num">Moduł 05</span></div>
         <div class="module-head-row">
           <div class="module-glyph"><span class="material-symbols-rounded">check_box</span></div>
           <h2 class="module-title">Zadania</h2>
@@ -2225,9 +2276,9 @@ document.addEventListener('DOMContentLoaded', function() {
 <!-- ───────── 05 · ANKIETY ───────── -->
 <section class="module-section" id="ankiety">
   <div class="container">
-    <div class="module-row reverse">
+    <div class="module-row">
       <div class="module-text">
-        <div class="module-eyebrow"><span class="num">Moduł 05</span></div>
+        <div class="module-eyebrow"><span class="num">Moduł 06</span></div>
         <div class="module-head-row">
           <div class="module-glyph"><span class="material-symbols-rounded">assignment</span></div>
           <h2 class="module-title">Ankiety</h2>
@@ -2276,7 +2327,7 @@ document.addEventListener('DOMContentLoaded', function() {
   <div class="container">
     <div class="module-row">
       <div class="module-text">
-        <div class="module-eyebrow"><span class="num">Moduł 06</span></div>
+        <div class="module-eyebrow"><span class="num">Moduł 07</span></div>
         <div class="module-head-row">
           <div class="module-glyph"><span class="material-symbols-rounded">package_2</span></div>
           <h2 class="module-title">Produkty</h2>
@@ -2374,7 +2425,7 @@ document.addEventListener('DOMContentLoaded', function() {
   <div class="container">
     <div class="module-row">
       <div class="module-text">
-        <div class="module-eyebrow"><span class="num">Moduł 07</span></div>
+        <div class="module-eyebrow"><span class="num">Moduł 08</span></div>
         <div class="module-head-row">
           <div class="module-glyph"><span class="material-symbols-rounded">engineering</span></div>
           <h2 class="module-title">Wykonawcy</h2>
@@ -2438,9 +2489,9 @@ document.addEventListener('DOMContentLoaded', function() {
 <!-- ───────── 08 · KALENDARZ ───────── -->
 <section class="module-section" id="kalendarz">
   <div class="container">
-    <div class="module-row reverse">
+    <div class="module-row">
       <div class="module-text">
-        <div class="module-eyebrow"><span class="num">Moduł 08</span></div>
+        <div class="module-eyebrow"><span class="num">Moduł 09</span></div>
         <div class="module-head-row">
           <div class="module-glyph"><span class="material-symbols-rounded">calendar_month</span></div>
           <h2 class="module-title">Kalendarz</h2>
@@ -2522,7 +2573,7 @@ document.addEventListener('DOMContentLoaded', function() {
   <div class="container">
     <div class="module-row">
       <div class="module-text">
-        <div class="module-eyebrow"><span class="num">Moduł 09</span></div>
+        <div class="module-eyebrow"><span class="num">Moduł 10</span></div>
         <div class="module-head-row">
           <div class="module-glyph"><span class="material-symbols-rounded">note_stack</span></div>
           <h2 class="module-title">Notatnik</h2>
@@ -2607,9 +2658,9 @@ document.addEventListener('DOMContentLoaded', function() {
 <!-- ───────── 10 · DYSKUSJE ───────── -->
 <section class="module-section" id="dyskusje">
   <div class="container">
-    <div class="module-row reverse">
+    <div class="module-row">
       <div class="module-text">
-        <div class="module-eyebrow"><span class="num">Moduł 10</span></div>
+        <div class="module-eyebrow"><span class="num">Moduł 11</span></div>
         <div class="module-head-row">
           <div class="module-glyph"><span class="material-symbols-rounded">chat_bubble</span></div>
           <h2 class="module-title">Dyskusje</h2>
@@ -2694,12 +2745,12 @@ document.addEventListener('DOMContentLoaded', function() {
   </div>
 </section>
 
-<!-- ───────── 11 · VEEZARD - WKRÓTCE ───────── -->
+<!-- ───────── 12 · VEEZARD - WKRÓTCE ───────── -->
 <section class="coming-soon" id="generator3d">
   <div class="container">
     <div class="cs-inner">
       <div class="cs-eyebrow">
-        <span class="cs-num">Moduł 11</span>
+        <span class="cs-num">Moduł 12</span>
         <span class="badge-soon">Wkrótce</span>
       </div>
       <div class="cs-head">
@@ -2851,6 +2902,10 @@ document.addEventListener('DOMContentLoaded', function() {
     .m-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
 
     /* utrzymanie naturalnej szerokości mockupu, by nic się nie ściskało */
+    #moodboardy .mb-shot   { min-width: 560px; max-width: none; }
+    #klienci  .kl-deck     { min-width: 580px; max-width: none; box-sizing: content-box; padding-top: 18px; padding-right: 32px; }
+    #listy    .lz-card     { min-width: 560px; max-width: none; }
+    #produkty .pr-stage    { min-width: 560px; max-width: none; }
     #projectflow .rf-stage  { min-width: 500px; }
     #zadania   .zd-stage   { min-width: 540px; }
     #kalendarz .kal-stage  { min-width: 560px; }
@@ -2868,26 +2923,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     .m-swipe-hint .material-symbols-rounded { font-size: 16px; color: var(--primary); }
 
-    /* Klienci: rozłóż „talię" obróconych kart w czytelną pionową listę
-       (na desktopie są position:absolute i nachodzą na siebie jak karty) */
-    #klienci .kl-deck {
-      aspect-ratio: auto !important;
-      max-width: 100%;
-      display: flex; flex-direction: column; gap: 22px;
-    }
-    #klienci .kl-card {
-      position: static !important;
-      width: 100% !important; height: auto !important;
-      transform: none !important;
-      inset: auto !important;
-      margin-top: 4px;
-    }
   }
 </style>
 <script>
   // Owiń szeroki mockup w przewijalny .m-scroll i wstaw podpowiedź tuż pod nim (raz)
   (function () {
-    var map = { projectflow: '.rf-stage', zadania: '.zd-stage', kalendarz: '.kal-stage', notatnik: '.nt-frame', dyskusje: '.dy-frame' };
+    var map = { moodboardy: '.mb-shot', klienci: '.kl-deck', listy: '.lz-card', produkty: '.pr-stage', projectflow: '.rf-stage', zadania: '.zd-stage', kalendarz: '.kal-stage', notatnik: '.nt-frame', dyskusje: '.dy-frame' };
     Object.keys(map).forEach(function (id) {
       var sec = document.getElementById(id);
       if (!sec) return;
