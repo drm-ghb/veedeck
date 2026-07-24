@@ -552,6 +552,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
   const cropDragRef = useRef<{ handle: string; startX: number; startY: number; startRect: CropRect } | null>(null);
   // Remove background
   const [removingBgId, setRemovingBgId] = useState<string | null>(null);
+  const [removeBgProgress, setRemoveBgProgress] = useState(0);
   // Snap guide lines (canvas coords)
   const [snapLines, setSnapLines] = useState<Array<{ x1: number; y1: number; x2: number; y2: number }>>([]);
   const [rotationGuide, setRotationGuide] = useState<{ cx: number; cy: number; angle: number } | null>(null);
@@ -629,6 +630,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
   async function handleRemoveBg(el: CanvasElement) {
     if (!el.imageUrl || removingBgId) return;
     setRemovingBgId(el.id);
+    setRemoveBgProgress(0);
     try {
       const { removeBackground } = await import("@imgly/background-removal");
 
@@ -643,7 +645,11 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
 
       const resultBlob = await removeBackground(imageSource, {
         debug: false,
+        model: 'large',
         publicPath: `https://staticimgly.com/@imgly/background-removal-data/1.7.0/dist/`,
+        progress: (_key: string, current: number, total: number) => {
+          if (total > 0) setRemoveBgProgress(Math.round((current / total) * 100));
+        },
       });
       const url = URL.createObjectURL(resultBlob);
       imageCache.delete(el.imageUrl);
@@ -3249,14 +3255,24 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                         <X size={14} /> Resetuj kadr
                       </button>
                     )}
-                    <button
-                      onClick={() => handleRemoveBg(firstSelected)}
-                      disabled={!!removingBgId}
-                      className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground disabled:opacity-50"
-                    >
-                      <Eraser size={14} />
-                      {removingBgId === firstSelected.id ? "Usuwam..." : "Usuń tło"}
-                    </button>
+                    <div className="flex flex-col gap-0.5">
+                      <button
+                        onClick={() => handleRemoveBg(firstSelected)}
+                        disabled={!!removingBgId}
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground disabled:opacity-50"
+                      >
+                        <Eraser size={14} />
+                        {removingBgId === firstSelected.id ? `Usuwam... ${removeBgProgress}%` : "Usuń tło"}
+                      </button>
+                      {removingBgId === firstSelected.id && (
+                        <div className="mx-2.5 h-1 rounded-full bg-muted overflow-hidden">
+                          <div
+                            className="h-full bg-primary rounded-full transition-all duration-200"
+                            style={{ width: `${removeBgProgress}%` }}
+                          />
+                        </div>
+                      )}
+                    </div>
                     <div className="w-px h-5 bg-border shrink-0" />
                   </>
                 )}
