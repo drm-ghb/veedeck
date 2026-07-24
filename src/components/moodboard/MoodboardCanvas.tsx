@@ -64,7 +64,7 @@ export interface CanvasElement {
   frameName?: string;
   frameId?: string; // id of the frame this element belongs to
   // template placeholder
-  templateRole?: 'image' | 'swatch' | 'text';
+  templateRole?: 'image' | 'swatch' | 'text' | 'cutout';
   templateLabel?: string;
   // masked image (template slot filled with photo — inner pan/zoom)
   maskShape?: 'rect' | 'ellipse';
