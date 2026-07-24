@@ -14,6 +14,7 @@ import {
   Frame as FrameIcon,
 } from "@/components/ui/icons";
 import { useRouter } from "next/navigation";
+import { useUploadThing } from "@/lib/uploadthing-client";
 import { MOODBOARD_TEMPLATES } from "@/components/moodboard/data/templates";
 import type { MoodboardTemplate } from "@/components/moodboard/data/templates";
 
@@ -484,6 +485,8 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
   const initElements: CanvasElement[] = parsed?.elements ?? [];
   const initViewport = parsed?.viewport ?? { x: 0, y: 0, scale: 1 };
   const initBg = parsed?.background ?? '#FFFFFF';
+
+  const { startUpload: startImageUpload } = useUploadThing("moodboardImageUploader");
 
   // State
   const [tool, setTool] = useState<Tool>("select");
@@ -1624,49 +1627,42 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
     if (files.length === 0) return;
     const dropX = e.clientX;
     const dropY = e.clientY;
-    files.forEach((file, i) => {
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        const url = ev.target?.result as string;
-        const img = new window.Image();
-        img.onload = () => {
+    toast.loading("Przesyłanie...", { id: "moodboard-upload" });
+    startImageUpload(files).then((results) => {
+      if (!results) { toast.error("Błąd przesyłania zdjęcia", { id: "moodboard-upload" }); return; }
+      results.forEach((res, i) => {
+        loadImage(res.url, (img) => {
           const maxW = 400, maxH = 300;
           const ratio = Math.min(maxW / img.naturalWidth, maxH / img.naturalHeight, 1);
           const w = img.naturalWidth * ratio, h = img.naturalHeight * ratio;
-          const OFFSET = i * 20;
-          const pos = stagePoint(dropX + OFFSET, dropY + OFFSET);
-          const newEl: CanvasElement = { id: uid(), type: "image", x: pos.x - w / 2, y: pos.y - h / 2, width: w, height: h, imageUrl: url, opacity: 1, rotation: 0 };
+          const pos = stagePoint(dropX + i * 20, dropY + i * 20);
+          const newEl: CanvasElement = { id: uid(), type: "image", x: pos.x - w / 2, y: pos.y - h / 2, width: w, height: h, imageUrl: res.url, opacity: 1, rotation: 0 };
           const next = [...elementsRef.current, newEl];
           updateElements(next);
-          setSelectedIds((prev) => [...prev, newEl.id]);
-        };
-        img.src = url;
-      };
-      reader.readAsDataURL(file);
-    });
+          setSelectedIds([newEl.id]);
+        });
+      });
+      toast.success("Przesłano", { id: "moodboard-upload" });
+    }).catch(() => toast.error("Błąd przesyłania zdjęcia", { id: "moodboard-upload" }));
   }
 
-  async function handleImageUpload(file: File) {
-    const fd = new FormData();
-    fd.append("file", file);
-    // Use uploadthing or a simple base64 for now
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const url = e.target?.result as string;
-      const img = new window.Image();
-      img.onload = () => {
+  function handleImageUpload(file: File) {
+    toast.loading("Przesyłanie...", { id: "moodboard-upload" });
+    startImageUpload([file]).then((results) => {
+      if (!results?.[0]) { toast.error("Błąd przesyłania zdjęcia", { id: "moodboard-upload" }); return; }
+      const url = results[0].url;
+      loadImage(url, (img) => {
         const maxW = 400, maxH = 300;
         const ratio = Math.min(maxW / img.naturalWidth, maxH / img.naturalHeight, 1);
         const w = img.naturalWidth * ratio, h = img.naturalHeight * ratio;
         const pos = stagePoint(containerSize.w / 2, containerSize.h / 2);
         const newEl: CanvasElement = { id: uid(), type: "image", x: pos.x - w / 2, y: pos.y - h / 2, width: w, height: h, imageUrl: url, opacity: 1, rotation: 0 };
-        const next = [...elements, newEl];
+        const next = [...elementsRef.current, newEl];
         updateElements(next);
         setSelectedIds([newEl.id]);
-      };
-      img.src = url;
-    };
-    reader.readAsDataURL(file);
+      });
+      toast.success("Przesłano", { id: "moodboard-upload" });
+    }).catch(() => toast.error("Błąd przesyłania zdjęcia", { id: "moodboard-upload" }));
   }
 
   function fillPlaceholderWithImage(placeholderId: string, sourceEl: CanvasElement) {
