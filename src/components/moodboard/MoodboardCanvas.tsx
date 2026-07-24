@@ -218,18 +218,20 @@ type RenderItem = { id: string; name: string; fileUrl: string; fileType: string 
 type FolderItem = { id: string; name: string; renders: RenderItem[] };
 type RoomItem   = { id: string; name: string; folders: FolderItem[]; renders: RenderItem[] };
 
-function RenderSidebarItem({ render, onClick }: { render: RenderItem; onClick: (url: string, name: string) => void }) {
+function RenderSidebarItem({ render, onClick, onFill }: { render: RenderItem; onClick: (url: string, name: string) => void; onFill?: (url: string) => void }) {
   const isImage = render.fileType?.startsWith("image") || /\.(jpe?g|png|webp|gif|heic|avif)$/i.test(render.fileUrl);
   return (
     <button
-      onClick={() => onClick(render.fileUrl, render.name)}
-      className="flex flex-col rounded-xl border border-border overflow-hidden hover:border-primary/40 hover:shadow-sm transition-all text-left"
+      draggable={isImage}
+      onDragStart={(e) => { e.dataTransfer.setData('moodboard-image-url', render.fileUrl); e.dataTransfer.effectAllowed = 'copy'; }}
+      onClick={() => onFill ? onFill(render.fileUrl) : onClick(render.fileUrl, render.name)}
+      className={`flex flex-col rounded-xl border overflow-hidden hover:shadow-sm transition-all text-left ${onFill ? "border-primary/60 ring-1 ring-primary/30 hover:border-primary" : "border-border hover:border-primary/40"}`}
       title={render.name}
     >
       <div className="aspect-square bg-muted w-full overflow-hidden flex items-center justify-center">
         {isImage
           // eslint-disable-next-line @next/next/no-img-element
-          ? <img src={render.fileUrl} alt={render.name} className="w-full h-full object-cover" />
+          ? <img src={render.fileUrl} alt={render.name} className="w-full h-full object-cover pointer-events-none" />
           : <Image size={24} className="text-muted-foreground" />}
       </div>
       <p className="text-[11px] font-medium truncate px-2 py-1.5">{render.name}</p>
@@ -1382,7 +1384,6 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
 
     updateElements([...elements, ...newEls]);
     setSelectedIds(newEls.map(e => e.id));
-    if (template.background) updateCanvasBg(template.background);
     setTemplateGalleryOpen(false);
     setTool('select');
   }
@@ -1593,6 +1594,17 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
     e.preventDefault();
     dragCounterRef2.current = 0;
     setIsDragOver(false);
+    // Sidebar image drag-and-drop onto placeholder
+    const sidebarUrl = e.dataTransfer.getData('moodboard-image-url');
+    if (sidebarUrl) {
+      const placeholderId = getPlaceholderAtPoint(e.clientX, e.clientY);
+      if (placeholderId) {
+        fillPlaceholderWithUrl(placeholderId, sidebarUrl);
+      } else {
+        addRenderToCanvas(sidebarUrl, '');
+      }
+      return;
+    }
     const files = Array.from(e.dataTransfer.files).filter((f) => f.type.startsWith("image/"));
     if (files.length === 0) return;
     const dropX = e.clientX;
@@ -1688,6 +1700,54 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
       setTemplatePickModeId(null);
       setSelectedIds([placeholderId]);
     });
+  }
+
+  // Fill placeholder with image URL directly (used by sidebar click/drag)
+  function fillPlaceholderWithUrl(placeholderId: string, imageUrl: string) {
+    const placeholder = elements.find(el => el.id === placeholderId);
+    if (!placeholder) return;
+    const maskW = placeholder.width ?? 200;
+    const maskH = placeholder.height ?? 150;
+    const maskShape: 'rect' | 'ellipse' = placeholder.type === 'ellipse' ? 'ellipse' : 'rect';
+    const maskX = placeholder.type === 'ellipse' ? placeholder.x - maskW / 2 : placeholder.x;
+    const maskY = placeholder.type === 'ellipse' ? placeholder.y - maskH / 2 : placeholder.y;
+    loadImage(imageUrl, (img) => {
+      const natW = img.naturalWidth, natH = img.naturalHeight;
+      const coverScale = Math.max(maskW / natW, maskH / natH);
+      const imgW = natW * coverScale, imgH = natH * coverScale;
+      updateEl(placeholderId, {
+        type: 'image' as const, imageUrl,
+        x: maskX, y: maskY, width: maskW, height: maskH,
+        fill: undefined, stroke: undefined, strokeWidth: undefined,
+        templateRole: undefined, templateLabel: undefined,
+        maskShape, naturalW: natW, naturalH: natH,
+        innerScale: coverScale,
+        innerOffsetX: (maskW - imgW) / 2,
+        innerOffsetY: (maskH - imgH) / 2,
+      });
+      setTemplatePickModeId(null);
+      setSelectedIds([placeholderId]);
+    });
+  }
+
+  // Find topmost rect/ellipse element at canvas-relative drop position
+  function getPlaceholderAtPoint(clientX: number, clientY: number): string | null {
+    if (!containerRef.current) return null;
+    const rect = containerRef.current.getBoundingClientRect();
+    const sx = (clientX - rect.left - stagePos.x) / stageScale;
+    const sy = (clientY - rect.top - stagePos.y) / stageScale;
+    const candidates = [...elements].reverse();
+    for (const el of candidates) {
+      if (el.type === 'rect') {
+        const w = el.width ?? 120, h = el.height ?? 80;
+        if (sx >= el.x && sx <= el.x + w && sy >= el.y && sy <= el.y + h) return el.id;
+      } else if (el.type === 'ellipse') {
+        const rx = (el.width ?? 120) / 2, ry = (el.height ?? 80) / 2;
+        const dx = (sx - el.x) / rx, dy = (sy - el.y) / ry;
+        if (dx * dx + dy * dy <= 1) return el.id;
+      }
+    }
+    return null;
   }
 
   // Add render from sidebar
@@ -2063,7 +2123,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
           {/* Template pick mode banner */}
           {templatePickModeId && (
             <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3 bg-foreground/90 backdrop-blur-sm text-background px-4 py-2.5 rounded-2xl shadow-xl pointer-events-auto">
-              <span className="text-sm font-medium">Kliknij zdjęcie na tablicy aby wstawić je do slotu</span>
+              <span className="text-sm font-medium">Kliknij zdjęcie na tablicy lub w Zasobach, lub przeciągnij je na placeholder</span>
               <button
                 onClick={() => setTemplatePickModeId(null)}
                 className="text-background/60 hover:text-background transition-colors"
@@ -3561,6 +3621,11 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
             </div>
             {/* Content */}
             <div className="flex-1 overflow-y-auto p-2">
+              {templatePickModeId && (
+                <div className="mb-2 px-2 py-1.5 rounded-lg bg-primary/10 text-primary text-xs font-medium">
+                  Kliknij zdjęcie aby wstawić do slotu, lub przeciągnij je na placeholder
+                </div>
+              )}
               {rightTab === "projectflow" && (
                 <>
                   {!project && (
@@ -3587,7 +3652,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                               {room.renders.length > 0 && (
                                 <div className="grid grid-cols-2 gap-1.5 mb-1">
                                   {room.renders.map(r => (
-                                    <RenderSidebarItem key={r.id} render={r} onClick={addRenderToCanvas} />
+                                    <RenderSidebarItem key={r.id} render={r} onClick={addRenderToCanvas} onFill={templatePickModeId ? (url) => fillPlaceholderWithUrl(templatePickModeId, url) : undefined} />
                                   ))}
                                 </div>
                               )}
@@ -3606,7 +3671,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                                   {expandedFolders.has(folder.id) && (
                                     <div className="ml-2 grid grid-cols-2 gap-1.5 mt-1 mb-1">
                                       {folder.renders.map(r => (
-                                        <RenderSidebarItem key={r.id} render={r} onClick={addRenderToCanvas} />
+                                        <RenderSidebarItem key={r.id} render={r} onClick={addRenderToCanvas} onFill={templatePickModeId ? (url) => fillPlaceholderWithUrl(templatePickModeId, url) : undefined} />
                                       ))}
                                     </div>
                                   )}
@@ -3627,14 +3692,17 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                   )}
                   <div className="grid grid-cols-2 gap-2">
                     {filteredProducts.map((p) => (
-                      <button key={p.id} onClick={() => p.imageUrl && addProductToCanvas(p.imageUrl, p.name)}
+                      <button key={p.id}
+                        draggable={!!p.imageUrl}
+                        onDragStart={(e) => { if (p.imageUrl) { e.dataTransfer.setData('moodboard-image-url', p.imageUrl); e.dataTransfer.effectAllowed = 'copy'; } }}
+                        onClick={() => { if (!p.imageUrl) return; templatePickModeId ? fillPlaceholderWithUrl(templatePickModeId, p.imageUrl) : addProductToCanvas(p.imageUrl, p.name); }}
                         disabled={!p.imageUrl}
-                        className="flex flex-col rounded-xl border border-border overflow-hidden hover:border-primary/40 hover:shadow-sm transition-all text-left disabled:opacity-40"
+                        className={`flex flex-col rounded-xl border overflow-hidden hover:shadow-sm transition-all text-left disabled:opacity-40 ${templatePickModeId && p.imageUrl ? "border-primary/60 ring-1 ring-primary/30 hover:border-primary" : "border-border hover:border-primary/40"}`}
                         title={p.name}>
                         <div className="aspect-square bg-muted w-full overflow-hidden">
                           {p.imageUrl
                             // eslint-disable-next-line @next/next/no-img-element
-                            ? <img src={p.imageUrl} alt={p.name} className="w-full h-full object-cover" />
+                            ? <img src={p.imageUrl} alt={p.name} className="w-full h-full object-cover pointer-events-none" />
                             : <Package size={24} className="text-muted-foreground m-auto mt-8" />}
                         </div>
                         <p className="text-[11px] font-medium truncate px-2 py-1.5">{p.name}</p>
@@ -3680,15 +3748,17 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                                       {section.products.filter(p => !sidebarQuery || p.name.toLowerCase().includes(sidebarQuery.toLowerCase())).map(product => (
                                         <button
                                           key={product.id}
-                                          onClick={() => product.imageUrl && addProductToCanvas(product.imageUrl, product.name)}
+                                          draggable={!!product.imageUrl}
+                                          onDragStart={(e) => { if (product.imageUrl) { e.dataTransfer.setData('moodboard-image-url', product.imageUrl); e.dataTransfer.effectAllowed = 'copy'; } }}
+                                          onClick={() => { if (!product.imageUrl) return; templatePickModeId ? fillPlaceholderWithUrl(templatePickModeId, product.imageUrl) : addProductToCanvas(product.imageUrl, product.name); }}
                                           disabled={!product.imageUrl}
-                                          className="flex flex-col rounded-xl border border-border overflow-hidden hover:border-primary/40 hover:shadow-sm transition-all text-left disabled:opacity-40"
+                                          className={`flex flex-col rounded-xl border overflow-hidden hover:shadow-sm transition-all text-left disabled:opacity-40 ${templatePickModeId && product.imageUrl ? "border-primary/60 ring-1 ring-primary/30 hover:border-primary" : "border-border hover:border-primary/40"}`}
                                           title={product.name}
                                         >
                                           <div className="aspect-square bg-muted w-full overflow-hidden">
                                             {product.imageUrl
                                               // eslint-disable-next-line @next/next/no-img-element
-                                              ? <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" />
+                                              ? <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover pointer-events-none" />
                                               : <Package size={20} className="text-muted-foreground m-auto mt-6" />}
                                           </div>
                                           <div className="px-1.5 py-1">

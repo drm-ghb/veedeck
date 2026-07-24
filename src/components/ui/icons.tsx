@@ -47,6 +47,8 @@ export const Maximize2        = icon("open_in_full");
 // ── Modules (user-specified) ───────────────────────────────────────────────
 export const Users            = icon("group");
 export const Interests        = icon("interests");
+export const Frame            = icon("crop_free");
+export const DashboardAdd     = icon("dashboard_customize");
 
 export function PictureInPicture({ size = 20, className, color, style }: IconProps): ReactElement {
   const px = typeof size === "number" ? size : parseInt(size as string, 10) || 20;

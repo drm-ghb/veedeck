@@ -267,7 +267,6 @@ export const MOODBOARD_TEMPLATES: MoodboardTemplate[] = [
     },
     category: 'flatlay',
     aspectRatio: 0.75,
-    background: FLAT_LAY_BG,
     slots: [
       { id: 'slats', role: 'image', shape: 'rect', x: 0.22, y: 0.24, w: 0.26, h: 0.28, z: 1, label: { pl: 'Płytki / lamele', en: 'Tiles / slats' } },
       { id: 'plaster', role: 'image', shape: 'rect', x: 0.18, y: 0.46, w: 0.22, h: 0.24, z: 2, label: { pl: 'Tynk / farba', en: 'Plaster / paint' } },
@@ -289,7 +288,6 @@ export const MOODBOARD_TEMPLATES: MoodboardTemplate[] = [
     },
     category: 'flatlay',
     aspectRatio: 0.75,
-    background: FLAT_LAY_BG,
     slots: [
       { id: 's-1', role: 'image', shape: 'rect', x: 0.10, y: 0.10, w: 0.34, h: 0.16, z: 1 },
       { id: 's-2', role: 'image', shape: 'rect', x: 0.26, y: 0.21, w: 0.36, h: 0.18, z: 2 },
@@ -311,7 +309,6 @@ export const MOODBOARD_TEMPLATES: MoodboardTemplate[] = [
     },
     category: 'flatlay',
     aspectRatio: 0.75,
-    background: FLAT_LAY_BG,
     slots: [
       { id: 'base', role: 'image', shape: 'rect', x: 0.20, y: 0.18, w: 0.60, h: 0.48, z: 1, label: { pl: 'Materiał przewodni', en: 'Lead material' } },
       { id: 'sat-tr', role: 'image', shape: 'rect', x: 0.66, y: 0.10, w: 0.26, h: 0.18, z: 2 },
