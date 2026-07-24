@@ -4,7 +4,7 @@ import { useState, useRef, useCallback, useEffect, Fragment } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, ChevronDown, ChevronUp, Plus, ExternalLink, Minus, MoreHorizontal, Pencil, Trash2, GripVertical, FileDown, Sheet, ArrowDownUp, Eye, EyeOff, Check, X, RotateCcw, FolderInput, Wallet, AlertCircle, AlertTriangle, DollarSign, Copy, Comment, CheckCircle, RadioButtonUnchecked, Search, FileText, Link2, Layers } from "@/components/ui/icons";
+import { ChevronLeft, ChevronDown, ChevronUp, Plus, ExternalLink, Minus, MoreHorizontal, Pencil, Trash2, GripVertical, FileDown, Sheet, ArrowDownUp, Eye, EyeOff, Check, X, RotateCcw, FolderInput, Wallet, AlertCircle, AlertTriangle, DollarSign, Copy, Comment, CheckCircle, RadioButtonUnchecked, Search, FileText, Link2, Layers, Asterisk } from "@/components/ui/icons";
 import ProductCommentPanel from "./ProductCommentPanel";
 import ListSectionNav from "./ListSectionNav";
 import { pusherClient } from "@/lib/pusher";
@@ -315,6 +315,7 @@ function ProductRow({
   allCategories,
   sections,
   isVariant,
+  productNumber,
 }: {
   product: Product;
   index: number;
@@ -345,6 +346,7 @@ function ProductRow({
   dragHandle?: React.ReactNode;
   allCategories: { value: string; label: string }[];
   isVariant?: boolean;
+  productNumber?: string;
 }) {
   const [qty, setQty] = useState(product.quantity);
   const [saving, setSaving] = useState(false);
@@ -592,7 +594,7 @@ function ProductRow({
   ) : null;
 
   return (
-    <div className={`hover:bg-muted/30 transition-colors ${!last ? "border-b border-border" : ""} ${product.hidden ? "opacity-40" : ""}`}>
+    <div className={`group hover:bg-muted/30 transition-colors ${!last ? "border-b border-border" : ""} ${product.hidden ? "opacity-40" : ""}`}>
       {lightboxEl}
       {movePortal}
       {copyPortal}
@@ -608,19 +610,26 @@ function ProductRow({
           )}
           {dragHandle ?? <span className="w-4 shrink-0" />}
         </div>
-        <div className={`flex flex-col justify-between shrink-0 opacity-100 ${isCollapsed ? "self-center" : "h-32"}`}>
-          <button onClick={onToggleHidden} className="w-5 h-5 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors" title={product.hidden ? t.render.showToClient : t.render.hideFromClient}>
+        {productNumber && (
+          <span className={`text-xs font-semibold tabular-nums select-none shrink-0 ${isCollapsed ? "self-center" : "self-start pt-1"} ${product.optional ? "text-muted-foreground/60" : "text-muted-foreground"}`}>
+            {productNumber}
+          </span>
+        )}
+        <div className={`flex flex-col justify-between shrink-0 ${isCollapsed ? "self-center" : "h-32"}`}>
+          {!isCollapsed && (
+            <button onClick={onToggleOptional} className={`w-5 h-5 flex items-center justify-center transition-colors ${product.optional ? "" : "opacity-0 group-hover:opacity-100"}`} title={product.optional ? "Produkt opcjonalny (kliknij, by oznaczyć jako podstawowy)" : "Produkt podstawowy (kliknij, by oznaczyć jako opcjonalny)"}>
+              <Asterisk size={14} className={product.optional ? "text-amber-500 hover:text-amber-600" : "text-muted-foreground hover:text-foreground"} />
+            </button>
+          )}
+          <button onClick={onToggleHidden} className="w-5 h-5 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors opacity-0 group-hover:opacity-100" title={product.hidden ? t.render.showToClient : t.render.hideFromClient}>
             {product.hidden ? <EyeOff size={14} /> : <Eye size={14} />}
           </button>
           {!isCollapsed && (
             <>
-              <button onClick={onToggleOptional} className="w-5 h-5 flex items-center justify-center transition-colors" title={product.optional ? "Produkt opcjonalny (kliknij, by oznaczyć jako podstawowy)" : "Produkt podstawowy (kliknij, by oznaczyć jako opcjonalny)"}>
-                {product.optional ? <RadioButtonUnchecked size={14} className="text-muted-foreground hover:text-foreground" /> : <CheckCircle size={14} className="text-muted-foreground hover:text-foreground" />}
-              </button>
-              <button onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); setCopyMenuPos({ top: r.top, left: r.right + 6 }); setCopyMenuOpen(true); }} className="w-5 h-5 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors" title={t.listy.copyToSection}>
+              <button onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); setCopyMenuPos({ top: r.top, left: r.right + 6 }); setCopyMenuOpen(true); }} className="w-5 h-5 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors opacity-0 group-hover:opacity-100" title={t.listy.copyToSection}>
                 <Copy size={14} />
               </button>
-              <button onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); setMoveMenuPos({ top: r.top, left: r.right + 6 }); setMoveMenuOpen(true); }} className="w-5 h-5 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors" title={t.listy.moveToSection}>
+              <button onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); setMoveMenuPos({ top: r.top, left: r.right + 6 }); setMoveMenuOpen(true); }} className="w-5 h-5 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors opacity-0 group-hover:opacity-100" title={t.listy.moveToSection}>
                 <FolderInput size={14} />
               </button>
             </>
@@ -979,6 +988,41 @@ function SortableSection({ id, children }: { id: string; children: (dragHandle: 
       {children(dragHandle)}
     </div>
   );
+}
+
+function computeProductNumbers(
+  topLevel: Product[],
+  getVariants: (productId: string) => Product[]
+): Record<string, string> {
+  const map: Record<string, string> = {};
+  let mainIdx = 0;
+  let subIdx = 0;
+  for (const product of topLevel) {
+    if (!product.optional) {
+      // Primary product — own main number
+      mainIdx++;
+      subIdx = 0;
+      map[product.id] = String(mainIdx);
+    } else {
+      // Optional without parent — sub-number of last primary.
+      // Edge case: if no primary came before (mainIdx=0), treat as first main number.
+      if (mainIdx === 0) {
+        mainIdx++;
+        subIdx = 0;
+        map[product.id] = String(mainIdx);
+      } else {
+        subIdx++;
+        map[product.id] = `${mainIdx}.${subIdx}`;
+      }
+    }
+    // Variants (products with parentProductId pointing here) always get sub-numbers
+    const variants = getVariants(product.id);
+    for (const variant of variants) {
+      subIdx++;
+      map[variant.id] = `${mainIdx}.${subIdx}`;
+    }
+  }
+  return map;
 }
 
 function byCreatedAt(a: Product, b: Product): number {
@@ -2196,6 +2240,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
               <div className="bg-card border border-border rounded-xl overflow-hidden">
                 {(() => {
                   const topLevel = unsortedSection.products.filter((p) => !p.parentProductId);
+                  const numberMap = computeProductNumbers(topLevel, (id) => unsortedSection.products.filter((p) => p.parentProductId === id).sort((a, b) => a.order - b.order));
                   return (
                     <SortableContext items={topLevel.map((p) => p.id)} strategy={verticalListSortingStrategy}>
                       {topLevel.map((product, i) => {
@@ -2209,6 +2254,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                                   product={product}
                                   index={i}
                                   last={isLastTopLevel && variants.length === 0}
+                                  productNumber={numberMap[product.id]}
                                   listId={list.id}
                                   sectionId={unsortedSection.id}
                                   onQuantityChange={(pid, qty) => handleQuantityChange(unsortedSection.id, pid, qty)}
@@ -2274,6 +2320,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                                   allCategories={allCategories}
                                   sections={sections}
                                   isVariant
+                                  productNumber={numberMap[variant.id]}
                                 />
                               </div>
                             ))}
@@ -2408,6 +2455,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                       <div className="bg-card border border-border rounded-xl overflow-hidden">
                           {(() => {
                             const topLevel = sortProducts(section.products.filter((p) => !p.parentProductId), getSortBy(section.sortBy), categoryOrder);
+                            const numberMap = computeProductNumbers(topLevel, (id) => section.products.filter((p) => p.parentProductId === id).sort((a, b) => a.order - b.order));
                             return (
                               <SortableContext
                                 items={topLevel.map((p) => p.id)}
@@ -2426,6 +2474,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                                             last={isLastTopLevel && variants.length === 0}
                                             listId={list.id}
                                             sectionId={section.id}
+                                            productNumber={numberMap[product.id]}
                                             onQuantityChange={(pid, qty) => handleQuantityChange(section.id, pid, qty)}
                                             onEdit={() => setEditState({ product, sectionId: section.id })}
                                             onDelete={() => handleDeleteProduct(section.id, product.id)}
@@ -2489,6 +2538,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                                             allCategories={allCategories}
                                             sections={sections}
                                             isVariant
+                                            productNumber={numberMap[variant.id]}
                                           />
                                         </div>
                                       ))}

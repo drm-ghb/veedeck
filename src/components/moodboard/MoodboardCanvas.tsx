@@ -11,7 +11,7 @@ import {
   ChevronRight, ChevronDown, Search, Package, PushPin, X, Folder, RefreshCw, LocalMall, LayoutGrid, DashboardAdd,
   ArrowUp, ArrowDown, Layers, Palette, Crop, Eraser, Check as CheckIcon, Copy,
   Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, HelpCircle, Pen, MoreVertical, Download,
-  Frame as FrameIcon,
+  Frame as FrameIcon, Pipette,
 } from "@/components/ui/icons";
 import { useRouter } from "next/navigation";
 import { useUploadThing } from "@/lib/uploadthing-client";
@@ -601,6 +601,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
   // Export
   const [exportMode, setExportMode] = useState(false);
   const [exportRect, setExportRect] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
+  const [exportDropdownOpen, setExportDropdownOpen] = useState(false);
   const [isExportDrawing, setIsExportDrawing] = useState(false);
   const exportDrawStartRef = useRef<{ x: number; y: number } | null>(null);
   // Clipboard for copy/paste
@@ -901,6 +902,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
         if (e.key === "c") { e.preventDefault(); copySelected(); }
         if (e.key === "v") { e.preventDefault(); pasteClipboard(); }
         if (e.key === "d") { e.preventDefault(); duplicateElements(selectedIds); }
+        if (e.key === "a") { e.preventDefault(); setSelectedIds(elements.filter(el => el.type !== "connection").map(el => el.id)); }
       }
       // Tool shortcuts
       if (!e.ctrlKey && !e.metaKey && !e.altKey) {
@@ -1202,7 +1204,6 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
         };
         const next = [...elements, newEl];
         updateElements(next);
-        setTool("select");
       }
       setPenPoints([]);
       penStartRef.current = null;
@@ -1542,6 +1543,96 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
     img.src = konvaUrl;
   }
 
+  function getElementBounds(el: CanvasElement) {
+    if (el.type === "arrow" || el.type === "line" || el.type === "freehand") {
+      const pts = el.points ?? [];
+      let minX = el.x, minY = el.y, maxX = el.x, maxY = el.y;
+      for (let i = 0; i < pts.length; i += 2) {
+        minX = Math.min(minX, el.x + pts[i]);
+        minY = Math.min(minY, el.y + pts[i + 1]);
+        maxX = Math.max(maxX, el.x + pts[i]);
+        maxY = Math.max(maxY, el.y + pts[i + 1]);
+      }
+      return { minX, minY, maxX, maxY };
+    }
+    return { minX: el.x, minY: el.y, maxX: el.x + (el.width ?? 0), maxY: el.y + (el.height ?? 0) };
+  }
+
+  async function doExportRegion(sx: number, sy: number, sw: number, sh: number, fileName: string) {
+    if (!stageRef.current || sw <= 0 || sh <= 0) return;
+    const pixelRatio = 2;
+    const layer = stageRef.current.getLayers()[0];
+    const uiCircles = layer?.find("Circle") ?? [];
+    uiCircles.forEach((n: Konva.Node) => n.hide());
+    transformerRef.current?.visible(false);
+    const frameBorderNodes = elements
+      .filter(e => e.type === "frame")
+      .map(e => stageRef.current!.findOne("#" + e.id))
+      .filter(Boolean) as Konva.Node[];
+    frameBorderNodes.forEach(n => n.hide());
+    layer?.batchDraw();
+    const konvaUrl = stageRef.current.toDataURL({ x: sx, y: sy, width: sw, height: sh, pixelRatio } as Parameters<typeof stageRef.current.toDataURL>[0]);
+    uiCircles.forEach((n: Konva.Node) => n.show());
+    transformerRef.current?.visible(transformerVisible);
+    frameBorderNodes.forEach(n => n.show());
+    layer?.batchDraw();
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(sw * pixelRatio);
+    canvas.height = Math.round(sh * pixelRatio);
+    const ctx = canvas.getContext("2d")!;
+    ctx.fillStyle = canvasBg ?? "#ffffff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    await new Promise<void>(resolve => {
+      const img = new window.Image();
+      img.onload = () => { ctx.drawImage(img, 0, 0); resolve(); };
+      img.src = konvaUrl;
+    });
+    const url = canvas.toDataURL("image/jpeg", 0.92);
+    const link = document.createElement("a");
+    link.download = fileName;
+    link.href = url;
+    link.click();
+  }
+
+  async function exportSelection() {
+    if (selectedIds.length === 0) return;
+    setExportDropdownOpen(false);
+    const selected = elements.filter(e => selectedIds.includes(e.id));
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (const el of selected) {
+      const b = getElementBounds(el);
+      minX = Math.min(minX, b.minX); minY = Math.min(minY, b.minY);
+      maxX = Math.max(maxX, b.maxX); maxY = Math.max(maxY, b.maxY);
+    }
+    if (!isFinite(minX)) return;
+    const pad = 20 / stageScale;
+    const sx = (minX - pad) * stageScale + stagePos.x;
+    const sy = (minY - pad) * stageScale + stagePos.y;
+    const sw = (maxX - minX + pad * 2) * stageScale;
+    const sh = (maxY - minY + pad * 2) * stageScale;
+    const baseName = (title || "zaznaczenie").replace(/[^a-z0-9_\-]/gi, "_");
+    await doExportRegion(sx, sy, sw, sh, `${baseName}.jpg`);
+  }
+
+  async function exportFullCanvas() {
+    if (elements.length === 0) return;
+    setExportDropdownOpen(false);
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (const el of elements) {
+      const b = getElementBounds(el);
+      minX = Math.min(minX, b.minX); minY = Math.min(minY, b.minY);
+      maxX = Math.max(maxX, b.maxX); maxY = Math.max(maxY, b.maxY);
+    }
+    if (!isFinite(minX)) return;
+    const pad = 40 / stageScale;
+    const sx = (minX - pad) * stageScale + stagePos.x;
+    const sy = (minY - pad) * stageScale + stagePos.y;
+    const sw = (maxX - minX + pad * 2) * stageScale;
+    const sh = (maxY - minY + pad * 2) * stageScale;
+    const baseName = (title || "moodboard").replace(/[^a-z0-9_\-]/gi, "_");
+    await doExportRegion(sx, sy, sw, sh, `${baseName}.jpg`);
+  }
+
   async function exportFrame(frameElId: string, format: "png" | "jpg" | "pdf") {
     const frameEl = elements.find(e => e.id === frameElId);
     if (!frameEl || !stageRef.current) return;
@@ -1552,11 +1643,17 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
     const sw = (frameEl.width ?? 0) * stageScale;
     const sh = (frameEl.height ?? 0) * stageScale;
     // Hide UI-only Konva nodes that must not appear in the export:
-    // anchor hook circles and the transformer handles
+    // anchor hook circles, transformer handles, and frame border strokes
     const layer = stageRef.current.getLayers()[0];
     const uiCircles = layer?.find("Circle") ?? [];
     uiCircles.forEach((n: Konva.Node) => n.hide());
     transformerRef.current?.visible(false);
+    // Hide all frame border nodes (they are transparent-fill rects with stroke)
+    const frameBorderNodes = elements
+      .filter(e => e.type === "frame")
+      .map(e => stageRef.current!.findOne("#" + e.id))
+      .filter(Boolean) as Konva.Node[];
+    frameBorderNodes.forEach(n => n.hide());
     layer?.batchDraw();
 
     const konvaUrl = stageRef.current.toDataURL({ x: sx, y: sy, width: sw, height: sh, pixelRatio } as Parameters<typeof stageRef.current.toDataURL>[0]);
@@ -1564,6 +1661,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
     // Restore hidden nodes
     uiCircles.forEach((n: Konva.Node) => n.show());
     transformerRef.current?.visible(transformerVisible);
+    frameBorderNodes.forEach(n => n.show());
     layer?.batchDraw();
     const baseName = (frameEl.frameName || title || "frame").replace(/[^a-z0-9_\-]/gi, "_");
 
@@ -1967,14 +2065,51 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
           />
         </label>
         {/* Export */}
-        <button
-          onClick={() => { setExportMode(true); setExportRect(null); }}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border ${exportMode ? "bg-primary/10 text-primary border-primary/30" : "text-muted-foreground hover:text-foreground hover:bg-muted border-border"}`}
-          title="Eksportuj jako JPG"
-        >
-          <Download size={14} />
-          Eksportuj
-        </button>
+        <div className="relative">
+          <button
+            onClick={() => {
+              if (selectedIds.length > 0) { setExportDropdownOpen(v => !v); }
+              else { setExportMode(true); setExportRect(null); }
+            }}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border ${exportMode || exportDropdownOpen ? "bg-primary/10 text-primary border-primary/30" : "text-muted-foreground hover:text-foreground hover:bg-muted border-border"}`}
+            title="Eksportuj"
+          >
+            <Download size={14} />
+            Eksportuj
+          </button>
+          {exportDropdownOpen && selectedIds.length > 0 && (
+            <>
+              <div className="fixed inset-0 z-[40]" onClick={() => setExportDropdownOpen(false)} />
+              <div className="absolute right-0 top-[calc(100%+6px)] z-[50] bg-card border border-border rounded-xl shadow-xl p-1 min-w-[220px]">
+                <button
+                  onClick={exportSelection}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg hover:bg-muted transition-colors text-left"
+                >
+                  <Download size={13} />
+                  {selectedIds.length === 1 && elements.find(e => e.id === selectedIds[0])?.type === "frame"
+                    ? "Eksportuj frame"
+                    : selectedIds.length === 1 ? "Eksportuj element"
+                    : `Eksportuj zaznaczone (${selectedIds.length})`}
+                </button>
+                <div className="h-px bg-border my-1" />
+                <button
+                  onClick={() => { setExportDropdownOpen(false); setExportMode(true); setExportRect(null); }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg hover:bg-muted transition-colors text-left text-muted-foreground"
+                >
+                  <MousePointer size={13} />
+                  Eksportuj obszar ręcznie...
+                </button>
+                <button
+                  onClick={exportFullCanvas}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg hover:bg-muted transition-colors text-left text-muted-foreground"
+                >
+                  <Download size={13} />
+                  Eksportuj całą planszę
+                </button>
+              </div>
+            </>
+          )}
+        </div>
         {/* Share */}
         {client && (
           <button
@@ -2574,21 +2709,34 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                       onDblClick={() => setInnerEditId(el.id)}
                       onInnerDragEnd={(offX, offY) => updateEl(el.id, { innerOffsetX: offX, innerOffsetY: offY })}
                       onOuterDragEnd={(x, y) => {
-                        const elW = el.width ?? 120; const elH = el.height ?? 80;
-                        const cx = x + elW / 2; const cy = y + elH / 2;
-                        const containingFrame = elements.find(f =>
-                          f.type === "frame" && f.id !== el.id &&
-                          cx >= f.x && cx <= f.x + (f.width ?? 0) &&
-                          cy >= f.y && cy <= f.y + (f.height ?? 0)
-                        );
-                        updateEl(el.id, { x, y, frameId: containingFrame?.id ?? undefined });
+                        if (selectedIds.length > 1) {
+                          const dx = x - el.x; const dy = y - el.y;
+                          updateElements(elements.map(elem => selectedIds.includes(elem.id) && elem.type !== "connection" ? { ...elem, x: elem.x + dx, y: elem.y + dy } : elem));
+                        } else {
+                          const elW = el.width ?? 120; const elH = el.height ?? 80;
+                          const cx = x + elW / 2; const cy = y + elH / 2;
+                          const containingFrame = elements.find(f =>
+                            f.type === "frame" && f.id !== el.id &&
+                            cx >= f.x && cx <= f.x + (f.width ?? 0) &&
+                            cy >= f.y && cy <= f.y + (f.height ?? 0)
+                          );
+                          updateEl(el.id, { x, y, frameId: containingFrame?.id ?? undefined });
+                        }
                       }}
                       onTransformEnd={(attrs) => updateEl(el.id, attrs)}
                       onMouseEnter={() => { if (tool === "select") setHoveredElementId(el.id); }}
                       onMouseLeave={() => setHoveredElementId(null)}
                       onDragStarted={() => { isDragging.current = true; setHoveredElementId(null); }}
                       onDragEnded={() => { isDragging.current = false; setHoveredElementId(null); setSnapLines([]); }}
-                      onDragMove={(e) => applySnap(e, el)}
+                      onDragMove={(e) => {
+                        if (selectedIds.length > 1) {
+                          const dx = e.target.x() - el.x; const dy = e.target.y() - el.y;
+                          const stage = stageRef.current;
+                          if (stage) selectedIds.forEach(sid => { if (sid === el.id) return; const srcEl = elements.find(e2 => e2.id === sid); if (!srcEl || srcEl.type === "connection") return; const node = stage.findOne("#" + sid); if (node) { node.x(srcEl.x + dx); node.y(srcEl.y + dy); } });
+                          setSnapLines([]); return;
+                        }
+                        applySnap(e, el);
+                      }}
                       onContextMenu={(e) => { e.evt.preventDefault(); setSelectedIds([el.id]); setContextMenu({ screenX: e.evt.clientX, screenY: e.evt.clientY, elementId: el.id }); }}
                     />
                   );
@@ -2602,8 +2750,11 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                         setSelectedIds([el.id]);
                       }}
                       onDragEnd={(x, y) => {
-                        const nx = x, ny = y;
-                        if (el.type !== "frame" && el.type !== "connection") {
+                        if (selectedIds.length > 1) {
+                          const dx = x - el.x; const dy = y - el.y;
+                          updateElements(elements.map(elem => selectedIds.includes(elem.id) && elem.type !== "connection" ? { ...elem, x: elem.x + dx, y: elem.y + dy } : elem));
+                        } else {
+                          const nx = x, ny = y;
                           const elW = el.width ?? 120; const elH = el.height ?? 80;
                           const cx = nx + elW / 2; const cy = ny + elH / 2;
                           const containingFrame = elements.find(f =>
@@ -2612,8 +2763,6 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                             cy >= f.y && cy <= f.y + (f.height ?? 0)
                           );
                           updateEl(el.id, { x: nx, y: ny, frameId: containingFrame?.id ?? undefined });
-                        } else {
-                          updateEl(el.id, { x: nx, y: ny });
                         }
                       }}
                       onTransformEnd={(attrs) => updateEl(el.id, attrs)}
@@ -2621,7 +2770,15 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                       onMouseLeave={() => setHoveredElementId(null)}
                       onDragStarted={() => { isDragging.current = true; setHoveredElementId(null); }}
                       onDragEnded={() => { isDragging.current = false; setHoveredElementId(null); setSnapLines([]); }}
-                      onDragMove={(e) => applySnap(e, el)}
+                      onDragMove={(e) => {
+                        if (selectedIds.length > 1) {
+                          const dx = e.target.x() - el.x; const dy = e.target.y() - el.y;
+                          const stage = stageRef.current;
+                          if (stage) selectedIds.forEach(sid => { if (sid === el.id) return; const srcEl = elements.find(e2 => e2.id === sid); if (!srcEl || srcEl.type === "connection") return; const node = stage.findOne("#" + sid); if (node) { node.x(srcEl.x + dx); node.y(srcEl.y + dy); } });
+                          setSnapLines([]); return;
+                        }
+                        applySnap(e, el);
+                      }}
                       onContextMenu={(e) => { e.evt.preventDefault(); setSelectedIds([el.id]); setContextMenu({ screenX: e.evt.clientX, screenY: e.evt.clientY, elementId: el.id }); }} />
                   );
                   return clipFunc
@@ -3057,36 +3214,32 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
               {/* Row 1: Fill + Stroke colors */}
               <div className="flex items-center gap-3">
               {/* Fill color */}
-              {(firstSelected.type === "rect" || firstSelected.type === "ellipse" || firstSelected.type === "note") && (
+              {(firstSelected.type === "rect" || firstSelected.type === "ellipse" || firstSelected.type === "note" || firstSelected.type === "frame") && (
                 <div className="flex items-center gap-1.5">
                   <span className="text-xs text-muted-foreground w-10 shrink-0">Kolor</span>
-                  <div className="flex gap-1">
-                    {(firstSelected.type === "note" ? NOTE_COLORS.map(n => n.bg) : FILL_COLORS.slice(0, 9)).map((c) => (
-                      <button key={c} onClick={() => updateSelected(firstSelected.type === "note" ? { fill: c, noteColor: c } : { fill: c })}
-                        style={{ background: c === "transparent" ? "repeating-linear-gradient(45deg,#ccc 0,#ccc 1px,#fff 0,#fff 50%)" : c }}
-                        className={`w-5 h-5 rounded border-2 transition-all ${(firstSelected.fill === c || firstSelected.noteColor === c) ? "border-primary scale-110" : "border-border"}`}
-                      />
-                    ))}
-                  </div>
-                  <input
-                    type="color"
-                    value={customFillColor || (firstSelected.fill && firstSelected.fill !== "transparent" ? firstSelected.fill : "#ffffff")}
-                    onChange={(e) => {
-                      setCustomFillColor(e.target.value);
-                      updateSelected(firstSelected.type === "note" ? { fill: e.target.value, noteColor: e.target.value } : { fill: e.target.value });
-                    }}
-                    title="Własny kolor"
-                    className="w-6 h-6 rounded cursor-pointer border border-border p-0 bg-transparent"
-                    style={{ minWidth: 24 }}
-                  />
+                  <button
+                    onClick={() => updateSelected(firstSelected.type === "note" ? { fill: "transparent", noteColor: "transparent" } : { fill: "transparent" })}
+                    title="Brak wypełnienia"
+                    className={`w-6 h-6 rounded border-2 transition-all relative overflow-hidden shrink-0 ${(firstSelected.fill === "transparent" || !firstSelected.fill) ? "border-primary scale-110" : "border-border"}`}
+                  >
+                    <div className="absolute inset-0" style={{ background: "repeating-linear-gradient(45deg,#ccc 0,#ccc 1px,#fff 0,#fff 50%)" }} />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="w-full h-px" style={{ background: "#ef4444", transform: "rotate(45deg)" }} />
+                    </div>
+                  </button>
+                  <label className="flex items-center gap-1 px-1.5 py-1 rounded-lg border border-border cursor-pointer hover:bg-muted transition-colors" title="Kolor wypełnienia">
+                    <span className="w-4 h-4 rounded-sm border border-border/60 shrink-0" style={{ background: firstSelected.fill && firstSelected.fill !== "transparent" ? firstSelected.fill : "#ffffff" }} />
+                    <Pipette size={13} className="text-muted-foreground" />
+                    <input type="color"
+                      key={firstSelected.id + "-fill"}
+                      defaultValue={firstSelected.fill && firstSelected.fill !== "transparent" ? firstSelected.fill : "#ffffff"}
+                      onChange={(e) => { setCustomFillColor(e.target.value); updateSelected(firstSelected.type === "note" ? { fill: e.target.value, noteColor: e.target.value } : { fill: e.target.value }); }}
+                      className="sr-only" />
+                  </label>
                   <input
                     type="text"
                     value={customFillColor || (firstSelected.fill && firstSelected.fill !== "transparent" ? firstSelected.fill : "")}
-                    onChange={(e) => {
-                      const v = e.target.value;
-                      setCustomFillColor(v);
-                      if (/^#[0-9a-fA-F]{6}$/.test(v)) updateSelected(firstSelected.type === "note" ? { fill: v, noteColor: v } : { fill: v });
-                    }}
+                    onChange={(e) => { const v = e.target.value; setCustomFillColor(v); if (/^#[0-9a-fA-F]{6}$/.test(v)) updateSelected(firstSelected.type === "note" ? { fill: v, noteColor: v } : { fill: v }); }}
                     placeholder="#hex"
                     maxLength={7}
                     className="w-16 text-xs border border-border rounded-lg px-2 py-1 bg-background text-foreground outline-none focus:ring-2 focus:ring-primary/30"
@@ -3094,53 +3247,58 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                 </div>
               )}
               {/* Stroke color */}
-              {firstSelected.type !== "text" && firstSelected.type !== "image" && (
+              {firstSelected.type !== "text" && firstSelected.type !== "image" && firstSelected.type !== "frame" && (
                 <>
                   {(firstSelected.type === "rect" || firstSelected.type === "ellipse" || firstSelected.type === "note") && (
                     <div className="w-px h-5 bg-border shrink-0" />
                   )}
                   <div className="flex items-center gap-1.5">
                     <span className="text-xs text-muted-foreground w-10 shrink-0">Obr.</span>
-                    <div className="flex gap-1">
-                      {/* No stroke option */}
-                      <button
-                        onClick={() => updateSelected({ stroke: "transparent", strokeWidth: 0 })}
-                        title="Brak koloru"
-                        className={`w-5 h-5 rounded border-2 transition-all relative overflow-hidden ${(firstSelected.stroke === "transparent" || firstSelected.strokeWidth === 0) ? "border-primary scale-110" : "border-border"}`}
-                      >
-                        <div className="absolute inset-0 bg-white dark:bg-zinc-800" />
-                        <div className="absolute left-0 right-0 top-1/2 h-px rotate-45 origin-center" style={{ background: "#ef4444", transform: "rotate(45deg)" }} />
-                      </button>
-                      {STROKE_COLORS.slice(0, 6).map((c) => (
-                        <button key={c} onClick={() => updateSelected({ stroke: c })}
-                          style={{ background: c }}
-                          className={`w-5 h-5 rounded border-2 transition-all ${firstSelected.stroke === c ? "border-primary scale-110" : "border-border"}`}
-                        />
-                      ))}
-                    </div>
-                    <input
-                      type="color"
-                      value={customStrokeColor || (firstSelected.stroke ?? "#334155")}
-                      onChange={(e) => {
-                        setCustomStrokeColor(e.target.value);
-                        updateSelected({ stroke: e.target.value });
-                      }}
-                      title="Własny kolor obramowania"
-                      className="w-6 h-6 rounded cursor-pointer border border-border p-0 bg-transparent"
-                      style={{ minWidth: 24 }}
-                    />
+                    <button
+                      onClick={() => updateSelected({ stroke: "transparent", strokeWidth: 0 })}
+                      title="Brak obramowania"
+                      className={`w-6 h-6 rounded border-2 transition-all relative overflow-hidden shrink-0 ${(firstSelected.stroke === "transparent" || firstSelected.strokeWidth === 0) ? "border-primary scale-110" : "border-border"}`}
+                    >
+                      <div className="absolute inset-0 bg-white dark:bg-zinc-800" />
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="w-full h-px" style={{ background: "#ef4444", transform: "rotate(45deg)" }} />
+                      </div>
+                    </button>
+                    <label className="flex items-center gap-1 px-1.5 py-1 rounded-lg border border-border cursor-pointer hover:bg-muted transition-colors" title="Kolor obramowania">
+                      <span className="w-4 h-4 rounded-sm border border-border/60 shrink-0" style={{ background: firstSelected.stroke && firstSelected.stroke !== "transparent" ? firstSelected.stroke : "#334155" }} />
+                      <Pipette size={13} className="text-muted-foreground" />
+                      <input type="color"
+                        value={customStrokeColor || (firstSelected.stroke && firstSelected.stroke !== "transparent" ? firstSelected.stroke : "#334155")}
+                        onChange={(e) => { setCustomStrokeColor(e.target.value); updateSelected({ stroke: e.target.value }); }}
+                        className="sr-only" />
+                    </label>
                     <input
                       type="text"
-                      value={customStrokeColor || (firstSelected.stroke ?? "")}
-                      onChange={(e) => {
-                        const v = e.target.value;
-                        setCustomStrokeColor(v);
-                        if (/^#[0-9a-fA-F]{6}$/.test(v)) updateSelected({ stroke: v });
-                      }}
+                      value={customStrokeColor || (firstSelected.stroke && firstSelected.stroke !== "transparent" ? firstSelected.stroke : "")}
+                      onChange={(e) => { const v = e.target.value; setCustomStrokeColor(v); if (/^#[0-9a-fA-F]{6}$/.test(v)) updateSelected({ stroke: v }); }}
                       placeholder="#hex"
                       maxLength={7}
                       className="w-16 text-xs border border-border rounded-lg px-2 py-1 bg-background text-foreground outline-none focus:ring-2 focus:ring-primary/30"
                     />
+                    {(firstSelected.type === "arrow" || firstSelected.type === "line" || firstSelected.type === "rect" || firstSelected.type === "ellipse") && (
+                      <>
+                        <div className="w-px h-5 bg-border shrink-0" />
+                        <span className="text-xs text-muted-foreground shrink-0">Grubość</span>
+                        <div className="flex items-center border border-border rounded-lg bg-background overflow-hidden">
+                          <input
+                            type="number"
+                            min={0.5}
+                            max={50}
+                            step={0.5}
+                            value={firstSelected.strokeWidth ?? 2}
+                            onChange={(e) => updateSelected({ strokeWidth: Math.max(0.5, parseFloat(e.target.value) || 0.5) })}
+                            onMouseDown={(e) => e.stopPropagation()}
+                            className="w-12 text-xs bg-transparent focus:outline-none text-center py-1 px-1"
+                          />
+                          <span className="text-xs text-muted-foreground pr-2">px</span>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </>
               )}
@@ -3148,22 +3306,14 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
               {firstSelected.type === "text" && (
                 <div className="flex items-center gap-1.5">
                   <span className="text-xs text-muted-foreground w-10 shrink-0">Kolor</span>
-                  <div className="flex gap-1">
-                    {STROKE_COLORS.slice(0, 6).map((c) => (
-                      <button key={c} onClick={() => updateSelected({ fill: c })}
-                        style={{ background: c }}
-                        className={`w-5 h-5 rounded border-2 transition-all ${firstSelected.fill === c ? "border-primary scale-110" : "border-border"}`}
-                      />
-                    ))}
-                  </div>
-                  <input
-                    type="color"
-                    value={customFillColor || (firstSelected.fill ?? "#1e293b")}
-                    onChange={(e) => { setCustomFillColor(e.target.value); updateSelected({ fill: e.target.value }); }}
-                    title="Własny kolor tekstu"
-                    className="w-6 h-6 rounded cursor-pointer border border-border p-0 bg-transparent"
-                    style={{ minWidth: 24 }}
-                  />
+                  <label className="flex items-center gap-1 px-1.5 py-1 rounded-lg border border-border cursor-pointer hover:bg-muted transition-colors" title="Kolor tekstu">
+                    <span className="w-4 h-4 rounded-sm border border-border/60 shrink-0" style={{ background: firstSelected.fill ?? "#1e293b" }} />
+                    <Pipette size={13} className="text-muted-foreground" />
+                    <input type="color"
+                      value={customFillColor || (firstSelected.fill ?? "#1e293b")}
+                      onChange={(e) => { setCustomFillColor(e.target.value); updateSelected({ fill: e.target.value }); }}
+                      className="sr-only" />
+                  </label>
                   <input
                     type="text"
                     value={customFillColor || (firstSelected.fill ?? "")}
@@ -3178,19 +3328,6 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
 
               {/* Row 2: Stroke width, font size, opacity, delete */}
               <div className="flex items-center gap-3">
-                {/* Stroke width */}
-                {(firstSelected.type === "arrow" || firstSelected.type === "line" || firstSelected.type === "rect" || firstSelected.type === "ellipse") && (
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xs text-muted-foreground shrink-0">Grubość</span>
-                    {[1, 2, 4, 6].map((w) => (
-                      <button key={w} onClick={() => updateSelected({ strokeWidth: w })}
-                        className={`w-8 h-6 rounded-lg border transition-all text-xs ${firstSelected.strokeWidth === w ? "bg-primary/10 border-primary text-primary" : "border-border text-muted-foreground hover:bg-muted"}`}>
-                        {w}
-                      </button>
-                    ))}
-                    <div className="w-px h-5 bg-border shrink-0" />
-                  </div>
-                )}
                 {/* Font size + formatting */}
                 {firstSelected.type === "text" && (
                   <>
@@ -3453,8 +3590,10 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                     className={`w-5 h-5 rounded-full border-2 transition-all ${penColor === c ? "border-primary scale-110" : "border-transparent"}`}
                   />
                 ))}
-                <input type="color" value={penColor} onChange={(e) => setPenColor(e.target.value)}
-                  className="w-5 h-5 rounded-full cursor-pointer border border-border p-0 bg-transparent" style={{ minWidth: 20 }} />
+                <label className="w-7 h-7 rounded-lg border border-border flex items-center justify-center cursor-pointer hover:bg-muted transition-colors shrink-0" title="Własny kolor">
+                  <Pipette size={14} className="text-muted-foreground" />
+                  <input type="color" value={penColor} onChange={(e) => setPenColor(e.target.value)} className="sr-only" />
+                </label>
               </div>
               <div className="w-px h-5 bg-border" />
               <span className="text-xs text-muted-foreground shrink-0">Grubość</span>
@@ -3581,6 +3720,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                   key={item.t}
                   onClick={() => {
                     if (item.t === "image") { fileInputRef.current?.click(); return; }
+                    if (tool === item.t && item.t !== "select") { setTool("select"); return; }
                     setTool(item.t as Tool);
                   }}
                   title={item.label}
