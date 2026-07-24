@@ -42,7 +42,7 @@ export default async function ClientMoodboardPage({ params }: { params: Promise<
 
   return (
     <>
-      <ClientThemeApplier colorTheme={user.colorTheme} customTheme={user.customTheme} />
+      <ClientThemeApplier colorTheme={user.colorTheme} customTheme={user.customTheme as any} />
       <div className="h-dvh flex flex-col bg-muted/60">
         <ShareNavbar
           clientLogoUrl={user.showClientLogo ? user.clientLogoUrl : null}
