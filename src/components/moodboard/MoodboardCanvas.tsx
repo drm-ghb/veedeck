@@ -489,6 +489,12 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
   const [tool, setTool] = useState<Tool>("select");
   const [elements, setElements] = useState<CanvasElement[]>(initElements);
   const [canvasBg, setCanvasBg] = useState<string>(initBg);
+  // Always-fresh refs — safe to read from async callbacks and stale closures
+  const elementsRef = useRef<CanvasElement[]>(initElements);
+  elementsRef.current = elements;
+  const historyIndexRef = useRef(0);
+  const canvasBgRef = useRef(initBg);
+  canvasBgRef.current = canvasBg;
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [stagePos, setStagePos] = useState({ x: initViewport.x, y: initViewport.y });
   const [stageScale, setStageScale] = useState(initViewport.scale);
@@ -771,13 +777,16 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rightSidebarOpen, rightTab, project?.id, client?.id]);
 
-  // Push history
+  // Push history — uses ref to avoid stale closure for historyIndex
   function pushHistory(els: CanvasElement[]) {
+    const currentIdx = historyIndexRef.current;
+    const nextIdx = currentIdx + 1;
+    historyIndexRef.current = nextIdx;
     setHistory((prev) => {
-      const trimmed = prev.slice(0, historyIndex + 1);
+      const trimmed = prev.slice(0, currentIdx + 1);
       return [...trimmed, els];
     });
-    setHistoryIndex((prev) => prev + 1);
+    setHistoryIndex(nextIdx);
   }
 
   function updateElements(newEls: CanvasElement[]) {
@@ -791,7 +800,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(() => {
       const viewport = vp ?? { x: stagePos.x, y: stagePos.y, scale: stageScale };
-      const background = bg ?? canvasBg;
+      const background = bg ?? canvasBgRef.current;
       fetch(`/api/moodboards/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -811,8 +820,11 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
     const ni = historyIndex - 1;
     const snapshot = history[ni];
     if (!Array.isArray(snapshot)) return;
+    historyIndexRef.current = ni;
     setHistoryIndex(ni);
     setElements(snapshot);
+    elementsRef.current = snapshot;
+    scheduleSave(snapshot);
     setSelectedIds([]);
   }
 
@@ -821,8 +833,11 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
     const ni = historyIndex + 1;
     const snapshot = history[ni];
     if (!Array.isArray(snapshot)) return;
+    historyIndexRef.current = ni;
     setHistoryIndex(ni);
     setElements(snapshot);
+    elementsRef.current = snapshot;
+    scheduleSave(snapshot);
     setSelectedIds([]);
   }
 
@@ -1295,7 +1310,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
 
   // Update element property
   function updateEl(elId: string, patch: Partial<CanvasElement>) {
-    const next = elements.map((el) => el.id === elId ? { ...el, ...patch } : el);
+    const next = elementsRef.current.map((el) => el.id === elId ? { ...el, ...patch } : el);
     updateElements(next);
   }
 
@@ -1621,12 +1636,8 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
           const OFFSET = i * 20;
           const pos = stagePoint(dropX + OFFSET, dropY + OFFSET);
           const newEl: CanvasElement = { id: uid(), type: "image", x: pos.x - w / 2, y: pos.y - h / 2, width: w, height: h, imageUrl: url, opacity: 1, rotation: 0 };
-          setElements((prev) => {
-            const next = [...prev, newEl];
-            pushHistory(next);
-            scheduleSave(next);
-            return next;
-          });
+          const next = [...elementsRef.current, newEl];
+          updateElements(next);
           setSelectedIds((prev) => [...prev, newEl.id]);
         };
         img.src = url;
@@ -1660,7 +1671,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
 
   function fillPlaceholderWithImage(placeholderId: string, sourceEl: CanvasElement) {
     if (!sourceEl.imageUrl) return;
-    const placeholder = elements.find(el => el.id === placeholderId);
+    const placeholder = elementsRef.current.find(el => el.id === placeholderId);
     if (!placeholder) return;
 
     const maskW = placeholder.width ?? 200;
@@ -1704,7 +1715,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
 
   // Fill placeholder with image URL directly (used by sidebar click/drag)
   function fillPlaceholderWithUrl(placeholderId: string, imageUrl: string) {
-    const placeholder = elements.find(el => el.id === placeholderId);
+    const placeholder = elementsRef.current.find(el => el.id === placeholderId);
     if (!placeholder) return;
     const maskW = placeholder.width ?? 200;
     const maskH = placeholder.height ?? 150;
@@ -1760,14 +1771,14 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
       const w = img.naturalWidth * ratio, h = img.naturalHeight * ratio;
       const pos = stagePoint(containerSize.w / 2, containerSize.h / 2);
       const newEl: CanvasElement = { id: uid(), type: "image", x: pos.x - w / 2, y: pos.y - h / 2, width: w, height: h, imageUrl: url, opacity: 1, rotation: 0 };
-      const next = [...elements, newEl];
+      const next = [...elementsRef.current, newEl];
       updateElements(next);
       setSelectedIds([newEl.id]);
     };
     img.onerror = () => {
       const pos = stagePoint(containerSize.w / 2, containerSize.h / 2);
       const newEl: CanvasElement = { id: uid(), type: "image", x: pos.x - 175, y: pos.y - 130, width: 350, height: 260, imageUrl: url, opacity: 1, rotation: 0 };
-      const next = [...elements, newEl];
+      const next = [...elementsRef.current, newEl];
       updateElements(next);
     };
     img.src = url;
