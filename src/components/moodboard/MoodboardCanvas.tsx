@@ -1165,7 +1165,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
           .filter(el => el.type !== "connection")
           .filter(el => {
             const b = getElementBounds(el);
-            return b.x < box.x + box.w && b.x + b.width > box.x && b.y < box.y + box.h && b.y + b.height > box.y;
+            return b.minX < box.x + box.w && b.maxX > box.x && b.minY < box.y + box.h && b.maxY > box.y;
           })
           .map(el => el.id);
         setSelectedIds(hit);
