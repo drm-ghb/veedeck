@@ -13,6 +13,8 @@ interface Message {
 interface HelpWidgetProps {
   open: boolean;
   onClose: () => void;
+  initialTab?: "ai" | "contact";
+  initialCategory?: string;
 }
 
 function renderMarkdown(text: string): React.ReactNode[] {
@@ -64,7 +66,7 @@ function renderMarkdown(text: string): React.ReactNode[] {
   return result;
 }
 
-export default function HelpWidget({ open, onClose }: HelpWidgetProps) {
+export default function HelpWidget({ open, onClose, initialTab, initialCategory }: HelpWidgetProps) {
   const t = useT();
   const [activeTab, setActiveTab] = useState<"ai" | "contact">("ai");
   const [expanded, setExpanded] = useState(false);
@@ -100,10 +102,11 @@ export default function HelpWidget({ open, onClose }: HelpWidgetProps) {
 
   useEffect(() => {
     if (open) {
-      setActiveTab("ai");
+      setActiveTab(initialTab ?? "ai");
       setHelpSent(false);
+      setHelpCategory(initialCategory ?? "");
     }
-  }, [open]);
+  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -305,9 +308,9 @@ export default function HelpWidget({ open, onClose }: HelpWidgetProps) {
 
       {/* Contact Tab */}
       {activeTab === "contact" && (
-        <div className="flex-1 overflow-y-auto px-4 py-4 min-h-0">
+        <div className="flex flex-col flex-1 min-h-0">
           {helpSent ? (
-            <div className="flex flex-col items-center text-center py-8 gap-3">
+            <div className="flex flex-col items-center text-center py-8 gap-3 px-4">
               <CheckCircle size={48} className="text-green-500" />
               <p className="font-semibold text-lg">{t.nav.helpSent}</p>
               <p className="text-sm text-muted-foreground">{t.nav.helpSentDesc}</p>
@@ -319,132 +322,143 @@ export default function HelpWidget({ open, onClose }: HelpWidgetProps) {
               </button>
             </div>
           ) : (
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 text-sm bg-muted/50 rounded-lg px-3 py-2">
-                <a href="mailto:support@veedeck.com" className="text-primary font-medium hover:underline">support@veedeck.com</a>
-              </div>
+            <>
+              {/* Scrollable fields */}
+              <div className="flex-1 overflow-y-auto px-4 pt-4 pb-2 min-h-0 flex flex-col gap-4">
+                <div className="flex items-center gap-2 text-sm bg-muted/50 rounded-lg px-3 py-2">
+                  <a href="mailto:support@veedeck.com" className="text-primary font-medium hover:underline">support@veedeck.com</a>
+                </div>
 
-              <div className="relative space-y-1" ref={helpCategoryRef}>
-                <label className="text-sm font-medium">{t.nav.helpCategory}</label>
-                <button
-                  type="button"
-                  onClick={() => setHelpCategoryOpen((o) => !o)}
-                  className="w-full flex items-center justify-between gap-2 px-3 py-2 text-sm border border-border rounded-lg bg-background hover:bg-muted/40 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-colors text-left"
-                >
-                  <span className={helpCategory ? "text-foreground" : "text-muted-foreground"}>
-                    {helpCategory || t.nav.helpCategoryPlaceholder}
-                  </span>
-                  <ChevronDown size={14} className={`text-muted-foreground shrink-0 transition-transform ${helpCategoryOpen ? "rotate-180" : ""}`} />
-                </button>
-                {helpCategoryOpen && (
-                  <div className="absolute z-10 top-full left-0 w-full bg-popover border border-border rounded-lg shadow-md p-1">
-                    {t.nav.helpCategories.map((cat) => (
-                      <button
-                        key={cat}
-                        type="button"
-                        onClick={() => { setHelpCategory(cat); setHelpCategoryOpen(false); }}
-                        className={`w-full text-left px-3 py-1.5 text-sm rounded-md transition-colors ${
-                          helpCategory === cat
-                            ? "bg-primary/10 text-primary font-medium"
-                            : "hover:bg-accent text-foreground"
-                        }`}
-                      >
-                        {cat}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+                <div className="relative space-y-1" ref={helpCategoryRef}>
+                  <label className="text-sm font-medium">{t.nav.helpCategory}</label>
+                  <button
+                    type="button"
+                    onClick={() => setHelpCategoryOpen((o) => !o)}
+                    className="w-full flex items-center justify-between gap-2 px-3 py-2 text-sm border border-border rounded-lg bg-background hover:bg-muted/40 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-colors text-left"
+                  >
+                    <span className={helpCategory ? "text-foreground" : "text-muted-foreground"}>
+                      {helpCategory || t.nav.helpCategoryPlaceholder}
+                    </span>
+                    <ChevronDown size={14} className={`text-muted-foreground shrink-0 transition-transform ${helpCategoryOpen ? "rotate-180" : ""}`} />
+                  </button>
+                  {helpCategoryOpen && (
+                    <div className="absolute z-10 top-full left-0 w-full bg-popover border border-border rounded-lg shadow-md p-1">
+                      {t.nav.helpCategories.map((cat) => (
+                        <button
+                          key={cat}
+                          type="button"
+                          onClick={() => { setHelpCategory(cat); setHelpCategoryOpen(false); }}
+                          className={`w-full text-left px-3 py-1.5 text-sm rounded-md transition-colors ${
+                            helpCategory === cat
+                              ? "bg-primary/10 text-primary font-medium"
+                              : "hover:bg-accent text-foreground"
+                          }`}
+                        >
+                          {cat}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
 
-              <div className="space-y-1">
-                <label className="text-sm font-medium">{t.nav.helpSubject}</label>
-                <input
-                  type="text"
-                  value={helpSubject}
-                  onChange={(e) => setHelpSubject(e.target.value)}
-                  placeholder={t.nav.helpSubjectPlaceholder}
-                  className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-sm font-medium">{t.nav.helpDescription}</label>
-                <textarea
-                  value={helpDesc}
-                  onChange={(e) => setHelpDesc(e.target.value)}
-                  placeholder={t.nav.helpDescriptionPlaceholder}
-                  rows={4}
-                  className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
-                />
-              </div>
-
-              {/* Attachments */}
-              <div className="space-y-2">
-                {helpAttachments.map((att, i) => (
-                  <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/50 border border-border text-sm">
-                    <Paperclip size={13} className="text-muted-foreground shrink-0" />
-                    <span className="flex-1 truncate text-foreground text-xs">{att.name}</span>
-                    <button
-                      type="button"
-                      onClick={() => setHelpAttachments((prev) => prev.filter((_, j) => j !== i))}
-                      className="text-muted-foreground hover:text-red-500 transition-colors shrink-0"
-                    >
-                      <Trash2 size={13} />
-                    </button>
-                  </div>
-                ))}
-                <label className={`flex items-center gap-2 text-xs text-muted-foreground cursor-pointer hover:text-foreground border border-border rounded-lg px-3 py-2 transition-colors ${helpUploading ? "opacity-50 pointer-events-none" : ""}`}>
-                  <Paperclip size={13} className="shrink-0" />
-                  {helpUploading ? "Wgrywanie..." : "Dodaj załączniki (zdjęcia, wideo, dokumenty)"}
+                <div className="space-y-1">
+                  <label className="text-sm font-medium">{t.nav.helpSubject}</label>
                   <input
-                    type="file"
-                    className="hidden"
-                    multiple
-                    accept="image/*,video/*,application/pdf,.doc,.docx,.xls,.xlsx,.csv"
-                    onChange={async (e) => {
-                      const files = Array.from(e.target.files ?? []);
-                      if (!files.length) return;
-                      setHelpUploading(true);
-                      try {
-                        const results = await startUpload(files);
-                        if (results) {
-                          setHelpAttachments((prev) => [
-                            ...prev,
-                            ...results.map((r, i) => ({ url: r.url, name: files[i]?.name ?? r.name ?? "plik" })),
-                          ]);
-                        }
-                      } finally {
-                        setHelpUploading(false);
-                        e.target.value = "";
-                      }
-                    }}
+                    type="text"
+                    value={helpSubject}
+                    onChange={(e) => setHelpSubject(e.target.value)}
+                    placeholder={t.nav.helpSubjectPlaceholder}
+                    className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
                   />
-                </label>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-sm font-medium">{t.nav.helpDescription}</label>
+                  <textarea
+                    value={helpDesc}
+                    onChange={(e) => setHelpDesc(e.target.value)}
+                    placeholder={t.nav.helpDescriptionPlaceholder}
+                    className="w-full min-h-[120px] px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 resize-y"
+                  />
+                </div>
+
+                {/* Attachments */}
+                <div className="space-y-2">
+                  {helpAttachments.length > 0 && (
+                    <div className="space-y-1 max-h-[160px] overflow-y-auto">
+                      {helpAttachments.map((att, i) => (
+                        <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/50 border border-border text-sm">
+                          <Paperclip size={13} className="text-muted-foreground shrink-0" />
+                          <span className="flex-1 truncate text-foreground text-xs">{att.name}</span>
+                          <button
+                            type="button"
+                            onClick={() => setHelpAttachments((prev) => prev.filter((_, j) => j !== i))}
+                            className="text-muted-foreground hover:text-red-500 transition-colors shrink-0"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {helpAttachments.length < 10 && (
+                    <label className={`flex items-center gap-2 text-xs text-muted-foreground cursor-pointer hover:text-foreground border border-border rounded-lg px-3 py-2 transition-colors ${helpUploading ? "opacity-50 pointer-events-none" : ""}`}>
+                      <Paperclip size={13} className="shrink-0" />
+                      {helpUploading ? "Wgrywanie..." : helpAttachments.length > 0 ? `Dodaj więcej (${helpAttachments.length}/10)` : "Dodaj załączniki (zdjęcia, wideo, dokumenty)"}
+                      <input
+                        type="file"
+                        className="hidden"
+                        multiple
+                        accept="image/*,video/*,application/pdf,.doc,.docx,.xls,.xlsx,.csv"
+                        onChange={async (e) => {
+                          const files = Array.from(e.target.files ?? []).slice(0, 10 - helpAttachments.length);
+                          if (!files.length) return;
+                          setHelpUploading(true);
+                          try {
+                            const results = await startUpload(files);
+                            if (results) {
+                              setHelpAttachments((prev) => [
+                                ...prev,
+                                ...results.map((r, i) => ({ url: r.url, name: files[i]?.name ?? r.name ?? "plik" })),
+                              ]);
+                            }
+                          } finally {
+                            setHelpUploading(false);
+                            e.target.value = "";
+                          }
+                        }}
+                      />
+                    </label>
+                  )}
+                </div>
               </div>
 
-              <button
-                onClick={async () => {
-                  if (!helpSubject.trim() && !helpDesc.trim()) return;
-                  await fetch("/api/help-requests", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                      category: helpCategory,
-                      subject: helpSubject,
-                      message: helpDesc,
-                      attachmentUrl: helpAttachments[0]?.url ?? null,
-                      attachmentName: helpAttachments[0]?.name ?? null,
-                      attachments: helpAttachments.length > 0 ? helpAttachments : null,
-                    }),
-                  });
-                  setHelpSent(true);
-                }}
-                disabled={(!helpSubject.trim() && !helpDesc.trim()) || helpUploading}
-                className="w-full py-2 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                {t.nav.helpSend}
-              </button>
-            </div>
+              {/* Submit — fixed at bottom */}
+              <div className="px-4 py-3 border-t border-border shrink-0">
+                <button
+                  onClick={async () => {
+                    if (!helpSubject.trim() && !helpDesc.trim()) return;
+                    await fetch("/api/help-requests", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        category: helpCategory,
+                        subject: helpSubject,
+                        message: helpDesc,
+                        attachmentUrl: helpAttachments[0]?.url ?? null,
+                        attachmentName: helpAttachments[0]?.name ?? null,
+                        attachments: helpAttachments.length > 0 ? helpAttachments : null,
+                      }),
+                    });
+                    setHelpSent(true);
+                  }}
+                  disabled={(!helpSubject.trim() && !helpDesc.trim()) || helpUploading}
+                  className="w-full py-2 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  {t.nav.helpSend}
+                </button>
+              </div>
+            </>
           )}
         </div>
       )}

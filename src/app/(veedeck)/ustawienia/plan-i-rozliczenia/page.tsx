@@ -1,3 +1,4 @@
+export const metadata = { title: "Plan i rozliczenia" };
 export const dynamic = "force-dynamic";
 
 import { auth } from "@/lib/auth";

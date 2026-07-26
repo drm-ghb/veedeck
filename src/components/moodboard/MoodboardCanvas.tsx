@@ -17,16 +17,17 @@ import { useRouter } from "next/navigation";
 import { useUploadThing } from "@/lib/uploadthing-client";
 import { MOODBOARD_TEMPLATES } from "@/components/moodboard/data/templates";
 import type { MoodboardTemplate } from "@/components/moodboard/data/templates";
+import { ColorPicker } from "@/components/moodboard/ColorPicker";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
-type Tool = "select" | "hand" | "rect" | "ellipse" | "text" | "arrow" | "line" | "note" | "image" | "pen" | "frame";
+type Tool = "select" | "hand" | "rect" | "ellipse" | "triangle" | "text" | "arrow" | "line" | "note" | "image" | "pen" | "frame";
 
 type FramePresetId = "custom" | "a4" | "16:9" | "4:3" | "1:1";
 
 export interface CanvasElement {
   id: string;
-  type: "rect" | "ellipse" | "text" | "arrow" | "line" | "note" | "image" | "connection" | "freehand" | "frame";
+  type: "rect" | "ellipse" | "triangle" | "text" | "arrow" | "line" | "note" | "image" | "connection" | "freehand" | "frame";
   x: number;
   y: number;
   width?: number;
@@ -544,8 +545,6 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
   const selBoxStartRef = useRef<{ x: number; y: number } | null>(null);
   const [selBox, setSelBox] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
   const [contextMenu, setContextMenu] = useState<{ screenX: number; screenY: number; elementId: string } | null>(null);
-  const [customFillColor, setCustomFillColor] = useState("");
-  const [customStrokeColor, setCustomStrokeColor] = useState("");
   // Crop mode
   const [cropMode, setCropMode] = useState<string | null>(null);
   type CropRect = { left: number; top: number; right: number; bottom: number };
@@ -584,6 +583,11 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
   // Frame tool
   const [framePreset, setFramePreset] = useState<FramePresetId>("custom");
   const [framePickerOpen, setFramePickerOpen] = useState(false);
+  const [shapePickerOpen, setShapePickerOpen] = useState(false);
+  const [pinterestOpen, setPinterestOpen] = useState(false);
+  const [pinterestConnected, setPinterestConnected] = useState(false);
+  const [bgPickerOpen, setBgPickerOpen] = useState(false);
+  const [selectedShape, setSelectedShape] = useState<"rect" | "ellipse" | "triangle" | "arrow" | "line">("rect");
   const [renameFrameId, setRenameFrameId] = useState<string | null>(null);
   const [renameFrameValue, setRenameFrameValue] = useState("");
   const [frameMenuId, setFrameMenuId] = useState<string | null>(null);
@@ -608,12 +612,6 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
   // Clipboard for copy/paste
   const clipboardRef = useRef<CanvasElement[]>([]);
 
-  // Reset custom colors when selection changes
-  const firstSelectedId = selectedIds[0] ?? null;
-  useEffect(() => {
-    setCustomFillColor("");
-    setCustomStrokeColor("");
-  }, [firstSelectedId]);
 
   // Measure container
   useEffect(() => {
@@ -913,11 +911,11 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
         if (e.key === "Escape" && templatePickModeId) { setTemplatePickModeId(null); return; }
         if (e.key === "v" || e.key === "Escape") setTool("select");
         if (e.key === "h") setTool("hand");
-        if (e.key === "r") setTool("rect");
-        if (e.key === "o") setTool("ellipse");
+        if (e.key === "r") { setTool("rect"); setSelectedShape("rect"); }
+        if (e.key === "o") { setTool("ellipse"); setSelectedShape("ellipse"); }
         if (e.key === "t") setTool("text");
-        if (e.key === "a") setTool("arrow");
-        if (e.key === "l") setTool("line");
+        if (e.key === "a") { setTool("arrow"); setSelectedShape("arrow"); }
+        if (e.key === "l") { setTool("line"); setSelectedShape("line"); }
         if (e.key === "n") setTool("note");
         if (e.key === "p") setTool("pen");
         if (e.key === "f") setTool("frame");
@@ -938,7 +936,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
   }, [selectedIds, elements, editingTextId, historyIndex, history, innerEditId, templatePickModeId]);
 
   // Types that get transformer handles
-  const TRANSFORMABLE = new Set(["rect", "ellipse", "note", "image", "frame"]);
+  const TRANSFORMABLE = new Set(["rect", "ellipse", "triangle", "text", "note", "image", "frame"]);
 
   // Update transformer when selection changes
   useEffect(() => {
@@ -1128,7 +1126,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
     const pos = stagePoint(e.evt.clientX, e.evt.clientY);
     let rawW = Math.abs(pos.x - drawStart.x);
     let rawH = Math.abs(pos.y - drawStart.y);
-    if (e.evt.shiftKey && (tool === "rect" || tool === "ellipse")) {
+    if (e.evt.shiftKey && (tool === "rect" || tool === "ellipse" || tool === "triangle")) {
       const side = Math.max(rawW, rawH);
       rawW = side; rawH = side;
     }
@@ -1229,6 +1227,8 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
       newEl = { id: uid(), type: "rect", x: pos.x, y: pos.y, width: w, height: h, fill: "#e2e8f0", stroke: "#94a3b8", strokeWidth: 1.5, opacity: 1, rotation: 0 };
     } else if (tool === "ellipse") {
       newEl = { id: uid(), type: "ellipse", x: pos.x + w / 2, y: pos.y + h / 2, width: w, height: h, fill: "#e2e8f0", stroke: "#94a3b8", strokeWidth: 1.5, opacity: 1, rotation: 0 };
+    } else if (tool === "triangle") {
+      newEl = { id: uid(), type: "triangle", x: pos.x, y: pos.y, width: w, height: h, fill: "#e2e8f0", stroke: "#94a3b8", strokeWidth: 1.5, opacity: 1, rotation: 0 };
     } else if (tool === "arrow") {
       const end = stagePoint(e.evt.clientX, e.evt.clientY);
       newEl = { id: uid(), type: "arrow", x: drawStart.x, y: drawStart.y, points: [0, 0, end.x - drawStart.x, end.y - drawStart.y], stroke: "#334155", strokeWidth: 2, opacity: 1 };
@@ -1922,6 +1922,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
     hand: isPanning ? "grabbing" : "grab",
     rect: "crosshair",
     ellipse: "crosshair",
+    triangle: "crosshair",
     text: "text",
     arrow: "crosshair",
     line: "crosshair",
@@ -2073,20 +2074,6 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
           )}
         </div>
         <div className="flex-1" />
-        {/* Canvas background color */}
-        <label
-          className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors border border-border cursor-pointer"
-          title="Kolor tła planszy"
-        >
-          <span className="text-xs">Tło</span>
-          <span className="inline-block w-4 h-4 rounded-sm border border-border/60 flex-shrink-0" style={{ background: canvasBg }} />
-          <input
-            type="color"
-            value={canvasBg}
-            onChange={(e) => updateCanvasBg(e.target.value)}
-            className="sr-only"
-          />
-        </label>
         {/* Export */}
         <div className="relative">
           <button
@@ -2143,41 +2130,6 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
             {isSharedWithClient ? "Udostępnione" : "Udostępnij klientowi"}
           </button>
         )}
-        {/* Grid background picker */}
-        <div className="relative">
-          <button
-            onClick={() => setGridMenuOpen((v) => !v)}
-            className={`w-8 h-8 flex items-center justify-center rounded-lg transition-colors ${gridMenuOpen ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
-            title="Tło tablicy"
-          >
-            <LayoutGrid size={16} />
-          </button>
-          {gridMenuOpen && (
-            <>
-              <div className="fixed inset-0 z-[40]" onClick={() => setGridMenuOpen(false)} />
-              <div className="absolute right-0 top-[calc(100%+6px)] z-[50] bg-card border border-border rounded-xl shadow-xl overflow-hidden p-1 w-36">
-                {([
-                  { value: "dots", label: "Kropki" },
-                  { value: "grid", label: "Kratka" },
-                  { value: "none", label: "Brak" },
-                ] as { value: "dots" | "grid" | "none"; label: string }[]).map(({ value, label }) => (
-                  <button
-                    key={value}
-                    onClick={() => { setGridMode(value); localStorage.setItem("moodboard-grid", value); setGridMenuOpen(false); }}
-                    className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm rounded-lg transition-colors text-left ${gridMode === value ? "bg-primary/10 text-primary font-medium" : "hover:bg-muted text-foreground"}`}
-                  >
-                    <span className="w-4 h-4 rounded border border-border flex items-center justify-center shrink-0 bg-background">
-                      {value === "dots" && <span className="w-1 h-1 rounded-full bg-current" />}
-                      {value === "grid" && <svg width="10" height="10" viewBox="0 0 10 10"><path d="M5 0v10M0 5h10" stroke="currentColor" strokeWidth="1" opacity="0.6" /></svg>}
-                    </span>
-                    {label}
-                    {gridMode === value && <Check size={13} className="ml-auto" />}
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
 
         {/* Help / shortcuts */}
         <div className="relative">
@@ -2680,6 +2632,20 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                     align={el.textAlign ?? "left"} />
                 );
 
+                if (el.type === "triangle") {
+                  const tw = el.width ?? 120, th = el.height ?? 80;
+                  return (
+                    <Line key={el.id} {...commonProps} x={el.x} y={el.y}
+                      points={[tw / 2, 0, tw, th, 0, th]}
+                      closed={true}
+                      fill={el.fill ?? "#e2e8f0"}
+                      stroke={isSel ? "#6366f1" : (el.stroke ?? "#94a3b8")}
+                      strokeWidth={isSel ? 2 : (el.strokeWidth ?? 1.5)}
+                      rotation={el.rotation ?? 0}
+                    />
+                  );
+                }
+
                 if (el.type === "note") return (
                   <Group key={el.id} {...commonProps} x={el.x} y={el.y}>
                     <Rect width={el.width ?? 150} height={el.height ?? 150}
@@ -2910,6 +2876,15 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                 <Ellipse x={drawRect.x + drawRect.w / 2} y={drawRect.y + drawRect.h / 2}
                   radiusX={drawRect.w / 2} radiusY={drawRect.h / 2}
                   fill="#e2e8f040" stroke="#94a3b8" strokeWidth={1} dash={[4, 4]} />
+              )}
+              {isDrawing && drawRect && tool === "triangle" && (
+                <Line
+                  x={drawRect.x} y={drawRect.y}
+                  points={[drawRect.w / 2, 0, drawRect.w, drawRect.h, 0, drawRect.h]}
+                  closed={true}
+                  fill="#e2e8f040" stroke="#94a3b8" strokeWidth={1} dash={[4, 4]}
+                  listening={false}
+                />
               )}
 
               {/* ── Line / Arrow endpoint handles ── */}
@@ -3170,102 +3145,250 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
             );
           })()}
 
+          {/* Background pill — bottom-left */}
+          {!readOnly && (
+            <div className="absolute bottom-4 left-4 flex items-center gap-1 bg-card border border-border rounded-2xl shadow-lg px-2.5 py-1.5 z-20">
+              {/* Canvas bg color */}
+              <div className="relative">
+                <button
+                  onClick={() => setBgPickerOpen((v) => !v)}
+                  className={`flex items-center gap-1.5 h-[38px] px-2 rounded-xl transition-colors ${bgPickerOpen ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
+                  title="Kolor tła tablicy"
+                >
+                  <span className="text-xs font-medium">Tło</span>
+                  <span className="w-4 h-4 rounded-sm border border-border/60 shrink-0" style={{ background: canvasBg }} />
+                </button>
+                {bgPickerOpen && (
+                  <>
+                    <div className="fixed inset-0 z-[40]" onClick={() => setBgPickerOpen(false)} />
+                    <div className="absolute left-0 bottom-[calc(100%+6px)] z-[50] bg-card border border-border rounded-xl shadow-xl p-3 w-52">
+                      <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Kolor tła</p>
+                      <div className="grid grid-cols-7 gap-1.5 mb-3">
+                        {["#FFFFFF","#F8F7F4","#F2F0EB","#E8E4DC","#D4CFC4","#1C1C1C","#111111",
+                          "#EFF6FF","#DBEAFE","#FEF9C3","#FEF3C7","#FCE7F3","#F0FDF4","#F5F3FF"].map((c) => (
+                          <button
+                            key={c}
+                            onClick={() => { updateCanvasBg(c); setBgPickerOpen(false); }}
+                            className="w-6 h-6 rounded-md border-2 transition-all hover:scale-110"
+                            style={{ background: c, borderColor: canvasBg === c ? "var(--primary)" : "var(--border)" }}
+                            title={c}
+                          />
+                        ))}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <ColorPicker value={canvasBg} onChange={updateCanvasBg} />
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+              <div className="w-px h-4 bg-border" />
+              {/* Grid pattern */}
+              <div className="relative">
+                <button
+                  onClick={() => setGridMenuOpen((v) => !v)}
+                  className={`flex items-center gap-1.5 h-[38px] px-2 rounded-xl transition-colors ${gridMenuOpen ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
+                  title="Wzór tła"
+                >
+                  <LayoutGrid size={14} />
+                  <span className="text-xs font-medium">
+                    {gridMode === "dots" ? "Kropki" : gridMode === "grid" ? "Siatka" : "Brak"}
+                  </span>
+                </button>
+                {gridMenuOpen && (
+                  <>
+                    <div className="fixed inset-0 z-[40]" onClick={() => setGridMenuOpen(false)} />
+                    <div className="absolute left-0 bottom-[calc(100%+6px)] z-[50] bg-card border border-border rounded-xl shadow-xl overflow-hidden p-1 w-36">
+                      {([
+                        { value: "dots", label: "Kropki" },
+                        { value: "grid", label: "Siatka" },
+                        { value: "none", label: "Brak" },
+                      ] as { value: "dots" | "grid" | "none"; label: string }[]).map(({ value, label }) => (
+                        <button
+                          key={value}
+                          onClick={() => { setGridMode(value); localStorage.setItem("moodboard-grid", value); setGridMenuOpen(false); }}
+                          className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm rounded-lg transition-colors text-left ${gridMode === value ? "bg-primary/10 text-primary font-medium" : "hover:bg-muted text-foreground"}`}
+                        >
+                          <span className="w-4 h-4 rounded border border-border flex items-center justify-center shrink-0 bg-background">
+                            {value === "dots" && <span className="w-1 h-1 rounded-full bg-current" />}
+                            {value === "grid" && <svg width="10" height="10" viewBox="0 0 10 10"><path d="M5 0v10M0 5h10" stroke="currentColor" strokeWidth="1" opacity="0.6" /></svg>}
+                          </span>
+                          {label}
+                          {gridMode === value && <Check size={13} className="ml-auto" />}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Zoom controls */}
-          <div className="absolute bottom-4 right-4 flex items-center gap-1 bg-card border border-border rounded-xl shadow-sm px-1 py-1 z-20">
-            <button onClick={() => setStageScale((s) => Math.max(0.1, s / 1.2))} className="w-7 h-7 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"><ZoomOut size={15} /></button>
-            <button onClick={() => setStageScale(1)} className="text-xs font-medium text-muted-foreground hover:text-foreground px-2 py-1 rounded-lg hover:bg-muted transition-colors min-w-[48px] text-center">{zoomPct}%</button>
-            <button onClick={() => setStageScale((s) => Math.min(5, s * 1.2))} className="w-7 h-7 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"><ZoomIn size={15} /></button>
+          <div className="absolute bottom-4 right-4 flex items-center gap-0.5 bg-card border border-border rounded-2xl shadow-lg px-2.5 py-1.5 z-20">
+            <button onClick={() => setStageScale((s) => Math.max(0.1, s / 1.2))} className="w-[38px] h-[38px] flex items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"><ZoomOut size={17} /></button>
+            <button onClick={() => setStageScale(1)} className="text-xs font-medium text-muted-foreground hover:text-foreground px-2 h-[38px] rounded-xl hover:bg-muted transition-colors min-w-[48px] text-center">{zoomPct}%</button>
+            <button onClick={() => setStageScale((s) => Math.min(5, s * 1.2))} className="w-[38px] h-[38px] flex items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"><ZoomIn size={17} /></button>
           </div>
 
           {/* Properties panel — shown above toolbar when element selected */}
           {!readOnly && firstSelected && !editingTextId && (
-            <div className="absolute bottom-[76px] left-1/2 -translate-x-1/2 flex flex-col gap-2 bg-card border border-border rounded-2xl shadow-lg px-4 py-3 z-20 pointer-events-auto min-w-max">
-              {/* Font family picker — text only */}
+            <div className="absolute bottom-[78px] left-1/2 -translate-x-1/2 flex flex-col bg-card border border-border rounded-2xl shadow-lg px-4 py-3 z-20 pointer-events-auto min-w-max">
+              {/* Text element — single row with all controls */}
               {firstSelected.type === "text" && (
-                <div className="flex items-center gap-2 relative">
-                  <span className="text-xs text-muted-foreground shrink-0">Czcionka</span>
-                  <button
-                    onClick={() => { setFontPickerOpen((v) => !v); setFontSearch(""); }}
-                    className="flex items-center justify-between gap-2 px-2.5 py-1 rounded-lg border border-border bg-background hover:bg-muted text-xs min-w-[160px] transition-colors"
-                    style={{ fontFamily: firstSelected.fontFamily ?? "Inter, sans-serif" }}
-                  >
-                    <span className="truncate">{firstSelected.fontFamily ?? "Inter"}</span>
-                    <ChevronDown size={12} className="shrink-0 text-muted-foreground" />
+                <div className="flex items-center gap-1.5">
+                  {/* Font picker */}
+                  <div className="relative">
+                    <button
+                      onClick={() => { setFontPickerOpen((v) => !v); setFontSearch(""); }}
+                      className="flex items-center justify-between gap-2 px-2.5 h-8 rounded-lg border border-border bg-background hover:bg-muted text-xs min-w-[140px] transition-colors"
+                      style={{ fontFamily: firstSelected.fontFamily ?? "Inter, sans-serif" }}
+                    >
+                      <span className="truncate">{firstSelected.fontFamily ?? "Inter"}</span>
+                      <ChevronDown size={12} className="shrink-0 text-muted-foreground" />
+                    </button>
+                    {fontPickerOpen && (
+                      <>
+                        <div className="fixed inset-0 z-[60]" onClick={() => setFontPickerOpen(false)} />
+                        <div className="absolute left-0 bottom-[calc(100%+4px)] z-[70] w-56 bg-card border border-border rounded-xl shadow-xl overflow-hidden flex flex-col">
+                          <div className="p-2 border-b border-border">
+                            <input
+                              autoFocus
+                              value={fontSearch}
+                              onChange={(e) => setFontSearch(e.target.value)}
+                              placeholder="Szukaj czcionki…"
+                              className="w-full text-xs px-2.5 py-1.5 rounded-lg border border-border bg-background outline-none focus:ring-2 focus:ring-primary/30"
+                            />
+                          </div>
+                          <div className="overflow-y-auto max-h-60 p-1">
+                            {GOOGLE_FONTS
+                              .filter((f) => f.toLowerCase().includes(fontSearch.toLowerCase()))
+                              .map((font) => (
+                                <button
+                                  key={font}
+                                  onMouseEnter={() => loadGoogleFont(font)}
+                                  onClick={() => {
+                                    loadGoogleFont(font);
+                                    updateSelected({ fontFamily: font });
+                                    setFontPickerOpen(false);
+                                    document.fonts.load(`16px "${font}"`).then(() => {
+                                      stageRef.current?.getLayers().forEach(l => l.batchDraw());
+                                    }).catch(() => {});
+                                  }}
+                                  className={`w-full text-left px-3 py-1.5 rounded-lg text-sm hover:bg-muted transition-colors ${(firstSelected.fontFamily ?? "Inter") === font ? "bg-primary/10 text-primary font-medium" : "text-foreground"}`}
+                                  style={{ fontFamily: font }}
+                                >
+                                  {font}
+                                </button>
+                              ))}
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                  <div className="w-px h-5 bg-border shrink-0" />
+                  {/* Font size */}
+                  <input
+                    type="number"
+                    min={6} max={200}
+                    key={firstSelected.id + "-fontsize"}
+                    defaultValue={firstSelected.fontSize ?? 16}
+                    onBlur={(e) => {
+                      const v = parseInt(e.target.value);
+                      if (v >= 6 && v <= 200) updateSelected({ fontSize: v });
+                      else e.target.value = String(firstSelected.fontSize ?? 16);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        const v = parseInt((e.target as HTMLInputElement).value);
+                        if (v >= 6 && v <= 200) updateSelected({ fontSize: v });
+                      }
+                    }}
+                    className="w-14 h-8 text-xs border border-border rounded-lg px-2 bg-background text-foreground outline-none focus:ring-2 focus:ring-primary/30 text-center"
+                  />
+                  <div className="w-px h-5 bg-border shrink-0" />
+                  {/* Bold / Italic / Underline */}
+                  {([
+                    { label: "Pogrubienie", icon: <Bold size={14} />, toggle: () => {
+                      const cur = firstSelected.fontStyle ?? "normal";
+                      const isBold = cur.includes("bold");
+                      const isItalic = cur.includes("italic");
+                      updateSelected({ fontStyle: (isBold ? (isItalic ? "italic" : "normal") : (isItalic ? "bold italic" : "bold")) });
+                    }, active: (firstSelected.fontStyle ?? "").includes("bold") },
+                    { label: "Kursywa", icon: <Italic size={14} />, toggle: () => {
+                      const cur = firstSelected.fontStyle ?? "normal";
+                      const isBold = cur.includes("bold");
+                      const isItalic = cur.includes("italic");
+                      updateSelected({ fontStyle: (isItalic ? (isBold ? "bold" : "normal") : (isBold ? "bold italic" : "italic")) });
+                    }, active: (firstSelected.fontStyle ?? "").includes("italic") },
+                    { label: "Podkreślenie", icon: <Underline size={14} />, toggle: () => {
+                      updateSelected({ textDecoration: firstSelected.textDecoration === "underline" ? "" : "underline" });
+                    }, active: firstSelected.textDecoration === "underline" },
+                  ] as { label: string; icon: React.ReactNode; toggle: () => void; active: boolean }[]).map(btn => (
+                    <button key={btn.label} onClick={btn.toggle} title={btn.label}
+                      className={`w-8 h-8 rounded-lg border transition-all flex items-center justify-center ${btn.active ? "bg-primary/10 border-primary text-primary" : "border-border text-muted-foreground hover:bg-muted"}`}>
+                      {btn.icon}
+                    </button>
+                  ))}
+                  <div className="w-px h-5 bg-border shrink-0" />
+                  {/* Alignment */}
+                  {([
+                    { label: "Wyrównaj do lewej", icon: <AlignLeft size={14} />, align: "left" },
+                    { label: "Wyśrodkuj", icon: <AlignCenter size={14} />, align: "center" },
+                    { label: "Wyrównaj do prawej", icon: <AlignRight size={14} />, align: "right" },
+                  ] as { label: string; icon: React.ReactNode; align: string }[]).map(btn => (
+                    <button key={btn.align} onClick={() => updateSelected({ textAlign: btn.align })} title={btn.label}
+                      className={`w-8 h-6 rounded-lg border transition-all flex items-center justify-center ${(firstSelected.textAlign ?? "left") === btn.align ? "bg-primary/10 border-primary text-primary" : "border-border text-muted-foreground hover:bg-muted"}`}>
+                      {btn.icon}
+                    </button>
+                  ))}
+                  <div className="w-px h-5 bg-border shrink-0" />
+                  {/* Color */}
+                  <ColorPicker value={firstSelected.fill ?? "#1e293b"} onChange={(hex) => updateSelected({ fill: hex })} />
+                  <div className="w-px h-5 bg-border shrink-0" />
+                  {/* Opacity */}
+                  <input type="range" min={0.1} max={1} step={0.05} value={firstSelected.opacity ?? 1}
+                    onChange={(e) => updateSelected({ opacity: parseFloat(e.target.value) })}
+                    className="w-16 accent-primary self-center" />
+                  <span className="text-xs text-muted-foreground w-7">{Math.round((firstSelected.opacity ?? 1) * 100)}%</span>
+                  <div className="w-px h-5 bg-border shrink-0" />
+                  {/* Layer */}
+                  <button onClick={() => bringToFront(firstSelected.id)} title="Przesuń w górę"
+                    className="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+                    <ArrowUp size={16} />
                   </button>
-                  {fontPickerOpen && (
-                    <>
-                      <div className="fixed inset-0 z-[60]" onClick={() => setFontPickerOpen(false)} />
-                      <div className="absolute left-[72px] bottom-[calc(100%+4px)] z-[70] w-56 bg-card border border-border rounded-xl shadow-xl overflow-hidden flex flex-col">
-                        <div className="p-2 border-b border-border">
-                          <input
-                            autoFocus
-                            value={fontSearch}
-                            onChange={(e) => setFontSearch(e.target.value)}
-                            placeholder="Szukaj czcionki…"
-                            className="w-full text-xs px-2.5 py-1.5 rounded-lg border border-border bg-background outline-none focus:ring-2 focus:ring-primary/30"
-                          />
-                        </div>
-                        <div className="overflow-y-auto max-h-60 p-1">
-                          {GOOGLE_FONTS
-                            .filter((f) => f.toLowerCase().includes(fontSearch.toLowerCase()))
-                            .map((font) => (
-                              <button
-                                key={font}
-                                onMouseEnter={() => loadGoogleFont(font)}
-                                onClick={() => {
-                                  loadGoogleFont(font);
-                                  updateSelected({ fontFamily: font });
-                                  setFontPickerOpen(false);
-                                  // Wait for the font to load, then force Konva to re-render
-                                  document.fonts.load(`16px "${font}"`).then(() => {
-                                    stageRef.current?.getLayers().forEach(l => l.batchDraw());
-                                  }).catch(() => {});
-                                }}
-                                className={`w-full text-left px-3 py-1.5 rounded-lg text-sm hover:bg-muted transition-colors ${(firstSelected.fontFamily ?? "Inter") === font ? "bg-primary/10 text-primary font-medium" : "text-foreground"}`}
-                                style={{ fontFamily: font }}
-                              >
-                                {font}
-                              </button>
-                            ))}
-                        </div>
-                      </div>
-                    </>
-                  )}
+                  <button onClick={() => sendToBack(firstSelected.id)} title="Przesuń w dół"
+                    className="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+                    <ArrowDown size={16} />
+                  </button>
+                  <div className="w-px h-5 bg-border shrink-0" />
+                  {/* Delete */}
+                  <button onClick={() => { updateElements(safeElements.filter(e => !selectedIds.includes(e.id))); setSelectedIds([]); }}
+                    className="w-8 h-8 flex items-center justify-center rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors">
+                    <Trash2 size={16} />
+                  </button>
                 </div>
               )}
 
-              {/* Row 1: Fill + Stroke colors */}
-              <div className="flex items-center gap-3">
+              {/* Row 1: Fill + Stroke colors (not for text — text has its own row above) */}
+              {firstSelected.type !== "text" && <div className="flex items-center gap-3">
               {/* Fill color */}
-              {(firstSelected.type === "rect" || firstSelected.type === "ellipse" || firstSelected.type === "note" || firstSelected.type === "frame") && (
+              {(firstSelected.type === "rect" || firstSelected.type === "ellipse" || firstSelected.type === "triangle" || firstSelected.type === "note" || firstSelected.type === "frame") && (
                 <div className="flex items-center gap-1.5">
                   <span className="text-xs text-muted-foreground w-10 shrink-0">Kolor</span>
                   <button
                     onClick={() => updateSelected(firstSelected.type === "note" ? { fill: "transparent", noteColor: "transparent" } : { fill: "transparent" })}
                     title="Brak wypełnienia"
-                    className={`w-6 h-6 rounded border-2 transition-all relative overflow-hidden shrink-0 ${(firstSelected.fill === "transparent" || !firstSelected.fill) ? "border-primary scale-110" : "border-border"}`}
+                    className={`w-8 h-8 rounded-lg border-2 transition-all relative overflow-hidden shrink-0 ${(firstSelected.fill === "transparent" || !firstSelected.fill) ? "border-primary scale-110" : "border-border"}`}
                   >
                     <div className="absolute inset-0" style={{ background: "repeating-linear-gradient(45deg,#ccc 0,#ccc 1px,#fff 0,#fff 50%)" }} />
                     <div className="absolute inset-0 flex items-center justify-center">
                       <div className="w-full h-px" style={{ background: "#ef4444", transform: "rotate(45deg)" }} />
                     </div>
                   </button>
-                  <label className="flex items-center gap-1 px-1.5 py-1 rounded-lg border border-border cursor-pointer hover:bg-muted transition-colors" title="Kolor wypełnienia">
-                    <span className="w-4 h-4 rounded-sm border border-border/60 shrink-0" style={{ background: firstSelected.fill && firstSelected.fill !== "transparent" ? firstSelected.fill : "#ffffff" }} />
-                    <Pipette size={13} className="text-muted-foreground" />
-                    <input type="color"
-                      key={firstSelected.id + "-fill"}
-                      defaultValue={firstSelected.fill && firstSelected.fill !== "transparent" ? firstSelected.fill : "#ffffff"}
-                      onChange={(e) => { setCustomFillColor(e.target.value); updateSelected(firstSelected.type === "note" ? { fill: e.target.value, noteColor: e.target.value } : { fill: e.target.value }); }}
-                      className="sr-only" />
-                  </label>
-                  <input
-                    type="text"
-                    value={customFillColor || (firstSelected.fill && firstSelected.fill !== "transparent" ? firstSelected.fill : "")}
-                    onChange={(e) => { const v = e.target.value; setCustomFillColor(v); if (/^#[0-9a-fA-F]{6}$/.test(v)) updateSelected(firstSelected.type === "note" ? { fill: v, noteColor: v } : { fill: v }); }}
-                    placeholder="#hex"
-                    maxLength={7}
-                    className="w-16 text-xs border border-border rounded-lg px-2 py-1 bg-background text-foreground outline-none focus:ring-2 focus:ring-primary/30"
+                  <ColorPicker
+                    value={firstSelected.fill && firstSelected.fill !== "transparent" ? firstSelected.fill : "#ffffff"}
+                    onChange={(hex) => updateSelected(firstSelected.type === "note" ? { fill: hex, noteColor: hex } : { fill: hex })}
                   />
                 </div>
               )}
@@ -3280,34 +3403,22 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                     <button
                       onClick={() => updateSelected({ stroke: "transparent", strokeWidth: 0 })}
                       title="Brak obramowania"
-                      className={`w-6 h-6 rounded border-2 transition-all relative overflow-hidden shrink-0 ${(firstSelected.stroke === "transparent" || firstSelected.strokeWidth === 0) ? "border-primary scale-110" : "border-border"}`}
+                      className={`w-8 h-8 rounded-lg border-2 transition-all relative overflow-hidden shrink-0 ${(firstSelected.stroke === "transparent" || firstSelected.strokeWidth === 0) ? "border-primary scale-110" : "border-border"}`}
                     >
                       <div className="absolute inset-0 bg-white dark:bg-zinc-800" />
                       <div className="absolute inset-0 flex items-center justify-center">
                         <div className="w-full h-px" style={{ background: "#ef4444", transform: "rotate(45deg)" }} />
                       </div>
                     </button>
-                    <label className="flex items-center gap-1 px-1.5 py-1 rounded-lg border border-border cursor-pointer hover:bg-muted transition-colors" title="Kolor obramowania">
-                      <span className="w-4 h-4 rounded-sm border border-border/60 shrink-0" style={{ background: firstSelected.stroke && firstSelected.stroke !== "transparent" ? firstSelected.stroke : "#334155" }} />
-                      <Pipette size={13} className="text-muted-foreground" />
-                      <input type="color"
-                        value={customStrokeColor || (firstSelected.stroke && firstSelected.stroke !== "transparent" ? firstSelected.stroke : "#334155")}
-                        onChange={(e) => { setCustomStrokeColor(e.target.value); updateSelected({ stroke: e.target.value }); }}
-                        className="sr-only" />
-                    </label>
-                    <input
-                      type="text"
-                      value={customStrokeColor || (firstSelected.stroke && firstSelected.stroke !== "transparent" ? firstSelected.stroke : "")}
-                      onChange={(e) => { const v = e.target.value; setCustomStrokeColor(v); if (/^#[0-9a-fA-F]{6}$/.test(v)) updateSelected({ stroke: v }); }}
-                      placeholder="#hex"
-                      maxLength={7}
-                      className="w-16 text-xs border border-border rounded-lg px-2 py-1 bg-background text-foreground outline-none focus:ring-2 focus:ring-primary/30"
+                    <ColorPicker
+                      value={firstSelected.stroke && firstSelected.stroke !== "transparent" ? firstSelected.stroke : "#334155"}
+                      onChange={(hex) => updateSelected({ stroke: hex })}
                     />
-                    {(firstSelected.type === "arrow" || firstSelected.type === "line" || firstSelected.type === "rect" || firstSelected.type === "ellipse") && (
+                    {(firstSelected.type === "arrow" || firstSelected.type === "line" || firstSelected.type === "rect" || firstSelected.type === "ellipse" || firstSelected.type === "triangle") && (
                       <>
                         <div className="w-px h-5 bg-border shrink-0" />
                         <span className="text-xs text-muted-foreground shrink-0">Grubość</span>
-                        <div className="flex items-center border border-border rounded-lg bg-background overflow-hidden">
+                        <div className="flex items-center h-8 border border-border rounded-lg bg-background overflow-hidden">
                           <input
                             type="number"
                             min={0.5}
@@ -3316,7 +3427,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                             value={firstSelected.strokeWidth ?? 2}
                             onChange={(e) => updateSelected({ strokeWidth: Math.max(0.5, parseFloat(e.target.value) || 0.5) })}
                             onMouseDown={(e) => e.stopPropagation()}
-                            className="w-12 text-xs bg-transparent focus:outline-none text-center py-1 px-1"
+                            className="w-12 h-8 text-xs bg-transparent focus:outline-none text-center px-1"
                           />
                           <span className="text-xs text-muted-foreground pr-2">px</span>
                         </div>
@@ -3325,155 +3436,113 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                   </div>
                 </>
               )}
-              {/* Text color */}
-              {firstSelected.type === "text" && (
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs text-muted-foreground w-10 shrink-0">Kolor</span>
-                  <label className="flex items-center gap-1 px-1.5 py-1 rounded-lg border border-border cursor-pointer hover:bg-muted transition-colors" title="Kolor tekstu">
-                    <span className="w-4 h-4 rounded-sm border border-border/60 shrink-0" style={{ background: firstSelected.fill ?? "#1e293b" }} />
-                    <Pipette size={13} className="text-muted-foreground" />
-                    <input type="color"
-                      value={customFillColor || (firstSelected.fill ?? "#1e293b")}
-                      onChange={(e) => { setCustomFillColor(e.target.value); updateSelected({ fill: e.target.value }); }}
-                      className="sr-only" />
-                  </label>
-                  <input
-                    type="text"
-                    value={customFillColor || (firstSelected.fill ?? "")}
-                    onChange={(e) => { const v = e.target.value; setCustomFillColor(v); if (/^#[0-9a-fA-F]{6}$/.test(v)) updateSelected({ fill: v }); }}
-                    placeholder="#hex"
-                    maxLength={7}
-                    className="w-16 text-xs border border-border rounded-lg px-2 py-1 bg-background text-foreground outline-none focus:ring-2 focus:ring-primary/30"
-                  />
-                </div>
+              {/* Frame: opacity + layer + delete inline */}
+              {firstSelected.type === "frame" && (
+                <>
+                  <div className="w-px h-5 bg-border shrink-0" />
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs text-muted-foreground shrink-0">Krycie</span>
+                    <input type="range" min={0.1} max={1} step={0.05} value={firstSelected.opacity ?? 1}
+                      onChange={(e) => updateSelected({ opacity: parseFloat(e.target.value) })}
+                      className="w-20 accent-primary self-center" />
+                    <span className="text-xs text-muted-foreground w-7">{Math.round((firstSelected.opacity ?? 1) * 100)}%</span>
+                  </div>
+                  <div className="w-px h-5 bg-border shrink-0" />
+                  <button onClick={() => bringToFront(firstSelected.id)} title="Przesuń w górę"
+                    className="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+                    <ArrowUp size={16} />
+                  </button>
+                  <button onClick={() => sendToBack(firstSelected.id)} title="Przesuń w dół"
+                    className="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+                    <ArrowDown size={16} />
+                  </button>
+                  <div className="w-px h-5 bg-border shrink-0" />
+                  <button onClick={() => { updateElements(safeElements.filter(e => !selectedIds.includes(e.id))); setSelectedIds([]); }}
+                    className="w-8 h-8 flex items-center justify-center rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors">
+                    <Trash2 size={16} />
+                  </button>
+                </>
               )}
-              </div>
-
-              {/* Row 2: Stroke width, font size, opacity, delete */}
-              <div className="flex items-center gap-3">
-                {/* Font size + formatting */}
-                {firstSelected.type === "text" && (
-                  <>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-xs text-muted-foreground shrink-0">Rozmiar</span>
-                      <input
-                        type="number"
-                        min={6} max={200}
-                        value={firstSelected.fontSize ?? 16}
-                        onChange={(e) => { const v = parseInt(e.target.value); if (v >= 6 && v <= 200) updateSelected({ fontSize: v }); }}
-                        className="w-16 text-xs border border-border rounded-lg px-2 py-1 bg-background text-foreground outline-none focus:ring-2 focus:ring-primary/30 text-center"
-                      />
-                      <div className="w-px h-5 bg-border shrink-0" />
-                      {/* Bold / Italic / Underline */}
-                      {([
-                        { label: "Pogrubienie", icon: <Bold size={14} />, toggle: () => {
-                          const cur = firstSelected.fontStyle ?? "normal";
-                          const isBold = cur.includes("bold");
-                          const isItalic = cur.includes("italic");
-                          updateSelected({ fontStyle: (isBold ? (isItalic ? "italic" : "normal") : (isItalic ? "bold italic" : "bold")) });
-                        }, active: (firstSelected.fontStyle ?? "").includes("bold") },
-                        { label: "Kursywa", icon: <Italic size={14} />, toggle: () => {
-                          const cur = firstSelected.fontStyle ?? "normal";
-                          const isBold = cur.includes("bold");
-                          const isItalic = cur.includes("italic");
-                          updateSelected({ fontStyle: (isItalic ? (isBold ? "bold" : "normal") : (isBold ? "bold italic" : "italic")) });
-                        }, active: (firstSelected.fontStyle ?? "").includes("italic") },
-                        { label: "Podkreślenie", icon: <Underline size={14} />, toggle: () => {
-                          updateSelected({ textDecoration: firstSelected.textDecoration === "underline" ? "" : "underline" });
-                        }, active: firstSelected.textDecoration === "underline" },
-                      ] as { label: string; icon: React.ReactNode; toggle: () => void; active: boolean }[]).map(btn => (
-                        <button key={btn.label} onClick={btn.toggle} title={btn.label}
-                          className={`w-8 h-6 rounded-lg border transition-all flex items-center justify-center ${btn.active ? "bg-primary/10 border-primary text-primary" : "border-border text-muted-foreground hover:bg-muted"}`}>
-                          {btn.icon}
-                        </button>
-                      ))}
-                      <div className="w-px h-5 bg-border shrink-0" />
-                      {/* Align */}
-                      {([
-                        { label: "Wyrównaj do lewej", icon: <AlignLeft size={14} />, align: "left" },
-                        { label: "Wyśrodkuj", icon: <AlignCenter size={14} />, align: "center" },
-                        { label: "Wyrównaj do prawej", icon: <AlignRight size={14} />, align: "right" },
-                      ] as { label: string; icon: React.ReactNode; align: string }[]).map(btn => (
-                        <button key={btn.align} onClick={() => updateSelected({ textAlign: btn.align })} title={btn.label}
-                          className={`w-8 h-6 rounded-lg border transition-all flex items-center justify-center ${(firstSelected.textAlign ?? "left") === btn.align ? "bg-primary/10 border-primary text-primary" : "border-border text-muted-foreground hover:bg-muted"}`}>
-                          {btn.icon}
-                        </button>
-                      ))}
-                    </div>
-                  </>
-                )}
-                {/* Image controls */}
-                {firstSelected.type === "image" && !cropMode && (
-                  <>
+              {/* Image controls (kadruj, usuń tło) */}
+              {firstSelected.type === "image" && !cropMode && (
+                <>
+                  <button
+                    onClick={() => enterCropMode(firstSelected)}
+                    className="flex items-center gap-1.5 px-2.5 h-8 text-xs rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+                  >
+                    <Crop size={14} /> Kadruj
+                  </button>
+                  {firstSelected.cropLeft !== undefined && (
                     <button
-                      onClick={() => enterCropMode(firstSelected)}
-                      className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+                      onClick={resetCrop}
+                      className="flex items-center gap-1.5 px-2.5 h-8 text-xs rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
                     >
-                      <Crop size={14} /> Kadruj
+                      <X size={14} /> Resetuj kadr
                     </button>
-                    {firstSelected.cropLeft !== undefined && (
-                      <button
-                        onClick={resetCrop}
-                        className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
-                      >
-                        <X size={14} /> Resetuj kadr
-                      </button>
+                  )}
+                  <div className="flex flex-col gap-0.5">
+                    <button
+                      onClick={() => handleRemoveBg(firstSelected)}
+                      disabled={!!removingBgId}
+                      className="flex items-center gap-1.5 px-2.5 h-8 text-xs rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground disabled:opacity-50"
+                    >
+                      <Eraser size={14} />
+                      {removingBgId === firstSelected.id ? `Usuwam... ${removeBgProgress}%` : "Usuń tło"}
+                    </button>
+                    {removingBgId === firstSelected.id && (
+                      <div className="mx-2.5 h-1 rounded-full bg-muted overflow-hidden">
+                        <div className="h-full bg-primary rounded-full transition-all duration-200" style={{ width: `${removeBgProgress}%` }} />
+                      </div>
                     )}
-                    <div className="flex flex-col gap-0.5">
-                      <button
-                        onClick={() => handleRemoveBg(firstSelected)}
-                        disabled={!!removingBgId}
-                        className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground disabled:opacity-50"
-                      >
-                        <Eraser size={14} />
-                        {removingBgId === firstSelected.id ? `Usuwam... ${removeBgProgress}%` : "Usuń tło"}
-                      </button>
-                      {removingBgId === firstSelected.id && (
-                        <div className="mx-2.5 h-1 rounded-full bg-muted overflow-hidden">
-                          <div
-                            className="h-full bg-primary rounded-full transition-all duration-200"
-                            style={{ width: `${removeBgProgress}%` }}
-                          />
-                        </div>
-                      )}
-                    </div>
-                    <div className="w-px h-5 bg-border shrink-0" />
-                  </>
-                )}
-                {/* Corner radius — rect and image */}
-                {(firstSelected.type === "rect" || firstSelected.type === "image") && (
+                  </div>
+                  <div className="w-px h-5 bg-border shrink-0" />
+                </>
+              )}
+              {/* Corner radius — rect and image */}
+              {(firstSelected.type === "rect" || firstSelected.type === "image") && (
+                <>
                   <div className="flex items-center gap-1.5">
                     <span className="text-xs text-muted-foreground shrink-0">Zaokrąglenie</span>
-                    <div className="flex items-center border border-border rounded-lg bg-background overflow-hidden">
+                    <div className="flex items-center h-8 border border-border rounded-lg bg-background overflow-hidden">
                       <input
-                        type="number"
-                        min={0}
-                        max={500}
-                        step={1}
+                        type="number" min={0} max={500} step={1}
                         value={Math.round(firstSelected.cornerRadius ?? 0)}
                         onChange={(e) => updateSelected({ cornerRadius: Math.max(0, parseInt(e.target.value) || 0) })}
                         onMouseDown={(e) => e.stopPropagation()}
-                        className="w-12 text-xs bg-transparent focus:outline-none text-center py-1 px-1"
+                        className="w-12 h-8 text-xs bg-transparent focus:outline-none text-center px-1"
                       />
                       <span className="text-xs text-muted-foreground pr-2">px</span>
                     </div>
                   </div>
-                )}
-                {/* Opacity */}
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs text-muted-foreground shrink-0">Krycie</span>
+                  <div className="w-px h-5 bg-border shrink-0" />
+                </>
+              )}
+              {/* All other types: opacity + layer + delete inline in Row 1 */}
+              {firstSelected.type !== "frame" && firstSelected.type !== "text" && (
+                <>
+                  <div className="w-px h-5 bg-border shrink-0" />
                   <input type="range" min={0.1} max={1} step={0.05} value={firstSelected.opacity ?? 1}
                     onChange={(e) => updateSelected({ opacity: parseFloat(e.target.value) })}
-                    className="w-20 accent-primary" />
+                    className="w-20 accent-primary self-center" />
                   <span className="text-xs text-muted-foreground w-7">{Math.round((firstSelected.opacity ?? 1) * 100)}%</span>
-                </div>
-                <div className="w-px h-5 bg-border shrink-0" />
-                {/* Delete */}
-                <button onClick={() => { updateElements(safeElements.filter(e => !selectedIds.includes(e.id))); setSelectedIds([]); }}
-                  className="w-8 h-8 flex items-center justify-center rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors">
-                  <Trash2 size={16} />
-                </button>
-              </div>
+                  <div className="w-px h-5 bg-border shrink-0" />
+                  <button onClick={() => bringToFront(firstSelected.id)} title="Przesuń w górę"
+                    className="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+                    <ArrowUp size={16} />
+                  </button>
+                  <button onClick={() => sendToBack(firstSelected.id)} title="Przesuń w dół"
+                    className="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+                    <ArrowDown size={16} />
+                  </button>
+                  <div className="w-px h-5 bg-border shrink-0" />
+                  <button onClick={() => { updateElements(safeElements.filter(e => !selectedIds.includes(e.id))); setSelectedIds([]); }}
+                    className="w-8 h-8 flex items-center justify-center rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors">
+                    <Trash2 size={16} />
+                  </button>
+                </>
+              )}
+              </div>}
+
             </div>
           )}
 
@@ -3604,7 +3673,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
 
           {/* Pen options — shown above toolbar when pen is active */}
           {tool === "pen" && (
-            <div className="absolute bottom-[72px] left-1/2 -translate-x-1/2 flex items-center gap-3 bg-card border border-border rounded-2xl shadow-lg px-4 py-2.5 z-20">
+            <div className="absolute bottom-[78px] left-1/2 -translate-x-1/2 flex items-center gap-3 bg-card border border-border rounded-2xl shadow-lg px-4 py-2.5 z-20">
               <span className="text-xs text-muted-foreground shrink-0">Kolor</span>
               <div className="flex gap-1">
                 {["#334155","#ef4444","#f97316","#eab308","#22c55e","#3b82f6","#8b5cf6","#ec4899","#ffffff"].map((c) => (
@@ -3613,10 +3682,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                     className={`w-5 h-5 rounded-full border-2 transition-all ${penColor === c ? "border-primary scale-110" : "border-transparent"}`}
                   />
                 ))}
-                <label className="w-7 h-7 rounded-lg border border-border flex items-center justify-center cursor-pointer hover:bg-muted transition-colors shrink-0" title="Własny kolor">
-                  <Pipette size={14} className="text-muted-foreground" />
-                  <input type="color" value={penColor} onChange={(e) => setPenColor(e.target.value)} className="sr-only" />
-                </label>
+                <ColorPicker value={penColor} onChange={setPenColor} />
               </div>
               <div className="w-px h-5 bg-border" />
               <span className="text-xs text-muted-foreground shrink-0">Grubość</span>
@@ -3632,39 +3698,82 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
           )}
 
           {/* Floating toolbar */}
-          {!readOnly && <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-0.5 bg-card border border-border rounded-2xl shadow-lg px-2 py-1.5 z-20">
+          {!readOnly && <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-0.5 bg-card border border-border rounded-2xl shadow-lg px-2.5 py-1.5 z-20">
             {/* Undo / Redo */}
             <button onClick={undo} disabled={historyIndex <= 0} title="Cofnij (Ctrl+Z)"
-              className="w-9 h-9 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30 transition-colors">
-              <Undo2 size={18} />
+              className="w-[38px] h-[38px] rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30 transition-colors">
+              <Undo2 size={19} />
             </button>
             <button onClick={redo} disabled={historyIndex >= history.length - 1} title="Ponów (Ctrl+Y)"
-              className="w-9 h-9 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30 transition-colors">
-              <Redo2 size={18} />
+              className="w-[38px] h-[38px] rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30 transition-colors">
+              <Redo2 size={19} />
             </button>
-            <div className="w-px h-6 bg-border mx-1" />
+            <div className="w-px h-[26px] bg-border mx-1" />
             {(
               [
-                { t: "select", icon: <MousePointer size={18} />, label: "Zaznaczanie (V)" },
-                { t: "hand", icon: <Hand size={18} />, label: "Przesuwanie (H)" },
+                { t: "select", icon: <MousePointer size={19} />, label: "Zaznaczanie (V)" },
+                { t: "hand", icon: <Hand size={19} />, label: "Przesuwanie (H)" },
                 null,
-                { t: "frame", icon: <FrameIcon size={18} />, label: "Frame (F)", hasDropdown: true },
+                { t: "frame", icon: <FrameIcon size={19} />, label: "Frame (F)", hasDropdown: true },
                 null,
-                { t: "rect", icon: <Square size={18} />, label: "Prostokąt (R)" },
-                { t: "ellipse", icon: <Circle size={18} />, label: "Elipsa (O)" },
-                { t: "note", icon: <StickyNote size={18} />, label: "Notka (N)" },
+                { t: "rect" as Tool, icon: selectedShape === "ellipse" ? <Circle size={19} /> : selectedShape === "triangle" ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 19, height: 19 }}><polygon points="12,3 22,21 2,21" /></svg> : selectedShape === "arrow" ? <ArrowRight size={19} /> : selectedShape === "line" ? <Minus size={19} /> : <Square size={19} />, label: "Kształty", hasShapeDropdown: true },
+                { t: "note", icon: <StickyNote size={19} />, label: "Notka (N)" },
                 null,
-                { t: "text", icon: <Type size={18} />, label: "Tekst (T)" },
-                { t: "arrow", icon: <ArrowRight size={18} />, label: "Strzałka (A)" },
-                { t: "line", icon: <Minus size={18} />, label: "Linia (L)" },
+                { t: "text", icon: <Type size={19} />, label: "Tekst (T)" },
                 null,
-                { t: "image", icon: <Image size={18} />, label: "Obraz" },
+                { t: "image", icon: <Image size={19} />, label: "Obraz" },
                 null,
-                { t: "pen", icon: <Pen size={18} />, label: "Pisanie ręczne (P)" },
-              ] as (null | { t: Tool; icon: React.ReactNode; label: string; hasDropdown?: boolean })[]
+                { t: "pen", icon: <Pen size={19} />, label: "Rysuj (P)" },
+              ] as (null | { t: Tool; icon: React.ReactNode; label: string; hasDropdown?: boolean; hasShapeDropdown?: boolean })[]
             ).map((item, idx) =>
               item === null ? (
-                <div key={idx} className="w-px h-6 bg-border mx-1" />
+                <div key={idx} className="w-px h-[26px] bg-border mx-1" />
+              ) : item.hasShapeDropdown ? (
+                /* Shapes button with picker */
+                <div key="shapes" className="relative">
+                  <div className={`flex items-center rounded-xl overflow-hidden transition-colors ${(tool === "rect" || tool === "ellipse" || tool === "triangle" || tool === "arrow" || tool === "line") ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}>
+                    <button
+                      onClick={() => setTool(selectedShape)}
+                      title={`Kształty — aktywny: ${selectedShape === "rect" ? "Prostokąt" : selectedShape === "ellipse" ? "Elipsa" : "Trójkąt"}`}
+                      className="w-[38px] h-[38px] flex items-center justify-center transition-colors"
+                    >
+                      {item.icon}
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setShapePickerOpen(v => !v); }}
+                      className="h-[38px] px-0.5 flex items-center justify-center transition-colors hover:opacity-70"
+                      title="Wybierz kształt"
+                    >
+                      <ChevronDown size={12} className={shapePickerOpen ? "" : "rotate-180"} />
+                    </button>
+                  </div>
+                  {shapePickerOpen && (
+                    <>
+                      <div className="fixed inset-0 z-[40]" onClick={() => setShapePickerOpen(false)} />
+                      <div className="absolute left-1/2 -translate-x-1/2 bottom-[calc(100%+8px)] z-[50] bg-card border border-border rounded-2xl shadow-xl p-3 w-44">
+                        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-1">Kształt</p>
+                        <div className="flex flex-col gap-0.5">
+                          {([
+                            { shape: "rect" as const, icon: <Square size={15} />, label: "Prostokąt (R)" },
+                            { shape: "ellipse" as const, icon: <Circle size={15} />, label: "Elipsa (O)" },
+                            { shape: "triangle" as const, icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 15, height: 15 }}><polygon points="12,3 22,21 2,21" /></svg>, label: "Trójkąt" },
+                            { shape: "arrow" as const, icon: <ArrowRight size={15} />, label: "Strzałka (A)" },
+                            { shape: "line" as const, icon: <Minus size={15} />, label: "Linia (L)" },
+                          ]).map(s => (
+                            <button
+                              key={s.shape}
+                              onClick={() => { setSelectedShape(s.shape); setTool(s.shape); setShapePickerOpen(false); }}
+                              className={`flex items-center gap-2 w-full px-2 py-1.5 rounded-lg text-sm transition-colors ${selectedShape === s.shape ? "bg-primary/10 text-primary font-medium" : "text-foreground hover:bg-muted"}`}
+                            >
+                              {s.icon}
+                              {s.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
               ) : item.hasDropdown ? (
                 /* Frame button with preset picker */
                 <div key={item.t} className="relative">
@@ -3672,13 +3781,13 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                     <button
                       onClick={() => setTool(item.t as Tool)}
                       title={item.label}
-                      className="w-9 h-9 flex items-center justify-center transition-colors"
+                      className="w-[38px] h-[38px] flex items-center justify-center transition-colors"
                     >
                       {item.icon}
                     </button>
                     <button
                       onClick={(e) => { e.stopPropagation(); setFramePickerOpen(v => !v); }}
-                      className="h-9 px-0.5 flex items-center justify-center transition-colors hover:opacity-70"
+                      className="h-[38px] px-0.5 flex items-center justify-center transition-colors hover:opacity-70"
                       title="Wybierz format"
                     >
                       {framePickerOpen ? <ChevronDown size={12} /> : <ChevronDown size={12} className="rotate-180" />}
@@ -3747,19 +3856,28 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                     setTool(item.t as Tool);
                   }}
                   title={item.label}
-                  className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors ${tool === item.t ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
+                  className={`w-[38px] h-[38px] rounded-xl flex items-center justify-center transition-colors ${tool === item.t ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
                 >
                   {item.icon}
                 </button>
               )
             )}
-            <div className="w-px h-6 bg-border mx-1" />
+            <div className="w-px h-[26px] bg-border mx-1" />
             <button
               onClick={() => setTemplateGalleryOpen(v => !v)}
               title="Szablony"
-              className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors ${templateGalleryOpen ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
+              className={`w-[38px] h-[38px] rounded-xl flex items-center justify-center transition-colors ${templateGalleryOpen ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
             >
-              <DashboardAdd size={18} />
+              <DashboardAdd size={19} />
+            </button>
+            <div className="w-px h-[26px] bg-border mx-1" />
+            <button
+              onClick={() => setPinterestOpen(v => !v)}
+              title="Pinterest"
+              className={`w-[38px] h-[38px] rounded-xl flex items-center justify-center transition-colors ${pinterestOpen ? "bg-red-100 dark:bg-red-950/30" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/pinterest-logo.svg" alt="Pinterest" className="w-5 h-5" />
             </button>
             <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImageUpload(f); e.target.value = ""; }} />
           </div>}
@@ -3968,6 +4086,97 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                     </div>
                   )}
                 </>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Pinterest panel */}
+        {pinterestOpen && (
+          <div className="w-80 border-l border-border bg-background flex flex-col shrink-0">
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
+              <div className="flex items-center gap-2">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/pinterest-logo.svg" alt="Pinterest" className="w-5 h-5" />
+                <span className="text-sm font-semibold">Pinterest</span>
+              </div>
+              <button
+                onClick={() => setPinterestOpen(false)}
+                className="w-7 h-7 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              >
+                <X size={15} />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="flex-1 overflow-y-auto">
+              {!pinterestConnected ? (
+                /* Not connected */
+                <div className="flex flex-col items-center text-center px-6 py-10 gap-5">
+                  <div className="w-16 h-16 rounded-2xl overflow-hidden shadow-md">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src="/pinterest-logo.svg" alt="Pinterest" className="w-full h-full" />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <p className="text-sm font-semibold text-foreground">Połącz swoje konto Pinterest</p>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      Po połączeniu zobaczysz swoje tablice i piny — możesz przeciągać je bezpośrednio na moodboard.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      window.open(
+                        "https://www.pinterest.com/oauth/?response_type=code&scope=boards:read,pins:read,user_accounts:read",
+                        "_blank",
+                        "width=600,height=700"
+                      );
+                    }}
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90"
+                    style={{ background: "#E60023" }}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src="/pinterest-logo.svg" alt="" className="w-4 h-4 brightness-0 invert" />
+                    Połącz konto
+                  </button>
+                  <p className="text-[11px] text-muted-foreground">
+                    Integracja wymaga konta Pinterest Business lub konta dewelopera.
+                  </p>
+                  {/* Dev helper — remove when real OAuth is wired */}
+                  <button
+                    onClick={() => setPinterestConnected(true)}
+                    className="text-[11px] text-muted-foreground underline underline-offset-2 hover:text-foreground transition-colors"
+                  >
+                    Podgląd widoku po połączeniu →
+                  </button>
+                </div>
+              ) : (
+                /* Connected — placeholder */
+                <div className="flex flex-col h-full">
+                  <div className="flex items-center justify-between px-4 py-2.5 border-b border-border">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-full bg-red-100 dark:bg-red-950/40 flex items-center justify-center">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src="/pinterest-logo.svg" alt="" className="w-3.5 h-3.5" />
+                      </div>
+                      <span className="text-xs font-medium text-foreground">Połączono</span>
+                    </div>
+                    <button
+                      onClick={() => setPinterestConnected(false)}
+                      className="text-[11px] text-muted-foreground hover:text-red-500 transition-colors"
+                    >
+                      Rozłącz
+                    </button>
+                  </div>
+                  <div className="flex-1 flex flex-col items-center justify-center gap-3 px-6 text-center py-12">
+                    <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center">
+                      <Package size={18} className="text-muted-foreground" />
+                    </div>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      Tu pojawią się Twoje tablice i piny.<br />Funkcja zostanie aktywowana po uruchomieniu integracji API.
+                    </p>
+                  </div>
+                </div>
               )}
             </div>
           </div>

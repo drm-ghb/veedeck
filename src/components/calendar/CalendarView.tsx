@@ -20,6 +20,7 @@ export interface CalendarEvent {
   description: string | null;
   guests: { id: string; name: string | null; email: string | null; userId: string | null }[];
   isGuest?: boolean;
+  source?: "veedeck" | "google";
 }
 
 type View = "month" | "week" | "day";
@@ -175,7 +176,8 @@ function TimeGrid({
                       className={`absolute left-0.5 right-0.5 rounded-md px-1.5 py-0.5 text-left overflow-hidden z-10 border-l-2 ${c.bg} ${c.text} ${c.border} hover:brightness-95 transition-[filter]`}
                       style={{ top: topPx, height: heightPx, minHeight: 20 }}
                     >
-                      <p className="text-[11px] font-semibold leading-tight truncate">
+                      <p className="text-[11px] font-semibold leading-tight truncate flex items-center gap-1">
+                        {ev.source === "google" && <img src="/logos/google-calendar.svg" alt="" className="w-2.5 h-2.5 shrink-0" />}
                         {ev.title}
                       </p>
                       {heightPx >= 32 && (
@@ -229,6 +231,23 @@ export default function CalendarView() {
   const [addDate, setAddDate] = useState<Date | null>(null);
   const [detailEvent, setDetailEvent] = useState<CalendarEvent | null>(null);
   const [editEvent, setEditEvent] = useState<CalendarEvent | null>(null);
+  const [googleConnected, setGoogleConnected] = useState<boolean | null>(null);
+
+  // Check Google connection status + handle OAuth return
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("google") === "connected") {
+      toast.success("Google Calendar połączony");
+      window.history.replaceState({}, "", "/kalendarz");
+      setGoogleConnected(true);
+    } else if (params.get("google") === "error") {
+      toast.error("Nie udało się połączyć Google Calendar");
+      window.history.replaceState({}, "", "/kalendarz");
+    }
+    fetch("/api/auth/google/status").then(async (r) => {
+      if (r.ok) setGoogleConnected((await r.json()).connected);
+    }).catch(() => {});
+  }, []);
 
   // --- Compute date range for fetching ---
   const { rangeFrom, rangeTo } = useCallback(() => {
@@ -380,8 +399,9 @@ export default function CalendarView() {
                   <button
                     key={ev.id}
                     onClick={(e) => { e.stopPropagation(); setDetailEvent(ev); }}
-                    className={`w-full text-left text-[11px] px-1.5 py-0.5 rounded truncate font-medium ${TYPE_COLORS[ev.type].bg} ${TYPE_COLORS[ev.type].text}`}
+                    className={`w-full text-left text-[11px] px-1.5 py-0.5 rounded truncate font-medium flex items-center gap-1 ${TYPE_COLORS[ev.type].bg} ${TYPE_COLORS[ev.type].text}`}
                   >
+                    {ev.source === "google" && <img src="/logos/google-calendar.svg" alt="" className="w-2.5 h-2.5 shrink-0" />}
                     {fmtTime(ev.startAt)} {ev.title}
                   </button>
                 ))}
@@ -491,9 +511,18 @@ export default function CalendarView() {
           </div>
         </div>
 
-        {/* Row 2: title + Push button + Dodaj */}
+        {/* Row 2: title + Google Calendar connect + Dodaj */}
         <div className="flex items-center gap-2 mt-2">
           <h2 className="text-sm font-semibold capitalize truncate flex-1">{navTitle()}</h2>
+          {googleConnected === false && (
+            <a
+              href="/api/auth/google"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-card text-sm font-medium text-foreground hover:bg-muted transition-colors flex-shrink-0"
+            >
+              <img src="/logos/google-calendar.svg" alt="Google Calendar" className="w-4 h-4" />
+              Połącz z Kalendarzem
+            </a>
+          )}
           <button onClick={() => { if (!expired) { setAddDate(null); setAddOpen(true); } }} disabled={expired} title={expired ? "Dostępne w płatnym planie" : undefined} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed">
             <Plus size={15} />
             {t.calendar.addBtn}

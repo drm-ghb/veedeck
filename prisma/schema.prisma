@@ -67,6 +67,10 @@ model User {
   activationToken            String?                 @unique
   activationTokenExpiry      DateTime?
   stripeCustomerId           String?                 @unique
+  googleAccessToken          String?
+  googleRefreshToken         String?
+  googleTokenExpiry          DateTime?
+  googleCalendarId           String?
   accounts                   Account[]
   calendarEvents             CalendarEvent[]
   calendarGuestEntries       CalendarGuest[]
@@ -728,6 +732,7 @@ model Product {
 model Discussion {
   id                     String                  @id @default(cuid())
   title                  String
+  avatarUrl              String?
   type                   String                  @default("internal")
   ownerId                String
   projectId              String?                 @unique

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { pusherServer } from "@/lib/pusher";
+import { getValidGoogleToken, fetchGoogleCalendarEvents, createGoogleCalendarEvent } from "@/lib/google-calendar";
 
 async function notifyGuestUsers(
   guestList: { userId?: string | null }[],
@@ -45,7 +46,7 @@ export async function GET(req: NextRequest) {
     },
   };
 
-  const [ownEvents, guestEvents] = await Promise.all([
+  const [ownEvents, guestEvents, user] = await Promise.all([
     prisma.calendarEvent.findMany({
       where: { userId, ...dateWhere },
       include: { guests: true },
@@ -56,13 +57,43 @@ export async function GET(req: NextRequest) {
       include: { guests: true },
       orderBy: { startAt: "asc" },
     }),
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: { googleCalendarId: true, googleRefreshToken: true },
+    }),
   ]);
 
   const ownIds = new Set(ownEvents.map((e) => e.id));
-  const result = [
-    ...ownEvents.map((e) => ({ ...e, isGuest: false })),
-    ...guestEvents.filter((e) => !ownIds.has(e.id)).map((e) => ({ ...e, isGuest: true })),
-  ].sort((a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime());
+  const veedeckEvents = [
+    ...ownEvents.map((e) => ({ ...e, isGuest: false, source: "veedeck" })),
+    ...guestEvents.filter((e) => !ownIds.has(e.id)).map((e) => ({ ...e, isGuest: true, source: "veedeck" })),
+  ];
+
+  // Fetch Google Calendar events if connected
+  let googleEvents: any[] = [];
+  if (user?.googleCalendarId && user.googleRefreshToken && from && to) {
+    const token = await getValidGoogleToken(userId);
+    if (token) {
+      const raw = await fetchGoogleCalendarEvents(token, user.googleCalendarId, from, to);
+      // Normalize to veedeck CalendarEvent shape
+      googleEvents = raw.map((g) => ({
+        id: `google_${g.id}`,
+        title: g.summary ?? "(bez tytułu)",
+        type: "WYDARZENIE" as const,
+        startAt: g.start.dateTime ?? g.start.date ?? from,
+        endAt: g.end?.dateTime ?? g.end?.date ?? null,
+        location: g.location ?? null,
+        description: g.description ?? null,
+        guests: [],
+        isGuest: false,
+        source: "google",
+      }));
+    }
+  }
+
+  const result = [...veedeckEvents, ...googleEvents].sort(
+    (a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime()
+  );
 
   return NextResponse.json(result);
 }
@@ -81,7 +112,7 @@ export async function POST(req: NextRequest) {
 
   const organizer = await prisma.user.findUnique({
     where: { id: userId },
-    select: { name: true, email: true },
+    select: { name: true, email: true, googleCalendarId: true, googleRefreshToken: true },
   });
   const organizerName = organizer?.name || organizer?.email || "Projektant";
 
@@ -109,5 +140,19 @@ export async function POST(req: NextRequest) {
 
   await notifyGuestUsers(guestData, title.trim(), organizerName);
 
-  return NextResponse.json({ ...event, isGuest: false }, { status: 201 });
+  // Push to Google Calendar if connected
+  if (organizer?.googleCalendarId && organizer.googleRefreshToken) {
+    const token = await getValidGoogleToken(userId);
+    if (token) {
+      await createGoogleCalendarEvent(token, organizer.googleCalendarId, {
+        title: title.trim(),
+        startAt,
+        endAt: endAt ?? null,
+        description: description?.trim() || null,
+        location: location?.trim() || null,
+      });
+    }
+  }
+
+  return NextResponse.json({ ...event, isGuest: false, source: "veedeck" }, { status: 201 });
 }

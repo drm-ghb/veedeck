@@ -16,14 +16,15 @@ export async function PATCH(
   if (!discussion) return NextResponse.json({ error: "Nie znaleziono" }, { status: 404 });
   if (discussion.ownerId !== userId) return NextResponse.json({ error: "Brak dostępu" }, { status: 403 });
 
-  const { title, projectId, contractorAssignmentId, archived } = await req.json();
-  if (!title && projectId === undefined && contractorAssignmentId === undefined && archived === undefined) {
+  const { title, projectId, contractorAssignmentId, archived, avatarUrl } = await req.json();
+  if (!title && projectId === undefined && contractorAssignmentId === undefined && archived === undefined && avatarUrl === undefined) {
     return NextResponse.json({ error: "Brak danych do aktualizacji" }, { status: 400 });
   }
 
   const updateData: Record<string, unknown> = {};
   if (title) updateData.title = title;
   if (typeof archived === "boolean") updateData.archived = archived;
+  if (avatarUrl !== undefined) updateData.avatarUrl = avatarUrl;
 
   if (contractorAssignmentId !== undefined) {
     if (contractorAssignmentId === null) {

@@ -37,7 +37,10 @@ const nunito = Nunito({
 });
 
 export const metadata: Metadata = {
-  title: "veedeck — platforma dla projektantów wnętrz",
+  title: {
+    template: "%s | veedeck",
+    default: "veedeck — platforma dla projektantów wnętrz",
+  },
   description: "Centralizuj feedback do renderów w jednym miejscu",
 };
 

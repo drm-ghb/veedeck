@@ -1,3 +1,5 @@
+export const metadata = { title: "Generator 3D" };
+
 import { redirect } from "next/navigation";
 
 export default function Generator3DPage() {

@@ -1836,7 +1836,7 @@ export const en: TranslationKeys = {
     deleteDiscussion: "Delete discussion",
     threadOptions: "Thread options",
     searchInDiscussion: "Search in discussion",
-    editTitle: "Edit title",
+    editTitle: "Edit",
     startTypingDesignerDesc: "Start typing to begin a discussion",
     ownerLabel: "Owner",
     designerRole: "Designer",
@@ -2383,6 +2383,14 @@ export const en: TranslationKeys = {
     listyStep3: "The product lands on the list with price, image and link — group it into sections and send it to your client.",
     listyStep4: "Click the product menu (3 dots) → \"Add variant\" to group alternative versions under a single product.",
     listyTip: "The client approves the finished list with one click and <b>cannot see</b> your purchase prices or margin.",
+    // Moodboards
+    moodboardyLabel: "Moodboards",
+    moodboardyTitle: "Create mood boards for your clients",
+    moodboardyDesc: "A mood board is a visual canvas where you arrange photos, colours and materials to show the client the style direction of a project — before diving into the details.",
+    moodboardyStep1: "Go to the Moodboards module and create a new board.",
+    moodboardyStep2: "Add photos, colours and textures — drag and arrange them freely on the canvas.",
+    moodboardyStep3: "Share the finished board with your client via a single link — no login required.",
+    moodboardyTip: "A mood board can be linked to a specific project and exported as an image.",
     // Products
     produktyLabel: "Products",
     produktyTitle: "Build your own product library",

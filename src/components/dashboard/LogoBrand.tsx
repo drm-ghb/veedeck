@@ -31,7 +31,7 @@ export function LogoBrand({ initialCollapsed = false }: { initialCollapsed?: boo
             src="/vee_black.png"
             alt="veedeck"
             className="hidden md:block dark:hidden shrink-0"
-            style={{ height: "17px", width: "auto" }}
+            style={{ height: "19px", width: "auto" }}
           />
           {/* Dark mode: white wordmark (md+ dark only) */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -39,7 +39,7 @@ export function LogoBrand({ initialCollapsed = false }: { initialCollapsed?: boo
             src="/veedeckicon.png"
             alt=""
             className="hidden md:dark:block shrink-0"
-            style={{ height: "17px", width: "auto" }}
+            style={{ height: "19px", width: "auto" }}
           />
         </>
       )}

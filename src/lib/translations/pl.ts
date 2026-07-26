@@ -1838,7 +1838,7 @@ export const pl = {
     deleteDiscussion: "Usuń dyskusję",
     threadOptions: "Opcje wątku",
     searchInDiscussion: "Szukaj w dyskusji",
-    editTitle: "Edytuj tytuł",
+    editTitle: "Edytuj",
     startTypingDesignerDesc: "Zacznij pisać aby rozpocząć dyskusję",
     ownerLabel: "Właściciel",
     designerRole: "Projektant",
@@ -2385,6 +2385,14 @@ export const pl = {
     listyStep3: "Produkt trafia na listę z ceną, zdjęciem i linkiem — pogrupuj go w sekcje i wyślij klientowi.",
     listyStep4: "Kliknij menu produktu (3 kropki) → \"Dodaj wariant\", aby grupować alternatywne wersje pod jednym produktem.",
     listyTip: "Klient zatwierdza gotową listę jednym kliknięciem i <b>nie widzi</b> Twoich cen zakupu ani marży.",
+    // Moodboards
+    moodboardyLabel: "Moodboardy",
+    moodboardyTitle: "Twórz tablice inspiracji dla klientów",
+    moodboardyDesc: "Moodboard to wizualna tablica inspiracji, na której układasz zdjęcia, kolory i materiały, by pokazać klientowi kierunek stylistyczny projektu — zanim wejdziesz w szczegóły.",
+    moodboardyStep1: "Przejdź do modułu Moodboardy i utwórz nową tablicę.",
+    moodboardyStep2: "Dodaj zdjęcia, kolory i tekstury — przeciągaj i układaj je dowolnie na kanwie.",
+    moodboardyStep3: "Udostępnij gotową tablicę klientowi jednym kliknięciem, a on zobaczy ją w swoim panelu.",
+    moodboardyTip: "Moodboard możesz przypisać do konkretnego projektu i eksportować jako obraz.",
     // Products
     produktyLabel: "Produkty",
     produktyTitle: "Zbuduj własną bazę produktów",

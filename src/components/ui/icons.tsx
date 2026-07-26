@@ -285,6 +285,7 @@ export const ShowerHead       = icon("shower");
 // ── Contractors / Construction ─────────────────────────────────────────────
 export const Engineering      = icon("engineering");
 export const Ruler            = icon("straighten");
+export const Bug              = icon("bug_report");
 
 // ── Custom brand icons ─────────────────────────────────────────────────────
 export const VeezardIcon = icon("wand_stars");

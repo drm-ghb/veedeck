@@ -1,4 +1,6 @@
-﻿import TeamSettings from "@/components/settings/TeamSettings";
+﻿export const metadata = { title: "Użytkownicy" };
+
+import TeamSettings from "@/components/settings/TeamSettings";
 
 export default function UzytkownicyPage() {
   return (

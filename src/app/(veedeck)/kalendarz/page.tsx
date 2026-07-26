@@ -1,3 +1,5 @@
+export const metadata = { title: "Kalendarz" };
+
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import CalendarView from "@/components/calendar/CalendarView";

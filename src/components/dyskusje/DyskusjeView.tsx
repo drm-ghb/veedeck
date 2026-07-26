@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { ChatBubble, Plus, Trash2, Edit2, Check, X, ExternalLink, ChevronDown, ChevronLeft, Paperclip, FileText, FileSpreadsheet, File as FileIcon, Loader2, FolderOpen, Mic, Square, Search, Archive, ArchiveRestore, CornerDownLeft, MoreVertical, Send, Users, UserPlus, UserMinus, AddReaction } from "@/components/ui/icons";
+import { ChatBubble, Plus, Trash2, Edit2, Check, X, ExternalLink, ChevronDown, ChevronLeft, Paperclip, FileText, FileSpreadsheet, File as FileIcon, Loader2, FolderOpen, Mic, Square, Search, Archive, ArchiveRestore, CornerDownLeft, MoreVertical, Send, Users, UserPlus, UserMinus, AddReaction, Camera } from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -42,6 +42,7 @@ interface DiscussionSummary {
   id: string;
   title: string;
   type: string;
+  avatarUrl?: string | null;
   projectId: string | null;
   project: { id: string; title: string } | null;
   messageCount: number;
@@ -176,6 +177,8 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
   const [headerTitle, setHeaderTitle] = useState("");
   const [headerProjectId, setHeaderProjectId] = useState<string | null>(null);
   const [headerIsContractorChat, setHeaderIsContractorChat] = useState(false);
+  const [headerAvatarUrl, setHeaderAvatarUrl] = useState<string | null>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [savingHeader, setSavingHeader] = useState(false);
   const [showProjectDropdown, setShowProjectDropdown] = useState(false);
   const [showResources, setShowResources] = useState(false);
@@ -233,6 +236,7 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
   const dragCounterRef = useRef(0);
 
   const { startUpload } = useUploadThing("discussionAttachmentUploader");
+  const { startUpload: startAvatarUpload } = useUploadThing("avatarUploader");
 
   const selected = discussions.find((d) => d.id === selectedId) ?? null;
 
@@ -492,6 +496,7 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
   function startHeaderEdit() {
     if (!selected) return;
     setHeaderTitle(selected.title);
+    setHeaderAvatarUrl(selected.avatarUrl ?? null);
     if (selected.type === "contractor" && selected.contractorAssignmentId) {
       // Find the project that owns this contractor assignment
       const project = projects.find((p) => p.contractorAssignmentId === selected.contractorAssignmentId);
@@ -509,6 +514,7 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
     setHeaderEditing(false);
     setShowProjectDropdown(false);
     setHeaderIsContractorChat(false);
+    setHeaderAvatarUrl(null);
   }
 
   async function saveHeaderEdit() {
@@ -518,6 +524,9 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
       const body: Record<string, unknown> = {};
       if (headerTitle.trim() && headerTitle.trim() !== selected.title) {
         body.title = headerTitle.trim();
+      }
+      if (headerAvatarUrl !== (selected.avatarUrl ?? null)) {
+        body.avatarUrl = headerAvatarUrl;
       }
 
       const selectedProject = projects.find((p) => p.id === headerProjectId);
@@ -569,6 +578,7 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                 project: updated.project ?? null,
                 type: updated.type,
                 contractorAssignmentId: updated.contractorAssignmentId ?? null,
+                avatarUrl: updated.avatarUrl ?? null,
               }
             : d
         )
@@ -776,7 +786,7 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
       const d = await res.json();
       setDiscussions((prev) => [
         {
-          id: d.id, title: d.title, type: d.type,
+          id: d.id, title: d.title, type: d.type, avatarUrl: null,
           projectId: d.projectId ?? null, project: null,
           messageCount: 0, lastMessage: null, unreadCount: 0,
           archived: false, updatedAt: d.createdAt ?? new Date().toISOString(),
@@ -1193,37 +1203,35 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                       setHeaderEditing(false);
                       setShowResources(false);
                     }}
-                    className={`group w-full text-left px-4 py-3 border-b border-border/50 transition-colors ${
+                    className={`group w-full text-left px-3 py-2.5 border-b border-border/50 transition-colors ${
                       selectedId === d.id ? "bg-primary/10 border-l-2 border-l-primary" : "hover:bg-muted/60"
                     }`}
                   >
-                    <div className="flex items-start justify-between gap-2 mb-0.5">
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        {(d.unreadCount ?? 0) > 0 && (
-                          <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center leading-none flex-shrink-0">
-                            {(d.unreadCount ?? 0) > 99 ? "99+" : d.unreadCount}
+                    <div className="flex items-center gap-2.5">
+                      <DiscussionAvatar title={d.title} avatarUrl={d.avatarUrl} type={d.type} />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-1 mb-0.5">
+                          <span className={`text-sm font-medium truncate ${selectedId === d.id ? "text-primary" : ""}`}>{d.title}</span>
+                          <span className="text-[11px] text-muted-foreground shrink-0 mt-0.5">
+                            {formatTime(d.lastMessage?.createdAt ?? d.updatedAt)}
                           </span>
-                        )}
-                        {d.type === "support" && (
-                          <span className="w-5 h-5 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
-                            <img src="/veedeck_ikona_vsg.svg" alt="" className="w-3 h-3" />
-                          </span>
-                        )}
-                        <span className={`text-sm font-medium truncate ${selectedId === d.id ? "text-primary" : ""}`}>{d.title}</span>
-                      </div>
-                      <div className="flex items-center gap-1 shrink-0">
-                        <span className="text-xs text-muted-foreground mt-0.5">
-                          {formatTime(d.lastMessage?.createdAt ?? d.updatedAt)}
-                        </span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          {(d.unreadCount ?? 0) > 0 && (
+                            <span className="min-w-[16px] h-4 px-1 rounded-full bg-primary text-primary-foreground text-[9px] font-bold flex items-center justify-center leading-none flex-shrink-0">
+                              {(d.unreadCount ?? 0) > 99 ? "99+" : d.unreadCount}
+                            </span>
+                          )}
+                          {d.lastMessage ? (
+                            <p className="text-xs text-muted-foreground truncate">
+                              {d.lastMessage.content || t.dyskusje.attachmentLabel}
+                            </p>
+                          ) : d.project ? (
+                            <p className="text-xs text-muted-foreground truncate">{d.project.title}</p>
+                          ) : null}
+                        </div>
                       </div>
                     </div>
-                    {d.lastMessage ? (
-                      <p className="text-xs text-muted-foreground truncate pl-3.5">
-                        {d.lastMessage.content || t.dyskusje.attachmentLabel}
-                      </p>
-                    ) : d.project ? (
-                      <p className="text-xs text-muted-foreground truncate pl-3.5">{d.project.title}</p>
-                    ) : null}
                   </button>
               ))
             )}
@@ -1251,65 +1259,235 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
               </div>
             )}
             {/* Header */}
-            <div className="px-5 py-3 border-b border-border">
-              {headerEditing ? (
-                <div className="flex flex-col gap-2">
-                  <div className="flex items-center gap-2">
-                    <input
-                      autoFocus
-                      value={headerTitle}
-                      onChange={(e) => setHeaderTitle(e.target.value)}
-                      onKeyDown={(e) => { if (e.key === "Enter") saveHeaderEdit(); if (e.key === "Escape") cancelHeaderEdit(); }}
-                      className="flex-1 text-sm font-semibold px-2 py-1 rounded border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
-                    />
-                    <button
-                      onClick={saveHeaderEdit}
-                      disabled={savingHeader}
-                      className="p-1.5 rounded-lg text-primary hover:bg-primary/10 transition-colors disabled:opacity-40"
-                      title={t.common.save}
+            <div className="px-4 py-3 border-b border-border">
+              <div className="flex items-center gap-2.5">
+                <button
+                  onClick={() => setSelectedId(null)}
+                  className="md:hidden p-1.5 -ml-1 rounded-lg text-muted-foreground hover:bg-muted transition-colors flex-shrink-0"
+                  aria-label={t.dyskusje.backToList}
+                >
+                  <ChevronLeft size={20} />
+                </button>
+                <DiscussionAvatar title={selected.title} avatarUrl={selected.avatarUrl} type={selected.type} small />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5">
+                    <h2 className="font-semibold text-sm truncate">{selected.title}</h2>
+                    {selected.type === "contractor" && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-orange-100 text-orange-700 font-semibold shrink-0">{t.dyskusje.typeContractor}</span>
+                    )}
+                    {selected.type === "project" && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700 font-semibold shrink-0">{t.dyskusje.typeProject}</span>
+                    )}
+                    {selected.type === "internal" && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground font-semibold shrink-0">{t.dyskusje.typeInternal}</span>
+                    )}
+                    {selected.type === "support" && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 font-semibold shrink-0">{t.dyskusje.typeSupport}</span>
+                    )}
+                  </div>
+                  {selected.project ? (
+                    <a
+                      href={`/projekty/${selected.project.id}`}
+                      className="text-xs text-primary hover:underline flex items-center gap-1"
                     >
-                      <Check size={14} />
+                      {selected.project.title}
+                      <ExternalLink size={10} />
+                    </a>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">{t.dyskusje.noProjectAssignment}</span>
+                  )}
+                </div>
+                <div className="flex gap-1 items-center">
+                  {/* Search */}
+                  <button
+                    onClick={() => { setChatSearchOpen((v) => !v); setChatSearch(""); }}
+                    title={t.dyskusje.searchTitle}
+                    className={`p-1.5 rounded-lg transition-colors ${chatSearchOpen ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
+                  >
+                    <Search size={18} />
+                  </button>
+                  {/* Files */}
+                  {(() => {
+                    const fileCount = messages.filter((m) => m.attachmentType === "document" || m.attachmentType === "pdf" || m.attachmentType === "image").length;
+                    return (
+                      <button
+                        onClick={() => { setShowResources((v) => !v); setResourceTab("all"); setShowMembers(false); }}
+                        className={`relative p-1.5 rounded-lg transition-colors ${showResources ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
+                        title={t.dyskusje.discussionFiles}
+                      >
+                        <FolderOpen size={18} />
+                        {fileCount > 0 && (
+                          <span className="absolute -top-0.5 -right-0.5 min-w-[14px] h-3.5 px-0.5 rounded-full bg-primary text-primary-foreground text-[9px] font-bold flex items-center justify-center leading-none">
+                            {fileCount}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })()}
+                  {/* Members */}
+                  {!isTeamMember && (
+                    <button
+                      onClick={() => {
+                        const opening = !showMembers;
+                        setShowMembers(opening);
+                        if (opening) { loadMembers(selected.id); setShowResources(false); }
+                      }}
+                      className={`relative p-1.5 rounded-lg transition-colors ${showMembers ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
+                      title={t.dyskusje.participantsTitle}
+                    >
+                      <Users size={18} />
+                      {((selected.participants?.length ?? 0) + 1) > 1 && (
+                        <span className="absolute -top-0.5 -right-0.5 min-w-[14px] h-3.5 px-0.5 rounded-full bg-muted-foreground/30 text-foreground text-[9px] font-bold flex items-center justify-center leading-none">
+                          {(selected.participants?.length ?? 0) + 1}
+                        </span>
+                      )}
                     </button>
+                  )}
+                  {/* 3-dot menu: Edit / Archive / Delete */}
+                  <div className="relative" ref={mobileActionsRef}>
                     <button
-                      onClick={cancelHeaderEdit}
-                      className="p-1.5 rounded-lg text-muted-foreground hover:bg-muted transition-colors"
-                      title={t.common.cancel}
+                      onClick={() => setMobileActionsOpen((v) => !v)}
+                      className={`p-1.5 rounded-lg transition-colors ${mobileActionsOpen ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
+                      aria-label={t.dyskusje.threadOptions}
                     >
-                      <X size={14} />
+                      <MoreVertical size={20} />
+                    </button>
+                    {mobileActionsOpen && (
+                      <div className="absolute right-0 top-full mt-1 w-52 bg-card border border-border rounded-xl shadow-lg z-50 py-1 overflow-hidden">
+                        <button
+                          onClick={() => { setChatSearchOpen((v) => !v); setChatSearch(""); setMobileActionsOpen(false); }}
+                          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors md:hidden"
+                        >
+                          <Search size={15} className="shrink-0 text-muted-foreground" />
+                          {t.dyskusje.searchInDiscussion}
+                        </button>
+                        {selected.type !== "support" && (
+                          <>
+                            <button
+                              onClick={() => { startHeaderEdit(); setMobileActionsOpen(false); }}
+                              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
+                            >
+                              <Edit2 size={15} className="shrink-0 text-muted-foreground" />
+                              {t.dyskusje.editTitle}
+                            </button>
+                            <button
+                              onClick={() => { selected.archived ? toggleArchive(selected.id, true) : setShowArchiveConfirm(true); setMobileActionsOpen(false); }}
+                              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
+                            >
+                              {selected.archived ? <ArchiveRestore size={15} className="shrink-0 text-muted-foreground" /> : <Archive size={15} className="shrink-0 text-muted-foreground" />}
+                              {selected.archived ? t.dyskusje.restoreDiscussion : t.dyskusje.archiveAction}
+                            </button>
+                          </>
+                        )}
+                        <button
+                          onClick={() => { deleteDiscussion(selected.id); setMobileActionsOpen(false); }}
+                          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
+                        >
+                          <Trash2 size={15} className="shrink-0" />
+                          {t.dyskusje.deleteDiscussion}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Edit chat modal */}
+            {headerEditing && selected && (
+              <div
+                className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+                onClick={cancelHeaderEdit}
+              >
+                <div
+                  className="bg-card border border-border rounded-2xl shadow-2xl w-[420px] max-w-full"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+                    <h3 className="font-semibold text-sm">Edytuj czat</h3>
+                    <button onClick={cancelHeaderEdit} className="text-muted-foreground hover:text-foreground transition-colors">
+                      <X size={16} />
                     </button>
                   </div>
-                  {/* Project selector */}
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <div className="relative" ref={dropdownRef}>
-                      <button
-                        type="button"
-                        onClick={() => setShowProjectDropdown((v) => !v)}
-                        className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground border border-border rounded-md px-2 py-1 bg-background transition-colors"
-                      >
-                        <span className="truncate max-w-[200px]">{selectedProjectLabel}</span>
-                        <ChevronDown size={12} className="flex-shrink-0" />
-                      </button>
-                      {showProjectDropdown && (
-                        <div className="absolute top-full left-0 mt-1 w-64 bg-popover border border-border rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
-                          <button
-                            type="button"
-                            onClick={() => { setHeaderProjectId(null); setHeaderIsContractorChat(false); setShowProjectDropdown(false); }}
-                            className={`w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors ${headerProjectId === null ? "font-medium text-primary" : "text-muted-foreground"}`}
-                          >
-                            {t.dyskusje.noProject}
-                          </button>
-                          {projects.map((p) => (
-                            <button
-                              key={p.id}
-                              type="button"
-                              onClick={() => { setHeaderProjectId(p.id); setHeaderIsContractorChat(false); setShowProjectDropdown(false); }}
-                              className={`w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors truncate ${headerProjectId === p.id ? "font-medium text-primary" : "text-foreground"}`}
-                            >
-                              {p.title}
-                            </button>
-                          ))}
+                  <div className="px-5 py-4 space-y-4">
+                    {/* Avatar */}
+                    {selected.type !== "support" && (
+                      <div className="flex items-center gap-3">
+                        <div className="relative shrink-0 group/av">
+                          <DiscussionAvatar title={headerTitle || selected.title} avatarUrl={headerAvatarUrl} type={selected.type} />
+                          <label className="absolute inset-0 flex items-center justify-center rounded-full opacity-0 group-hover/av:opacity-100 cursor-pointer bg-black/50 transition-opacity">
+                            {uploadingAvatar
+                              ? <Loader2 size={13} className="text-white animate-spin" />
+                              : <Camera size={13} className="text-white" />
+                            }
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              disabled={uploadingAvatar}
+                              onChange={async (e) => {
+                                const file = e.target.files?.[0];
+                                if (!file) return;
+                                setUploadingAvatar(true);
+                                try {
+                                  const results = await startAvatarUpload([file]);
+                                  if (results?.[0]) setHeaderAvatarUrl(results[0].url);
+                                } finally {
+                                  setUploadingAvatar(false);
+                                  e.target.value = "";
+                                }
+                              }}
+                            />
+                          </label>
                         </div>
-                      )}
+                        <p className="text-xs text-muted-foreground">Kliknij awatar, aby zmienić zdjęcie</p>
+                      </div>
+                    )}
+                    {/* Title */}
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-muted-foreground">Nazwa czatu</label>
+                      <input
+                        autoFocus
+                        value={headerTitle}
+                        onChange={(e) => setHeaderTitle(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === "Enter") saveHeaderEdit(); if (e.key === "Escape") cancelHeaderEdit(); }}
+                        className="w-full text-sm px-3 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      />
+                    </div>
+                    {/* Project selector */}
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-muted-foreground">Projekt</label>
+                      <div className="relative" ref={dropdownRef}>
+                        <button
+                          type="button"
+                          onClick={() => setShowProjectDropdown((v) => !v)}
+                          className="w-full flex items-center justify-between gap-2 text-sm text-foreground border border-border rounded-lg px-3 py-2 bg-background hover:bg-muted/40 transition-colors"
+                        >
+                          <span className="truncate">{selectedProjectLabel}</span>
+                          <ChevronDown size={13} className="flex-shrink-0 text-muted-foreground" />
+                        </button>
+                        {showProjectDropdown && (
+                          <div className="absolute top-full left-0 mt-1 w-full bg-popover border border-border rounded-lg shadow-lg z-50 max-h-52 overflow-y-auto">
+                            <button
+                              type="button"
+                              onClick={() => { setHeaderProjectId(null); setHeaderIsContractorChat(false); setShowProjectDropdown(false); }}
+                              className={`w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors ${headerProjectId === null ? "font-medium text-primary" : "text-muted-foreground"}`}
+                            >
+                              {t.dyskusje.noProject}
+                            </button>
+                            {projects.map((p) => (
+                              <button
+                                key={p.id}
+                                type="button"
+                                onClick={() => { setHeaderProjectId(p.id); setHeaderIsContractorChat(false); setShowProjectDropdown(false); }}
+                                className={`w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors truncate ${headerProjectId === p.id ? "font-medium text-primary" : "text-foreground"}`}
+                              >
+                                {p.title}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                     {headerProjectId && projects.find((p) => p.id === headerProjectId)?.contractorAssignmentId && (
                       <label className="flex items-center gap-1.5 text-xs cursor-pointer select-none text-muted-foreground hover:text-foreground">
@@ -1323,186 +1501,24 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                       </label>
                     )}
                   </div>
-                </div>
-              ) : (
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => setSelectedId(null)}
-                    className="md:hidden p-1.5 -ml-1 rounded-lg text-muted-foreground hover:bg-muted transition-colors flex-shrink-0"
-                    aria-label={t.dyskusje.backToList}
-                  >
-                    <ChevronLeft size={20} />
-                  </button>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <h2 className="font-semibold text-sm">{selected.title}</h2>
-                      {selected.type === "contractor" && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-orange-100 text-orange-700 font-semibold shrink-0">{t.dyskusje.typeContractor}</span>
-                      )}
-                      {selected.type === "project" && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700 font-semibold shrink-0">{t.dyskusje.typeProject}</span>
-                      )}
-                      {selected.type === "internal" && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground font-semibold shrink-0">{t.dyskusje.typeInternal}</span>
-                      )}
-                      {selected.type === "support" && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 font-semibold shrink-0">{t.dyskusje.typeSupport}</span>
-                      )}
-                    </div>
-                    {selected.project ? (
-                      <a
-                        href={`/projekty/${selected.project.id}`}
-                        className="text-xs text-primary hover:underline flex items-center gap-1"
-                      >
-                        {selected.project.title}
-                        <ExternalLink size={10} />
-                      </a>
-                    ) : (
-                      <span className="text-xs text-muted-foreground">{t.dyskusje.noProjectAssignment}</span>
-                    )}
-                  </div>
-                  <div className="ml-auto flex gap-1 items-center">
-                    {/* Desktop tools */}
-                    <div className="hidden lg:flex gap-1 items-center">
-                      <button
-                        onClick={() => { setChatSearchOpen((v) => !v); setChatSearch(""); }}
-                        title={t.dyskusje.searchTitle}
-                        className={`p-1.5 rounded-lg transition-colors ${chatSearchOpen ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
-                      >
-                        <Search size={14} />
-                      </button>
-                      {(() => {
-                        const fileCount = messages.filter((m) => m.attachmentType === "document" || m.attachmentType === "pdf" || m.attachmentType === "image").length;
-                        return (
-                          <button
-                            onClick={() => { setShowResources((v) => !v); setResourceTab("all"); setShowMembers(false); }}
-                            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs transition-colors ${showResources ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
-                            title={t.dyskusje.discussionFiles}
-                          >
-                            <FolderOpen size={13} />
-                            {t.dyskusje.filesLabel}{fileCount > 0 && <span className="font-semibold">{fileCount}</span>}
-                          </button>
-                        );
-                      })()}
-                      {!isTeamMember && (
-                        <button
-                          onClick={() => {
-                            const opening = !showMembers;
-                            setShowMembers(opening);
-                            if (opening) { loadMembers(selected.id); setShowResources(false); }
-                          }}
-                          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs transition-colors ${showMembers ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
-                          title={t.dyskusje.participantsTitle}
-                        >
-                          <Users size={13} />
-                          {t.dyskusje.participants}
-                          {((selected.participants?.length ?? 0) + 1) > 1 && (
-                            <span className="font-semibold">{(selected.participants?.length ?? 0) + 1}</span>
-                          )}
-                        </button>
-                      )}
-                      {selected.type !== "support" && (
-                        <>
-                          <button
-                            onClick={startHeaderEdit}
-                            className="p-1.5 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-                            title={t.common.edit}
-                          >
-                            <Edit2 size={14} />
-                          </button>
-                          <button
-                            onClick={() => selected.archived ? toggleArchive(selected.id, true) : setShowArchiveConfirm(true)}
-                            className="p-1.5 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-                            title={selected.archived ? t.dyskusje.restoreDiscussion : t.dyskusje.archiveDiscussion}
-                          >
-                            {selected.archived ? <ArchiveRestore size={14} /> : <Archive size={14} />}
-                          </button>
-                        </>
-                      )}
-                      <button
-                        onClick={() => deleteDiscussion(selected.id)}
-                        className="p-1.5 rounded-lg text-muted-foreground hover:bg-muted hover:text-destructive transition-colors"
-                        title={t.dyskusje.deleteDiscussion}
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-
-                    {/* Mobile: 3-dot menu */}
-                    <div className="lg:hidden relative" ref={mobileActionsRef}>
-                      <button
-                        onClick={() => setMobileActionsOpen((v) => !v)}
-                        className={`p-1.5 rounded-lg transition-colors ${mobileActionsOpen ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
-                        aria-label={t.dyskusje.threadOptions}
-                      >
-                        <MoreVertical size={18} />
-                      </button>
-                      {mobileActionsOpen && (
-                        <div className="absolute right-0 top-full mt-1 w-52 bg-card border border-border rounded-xl shadow-lg z-50 py-1 overflow-hidden">
-                          <button
-                            onClick={() => { setChatSearchOpen((v) => !v); setChatSearch(""); setMobileActionsOpen(false); }}
-                            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
-                          >
-                            <Search size={15} className="shrink-0 text-muted-foreground" />
-                            {t.dyskusje.searchInDiscussion}
-                          </button>
-                          <button
-                            onClick={() => { setShowResources((v) => !v); setResourceTab("all"); setShowMembers(false); setMobileActionsOpen(false); }}
-                            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
-                          >
-                            <FolderOpen size={15} className="shrink-0 text-muted-foreground" />
-                            {t.dyskusje.discussionFiles}
-                            {(() => {
-                              const fileCount = messages.filter((m) => m.attachmentType === "document" || m.attachmentType === "pdf" || m.attachmentType === "image").length;
-                              return fileCount > 0 ? <span className="ml-auto text-xs text-muted-foreground">{fileCount}</span> : null;
-                            })()}
-                          </button>
-                          {!isTeamMember && (
-                            <button
-                              onClick={() => {
-                                const opening = !showMembers;
-                                setShowMembers(opening);
-                                if (opening) { loadMembers(selected.id); setShowResources(false); }
-                                setMobileActionsOpen(false);
-                              }}
-                              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
-                            >
-                              <Users size={15} className="shrink-0 text-muted-foreground" />
-                              {t.dyskusje.participants}
-                              {((selected.participants?.length ?? 0) + 1) > 1 && (
-                                <span className="ml-auto text-xs text-muted-foreground">{(selected.participants?.length ?? 0) + 1}</span>
-                              )}
-                            </button>
-                          )}
-                          <div className="mx-3 my-1 border-t border-border" />
-                          <button
-                            onClick={() => { startHeaderEdit(); setMobileActionsOpen(false); }}
-                            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
-                          >
-                            <Edit2 size={15} className="shrink-0 text-muted-foreground" />
-                            {t.dyskusje.editTitle}
-                          </button>
-                          <button
-                            onClick={() => { selected.archived ? toggleArchive(selected.id, true) : setShowArchiveConfirm(true); setMobileActionsOpen(false); }}
-                            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
-                          >
-                            {selected.archived ? <ArchiveRestore size={15} className="shrink-0 text-muted-foreground" /> : <Archive size={15} className="shrink-0 text-muted-foreground" />}
-                            {selected.archived ? t.dyskusje.restoreDiscussion : t.dyskusje.archiveAction}
-                          </button>
-                          <button
-                            onClick={() => { deleteDiscussion(selected.id); setMobileActionsOpen(false); }}
-                            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
-                          >
-                            <Trash2 size={15} className="shrink-0" />
-                            {t.dyskusje.deleteDiscussion}
-                          </button>
-                        </div>
-                      )}
-                    </div>
+                  <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-border">
+                    <button
+                      onClick={cancelHeaderEdit}
+                      className="px-4 py-2 text-sm rounded-lg border border-border hover:bg-muted transition-colors"
+                    >
+                      {t.common.cancel}
+                    </button>
+                    <button
+                      onClick={saveHeaderEdit}
+                      disabled={savingHeader || uploadingAvatar}
+                      className="px-4 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity disabled:opacity-40"
+                    >
+                      {savingHeader ? <Loader2 size={14} className="animate-spin" /> : t.common.save}
+                    </button>
                   </div>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
 
             {/* Chat search bar */}
             {chatSearchOpen && !showResources && (
@@ -1973,6 +1989,30 @@ function PillDropdown({ value, onChange, options }: {
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+function DiscussionAvatar({ title, avatarUrl, type, small }: { title: string; avatarUrl?: string | null; type: string; small?: boolean }) {
+  const sz = small ? "w-8 h-8" : "w-10 h-10";
+  const iconSz = small ? "w-4 h-4" : "w-5 h-5";
+  const textSz = small ? "text-xs" : "text-sm";
+  if (type === "support") {
+    return (
+      <div className={`${sz} rounded-full bg-primary flex items-center justify-center shrink-0`}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/veedeck_ikona_vsg.svg" alt="" className={iconSz} />
+      </div>
+    );
+  }
+  if (avatarUrl) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={avatarUrl} alt={title} className={`${sz} rounded-full object-cover shrink-0`} />;
+  }
+  const initials = title.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2) || "?";
+  return (
+    <div className={`${sz} rounded-full bg-primary/10 flex items-center justify-center shrink-0`}>
+      <span className={`${textSz} font-bold text-primary`}>{initials}</span>
     </div>
   );
 }

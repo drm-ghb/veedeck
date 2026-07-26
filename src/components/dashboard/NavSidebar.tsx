@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import Pusher from "pusher-js";
-import { LayoutDashboard, Users, LocalMall, Package, PanelLeftClose, PanelLeftOpen, Settings, Sun, Moon, HelpCircle, PushPin, ShieldCheck, CalendarDays, NotebookText, ChatBubble, CheckSquare, VeezardIcon, BookOpen, ClipboardList, Engineering, Interests } from "@/components/ui/icons";
+import { LayoutDashboard, Users, LocalMall, Package, PanelLeftClose, PanelLeftOpen, Settings, Sun, Moon, HelpCircle, PushPin, ShieldCheck, CalendarDays, NotebookText, ChatBubble, CheckSquare, VeezardIcon, BookOpen, ClipboardList, Engineering, Interests, Bug } from "@/components/ui/icons";
 import { useTheme } from "@/lib/theme";
 import { useT } from "@/lib/i18n";
 import HelpWidget from "@/components/dashboard/HelpWidget";
@@ -41,6 +41,19 @@ export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userI
   const [collapsed, setCollapsed] = useState(initialCollapsed);
   const [mounted, setMounted] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [helpTab, setHelpTab] = useState<"ai" | "contact">("ai");
+  const [helpCategory, setHelpCategory] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    function handleOpenHelp(e: Event) {
+      const detail = (e as CustomEvent).detail ?? {};
+      setHelpTab(detail.tab ?? "ai");
+      setHelpCategory(detail.category ?? undefined);
+      setHelpOpen(true);
+    }
+    window.addEventListener("open-help-widget", handleOpenHelp);
+    return () => window.removeEventListener("open-help-widget", handleOpenHelp);
+  }, []);
 
   const [discussionUnread, setDiscussionUnread] = useState(0);
   const [contractorUnread, setContractorUnread] = useState(0);
@@ -343,9 +356,21 @@ export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userI
           </div>
         )}
 
+        {/* Zgłoś błąd */}
+        <button
+          onClick={() => { setHelpTab("contact"); setHelpCategory("🐞 Zgłoś błąd"); setHelpOpen(true); }}
+          title={isCollapsed ? "Zgłoś błąd" : undefined}
+          className="flex items-center gap-3 px-2.5 py-2.5 rounded-lg text-sm font-medium transition-colors w-full opacity-60 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5"
+        >
+          <span className="flex-shrink-0 w-5 flex items-center justify-center">
+            <Bug size={18} />
+          </span>
+          {!isCollapsed && "Zgłoś błąd"}
+        </button>
+
         {/* Help */}
         <button
-          onClick={() => setHelpOpen(true)}
+          onClick={() => { setHelpTab("ai"); setHelpCategory(undefined); setHelpOpen(true); }}
           title={isCollapsed ? t.nav.help : undefined}
           className="flex items-center gap-3 px-2.5 py-2.5 rounded-lg text-sm font-medium transition-colors w-full opacity-60 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5"
         >
@@ -395,7 +420,7 @@ export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userI
       </div>
     </aside>
 
-    <HelpWidget open={helpOpen} onClose={() => setHelpOpen(false)} />
+    <HelpWidget open={helpOpen} onClose={() => setHelpOpen(false)} initialTab={helpTab} initialCategory={helpCategory} />
     </>
   );
 }

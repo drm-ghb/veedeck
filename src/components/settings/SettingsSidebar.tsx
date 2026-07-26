@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   Bell, ChevronLeft, Users, Puzzle, BookOpen,
   UserCircle, Image, Palette, Payments, UserMinus,
-  LocalMall, Eye, ClipboardList,
+  LocalMall, Eye, ClipboardList, Link2,
 } from "@/components/ui/icons";
 import { useT } from "@/lib/i18n";
 
@@ -21,6 +21,7 @@ export default function SettingsSidebar() {
     { href: "/ustawienia/uzytkownicy",   label: t.settings.usersNav,        icon: <Users size={16} /> },
     { href: "/ustawienia/powiadomienia", label: "Powiadomienia",             icon: <Bell size={16} /> },
     { href: "/ustawienia/wtyczka",       label: t.settings.pluginNav,       icon: <Puzzle size={16} /> },
+    { href: "/ustawienia/integracje",    label: "Integracje",               icon: <Link2 size={16} /> },
     { href: "/ustawienia/instrukcja",    label: t.settings.guideNav,        icon: <BookOpen size={16} /> },
     { href: "/ustawienia/plan-i-rozliczenia",   label: "Plan i rozliczenia",       icon: <Payments size={16} /> },
     { href: "/ustawienia/konto",         label: "Konto",                    icon: <UserMinus size={16} /> },

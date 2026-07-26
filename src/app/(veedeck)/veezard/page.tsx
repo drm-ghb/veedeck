@@ -1,3 +1,5 @@
+export const metadata = { title: "Veezard" };
+
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getWorkspaceUserId } from "@/lib/workspace";

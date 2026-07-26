@@ -1,3 +1,5 @@
+export const metadata = { title: "Dyskusje" };
+
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getWorkspaceUserId } from "@/lib/workspace";
@@ -118,6 +120,7 @@ export default async function DyskusjePage() {
         id: d.id,
         title: d.title,
         type: d.type,
+        avatarUrl: d.avatarUrl ?? null,
         projectId: d.projectId,
         project: d.project,
         messageCount: d._count.messages,
