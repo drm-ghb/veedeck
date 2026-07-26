@@ -3393,7 +3393,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                 </div>
               )}
               {/* Stroke color */}
-              {firstSelected.type !== "text" && firstSelected.type !== "image" && firstSelected.type !== "frame" && (
+              {firstSelected.type !== "image" && firstSelected.type !== "frame" && (
                 <>
                   {(firstSelected.type === "rect" || firstSelected.type === "ellipse" || firstSelected.type === "note") && (
                     <div className="w-px h-5 bg-border shrink-0" />
