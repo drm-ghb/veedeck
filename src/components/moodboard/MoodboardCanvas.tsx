@@ -715,7 +715,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
   }
 
   function resetCrop() {
-    const targetId = cropMode ?? firstSelectedId;
+    const targetId = cropMode ?? firstSelected?.id;
     if (!targetId) return;
     updateEl(targetId, { cropLeft: undefined, cropTop: undefined, cropRight: undefined, cropBottom: undefined });
     setCropMode(null);
