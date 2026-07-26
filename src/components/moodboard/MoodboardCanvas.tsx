@@ -3518,7 +3518,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                 </>
               )}
               {/* All other types: opacity + layer + delete inline in Row 1 */}
-              {firstSelected.type !== "frame" && firstSelected.type !== "text" && (
+              {firstSelected.type !== "frame" && (
                 <>
                   <div className="w-px h-5 bg-border shrink-0" />
                   <input type="range" min={0.1} max={1} step={0.05} value={firstSelected.opacity ?? 1}
