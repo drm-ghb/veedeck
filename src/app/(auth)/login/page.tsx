@@ -164,6 +164,17 @@ const CSS = `
   .vd-footer a { color: var(--muted-foreground); text-decoration: underline; text-decoration-color: transparent; transition: text-decoration-color 140ms; }
   .vd-footer a:hover { text-decoration-color: var(--muted-foreground); }
 
+  .vd-topbar { position: relative; }
+  .vd-role-switcher { position: absolute; left: 50%; transform: translateX(-50%); }
+  .vd-role-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 10px; border: 1px solid var(--border); background: #fff; font-family: var(--font-sans); font-size: 13.5px; font-weight: 600; color: var(--foreground); cursor: pointer; transition: background 140ms, border-color 140ms; white-space: nowrap; }
+  .vd-role-btn:hover { background: var(--secondary); border-color: #cdd0db; }
+  .vd-role-btn-chevron { width: 14px; height: 14px; color: var(--muted-foreground); transition: transform 140ms; flex-shrink: 0; }
+  .vd-role-btn-chevron.open { transform: rotate(180deg); }
+  .vd-role-dropdown { position: absolute; top: calc(100% + 6px); left: 50%; transform: translateX(-50%); min-width: 170px; background: #fff; border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 8px 24px -8px rgba(15,23,42,.18); padding: 4px; z-index: 99; }
+  .vd-role-option { display: flex; align-items: center; gap: 8px; width: 100%; padding: 9px 12px; border-radius: 8px; border: none; background: none; font-family: var(--font-sans); font-size: 13.5px; font-weight: 500; color: var(--foreground); cursor: pointer; text-align: left; text-decoration: none; transition: background 100ms; }
+  .vd-role-option:hover { background: var(--secondary); }
+  .vd-role-option.active { font-weight: 700; color: var(--primary); }
+
   .vd-reg-lock { position: relative; }
   .vd-card.reg-disabled { filter: blur(2.5px) grayscale(0.85); opacity: 0.5; pointer-events: none; user-select: none; }
   .vd-reg-overlay { position: absolute; inset: 0; z-index: 3; display: flex; align-items: flex-start; justify-content: center; padding: 40px 24px; border-radius: 18px; background: rgba(255,255,255,0.55); backdrop-filter: blur(3px); }
@@ -245,6 +256,40 @@ function PasswordInput({ id, value, onChange, placeholder, autoComplete }: {
       <button type="button" className="vd-password-toggle" onClick={() => setShow(!show)} aria-label="Pokaż / ukryj hasło">
         {show ? <EyeOffIcon /> : <EyeIcon />}
       </button>
+    </div>
+  );
+}
+
+function RoleSwitcher({ current }: { current: "projektant" | "klient" | "wykonawca" }) {
+  const [open, setOpen] = useState(false);
+  const labels = { projektant: "Projektant", klient: "Klient", wykonawca: "Wykonawca" };
+  const links = { projektant: "/login", klient: "/login/klient", wykonawca: "/login/wykonawca" };
+  return (
+    <div className="vd-role-switcher" style={{ position: "absolute", left: "50%", transform: "translateX(-50%)" }}>
+      <button type="button" className="vd-role-btn" onClick={() => setOpen((o) => !o)}>
+        {labels[current]}
+        <svg className={`vd-role-btn-chevron${open ? " open" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </button>
+      {open && (
+        <>
+          <div style={{ position: "fixed", inset: 0, zIndex: 98 }} onClick={() => setOpen(false)} />
+          <div className="vd-role-dropdown">
+            {(["projektant", "klient", "wykonawca"] as const).map((role) => (
+              <a key={role} href={links[role]} className={`vd-role-option${current === role ? " active" : ""}`} onClick={() => setOpen(false)}>
+                {current === role && (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                )}
+                {current !== role && <span style={{ width: 14, display: "inline-block" }} />}
+                {labels[role]}
+              </a>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -409,6 +454,7 @@ export default function LoginPage() {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img className="word" src="/vee_black.png" alt="veedeck" />
             </a>
+            <RoleSwitcher current="projektant" />
             <a className="vd-back-link" href="https://veedeck.com">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M19 12H5M12 19l-7-7 7-7" />
