@@ -108,7 +108,7 @@ export default function PdfThumbnail({ fileUrl, className, iconSize = 36 }: PdfT
     return (
       <div
         className={`flex flex-col items-center justify-center gap-1 bg-muted cursor-pointer ${className ?? ""}`}
-        onClick={() => setRetryKey((k) => k + 1)}
+        onClick={(e) => { e.stopPropagation(); setRetryKey((k) => k + 1); }}
         title={t.render.pdfRetryTitle}
       >
         <FileText size={iconSize} className="text-red-400" />

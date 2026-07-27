@@ -4064,24 +4064,26 @@ export default function RenderViewer({
                 });
                 return (
                   <div key={v.id} className="flex items-center gap-4 px-6 py-4">
-                    <a
-                      href={v.fileUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex-shrink-0 w-48 h-32 rounded-lg overflow-hidden border border-border bg-muted hover:opacity-80 transition-opacity flex items-center justify-center"
-                      title={t.render.openFullSize}
-                    >
-                      {isPdf ? (
+                    {isPdf ? (
+                      <div className="flex-shrink-0 w-48 h-32 rounded-lg overflow-hidden border border-border bg-muted flex items-center justify-center">
                         <FileText size={22} className="text-red-400" />
-                      ) : (
-                        /* eslint-disable-next-line @next/next/no-img-element */
+                      </div>
+                    ) : (
+                      <a
+                        href={v.fileUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-shrink-0 w-48 h-32 rounded-lg overflow-hidden border border-border bg-muted hover:opacity-80 transition-opacity flex items-center justify-center"
+                        title={t.render.openFullSize}
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={v.fileUrl}
                           alt={`Wersja ${v.versionNumber}`}
                           className="w-full h-full object-cover"
                         />
-                      )}
-                    </a>
+                      </a>
+                    )}
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">
                         {v.label || `Wersja ${v.versionNumber}`}

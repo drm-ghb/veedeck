@@ -36,6 +36,7 @@ const PdfViewer = forwardRef<HTMLDivElement, PdfViewerProps>(function PdfViewer(
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [totalPages, setTotalPages] = useState(0);
   const [status, setStatus] = useState<"loading" | "done" | "error">("loading");
+  const [retryKey, setRetryKey] = useState(0);
   const renderTaskRef = useRef<{ cancel: () => void } | null>(null);
   const pdfDocRef = useRef<import("pdfjs-dist").PDFDocumentProxy | null>(null);
 
@@ -102,7 +103,7 @@ const PdfViewer = forwardRef<HTMLDivElement, PdfViewerProps>(function PdfViewer(
       pdfDocRef.current?.destroy();
       pdfDocRef.current = null;
     };
-  }, [url, page, maxHeight, maxWidth, zoom]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [url, page, maxHeight, maxWidth, zoom, retryKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div
@@ -141,8 +142,13 @@ const PdfViewer = forwardRef<HTMLDivElement, PdfViewerProps>(function PdfViewer(
       )}
 
       {status === "error" && (
-        <div className="absolute inset-0 flex items-center justify-center min-h-[300px]">
+        <div
+          className="absolute inset-0 flex flex-col items-center justify-center gap-2 min-h-[300px] cursor-pointer"
+          onClick={(e) => { e.stopPropagation(); setRetryKey((k) => k + 1); }}
+          title="Kliknij, aby spróbować ponownie"
+        >
           <FileText size={48} className="text-red-400" />
+          <span className="text-xs text-muted-foreground">Odśwież</span>
         </div>
       )}
 
