@@ -691,7 +691,7 @@ function ProductRow({
             </button>
           </div>
           {/* Badges row — approval + order status */}
-          <div className="flex items-center gap-1.5 mt-1">
+          <div className="flex items-center gap-1.5 mt-1.5">
             <button
               onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); const estH = 3 * 28 + 8; const top = (window.innerHeight - r.bottom) >= estH + 8 ? r.bottom + 4 : Math.max(4, r.top - estH - 4); setApprovalMenuPos({ top, left: r.left }); setApprovalMenuOpen((v) => !v); }}
               className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors shrink-0 hover:opacity-80 ${getApprovalLabel(approval).cls}`}
