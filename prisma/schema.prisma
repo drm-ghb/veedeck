@@ -106,6 +106,25 @@ model User {
   passwordResetTokens        PasswordResetToken[]
   emailNotifQueue            EmailNotifQueue[]
   impersonationTokens        ImpersonationToken[]
+  accessTokens               AccessToken[]
+  pinHash                    String?
+  passwordHintDismissedAt    DateTime?
+  firstLoginAt               DateTime?
+}
+
+model AccessToken {
+  id          String    @id @default(cuid())
+  userId      String
+  projectId   String?
+  tokenHash   String    @unique
+  purpose     String    @default("access")
+  expiresAt   DateTime
+  lastUsedAt  DateTime?
+  revokedAt   DateTime?
+  pinFailures Int       @default(0)
+  createdAt   DateTime  @default(now())
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project     Project?  @relation(fields: [projectId], references: [id])
 }
 
 model ImpersonationToken {
@@ -354,9 +373,12 @@ model Project {
   startDate                DateTime?
   paymentsSharedWithClient Boolean                @default(false)
   scheduleSharedWithClient Boolean                @default(false)
+  clientPinRequired        Boolean                @default(false)
+  clientPin                String?
   clientId                 String?
   contractorAssignments    ContractorAssignment[]
   discussion               Discussion?
+  accessTokens             AccessToken[]
   paymentsAsRfProject      Payment[]              @relation("PaymentRfProject")
   paymentGroupsAsRfProject PaymentGroup[]         @relation("PaymentGroupRfProject")
   client                   Client?                @relation(fields: [clientId], references: [id])
@@ -385,6 +407,8 @@ model ProjectClient {
   userId         String?
   order          Int               @default(0)
   totalAmount    Float?
+  isDecisionMaker Boolean          @default(false)
+  lastReminderSentAt DateTime?
   clientId       String?
   docs           ClientDoc[]
   docFolders     ClientDocFolder[]
@@ -1018,6 +1042,7 @@ model Contractor {
   trade       String?
   email       String?
   phone       String?
+  lastReminderSentAt DateTime?
   createdAt   DateTime               @default(now())
   designer    User                   @relation("DesignerContractors", fields: [designerId], references: [id], onDelete: Cascade)
   user        User?                  @relation("ContractorUser", fields: [userId], references: [id])

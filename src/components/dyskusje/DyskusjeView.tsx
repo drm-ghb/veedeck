@@ -13,6 +13,9 @@ import { SwipeableMessage } from "@/components/ui/swipeable-message";
 import { playMessageSound } from "@/lib/notification-sound";
 import { useT } from "@/lib/i18n";
 import { useIsTrialExpired } from "@/lib/trial-context";
+import Cropper from "react-easy-crop";
+import type { Area } from "react-easy-crop";
+import { getCroppedImg } from "@/components/settings/SettingsShared";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -179,6 +182,10 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
   const [headerIsContractorChat, setHeaderIsContractorChat] = useState(false);
   const [headerAvatarUrl, setHeaderAvatarUrl] = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [avatarCropSrc, setAvatarCropSrc] = useState<string | null>(null);
+  const [avatarCrop, setAvatarCrop] = useState({ x: 0, y: 0 });
+  const [avatarZoom, setAvatarZoom] = useState(1);
+  const [avatarCroppedAreaPixels, setAvatarCroppedAreaPixels] = useState<Area | null>(null);
   const [savingHeader, setSavingHeader] = useState(false);
   const [showProjectDropdown, setShowProjectDropdown] = useState(false);
   const [showResources, setShowResources] = useState(false);
@@ -237,6 +244,29 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
 
   const { startUpload } = useUploadThing("discussionAttachmentUploader");
   const { startUpload: startAvatarUpload } = useUploadThing("avatarUploader");
+
+  const handleAvatarCropComplete = useCallback((_: Area, pixels: Area) => {
+    setAvatarCroppedAreaPixels(pixels);
+  }, []);
+
+  async function handleAvatarCropApply() {
+    if (!avatarCropSrc || !avatarCroppedAreaPixels) return;
+    setUploadingAvatar(true);
+    try {
+      const file = await getCroppedImg(avatarCropSrc, avatarCroppedAreaPixels);
+      const results = await startAvatarUpload([file]);
+      if (results?.[0]) {
+        setHeaderAvatarUrl(results[0].url);
+        setAvatarCropSrc(null);
+      } else {
+        throw new Error();
+      }
+    } catch {
+      toast.error("Nie udało się przesłać avatara");
+    } finally {
+      setUploadingAvatar(false);
+    }
+  }
 
   const selected = discussions.find((d) => d.id === selectedId) ?? null;
 
@@ -1425,17 +1455,17 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                               accept="image/*"
                               className="hidden"
                               disabled={uploadingAvatar}
-                              onChange={async (e) => {
+                              onChange={(e) => {
                                 const file = e.target.files?.[0];
                                 if (!file) return;
-                                setUploadingAvatar(true);
-                                try {
-                                  const results = await startAvatarUpload([file]);
-                                  if (results?.[0]) setHeaderAvatarUrl(results[0].url);
-                                } finally {
-                                  setUploadingAvatar(false);
-                                  e.target.value = "";
-                                }
+                                e.target.value = "";
+                                const reader = new FileReader();
+                                reader.onload = () => {
+                                  setAvatarCropSrc(reader.result as string);
+                                  setAvatarCrop({ x: 0, y: 0 });
+                                  setAvatarZoom(1);
+                                };
+                                reader.readAsDataURL(file);
                               }}
                             />
                           </label>
@@ -1944,6 +1974,41 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
           </div>
         )}
       </div>
+
+      {/* Avatar crop modal */}
+      {avatarCropSrc && (
+        <div className="fixed inset-0 z-50 flex flex-col bg-black/90">
+          <div className="flex items-center justify-between px-6 py-4 bg-card border-b border-border flex-shrink-0">
+            <h3 className="font-semibold text-sm">Kadruj avatar</h3>
+            <button onClick={() => setAvatarCropSrc(null)} className="text-muted-foreground hover:text-foreground transition-colors"><X size={18} /></button>
+          </div>
+          <div className="relative flex-1">
+            <Cropper
+              image={avatarCropSrc}
+              crop={avatarCrop}
+              zoom={avatarZoom}
+              aspect={1}
+              cropShape="round"
+              showGrid={false}
+              onCropChange={setAvatarCrop}
+              onZoomChange={setAvatarZoom}
+              onCropComplete={handleAvatarCropComplete}
+            />
+          </div>
+          <div className="px-6 py-4 bg-card border-t border-border flex-shrink-0 space-y-4">
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-muted-foreground w-10">Zoom</span>
+              <input type="range" min={1} max={3} step={0.01} value={avatarZoom} onChange={(e) => setAvatarZoom(Number(e.target.value))} className="flex-1 accent-primary" />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setAvatarCropSrc(null)}>Anuluj</Button>
+              <Button onClick={handleAvatarCropApply} disabled={uploadingAvatar}>
+                {uploadingAvatar ? <Loader2 size={14} className="animate-spin" /> : "Zastosuj"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

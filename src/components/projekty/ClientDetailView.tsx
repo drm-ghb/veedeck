@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -9,14 +9,16 @@ import {
   Trash2,
   AlertTriangle,
   X,
-  Eye,
-  EyeOff,
   KeyRound,
   GripVertical,
   Check,
   Mail,
+  Phone,
+  Send,
+  CheckCircle,
   PushPin,
   LocalMall,
+  Info,
 } from "@/components/ui/icons";
 import {
   DndContext,
@@ -49,7 +51,6 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { generateClientLogin } from "@/lib/client-login";
 import { useT } from "@/lib/i18n";
 import ClientHistoryTab from "@/components/projekty/ClientHistoryTab";
 
@@ -61,9 +62,10 @@ interface Contact {
   email: string | null;
   phone: string | null;
   isMainContact: boolean;
+  isDecisionMaker: boolean;
   createdAt: string;
   userId: string | null;
-  user: { id: string; login: string; email?: string | null } | null;
+  user: { id: string; login: string; email?: string | null; firstLoginAt?: string | null } | null;
 }
 
 interface ClientData {
@@ -142,8 +144,6 @@ export default function ClientDetailView({ client: initialClient }: Props) {
   const [newName, setNewName] = useState("");
   const [newEmail, setNewEmail] = useState("");
   const [newPhone, setNewPhone] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [showNewPassword, setShowNewPassword] = useState(false);
   const [newIsMain, setNewIsMain] = useState(false);
   const [addingContact, setAddingContact] = useState(false);
 
@@ -153,16 +153,6 @@ export default function ClientDetailView({ client: initialClient }: Props) {
   const [editPhone, setEditPhone] = useState("");
   const [savingEdit, setSavingEdit] = useState(false);
 
-  // ── Credentials ──────────────────────────────────────────────────────────
-  const [clientCreds, setClientCreds] = useState<Record<string, { login: string; password: string; showPassword: boolean }>>(() =>
-    Object.fromEntries(
-      initialClient.contacts
-        .filter((c) => c.user)
-        .map((c) => [c.id, { login: c.user!.login, password: "", showPassword: false }])
-    )
-  );
-  const [credentialsOpen, setCredentialsOpen] = useState<Record<string, boolean>>({});
-
   // ── Create account inline ────────────────────────────────────────────────
   const [createAccountOpen, setCreateAccountOpen] = useState<Record<string, boolean>>(() =>
     Object.fromEntries(initialClient.contacts.filter((c) => !c.userId).map((c) => [c.id, true]))
@@ -170,17 +160,11 @@ export default function ClientDetailView({ client: initialClient }: Props) {
   const [createAccountEmail, setCreateAccountEmail] = useState<Record<string, string>>(() =>
     Object.fromEntries(initialClient.contacts.filter((c) => !c.userId && c.email).map((c) => [c.id, c.email!]))
   );
-  const [createAccountPassword, setCreateAccountPassword] = useState<Record<string, string>>({});
-  const [createAccountShowPass, setCreateAccountShowPass] = useState<Record<string, boolean>>({});
   const [creatingAccount, setCreatingAccount] = useState<Record<string, boolean>>({});
 
-  // ── Invite ───────────────────────────────────────────────────────────────
-  const [showInviteDialog, setShowInviteDialog] = useState(false);
-  const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteEmailExists, setInviteEmailExists] = useState(false);
-  const [checkingEmail, setCheckingEmail] = useState(false);
-  const [sendingInvite, setSendingInvite] = useState(false);
-  const emailCheckTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // ── Send access link ─────────────────────────────────────────────────────
+  const [sendingLink, setSendingLink] = useState<Record<string, boolean>>({});
+
 
   // ── No-account banner ────────────────────────────────────────────────────
   const [bannerDismissed, setBannerDismissed] = useState(false);
@@ -296,25 +280,15 @@ export default function ClientDetailView({ client: initialClient }: Props) {
           name: newName.trim(),
           email: newEmail.trim() || null,
           phone: newPhone.trim() || null,
-          password: newPassword.trim() || undefined,
           isMainContact: newIsMain,
         }),
       });
       if (!res.ok) throw new Error();
       const created = await res.json();
       setContacts((prev) => [...prev, created]);
-      if (created.user?.login) {
-        setClientCreds((prev) => ({
-          ...prev,
-          [created.id]: { login: created.user.login, password: "", showPassword: false },
-        }));
-        setCredentialsOpen((prev) => ({ ...prev, [created.id]: true }));
-      }
       setNewName("");
       setNewEmail("");
       setNewPhone("");
-      setNewPassword("");
-      setShowNewPassword(false);
       setNewIsMain(false);
       setShowAddContact(false);
       toast.success(t.projekty.contactAdded);
@@ -361,26 +335,22 @@ export default function ClientDetailView({ client: initialClient }: Props) {
     }
   }
 
-  async function saveContactCreds(contactId: string) {
-    const creds = clientCreds[contactId];
-    if (!creds) return;
-    const body: Record<string, string> = {};
-    if (creds.login.trim()) body.login = creds.login.trim();
-    if (creds.password.trim()) body.password = creds.password.trim();
-    if (!Object.keys(body).length) return;
+  async function sendAccessLink(userId: string, contactId?: string) {
+    const key = contactId ?? userId;
+    setSendingLink((prev) => ({ ...prev, [key]: true }));
     try {
-      const res = await fetch(`/api/clients/${initialClient.id}/contacts/${contactId}`, {
-        method: "PATCH",
+      const res = await fetch("/api/access/send", {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+        body: JSON.stringify({ userId }),
       });
-      if (!res.ok) throw new Error();
-      const updated = await res.json();
-      setContacts((prev) => prev.map((c) => c.id === contactId ? { ...c, user: updated.user ?? c.user } : c));
-      setClientCreds((prev) => ({ ...prev, [contactId]: { ...prev[contactId], password: "", showPassword: false } }));
-      toast.success(t.common.saved);
-    } catch {
-      toast.error(t.settings.saveError);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error((data as { error?: string }).error || "Błąd wysyłania linku");
+      toast.success("Link dostępowy wysłany");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Nie udało się wysłać linku");
+    } finally {
+      setSendingLink((prev) => ({ ...prev, [key]: false }));
     }
   }
 
@@ -400,8 +370,6 @@ export default function ClientDetailView({ client: initialClient }: Props) {
   }
 
   async function createContactAccount(contactId: string) {
-    const password = createAccountPassword[contactId];
-    if (!password?.trim() || password.trim().length < 4) return;
     const accEmail = createAccountEmail[contactId]?.trim();
     if (accEmail && !accEmail.includes("@")) {
       toast.error(t.projekty.emailInvalid);
@@ -409,12 +377,14 @@ export default function ClientDetailView({ client: initialClient }: Props) {
     }
     setCreatingAccount((prev) => ({ ...prev, [contactId]: true }));
     try {
+      // Generate a random password — user will log in via magic link
+      const autoPassword = Math.random().toString(36).slice(2, 10) + "Aa1!";
       const res = await fetch(`/api/clients/${initialClient.id}/contacts/${contactId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          password: password.trim(),
-          ...(createAccountEmail[contactId]?.trim() ? { email: createAccountEmail[contactId].trim().toLowerCase() } : {}),
+          password: autoPassword,
+          ...(accEmail ? { email: accEmail.toLowerCase() } : {}),
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -422,16 +392,12 @@ export default function ClientDetailView({ client: initialClient }: Props) {
       setContacts((prev) =>
         prev.map((c) => c.id === contactId ? { ...c, userId: data.userId, user: data.user } : c)
       );
-      if (data.user?.login) {
-        setClientCreds((prev) => ({
-          ...prev,
-          [contactId]: { login: data.user.login, password: "", showPassword: false },
-        }));
-        setCredentialsOpen((prev) => ({ ...prev, [contactId]: true }));
-      }
       setCreateAccountOpen((prev) => ({ ...prev, [contactId]: false }));
-      setCreateAccountPassword((prev) => ({ ...prev, [contactId]: "" }));
       toast.success(t.projekty.accountCreated);
+      // Auto-send magic link if user has a real email
+      if (data.user?.id && accEmail) {
+        await sendAccessLink(data.user.id, contactId);
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t.projekty.accountCreateError);
     } finally {
@@ -451,52 +417,6 @@ export default function ClientDetailView({ client: initialClient }: Props) {
       toast.error(t.projekty.contactDeleteError);
     }
   }
-
-  function handleInviteEmailChange(value: string) {
-    setInviteEmail(value);
-    setInviteEmailExists(false);
-    if (emailCheckTimer.current) clearTimeout(emailCheckTimer.current);
-    if (!value.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())) {
-      setCheckingEmail(false);
-      return;
-    }
-    setCheckingEmail(true);
-    emailCheckTimer.current = setTimeout(() => {
-      fetch(`/api/client-invite/check-email?email=${encodeURIComponent(value.trim())}`)
-        .then((r) => r.json())
-        .then((data) => {
-          setInviteEmailExists(!!data.exists);
-          setCheckingEmail(false);
-        })
-        .catch(() => setCheckingEmail(false));
-    }, 400);
-  }
-
-  async function sendClientInvite() {
-    if (!inviteEmail.trim() || !inviteEmail.includes("@")) {
-      toast.error(t.projekty.emailInvalid);
-      return;
-    }
-    setSendingInvite(true);
-    const res = await fetch("/api/client-invite", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: inviteEmail.trim(), clientEntityId: initialClient.id }),
-    });
-    const data = await res.json().catch(() => ({}));
-    setSendingInvite(false);
-    if (!res.ok) {
-      toast.error((data as { error?: string }).error || t.projekty.inviteSendError);
-      return;
-    }
-    toast.success(t.projekty.inviteSent);
-    setShowInviteDialog(false);
-    setInviteEmail("");
-  }
-
-  const previewLogin = newName.trim().split(/\s+/).length >= 2
-    ? generateClientLogin(newName.trim())
-    : "";
 
   // ── Render ────────────────────────────────────────────────────────────────
 
@@ -773,15 +693,6 @@ export default function ClientDetailView({ client: initialClient }: Props) {
             <div className="flex items-center gap-2">
               <Button
                 size="sm"
-                variant="outline"
-                className="gap-1.5"
-                onClick={() => setShowInviteDialog(true)}
-              >
-                <Mail size={13} />
-                <span className="hidden sm:inline">{t.projekty.sendInvite}</span>
-              </Button>
-              <Button
-                size="sm"
                 className="gap-1.5"
                 onClick={() => setShowAddContact(true)}
               >
@@ -798,38 +709,65 @@ export default function ClientDetailView({ client: initialClient }: Props) {
           ) : (
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleContactDragEnd}>
               <SortableContext items={contacts.map((c) => c.id)} strategy={verticalListSortingStrategy}>
-                <div className="divide-y divide-border">
+                <div className="space-y-2">
                   {contacts.map((contact) => (
                     <SortableContactItem key={contact.id} contact={contact}>
-                      <div className="pl-7 pr-2 py-3">
-                        <div className="flex items-start justify-between gap-2">
+                      <div className="pl-7 pr-3 py-3 bg-card border border-border rounded-xl">
+                        <div className="flex items-start gap-3">
+                          {/* Avatar */}
+                          <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <span className="text-sm font-semibold text-primary">
+                              {contact.name.charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+
+                          {/* Content */}
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="font-medium text-sm">{contact.name}</span>
+                            {/* Name + badges */}
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="font-semibold text-sm text-foreground">{contact.name}</span>
                               {contact.isMainContact && (
-                                <span className="text-xs px-1.5 py-0.5 rounded bg-primary/10 text-primary font-medium">{t.projekty.mainContactBadge}</span>
+                                <span className="inline-flex items-center text-[11px] px-1.5 py-0.5 rounded-md bg-primary/10 text-primary font-medium">
+                                  {t.projekty.mainContactBadge}
+                                </span>
+                              )}
+                              {contact.isDecisionMaker && (
+                                <span className="text-[11px] px-1.5 py-0.5 rounded-md bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 font-medium">Decydent</span>
                               )}
                               {!contact.userId && (
-                                <span className="text-xs px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 font-medium">{t.projekty.noAccount}</span>
+                                <span className="text-[11px] px-1.5 py-0.5 rounded-md bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 font-medium">{t.projekty.noAccount}</span>
+                              )}
+                              {contact.userId && contact.user?.firstLoginAt && (
+                                <span className="text-[11px] px-1.5 py-0.5 rounded-md bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 font-medium flex items-center gap-1">
+                                  <CheckCircle size={10} />
+                                  Aktywne
+                                </span>
                               )}
                             </div>
 
+                            {/* Edit form or contact details */}
                             {editingId === contact.id ? (
                               <div className="mt-2 space-y-2">
                                 <div className="flex gap-2">
-                                  <Input
-                                    value={editEmail}
-                                    onChange={(e) => setEditEmail(e.target.value)}
-                                    placeholder={t.projekty.emailLabel}
-                                    className="text-xs h-8"
-                                    type="email"
-                                  />
-                                  <Input
-                                    value={editPhone}
-                                    onChange={(e) => setEditPhone(e.target.value)}
-                                    placeholder={t.projekty.phonePlaceholder}
-                                    className="text-xs h-8"
-                                  />
+                                  <div className="relative flex-1">
+                                    <Mail size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                                    <Input
+                                      value={editEmail}
+                                      onChange={(e) => setEditEmail(e.target.value)}
+                                      placeholder={t.projekty.emailLabel}
+                                      className="text-xs h-8 pl-7"
+                                      type="email"
+                                    />
+                                  </div>
+                                  <div className="relative flex-1">
+                                    <Phone size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                                    <Input
+                                      value={editPhone}
+                                      onChange={(e) => setEditPhone(e.target.value)}
+                                      placeholder={t.projekty.phonePlaceholder}
+                                      className="text-xs h-8 pl-7"
+                                    />
+                                  </div>
                                 </div>
                                 <div className="flex gap-1.5">
                                   <Button size="sm" className="h-7 text-xs" disabled={savingEdit} onClick={() => saveContactEdit(contact.id)}>
@@ -839,136 +777,31 @@ export default function ClientDetailView({ client: initialClient }: Props) {
                                 </div>
                               </div>
                             ) : (
-                              <div className="text-xs text-muted-foreground mt-0.5 space-y-0.5">
-                                {contact.email && <p>{contact.email}</p>}
-                                {contact.phone && <p>{contact.phone}</p>}
-                              </div>
-                            )}
-
-                            {/* Credentials section */}
-                            {contact.userId && clientCreds[contact.id] !== undefined && (
-                              <div className="mt-2">
-                                <button
-                                  onClick={() => setCredentialsOpen((prev) => ({ ...prev, [contact.id]: !prev[contact.id] }))}
-                                  className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
-                                >
-                                  <KeyRound size={11} />
-                                  {credentialsOpen[contact.id] ? t.projekty.hideCredentials : t.projekty.loginData}
-                                </button>
-                                {credentialsOpen[contact.id] && (
-                                  <div className="mt-2 p-2.5 rounded-lg bg-muted/50 border border-border space-y-2">
-                                    <div className="space-y-1">
-                                      <p className="text-xs text-muted-foreground font-medium">{t.projekty.loginPlaceholder}</p>
-                                      <div className="flex gap-1.5">
-                                        <Input
-                                          value={clientCreds[contact.id].login}
-                                          onChange={(e) => setClientCreds((prev) => ({ ...prev, [contact.id]: { ...prev[contact.id], login: e.target.value } }))}
-                                          className="text-xs h-7 font-mono"
-                                        />
-                                      </div>
-                                    </div>
-                                    <div className="space-y-1">
-                                      <p className="text-xs text-muted-foreground font-medium">{t.projekty.newPasswordPlaceholder}</p>
-                                      <div className="flex gap-1.5">
-                                        <div className="relative flex-1">
-                                          <Input
-                                            type={clientCreds[contact.id].showPassword ? "text" : "password"}
-                                            value={clientCreds[contact.id].password}
-                                            onChange={(e) => setClientCreds((prev) => ({ ...prev, [contact.id]: { ...prev[contact.id], password: e.target.value } }))}
-                                            className="text-xs h-7 pr-7"
-                                            placeholder={t.projekty.leaveEmptyPassword}
-                                          />
-                                          <button
-                                            type="button"
-                                            onClick={() => setClientCreds((prev) => ({ ...prev, [contact.id]: { ...prev[contact.id], showPassword: !prev[contact.id].showPassword } }))}
-                                            className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground"
-                                          >
-                                            {clientCreds[contact.id].showPassword ? <EyeOff size={11} /> : <Eye size={11} />}
-                                          </button>
-                                        </div>
-                                        <Button
-                                          size="sm"
-                                          className="h-7 text-xs"
-                                          disabled={!clientCreds[contact.id].login.trim() && !clientCreds[contact.id].password.trim()}
-                                          onClick={() => saveContactCreds(contact.id)}
-                                        >
-                                          {t.common.save}
-                                        </Button>
-                                      </div>
-                                    </div>
-                                  </div>
+                              <div className="mt-1 space-y-0.5">
+                                {contact.email && (
+                                  <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                                    <Mail size={11} className="flex-shrink-0" />
+                                    {contact.email}
+                                  </p>
+                                )}
+                                {contact.phone && (
+                                  <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                                    <Phone size={11} className="flex-shrink-0" />
+                                    {contact.phone}
+                                  </p>
                                 )}
                               </div>
                             )}
 
-                            {/* Create account section */}
-                            {!contact.userId && (
-                              <div className="mt-2">
-                                <button
-                                  onClick={() => setCreateAccountOpen((prev) => ({ ...prev, [contact.id]: !prev[contact.id] }))}
-                                  className="flex items-center gap-1 text-xs text-amber-600 hover:text-amber-800 dark:hover:text-amber-300 transition-colors"
-                                >
-                                  <KeyRound size={11} />
-                                  {createAccountOpen[contact.id] ? t.projekty.hide : t.projekty.createAccount}
-                                </button>
-                                {createAccountOpen[contact.id] && (
-                                  <div className="mt-2 p-2.5 rounded-lg bg-muted/50 border border-border space-y-2">
-                                    <div className="space-y-1">
-                                      <p className="text-xs text-muted-foreground font-medium">{t.projekty.emailLoginLabel}</p>
-                                      <Input
-                                        type="email"
-                                        value={createAccountEmail[contact.id] ?? ""}
-                                        onChange={(e) => setCreateAccountEmail((prev) => ({ ...prev, [contact.id]: e.target.value }))}
-                                        placeholder={t.projekty.emailLoginHintShort}
-                                        className="text-xs h-7"
-                                      />
-                                    </div>
-                                    <div className="space-y-1">
-                                      <p className="text-xs text-muted-foreground font-medium">{t.projekty.passwordClientLabel}</p>
-                                      <div className="flex gap-1.5">
-                                        <div className="relative flex-1">
-                                          <Input
-                                            type={createAccountShowPass[contact.id] ? "text" : "password"}
-                                            value={createAccountPassword[contact.id] ?? ""}
-                                            onChange={(e) => setCreateAccountPassword((prev) => ({ ...prev, [contact.id]: e.target.value }))}
-                                            placeholder={t.projekty.minCharsPlaceholder}
-                                            className="text-xs h-7 pr-7"
-                                          />
-                                          <button
-                                            type="button"
-                                            onClick={() => setCreateAccountShowPass((prev) => ({ ...prev, [contact.id]: !prev[contact.id] }))}
-                                            className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground"
-                                          >
-                                            {createAccountShowPass[contact.id] ? <EyeOff size={11} /> : <Eye size={11} />}
-                                          </button>
-                                        </div>
-                                        <Button
-                                          size="sm"
-                                          className="h-7 text-xs"
-                                          disabled={
-                                            !(createAccountPassword[contact.id]?.trim()) ||
-                                            (createAccountPassword[contact.id]?.trim().length ?? 0) < 4 ||
-                                            !!creatingAccount[contact.id]
-                                          }
-                                          onClick={() => createContactAccount(contact.id)}
-                                        >
-                                          {creatingAccount[contact.id] ? t.projekty.creatingAccount : t.projekty.createAccount}
-                                        </Button>
-                                      </div>
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            )}
                           </div>
 
                           {/* Actions */}
-                          <div className="flex items-center gap-1 flex-shrink-0">
+                          <div className="flex items-center gap-0.5 flex-shrink-0">
                             {!contact.isMainContact && (
                               <button
                                 title={t.projekty.setAsMain}
                                 onClick={() => setMainContact(contact.id)}
-                                className="p-1.5 rounded text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                                className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
                               >
                                 <Check size={14} />
                               </button>
@@ -976,19 +809,104 @@ export default function ClientDetailView({ client: initialClient }: Props) {
                             <button
                               title={t.projekty.editContactShort}
                               onClick={() => editingId === contact.id ? cancelEditing() : startEditing(contact)}
-                              className="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                              className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                             >
                               <Pencil size={14} />
                             </button>
                             <button
                               title={t.projekty.deleteContact}
                               onClick={() => removeContact(contact.id)}
-                              className="p-1.5 rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                              className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
                             >
                               <Trash2 size={14} />
                             </button>
                           </div>
                         </div>
+
+                        {/* Account section — pełna szerokość pod głównym wierszem */}
+                        {contact.userId && contact.user && (
+                          <div className="mt-2 pt-2 border-t border-border flex flex-wrap items-center gap-x-3 gap-y-1">
+                            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                              <KeyRound size={11} />
+                              <span className="font-mono">{contact.user.login}</span>
+                            </span>
+                            {!contact.user.firstLoginAt && (
+                              <span className="text-xs text-muted-foreground">Nie aktywowano</span>
+                            )}
+                            {contact.user.email && !contact.user.email.endsWith(".internal") && (
+                              <button
+                                className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg border border-border text-foreground hover:bg-muted transition-colors disabled:opacity-50 ml-auto"
+                                disabled={!!sendingLink[contact.id]}
+                                onClick={() => sendAccessLink(contact.user!.id, contact.id)}
+                              >
+                                <Send size={11} />
+                                {sendingLink[contact.id] ? "Wysyłanie..." : "Wyślij link"}
+                              </button>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Create account section — pełna szerokość pod głównym wierszem */}
+                        {!contact.userId && (
+                          <div className="mt-2 pt-2 border-t border-border">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {!contact.email && (
+                                <p className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1 flex-1 min-w-0">
+                                  <Info size={11} className="flex-shrink-0" />
+                                  <span>Brak adresu e-mail - dodaj, aby utworzyć konto.</span>
+                                </p>
+                              )}
+                              <button
+                                onClick={() => setCreateAccountOpen((prev) => ({ ...prev, [contact.id]: !prev[contact.id] }))}
+                                className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 hover:bg-amber-200 dark:hover:bg-amber-900/50 transition-colors ml-auto shrink-0"
+                              >
+                                <KeyRound size={11} />
+                                {createAccountOpen[contact.id] ? t.projekty.hide : t.projekty.createAccount}
+                              </button>
+                            </div>
+                            {createAccountOpen[contact.id] && (
+                              <div className="mt-2 p-2.5 rounded-lg bg-muted/50 border border-border space-y-2">
+                                <div className="space-y-1">
+                                  {contact.email ? (
+                                    <div className="flex items-center gap-1.5">
+                                      <Button
+                                        size="sm"
+                                        className="h-7 text-xs"
+                                        disabled={!!creatingAccount[contact.id]}
+                                        onClick={() => createContactAccount(contact.id)}
+                                      >
+                                        {creatingAccount[contact.id] ? t.projekty.creatingAccount : t.projekty.createAccount}
+                                      </Button>
+                                      <span className="text-xs text-muted-foreground">dla {contact.email}</span>
+                                    </div>
+                                  ) : (
+                                    <>
+                                      <p className="text-xs text-muted-foreground font-medium">{t.projekty.emailLoginLabel}</p>
+                                      <div className="flex gap-1.5">
+                                        <Input
+                                          type="email"
+                                          value={createAccountEmail[contact.id] ?? ""}
+                                          onChange={(e) => setCreateAccountEmail((prev) => ({ ...prev, [contact.id]: e.target.value }))}
+                                          placeholder={t.projekty.emailLoginHintShort}
+                                          className="text-xs h-7 flex-1"
+                                        />
+                                        <Button
+                                          size="sm"
+                                          className="h-7 text-xs"
+                                          disabled={!!creatingAccount[contact.id]}
+                                          onClick={() => createContactAccount(contact.id)}
+                                        >
+                                          {creatingAccount[contact.id] ? t.projekty.creatingAccount : t.projekty.createAccount}
+                                        </Button>
+                                      </div>
+                                    </>
+                                  )}
+                                  <p className="text-xs text-muted-foreground">Klient zaloguje się przez link wysłany e-mailem.</p>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </SortableContactItem>
                   ))}
@@ -1028,33 +946,6 @@ export default function ClientDetailView({ client: initialClient }: Props) {
                     placeholder="+48 123 456 789"
                   />
                 </div>
-                <div className="col-span-2 space-y-1">
-                  <Label className="text-xs">
-                    {t.projekty.contactPasswordOpt} <span className="text-muted-foreground font-normal">{t.common.optional}</span>
-                  </Label>
-                  <div className="relative">
-                    <Input
-                      type={showNewPassword ? "text" : "password"}
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder={t.projekty.clientPasswordLoginPlaceholder}
-                      className="pr-9"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowNewPassword((v) => !v)}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                    >
-                      {showNewPassword ? <EyeOff size={14} /> : <Eye size={14} />}
-                    </button>
-                  </div>
-                  {newPassword.trim() && !newEmail.trim() && previewLogin && (
-                    <p className="text-xs text-muted-foreground">Login: <span className="font-mono font-medium text-foreground">{previewLogin}</span></p>
-                  )}
-                  {newPassword.trim() && newEmail.trim() && (
-                    <p className="text-xs text-muted-foreground">Login: <span className="font-mono font-medium text-foreground">{newEmail.trim().toLowerCase()}</span></p>
-                  )}
-                </div>
               </div>
               <div className="flex items-center gap-2">
                 <input
@@ -1067,7 +958,7 @@ export default function ClientDetailView({ client: initialClient }: Props) {
                 <Label htmlFor="new-main" className="text-xs cursor-pointer">{t.projekty.mainContact}</Label>
               </div>
               <div className="flex gap-2 justify-end">
-                <Button size="sm" variant="outline" onClick={() => { setShowAddContact(false); setNewName(""); setNewEmail(""); setNewPhone(""); setNewPassword(""); }}>
+                <Button size="sm" variant="outline" onClick={() => { setShowAddContact(false); setNewName(""); setNewEmail(""); setNewPhone(""); }}>
                   {t.common.cancel}
                 </Button>
                 <Button size="sm" disabled={addingContact || !newName.trim()} onClick={addContact}>
@@ -1125,38 +1016,6 @@ export default function ClientDetailView({ client: initialClient }: Props) {
         <ClientHistoryTab apiUrl={`/api/klienci/${initialClient.id}/client-history`} />
       )}
 
-      {/* ── Invite dialog ─────────────────────────────────────────────────── */}
-      <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t.projekty.sendInvite}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3 py-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="invite-email">{t.projekty.inviteEmailLabel}</Label>
-              <Input
-                id="invite-email"
-                type="email"
-                value={inviteEmail}
-                onChange={(e) => handleInviteEmailChange(e.target.value)}
-                placeholder="klient@domena.pl"
-                autoFocus
-              />
-              {checkingEmail && <p className="text-xs text-muted-foreground">{t.projekty.checkingEmail}</p>}
-              {inviteEmailExists && <p className="text-xs text-amber-600">{t.projekty.emailAlreadyExists}</p>}
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowInviteDialog(false)}>{t.common.cancel}</Button>
-            <Button
-              onClick={sendClientInvite}
-              disabled={sendingInvite || !inviteEmail.trim()}
-            >
-              {sendingInvite ? t.projekty.sending : t.projekty.sendInvite}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

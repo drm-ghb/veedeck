@@ -27,7 +27,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
       createdAt: true,
       contacts: {
         orderBy: [{ isMainContact: "desc" }, { order: "asc" }, { createdAt: "asc" }],
-        include: { user: { select: { id: true, login: true, email: true } } },
+        include: { user: { select: { id: true, login: true, email: true, firstLoginAt: true } } },
       },
     },
   });
@@ -53,9 +53,12 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
       email: c.email,
       phone: c.phone ?? null,
       isMainContact: c.isMainContact,
+      isDecisionMaker: c.isDecisionMaker,
       createdAt: c.createdAt.toISOString(),
       userId: c.userId ?? null,
-      user: c.user ? { id: c.user.id, login: c.user.login ?? "", email: c.user.email ?? null } : null,
+      user: c.user
+        ? { id: c.user.id, login: c.user.login ?? "", email: c.user.email ?? null, firstLoginAt: c.user.firstLoginAt?.toISOString() ?? null }
+        : null,
     })),
   };
 

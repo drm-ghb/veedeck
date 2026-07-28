@@ -13,12 +13,12 @@ import {
   Archive,
   ArchiveRestore,
   ChevronLeft,
-  Eye,
-  EyeOff,
   KeyRound,
   Trash2,
   X,
   Info,
+  Send,
+  CheckCircle,
 } from "@/components/ui/icons";
 import { useT } from "@/lib/i18n";
 import AssignProjectDialog from "./AssignProjectDialog";
@@ -37,6 +37,7 @@ interface ContractorUser {
   id: string;
   login: string | null;
   email: string | null;
+  firstLoginAt: string | null;
 }
 
 interface Contractor {
@@ -80,14 +81,8 @@ export default function ContractorProfile({ contractor }: Props) {
   const [accountUser, setAccountUser] = useState<ContractorUser | null>(contractor.user);
   const [createOpen, setCreateOpen] = useState(false);
   const [createEmail, setCreateEmail] = useState(contractor.email ?? "");
-  const [createPassword, setCreatePassword] = useState("");
-  const [showCreatePass, setShowCreatePass] = useState(false);
   const [creatingAccount, setCreatingAccount] = useState(false);
-  const [credsOpen, setCredsOpen] = useState(false);
-  const [credLogin, setCredLogin] = useState(contractor.user?.login ?? "");
-  const [credPassword, setCredPassword] = useState("");
-  const [showCredPass, setShowCredPass] = useState(false);
-  const [savingCreds, setSavingCreds] = useState(false);
+  const [sendingLink, setSendingLink] = useState(false);
 
   const active = contractor.assignments.filter((a) => !a.archived);
   const archived = contractor.assignments.filter((a) => a.archived);
@@ -151,18 +146,16 @@ export default function ContractorProfile({ contractor }: Props) {
   }
 
   async function createAccount() {
-    if (!createPassword.trim() || createPassword.trim().length < 4) {
-      toast.error(t.wykonawcy.passwordMinChars);
-      return;
-    }
     setCreatingAccount(true);
     try {
+      // Generate a random password — contractor uses magic links, not this password
+      const rnd = Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 6).toUpperCase() + "1!";
       const res = await fetch(`/api/contractors/${contractor.id}/account`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: createEmail.trim() || undefined,
-          password: createPassword.trim(),
+          password: rnd,
         }),
       });
       const data = await res.json();
@@ -171,39 +164,32 @@ export default function ContractorProfile({ contractor }: Props) {
         return;
       }
       setAccountUser(data.user);
-      setCredLogin(data.user.login);
       setCreateOpen(false);
-      setCreatePassword("");
-      setCredsOpen(true);
+      // Auto-send access link
+      if (data.user?.id) {
+        await sendAccessLink(data.user.id);
+      }
       toast.success(t.wykonawcy.accountCreated);
     } finally {
       setCreatingAccount(false);
     }
   }
 
-  async function saveAccountCreds() {
-    if (!credLogin.trim() && !credPassword.trim()) return;
-    setSavingCreds(true);
+  async function sendAccessLink(userId: string) {
+    setSendingLink(true);
     try {
-      const body: Record<string, string> = {};
-      if (credLogin.trim()) body.login = credLogin.trim();
-      if (credPassword.trim()) body.password = credPassword.trim();
-      const res = await fetch(`/api/contractors/${contractor.id}/account`, {
-        method: "PATCH",
+      const res = await fetch("/api/access/send", {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+        body: JSON.stringify({ userId }),
       });
-      const data = await res.json();
-      if (!res.ok) {
-        toast.error(data.error ?? t.wykonawcy.saveError);
-        return;
+      if (res.ok) {
+        toast.success("Link dostępowy wysłany na adres e-mail wykonawcy.");
+      } else {
+        toast.error("Nie udało się wysłać linku. Sprawdź czy wykonawca ma adres e-mail.");
       }
-      setAccountUser(data.user);
-      setCredLogin(data.user.login);
-      setCredPassword("");
-      toast.success(t.wykonawcy.credentialsUpdated);
     } finally {
-      setSavingCreds(false);
+      setSendingLink(false);
     }
   }
 
@@ -211,9 +197,6 @@ export default function ContractorProfile({ contractor }: Props) {
     const res = await fetch(`/api/contractors/${contractor.id}/account`, { method: "DELETE" });
     if (res.ok) {
       setAccountUser(null);
-      setCredLogin("");
-      setCredPassword("");
-      setCredsOpen(false);
       setCreateOpen(false);
       toast.success(t.wykonawcy.accountUnlinked);
     } else {
@@ -297,66 +280,37 @@ export default function ContractorProfile({ contractor }: Props) {
 
         {accountUser ? (
           <div className="space-y-2">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2 text-sm">
-                <KeyRound size={14} className="text-muted-foreground" />
-                <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">{accountUser.login}</span>
-              </div>
-              <button
-                onClick={() => setCredsOpen((v) => !v)}
-                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {credsOpen ? t.wykonawcy.hideCredsBtn : t.wykonawcy.editCredsBtn}
-              </button>
+            {/* Login + activation status */}
+            <div className="flex items-center gap-2 text-sm">
+              <KeyRound size={14} className="text-muted-foreground shrink-0" />
+              <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">{accountUser.login}</span>
             </div>
-
-            {credsOpen && (
-              <div className="p-3 rounded-lg bg-muted/50 border border-border space-y-2">
-                <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground font-medium">{t.wykonawcy.labelLogin}</p>
-                  <Input
-                    value={credLogin}
-                    onChange={(e) => setCredLogin(e.target.value)}
-                    className="text-xs h-7 font-mono"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground font-medium">{t.wykonawcy.newPassword}</p>
-                  <div className="relative">
-                    <Input
-                      type={showCredPass ? "text" : "password"}
-                      value={credPassword}
-                      onChange={(e) => setCredPassword(e.target.value)}
-                      placeholder={t.wykonawcy.leaveEmptyToKeep}
-                      className="text-xs h-7 pr-7"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowCredPass((v) => !v)}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground"
-                    >
-                      {showCredPass ? <EyeOff size={11} /> : <Eye size={11} />}
-                    </button>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between gap-2 pt-1">
-                  <button
-                    onClick={unlinkAccount}
-                    className="text-xs text-destructive hover:text-destructive/80 transition-colors"
-                  >
-                    {t.wykonawcy.unlinkAccount}
-                  </button>
-                  <Button
-                    size="sm"
-                    className="h-7 text-xs"
-                    disabled={savingCreds || (!credLogin.trim() && !credPassword.trim())}
-                    onClick={saveAccountCreds}
-                  >
-                    {savingCreds ? t.wykonawcy.savingBtn : t.common.save}
-                  </Button>
-                </div>
+            {accountUser.firstLoginAt ? (
+              <div className="flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400">
+                <CheckCircle size={12} />
+                <span>Aktywny · zalogował się {new Date(accountUser.firstLoginAt).toLocaleDateString("pl-PL")}</span>
               </div>
+            ) : (
+              <p className="text-xs text-amber-600 dark:text-amber-400">Oczekuje na pierwsze logowanie</p>
             )}
+            {/* Send link button */}
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 text-xs gap-1.5 w-full"
+              disabled={sendingLink || !accountUser.email}
+              onClick={() => sendAccessLink(accountUser.id)}
+              title={!accountUser.email ? "Wykonawca nie ma adresu e-mail" : undefined}
+            >
+              <Send size={11} />
+              {sendingLink ? "Wysyłanie…" : "Wyślij link dostępowy"}
+            </Button>
+            <button
+              onClick={unlinkAccount}
+              className="text-xs text-destructive hover:text-destructive/80 transition-colors"
+            >
+              {t.wykonawcy.unlinkAccount}
+            </button>
           </div>
         ) : (
           <div className="space-y-2">
@@ -371,6 +325,9 @@ export default function ContractorProfile({ contractor }: Props) {
 
             {createOpen && (
               <div className="p-3 rounded-lg bg-muted/50 border border-border space-y-2">
+                <p className="text-xs text-muted-foreground">
+                  Wykonawca otrzyma link dostępowy na podany e-mail. Nie musisz ustawiać hasła.
+                </p>
                 <div className="space-y-1">
                   <p className="text-xs text-muted-foreground font-medium">{t.wykonawcy.emailLogin}</p>
                   <Input
@@ -381,30 +338,11 @@ export default function ContractorProfile({ contractor }: Props) {
                     className="text-xs h-7"
                   />
                 </div>
-                <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground font-medium">{t.wykonawcy.labelPassword}</p>
-                  <div className="relative">
-                    <Input
-                      type={showCreatePass ? "text" : "password"}
-                      value={createPassword}
-                      onChange={(e) => setCreatePassword(e.target.value)}
-                      placeholder={t.wykonawcy.minChars}
-                      className="text-xs h-7 pr-7"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowCreatePass((v) => !v)}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground"
-                    >
-                      {showCreatePass ? <EyeOff size={11} /> : <Eye size={11} />}
-                    </button>
-                  </div>
-                </div>
                 <div className="flex justify-end pt-1">
                   <Button
                     size="sm"
                     className="h-7 text-xs"
-                    disabled={creatingAccount || !createPassword.trim() || createPassword.trim().length < 4}
+                    disabled={creatingAccount}
                     onClick={createAccount}
                   >
                     {creatingAccount ? t.wykonawcy.creating : t.wykonawcy.createAccountBtn}

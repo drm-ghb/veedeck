@@ -131,9 +131,12 @@ export default function ShareSidebar({
     setSettingsOpen(false);
   }
 
+  const sidebarStorageKey = clientProjectId ? "client-sidebar-collapsed" : "nav-sidebar-collapsed";
+
   useLayoutEffect(() => {
-    const saved = localStorage.getItem("nav-sidebar-collapsed");
+    const saved = localStorage.getItem(sidebarStorageKey);
     if (saved === "true") setCollapsed(true);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Unread discussion count — fetch from server on mount to catch messages sent before client first opened panel
@@ -306,7 +309,7 @@ export default function ShareSidebar({
   function toggle() {
     const next = !collapsed;
     setCollapsed(next);
-    localStorage.setItem("nav-sidebar-collapsed", String(next));
+    localStorage.setItem(sidebarStorageKey, String(next));
   }
 
   const isCollapsed = forceCollapsed ?? collapsed;

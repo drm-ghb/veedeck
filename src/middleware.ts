@@ -45,6 +45,7 @@ export default auth((req) => {
     !pathname.startsWith("/wykonawca") &&
     !pathname.startsWith("/api/") &&
     !pathname.startsWith("/login") &&
+    !pathname.startsWith("/p/") &&
     !pathname.startsWith("/_next")
   ) {
     return NextResponse.redirect(new URL("/wykonawca", req.url));
@@ -53,7 +54,7 @@ export default auth((req) => {
   // Protect /wykonawca/* — require authenticated contractor only
   if (pathname.startsWith("/wykonawca") && !pathname.startsWith("/api/")) {
     if (!isLoggedIn) {
-      return NextResponse.redirect(new URL("/login", req.url));
+      return NextResponse.redirect(new URL("/login/wykonawca", req.url));
     }
     if (!isContractor) {
       return NextResponse.redirect(new URL("/panel-glowny", req.url));
@@ -69,6 +70,7 @@ export default auth((req) => {
     !pathname.startsWith("/share/") &&
     !pathname.startsWith("/api/") &&
     !pathname.startsWith("/login") &&
+    !pathname.startsWith("/p/") &&
     !pathname.startsWith("/_next")
   ) {
     return NextResponse.redirect(new URL("/client", req.url));
@@ -77,7 +79,7 @@ export default auth((req) => {
   // Protect /client/* — require authenticated client or designer
   if (pathname.startsWith("/client") && !pathname.startsWith("/api/")) {
     if (!isLoggedIn) {
-      return NextResponse.redirect(new URL("/login", req.url));
+      return NextResponse.redirect(new URL("/login/klient", req.url));
     }
   }
 

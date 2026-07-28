@@ -3,9 +3,8 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X, LayoutDashboard, Users, LocalMall, Package, Settings, LogOut, HelpCircle, Sun, Moon, CheckCircle, CalendarDays, NotebookText, PushPin, ChatBubble, VeezardIcon, BookOpen, ClipboardList, CheckSquare, Engineering } from "@/components/ui/icons";
+import { Menu, X, LayoutDashboard, Users, LocalMall, Package, Settings, LogOut, HelpCircle, CheckCircle, CalendarDays, NotebookText, PushPin, ChatBubble, VeezardIcon, BookOpen, ClipboardList, CheckSquare, Engineering, Interests } from "@/components/ui/icons";
 import { signOut } from "next-auth/react";
-import { useTheme } from "@/lib/theme";
 import { useT } from "@/lib/i18n";
 
 interface MobileMenuProps {
@@ -22,7 +21,6 @@ export default function MobileMenu({ userName, logoUrl, hiddenModules = [], isTr
   const [helpDesc, setHelpDesc] = useState("");
   const [helpSent, setHelpSent] = useState(false);
   const pathname = usePathname();
-  const { theme, setTheme } = useTheme();
   const t = useT();
 
   const [discussionUnread, setDiscussionUnread] = useState(0);
@@ -46,6 +44,7 @@ export default function MobileMenu({ userName, logoUrl, hiddenModules = [], isTr
     { label: t.nav.projects, href: "/klienci", icon: <Users size={18} />, slug: null },
     { label: t.nav.renderflow, href: "/projectflow", icon: <PushPin size={18} />, slug: "renderflow" },
     { label: t.nav.lists, href: "/listy-zakupowe", icon: <LocalMall size={18} />, slug: "listy" },
+    { label: t.nav.moodboard, href: "/moodboardy", icon: <Interests size={18} />, slug: "moodboardy" },
     { label: t.nav.contractors, href: "/wykonawcy", icon: <Engineering size={18} />, slug: null },
     { label: t.nav.tasks, href: "/zadania", icon: <CheckSquare size={18} />, slug: null },
     { label: t.nav.products, href: "/produkty", icon: <Package size={18} />, slug: "produkty" },
@@ -156,24 +155,6 @@ export default function MobileMenu({ userName, logoUrl, hiddenModules = [], isTr
 
         {/* Bottom actions */}
         <div className="p-3 border-t border-border space-y-0.5">
-          {/* Theme toggle */}
-          <div className="flex items-center justify-between px-3 py-2.5 rounded-lg">
-            <div className="flex items-center gap-3">
-              <span className="w-5 flex items-center justify-center text-gray-400">
-                {theme === "dark" ? <Moon size={18} /> : <Sun size={18} />}
-              </span>
-              <span className="text-sm font-medium text-gray-400">
-                {theme === "dark" ? t.nav.dark : t.nav.light}
-              </span>
-            </div>
-            <button
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className={`relative w-10 h-5 rounded-full transition-colors shrink-0 ${theme === "dark" ? "bg-primary" : "bg-muted-foreground/30"}`}
-            >
-              <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${theme === "dark" ? "left-5" : "left-0.5"}`} />
-            </button>
-          </div>
-
           <button
             onClick={openHelp}
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:bg-muted hover:text-foreground transition-colors"

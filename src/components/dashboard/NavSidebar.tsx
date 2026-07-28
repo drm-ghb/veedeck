@@ -4,8 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import Pusher from "pusher-js";
-import { LayoutDashboard, Users, LocalMall, Package, PanelLeftClose, PanelLeftOpen, Settings, Sun, Moon, HelpCircle, PushPin, ShieldCheck, CalendarDays, NotebookText, ChatBubble, CheckSquare, VeezardIcon, BookOpen, ClipboardList, Engineering, Interests, Bug } from "@/components/ui/icons";
-import { useTheme } from "@/lib/theme";
+import { LayoutDashboard, Users, LocalMall, Package, PanelLeftClose, PanelLeftOpen, Settings, HelpCircle, PushPin, ShieldCheck, CalendarDays, NotebookText, ChatBubble, CheckSquare, VeezardIcon, BookOpen, ClipboardList, Engineering, Interests, Bug } from "@/components/ui/icons";
 import { useT } from "@/lib/i18n";
 import HelpWidget from "@/components/dashboard/HelpWidget";
 
@@ -36,7 +35,6 @@ const HIDDEN_ON: RegExp[] = [
 
 export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userId, isTrial, initialCollapsed = false }: NavSidebarProps) {
   const pathname = usePathname();
-  const { theme, setTheme } = useTheme();
   const t = useT();
   const [collapsed, setCollapsed] = useState(initialCollapsed);
   const [mounted, setMounted] = useState(false);
@@ -327,35 +325,6 @@ export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userI
       )}
 
       <div className="p-2 space-y-0.5">
-        {/* Theme toggle */}
-        {isCollapsed ? (
-          <button
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            title={theme === "dark" ? t.nav.switchLight : t.nav.switchDark}
-            className="flex items-center justify-center w-full py-2 px-2.5 rounded-lg opacity-60 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
-          >
-            {theme === "dark" ? <Moon size={18} /> : <Sun size={18} />}
-          </button>
-        ) : (
-          <div className="flex items-center justify-between px-2.5 py-2.5 rounded-lg">
-            <div className="flex items-center gap-3">
-              <span className="flex-shrink-0 w-5 flex items-center justify-center opacity-60">
-                {theme === "dark" ? <Moon size={18} /> : <Sun size={18} />}
-              </span>
-              <span className="text-sm font-medium opacity-60">
-                {theme === "dark" ? t.nav.dark : t.nav.light}
-              </span>
-            </div>
-            <button
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              title={theme === "dark" ? t.nav.switchLight : t.nav.switchDark}
-              className={`relative w-10 h-5 rounded-full transition-colors shrink-0 ${theme === "dark" ? "bg-primary" : "bg-muted-foreground/30"}`}
-            >
-              <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${theme === "dark" ? "left-5" : "left-0.5"}`} />
-            </button>
-          </div>
-        )}
-
         {/* Zgłoś błąd */}
         <button
           onClick={() => { setHelpTab("contact"); setHelpCategory("🐞 Zgłoś błąd"); setHelpOpen(true); }}

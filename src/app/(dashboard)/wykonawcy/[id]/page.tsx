@@ -18,7 +18,7 @@ export default async function ContractorDetailPage({ params }: Props) {
   const contractor = await prisma.contractor.findFirst({
     where: { id, designerId },
     include: {
-      user: { select: { id: true, login: true, email: true } },
+      user: { select: { id: true, login: true, email: true, firstLoginAt: true } },
       assignments: {
         include: {
           project: { select: { id: true, title: true, clientName: true } },
@@ -54,7 +54,9 @@ export default async function ContractorDetailPage({ params }: Props) {
 
   const serializedContractor = {
     ...contractor,
-    user: contractor.user ?? null,
+    user: contractor.user
+      ? { ...contractor.user, firstLoginAt: contractor.user.firstLoginAt?.toISOString() ?? null }
+      : null,
     assignments: contractor.assignments.map((a) => ({
       ...a,
       createdAt: a.createdAt.toISOString(),

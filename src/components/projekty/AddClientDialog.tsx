@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Eye, EyeOff } from "@/components/ui/icons";
 import { useT } from "@/lib/i18n";
 
 interface Props {
@@ -23,8 +22,6 @@ export default function AddClientDialog({ open, onOpenChange, onCreated }: Props
   const [contactName, setContactName] = useState("");
   const [contactEmail, setContactEmail] = useState("");
   const [contactPhone, setContactPhone] = useState("");
-  const [contactPassword, setContactPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   function reset() {
@@ -33,8 +30,6 @@ export default function AddClientDialog({ open, onOpenChange, onCreated }: Props
     setContactName("");
     setContactEmail("");
     setContactPhone("");
-    setContactPassword("");
-    setShowPassword(false);
   }
 
   async function handleSubmit() {
@@ -54,7 +49,6 @@ export default function AddClientDialog({ open, onOpenChange, onCreated }: Props
           contactName: contactName.trim() || undefined,
           contactEmail: contactEmail.trim() || undefined,
           contactPhone: contactPhone.trim() || undefined,
-          contactPassword: contactPassword.trim() || undefined,
         }),
       });
       if (!res.ok) {
@@ -117,29 +111,6 @@ export default function AddClientDialog({ open, onOpenChange, onCreated }: Props
                 placeholder="+48 123 456 789"
               />
             </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <Label>{t.projekty.clientPasswordLabel} <span className="text-muted-foreground font-normal">{t.common.optional}</span></Label>
-            <div className="relative">
-              <Input
-                type={showPassword ? "text" : "password"}
-                value={contactPassword}
-                onChange={(e) => setContactPassword(e.target.value)}
-                placeholder={t.projekty.clientPasswordLoginPlaceholder}
-                className="pr-9"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword((v) => !v)}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              >
-                {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
-              </button>
-            </div>
-            {contactPassword.trim() && contactEmail.trim() && (
-              <p className="text-xs text-muted-foreground">{t.projekty.clientLoginPrefix} <span className="font-mono font-medium text-foreground">{contactEmail.trim().toLowerCase()}</span></p>
-            )}
           </div>
 
           <div className="space-y-1.5">

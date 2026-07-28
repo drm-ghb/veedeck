@@ -6,6 +6,70 @@ import bcrypt from "bcryptjs";
 import { prisma } from "./prisma";
 import { logActivity } from "./activity-log";
 import { authConfig } from "./auth.config";
+import { verifyAccessToken, extendTokenExpiry } from "./access-token";
+
+/** Find the designer responsible for a client/contractor and send first-login notification. */
+async function notifyDesignerFirstLogin(userId: string, role: string): Promise<void> {
+  try {
+    let designerId: string | null = null;
+    let personName: string | null = null;
+
+    if (role === "client") {
+      // Find via ProjectClient → Client → designer
+      const contact = await prisma.projectClient.findFirst({
+        where: { userId },
+        include: { client: { select: { designerId: true, name: true } } },
+      });
+      designerId = contact?.client?.designerId ?? null;
+      personName = contact?.name ?? null;
+    } else if (role === "contractor") {
+      const contractor = await prisma.contractor.findFirst({
+        where: { userId },
+        select: { designerId: true, name: true },
+      });
+      designerId = contractor?.designerId ?? null;
+      personName = contractor?.name ?? null;
+    }
+
+    if (!designerId) return;
+
+    const designer = await prisma.user.findUnique({
+      where: { id: designerId },
+      select: { email: true, contactEmail: true },
+    });
+    if (!designer) return;
+
+    const now = new Date();
+    const dateStr = now.toLocaleDateString("pl-PL", { day: "2-digit", month: "2-digit", year: "numeric" });
+    const timeStr = now.toLocaleTimeString("pl-PL", { hour: "2-digit", minute: "2-digit" });
+    const label = role === "client" ? "Klient" : "Wykonawca";
+
+    // In-app notification
+    await prisma.notification.create({
+      data: {
+        userId: designerId,
+        message: `${label} ${personName ?? "nieznany"} po raz pierwszy otworzył panel (${dateStr} ${timeStr}).`,
+        link: role === "client" ? "/klienci" : "/wykonawcy",
+        type: "info",
+      },
+    });
+
+    // Email notification
+    const toEmail = designer.contactEmail ?? designer.email;
+    if (toEmail) {
+      const { sendFirstLoginNotification } = await import("./email");
+      await sendFirstLoginNotification({
+        to: toEmail,
+        personName: personName ?? "Nieznany",
+        role: label,
+        date: dateStr,
+        time: timeStr,
+      });
+    }
+  } catch (err) {
+    console.error("[auth] notifyDesignerFirstLogin error:", err);
+  }
+}
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
@@ -23,8 +87,37 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         email: { label: "Email", type: "email" },
         password: { label: "Hasło", type: "password" },
         impersonateToken: { label: "Impersonate Token", type: "text" },
+        accessToken: { label: "Access Token", type: "text" },
       },
       async authorize(credentials) {
+        // Access token path — passwordless entry via /p/[token]
+        if (credentials?.accessToken) {
+          const raw = credentials.accessToken as string;
+          const result = await verifyAccessToken(raw);
+          if (!result.ok) return null;
+
+          const user = await prisma.user.findUnique({
+            where: { id: result.userId },
+            select: { id: true, email: true, name: true, role: true },
+          });
+          if (!user) return null;
+
+          // Extend sliding window
+          await extendTokenExpiry(result.tokenId);
+
+          // First login — set firstLoginAt atomically and notify designer
+          const updated = await prisma.user.updateMany({
+            where: { id: user.id, firstLoginAt: null },
+            data: { firstLoginAt: new Date() },
+          });
+          if (updated.count > 0) {
+            // Fire-and-forget: notify designer of first login
+            void notifyDesignerFirstLogin(user.id, user.role).catch(() => {});
+          }
+
+          return { id: user.id, email: user.email, name: user.name, isAdmin: false, role: user.role };
+        }
+
         // Impersonation path — admin-generated one-time token
         if (credentials?.impersonateToken) {
           const rec = await prisma.impersonationToken.findUnique({
@@ -127,6 +220,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           } else {
             token.memberHiddenModules = [];
           }
+          // isMainContact — for clients, determines who can accept renders/lists
+          if (dbUser?.role === "client") {
+            const contact = await prisma.projectClient.findFirst({
+              where: { userId: user.id as string },
+              select: { isMainContact: true },
+            });
+            token.isMainContact = contact?.isMainContact ?? false;
+          }
         } catch (e) {
           console.error("[auth] JWT callback prisma error:", e);
           token.needsNameSetup = false;
@@ -200,6 +301,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         (session.user as any).trialEndsAt = token.trialEndsAt ?? null;
         (session.user as any).isFree = token.isFree ?? false;
         (session.user as any).hasActiveSubscription = token.hasActiveSubscription ?? false;
+        (session.user as any).isMainContact = token.isMainContact ?? null;
       }
       return session;
     },

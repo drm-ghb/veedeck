@@ -25,14 +25,12 @@ interface ClientItem {
 export default function NewListDialog() {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
-  const [clientTab, setClientTab] = useState<"new" | "existing">("new");
+  const [clientTab, setClientTab] = useState<"new" | "existing">("existing");
   const [clientEntityName, setClientEntityName] = useState("");
   const [newClientName, setNewClientName] = useState("");
   const [newClientEmail, setNewClientEmail] = useState("");
   const [newClientEmailError, setNewClientEmailError] = useState("");
   const [newClientPhone, setNewClientPhone] = useState("");
-  const [newClientPassword, setNewClientPassword] = useState("");
-  const [showNewClientPassword, setShowNewClientPassword] = useState(false);
   const [clients, setClients] = useState<ClientItem[]>([]);
   const [loadingClients, setLoadingClients] = useState(false);
   const [selectedClient, setSelectedClient] = useState<ClientItem | null>(null);
@@ -81,7 +79,6 @@ export default function NewListDialog() {
             clientName: clientEntityName.trim(),
             clientEmail: newClientEmail.trim() || undefined,
             clientPhone: newClientPhone.trim() || undefined,
-            clientPassword: newClientPassword.trim() || undefined,
           }),
         });
         if (!projRes.ok) throw new Error();
@@ -113,13 +110,11 @@ export default function NewListDialog() {
     setOpen(val);
     if (!val) {
       setName("");
-      setClientTab("new");
+      setClientTab("existing");
       setClientEntityName("");
       setNewClientName("");
       setNewClientEmail("");
       setNewClientPhone("");
-      setNewClientPassword("");
-      setShowNewClientPassword(false);
       setSelectedClient(null);
       setSearch("");
     }
@@ -158,17 +153,6 @@ export default function NewListDialog() {
             <div className="flex gap-1 bg-muted rounded-lg p-1">
               <button
                 type="button"
-                onClick={() => { setClientTab("new"); setSelectedClient(null); setSearch(""); }}
-                className={`flex-1 text-sm py-1.5 rounded-md font-medium transition-colors ${
-                  clientTab === "new"
-                    ? "bg-background shadow-sm text-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {t.listy.newClientTab}
-              </button>
-              <button
-                type="button"
                 onClick={() => { setClientTab("existing"); setNewClientName(""); }}
                 className={`flex-1 text-sm py-1.5 rounded-md font-medium transition-colors ${
                   clientTab === "existing"
@@ -177,6 +161,17 @@ export default function NewListDialog() {
                 }`}
               >
                 {t.listy.existingClientTab}
+              </button>
+              <button
+                type="button"
+                onClick={() => { setClientTab("new"); setSelectedClient(null); setSearch(""); }}
+                className={`flex-1 text-sm py-1.5 rounded-md font-medium transition-colors ${
+                  clientTab === "new"
+                    ? "bg-background shadow-sm text-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {t.listy.newClientTab}
               </button>
             </div>
 
@@ -219,34 +214,6 @@ export default function NewListDialog() {
                       placeholder="+48 123 456 789"
                     />
                   </div>
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="newClientPassword">
-                    {t.listy.accountPassword}{" "}
-                    <span className="text-muted-foreground font-normal">{t.common.optional}</span>
-                  </Label>
-                  <div className="relative">
-                    <Input
-                      id="newClientPassword"
-                      type={showNewClientPassword ? "text" : "password"}
-                      value={newClientPassword}
-                      onChange={(e) => setNewClientPassword(e.target.value)}
-                      placeholder={t.listy.newClientPasswordPlaceholder}
-                      className="pr-9"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowNewClientPassword((v) => !v)}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                    >
-                      {showNewClientPassword ? <EyeOff size={14} /> : <Eye size={14} />}
-                    </button>
-                  </div>
-                  {newClientPassword.trim() && (
-                    newClientEmail.trim()
-                      ? <p className="text-xs text-muted-foreground">{t.listy.loginPrefix} <span className="font-mono font-medium text-foreground">{newClientEmail.trim().toLowerCase()}</span></p>
-                      : <p className="text-xs text-destructive">{t.listy.emailRequiredForLogin}</p>
-                  )}
                 </div>
               </div>
             )}
@@ -315,6 +282,11 @@ export default function NewListDialog() {
             )}
           </div>
 
+          <p className="text-xs text-muted-foreground">
+            Aby udostępnić listę klientowi, utwórz konto klienta w{" "}
+            <span className="font-medium text-foreground">Klienci → [klient] → Kontakty</span>
+          </p>
+
           <div className="flex gap-2 justify-end pt-1">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               {t.common.cancel}
@@ -326,8 +298,7 @@ export default function NewListDialog() {
                 loading ||
                 !name.trim() ||
                 (clientTab === "new" && !clientEntityName.trim()) ||
-                (clientTab === "existing" && !selectedClient) ||
-                (!!newClientPassword.trim() && !newClientEmail.trim())
+                (clientTab === "existing" && !selectedClient)
               }
             >
               {loading ? t.listy.creating : t.listy.createList}

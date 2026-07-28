@@ -10,6 +10,10 @@ import {
   teamInvitationEmailPL, teamInvitationEmailEN,
   clientInvitationEmailPL, clientInvitationEmailEN,
   paymentFailedEmailPL, paymentFailedEmailEN,
+  accessLinkEmailPL, accessLinkEmailEN,
+  reminderEmailPL,
+  firstLoginNotificationEmailPL,
+  passwordSetEmailPL,
 } from "@/lib/email-templates";
 
 const transporter = nodemailer.createTransport({
@@ -878,4 +882,81 @@ export async function notifyAdminSubscriptionChanged(opts: {
     subject: subjects[opts.changeType],
     html: emailBase(bodies[opts.changeType]),
   }).catch((err) => console.error("[EMAIL] notifyAdminSubscriptionChanged failed:", err));
+}
+
+export async function sendAccessLinkEmail({
+  to,
+  link,
+  personName,
+  designerName,
+  locale = "pl",
+}: {
+  to: string;
+  link: string;
+  personName: string;
+  designerName: string;
+  locale?: "pl" | "en";
+}) {
+  const subject = locale === "en" ? "Your project panel — veedeck" : "Twój panel projektu — veedeck";
+  const html =
+    locale === "en"
+      ? accessLinkEmailEN({ link, personName, designerName })
+      : accessLinkEmailPL({ link, personName, designerName });
+  await transporter.sendMail({ from: FROM, to, subject, html })
+    .catch((err) => console.error("[EMAIL] sendAccessLinkEmail failed:", err));
+}
+
+export async function sendReminderEmail({
+  to,
+  link,
+  personName,
+  designerName,
+}: {
+  to: string;
+  link: string;
+  personName: string;
+  designerName: string;
+}) {
+  await transporter.sendMail({
+    from: FROM,
+    to,
+    subject: "Przypomnienie — Twój panel projektu czeka",
+    html: reminderEmailPL({ link, personName, designerName }),
+  }).catch((err) => console.error("[EMAIL] sendReminderEmail failed:", err));
+}
+
+export async function sendFirstLoginNotification({
+  to,
+  personName,
+  role,
+  date,
+  time,
+}: {
+  to: string;
+  personName: string;
+  role: string;
+  date: string;
+  time: string;
+}) {
+  await transporter.sendMail({
+    from: FROM,
+    to,
+    subject: `${role} ${personName} po raz pierwszy otworzył panel`,
+    html: firstLoginNotificationEmailPL({ personName, role, date, time }),
+  }).catch((err) => console.error("[EMAIL] sendFirstLoginNotification failed:", err));
+}
+
+export async function sendPasswordSetConfirmation({
+  to,
+  personName,
+}: {
+  to: string;
+  personName: string;
+}) {
+  await transporter.sendMail({
+    from: FROM,
+    to,
+    subject: "Hasło zostało ustawione — veedeck",
+    html: passwordSetEmailPL(personName),
+  }).catch((err) => console.error("[EMAIL] sendPasswordSetConfirmation failed:", err));
 }

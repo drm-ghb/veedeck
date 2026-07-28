@@ -265,6 +265,16 @@ export default function ClientProjectPage() {
   const [showNewPwd, setShowNewPwd] = useState(false);
   const [showConfirmPwd, setShowConfirmPwd] = useState(false);
 
+  // Welcome banner (first visit via magic link)
+  const [showWelcomeBanner, setShowWelcomeBanner] = useState(false);
+
+  // Set initial password (magic-link users — no current password needed)
+  const [showSetInitialPwd, setShowSetInitialPwd] = useState(false);
+  const [initialPwd, setInitialPwd] = useState("");
+  const [initialPwdConfirm, setInitialPwdConfirm] = useState("");
+  const [showInitialPwd, setShowInitialPwd] = useState(false);
+  const [initialPwdLoading, setInitialPwdLoading] = useState(false);
+
   // Avatar state
   const [clientAvatarUrl, setClientAvatarUrl] = useState<string | null>(null);
   const [avatarCropSrc, setAvatarCropSrc] = useState<string | null>(null);
@@ -352,6 +362,12 @@ export default function ClientProjectPage() {
     return () => window.removeEventListener("popstate", handlePopState);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!projectId) return;
+    const shown = localStorage.getItem(`client-welcome-shown-${projectId}`);
+    if (!shown) setShowWelcomeBanner(true);
+  }, [projectId]);
 
   useEffect(() => {
     if (view !== "home" || !project) return;
@@ -449,6 +465,20 @@ export default function ClientProjectPage() {
       toast.success("Hasło zostało zmienione");
       setCurrentPassword(""); setNewPassword(""); setConfirmPassword("");
     } finally { setPasswordLoading(false); }
+  }
+
+  async function handleSetInitialPassword() {
+    if (initialPwd !== initialPwdConfirm) { toast.error("Hasła nie są identyczne"); return; }
+    const valid = initialPwd.length >= 8 && /[a-z]/.test(initialPwd) && /[A-Z]/.test(initialPwd) && /[0-9]/.test(initialPwd);
+    if (!valid) { toast.error("Hasło nie spełnia wymagań bezpieczeństwa"); return; }
+    setInitialPwdLoading(true);
+    try {
+      const res = await fetch("/api/user/set-initial-password", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ newPassword: initialPwd }) });
+      const data = await res.json();
+      if (!res.ok) { toast.error(data.error || "Nie udało się ustawić hasła"); return; }
+      toast.success("Hasło zostało ustawione. Możesz teraz logować się bezpośrednio.");
+      setInitialPwd(""); setInitialPwdConfirm(""); setShowSetInitialPwd(false);
+    } finally { setInitialPwdLoading(false); }
   }
 
   useEffect(() => {
@@ -744,6 +774,38 @@ export default function ClientProjectPage() {
     <>
       {view === "home" && (
         <div>
+          {/* ── Welcome banner (first visit) ── */}
+          {showWelcomeBanner && (
+            <div className="flex items-start gap-3 bg-primary/8 border border-primary/20 rounded-xl px-4 py-3.5 mb-5">
+              <Info size={16} className="text-primary mt-0.5 flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-foreground mb-0.5">Witaj w panelu klienta!</p>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Dostęp uzyskujesz przez unikalny link — nie musisz pamiętać hasła. Jeśli chcesz logować się e-mailem i hasłem,{" "}
+                  <button
+                    type="button"
+                    onClick={() => { setView("settings"); setShowSetInitialPwd(true); navigate({ view: "settings" }); }}
+                    className="text-primary underline underline-offset-2 hover:opacity-80 transition-opacity"
+                  >
+                    ustaw hasło w ustawieniach
+                  </button>
+                  .
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowWelcomeBanner(false);
+                  localStorage.setItem(`client-welcome-shown-${projectId}`, "1");
+                }}
+                className="text-muted-foreground hover:text-foreground transition-colors flex-shrink-0 mt-0.5"
+                aria-label="Zamknij"
+              >
+                <X size={15} />
+              </button>
+            </div>
+          )}
+
           {/* ── Welcome row ── */}
           <div className="flex items-center justify-between flex-wrap gap-3.5 mb-[22px]">
             <h2 className="text-[23px] font-bold tracking-tight text-foreground">
@@ -1179,7 +1241,7 @@ export default function ClientProjectPage() {
                           {downloadingAll ? "Pobieranie…" : "Pobierz wszystko"}
                         </button>
                       )}
-                      {(project.allowDirectStatusChange || project.allowClientAcceptance) && activeRenders.some((r) => r.status !== "ACCEPTED") && (
+                      {(project.allowDirectStatusChange || project.allowClientAcceptance) && activeRenders.some((r) => r.status !== "ACCEPTED") && (session?.user as any)?.isMainContact !== false && (
                         <button
                           onClick={() => handleBatchApprove(activeRenders)}
                           disabled={batchApproving}
@@ -1491,6 +1553,54 @@ export default function ClientProjectPage() {
               </div>
             </div>
 
+            {/* Magic-link banner: set initial password */}
+            <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-2xl p-5 space-y-3">
+              <div className="flex items-start gap-2">
+                <Info size={15} className="text-blue-500 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-blue-800 dark:text-blue-300">Logowanie przez link dostępowy</p>
+                  <p className="text-xs text-blue-600 dark:text-blue-400 mt-0.5">
+                    Twoje konto korzysta z bezpiecznych linków dostępowych. Możesz też ustawić hasło, żeby logować się bezpośrednio.
+                  </p>
+                </div>
+              </div>
+              {!showSetInitialPwd ? (
+                <button
+                  onClick={() => setShowSetInitialPwd(true)}
+                  className="text-xs text-blue-700 dark:text-blue-300 underline hover:no-underline"
+                >
+                  Ustaw hasło do logowania bezpośredniego →
+                </button>
+              ) : (
+                <div className="space-y-3 pt-1">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <label className="text-xs text-blue-700 dark:text-blue-300 font-medium">Nowe hasło</label>
+                      <div className="relative">
+                        <Input type={showInitialPwd ? "text" : "password"} value={initialPwd} onChange={(e) => setInitialPwd(e.target.value)} placeholder="min. 8 znaków" className="pr-9 text-sm" />
+                        <button type="button" onClick={() => setShowInitialPwd(!showInitialPwd)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                          {showInitialPwd ? <EyeOff size={14} /> : <Eye size={14} />}
+                        </button>
+                      </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs text-blue-700 dark:text-blue-300 font-medium">Powtórz hasło</label>
+                      <Input type="password" value={initialPwdConfirm} onChange={(e) => setInitialPwdConfirm(e.target.value)} placeholder="••••••••" className="text-sm" onKeyDown={(e) => e.key === "Enter" && handleSetInitialPassword()} />
+                    </div>
+                  </div>
+                  <p className="text-xs text-blue-500 dark:text-blue-400">Min. 8 znaków, mała i duża litera oraz cyfra.</p>
+                  <div className="flex gap-2">
+                    <Button size="sm" onClick={handleSetInitialPassword} disabled={initialPwdLoading || !initialPwd || !initialPwdConfirm}>
+                      {initialPwdLoading ? "Ustawianie…" : "Ustaw hasło"}
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => { setShowSetInitialPwd(false); setInitialPwd(""); setInitialPwdConfirm(""); }}>
+                      Anuluj
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
               <div className="flex items-center gap-2">
                 <Lock size={16} className="text-gray-400" />
@@ -1716,9 +1826,9 @@ export default function ClientProjectPage() {
               isDesigner={false}
               roomRenders={roomRenders}
               initialRenderStatus={selectedRender.status}
-              allowDirectStatusChange={project.allowDirectStatusChange}
+              allowDirectStatusChange={project.allowDirectStatusChange && (session?.user as any)?.isMainContact !== false}
               allowClientComments={project.allowClientComments}
-              allowClientAcceptance={project.allowClientAcceptance}
+              allowClientAcceptance={project.allowClientAcceptance && (session?.user as any)?.isMainContact !== false}
               hideCommentCount={project.hideCommentCount}
               versions={selectedRender.versions.map((v) => ({ ...v, archivedAt: typeof v.archivedAt === "string" ? v.archivedAt : new Date(v.archivedAt).toISOString() }))}
               allowClientVersionRestore={project.allowClientVersionRestore}

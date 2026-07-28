@@ -91,7 +91,8 @@ function RoleSwitcher({ current }: { current: "projektant" | "klient" | "wykonaw
   const labels = { projektant: "Projektant", klient: "Klient", wykonawca: "Wykonawca" };
   const links = { projektant: "/login", klient: "/login/klient", wykonawca: "/login/wykonawca" };
   return (
-    <div style={{ position: "absolute", left: "50%", transform: "translateX(-50%)" }}>
+    <div style={{ position: "relative", display: "flex", justifyContent: "center", alignItems: "center", gap: 10 }}>
+      <span style={{ fontSize: 13.5, color: "var(--muted-foreground)", fontWeight: 500, whiteSpace: "nowrap" }}>Zaloguj się jako:</span>
       <button type="button" className="vd-role-btn" onClick={() => setOpen((o) => !o)}>
         {labels[current]}
         <svg className={`vd-role-btn-chevron${open ? " open" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -192,7 +193,6 @@ export default function LoginKlientPage() {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img className="word" src="/vee_black.png" alt="veedeck" />
             </a>
-            <RoleSwitcher current="klient" />
             <a className="vd-back-link" href="https://veedeck.com">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M19 12H5M12 19l-7-7 7-7" />
@@ -212,6 +212,8 @@ export default function LoginKlientPage() {
                     <h1>Zaloguj się<br />do swojego panelu.</h1>
                     <p className="sub">Podaj adres e-mail — wyślemy Ci link dostępowy.</p>
                   </div>
+
+                  <RoleSwitcher current="klient" />
 
                   <div className="vd-card">
                     <form className="vd-form-stack" onSubmit={handleRequestLink} autoComplete="on">

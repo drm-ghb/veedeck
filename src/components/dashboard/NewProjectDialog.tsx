@@ -35,7 +35,7 @@ interface ClientOption {
 export default function NewProjectDialog({ module, label, iconOnly, clientMode, clientId: fixedClientId, clientName: fixedClientName }: NewProjectDialogProps = {}) {
   const t = useT();
   const [open, setOpen] = useState(false);
-  const [tab, setTab] = useState<"new" | "existing">("new");
+  const [tab, setTab] = useState<"new" | "existing">("existing");
 
   // New project form
   const [title, setTitle] = useState("");
@@ -43,8 +43,6 @@ export default function NewProjectDialog({ module, label, iconOnly, clientMode, 
   const [clientEmail, setClientEmail] = useState("");
   const [clientEmailError, setClientEmailError] = useState("");
   const [clientPhone, setClientPhone] = useState("");
-  const [clientPassword, setClientPassword] = useState("");
-  const [showClientPassword, setShowClientPassword] = useState(false);
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -96,7 +94,6 @@ export default function NewProjectDialog({ module, label, iconOnly, clientMode, 
       clientName: clientName.trim() || fixedClientName || undefined,
       clientEmail: clientEmail.trim() || undefined,
       clientPhone: clientPhone.trim() || undefined,
-      clientPassword: clientPassword.trim() || undefined,
       description: description.trim() || undefined,
       clientId: effectiveClientId,
       ...(module && { module }),
@@ -117,8 +114,6 @@ export default function NewProjectDialog({ module, label, iconOnly, clientMode, 
       setClientName("");
       setClientEmail("");
       setClientPhone("");
-      setClientPassword("");
-      setShowClientPassword(false);
       setDescription("");
       setSelectedClientId("");
       setClientSearch("");
@@ -133,13 +128,11 @@ export default function NewProjectDialog({ module, label, iconOnly, clientMode, 
   function handleOpenChange(val: boolean) {
     setOpen(val);
     if (!val) {
-      setTab("new");
+      setTab("existing");
       setTitle("");
       setClientName("");
       setClientEmail("");
       setClientPhone("");
-      setClientPassword("");
-      setShowClientPassword(false);
       setDescription("");
       setSelectedClientId("");
       setClientSearch("");
@@ -228,16 +221,6 @@ export default function NewProjectDialog({ module, label, iconOnly, clientMode, 
         {module && (
           <div className="flex gap-1 bg-muted rounded-lg p-1">
             <button
-              onClick={() => { setTab("new"); setSelectedClientId(""); setClientSearch(""); }}
-              className={`flex-1 text-sm py-1.5 rounded-md font-medium transition-colors ${
-                tab === "new"
-                  ? "bg-background shadow-sm text-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {t.projekty.newProjectTab}
-            </button>
-            <button
               onClick={() => setTab("existing")}
               className={`flex-1 text-sm py-1.5 rounded-md font-medium transition-colors ${
                 tab === "existing"
@@ -246,6 +229,16 @@ export default function NewProjectDialog({ module, label, iconOnly, clientMode, 
               }`}
             >
               {t.projekty.existingProjectTab}
+            </button>
+            <button
+              onClick={() => { setTab("new"); setSelectedClientId(""); setClientSearch(""); }}
+              className={`flex-1 text-sm py-1.5 rounded-md font-medium transition-colors ${
+                tab === "new"
+                  ? "bg-background shadow-sm text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {t.projekty.newProjectTab}
             </button>
           </div>
         )}
@@ -301,34 +294,6 @@ export default function NewProjectDialog({ module, label, iconOnly, clientMode, 
                   </div>
                 </div>
 
-                <div className="space-y-1.5">
-                  <Label htmlFor="clientPassword">
-                    {t.projekty.clientPasswordLabel}{" "}
-                    <span className="text-muted-foreground font-normal">{t.common.optional}</span>
-                  </Label>
-                  <div className="relative">
-                    <Input
-                      id="clientPassword"
-                      type={showClientPassword ? "text" : "password"}
-                      value={clientPassword}
-                      onChange={(e) => setClientPassword(e.target.value)}
-                      placeholder={t.projekty.clientPasswordLoginPlaceholder}
-                      className="pr-9"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowClientPassword((v) => !v)}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                    >
-                      {showClientPassword ? <EyeOff size={14} /> : <Eye size={14} />}
-                    </button>
-                  </div>
-                  {clientPassword.trim() && (
-                    clientEmail.trim()
-                      ? <p className="text-xs text-muted-foreground">Login: <span className="font-mono font-medium text-foreground">{clientEmail.trim().toLowerCase()}</span></p>
-                      : <p className="text-xs text-destructive">{t.projekty.emailRequiredForPassword}</p>
-                  )}
-                </div>
               </>
             )}
 
@@ -342,6 +307,11 @@ export default function NewProjectDialog({ module, label, iconOnly, clientMode, 
                 rows={3}
               />
             </div>
+
+            <p className="text-xs text-muted-foreground">
+              Aby udostępnić projekt klientowi, utwórz konto klienta w{" "}
+              <span className="font-medium text-foreground">Klienci → [klient] → Kontakty</span>
+            </p>
 
             <div className="flex gap-2 justify-end pt-1">
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>
@@ -372,6 +342,10 @@ export default function NewProjectDialog({ module, label, iconOnly, clientMode, 
                     {t.projekty.changeBtn}
                   </button>
                 </div>
+                <p className="text-xs text-muted-foreground">
+                  Aby udostępnić projekt klientowi, utwórz konto klienta w{" "}
+                  <span className="font-medium text-foreground">Klienci → [klient] → Kontakty</span>
+                </p>
                 <div className="flex gap-2 justify-end pt-1">
                   <Button type="button" variant="outline" onClick={() => setOpen(false)}>
                     {t.common.cancel}
