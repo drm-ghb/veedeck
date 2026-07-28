@@ -2626,17 +2626,6 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                                           </div>
                                         );
                                       })}
-                                      {variants.length > 0 && !expired && (
-                                        <div className="border-t border-dashed border-border" style={{ background: '#F4F4F7', padding: '7px 12px 9px 44px' }}>
-                                          <button
-                                            onClick={() => setDialogState({ open: true, sectionId: section.id })}
-                                            className="text-xs font-semibold transition-colors hover:opacity-70"
-                                            style={{ color: '#9096A6' }}
-                                          >
-                                            + Dodaj opcjonalny wariant
-                                          </button>
-                                        </div>
-                                      )}
                                     </div>
                                   );
                                 })}
