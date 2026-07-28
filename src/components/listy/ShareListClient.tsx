@@ -389,7 +389,6 @@ export default function ShareListClient({
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-sm text-foreground leading-tight">{product.name}</p>
-                          {product.manufacturer && <p className="text-xs text-muted-foreground">{product.manufacturer}</p>}
                           {isVariant && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted text-muted-foreground mt-0.5">Wariant</span>}
                           {!isVariant && product.optional && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium border border-dashed border-muted-foreground/40 text-muted-foreground mt-0.5">Opcjonalny</span>}
                         </div>
@@ -417,8 +416,9 @@ export default function ShareListClient({
                         </div>
                       )}
                       {/* Attributes stacked */}
-                      {(product.color || product.dimensions || product.deliveryTime) && (
+                      {(product.manufacturer || product.color || product.dimensions || product.deliveryTime) && (
                         <div className="mt-1.5 space-y-0.5">
+                          {product.manufacturer && <p className="text-xs text-muted-foreground">{t.listy.fieldManufacturer}: <span className="text-foreground font-medium">{product.manufacturer}</span></p>}
                           {product.color && <p className="text-xs text-muted-foreground">{t.listy.fieldColor}: <span className="text-foreground font-medium">{product.color}</span></p>}
                           {product.dimensions && <p className="text-xs text-muted-foreground">{t.listy.fieldDimensions}: <span className="text-foreground font-medium">{product.dimensions}</span></p>}
                           {product.deliveryTime && <p className="text-xs text-muted-foreground">{t.listy.fieldDelivery}: <span className="text-foreground font-medium">{product.deliveryTime}</span></p>}
