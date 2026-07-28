@@ -710,7 +710,7 @@ function ProductRow({
             </button>
           </div>
           {/* 3-column attribute grid */}
-          <div className="grid grid-cols-3 gap-x-0.5 mt-1">
+          <div className="grid grid-cols-3 gap-x-4 mt-1">
             {(["supplier", "color", "catalogNumber", "manufacturer", "dimensions", "deliveryTime"] as const).map((field) => {
               const labels: Record<string, string> = { manufacturer: t.listy.fieldManufacturer, supplier: t.listy.fieldSupplier, color: t.listy.fieldColor, dimensions: t.listy.fieldDimensions, deliveryTime: t.listy.fieldDelivery, catalogNumber: t.listy.fieldCatalogNumber };
               const val = product[field] as string | null;
