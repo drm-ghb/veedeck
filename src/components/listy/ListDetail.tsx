@@ -849,58 +849,106 @@ function ProductRow({
         )}
       </div>
 
-      {/* ── MOBILE layout (< lg) — compact ── */}
-      <div className="lg:hidden flex items-start gap-2 px-3 py-2.5">
-        <div className="w-20 h-20 shrink-0 rounded-lg overflow-hidden bg-white flex items-center justify-center">
-          {product.imageUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={product.imageUrl} alt={product.name} className="w-full h-full object-contain cursor-pointer" onClick={() => product.imageUrl && setLightbox(true)} />
-          ) : (
-            <span className="text-xl text-muted-foreground/30">📦</span>
-          )}
-        </div>
-        <div className="flex-1 min-w-0">
-          {/* Row 1: name + menu */}
-          <div className="flex items-start justify-between gap-1">
-            <div className="min-w-0 flex-1">
-              {product.url ? (
-                <a href={product.url} target="_blank" rel="noopener noreferrer" className="font-medium text-sm text-foreground hover:text-primary hover:underline leading-tight truncate block transition-colors">
-                  {product.name}
-                </a>
-              ) : (
-                <p className="font-medium text-sm text-foreground leading-tight truncate">{product.name}</p>
-              )}
+      {/* ── MOBILE layout (< lg) — card ── */}
+      <div className="lg:hidden px-3 py-3">
+        {/* Row 1: image + name + menu */}
+        <div className="flex items-start gap-2">
+          <div className="w-20 h-20 shrink-0 rounded-lg overflow-hidden bg-white flex items-center justify-center">
+            {product.imageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={product.imageUrl} alt={product.name} className="w-full h-full object-contain cursor-pointer" onClick={() => product.imageUrl && setLightbox(true)} />
+            ) : (
+              <span className="text-xl text-muted-foreground/30">📦</span>
+            )}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start justify-between gap-1">
+              <div className="min-w-0 flex-1">
+                {product.url ? (
+                  <a href={product.url} target="_blank" rel="noopener noreferrer" className="font-medium text-sm text-foreground hover:text-primary hover:underline leading-tight block transition-colors">
+                    {product.name}
+                  </a>
+                ) : (
+                  <p className="font-medium text-sm text-foreground leading-tight">{product.name}</p>
+                )}
+              </div>
+              <div className="shrink-0 -mt-0.5">{dropdown}</div>
+            </div>
+            {/* Tags: variant + category */}
+            <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
               {isVariant && (
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted text-muted-foreground mt-0.5">
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted text-muted-foreground">
                   <Layers size={9} />
                   wariant
                 </span>
               )}
-              {product.manufacturer && <p className="text-xs text-muted-foreground truncate">{t.listy.fieldManufacturer}: {product.manufacturer}</p>}
-              {product.supplier && <p className="text-xs text-muted-foreground truncate">{t.listy.fieldSupplier}: {product.supplier}</p>}
-              {product.color && <p className="text-xs text-muted-foreground truncate">{t.listy.fieldColor}: {product.color}</p>}
-              {product.deliveryTime && <p className="text-xs text-muted-foreground truncate">{t.listy.fieldDelivery}: {product.deliveryTime}</p>}
-              {product.dimensions && <p className="text-xs text-muted-foreground truncate">{t.listy.fieldDimensions}: {product.dimensions}</p>}
-              {product.catalogNumber && <p className="text-xs text-muted-foreground truncate">{t.listy.fieldCatalogNumber}: {product.catalogNumber}</p>}
-              {editingField === "note" ? (
-                <textarea
-                  autoFocus
-                  value={editingValue}
-                  onChange={(e) => setEditingValue(e.target.value)}
-                  onBlur={saveFieldEdit}
-                  onKeyDown={(e) => { if (e.key === "Enter" && e.ctrlKey) saveFieldEdit(); if (e.key === "Escape") setEditingField(null); }}
-                  rows={2}
-                  placeholder={t.listy.notePlaceholder}
-                  className="text-xs bg-transparent border border-primary/40 rounded px-1 focus:outline-none focus:border-primary w-full resize-none mt-0.5"
-                />
-              ) : (
-                product.note && <p className="text-xs text-muted-foreground italic truncate">📝 {product.note}</p>
-              )}
+              <button
+                onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); const estH = (allCategories.length + 1) * 28 + 8; const top = (window.innerHeight - r.bottom) >= estH + 8 ? r.bottom + 4 : Math.max(4, r.top - estH - 4); setCategoryMenuPos({ top, left: r.left }); setCategoryMenuOpen((v) => !v); }}
+                className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors shrink-0 ${product.category ? "bg-primary/8 text-primary dark:bg-primary/20" : "border border-dashed border-border text-muted-foreground"}`}
+              >
+                {product.category ? getCategoryLabel(product.category, allCategories) : t.listy.addCategoryShort}
+              </button>
             </div>
-            <div className="shrink-0 -mt-0.5">{dropdown}</div>
           </div>
-          {/* Row 2: price + category + approval */}
-          <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+        </div>
+        {/* Badges: approval + order status */}
+        <div className="flex items-center gap-1.5 mt-1.5">
+          <button
+            onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); const estH = 3 * 28 + 8; const top = (window.innerHeight - r.bottom) >= estH + 8 ? r.bottom + 4 : Math.max(4, r.top - estH - 4); setApprovalMenuPos({ top, left: r.left }); setApprovalMenuOpen((v) => !v); }}
+            className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors shrink-0 hover:opacity-80 ${getApprovalLabel(approval).cls}`}
+          >
+            {getApprovalLabel(approval).label}
+            <ChevronDown size={9} />
+          </button>
+          <button
+            onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); const estH = ORDER_STATUS_OPTIONS.length * 28 + 8; const top = (window.innerHeight - r.bottom) >= estH + 8 ? r.bottom + 4 : Math.max(4, r.top - estH - 4); setOrderStatusMenuPos({ top, left: r.left }); setOrderStatusMenuOpen((v) => !v); }}
+            className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium shrink-0 hover:opacity-80 ${getOrderStatusOption(orderStatus).cls}`}
+          >
+            {getOrderStatusOption(orderStatus).label}
+            <ChevronDown size={9} />
+          </button>
+        </div>
+        {/* Attributes — 2-column grid */}
+        <div className="grid grid-cols-2 gap-x-4 mt-1.5">
+          {(["supplier", "color", "manufacturer", "dimensions", "catalogNumber", "deliveryTime"] as const).map((field) => {
+            const labels: Record<string, string> = { manufacturer: t.listy.fieldManufacturer, supplier: t.listy.fieldSupplier, color: t.listy.fieldColor, dimensions: t.listy.fieldDimensions, deliveryTime: t.listy.fieldDelivery, catalogNumber: t.listy.fieldCatalogNumber };
+            const val = product[field] as string | null;
+            if (!val) return null;
+            return (
+              <p key={field} className="text-xs text-muted-foreground truncate py-0.5">{labels[field]}: {val}</p>
+            );
+          })}
+        </div>
+        {/* Note */}
+        {editingField === "note" ? (
+          <textarea
+            autoFocus
+            value={editingValue}
+            onChange={(e) => setEditingValue(e.target.value)}
+            onBlur={saveFieldEdit}
+            onKeyDown={(e) => { if (e.key === "Enter" && e.ctrlKey) saveFieldEdit(); if (e.key === "Escape") setEditingField(null); }}
+            rows={2}
+            placeholder={t.listy.notePlaceholder}
+            className="text-xs bg-transparent border border-primary/40 rounded px-1 focus:outline-none focus:border-primary w-full resize-none mt-1"
+          />
+        ) : (
+          product.note && <p className="text-xs text-muted-foreground italic truncate mt-1">📝 {product.note}</p>
+        )}
+        {/* Bottom row: qty + link | price + comments */}
+        <div className="flex items-center justify-between mt-2">
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-0.5">
+              <button onClick={() => updateQty(qty - 1)} disabled={qty <= 1 || saving} className="w-6 h-6 rounded flex items-center justify-center border border-border text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors"><Minus size={10} /></button>
+              <span className="w-6 text-center text-xs font-medium tabular-nums">{qty}</span>
+              <button onClick={() => updateQty(qty + 1)} disabled={saving} className="w-6 h-6 rounded flex items-center justify-center border border-border text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors"><Plus size={10} /></button>
+            </div>
+            {product.url && (
+              <a href={product.url} target="_blank" rel="noopener noreferrer" className="w-6 h-6 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+                <ExternalLink size={13} />
+              </a>
+            )}
+          </div>
+          <div className="flex items-center gap-1.5">
             {editingField === "price" ? (
               <input
                 autoFocus
@@ -911,23 +959,19 @@ function ProductRow({
                 className="text-sm bg-transparent border-b border-primary/40 focus:outline-none focus:border-primary px-0 w-24"
               />
             ) : totalPrice !== null ? (
-              <span className="inline-flex items-center gap-1">
-                <button
-                  onClick={() => startFieldEdit("price", product.price)}
-                  className="text-sm font-semibold text-foreground tabular-nums hover:text-primary transition-colors"
-                  title={t.listy.editPriceTitle}
-                >
-                  {formatPriceNum(totalPrice)} {currency}
-                </button>
-                {product.productId && (
-                  <div className="relative group">
-                    <AlertCircle size={14} className="text-red-500 cursor-default shrink-0" />
-                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-popover text-popover-foreground text-xs rounded shadow-md whitespace-nowrap border border-border opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-                      {t.listy.checkPriceWarning}
-                    </div>
-                  </div>
-                )}
-              </span>
+              <div className="text-right">
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => startFieldEdit("price", product.price)}
+                    className="text-sm font-semibold text-foreground tabular-nums hover:text-primary transition-colors"
+                    title={t.listy.editPriceTitle}
+                  >
+                    {formatPriceNum(totalPrice)} {currency}
+                  </button>
+                  {product.productId && <AlertCircle size={14} className="text-red-500 cursor-default shrink-0" />}
+                </div>
+                {qty > 1 && unitPrice !== null && <p className="text-xs text-muted-foreground tabular-nums text-right">{formatPriceNum(unitPrice)} / szt.</p>}
+              </div>
             ) : (
               <button
                 onClick={() => startFieldEdit("price", null)}
@@ -937,42 +981,6 @@ function ProductRow({
                 {t.listy.addPriceBtn}
               </button>
             )}
-            <button
-              onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); const estH = (allCategories.length + 1) * 28 + 8; const top = (window.innerHeight - r.bottom) >= estH + 8 ? r.bottom + 4 : Math.max(4, r.top - estH - 4); setCategoryMenuPos({ top, left: r.left }); setCategoryMenuOpen((v) => !v); }}
-              className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors shrink-0 ${product.category ? "bg-primary/8 text-primary dark:bg-primary/20" : "border border-dashed border-border text-muted-foreground"}`}
-            >
-              {product.category ? getCategoryLabel(product.category, allCategories) : t.listy.addCategoryShort}
-            </button>
-            <button
-              onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); const estH = 3 * 28 + 8; const top = (window.innerHeight - r.bottom) >= estH + 8 ? r.bottom + 4 : Math.max(4, r.top - estH - 4); setApprovalMenuPos({ top, left: r.left }); setApprovalMenuOpen((v) => !v); }}
-              className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors shrink-0 hover:opacity-80 ${getApprovalLabel(approval).cls}`}
-              title="Zmień status akceptacji"
-            >
-              {getApprovalLabel(approval).label}
-              <ChevronDown size={9} />
-            </button>
-            <button
-              onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); const estH = ORDER_STATUS_OPTIONS.length * 28 + 8; const top = (window.innerHeight - r.bottom) >= estH + 8 ? r.bottom + 4 : Math.max(4, r.top - estH - 4); setOrderStatusMenuPos({ top, left: r.left }); setOrderStatusMenuOpen((v) => !v); }}
-              className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium shrink-0 hover:opacity-80 ${getOrderStatusOption(orderStatus).cls}`}
-            >
-              {getOrderStatusOption(orderStatus).label}
-              <ChevronDown size={9} />
-            </button>
-          </div>
-          {/* Row 3: qty + link + comments */}
-          <div className="flex items-center justify-between mt-1.5">
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-0.5">
-                <button onClick={() => updateQty(qty - 1)} disabled={qty <= 1 || saving} className="w-6 h-6 rounded flex items-center justify-center border border-border text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors"><Minus size={10} /></button>
-                <span className="w-6 text-center text-xs font-medium tabular-nums">{qty}</span>
-                <button onClick={() => updateQty(qty + 1)} disabled={saving} className="w-6 h-6 rounded flex items-center justify-center border border-border text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors"><Plus size={10} /></button>
-              </div>
-              {product.url && (
-                <a href={product.url} target="_blank" rel="noopener noreferrer" className="w-6 h-6 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
-                  <ExternalLink size={13} />
-                </a>
-              )}
-            </div>
             <button onClick={onOpenComments} className="relative flex items-center justify-center w-7 h-7 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
               <Comment size={14} className={`transition-colors ${unread ? "text-blue-500" : ""}`} />
               {commentCount > 0 && <span className={`absolute -top-1 -right-1 min-w-[14px] h-[14px] rounded-full text-white text-[9px] font-bold flex items-center justify-center px-0.5 leading-none ${unread ? "bg-primary" : "bg-muted-foreground/40"}`}>{(unread ? unreadCount : commentCount) > 99 ? "99+" : (unread ? unreadCount : commentCount)}</span>}

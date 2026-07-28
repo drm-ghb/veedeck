@@ -912,7 +912,7 @@ export default function SharePage() {
           shoppingLists={project.shoppingLists}
           onProjectFlowClick={() => setView("rooms")}
         />
-        <div className="flex-1 min-h-0 relative bg-background rounded-tl-2xl">
+        <div className="flex-1 min-h-0 relative bg-background rounded-tl-2xl overflow-x-hidden">
           {/* Folder/room grid — always mounted to keep PDF thumbnails in DOM */}
           <main
             className="absolute inset-0 overflow-y-auto px-4 py-4 sm:px-6 sm:py-6"
