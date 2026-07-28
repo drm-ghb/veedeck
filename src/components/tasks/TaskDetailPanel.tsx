@@ -119,7 +119,7 @@ export default function TaskDetailPanel({ task, onClose, onUpdated, isSubTask = 
         ...files.map((f) => ({ fileUrl: f.url, fileName: f.name, fileSize: f.size })),
       ]);
     },
-    onUploadError: () => toast.error("Błąd przesyłania pliku"),
+    onUploadError: () => { toast.error("Błąd przesyłania pliku"); },
   });
 
   const [subTasks, setSubTasks] = useState<SubTask[]>(task.subTasks ?? []);
