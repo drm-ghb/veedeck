@@ -515,7 +515,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
   const [history, setHistory] = useState<CanvasElement[][]>([initElements]);
   const [historyIndex, setHistoryIndex] = useState(0);
   const [rightSidebarOpen, setRightSidebarOpen] = useState(false);
-  const [rightTab, setRightTab] = useState<"projectflow" | "products" | "lists">("projectflow");
+  const [rightTab, setRightTab] = useState<"projectflow" | "products" | "lists" | "pinterest">("projectflow");
   const [rooms, setRooms] = useState<RoomItem[]>([]);
   const [expandedRooms, setExpandedRooms] = useState<Set<string>>(new Set());
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
@@ -532,13 +532,6 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
   const [spaceDown, setSpaceDown] = useState(false);
   const spaceDownRef = useRef(false);
   // Connection dragging — refs for use in event handlers (avoid stale closures)
-  const [hoveredElementId, setHoveredElementId] = useState<string | null>(null);
-  type DraggingConn = { sourceId: string; sourceAnchor: Anchor; currentX: number; currentY: number };
-  const draggingConnRef = useRef<DraggingConn | null>(null);
-  const [draggingConn, setDraggingConn] = useState<DraggingConn | null>(null);
-  const nearestAnchorRef = useRef<{ elementId: string; anchor: Anchor } | null>(null);
-  const [nearestAnchor, setNearestAnchor] = useState<{ elementId: string; anchor: Anchor } | null>(null);
-  const isConnecting = useRef(false);
   const isDragging = useRef(false);
   // Rubber-band (marquee) selection
   const isSelBoxing = useRef(false);
@@ -584,7 +577,6 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
   const [framePreset, setFramePreset] = useState<FramePresetId>("custom");
   const [framePickerOpen, setFramePickerOpen] = useState(false);
   const [shapePickerOpen, setShapePickerOpen] = useState(false);
-  const [pinterestOpen, setPinterestOpen] = useState(false);
   const [pinterestConnected, setPinterestConnected] = useState(false);
   const [bgPickerOpen, setBgPickerOpen] = useState(false);
   const [selectedShape, setSelectedShape] = useState<"rect" | "ellipse" | "triangle" | "arrow" | "line">("rect");
@@ -1000,7 +992,6 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
 
   // Stage mouse events
   function handleMouseDown(e: Konva.KonvaEventObject<MouseEvent>) {
-    if (isConnecting.current) return;
     const isStage = e.target === e.target.getStage();
 
     // Middle mouse, hand tool, or space held = pan
@@ -1079,32 +1070,10 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
   }
 
   function handleMouseMove(e: Konva.KonvaEventObject<MouseEvent>) {
-    updateHoverFromPosition(e.evt.clientX, e.evt.clientY);
     if (isSelBoxing.current && selBoxStartRef.current) {
       const pos = stagePoint(e.evt.clientX, e.evt.clientY);
       const start = selBoxStartRef.current;
       setSelBox({ x: Math.min(pos.x, start.x), y: Math.min(pos.y, start.y), w: Math.abs(pos.x - start.x), h: Math.abs(pos.y - start.y) });
-      return;
-    }
-    if (draggingConnRef.current) {
-      const pos = stagePoint(e.evt.clientX, e.evt.clientY);
-      const updated = { ...draggingConnRef.current, currentX: pos.x, currentY: pos.y };
-      draggingConnRef.current = updated;
-      setDraggingConn({ ...updated });
-      // Find nearest anchor within 30px screen-space
-      const threshold = 30 / stageScale;
-      let nearest: { elementId: string; anchor: Anchor } | null = null;
-      let minDist = threshold;
-      for (const el of elements) {
-        if (el.id === draggingConnRef.current.sourceId || el.type === "connection") continue;
-        for (const anchor of ["top", "right", "bottom", "left"] as Anchor[]) {
-          const pt = getAnchorPoint(el, anchor);
-          const dist = Math.sqrt((pt.x - pos.x) ** 2 + (pt.y - pos.y) ** 2);
-          if (dist < minDist) { minDist = dist; nearest = { elementId: el.id, anchor }; }
-        }
-      }
-      nearestAnchorRef.current = nearest;
-      setNearestAnchor(nearest);
       return;
     }
     if (isPanning) {
@@ -1135,28 +1104,6 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
     setDrawRect({ x: rx, y: ry, w: rawW, h: rawH });
   }
 
-  function updateHoverFromPosition(clientX: number, clientY: number) {
-    if (tool !== "select" || draggingConnRef.current || isSelBoxing.current || isPanning || isDragging.current) return;
-    const pos = stagePoint(clientX, clientY);
-    const threshold = 20 / stageScale;
-    let found: string | null = null;
-    // Iterate in reverse so topmost (last rendered) element wins over elements below it.
-    // Skip connections and frames — frames have no anchor hooks and their large bounds
-    // would block hover detection of elements inside them.
-    for (let i = elements.length - 1; i >= 0; i--) {
-      const el = elements[i];
-      if (el.type === "connection" || el.type === "frame") continue;
-      const b = getElementBounds(el);
-      const cx = Math.max(b.minX, Math.min(pos.x, b.maxX));
-      const cy = Math.max(b.minY, Math.min(pos.y, b.maxY));
-      if (Math.sqrt((pos.x - cx) ** 2 + (pos.y - cy) ** 2) < threshold) {
-        found = el.id;
-        break;
-      }
-    }
-    setHoveredElementId(found);
-  }
-
   function handleMouseUp(e: Konva.KonvaEventObject<MouseEvent>) {
     if (isSelBoxing.current) {
       isSelBoxing.current = false;
@@ -1173,25 +1120,6 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
       }
       setSelBox(null);
       selBoxStartRef.current = null;
-      return;
-    }
-    if (draggingConnRef.current) {
-      isConnecting.current = false;
-      const dc = draggingConnRef.current;
-      const na = nearestAnchorRef.current;
-      if (na && na.elementId !== dc.sourceId) {
-        const newEl: CanvasElement = {
-          id: uid(), type: "connection", x: 0, y: 0,
-          sourceId: dc.sourceId, sourceAnchor: dc.sourceAnchor,
-          targetId: na.elementId, targetAnchor: na.anchor,
-          stroke: "#334155", strokeWidth: 2, opacity: 1,
-        };
-        updateElements([...elements, newEl]);
-      }
-      draggingConnRef.current = null;
-      nearestAnchorRef.current = null;
-      setDraggingConn(null);
-      setNearestAnchor(null);
       return;
     }
     if (isPenDrawingRef.current && penStartRef.current) {
@@ -1931,10 +1859,9 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
     pen: "crosshair",
     frame: framePreset === "custom" ? "crosshair" : "copy",
   };
-  const [anchorHovered, setAnchorHovered] = useState(false);
   const activeCursor = spaceDown
     ? (isPanning ? "grabbing" : "grab")
-    : anchorHovered ? "crosshair" : cursorMap[tool];
+    : cursorMap[tool];
 
   const q = sidebarQuery.toLowerCase();
   const filteredRooms = q
@@ -2210,14 +2137,14 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
           )}
         </div>
 
-        {/* Zasoby button — top bar, rightmost */}
+        {/* Biblioteka button — top bar, rightmost */}
         {!readOnly && <button
           onClick={() => setRightSidebarOpen((v) => !v)}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${rightSidebarOpen ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
-          title="Zasoby"
+          title="Biblioteka"
         >
           <Package size={15} />
-          Zasoby
+          Biblioteka
           {rightSidebarOpen ? <ChevronRight size={13} /> : <ChevronLeft size={13} />}
         </button>}
       </div>
@@ -2399,7 +2326,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                         else setSelectedIds([frameEl.id]);
                       }}
                       onTap={() => { if (tool === "select") setSelectedIds([frameEl.id]); }}
-                      onDragStart={() => { isDragging.current = true; setHoveredElementId(null); }}
+                      onDragStart={() => { isDragging.current = true; }}
                       onDragEnd={(e) => {
                         isDragging.current = false;
                         const dx = e.target.x() - frameEl.x;
@@ -2441,7 +2368,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                   id: el.id,
                   opacity: el.opacity ?? 1,
                   rotation: el.rotation ?? 0,
-                  draggable: tool === "select" && !draggingConnRef.current,
+                  draggable: tool === "select",
                   ...(clipFunc ? { clipFunc } : {}),
                   onContextMenu: (e: Konva.KonvaEventObject<MouseEvent>) => {
                     e.evt.preventDefault();
@@ -2450,7 +2377,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                       setContextMenu({ screenX: e.evt.clientX, screenY: e.evt.clientY, elementId: el.id });
                     }
                   },
-                  onDragStart: () => { isDragging.current = true; setHoveredElementId(null); },
+                  onDragStart: () => { isDragging.current = true; },
                   onClick: (e: Konva.KonvaEventObject<MouseEvent>) => {
                     if (tool !== "select") return;
                     if (e.evt.shiftKey) {
@@ -2488,7 +2415,6 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                   },
                   onDragEnd: (e: Konva.KonvaEventObject<DragEvent>) => {
                     isDragging.current = false;
-                    setHoveredElementId(null);
                     setSnapLines([]);
                     if (selectedIds.length > 1) {
                       const dx = e.target.x() - el.x;
@@ -2713,10 +2639,8 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                         }
                       }}
                       onTransformEnd={(attrs) => updateEl(el.id, attrs)}
-                      onMouseEnter={() => { if (tool === "select") setHoveredElementId(el.id); }}
-                      onMouseLeave={() => setHoveredElementId(null)}
-                      onDragStarted={() => { isDragging.current = true; setHoveredElementId(null); }}
-                      onDragEnded={() => { isDragging.current = false; setHoveredElementId(null); setSnapLines([]); }}
+                      onDragStarted={() => { isDragging.current = true; }}
+                      onDragEnded={() => { isDragging.current = false; setSnapLines([]); }}
                       onDragMove={(e) => {
                         if (selectedIds.length > 1) {
                           const dx = e.target.x() - el.x; const dy = e.target.y() - el.y;
@@ -2755,10 +2679,8 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                         }
                       }}
                       onTransformEnd={(attrs) => updateEl(el.id, attrs)}
-                      onMouseEnter={() => { if (tool === "select") setHoveredElementId(el.id); }}
-                      onMouseLeave={() => setHoveredElementId(null)}
-                      onDragStarted={() => { isDragging.current = true; setHoveredElementId(null); }}
-                      onDragEnded={() => { isDragging.current = false; setHoveredElementId(null); setSnapLines([]); }}
+                      onDragStarted={() => { isDragging.current = true; }}
+                      onDragEnded={() => { isDragging.current = false; setSnapLines([]); }}
                       onDragMove={(e) => {
                         if (selectedIds.length > 1) {
                           const dx = e.target.x() - el.x; const dy = e.target.y() - el.y;
@@ -2972,77 +2894,6 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                 />
               )}
 
-              {/* ── Anchor handles on hovered element (hidden in multi-select) ── */}
-              {tool === "select" && !draggingConn && hoveredElementId && selectedIds.length <= 1 && (() => {
-                const el = safeElements.find(e => e.id === hoveredElementId && e.type !== "connection");
-                if (!el) return null;
-                return (["top", "right", "bottom", "left"] as Anchor[]).map(anchor => {
-                  const pt = getAnchorPoint(el, anchor);
-                  return (
-                    <KonvaCircle
-                      key={anchor}
-                      x={pt.x} y={pt.y} radius={6}
-                      fill="white" stroke="#6366f1" strokeWidth={2}
-                      onMouseDown={(e) => {
-                        e.cancelBubble = true;
-                        isConnecting.current = true;
-                        const conn = { sourceId: el.id, sourceAnchor: anchor, currentX: pt.x, currentY: pt.y };
-                        draggingConnRef.current = conn;
-                        setDraggingConn(conn);
-                      }}
-                      onMouseEnter={() => setAnchorHovered(true)}
-                      onMouseLeave={() => setAnchorHovered(false)}
-                    />
-                  );
-                });
-              })()}
-
-              {/* ── All target anchors visible during connection drag ── */}
-              {draggingConn && elements
-                .filter(el => el.id !== draggingConn.sourceId && el.type !== "connection")
-                .flatMap(el =>
-                  (["top", "right", "bottom", "left"] as Anchor[]).map(anchor => {
-                    const pt = getAnchorPoint(el, anchor);
-                    const isNearest = nearestAnchor?.elementId === el.id && nearestAnchor?.anchor === anchor;
-                    return (
-                      <KonvaCircle
-                        key={`${el.id}-${anchor}`}
-                        x={pt.x} y={pt.y}
-                        radius={isNearest ? 8 : 5}
-                        fill={isNearest ? "#6366f1" : "white"}
-                        stroke="#6366f1" strokeWidth={2}
-                        listening={false}
-                      />
-                    );
-                  })
-                )
-              }
-
-              {/* ── Live connection preview while dragging ── */}
-              {draggingConn && (() => {
-                const srcEl = safeElements.find(e => e.id === draggingConn.sourceId);
-                if (!srcEl) return null;
-                const p1 = getAnchorPoint(srcEl, draggingConn.sourceAnchor);
-                const endPt = nearestAnchor
-                  ? (() => { const t = safeElements.find(e => e.id === nearestAnchor.elementId); return t ? getAnchorPoint(t, nearestAnchor.anchor) : { x: draggingConn.currentX, y: draggingConn.currentY }; })()
-                  : { x: draggingConn.currentX, y: draggingConn.currentY };
-                const dist = Math.sqrt((endPt.x - p1.x) ** 2 + (endPt.y - p1.y) ** 2);
-                const off = Math.max(40, Math.min(200, dist * 0.45));
-                let cx1 = p1.x, cy1 = p1.y;
-                if (draggingConn.sourceAnchor === "right")  cx1 += off;
-                else if (draggingConn.sourceAnchor === "left")   cx1 -= off;
-                if (draggingConn.sourceAnchor === "bottom") cy1 += off;
-                else if (draggingConn.sourceAnchor === "top")    cy1 -= off;
-                const cx2 = endPt.x + (p1.x - endPt.x) * 0.3;
-                const cy2 = endPt.y + (p1.y - endPt.y) * 0.3;
-                return (
-                  <KonvaPath
-                    data={`M ${p1.x} ${p1.y} C ${cx1} ${cy1} ${cx2} ${cy2} ${endPt.x} ${endPt.y}`}
-                    stroke="#6366f1" strokeWidth={2} fill="transparent"
-                    dash={[6, 4]} listening={false} opacity={0.8}
-                  />
-                );
-              })()}
             </Layer>
           </Stage>
 
@@ -3870,15 +3721,6 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
             >
               <DashboardAdd size={19} />
             </button>
-            <div className="w-px h-[26px] bg-border mx-1" />
-            <button
-              onClick={() => setPinterestOpen(v => !v)}
-              title="Pinterest"
-              className={`w-[38px] h-[38px] rounded-xl flex items-center justify-center transition-colors ${pinterestOpen ? "bg-red-100 dark:bg-red-950/30" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/pinterest-logo.svg" alt="Pinterest" className="w-5 h-5" />
-            </button>
             <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImageUpload(f); e.target.value = ""; }} />
           </div>}
         </div>
@@ -3914,8 +3756,16 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
               >
                 <LocalMall size={13} /> Listy
               </button>
+              <button
+                onClick={() => { setRightTab("pinterest"); setSidebarQuery(""); }}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-colors ${rightTab === "pinterest" ? "border-b-2 border-primary text-primary" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/pinterest-logo.svg" alt="" className="w-3.5 h-3.5" /> Pinterest
+              </button>
             </div>
             {/* Search */}
+            {rightTab !== "pinterest" && (
             <div className="p-2 border-b border-border">
               <div className="relative">
                 <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -3927,6 +3777,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                 />
               </div>
             </div>
+            )}
             {/* Content */}
             <div className="flex-1 overflow-y-auto p-2">
               {templatePickModeId && (
@@ -4087,95 +3938,72 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                   )}
                 </>
               )}
-            </div>
-          </div>
-        )}
-
-        {/* Pinterest panel */}
-        {pinterestOpen && (
-          <div className="w-80 border-l border-border bg-background flex flex-col shrink-0">
-            {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
-              <div className="flex items-center gap-2">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/pinterest-logo.svg" alt="Pinterest" className="w-5 h-5" />
-                <span className="text-sm font-semibold">Pinterest</span>
-              </div>
-              <button
-                onClick={() => setPinterestOpen(false)}
-                className="w-7 h-7 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-              >
-                <X size={15} />
-              </button>
-            </div>
-
-            {/* Body */}
-            <div className="flex-1 overflow-y-auto">
-              {!pinterestConnected ? (
-                /* Not connected */
-                <div className="flex flex-col items-center text-center px-6 py-10 gap-5">
-                  <div className="w-16 h-16 rounded-2xl overflow-hidden shadow-md">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src="/pinterest-logo.svg" alt="Pinterest" className="w-full h-full" />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <p className="text-sm font-semibold text-foreground">Połącz swoje konto Pinterest</p>
-                    <p className="text-xs text-muted-foreground leading-relaxed">
-                      Po połączeniu zobaczysz swoje tablice i piny — możesz przeciągać je bezpośrednio na moodboard.
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => {
-                      window.open(
-                        "https://www.pinterest.com/oauth/?response_type=code&scope=boards:read,pins:read,user_accounts:read",
-                        "_blank",
-                        "width=600,height=700"
-                      );
-                    }}
-                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90"
-                    style={{ background: "#E60023" }}
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src="/pinterest-logo.svg" alt="" className="w-4 h-4 brightness-0 invert" />
-                    Połącz konto
-                  </button>
-                  <p className="text-[11px] text-muted-foreground">
-                    Integracja wymaga konta Pinterest Business lub konta dewelopera.
-                  </p>
-                  {/* Dev helper — remove when real OAuth is wired */}
-                  <button
-                    onClick={() => setPinterestConnected(true)}
-                    className="text-[11px] text-muted-foreground underline underline-offset-2 hover:text-foreground transition-colors"
-                  >
-                    Podgląd widoku po połączeniu →
-                  </button>
-                </div>
-              ) : (
-                /* Connected — placeholder */
-                <div className="flex flex-col h-full">
-                  <div className="flex items-center justify-between px-4 py-2.5 border-b border-border">
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-red-100 dark:bg-red-950/40 flex items-center justify-center">
+              {rightTab === "pinterest" && (
+                <div className="flex-1 overflow-y-auto">
+                  {!pinterestConnected ? (
+                    <div className="flex flex-col items-center text-center px-6 py-10 gap-5">
+                      <div className="w-16 h-16 rounded-2xl overflow-hidden shadow-md">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src="/pinterest-logo.svg" alt="" className="w-3.5 h-3.5" />
+                        <img src="/pinterest-logo.svg" alt="Pinterest" className="w-full h-full" />
                       </div>
-                      <span className="text-xs font-medium text-foreground">Połączono</span>
+                      <div className="flex flex-col gap-1.5">
+                        <p className="text-sm font-semibold text-foreground">Połącz swoje konto Pinterest</p>
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          Po połączeniu zobaczysz swoje tablice i piny — możesz przeciągać je bezpośrednio na moodboard.
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          window.open(
+                            "https://www.pinterest.com/oauth/?response_type=code&scope=boards:read,pins:read,user_accounts:read",
+                            "_blank",
+                            "width=600,height=700"
+                          );
+                        }}
+                        className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90"
+                        style={{ background: "#E60023" }}
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src="/pinterest-logo.svg" alt="" className="w-4 h-4 brightness-0 invert" />
+                        Połącz konto
+                      </button>
+                      <p className="text-[11px] text-muted-foreground">
+                        Integracja wymaga konta Pinterest Business lub konta dewelopera.
+                      </p>
+                      <button
+                        onClick={() => setPinterestConnected(true)}
+                        className="text-[11px] text-muted-foreground underline underline-offset-2 hover:text-foreground transition-colors"
+                      >
+                        Podgląd widoku po połączeniu →
+                      </button>
                     </div>
-                    <button
-                      onClick={() => setPinterestConnected(false)}
-                      className="text-[11px] text-muted-foreground hover:text-red-500 transition-colors"
-                    >
-                      Rozłącz
-                    </button>
-                  </div>
-                  <div className="flex-1 flex flex-col items-center justify-center gap-3 px-6 text-center py-12">
-                    <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center">
-                      <Package size={18} className="text-muted-foreground" />
+                  ) : (
+                    <div className="flex flex-col h-full">
+                      <div className="flex items-center justify-between px-4 py-2.5 border-b border-border">
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 rounded-full bg-red-100 dark:bg-red-950/40 flex items-center justify-center">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src="/pinterest-logo.svg" alt="" className="w-3.5 h-3.5" />
+                          </div>
+                          <span className="text-xs font-medium text-foreground">Połączono</span>
+                        </div>
+                        <button
+                          onClick={() => setPinterestConnected(false)}
+                          className="text-[11px] text-muted-foreground hover:text-red-500 transition-colors"
+                        >
+                          Rozłącz
+                        </button>
+                      </div>
+                      <div className="flex-1 flex flex-col items-center justify-center gap-3 px-6 text-center py-12">
+                        <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center">
+                          <Package size={18} className="text-muted-foreground" />
+                        </div>
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          Tu pojawią się Twoje tablice i piny.<br />Funkcja zostanie aktywowana po uruchomieniu integracji API.
+                        </p>
+                      </div>
                     </div>
-                    <p className="text-xs text-muted-foreground leading-relaxed">
-                      Tu pojawią się Twoje tablice i piny.<br />Funkcja zostanie aktywowana po uruchomieniu integracji API.
-                    </p>
-                  </div>
+                  )}
                 </div>
               )}
             </div>
