@@ -1069,6 +1069,11 @@ export default function ListDetail({ list, designerName, designerEmail, designer
       .then((data) => { if (data.pdfListTemplate) setCurrentPdfTemplate(data.pdfListTemplate); })
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    fetch(`/api/lists/${list.id}/mark-comments-read`, { method: "POST" }).catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [list.id]);
   const SORT_OPTIONS = [
     { value: "manual", label: t.render.sortManual },
     { value: "category", label: t.listy.sortCategory },

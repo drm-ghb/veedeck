@@ -409,6 +409,7 @@ export default function RenderViewer({
   useEffect(() => {
     if (sessionStorage.getItem("renderflow_showComments") === "true") {
       setShowComments(true);
+      markChatRead();
     }
   }, []);
 

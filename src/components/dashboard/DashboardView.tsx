@@ -177,7 +177,7 @@ interface TodayEvent {
 interface DueTask {
   id: string;
   title: string;
-  dueDate: string;
+  dueDate: string | null;
   status: string;
   priority: "LOW" | "MEDIUM" | "HIGH";
   projectTitle: string | null;
@@ -291,20 +291,21 @@ function SectionCollapse({ hidden, children }: { hidden: boolean; children: Reac
   );
 }
 
-type SectionKey = "projekty" | "listy" | "kalendarz" | "wiadomosci" | "zadania";
+type SectionKey = "projekty" | "listy" | "kalendarz" | "wiadomosci" | "zadania" | "piny";
 type DesktopLayout = { left: SectionKey[]; right: SectionKey[] };
 
 const DEFAULT_DESKTOP_LAYOUT: DesktopLayout = {
   left: ["projekty", "listy"],
-  right: ["kalendarz", "wiadomosci", "zadania"],
+  right: ["kalendarz", "wiadomosci", "piny", "zadania"],
 };
-const DEFAULT_MOBILE_LAYOUT: SectionKey[] = ["kalendarz", "wiadomosci", "listy", "zadania", "projekty"];
+const DEFAULT_MOBILE_LAYOUT: SectionKey[] = ["kalendarz", "wiadomosci", "piny", "listy", "zadania", "projekty"];
 
 const SECTION_CONFIG = [
   { key: "projekty" as SectionKey, label: "Projekty" },
   { key: "listy" as SectionKey, label: "Listy" },
   { key: "kalendarz" as SectionKey, label: "Kalendarz" },
   { key: "wiadomosci" as SectionKey, label: "Wiadomości" },
+  { key: "piny" as SectionKey, label: "Piny" },
   { key: "zadania" as SectionKey, label: "Zadania" },
 ];
 
@@ -566,33 +567,11 @@ export default function DashboardView({
     });
   }
 
-  type TodoItem =
-    | { type: "pin"; data: Pin }
-    | { type: "status"; data: StatusRequest }
-    | { type: "version"; data: VersionRequest }
-    | { type: "task"; data: DueTask };
-
   const priorityOrder = { HIGH: 0, MEDIUM: 1, LOW: 2 };
-  const sortedTasks = [...dueTasks].sort((a, b) => {
-    const pDiff = priorityOrder[a.priority] - priorityOrder[b.priority];
-    if (pDiff !== 0) return pDiff;
-    return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
-  });
+  const sortedTasks = [...dueTasks].sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
 
-  const allTodoItems: TodoItem[] = [
-    ...sortedTasks.map((t) => ({ type: "task" as const, data: t })),
-    ...[
-      ...pins.filter((p) => !viewedPinIds.has(p.id)).map((p) => ({ type: "pin" as const, data: p })),
-      ...statusRequests
-        .filter((r) => !resolvedIds.has(r.id))
-        .map((r) => ({ type: "status" as const, data: r })),
-      ...versionRequests
-        .filter((r) => !resolvedIds.has(r.id))
-        .map((r) => ({ type: "version" as const, data: r })),
-    ].sort((a, b) => new Date(b.data.createdAt).getTime() - new Date(a.data.createdAt).getTime()),
-  ];
-
-  const todoCount = allTodoItems.length;
+  const taskCount = sortedTasks.length;
+  const visiblePins = pins.filter((p) => !viewedPinIds.has(p.id));
 
   async function handleRequest(
     id: string,
@@ -881,104 +860,85 @@ export default function DashboardView({
           </SectionCollapse>
         </>
       );
-      case "zadania": return (
+      case "piny": return (
         <>
-          {!isSectionHidden("zadania") && (
+          {!isSectionHidden("piny") && (
             <div className="flex items-center gap-1.5 mb-3 lg:mb-[10px]">
-              <h2 className="text-sm lg:text-[13px] font-semibold lg:font-bold text-foreground">{t.home.todoTitle}</h2>
-              <InfoTooltip items={[t.home.todoTip1, t.home.todoTip2, t.home.todoTip3, t.home.todoTip4]} />
+              <h2 className="text-sm lg:text-[13px] font-semibold lg:font-bold text-foreground">Piny</h2>
             </div>
           )}
-          <SectionCollapse hidden={isSectionHidden("zadania")}>
+          <SectionCollapse hidden={isSectionHidden("piny")}>
           <div className="space-y-3 lg:space-y-0">
-            {todoCount === 0 ? (
+            {visiblePins.length === 0 ? (
               <div className="rounded-xl border border-border bg-card p-6 text-center">
                 <CheckCircle2 size={28} className="mx-auto mb-2 text-green-500" />
                 <p className="text-sm font-medium text-foreground">{t.home.upToDate}</p>
-                <p className="text-xs text-muted-foreground mt-1">{t.home.noTodo}</p>
+                <p className="text-xs text-muted-foreground mt-1">Brak nowych pinów</p>
               </div>
             ) : (
               <div className="rounded-xl border border-border bg-card overflow-hidden">
               <div className="divide-y divide-border max-h-[192px] overflow-y-auto">
-                {allTodoItems.map((item) => {
-                  if (item.type === "task") {
-                    const task = item.data;
-                    const due = new Date(task.dueDate);
-                    const todayDate = new Date();
-                    const isToday = due.getFullYear() === todayDate.getFullYear() && due.getMonth() === todayDate.getMonth() && due.getDate() === todayDate.getDate();
-                    const isOverdue = due < todayDate && !isToday;
-                    const dueDateLabel = due.toLocaleDateString("pl-PL", { day: "numeric", month: "short" });
-                    return (
-                      <Link key={task.id} href="/zadania" className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors">
-                        <div className="w-8 h-8 rounded-lg bg-violet-100 dark:bg-violet-900/40 flex items-center justify-center shrink-0">
-                          <CheckSquare size={15} className="text-violet-600 dark:text-violet-400" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium truncate">{task.title}</p>
-                          <p className="text-xs text-muted-foreground truncate">{task.projectTitle ? `${task.projectTitle} · ` : ""}{t.home.todoTaskLabel}</p>
-                        </div>
-                        <div className="flex items-center gap-1.5 shrink-0">
-                          {task.priority === "HIGH" && <span className="text-xs font-medium px-1.5 py-0.5 rounded-md bg-red-100 text-red-600 dark:bg-red-950/40 dark:text-red-400">{t.tasks.priorityHigh}</span>}
-                          {task.priority === "MEDIUM" && <span className="text-xs font-medium px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400">{t.tasks.priorityMedium}</span>}
-                          {task.priority === "LOW" && <span className="text-xs font-medium px-1.5 py-0.5 rounded-md bg-muted text-muted-foreground">{t.tasks.priorityLow}</span>}
-                          {(isToday || isOverdue) && <span className="text-xs font-medium px-1.5 py-0.5 rounded-md bg-red-100 text-red-600 dark:bg-red-950/40 dark:text-red-400">{dueDateLabel}</span>}
-                        </div>
-                      </Link>
-                    );
-                  }
-                  if (item.type === "pin") {
-                    const pin = item.data;
-                    return (
-                      <div key={pin.id} className="flex items-center hover:bg-muted/50 transition-colors">
-                        <Link href={`/projekty/${pin.projectId}/renders/${pin.renderId}?pinId=${pin.id}`} onClick={() => markPinViewed(pin.id)} className="flex items-start gap-3 px-4 py-3 flex-1 min-w-0">
-                          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5"><MapPin size={15} className="text-primary" /></div>
-                          <div className="min-w-0 flex-1">
-                            <p className="text-sm font-medium truncate">{pin.title ?? pin.content}</p>
-                            <p className="text-xs text-muted-foreground truncate">{pin.author} · {pin.renderName}</p>
-                          </div>
-                          <span className="shrink-0 text-xs text-muted-foreground mr-2">{timeAgo(pin.createdAt, t)}</span>
-                        </Link>
-                        <button onClick={() => markPinViewed(pin.id)} title={t.home.markAsViewed} className="shrink-0 mr-3 p-1 rounded-md text-muted-foreground/40 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-950/30 transition-colors"><CheckCircle2 size={16} /></button>
-                      </div>
-                    );
-                  }
-                  if (item.type === "status") {
-                    const req = item.data;
-                    return (
-                      <div key={req.id} className="flex items-start gap-3 px-4 py-3">
-                        <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center shrink-0 mt-0.5"><Bell size={15} className="text-amber-600 dark:text-amber-400" /></div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium truncate">{req.renderName}</p>
-                          <p className="text-xs text-muted-foreground truncate">{req.clientName ? `${req.clientName} · ` : ""}{t.home.statusChangeLabel} · {req.projectTitle}</p>
-                          <div className="flex gap-1.5 mt-2">
-                            <button onClick={() => handleRequest(req.id, "status", "confirm")} disabled={actingOn !== null} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium bg-green-600 hover:bg-green-700 text-white disabled:opacity-50 transition-colors"><Check size={11} />{t.common.confirm}</button>
-                            <button onClick={() => handleRequest(req.id, "status", "reject")} disabled={actingOn !== null} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium border border-red-200 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 disabled:opacity-50 transition-colors"><X size={11} />{t.home.rejectBtn}</button>
-                          </div>
-                        </div>
-                        <div className="flex flex-col items-end gap-1 shrink-0">
-                          <span className="text-xs text-muted-foreground">{timeAgo(req.createdAt, t)}</span>
-                          <button onClick={() => setResolvedIds((prev) => new Set([...prev, req.id]))} title={t.home.removeFromList} className="p-1 rounded-md text-muted-foreground/40 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-950/30 transition-colors"><CheckCircle2 size={16} /></button>
-                        </div>
-                      </div>
-                    );
-                  }
-                  const req = item.data;
-                  return (
-                    <div key={req.id} className="flex items-start gap-3 px-4 py-3">
-                      <div className="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900/40 flex items-center justify-center shrink-0 mt-0.5"><RotateCcw size={15} className="text-purple-600 dark:text-purple-400" /></div>
+                {visiblePins.map((pin) => (
+                  <div key={pin.id} className="flex items-center hover:bg-muted/50 transition-colors">
+                    <Link href={`/projekty/${pin.projectId}/renders/${pin.renderId}?pinId=${pin.id}`} onClick={() => markPinViewed(pin.id)} className="flex items-start gap-3 px-4 py-3 flex-1 min-w-0">
+                      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5"><MapPin size={15} className="text-primary" /></div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium truncate">{req.renderName}</p>
-                        <p className="text-xs text-muted-foreground truncate">{req.clientName ? `${req.clientName} · ` : ""}{t.home.versionRestoreLabel} · {req.projectTitle}</p>
-                        <div className="flex gap-1.5 mt-2">
-                          <button onClick={() => handleRequest(req.id, "version", "confirm")} disabled={actingOn !== null} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium bg-green-600 hover:bg-green-700 text-white disabled:opacity-50 transition-colors"><Check size={11} />{t.common.restore}</button>
-                          <button onClick={() => handleRequest(req.id, "version", "reject")} disabled={actingOn !== null} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium border border-red-200 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 disabled:opacity-50 transition-colors"><X size={11} />{t.home.rejectBtn}</button>
-                        </div>
+                        <p className="text-sm font-medium truncate">{pin.title ?? pin.content}</p>
+                        <p className="text-xs text-muted-foreground truncate">{pin.author} · {pin.renderName}</p>
                       </div>
-                      <div className="flex flex-col items-end gap-1 shrink-0">
-                        <span className="text-xs text-muted-foreground">{timeAgo(req.createdAt, t)}</span>
-                        <button onClick={() => setResolvedIds((prev) => new Set([...prev, req.id]))} title={t.home.removeFromList} className="p-1 rounded-md text-muted-foreground/40 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-950/30 transition-colors"><CheckCircle2 size={16} /></button>
+                      <span className="shrink-0 text-xs text-muted-foreground mr-2">{timeAgo(pin.createdAt, t)}</span>
+                    </Link>
+                    <button onClick={() => markPinViewed(pin.id)} title={t.home.markAsViewed} className="shrink-0 mr-3 p-1 rounded-md text-muted-foreground/40 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-950/30 transition-colors"><CheckCircle2 size={16} /></button>
+                  </div>
+                ))}
+              </div>
+              </div>
+            )}
+          </div>
+          </SectionCollapse>
+        </>
+      );
+      case "zadania": return (
+        <>
+          {!isSectionHidden("zadania") && (
+            <div className="flex items-center gap-1.5 mb-3 lg:mb-[10px]">
+              <h2 className="text-sm lg:text-[13px] font-semibold lg:font-bold text-foreground">Zadania</h2>
+              <Link href="/zadania" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-0.5 transition-colors ml-auto">
+                {t.home.seeAll} <ChevronRight size={12} />
+              </Link>
+            </div>
+          )}
+          <SectionCollapse hidden={isSectionHidden("zadania")}>
+          <div className="space-y-3 lg:space-y-0">
+            {taskCount === 0 ? (
+              <div className="rounded-xl border border-border bg-card p-6 text-center">
+                <CheckCircle2 size={28} className="mx-auto mb-2 text-green-500" />
+                <p className="text-sm font-medium text-foreground">{t.home.upToDate}</p>
+                <p className="text-xs text-muted-foreground mt-1">Brak zadań z wysokim priorytetem</p>
+              </div>
+            ) : (
+              <div className="rounded-xl border border-border bg-card overflow-hidden">
+              <div className="divide-y divide-border max-h-[192px] overflow-y-auto">
+                {sortedTasks.map((task) => {
+                  const due = task.dueDate ? new Date(task.dueDate) : null;
+                  const todayDate = new Date();
+                  const isToday = due && due.getFullYear() === todayDate.getFullYear() && due.getMonth() === todayDate.getMonth() && due.getDate() === todayDate.getDate();
+                  const isOverdue = due && due < todayDate && !isToday;
+                  return (
+                    <Link key={task.id} href="/zadania" className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors">
+                      <div className="w-8 h-8 rounded-lg bg-violet-100 dark:bg-violet-900/40 flex items-center justify-center shrink-0">
+                        <CheckSquare size={15} className="text-violet-600 dark:text-violet-400" />
                       </div>
-                    </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium truncate">{task.title}</p>
+                        <p className="text-xs text-muted-foreground truncate">{task.projectTitle ? `${task.projectTitle} · ` : ""}Zadanie</p>
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {task.priority === "HIGH" && <span className="text-xs font-medium px-1.5 py-0.5 rounded-md bg-red-100 text-red-600 dark:bg-red-950/40 dark:text-red-400">{t.tasks.priorityHigh}</span>}
+                        {task.priority === "MEDIUM" && <span className="text-xs font-medium px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400">{t.tasks.priorityMedium}</span>}
+                        {due && (isToday || isOverdue) && <span className="text-xs font-medium px-1.5 py-0.5 rounded-md bg-red-100 text-red-600 dark:bg-red-950/40 dark:text-red-400">{due.toLocaleDateString("pl-PL", { day: "numeric", month: "short" })}</span>}
+                      </div>
+                    </Link>
                   );
                 })}
               </div>

@@ -93,9 +93,6 @@ export default async function DashboardPage() {
   todayEnd.setUTCHours(23, 59, 59, 999);
   todayEnd.setUTCDate(todayEnd.getUTCDate() + 1);
 
-  const endOfToday = new Date();
-  endOfToday.setHours(23, 59, 59, 999);
-
   const [clientCount, renderflowProjectCount, listCount, notificationCount, todayEvents, pins, statusRequests, versionRequests, renderDiscussions, listMessages, renderReplies, listReplies, dueTasks] =
     await Promise.all([
       prisma.client.count({ where: { designerId: userId, ...(allowedIds ? { id: { in: allowedIds } } : {}) } }),
@@ -278,12 +275,12 @@ export default async function DashboardPage() {
         take: 10,
       }),
 
-      // Tasks due today or overdue (not done)
+      // Priority tasks (HIGH or MEDIUM, not done)
       prisma.task.findMany({
         where: {
           ownerId: userId,
           status: { not: "DONE" },
-          dueDate: { lte: endOfToday },
+          priority: { not: "LOW" },
           parentId: null,
           ...(allowedIds ? { OR: [{ projectId: null }, { project: { clientId: { in: allowedIds } } }] } : {}),
         },
@@ -295,8 +292,8 @@ export default async function DashboardPage() {
           priority: true,
           project: { select: { title: true } },
         },
-        orderBy: { dueDate: "asc" },
-        take: 10,
+        orderBy: [{ priority: "desc" }, { createdAt: "asc" }],
+        take: 20,
       }),
     ]);
 
@@ -447,7 +444,7 @@ export default async function DashboardPage() {
       dueTasks={dueTasks.map((t) => ({
         id: t.id,
         title: t.title,
-        dueDate: t.dueDate!.toISOString(),
+        dueDate: t.dueDate?.toISOString() ?? null,
         status: t.status,
         priority: t.priority,
         projectTitle: t.project?.title ?? null,
