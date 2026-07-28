@@ -17,6 +17,8 @@ const taskInclude = {
     },
     orderBy: { createdAt: "asc" as const },
   },
+  _count: { select: { comments: true } },
+  comments: { select: { _count: { select: { attachments: true } } } },
 };
 
 export async function GET() {

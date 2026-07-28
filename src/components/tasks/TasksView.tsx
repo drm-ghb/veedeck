@@ -28,6 +28,8 @@ import {
   ArrowDown,
   Plus,
   Trash2,
+  MessageSquare,
+  Paperclip,
 } from "@/components/ui/icons";
 import AddTaskDialog from "./AddTaskDialog";
 import TaskDetailPanel from "./TaskDetailPanel";
@@ -64,6 +66,8 @@ interface SubTask {
 
 interface Task extends SubTask {
   description: string | null;
+  _count?: { comments: number };
+  comments?: { _count: { attachments: number } }[];
 }
 
 interface TaskStatusConfig {
@@ -200,6 +204,16 @@ function DraggableKanbanCard({
           <span className="text-xs text-muted-foreground truncate">{userDisplayName(task.assignee)}</span>
         </div>
       )}
+      <div className="flex items-center gap-3 pt-0.5">
+        <span className="flex items-center gap-1 text-xs text-muted-foreground">
+          <MessageSquare size={12} />
+          {task._count?.comments ?? 0}
+        </span>
+        <span className="flex items-center gap-1 text-xs text-muted-foreground">
+          <Paperclip size={12} />
+          {task.comments?.reduce((sum, c) => sum + c._count.attachments, 0) ?? 0}
+        </span>
+      </div>
     </div>
   );
 }
@@ -555,6 +569,18 @@ export default function TasksView() {
             <span className="text-sm font-medium truncate max-w-[260px]">
               {task.title}
             </span>
+            {!isSubTask && (
+              <span className="flex items-center gap-2 ml-auto shrink-0 pl-2">
+                <span className="flex items-center gap-0.5 text-xs text-muted-foreground">
+                  <MessageSquare size={12} />
+                  {task._count?.comments ?? 0}
+                </span>
+                <span className="flex items-center gap-0.5 text-xs text-muted-foreground">
+                  <Paperclip size={12} />
+                  {task.comments?.reduce((sum, c) => sum + c._count.attachments, 0) ?? 0}
+                </span>
+              </span>
+            )}
           </div>
         </td>
         {/* Klient */}

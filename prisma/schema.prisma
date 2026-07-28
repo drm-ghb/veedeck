@@ -60,6 +60,7 @@ model User {
   trialDay3SentAt            DateTime?
   trialEndedSentAt           DateTime?
   contactEmail               String?
+  taskReminderHours          Json?
   emailNotifEnabled          Boolean                 @default(false)
   emailNotifModules          String[]                @default(["renderflow", "listy", "dyskusje", "ankiety", "wykonawcy"])
   emailNotifDigestInterval   Int                     @default(30)
@@ -901,13 +902,24 @@ model TaskStatusConfig {
 }
 
 model TaskComment {
-  id        String   @id @default(cuid())
-  body      String
-  taskId    String
-  authorId  String
-  createdAt DateTime @default(now())
-  author    User     @relation("TaskCommentAuthor", fields: [authorId], references: [id], onDelete: Cascade)
-  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  id          String                   @id @default(cuid())
+  body        String
+  taskId      String
+  authorId    String
+  createdAt   DateTime                 @default(now())
+  author      User                     @relation("TaskCommentAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  task        Task                     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  attachments TaskCommentAttachment[]
+}
+
+model TaskCommentAttachment {
+  id            String      @id @default(cuid())
+  taskCommentId String
+  fileUrl       String
+  fileName      String
+  fileSize      Int?
+  createdAt     DateTime    @default(now())
+  comment       TaskComment @relation(fields: [taskCommentId], references: [id], onDelete: Cascade)
 }
 
 model Survey {

@@ -19,7 +19,10 @@ export async function GET(
 
   const comments = await prisma.taskComment.findMany({
     where: { taskId: id },
-    include: { author: { select: { id: true, name: true, email: true, fullName: true, avatarUrl: true } } },
+    include: {
+      author: { select: { id: true, name: true, email: true, fullName: true, avatarUrl: true } },
+      attachments: { orderBy: { createdAt: "asc" } },
+    },
     orderBy: { createdAt: "asc" },
   });
 
@@ -40,12 +43,30 @@ export async function POST(
   if (!task) return NextResponse.json({ error: "Nie znaleziono zadania" }, { status: 404 });
   if (task.ownerId !== ownerId) return NextResponse.json({ error: "Brak dostępu" }, { status: 403 });
 
-  const { body } = await req.json();
-  if (!body?.trim()) return NextResponse.json({ error: "Treść komentarza jest wymagana" }, { status: 400 });
+  const { body, attachments } = await req.json();
+  if (!body?.trim() && (!attachments || attachments.length === 0)) {
+    return NextResponse.json({ error: "Treść komentarza lub załącznik jest wymagany" }, { status: 400 });
+  }
 
   const comment = await prisma.taskComment.create({
-    data: { body: body.trim(), taskId: id, authorId: session.user.id },
-    include: { author: { select: { id: true, name: true, email: true, fullName: true, avatarUrl: true } } },
+    data: {
+      body: body?.trim() || "",
+      taskId: id,
+      authorId: session.user.id,
+      ...(attachments?.length > 0 && {
+        attachments: {
+          create: attachments.map((a: { fileUrl: string; fileName: string; fileSize?: number }) => ({
+            fileUrl: a.fileUrl,
+            fileName: a.fileName,
+            fileSize: a.fileSize ?? null,
+          })),
+        },
+      }),
+    },
+    include: {
+      author: { select: { id: true, name: true, email: true, fullName: true, avatarUrl: true } },
+      attachments: { orderBy: { createdAt: "asc" } },
+    },
   });
 
   return NextResponse.json(comment, { status: 201 });

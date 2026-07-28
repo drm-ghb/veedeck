@@ -1212,8 +1212,14 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
     if (selectedIds.length > 1) { setSnapLines([]); return; }
     const nx = e.target.x();
     const ny = e.target.y();
-    const w = el.width ?? 120;
-    const h = el.height ?? 80;
+    // Use getElementBounds to correctly handle arrows/lines (points-based) and ellipses (center-based)
+    const elBounds = getElementBounds(el);
+    const bboxOffsetX = elBounds.x - el.x;
+    const bboxOffsetY = elBounds.y - el.y;
+    const w = elBounds.width;
+    const h = elBounds.height;
+    const snapX = nx + bboxOffsetX;
+    const snapY = ny + bboxOffsetY;
     const threshold = 8 / stageScale;
     const newLines: Array<{ x1: number; y1: number; x2: number; y2: number }> = [];
     let bestDX = threshold + 1;
@@ -1222,14 +1228,15 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
     let snappedY = ny;
     for (const other of elements) {
       if (other.id === el.id || other.type === "connection" || selectedIds.includes(other.id)) continue;
-      const ow = other.width ?? 120;
-      const oh = other.height ?? 80;
-      const ox = other.type === "ellipse" ? other.x - ow / 2 : other.x;
-      const oy = other.type === "ellipse" ? other.y - oh / 2 : other.y;
+      const ob = getElementBounds(other);
+      const ox = ob.x;
+      const oy = ob.y;
+      const ow = ob.width;
+      const oh = ob.height;
       for (const [dxc, oxc] of [
-        [nx, ox], [nx, ox + ow / 2], [nx, ox + ow],
-        [nx + w / 2, ox], [nx + w / 2, ox + ow / 2], [nx + w / 2, ox + ow],
-        [nx + w, ox], [nx + w, ox + ow / 2], [nx + w, ox + ow],
+        [snapX, ox], [snapX, ox + ow / 2], [snapX, ox + ow],
+        [snapX + w / 2, ox], [snapX + w / 2, ox + ow / 2], [snapX + w / 2, ox + ow],
+        [snapX + w, ox], [snapX + w, ox + ow / 2], [snapX + w, ox + ow],
       ]) {
         const dist = Math.abs(dxc - oxc);
         if (dist < threshold && dist < bestDX) {
@@ -1238,9 +1245,9 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
         }
       }
       for (const [dyc, oyc] of [
-        [ny, oy], [ny, oy + oh / 2], [ny, oy + oh],
-        [ny + h / 2, oy], [ny + h / 2, oy + oh / 2], [ny + h / 2, oy + oh],
-        [ny + h, oy], [ny + h, oy + oh / 2], [ny + h, oy + oh],
+        [snapY, oy], [snapY, oy + oh / 2], [snapY, oy + oh],
+        [snapY + h / 2, oy], [snapY + h / 2, oy + oh / 2], [snapY + h / 2, oy + oh],
+        [snapY + h, oy], [snapY + h, oy + oh / 2], [snapY + h, oy + oh],
       ]) {
         const dist = Math.abs(dyc - oyc);
         if (dist < threshold && dist < bestDY) {
@@ -2651,6 +2658,8 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                         applySnap(e, el);
                       }}
                       onContextMenu={(e) => { e.evt.preventDefault(); setSelectedIds([el.id]); setContextMenu({ screenX: e.evt.clientX, screenY: e.evt.clientY, elementId: el.id }); }}
+                      onMouseEnter={() => { if (stageRef.current) stageRef.current.container().style.cursor = "pointer"; }}
+                      onMouseLeave={() => { if (stageRef.current) stageRef.current.container().style.cursor = ""; }}
                     />
                   );
                 }

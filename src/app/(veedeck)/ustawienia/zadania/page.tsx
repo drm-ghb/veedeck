@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { GripVertical, Plus, X, Pencil, Check } from "@/components/ui/icons";
+import { GripVertical, Plus, X, Pencil, Check, Bell } from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -14,10 +14,15 @@ interface TaskStatusConfig {
   order: number;
 }
 
+interface ReminderHours { LOW: number; MEDIUM: number; HIGH: number; }
+
 export default function SettingsZadaniaPage() {
   const [statuses, setStatuses] = useState<TaskStatusConfig[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+
+  const [reminderHours, setReminderHours] = useState<ReminderHours>({ LOW: 72, MEDIUM: 48, HIGH: 24 });
+  const [savingReminders, setSavingReminders] = useState(false);
   const [dragging, setDragging] = useState<number | null>(null);
   const [dragOver, setDragOver] = useState<number | null>(null);
   const [newLabel, setNewLabel] = useState("");
@@ -30,7 +35,28 @@ export default function SettingsZadaniaPage() {
       .then((r) => r.json())
       .then(setStatuses)
       .finally(() => setLoading(false));
+    fetch("/api/settings/task-reminders")
+      .then((r) => r.json())
+      .then((data) => setReminderHours({ LOW: data.LOW ?? 72, MEDIUM: data.MEDIUM ?? 48, HIGH: data.HIGH ?? 24 }))
+      .catch(() => {});
   }, []);
+
+  async function handleSaveReminders() {
+    setSavingReminders(true);
+    try {
+      const res = await fetch("/api/settings/task-reminders", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(reminderHours),
+      });
+      if (!res.ok) throw new Error();
+      toast.success("Interwały przypomnień zapisane");
+    } catch {
+      toast.error("Błąd zapisu");
+    } finally {
+      setSavingReminders(false);
+    }
+  }
 
   function handleDragStart(index: number) {
     setDragging(index);
@@ -279,6 +305,51 @@ export default function SettingsZadaniaPage() {
         <div className="flex justify-end pt-1 border-t border-border">
           <Button onClick={handleSaveOrder} disabled={saving || loading}>
             {saving ? "Zapisywanie..." : "Zapisz kolejność"}
+          </Button>
+        </div>
+      </div>
+
+      {/* Przypomnienia */}
+      <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
+        <div>
+          <h2 className="text-base font-semibold flex items-center gap-2">
+            <Bell size={15} className="text-muted-foreground" />
+            Interwały przypomnień
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Ile godzin przed deadlinem wysłać przypomnienie — per priorytet zadania.
+          </p>
+        </div>
+
+        <div className="space-y-3">
+          {(["LOW", "MEDIUM", "HIGH"] as const).map((p) => {
+            const label = p === "LOW" ? "Niski" : p === "MEDIUM" ? "Średni" : "Wysoki";
+            const dotClass = p === "HIGH" ? "bg-red-500" : p === "MEDIUM" ? "bg-yellow-400" : "bg-gray-400";
+            return (
+              <div key={p} className="flex items-center gap-4">
+                <div className="flex items-center gap-2 w-28 shrink-0">
+                  <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${dotClass}`} />
+                  <span className="text-sm font-medium">{label}</span>
+                </div>
+                <div className="flex items-center gap-2 flex-1">
+                  <Input
+                    type="number"
+                    min={1}
+                    max={720}
+                    value={reminderHours[p]}
+                    onChange={(e) => setReminderHours((prev) => ({ ...prev, [p]: Number(e.target.value) }))}
+                    className="w-24"
+                  />
+                  <span className="text-sm text-muted-foreground">godz. przed deadlinem</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="flex justify-end pt-1 border-t border-border">
+          <Button onClick={handleSaveReminders} disabled={savingReminders}>
+            {savingReminders ? "Zapisywanie..." : "Zapisz przypomnienia"}
           </Button>
         </div>
       </div>

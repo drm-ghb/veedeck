@@ -1583,12 +1583,12 @@ export default function RenderViewer({
   }, [highlightedChatId, sidebarTab, showComments, comments]);
 
   return (
-    <div className="flex flex-col h-full bg-card rounded-tl-2xl overflow-hidden">
+    <div className="flex flex-col h-full w-full bg-card rounded-tl-2xl overflow-hidden">
       {/* Header bar */}
       <div className="border-b bg-card flex-shrink-0">
 
         {/* Row 1: Back + Breadcrumb */}
-        <div className="flex items-center gap-3 px-4 py-2.5">
+        <div className="flex items-center gap-3 px-4 pt-4 pb-2.5">
           {/* Back arrow */}
           {(onBack || projectId) && (
             <>
@@ -1786,8 +1786,8 @@ export default function RenderViewer({
       </div>
 
       {/* Row 2: Mobile toolbar (hidden on sm+) — excludes Pin/Discussion (they're in the bottom toolbar) */}
-      <div className="sm:hidden border-b bg-card flex-shrink-0 overflow-x-auto">
-      <div className="flex items-center gap-0.5 px-2 py-1.5 w-max mx-auto">
+      <div className="sm:hidden border-b bg-card flex-shrink-0 flex items-center justify-center overflow-x-hidden">
+      <div className="flex items-center gap-0.5 px-2 py-1.5">
         {/* Hide pins */}
         <button onClick={() => setHidePins((v) => !v)} className={`flex items-center justify-center w-9 h-9 rounded-md border transition-colors flex-shrink-0 ${hidePins ? "bg-primary text-primary-foreground border-primary" : "border-transparent text-gray-500 hover:bg-muted"}`} title={hidePins ? t.render.showPins : t.render.hidePins}>
           <svg viewBox="0 0 24 24" className="w-[15px] h-[15px]" fill="currentColor"><path d="M16 9V4h1c.55 0 1-.45 1-1s-.45-1-1-1H7c-.55 0-1 .45-1 1s.45 1 1 1h1v5c0 1.66-1.34 3-3 3h10c-1.66 0-3-1.34-3-3zm-3 12v-6h-2v6c0 .55.45 1 1 1s1-.45 1-1z"/><path d="M3.51 3.51c-.39.39-.39 1.02 0 1.41l15.56 15.57c.39.39 1.02.39 1.41 0s.39-1.02 0-1.41L4.93 3.51c-.39-.39-1.02-.39-1.42 0z"/></svg>
@@ -4165,7 +4165,7 @@ export default function RenderViewer({
             </div>
           )}
           <div
-            className="fixed inset-x-0 bottom-0 z-[200] flex justify-center pointer-events-none"
+            className="fixed left-0 bottom-0 w-screen z-[200] flex justify-center pointer-events-none"
             style={{ paddingBottom: "calc(20px + env(safe-area-inset-bottom, 0px))" }}
           >
           <div

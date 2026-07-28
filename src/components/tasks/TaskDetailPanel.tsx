@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { useT } from "@/lib/i18n";
-import { X, Plus, Send, Check, Square, CheckSquare, Trash2, MoreVertical, ChevronLeft } from "@/components/ui/icons";
+import { X, Plus, Send, Check, Square, CheckSquare, Trash2, MoreVertical, ChevronLeft, Paperclip, FileText, Download } from "@/components/ui/icons";
+import { useUploadThing } from "@/lib/uploadthing-client";
 import TaskSelectField, { TaskSelectOption } from "./TaskSelectField";
 import { TaskDescriptionEditor } from "./TaskDescriptionEditor";
 import DatePicker from "@/components/ui/DatePicker";
@@ -23,11 +24,19 @@ interface Project {
   title: string;
 }
 
+interface TaskCommentAttachment {
+  id: string;
+  fileUrl: string;
+  fileName: string;
+  fileSize: number | null;
+}
+
 interface TaskComment {
   id: string;
   body: string;
   createdAt: string;
   author: User;
+  attachments: TaskCommentAttachment[];
 }
 
 interface SubTask {
@@ -100,6 +109,18 @@ export default function TaskDetailPanel({ task, onClose, onUpdated, isSubTask = 
   const [comments, setComments] = useState<TaskComment[]>([]);
   const [commentBody, setCommentBody] = useState("");
   const [sendingComment, setSendingComment] = useState(false);
+  const [pendingAttachments, setPendingAttachments] = useState<{ fileUrl: string; fileName: string; fileSize?: number }[]>([]);
+  const attachmentInputRef = useRef<HTMLInputElement>(null);
+
+  const { startUpload, isUploading } = useUploadThing("taskAttachmentUploader", {
+    onClientUploadComplete: (files) => {
+      setPendingAttachments((prev) => [
+        ...prev,
+        ...files.map((f) => ({ fileUrl: f.url, fileName: f.name, fileSize: f.size })),
+      ]);
+    },
+    onUploadError: () => toast.error("Błąd przesyłania pliku"),
+  });
 
   const [subTasks, setSubTasks] = useState<SubTask[]>(task.subTasks ?? []);
   const [subTaskInput, setSubTaskInput] = useState("");
@@ -123,6 +144,7 @@ export default function TaskDetailPanel({ task, onClose, onUpdated, isSubTask = 
     setSubTasks(task.subTasks ?? []);
     setComments([]);
     setCommentBody("");
+    setPendingAttachments([]);
     setSubTaskInput("");
   }, [task.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -185,18 +207,19 @@ export default function TaskDetailPanel({ task, onClose, onUpdated, isSubTask = 
   }, [task.id, onUpdated, t]);
 
   async function sendComment() {
-    if (!commentBody.trim()) return;
+    if (!commentBody.trim() && pendingAttachments.length === 0) return;
     setSendingComment(true);
     try {
       const res = await fetch(`/api/tasks/${task.id}/comments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ body: commentBody }),
+        body: JSON.stringify({ body: commentBody, attachments: pendingAttachments }),
       });
       if (!res.ok) throw new Error();
       const comment = await res.json();
       setComments((prev) => [...prev, comment]);
       setCommentBody("");
+      setPendingAttachments([]);
     } catch {
       toast.error(t.tasks.commentError);
     } finally {
@@ -256,7 +279,7 @@ export default function TaskDetailPanel({ task, onClose, onUpdated, isSubTask = 
 
   return (
     <>
-    <div className="fixed inset-0 z-40">
+    <div className="fixed inset-x-0 bottom-0 top-[57px] z-40">
       <div className="absolute inset-0 bg-black/30" onClick={onClose} />
       <div className="absolute right-0 top-0 bottom-0 w-full max-w-xl bg-background border border-border flex flex-col overflow-hidden shadow-xl rounded-l-2xl">
         {/* Header */}
@@ -444,7 +467,24 @@ export default function TaskDetailPanel({ task, onClose, onUpdated, isSubTask = 
                     <span className="text-sm font-medium">{userDisplayName(c.author)}</span>
                     <span className="text-xs text-muted-foreground">{new Date(c.createdAt).toLocaleDateString("pl-PL")}</span>
                   </div>
-                  <p className="text-sm text-foreground whitespace-pre-wrap">{c.body}</p>
+                  {c.body && <p className="text-sm text-foreground whitespace-pre-wrap">{c.body}</p>}
+                  {c.attachments?.length > 0 && (
+                    <div className="mt-1.5 flex flex-col gap-1">
+                      {c.attachments.map((a) => (
+                        <a
+                          key={a.id}
+                          href={a.fileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline max-w-full"
+                        >
+                          <FileText size={12} className="shrink-0" />
+                          <span className="truncate">{a.fileName}</span>
+                          <Download size={11} className="shrink-0 text-muted-foreground" />
+                        </a>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
@@ -457,7 +497,44 @@ export default function TaskDetailPanel({ task, onClose, onUpdated, isSubTask = 
 
         {/* Pole komentarza (Messenger style) */}
         <div className="px-4 py-3 border-t border-border shrink-0">
+          {pendingAttachments.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mb-2">
+              {pendingAttachments.map((a, i) => (
+                <div key={i} className="flex items-center gap-1 px-2 py-1 rounded-lg bg-muted text-xs max-w-[180px]">
+                  <FileText size={11} className="shrink-0 text-muted-foreground" />
+                  <span className="truncate">{a.fileName}</span>
+                  <button
+                    type="button"
+                    onClick={() => setPendingAttachments((prev) => prev.filter((_, idx) => idx !== i))}
+                    className="shrink-0 text-muted-foreground hover:text-red-500 transition-colors ml-0.5"
+                  >
+                    <X size={11} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
           <div className="flex items-end gap-2">
+            <input
+              ref={attachmentInputRef}
+              type="file"
+              multiple
+              className="hidden"
+              onChange={(e) => {
+                const files = Array.from(e.target.files ?? []);
+                if (files.length) startUpload(files);
+                e.target.value = "";
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => attachmentInputRef.current?.click()}
+              disabled={isUploading}
+              className="p-1.5 text-muted-foreground hover:text-foreground disabled:opacity-40 transition-colors shrink-0"
+              title="Dodaj załącznik"
+            >
+              <Paperclip size={18} />
+            </button>
             <textarea
               ref={commentAreaRef}
               value={commentBody}
@@ -476,7 +553,7 @@ export default function TaskDetailPanel({ task, onClose, onUpdated, isSubTask = 
             />
             <button
               onClick={sendComment}
-              disabled={sendingComment || !commentBody.trim()}
+              disabled={sendingComment || (!commentBody.trim() && pendingAttachments.length === 0) || isUploading}
               className="p-2 text-primary hover:opacity-70 disabled:opacity-40 transition-opacity shrink-0"
             >
               <Send size={30} />
