@@ -689,7 +689,7 @@ function ProductRow({
             {/* Inline category badge */}
             <button
               onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); const estH = (allCategories.length + 1) * 28 + 8; const top = (window.innerHeight - r.bottom) >= estH + 8 ? r.bottom + 4 : Math.max(4, r.top - estH - 4); setCategoryMenuPos({ top, left: r.left }); setCategoryMenuOpen((v) => !v); }}
-              className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors shrink-0 ${product.category ? "bg-primary/8 text-primary dark:bg-primary/20 hover:bg-primary/15" : "border border-dashed border-border text-muted-foreground hover:border-primary/40 hover:text-primary"}`}
+              className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors shrink-0 ${product.category ? "bg-muted text-muted-foreground hover:bg-muted/70" : "border border-dashed border-border text-muted-foreground hover:border-foreground/30"}`}
               title={t.listy.changeCategoryTitle}
             >
               {product.category ? getCategoryLabel(product.category, allCategories) : t.listy.addCategory}
@@ -889,7 +889,7 @@ function ProductRow({
               )}
               <button
                 onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); const estH = (allCategories.length + 1) * 28 + 8; const top = (window.innerHeight - r.bottom) >= estH + 8 ? r.bottom + 4 : Math.max(4, r.top - estH - 4); setCategoryMenuPos({ top, left: r.left }); setCategoryMenuOpen((v) => !v); }}
-                className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors shrink-0 ${product.category ? "bg-primary/8 text-primary dark:bg-primary/20" : "border border-dashed border-border text-muted-foreground"}`}
+                className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors shrink-0 ${product.category ? "bg-muted text-muted-foreground hover:bg-muted/70" : "border border-dashed border-border text-muted-foreground"}`}
               >
                 {product.category ? getCategoryLabel(product.category, allCategories) : t.listy.addCategoryShort}
               </button>
