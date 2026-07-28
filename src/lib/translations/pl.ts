@@ -182,6 +182,7 @@ export const pl = {
     upToDate: "Jesteś na bieżąco!",
     noUnread: "Brak nieprzeczytanych wiadomości",
     markAsRead: "Oznacz jako przeczytane",
+    seeAll: "Zobacz wszystkie",
     todoTitle: "Do zrobienia",
     noTodo: "Brak oczekujących działań",
     todoTaskLabel: "Zadanie",

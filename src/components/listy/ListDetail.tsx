@@ -4,7 +4,7 @@ import { useState, useRef, useCallback, useEffect, Fragment } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, ChevronDown, ChevronUp, Plus, ExternalLink, Minus, MoreHorizontal, Pencil, Trash2, GripVertical, FileDown, Sheet, ArrowDownUp, Eye, EyeOff, Check, X, RotateCcw, FolderInput, Wallet, AlertCircle, AlertTriangle, DollarSign, Copy, Comment, CheckCircle, RadioButtonUnchecked, Search, FileText, Link2, Layers, Asterisk } from "@/components/ui/icons";
+import { ChevronLeft, ChevronDown, ChevronUp, Plus, ExternalLink, Minus, MoreHorizontal, Pencil, Trash2, GripVertical, FileDown, Sheet, ArrowDownUp, Eye, EyeOff, Check, X, RotateCcw, FolderInput, Wallet, AlertCircle, AlertTriangle, DollarSign, Copy, Comment, CheckCircle, RadioButtonUnchecked, Search, FileText, Layers, Asterisk } from "@/components/ui/icons";
 import ProductCommentPanel from "./ProductCommentPanel";
 import ListSectionNav from "./ListSectionNav";
 import { pusherClient } from "@/lib/pusher";
@@ -236,55 +236,6 @@ function CopySectionDialog({ open, onOpenChange, sections, currentSectionId, pro
   );
 }
 
-function AssignVariantDialog({
-  open,
-  onOpenChange,
-  product,
-  sectionProducts,
-  onAssign,
-}: {
-  open: boolean;
-  onOpenChange: (v: boolean) => void;
-  product: Product;
-  sectionProducts: Product[];
-  onAssign: (parentId: string) => void;
-}) {
-  const candidates = sectionProducts.filter(
-    (p) => p.id !== product.id && !p.parentProductId
-  );
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-sm">
-        <DialogHeader>
-          <DialogTitle>Przypisz jako wariant</DialogTitle>
-          <DialogDescription>Wybierz produkt podstawowy, do którego chcesz przypisać „{product.name}"</DialogDescription>
-        </DialogHeader>
-        <div className="space-y-1 max-h-64 overflow-y-auto">
-          {candidates.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-4 text-center">Brak produktów podstawowych w tej sekcji</p>
-          ) : (
-            candidates.map((p) => (
-              <button
-                key={p.id}
-                onClick={() => { onAssign(p.id); onOpenChange(false); }}
-                className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-muted transition-colors flex items-center gap-2"
-              >
-                {p.imageUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={p.imageUrl} alt={p.name} className="w-8 h-8 rounded object-contain bg-muted shrink-0" />
-                ) : (
-                  <span className="w-8 h-8 rounded bg-muted flex items-center justify-center text-base shrink-0">📦</span>
-                )}
-                <span className="truncate">{p.name}</span>
-              </button>
-            ))
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
 function ProductRow({
   product,
   index,
@@ -303,9 +254,6 @@ function ProductRow({
   onOpenCopyDialog,
   onApprovalChange,
   onFieldUpdate,
-  onAddVariant,
-  onAssignVariant,
-  onUnassignVariant,
   approval,
   commentCount,
   unreadCount,
@@ -334,9 +282,6 @@ function ProductRow({
   onOpenCopyDialog: () => void;
   onApprovalChange: (value: string | null) => void;
   onFieldUpdate: (productId: string, field: string, value: string | null) => void;
-  onAddVariant?: () => void;
-  onAssignVariant?: () => void;
-  onUnassignVariant?: () => void;
   sections: Section[];
   approval: string | null;
   commentCount: number;
@@ -445,24 +390,6 @@ function ProductRow({
             : <RadioButtonUnchecked size={13} className="mr-2" />}
           {product.optional ? "Oznacz jako podstawowy" : "Oznacz jako opcjonalny"}
         </DropdownMenuItem>
-        {!product.parentProductId && onAddVariant && (
-          <DropdownMenuItem disabled={expired} title={expired ? "Dostępne w płatnym planie" : undefined} onClick={onAddVariant}>
-            <Layers size={13} className="mr-2" />
-            Dodaj wariant
-          </DropdownMenuItem>
-        )}
-        {product.optional && !product.parentProductId && onAssignVariant && (
-          <DropdownMenuItem disabled={expired} title={expired ? "Dostępne w płatnym planie" : undefined} onClick={onAssignVariant}>
-            <Link2 size={13} className="mr-2" />
-            Przypisz jako wariant
-          </DropdownMenuItem>
-        )}
-        {product.parentProductId && onUnassignVariant && (
-          <DropdownMenuItem disabled={expired} title={expired ? "Dostępne w płatnym planie" : undefined} onClick={onUnassignVariant}>
-            <Link2 size={13} className="mr-2 text-muted-foreground" />
-            Odepnij od produktu
-          </DropdownMenuItem>
-        )}
         <DropdownMenuItem disabled={expired} title={expired ? "Dostępne w płatnym planie" : undefined} onClick={onToggleHidden}>
           {product.hidden ? <Eye size={13} className="mr-2" /> : <EyeOff size={13} className="mr-2" />}
           {product.hidden ? t.render.showToClient : t.render.hideFromClient}
@@ -1118,7 +1045,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
   const [addingSection, setAddingSection] = useState(false);
   const [newSectionName, setNewSectionName] = useState("");
   const [savingSection, setSavingSection] = useState(false);
-  const [dialogState, setDialogState] = useState<{ open: boolean; sectionId: string | null; parentProductId?: string | null }>({
+  const [dialogState, setDialogState] = useState<{ open: boolean; sectionId: string | null }>({
     open: false,
     sectionId: null,
   });
@@ -1126,7 +1053,6 @@ export default function ListDetail({ list, designerName, designerEmail, designer
   const [editState, setEditState] = useState<{ product: Product; sectionId: string } | null>(null);
   const [moveState, setMoveState] = useState<{ product: Product; sectionId: string } | null>(null);
   const [copyState, setCopyState] = useState<{ product: Product; sectionId: string } | null>(null);
-  const [assignVariantState, setAssignVariantState] = useState<{ product: Product; sectionId: string } | null>(null);
   const [activeDragProduct, setActiveDragProduct] = useState<Product | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [editingSectionId, setEditingSectionId] = useState<string | null>(null);
@@ -1713,24 +1639,49 @@ export default function ListDetail({ list, designerName, designerEmail, designer
     const product = section?.products.find((p) => p.id === productId);
     if (!product) return;
     const optional = !product.optional;
+
+    // When marking as optional: auto-assign to the nearest preceding top-level product
+    let parentProductId: string | null = null;
+    if (optional) {
+      const sorted = [...(section?.products ?? [])].sort((a, b) => a.order - b.order);
+      const idx = sorted.findIndex((p) => p.id === productId);
+      for (let i = idx - 1; i >= 0; i--) {
+        if (!sorted[i].parentProductId) {
+          parentProductId = sorted[i].id;
+          break;
+        }
+      }
+    }
+
     setSections((prev) =>
       prev.map((s) =>
         s.id === sectionId
-          ? { ...s, products: s.products.map((p) => p.id === productId ? { ...p, optional } : p) }
+          ? { ...s, products: s.products.map((p) => p.id === productId ? { ...p, optional, parentProductId } : p) }
           : s
       )
     );
+
+    // API has separate if-blocks: parentProductId branch sets both fields; optional branch sets only optional.
+    // So: with parent → send { parentProductId } (sets optional:true too)
+    //     no parent, marking optional → send { optional: true }
+    //     unmarking → send { parentProductId: null } (sets optional:false too)
+    const patchBody = optional && parentProductId
+      ? { parentProductId }
+      : !optional
+      ? { parentProductId: null }
+      : { optional: true };
+
     try {
       const res = await fetch(`/api/lists/${list.id}/sections/${sectionId}/products/${productId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ optional }),
+        body: JSON.stringify(patchBody),
       });
       if (!res.ok) {
         setSections((prev) =>
           prev.map((s) =>
             s.id === sectionId
-              ? { ...s, products: s.products.map((p) => p.id === productId ? { ...p, optional: !optional } : p) }
+              ? { ...s, products: s.products.map((p) => p.id === productId ? { ...p, optional: !optional, parentProductId: product.parentProductId } : p) }
               : s
           )
         );
@@ -1740,7 +1691,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
       setSections((prev) =>
         prev.map((s) =>
           s.id === sectionId
-            ? { ...s, products: s.products.map((p) => p.id === productId ? { ...p, optional: !optional } : p) }
+            ? { ...s, products: s.products.map((p) => p.id === productId ? { ...p, optional: !optional, parentProductId: product.parentProductId } : p) }
             : s
         )
       );
@@ -1761,68 +1712,6 @@ export default function ListDetail({ list, designerName, designerEmail, designer
     } catch {
       setApprovals((a) => ({ ...a, [productId]: prev }));
       toast.error(t.listy.approvalChangeError);
-    }
-  }
-
-  function handleVariantLinked(updatedProduct: unknown) {
-    // An existing product was linked as variant via "Ta lista" tab — update it in state
-    const p = updatedProduct as { id: string; sectionId: string; parentProductId: string | null; optional: boolean };
-    setSections((prev) => {
-      const oldSection = prev.find((s) => s.products.some((prod) => prod.id === p.id));
-      if (!oldSection) return prev;
-      if (oldSection.id === p.sectionId) {
-        // Same section — just update the product fields
-        return prev.map((s) =>
-          s.id === p.sectionId
-            ? { ...s, products: s.products.map((prod) => prod.id === p.id ? { ...prod, parentProductId: p.parentProductId, optional: p.optional } : prod) }
-            : s
-        );
-      }
-      // Product moved to a different section — remove from old, add to new
-      const productData = oldSection.products.find((prod) => prod.id === p.id)!;
-      return prev.map((s) => {
-        if (s.id === oldSection.id) return { ...s, products: s.products.filter((prod) => prod.id !== p.id) };
-        if (s.id === p.sectionId) return { ...s, products: [...s.products, { ...productData, parentProductId: p.parentProductId, optional: p.optional }] };
-        return s;
-      });
-    });
-  }
-
-  async function handleAssignVariant(sectionId: string, productId: string, parentProductId: string) {
-    setSections((prev) =>
-      prev.map((s) =>
-        s.id === sectionId
-          ? { ...s, products: s.products.map((p) => p.id === productId ? { ...p, parentProductId, optional: true } : p) }
-          : s
-      )
-    );
-    try {
-      await fetch(`/api/lists/${list.id}/sections/${sectionId}/products/${productId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ parentProductId }),
-      });
-    } catch {
-      toast.error("Nie udało się przypisać wariantu");
-    }
-  }
-
-  async function handleUnassignVariant(sectionId: string, productId: string) {
-    setSections((prev) =>
-      prev.map((s) =>
-        s.id === sectionId
-          ? { ...s, products: s.products.map((p) => p.id === productId ? { ...p, parentProductId: null, optional: false } : p) }
-          : s
-      )
-    );
-    try {
-      await fetch(`/api/lists/${list.id}/sections/${sectionId}/products/${productId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ parentProductId: null }),
-      });
-    } catch {
-      toast.error("Nie udało się odpiąć wariantu");
     }
   }
 
@@ -2274,9 +2163,6 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                                   onOpenCopyDialog={() => setCopyState({ product, sectionId: unsortedSection.id })}
                                   onApprovalChange={(value) => handleApprovalChange(unsortedSection.id, product.id, value)}
                                   onFieldUpdate={(pid, field, value) => handleProductFieldUpdate(unsortedSection.id, pid, field, value)}
-                                  onAddVariant={() => setDialogState({ open: true, sectionId: unsortedSection.id, parentProductId: product.id })}
-                                  onAssignVariant={() => setAssignVariantState({ product, sectionId: unsortedSection.id })}
-                                  onUnassignVariant={() => handleUnassignVariant(unsortedSection.id, product.id)}
                                   approval={approvals[product.id] ?? null}
                                   commentCount={commentCounts[product.id] ?? 0}
                                   unreadCount={unreadProducts.has(product.id) ? Math.max(0, (commentCounts[product.id] ?? 0) - (seenCounts[product.id] ?? 0)) : 0}
@@ -2315,8 +2201,6 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                                   onOpenCopyDialog={() => setCopyState({ product: variant, sectionId: unsortedSection.id })}
                                   onApprovalChange={(value) => handleApprovalChange(unsortedSection.id, variant.id, value)}
                                   onFieldUpdate={(pid, field, value) => handleProductFieldUpdate(unsortedSection.id, pid, field, value)}
-                                  onAssignVariant={() => setAssignVariantState({ product: variant, sectionId: unsortedSection.id })}
-                                  onUnassignVariant={() => handleUnassignVariant(unsortedSection.id, variant.id)}
                                   approval={approvals[variant.id] ?? null}
                                   commentCount={commentCounts[variant.id] ?? 0}
                                   unreadCount={unreadProducts.has(variant.id) ? Math.max(0, (commentCounts[variant.id] ?? 0) - (seenCounts[variant.id] ?? 0)) : 0}
@@ -2492,9 +2376,6 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                                             onOpenCopyDialog={() => setCopyState({ product, sectionId: section.id })}
                                             onApprovalChange={(value) => handleApprovalChange(section.id, product.id, value)}
                                             onFieldUpdate={(pid, field, value) => handleProductFieldUpdate(section.id, pid, field, value)}
-                                            onAddVariant={() => setDialogState({ open: true, sectionId: section.id, parentProductId: product.id })}
-                                            onAssignVariant={() => setAssignVariantState({ product, sectionId: section.id })}
-                                            onUnassignVariant={() => handleUnassignVariant(section.id, product.id)}
                                             approval={approvals[product.id] ?? null}
                                             commentCount={commentCounts[product.id] ?? 0}
                                             unreadCount={unreadProducts.has(product.id) ? Math.max(0, (commentCounts[product.id] ?? 0) - (seenCounts[product.id] ?? 0)) : 0}
@@ -2533,8 +2414,6 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                                             onOpenCopyDialog={() => setCopyState({ product: variant, sectionId: section.id })}
                                             onApprovalChange={(value) => handleApprovalChange(section.id, variant.id, value)}
                                             onFieldUpdate={(pid, field, value) => handleProductFieldUpdate(section.id, pid, field, value)}
-                                            onAssignVariant={() => setAssignVariantState({ product: variant, sectionId: section.id })}
-                                            onUnassignVariant={() => handleUnassignVariant(section.id, variant.id)}
                                             approval={approvals[variant.id] ?? null}
                                             commentCount={commentCounts[variant.id] ?? 0}
                                             unreadCount={unreadProducts.has(variant.id) ? Math.max(0, (commentCounts[variant.id] ?? 0) - (seenCounts[variant.id] ?? 0)) : 0}
@@ -2598,25 +2477,12 @@ export default function ListDetail({ list, designerName, designerEmail, designer
 
       <AddProductDialog
         open={dialogState.open}
-        onOpenChange={(open) => setDialogState({ open, sectionId: open ? dialogState.sectionId : null, parentProductId: open ? dialogState.parentProductId : null })}
+        onOpenChange={(open) => setDialogState({ open, sectionId: open ? dialogState.sectionId : null })}
         listId={list.id}
         sectionId={dialogState.sectionId}
-        parentProductId={dialogState.parentProductId}
-        listProducts={dialogState.parentProductId ? sections.flatMap((s) => s.products.map((p) => ({ id: p.id, name: p.name, imageUrl: p.imageUrl, sectionId: s.id, sectionName: s.unsorted ? "Pozostałe" : s.name, parentProductId: p.parentProductId }))) : undefined}
         onAdded={(product) => handleProductAdded(dialogState.sectionId, product)}
-        onVariantLinked={handleVariantLinked}
         customCategories={customCategories}
       />
-
-      {assignVariantState && (
-        <AssignVariantDialog
-          open={!!assignVariantState}
-          onOpenChange={(v) => { if (!v) setAssignVariantState(null); }}
-          product={assignVariantState.product}
-          sectionProducts={sections.find((s) => s.id === assignVariantState.sectionId)?.products ?? []}
-          onAssign={(parentId) => handleAssignVariant(assignVariantState.sectionId, assignVariantState.product.id, parentId)}
-        />
-      )}
 
       {editState && (
         <EditProductDialog

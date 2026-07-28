@@ -184,6 +184,7 @@ export const en: TranslationKeys = {
     upToDate: "You're up to date!",
     noUnread: "No unread messages",
     markAsRead: "Mark as read",
+    seeAll: "See all",
     todoTitle: "To do",
     noTodo: "No pending actions",
     todoTaskLabel: "Task",
