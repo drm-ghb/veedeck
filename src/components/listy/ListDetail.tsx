@@ -709,9 +709,9 @@ function ProductRow({
               <ChevronDown size={9} />
             </button>
           </div>
-          {/* 2-column attribute grid */}
-          <div className="grid grid-cols-2 gap-x-4 mt-1">
-            {(["manufacturer", "supplier", "color", "deliveryTime", "dimensions", "catalogNumber"] as const).map((field) => {
+          {/* 3-column attribute grid */}
+          <div className="grid grid-cols-3 gap-x-2 mt-1">
+            {(["supplier", "color", "catalogNumber", "manufacturer", "dimensions", "deliveryTime"] as const).map((field) => {
               const labels: Record<string, string> = { manufacturer: t.listy.fieldManufacturer, supplier: t.listy.fieldSupplier, color: t.listy.fieldColor, dimensions: t.listy.fieldDimensions, deliveryTime: t.listy.fieldDelivery, catalogNumber: t.listy.fieldCatalogNumber };
               const val = product[field] as string | null;
               if (editingField === field) {
