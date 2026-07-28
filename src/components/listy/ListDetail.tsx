@@ -393,36 +393,40 @@ function ProductRow({
           {product.note ? t.listy.editNote : t.listy.addNote}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuLabel>Akceptacja</DropdownMenuLabel>
-        <DropdownMenuItem disabled={expired} title={expired ? "Dostępne w płatnym planie" : undefined} onClick={() => onApprovalChange("accepted")}>
-          <Check size={13} className="mr-2 text-green-600" />
-          {t.render.acceptBtn}
-          {approval === "accepted" && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-primary shrink-0" />}
-        </DropdownMenuItem>
-        <DropdownMenuItem disabled={expired} title={expired ? "Dostępne w płatnym planie" : undefined} onClick={() => onApprovalChange("rejected")}>
-          <X size={13} className="mr-2 text-red-500" />
-          {t.listy.rejectBtn}
-          {approval === "rejected" && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-primary shrink-0" />}
-        </DropdownMenuItem>
-        <DropdownMenuItem disabled={expired} title={expired ? "Dostępne w płatnym planie" : undefined} onClick={() => onApprovalChange(null)}>
-          <RotateCcw size={13} className="mr-2" />
-          Oczekuje
-          {approval === null && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-primary shrink-0" />}
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuLabel>Status zamówienia</DropdownMenuLabel>
-        {ORDER_STATUS_OPTIONS.map((opt) => (
-          <DropdownMenuItem
-            key={String(opt.value)}
-            disabled={expired}
-            title={expired ? "Dostępne w płatnym planie" : undefined}
-            onClick={() => onOrderStatusChange(opt.value ?? null)}
-          >
-            <span className="mr-2 w-[13px]" />
-            {opt.label}
-            {orderStatus === opt.value && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-primary shrink-0" />}
+        <DropdownMenuGroup>
+          <DropdownMenuLabel>Akceptacja</DropdownMenuLabel>
+          <DropdownMenuItem disabled={expired} title={expired ? "Dostępne w płatnym planie" : undefined} onClick={() => onApprovalChange("accepted")}>
+            <Check size={13} className="mr-2 text-green-600" />
+            {t.render.acceptBtn}
+            {approval === "accepted" && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-primary shrink-0" />}
           </DropdownMenuItem>
-        ))}
+          <DropdownMenuItem disabled={expired} title={expired ? "Dostępne w płatnym planie" : undefined} onClick={() => onApprovalChange("rejected")}>
+            <X size={13} className="mr-2 text-red-500" />
+            {t.listy.rejectBtn}
+            {approval === "rejected" && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-primary shrink-0" />}
+          </DropdownMenuItem>
+          <DropdownMenuItem disabled={expired} title={expired ? "Dostępne w płatnym planie" : undefined} onClick={() => onApprovalChange(null)}>
+            <RotateCcw size={13} className="mr-2" />
+            Oczekuje
+            {approval === null && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-primary shrink-0" />}
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuGroup>
+          <DropdownMenuLabel>Status zamówienia</DropdownMenuLabel>
+          {ORDER_STATUS_OPTIONS.map((opt) => (
+            <DropdownMenuItem
+              key={String(opt.value)}
+              disabled={expired}
+              title={expired ? "Dostępne w płatnym planie" : undefined}
+              onClick={() => onOrderStatusChange(opt.value ?? null)}
+            >
+              <span className="mr-2 w-[13px]" />
+              {opt.label}
+              {orderStatus === opt.value && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-primary shrink-0" />}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem disabled={expired} title={expired ? "Dostępne w płatnym planie" : undefined} onClick={onToggleOptional}>
           {product.optional
