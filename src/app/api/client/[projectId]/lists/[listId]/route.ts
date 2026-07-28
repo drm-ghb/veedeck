@@ -61,6 +61,7 @@ export async function GET(
         note: p.note,
         optional: p.optional,
         parentProductId: p.parentProductId,
+        orderStatus: p.orderStatus,
       })),
     })),
   });

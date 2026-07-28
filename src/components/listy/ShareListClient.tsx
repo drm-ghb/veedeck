@@ -52,6 +52,18 @@ interface Product {
   note: string | null;
   optional: boolean;
   parentProductId: string | null;
+  orderStatus: string | null;
+}
+
+const ORDER_STATUS_OPTIONS: { value: string | null; label: string; cls: string }[] = [
+  { value: "do_wyceny", label: "Do wyceny", cls: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400" },
+  { value: "w_wycenie", label: "W wycenie", cls: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" },
+  { value: "zamowione", label: "Zamówione", cls: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" },
+  { value: "do_reklamacji", label: "Do reklamacji", cls: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" },
+];
+
+function getOrderStatusOption(value: string | null) {
+  return ORDER_STATUS_OPTIONS.find((o) => o.value === value) ?? null;
 }
 
 interface Section {
@@ -314,31 +326,37 @@ export default function ShareListClient({
                     {displayCount > 0 && <span className={`absolute -top-1 -right-1 min-w-[14px] h-[14px] rounded-full text-white text-[9px] font-bold flex items-center justify-center px-0.5 leading-none transition-colors ${unread ? "bg-primary" : "bg-muted-foreground/40"}`}>{displayCount > 99 ? "99+" : displayCount}</span>}
                   </button>
                 );
+                const orderStatusOpt = getOrderStatusOption(product.orderStatus);
                 return (
                   <div key={product.id} className={`${!last ? "border-b border-border" : ""} ${isVariant ? "pl-8" : ""}`}>
                     {/* ── DESKTOP (md+) ── */}
-                    <div className="hidden md:flex items-center gap-2 px-4 py-4 hover:bg-muted/30 transition-colors">
-                      <div className="w-32 h-32 shrink-0 rounded-xl bg-muted flex items-center justify-center overflow-hidden">
+                    <div className="hidden md:flex items-center gap-3 px-4 py-4 hover:bg-muted/30 transition-colors">
+                      <div className="w-14 h-14 shrink-0 rounded-xl bg-muted flex items-center justify-center overflow-hidden">
                         {product.imageUrl ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={product.imageUrl} alt={product.name} className="w-full h-full object-contain" />
                         ) : (
-                          <span className="text-3xl text-muted-foreground/30 select-none">📦</span>
+                          <span className="text-2xl text-muted-foreground/30 select-none">📦</span>
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <p className="font-medium text-sm truncate">{product.name}</p>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <p className="font-medium text-sm">{product.name}</p>
                           {isVariant && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted text-muted-foreground shrink-0 cursor-default">Wariant</span>}
-                          {!isVariant && product.optional && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium border border-dashed border-muted-foreground/40 text-muted-foreground shrink-0 cursor-default" title="Produkt jest opcjonalny, jego cena nie jest wliczona do sumy kosztów">Opcjonalny</span>}
+                          {!isVariant && product.optional && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium border border-dashed border-muted-foreground/40 text-muted-foreground shrink-0 cursor-default">Opcjonalny</span>}
                         </div>
-                        {product.manufacturer && <p className="text-xs text-muted-foreground mt-0.5">{product.manufacturer}</p>}
-                        <div className="flex flex-col gap-y-0.5 mt-1">
-                          {product.color && <span className="text-xs text-muted-foreground">{t.listy.fieldColor}: {product.color}</span>}
-                          {product.dimensions && <span className="text-xs text-muted-foreground">{t.listy.fieldDimensions}: {product.dimensions}</span>}
-                          {product.deliveryTime && <span className="text-xs text-muted-foreground">{t.listy.fieldDelivery}: {product.deliveryTime}</span>}
+                        {product.manufacturer && <p className="text-xs text-muted-foreground">{product.manufacturer}</p>}
+                        {orderStatusOpt && (
+                          <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium mt-0.5 ${orderStatusOpt.cls}`}>
+                            {orderStatusOpt.label}
+                          </span>
+                        )}
+                        <div className="flex items-center gap-4 mt-0.5 flex-wrap">
+                          {product.color && <span className="text-xs text-muted-foreground">{t.listy.fieldColor}: <span className="text-foreground">{product.color}</span></span>}
+                          {product.dimensions && <span className="text-xs text-muted-foreground">{t.listy.fieldDimensions}: <span className="text-foreground">{product.dimensions}</span></span>}
+                          {product.deliveryTime && <span className="text-xs text-muted-foreground">{t.listy.fieldDelivery}: <span className="text-foreground">{product.deliveryTime}</span></span>}
                         </div>
-                        {product.note && <p className="text-xs text-muted-foreground italic mt-1">📝 {product.note}</p>}
+                        {product.note && <p className="text-xs text-muted-foreground italic mt-0.5">📝 {product.note}</p>}
                       </div>
                       <div className="flex items-center gap-3 shrink-0">
                         <div className="flex items-center gap-1.5">
@@ -346,53 +364,81 @@ export default function ShareListClient({
                           <span className="text-sm font-medium tabular-nums">{product.quantity}</span>
                         </div>
                         {totalPrice !== null && !hidePrices && (
-                          <div className="text-right min-w-[72px]">
+                          <div className="text-right min-w-[80px]">
                             <p className="text-sm font-semibold tabular-nums">{formatPriceNum(totalPrice)} {currency}</p>
                             {product.quantity > 1 && unitPrice !== null && <p className="text-xs text-muted-foreground tabular-nums">{formatPriceNum(unitPrice)} {t.listy.perUnit}</p>}
                           </div>
                         )}
-                        {product.url ? <a href={product.url} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors"><ExternalLink size={13} /></a> : <span className="w-4" />}
+                        {product.url ? <a href={product.url} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors w-7 h-7 flex items-center justify-center rounded hover:bg-muted"><ExternalLink size={13} /></a> : <span className="w-7" />}
                         {approvalButtons}
                         {commentBtn(14)}
                       </div>
                     </div>
 
                     {/* ── MOBILE (< md) ── */}
-                    <div className="md:hidden flex items-start gap-2 px-3 py-2.5 hover:bg-muted/30 transition-colors">
-                      <div className="w-14 h-14 shrink-0 rounded-lg overflow-hidden bg-muted flex items-center justify-center">
-                        {product.imageUrl ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={product.imageUrl} alt={product.name} className="w-full h-full object-contain cursor-pointer" onClick={() => setLightbox(product.imageUrl!)} />
-                        ) : (
-                          <span className="text-xl text-muted-foreground/30">📦</span>
+                    <div className="md:hidden px-3 py-3 hover:bg-muted/30 transition-colors">
+                      {/* Row 1: image + name + manufacturer */}
+                      <div className="flex items-start gap-2">
+                        <div className="w-16 h-16 shrink-0 rounded-lg overflow-hidden bg-muted flex items-center justify-center">
+                          {product.imageUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={product.imageUrl} alt={product.name} className="w-full h-full object-contain cursor-pointer" onClick={() => setLightbox(product.imageUrl!)} />
+                          ) : (
+                            <span className="text-xl text-muted-foreground/30">📦</span>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm text-foreground leading-tight">{product.name}</p>
+                          {product.manufacturer && <p className="text-xs text-muted-foreground">{product.manufacturer}</p>}
+                          {isVariant && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted text-muted-foreground mt-0.5">Wariant</span>}
+                          {!isVariant && product.optional && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium border border-dashed border-muted-foreground/40 text-muted-foreground mt-0.5">Opcjonalny</span>}
+                        </div>
+                      </div>
+                      {/* Order status badge */}
+                      {orderStatusOpt && (
+                        <div className="mt-1.5">
+                          <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${orderStatusOpt.cls}`}>
+                            {orderStatusOpt.label}
+                          </span>
+                        </div>
+                      )}
+                      {/* Attributes stacked */}
+                      {(product.color || product.dimensions || product.deliveryTime) && (
+                        <div className="mt-1.5 space-y-0.5">
+                          {product.color && <p className="text-xs text-muted-foreground">{t.listy.fieldColor}: <span className="text-foreground font-medium">{product.color}</span></p>}
+                          {product.dimensions && <p className="text-xs text-muted-foreground">{t.listy.fieldDimensions}: <span className="text-foreground font-medium">{product.dimensions}</span></p>}
+                          {product.deliveryTime && <p className="text-xs text-muted-foreground">{t.listy.fieldDelivery}: <span className="text-foreground font-medium">{product.deliveryTime}</span></p>}
+                        </div>
+                      )}
+                      {product.note && <p className="text-xs text-muted-foreground italic mt-1">📝 {product.note}</p>}
+                      {/* Qty + price */}
+                      <div className="flex items-center justify-between mt-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground">{t.listy.qtyLabel} <span className="font-medium text-foreground">{product.quantity}</span></span>
+                          {product.url && <a href={product.url} target="_blank" rel="noopener noreferrer" className="w-6 h-6 rounded flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"><ExternalLink size={13} /></a>}
+                        </div>
+                        {totalPrice !== null && !hidePrices && (
+                          <div className="text-right">
+                            <p className="text-sm font-semibold tabular-nums">{formatPriceNum(totalPrice)} {currency}</p>
+                            {product.quantity > 1 && unitPrice !== null && <p className="text-xs text-muted-foreground tabular-nums">{formatPriceNum(unitPrice)} {t.listy.perUnit}</p>}
+                          </div>
                         )}
                       </div>
-                      <div className="flex-1 min-w-0">
-                        {/* Row 1: name + actions */}
-                        <div className="flex items-start justify-between gap-1">
-                          <div className="min-w-0 flex-1">
-                            <p className="font-medium text-sm text-foreground leading-tight truncate">{product.name}</p>
-                            {product.manufacturer && <p className="text-xs text-muted-foreground truncate">{product.manufacturer}</p>}
-                            {product.note && <p className="text-xs text-muted-foreground italic truncate">📝 {product.note}</p>}
-                          </div>
-                          <div className="flex items-center gap-0.5 shrink-0 -mt-0.5">
-                            {approvalButtons}
-                          </div>
-                        </div>
-                        {/* Row 2: price + approval badge */}
-                        <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-                          {totalPrice !== null && !hidePrices && <span className="text-sm font-semibold text-foreground tabular-nums">{formatPriceNum(totalPrice)} {currency}</span>}
-                          {isVariant && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted text-muted-foreground cursor-default">Wariant</span>}
-                          {!isVariant && product.optional && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium border border-dashed border-muted-foreground/40 text-muted-foreground cursor-default" title="Produkt jest opcjonalny, jego cena nie jest wliczona do sumy kosztów">Opcjonalny</span>}
-                        </div>
-                        {/* Row 3: qty + link | comments */}
-                        <div className="flex items-center justify-between mt-1.5">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs text-muted-foreground">{t.listy.qtyLabel} <span className="font-medium text-foreground">{product.quantity}</span></span>
-                            {product.url && <a href={product.url} target="_blank" rel="noopener noreferrer" className="w-6 h-6 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"><ExternalLink size={13} /></a>}
-                          </div>
-                          {commentBtn(14)}
-                        </div>
+                      {/* Accept button — full width */}
+                      <button
+                        onClick={() => handleApproval(product.id, approval === "accepted" ? null : "accepted")}
+                        className={`w-full mt-2 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-colors ${approval === "accepted" ? "bg-green-600 text-white hover:bg-green-700" : "bg-green-500 text-white hover:bg-green-600"}`}
+                      >
+                        <Check size={16} />
+                        {approval === "accepted" ? t.render.undoAcceptance : t.render.acceptBtn}
+                      </button>
+                      {/* Reject + comment */}
+                      <div className="flex items-center justify-end gap-1 mt-1.5">
+                        <button
+                          onClick={() => handleApproval(product.id, approval === "rejected" ? null : "rejected")}
+                          className={`w-8 h-8 rounded flex items-center justify-center transition-colors ${approval === "rejected" ? "bg-red-500 text-white" : "text-muted-foreground hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950"}`}
+                        ><X size={16} /></button>
+                        {commentBtn(16)}
                       </div>
                     </div>
                   </div>
