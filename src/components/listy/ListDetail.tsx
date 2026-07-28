@@ -286,6 +286,7 @@ function ProductRow({
   allCategories,
   sections,
   isVariant,
+  isParent,
   productNumber,
 }: {
   product: Product;
@@ -316,6 +317,7 @@ function ProductRow({
   dragHandle?: React.ReactNode;
   allCategories: { value: string; label: string }[];
   isVariant?: boolean;
+  isParent?: boolean;
   productNumber?: string;
 }) {
   const [qty, setQty] = useState(product.quantity);
@@ -610,7 +612,7 @@ function ProductRow({
   ) : null;
 
   return (
-    <div className={`group hover:bg-muted/30 transition-colors ${!last ? "border-b border-border" : ""} ${product.hidden ? "opacity-40" : ""}`}>
+    <div className={`group transition-colors ${product.hidden ? "opacity-40" : ""}`}>
       {lightboxEl}
       {movePortal}
       {copyPortal}
@@ -679,6 +681,11 @@ function ProductRow({
               </a>
             ) : (
               <p className="font-medium text-sm text-foreground truncate">{product.name}</p>
+            )}
+            {isParent && (
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium shrink-0" style={{ background: '#EEF2FF', color: '#4F46E5' }}>
+                Podstawowy
+              </span>
             )}
             {isVariant && (
               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted text-muted-foreground shrink-0">
@@ -879,8 +886,13 @@ function ProductRow({
               </div>
               <div className="shrink-0 -mt-0.5">{dropdown}</div>
             </div>
-            {/* Tags: variant + category */}
+            {/* Tags: variant + parent + category */}
             <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+              {isParent && (
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium shrink-0" style={{ background: '#EEF2FF', color: '#4F46E5' }}>
+                  Podstawowy
+                </span>
+              )}
               {isVariant && (
                 <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted text-muted-foreground">
                   <Layers size={9} />
@@ -2286,7 +2298,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
           return (
             <div className="mb-8">
               <h2 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide">{t.listy.productsOutsideSection}</h2>
-              <div className="bg-card border border-border rounded-xl overflow-hidden">
+              <div className="bg-white border border-border rounded-[18px] p-4 flex flex-col gap-[10px]">
                 {(() => {
                   const topLevel = unsortedSection.products.filter((p) => !p.parentProductId);
                   const numberMap = computeProductNumbers(topLevel, (id) => unsortedSection.products.filter((p) => p.parentProductId === id).sort((a, b) => a.order - b.order));
@@ -2294,16 +2306,16 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                     <SortableContext items={topLevel.map((p) => p.id)} strategy={verticalListSortingStrategy}>
                       {topLevel.map((product, i) => {
                         const variants = unsortedSection.products.filter((p) => p.parentProductId === product.id).sort((a, b) => a.order - b.order);
-                        const isLastTopLevel = i === topLevel.length - 1;
                         return (
-                          <Fragment key={product.id}>
+                          <div key={product.id} className="bg-[#FAFAFB] border border-border rounded-[14px] overflow-hidden">
                             <SortableProduct id={product.id} sectionId={unsortedSection.id}>
                               {(dragHandle) => (
                                 <ProductRow
                                   product={product}
                                   index={i}
-                                  last={isLastTopLevel && variants.length === 0}
+                                  last={true}
                                   productNumber={numberMap[product.id]}
+                                  isParent={variants.length > 0}
                                   listId={list.id}
                                   sectionId={unsortedSection.id}
                                   onQuantityChange={(pid, qty) => handleQuantityChange(unsortedSection.id, pid, qty)}
@@ -2331,48 +2343,66 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                                 />
                               )}
                             </SortableProduct>
-                            {variants.length > 0 && (
-                              <div className="relative h-3 pointer-events-none">
-                                <div className="absolute left-4 inset-y-0 w-0.5 bg-border/60" />
+                            {variants.map((variant) => {
+                              const vUnit = parsePrice(variant.price);
+                              const vCurrency = getCurrency(variant.price);
+                              const vTotal = vUnit !== null ? vUnit * variant.quantity : null;
+                              const meta = [
+                                variant.manufacturer && `Producent: ${variant.manufacturer}`,
+                                variant.color && `Kolor: ${variant.color}`,
+                                variant.deliveryTime && `Dostawa: ${variant.deliveryTime}`,
+                              ].filter(Boolean).join(" · ");
+                              return (
+                                <div key={variant.id} className="relative flex items-center gap-2 border-t border-dashed border-border" style={{ background: '#F4F4F7', padding: '9px 12px 9px 44px' }}>
+                                  <div className="absolute top-0 bottom-0 w-px pointer-events-none" style={{ left: '20px', background: 'var(--border)' }} />
+                                  <div className="w-11 h-11 shrink-0 rounded-lg bg-white flex items-center justify-center overflow-hidden">
+                                    {variant.imageUrl
+                                      // eslint-disable-next-line @next/next/no-img-element
+                                      ? <img src={variant.imageUrl} alt={variant.name} className="w-full h-full object-contain" />
+                                      : <span className="text-lg text-muted-foreground/30 select-none">📦</span>}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                      <p className="text-xs font-semibold text-foreground truncate">{variant.name}</p>
+                                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium shrink-0" style={{ background: '#EDEBFB', color: '#6D5FD8' }}>Opcjonalny</span>
+                                    </div>
+                                    {meta && <p className="text-xs text-muted-foreground truncate mt-0.5">{meta}</p>}
+                                  </div>
+                                  {vTotal !== null && (
+                                    <div className="text-right shrink-0">
+                                      <p className="text-sm font-semibold tabular-nums">{formatPriceNum(vTotal)} {vCurrency}</p>
+                                      {variant.quantity > 1 && vUnit !== null && <p className="text-xs text-muted-foreground tabular-nums">{formatPriceNum(vUnit)} / szt.</p>}
+                                    </div>
+                                  )}
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger render={<button className="w-7 h-7 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors shrink-0" />}>
+                                      <MoreHorizontal size={15} />
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end" className="w-44">
+                                      <DropdownMenuItem onClick={() => setEditState({ product: variant, sectionId: unsortedSection.id })}>
+                                        <Pencil size={13} className="mr-2" />{t.common.edit}
+                                      </DropdownMenuItem>
+                                      <DropdownMenuSeparator />
+                                      <DropdownMenuItem variant="destructive" onClick={() => handleDeleteProduct(unsortedSection.id, variant.id)} className="text-destructive focus:text-destructive">
+                                        <Trash2 size={13} className="mr-2" />{t.render.deleteProduct}
+                                      </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                </div>
+                              );
+                            })}
+                            {variants.length > 0 && !expired && (
+                              <div className="border-t border-dashed border-border" style={{ background: '#F4F4F7', padding: '7px 12px 9px 44px' }}>
+                                <button
+                                  onClick={() => setDialogState({ open: true, sectionId: unsortedSection.id })}
+                                  className="text-xs font-semibold transition-colors hover:opacity-70"
+                                  style={{ color: '#9096A6' }}
+                                >
+                                  + Dodaj opcjonalny wariant
+                                </button>
                               </div>
                             )}
-                            {variants.map((variant, vi) => (
-                              <div key={variant.id} className="relative pl-8">
-                                <div className={`absolute left-4 top-0 w-0.5 bg-border/60 pointer-events-none ${vi === variants.length - 1 ? 'h-1/2' : 'h-full'}`} />
-                                <div className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-0.5 bg-border/60 pointer-events-none" />
-                                <ProductRow
-                                  product={variant}
-                                  index={vi}
-                                  last={isLastTopLevel && vi === variants.length - 1}
-                                  listId={list.id}
-                                  sectionId={unsortedSection.id}
-                                  onQuantityChange={(pid, qty) => handleQuantityChange(unsortedSection.id, pid, qty)}
-                                  onEdit={() => setEditState({ product: variant, sectionId: unsortedSection.id })}
-                                  onDelete={() => handleDeleteProduct(unsortedSection.id, variant.id)}
-                                  onOpenComments={() => openCommentsPanel(variant.id)}
-                                  onToggleHidden={() => handleToggleHidden(unsortedSection.id, variant.id)}
-                                  onToggleOptional={() => handleToggleOptional(unsortedSection.id, variant.id)}
-                                  onMove={(targetSectionId) => handleMoveProduct(unsortedSection.id, variant.id, targetSectionId)}
-                                  onCopy={(targetSectionId) => handleCopyProduct(unsortedSection.id, variant, targetSectionId)}
-                                  onOpenMoveDialog={() => setMoveState({ product: variant, sectionId: unsortedSection.id })}
-                                  onOpenCopyDialog={() => setCopyState({ product: variant, sectionId: unsortedSection.id })}
-                                  onApprovalChange={(value) => handleApprovalChange(unsortedSection.id, variant.id, value)}
-                                  onOrderStatusChange={(value) => handleOrderStatusChange(unsortedSection.id, variant.id, value)}
-                                  onFieldUpdate={(pid, field, value) => handleProductFieldUpdate(unsortedSection.id, pid, field, value)}
-                                  approval={approvals[variant.id] ?? null}
-                                  orderStatus={orderStatuses[variant.id] ?? null}
-                                  commentCount={commentCounts[variant.id] ?? 0}
-                                  unreadCount={unreadProducts.has(variant.id) ? Math.max(0, (commentCounts[variant.id] ?? 0) - (seenCounts[variant.id] ?? 0)) : 0}
-                                  unread={unreadProducts.has(variant.id)}
-                                  deleting={deletingId === variant.id}
-                                  allCategories={allCategories}
-                                  sections={sections}
-                                  isVariant
-                                  productNumber={numberMap[variant.id]}
-                                />
-                              </div>
-                            ))}
-                          </Fragment>
+                          </div>
                         );
                       })}
                     </SortableContext>
@@ -2500,7 +2530,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                         <p className="text-sm text-muted-foreground">{t.listy.addFirstProduct}</p>
                       </div>
                     ) : !isDraggingSection ? (
-                      <div className="bg-card border border-border rounded-xl overflow-hidden">
+                      <div className="bg-white border border-border rounded-[18px] p-4 flex flex-col gap-[10px]">
                           {(() => {
                             const topLevel = sortProducts(section.products.filter((p) => !p.parentProductId), getSortBy(section.sortBy), categoryOrder);
                             const numberMap = computeProductNumbers(topLevel, (id) => section.products.filter((p) => p.parentProductId === id).sort((a, b) => a.order - b.order));
@@ -2511,18 +2541,18 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                               >
                                 {topLevel.map((product, i) => {
                                   const variants = section.products.filter((p) => p.parentProductId === product.id).sort((a, b) => a.order - b.order);
-                                  const isLastTopLevel = i === topLevel.length - 1;
                                   return (
-                                    <Fragment key={product.id}>
+                                    <div key={product.id} className="bg-[#FAFAFB] border border-border rounded-[14px] overflow-hidden">
                                       <SortableProduct id={product.id} sectionId={section.id}>
                                         {(dragHandle) => (
                                           <ProductRow
                                             product={product}
                                             index={i}
-                                            last={isLastTopLevel && variants.length === 0}
+                                            last={true}
                                             listId={list.id}
                                             sectionId={section.id}
                                             productNumber={numberMap[product.id]}
+                                            isParent={variants.length > 0}
                                             onQuantityChange={(pid, qty) => handleQuantityChange(section.id, pid, qty)}
                                             onEdit={() => setEditState({ product, sectionId: section.id })}
                                             onDelete={() => handleDeleteProduct(section.id, product.id)}
@@ -2548,48 +2578,66 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                                           />
                                         )}
                                       </SortableProduct>
-                                      {variants.length > 0 && (
-                                        <div className="relative h-3 pointer-events-none">
-                                          <div className="absolute left-4 inset-y-0 w-0.5 bg-border/60" />
+                                      {variants.map((variant) => {
+                                        const vUnit = parsePrice(variant.price);
+                                        const vCurrency = getCurrency(variant.price);
+                                        const vTotal = vUnit !== null ? vUnit * variant.quantity : null;
+                                        const meta = [
+                                          variant.manufacturer && `Producent: ${variant.manufacturer}`,
+                                          variant.color && `Kolor: ${variant.color}`,
+                                          variant.deliveryTime && `Dostawa: ${variant.deliveryTime}`,
+                                        ].filter(Boolean).join(" · ");
+                                        return (
+                                          <div key={variant.id} className="relative flex items-center gap-2 border-t border-dashed border-border" style={{ background: '#F4F4F7', padding: '9px 12px 9px 44px' }}>
+                                            <div className="absolute top-0 bottom-0 w-px pointer-events-none" style={{ left: '20px', background: 'var(--border)' }} />
+                                            <div className="w-11 h-11 shrink-0 rounded-lg bg-white flex items-center justify-center overflow-hidden">
+                                              {variant.imageUrl
+                                                // eslint-disable-next-line @next/next/no-img-element
+                                                ? <img src={variant.imageUrl} alt={variant.name} className="w-full h-full object-contain" />
+                                                : <span className="text-lg text-muted-foreground/30 select-none">📦</span>}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                              <div className="flex items-center gap-1.5 flex-wrap">
+                                                <p className="text-xs font-semibold text-foreground truncate">{variant.name}</p>
+                                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium shrink-0" style={{ background: '#EDEBFB', color: '#6D5FD8' }}>Opcjonalny</span>
+                                              </div>
+                                              {meta && <p className="text-xs text-muted-foreground truncate mt-0.5">{meta}</p>}
+                                            </div>
+                                            {vTotal !== null && (
+                                              <div className="text-right shrink-0">
+                                                <p className="text-sm font-semibold tabular-nums">{formatPriceNum(vTotal)} {vCurrency}</p>
+                                                {variant.quantity > 1 && vUnit !== null && <p className="text-xs text-muted-foreground tabular-nums">{formatPriceNum(vUnit)} / szt.</p>}
+                                              </div>
+                                            )}
+                                            <DropdownMenu>
+                                              <DropdownMenuTrigger render={<button className="w-7 h-7 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors shrink-0" />}>
+                                                <MoreHorizontal size={15} />
+                                              </DropdownMenuTrigger>
+                                              <DropdownMenuContent align="end" className="w-44">
+                                                <DropdownMenuItem onClick={() => setEditState({ product: variant, sectionId: section.id })}>
+                                                  <Pencil size={13} className="mr-2" />{t.common.edit}
+                                                </DropdownMenuItem>
+                                                <DropdownMenuSeparator />
+                                                <DropdownMenuItem variant="destructive" onClick={() => handleDeleteProduct(section.id, variant.id)} className="text-destructive focus:text-destructive">
+                                                  <Trash2 size={13} className="mr-2" />{t.render.deleteProduct}
+                                                </DropdownMenuItem>
+                                              </DropdownMenuContent>
+                                            </DropdownMenu>
+                                          </div>
+                                        );
+                                      })}
+                                      {variants.length > 0 && !expired && (
+                                        <div className="border-t border-dashed border-border" style={{ background: '#F4F4F7', padding: '7px 12px 9px 44px' }}>
+                                          <button
+                                            onClick={() => setDialogState({ open: true, sectionId: section.id })}
+                                            className="text-xs font-semibold transition-colors hover:opacity-70"
+                                            style={{ color: '#9096A6' }}
+                                          >
+                                            + Dodaj opcjonalny wariant
+                                          </button>
                                         </div>
                                       )}
-                                      {variants.map((variant, vi) => (
-                                        <div key={variant.id} className="relative pl-8">
-                                          <div className={`absolute left-4 top-0 w-0.5 bg-border/60 pointer-events-none ${vi === variants.length - 1 ? 'h-1/2' : 'h-full'}`} />
-                                          <div className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-0.5 bg-border/60 pointer-events-none" />
-                                          <ProductRow
-                                            product={variant}
-                                            index={vi}
-                                            last={isLastTopLevel && vi === variants.length - 1}
-                                            listId={list.id}
-                                            sectionId={section.id}
-                                            onQuantityChange={(pid, qty) => handleQuantityChange(section.id, pid, qty)}
-                                            onEdit={() => setEditState({ product: variant, sectionId: section.id })}
-                                            onDelete={() => handleDeleteProduct(section.id, variant.id)}
-                                            onOpenComments={() => openCommentsPanel(variant.id)}
-                                            onToggleHidden={() => handleToggleHidden(section.id, variant.id)}
-                                            onToggleOptional={() => handleToggleOptional(section.id, variant.id)}
-                                            onMove={(targetSectionId) => handleMoveProduct(section.id, variant.id, targetSectionId)}
-                                            onCopy={(targetSectionId) => handleCopyProduct(section.id, variant, targetSectionId)}
-                                            onOpenMoveDialog={() => setMoveState({ product: variant, sectionId: section.id })}
-                                            onOpenCopyDialog={() => setCopyState({ product: variant, sectionId: section.id })}
-                                            onApprovalChange={(value) => handleApprovalChange(section.id, variant.id, value)}
-                                            onOrderStatusChange={(value) => handleOrderStatusChange(section.id, variant.id, value)}
-                                            onFieldUpdate={(pid, field, value) => handleProductFieldUpdate(section.id, pid, field, value)}
-                                            approval={approvals[variant.id] ?? null}
-                                            orderStatus={orderStatuses[variant.id] ?? null}
-                                            commentCount={commentCounts[variant.id] ?? 0}
-                                            unreadCount={unreadProducts.has(variant.id) ? Math.max(0, (commentCounts[variant.id] ?? 0) - (seenCounts[variant.id] ?? 0)) : 0}
-                                            unread={unreadProducts.has(variant.id)}
-                                            deleting={deletingId === variant.id}
-                                            allCategories={allCategories}
-                                            sections={sections}
-                                            isVariant
-                                            productNumber={numberMap[variant.id]}
-                                          />
-                                        </div>
-                                      ))}
-                                    </Fragment>
+                                    </div>
                                   );
                                 })}
                               </SortableContext>
@@ -2598,9 +2646,9 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                         {!expired && (
                           <button
                             onClick={() => setDialogState({ open: true, sectionId: section.id })}
-                            className="w-full flex items-center gap-1.5 px-4 py-2.5 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/30 border-t border-border transition-colors"
+                            className="w-full flex items-center justify-center gap-1.5 px-4 py-2 text-xs text-muted-foreground hover:text-foreground border border-dashed border-border rounded-[10px] transition-colors"
                           >
-                            <Plus size={13} />
+                            <Plus size={12} />
                             {t.products.addProduct}
                           </button>
                         )}
