@@ -13,6 +13,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -88,6 +89,7 @@ interface Product {
   catalogNumber: string | null;
   note: string | null;
   parentProductId: string | null;
+  orderStatus: string | null;
   createdAt?: string;
   commentCount?: number;
 }
@@ -236,6 +238,24 @@ function CopySectionDialog({ open, onOpenChange, sections, currentSectionId, pro
   );
 }
 
+const ORDER_STATUS_OPTIONS = [
+  { value: null, label: "Brak statusu", cls: "bg-muted text-muted-foreground" },
+  { value: "do_wyceny", label: "Do wyceny", cls: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400" },
+  { value: "w_wycenie", label: "W wycenie", cls: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" },
+  { value: "zamowione", label: "Zamówione", cls: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" },
+  { value: "do_reklamacji", label: "Do reklamacji", cls: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" },
+] as const;
+
+function getOrderStatusOption(value: string | null) {
+  return ORDER_STATUS_OPTIONS.find((o) => o.value === value) ?? ORDER_STATUS_OPTIONS[0];
+}
+
+function getApprovalLabel(value: string | null) {
+  if (value === "accepted") return { label: "Zaakceptowane", cls: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" };
+  if (value === "rejected") return { label: "Odrzucone", cls: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" };
+  return { label: "Oczekuje", cls: "bg-muted text-muted-foreground" };
+}
+
 function ProductRow({
   product,
   index,
@@ -253,8 +273,10 @@ function ProductRow({
   onOpenMoveDialog,
   onOpenCopyDialog,
   onApprovalChange,
+  onOrderStatusChange,
   onFieldUpdate,
   approval,
+  orderStatus,
   commentCount,
   unreadCount,
   unread,
@@ -281,9 +303,11 @@ function ProductRow({
   onOpenMoveDialog: () => void;
   onOpenCopyDialog: () => void;
   onApprovalChange: (value: string | null) => void;
+  onOrderStatusChange: (value: string | null) => void;
   onFieldUpdate: (productId: string, field: string, value: string | null) => void;
   sections: Section[];
   approval: string | null;
+  orderStatus: string | null;
   commentCount: number;
   unreadCount: number;
   unread: boolean;
@@ -298,6 +322,8 @@ function ProductRow({
   const [lightbox, setLightbox] = useState(false);
   const [categoryMenuOpen, setCategoryMenuOpen] = useState(false);
   const [categoryMenuPos, setCategoryMenuPos] = useState({ top: 0, left: 0 });
+  const [orderStatusMenuOpen, setOrderStatusMenuOpen] = useState(false);
+  const [orderStatusMenuPos, setOrderStatusMenuPos] = useState({ top: 0, left: 0 });
   const [copyMenuOpen, setCopyMenuOpen] = useState(false);
   const [copyMenuPos, setCopyMenuPos] = useState({ top: 0, left: 0 });
   const [moveMenuOpen, setMoveMenuOpen] = useState(false);
@@ -365,24 +391,36 @@ function ProductRow({
           {product.note ? t.listy.editNote : t.listy.addNote}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        {approval !== "accepted" && (
-          <DropdownMenuItem disabled={expired} title={expired ? "Dostępne w płatnym planie" : undefined} onClick={() => onApprovalChange("accepted")}>
-            <Check size={13} className="mr-2 text-green-600" />
-            {t.render.acceptBtn}
+        <DropdownMenuLabel>Akceptacja</DropdownMenuLabel>
+        <DropdownMenuItem disabled={expired} title={expired ? "Dostępne w płatnym planie" : undefined} onClick={() => onApprovalChange("accepted")}>
+          <Check size={13} className="mr-2 text-green-600" />
+          {t.render.acceptBtn}
+          {approval === "accepted" && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-primary shrink-0" />}
+        </DropdownMenuItem>
+        <DropdownMenuItem disabled={expired} title={expired ? "Dostępne w płatnym planie" : undefined} onClick={() => onApprovalChange("rejected")}>
+          <X size={13} className="mr-2 text-red-500" />
+          {t.listy.rejectBtn}
+          {approval === "rejected" && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-primary shrink-0" />}
+        </DropdownMenuItem>
+        <DropdownMenuItem disabled={expired} title={expired ? "Dostępne w płatnym planie" : undefined} onClick={() => onApprovalChange(null)}>
+          <RotateCcw size={13} className="mr-2" />
+          Oczekuje
+          {approval === null && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-primary shrink-0" />}
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuLabel>Status zamówienia</DropdownMenuLabel>
+        {ORDER_STATUS_OPTIONS.map((opt) => (
+          <DropdownMenuItem
+            key={String(opt.value)}
+            disabled={expired}
+            title={expired ? "Dostępne w płatnym planie" : undefined}
+            onClick={() => onOrderStatusChange(opt.value ?? null)}
+          >
+            <span className="mr-2 w-[13px]" />
+            {opt.label}
+            {orderStatus === opt.value && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-primary shrink-0" />}
           </DropdownMenuItem>
-        )}
-        {approval !== "rejected" && (
-          <DropdownMenuItem disabled={expired} title={expired ? "Dostępne w płatnym planie" : undefined} onClick={() => onApprovalChange("rejected")}>
-            <X size={13} className="mr-2 text-red-500" />
-            {t.listy.rejectBtn}
-          </DropdownMenuItem>
-        )}
-        {approval !== null && (
-          <DropdownMenuItem disabled={expired} title={expired ? "Dostępne w płatnym planie" : undefined} onClick={() => onApprovalChange(null)}>
-            <RotateCcw size={13} className="mr-2" />
-            {t.listy.resetStatus}
-          </DropdownMenuItem>
-        )}
+        ))}
         <DropdownMenuSeparator />
         <DropdownMenuItem disabled={expired} title={expired ? "Dostępne w płatnym planie" : undefined} onClick={onToggleOptional}>
           {product.optional
@@ -520,12 +558,32 @@ function ProductRow({
     document.body
   ) : null;
 
+  const orderStatusPortal = orderStatusMenuOpen ? createPortal(
+    <>
+      <div className="fixed inset-0 z-[200]" onClick={() => setOrderStatusMenuOpen(false)} />
+      <div className="fixed z-[201] bg-popover border border-border rounded-lg shadow-lg py-1 min-w-[160px]" style={{ top: orderStatusMenuPos.top, left: orderStatusMenuPos.left }}>
+        {ORDER_STATUS_OPTIONS.map((opt) => (
+          <button
+            key={String(opt.value)}
+            onClick={() => { onOrderStatusChange(opt.value ?? null); setOrderStatusMenuOpen(false); }}
+            className={`w-full text-left px-3 py-1.5 text-xs hover:bg-muted transition-colors flex items-center gap-2 ${orderStatus === opt.value ? "font-medium" : "text-foreground"}`}
+          >
+            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${orderStatus === opt.value ? "bg-primary" : ""}`} />
+            {opt.label}
+          </button>
+        ))}
+      </div>
+    </>,
+    document.body
+  ) : null;
+
   return (
     <div className={`group hover:bg-muted/30 transition-colors ${!last ? "border-b border-border" : ""} ${product.hidden ? "opacity-40" : ""}`}>
       {lightboxEl}
       {movePortal}
       {copyPortal}
       {categoryPortal}
+      {orderStatusPortal}
 
       {/* ── DESKTOP layout (lg+) — original ── */}
       <div className="hidden lg:flex items-center gap-2 px-4 py-4">
@@ -602,6 +660,20 @@ function ProductRow({
               title={t.listy.changeCategoryTitle}
             >
               {product.category ? getCategoryLabel(product.category, allCategories) : t.listy.addCategory}
+            </button>
+          </div>
+          {/* Badges row — approval + order status */}
+          <div className="flex items-center gap-1.5 mt-1">
+            <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium shrink-0 ${getApprovalLabel(approval).cls}`}>
+              {getApprovalLabel(approval).label}
+            </span>
+            <button
+              onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); const estH = ORDER_STATUS_OPTIONS.length * 28 + 8; const top = (window.innerHeight - r.bottom) >= estH + 8 ? r.bottom + 4 : Math.max(4, r.top - estH - 4); setOrderStatusMenuPos({ top, left: r.left }); setOrderStatusMenuOpen((v) => !v); }}
+              className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors shrink-0 hover:opacity-80 ${getOrderStatusOption(orderStatus).cls}`}
+              title="Zmień status zamówienia"
+            >
+              {getOrderStatusOption(orderStatus).label}
+              <ChevronDown size={9} />
             </button>
           </div>
           {/* 2-column attribute grid */}
@@ -685,8 +757,6 @@ function ProductRow({
           )}
         </div>
         <div className="flex items-center gap-3 shrink-0">
-          {approval === "accepted" && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 shrink-0">{t.listy.accepted}</span>}
-          {approval === "rejected" && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 shrink-0">{t.listy.rejected}</span>}
           <div className="flex items-center gap-1">
             <button onClick={() => updateQty(qty - 1)} disabled={qty <= 1 || saving} className="w-6 h-6 rounded flex items-center justify-center border border-border text-muted-foreground hover:text-foreground hover:border-foreground/30 disabled:opacity-30 transition-colors"><Minus size={11} /></button>
             <span className="w-6 text-center text-sm font-medium tabular-nums">{qty}</span>
@@ -840,8 +910,16 @@ function ProductRow({
             >
               {product.category ? getCategoryLabel(product.category, allCategories) : t.listy.addCategoryShort}
             </button>
-            {approval === "accepted" && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">{t.listy.accepted}</span>}
-            {approval === "rejected" && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">{t.listy.rejected}</span>}
+            <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium shrink-0 ${getApprovalLabel(approval).cls}`}>
+              {getApprovalLabel(approval).label}
+            </span>
+            <button
+              onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); const estH = ORDER_STATUS_OPTIONS.length * 28 + 8; const top = (window.innerHeight - r.bottom) >= estH + 8 ? r.bottom + 4 : Math.max(4, r.top - estH - 4); setOrderStatusMenuPos({ top, left: r.left }); setOrderStatusMenuOpen((v) => !v); }}
+              className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium shrink-0 hover:opacity-80 ${getOrderStatusOption(orderStatus).cls}`}
+            >
+              {getOrderStatusOption(orderStatus).label}
+              <ChevronDown size={9} />
+            </button>
           </div>
           {/* Row 3: qty + link + comments */}
           <div className="flex items-center justify-between mt-1.5">
@@ -1085,6 +1163,16 @@ export default function ListDetail({ list, designerName, designerEmail, designer
     for (const s of list.sections) {
       for (const p of s.products) {
         init[p.id] = p.approval ?? null;
+      }
+    }
+    return init;
+  });
+
+  const [orderStatuses, setOrderStatuses] = useState<Record<string, string | null>>(() => {
+    const init: Record<string, string | null> = {};
+    for (const s of list.sections) {
+      for (const p of s.products) {
+        init[p.id] = p.orderStatus ?? null;
       }
     }
     return init;
@@ -1715,6 +1803,22 @@ export default function ListDetail({ list, designerName, designerEmail, designer
     }
   }
 
+  async function handleOrderStatusChange(sectionId: string, productId: string, value: string | null) {
+    const prev = orderStatuses[productId];
+    setOrderStatuses((s) => ({ ...s, [productId]: value }));
+    try {
+      const res = await fetch(`/api/lists/${list.id}/sections/${sectionId}/products/${productId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderStatus: value }),
+      });
+      if (!res.ok) throw new Error();
+    } catch {
+      setOrderStatuses((s) => ({ ...s, [productId]: prev }));
+      toast.error("Błąd zmiany statusu zamówienia");
+    }
+  }
+
   async function handleDeleteProduct(sectionId: string, productId: string) {
     setDeletingId(productId);
     try {
@@ -2162,8 +2266,10 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                                   onOpenMoveDialog={() => setMoveState({ product, sectionId: unsortedSection.id })}
                                   onOpenCopyDialog={() => setCopyState({ product, sectionId: unsortedSection.id })}
                                   onApprovalChange={(value) => handleApprovalChange(unsortedSection.id, product.id, value)}
+                                  onOrderStatusChange={(value) => handleOrderStatusChange(unsortedSection.id, product.id, value)}
                                   onFieldUpdate={(pid, field, value) => handleProductFieldUpdate(unsortedSection.id, pid, field, value)}
                                   approval={approvals[product.id] ?? null}
+                                  orderStatus={orderStatuses[product.id] ?? null}
                                   commentCount={commentCounts[product.id] ?? 0}
                                   unreadCount={unreadProducts.has(product.id) ? Math.max(0, (commentCounts[product.id] ?? 0) - (seenCounts[product.id] ?? 0)) : 0}
                                   unread={unreadProducts.has(product.id)}
@@ -2200,8 +2306,10 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                                   onOpenMoveDialog={() => setMoveState({ product: variant, sectionId: unsortedSection.id })}
                                   onOpenCopyDialog={() => setCopyState({ product: variant, sectionId: unsortedSection.id })}
                                   onApprovalChange={(value) => handleApprovalChange(unsortedSection.id, variant.id, value)}
+                                  onOrderStatusChange={(value) => handleOrderStatusChange(unsortedSection.id, variant.id, value)}
                                   onFieldUpdate={(pid, field, value) => handleProductFieldUpdate(unsortedSection.id, pid, field, value)}
                                   approval={approvals[variant.id] ?? null}
+                                  orderStatus={orderStatuses[variant.id] ?? null}
                                   commentCount={commentCounts[variant.id] ?? 0}
                                   unreadCount={unreadProducts.has(variant.id) ? Math.max(0, (commentCounts[variant.id] ?? 0) - (seenCounts[variant.id] ?? 0)) : 0}
                                   unread={unreadProducts.has(variant.id)}
@@ -2375,8 +2483,10 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                                             onOpenMoveDialog={() => setMoveState({ product, sectionId: section.id })}
                                             onOpenCopyDialog={() => setCopyState({ product, sectionId: section.id })}
                                             onApprovalChange={(value) => handleApprovalChange(section.id, product.id, value)}
+                                            onOrderStatusChange={(value) => handleOrderStatusChange(section.id, product.id, value)}
                                             onFieldUpdate={(pid, field, value) => handleProductFieldUpdate(section.id, pid, field, value)}
                                             approval={approvals[product.id] ?? null}
+                                            orderStatus={orderStatuses[product.id] ?? null}
                                             commentCount={commentCounts[product.id] ?? 0}
                                             unreadCount={unreadProducts.has(product.id) ? Math.max(0, (commentCounts[product.id] ?? 0) - (seenCounts[product.id] ?? 0)) : 0}
                                             unread={unreadProducts.has(product.id)}
@@ -2413,8 +2523,10 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                                             onOpenMoveDialog={() => setMoveState({ product: variant, sectionId: section.id })}
                                             onOpenCopyDialog={() => setCopyState({ product: variant, sectionId: section.id })}
                                             onApprovalChange={(value) => handleApprovalChange(section.id, variant.id, value)}
+                                            onOrderStatusChange={(value) => handleOrderStatusChange(section.id, variant.id, value)}
                                             onFieldUpdate={(pid, field, value) => handleProductFieldUpdate(section.id, pid, field, value)}
                                             approval={approvals[variant.id] ?? null}
+                                            orderStatus={orderStatuses[variant.id] ?? null}
                                             commentCount={commentCounts[variant.id] ?? 0}
                                             unreadCount={unreadProducts.has(variant.id) ? Math.max(0, (commentCounts[variant.id] ?? 0) - (seenCounts[variant.id] ?? 0)) : 0}
                                             unread={unreadProducts.has(variant.id)}
