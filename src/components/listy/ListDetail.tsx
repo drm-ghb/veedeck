@@ -2343,54 +2343,41 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                                 />
                               )}
                             </SortableProduct>
-                            {variants.map((variant) => {
-                              const vUnit = parsePrice(variant.price);
-                              const vCurrency = getCurrency(variant.price);
-                              const vTotal = vUnit !== null ? vUnit * variant.quantity : null;
-                              const meta = [
-                                variant.manufacturer && `Producent: ${variant.manufacturer}`,
-                                variant.color && `Kolor: ${variant.color}`,
-                                variant.deliveryTime && `Dostawa: ${variant.deliveryTime}`,
-                              ].filter(Boolean).join(" · ");
-                              return (
-                                <div key={variant.id} className="relative flex items-center gap-2 border-t border-dashed border-border" style={{ background: '#F4F4F7', padding: '9px 12px 9px 44px' }}>
-                                  <div className="absolute top-0 bottom-0 w-px pointer-events-none" style={{ left: '20px', background: 'var(--border)' }} />
-                                  <div className="w-11 h-11 shrink-0 rounded-lg bg-white flex items-center justify-center overflow-hidden">
-                                    {variant.imageUrl
-                                      // eslint-disable-next-line @next/next/no-img-element
-                                      ? <img src={variant.imageUrl} alt={variant.name} className="w-full h-full object-contain" />
-                                      : <span className="text-lg text-muted-foreground/30 select-none">📦</span>}
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-1.5 flex-wrap">
-                                      <p className="text-xs font-semibold text-foreground truncate">{variant.name}</p>
-                                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium shrink-0" style={{ background: '#EDEBFB', color: '#6D5FD8' }}>Opcjonalny</span>
-                                    </div>
-                                    {meta && <p className="text-xs text-muted-foreground truncate mt-0.5">{meta}</p>}
-                                  </div>
-                                  {vTotal !== null && (
-                                    <div className="text-right shrink-0">
-                                      <p className="text-sm font-semibold tabular-nums">{formatPriceNum(vTotal)} {vCurrency}</p>
-                                      {variant.quantity > 1 && vUnit !== null && <p className="text-xs text-muted-foreground tabular-nums">{formatPriceNum(vUnit)} / szt.</p>}
-                                    </div>
-                                  )}
-                                  <DropdownMenu>
-                                    <DropdownMenuTrigger render={<button className="w-7 h-7 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors shrink-0" />}>
-                                      <MoreHorizontal size={15} />
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end" className="w-44">
-                                      <DropdownMenuItem onClick={() => setEditState({ product: variant, sectionId: unsortedSection.id })}>
-                                        <Pencil size={13} className="mr-2" />{t.common.edit}
-                                      </DropdownMenuItem>
-                                      <DropdownMenuSeparator />
-                                      <DropdownMenuItem variant="destructive" onClick={() => handleDeleteProduct(unsortedSection.id, variant.id)} className="text-destructive focus:text-destructive">
-                                        <Trash2 size={13} className="mr-2" />{t.render.deleteProduct}
-                                      </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                  </DropdownMenu>
-                                </div>
-                              );
-                            })}
+                            {variants.map((variant, vi) => (
+                              <div key={variant.id} className="relative border-t border-dashed border-border" style={{ background: '#F4F4F7' }}>
+                                <div className="absolute top-0 bottom-0 w-px pointer-events-none" style={{ left: '20px', background: 'var(--border)' }} />
+                                <ProductRow
+                                  product={variant}
+                                  index={vi}
+                                  last={true}
+                                  listId={list.id}
+                                  sectionId={unsortedSection.id}
+                                  productNumber={numberMap[variant.id]}
+                                  isVariant
+                                  onQuantityChange={(pid, qty) => handleQuantityChange(unsortedSection.id, pid, qty)}
+                                  onEdit={() => setEditState({ product: variant, sectionId: unsortedSection.id })}
+                                  onDelete={() => handleDeleteProduct(unsortedSection.id, variant.id)}
+                                  onOpenComments={() => openCommentsPanel(variant.id)}
+                                  onToggleHidden={() => handleToggleHidden(unsortedSection.id, variant.id)}
+                                  onToggleOptional={() => handleToggleOptional(unsortedSection.id, variant.id)}
+                                  onMove={(targetSectionId) => handleMoveProduct(unsortedSection.id, variant.id, targetSectionId)}
+                                  onCopy={(targetSectionId) => handleCopyProduct(unsortedSection.id, variant, targetSectionId)}
+                                  onOpenMoveDialog={() => setMoveState({ product: variant, sectionId: unsortedSection.id })}
+                                  onOpenCopyDialog={() => setCopyState({ product: variant, sectionId: unsortedSection.id })}
+                                  onApprovalChange={(value) => handleApprovalChange(unsortedSection.id, variant.id, value)}
+                                  onOrderStatusChange={(value) => handleOrderStatusChange(unsortedSection.id, variant.id, value)}
+                                  onFieldUpdate={(pid, field, value) => handleProductFieldUpdate(unsortedSection.id, pid, field, value)}
+                                  approval={approvals[variant.id] ?? null}
+                                  orderStatus={orderStatuses[variant.id] ?? null}
+                                  commentCount={commentCounts[variant.id] ?? 0}
+                                  unreadCount={unreadProducts.has(variant.id) ? Math.max(0, (commentCounts[variant.id] ?? 0) - (seenCounts[variant.id] ?? 0)) : 0}
+                                  unread={unreadProducts.has(variant.id)}
+                                  deleting={deletingId === variant.id}
+                                  allCategories={allCategories}
+                                  sections={sections}
+                                />
+                              </div>
+                            ))}
                             {variants.length > 0 && !expired && (
                               <div className="border-t border-dashed border-border" style={{ background: '#F4F4F7', padding: '7px 12px 9px 44px' }}>
                                 <button
@@ -2578,54 +2565,41 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                                           />
                                         )}
                                       </SortableProduct>
-                                      {variants.map((variant) => {
-                                        const vUnit = parsePrice(variant.price);
-                                        const vCurrency = getCurrency(variant.price);
-                                        const vTotal = vUnit !== null ? vUnit * variant.quantity : null;
-                                        const meta = [
-                                          variant.manufacturer && `Producent: ${variant.manufacturer}`,
-                                          variant.color && `Kolor: ${variant.color}`,
-                                          variant.deliveryTime && `Dostawa: ${variant.deliveryTime}`,
-                                        ].filter(Boolean).join(" · ");
-                                        return (
-                                          <div key={variant.id} className="relative flex items-center gap-2 border-t border-dashed border-border" style={{ background: '#F4F4F7', padding: '9px 12px 9px 44px' }}>
-                                            <div className="absolute top-0 bottom-0 w-px pointer-events-none" style={{ left: '20px', background: 'var(--border)' }} />
-                                            <div className="w-11 h-11 shrink-0 rounded-lg bg-white flex items-center justify-center overflow-hidden">
-                                              {variant.imageUrl
-                                                // eslint-disable-next-line @next/next/no-img-element
-                                                ? <img src={variant.imageUrl} alt={variant.name} className="w-full h-full object-contain" />
-                                                : <span className="text-lg text-muted-foreground/30 select-none">📦</span>}
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                              <div className="flex items-center gap-1.5 flex-wrap">
-                                                <p className="text-xs font-semibold text-foreground truncate">{variant.name}</p>
-                                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium shrink-0" style={{ background: '#EDEBFB', color: '#6D5FD8' }}>Opcjonalny</span>
-                                              </div>
-                                              {meta && <p className="text-xs text-muted-foreground truncate mt-0.5">{meta}</p>}
-                                            </div>
-                                            {vTotal !== null && (
-                                              <div className="text-right shrink-0">
-                                                <p className="text-sm font-semibold tabular-nums">{formatPriceNum(vTotal)} {vCurrency}</p>
-                                                {variant.quantity > 1 && vUnit !== null && <p className="text-xs text-muted-foreground tabular-nums">{formatPriceNum(vUnit)} / szt.</p>}
-                                              </div>
-                                            )}
-                                            <DropdownMenu>
-                                              <DropdownMenuTrigger render={<button className="w-7 h-7 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors shrink-0" />}>
-                                                <MoreHorizontal size={15} />
-                                              </DropdownMenuTrigger>
-                                              <DropdownMenuContent align="end" className="w-44">
-                                                <DropdownMenuItem onClick={() => setEditState({ product: variant, sectionId: section.id })}>
-                                                  <Pencil size={13} className="mr-2" />{t.common.edit}
-                                                </DropdownMenuItem>
-                                                <DropdownMenuSeparator />
-                                                <DropdownMenuItem variant="destructive" onClick={() => handleDeleteProduct(section.id, variant.id)} className="text-destructive focus:text-destructive">
-                                                  <Trash2 size={13} className="mr-2" />{t.render.deleteProduct}
-                                                </DropdownMenuItem>
-                                              </DropdownMenuContent>
-                                            </DropdownMenu>
-                                          </div>
-                                        );
-                                      })}
+                                      {variants.map((variant, vi) => (
+                                        <div key={variant.id} className="relative border-t border-dashed border-border" style={{ background: '#F4F4F7' }}>
+                                          <div className="absolute top-0 bottom-0 w-px pointer-events-none" style={{ left: '20px', background: 'var(--border)' }} />
+                                          <ProductRow
+                                            product={variant}
+                                            index={vi}
+                                            last={true}
+                                            listId={list.id}
+                                            sectionId={section.id}
+                                            productNumber={numberMap[variant.id]}
+                                            isVariant
+                                            onQuantityChange={(pid, qty) => handleQuantityChange(section.id, pid, qty)}
+                                            onEdit={() => setEditState({ product: variant, sectionId: section.id })}
+                                            onDelete={() => handleDeleteProduct(section.id, variant.id)}
+                                            onOpenComments={() => openCommentsPanel(variant.id)}
+                                            onToggleHidden={() => handleToggleHidden(section.id, variant.id)}
+                                            onToggleOptional={() => handleToggleOptional(section.id, variant.id)}
+                                            onMove={(targetSectionId) => handleMoveProduct(section.id, variant.id, targetSectionId)}
+                                            onCopy={(targetSectionId) => handleCopyProduct(section.id, variant, targetSectionId)}
+                                            onOpenMoveDialog={() => setMoveState({ product: variant, sectionId: section.id })}
+                                            onOpenCopyDialog={() => setCopyState({ product: variant, sectionId: section.id })}
+                                            onApprovalChange={(value) => handleApprovalChange(section.id, variant.id, value)}
+                                            onOrderStatusChange={(value) => handleOrderStatusChange(section.id, variant.id, value)}
+                                            onFieldUpdate={(pid, field, value) => handleProductFieldUpdate(section.id, pid, field, value)}
+                                            approval={approvals[variant.id] ?? null}
+                                            orderStatus={orderStatuses[variant.id] ?? null}
+                                            commentCount={commentCounts[variant.id] ?? 0}
+                                            unreadCount={unreadProducts.has(variant.id) ? Math.max(0, (commentCounts[variant.id] ?? 0) - (seenCounts[variant.id] ?? 0)) : 0}
+                                            unread={unreadProducts.has(variant.id)}
+                                            deleting={deletingId === variant.id}
+                                            allCategories={allCategories}
+                                            sections={sections}
+                                          />
+                                        </div>
+                                      ))}
                                     </div>
                                   );
                                 })}
