@@ -505,6 +505,8 @@ export const pl = {
     // Sort options
     sortCategory: "Kategoria",
     sortPrice: "Cena",
+    sortPriceAsc: "Cena - rosnąco",
+    sortPriceDesc: "Cena - malejąco",
     addCategory: "+ kategoria",
     addCategoryShort: "+ kat.",
     // Toolbar

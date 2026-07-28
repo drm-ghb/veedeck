@@ -506,6 +506,8 @@ export const en: TranslationKeys = {
     // Sort options
     sortCategory: "Category",
     sortPrice: "Price",
+    sortPriceAsc: "Price - ascending",
+    sortPriceDesc: "Price - descending",
     addCategory: "+ category",
     addCategoryShort: "+ cat.",
     // Toolbar

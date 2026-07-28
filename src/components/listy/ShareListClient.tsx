@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef, Fragment } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { ExternalLink, Comment, Check, X, RotateCcw } from "@/components/ui/icons";
 import ProductCommentPanel from "./ProductCommentPanel";
@@ -293,31 +293,16 @@ export default function ShareListClient({
               {t.listy.noProductsInSection}
             </p>
           ) : (
-            <div className="bg-card border border-border rounded-xl overflow-hidden">
+            <div className="bg-white border border-border rounded-[18px] p-4 flex flex-col gap-[10px]">
               {(() => {
                 const topLevel = section.products.filter((p) => !p.parentProductId);
-                const renderProduct = (product: Product, isVariant: boolean, isLast: boolean) => {
+                const renderProduct = (product: Product, isVariant: boolean, isParent: boolean) => {
                 const unitPrice = parsePrice(product.price);
                 const currency = getCurrency(product.price);
                 const totalPrice = unitPrice !== null ? unitPrice * product.quantity : null;
-                const last = isLast;
                 const unread = unreadProducts.has(product.id);
                 const count = unread ? Math.max(0, (commentCounts[product.id] ?? product.commentCount) - (seenCounts[product.id] ?? 0)) : 0;
                 const approval = approvals[product.id] ?? null;
-                const approvalButtons = (
-                  <>
-                    <button
-                      onClick={() => handleApproval(product.id, approval === "accepted" ? null : "accepted")}
-                      className={`w-7 h-7 rounded flex items-center justify-center transition-colors ${approval === "accepted" ? "bg-green-500 text-white" : "text-muted-foreground hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-950"}`}
-                      title={approval === "accepted" ? t.render.undoAcceptance : t.render.acceptBtn}
-                    ><Check size={14} /></button>
-                    <button
-                      onClick={() => handleApproval(product.id, approval === "rejected" ? null : "rejected")}
-                      className={`w-7 h-7 rounded flex items-center justify-center transition-colors ${approval === "rejected" ? "bg-red-500 text-white" : "text-muted-foreground hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950"}`}
-                      title={approval === "rejected" ? t.listy.undoRejection : t.listy.rejectBtn}
-                    ><X size={14} /></button>
-                  </>
-                );
                 const totalCommentCount = commentCounts[product.id] ?? product.commentCount;
                 const displayCount = unread ? count : totalCommentCount;
                 const commentBtn = (size: number) => (
@@ -327,10 +312,16 @@ export default function ShareListClient({
                   </button>
                 );
                 const orderStatusOpt = getOrderStatusOption(product.orderStatus);
+                const approvalBadge = approval === "accepted"
+                  ? <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"><Check size={9} />Zaakceptowany</span>
+                  : approval === "rejected"
+                  ? <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"><X size={9} />Odrzucony</span>
+                  : <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted text-muted-foreground">Oczekuje</span>;
                 return (
-                  <div key={product.id} className={`${!last ? "border-b border-border" : ""} ${isVariant ? "pl-8" : ""}`}>
-                    {/* ── DESKTOP (md+) ── */}
-                    <div className="hidden md:flex items-center gap-3 px-4 py-4 hover:bg-muted/30 transition-colors">
+                  <div key={product.id}>
+                    {/* ── DESKTOP (lg+) ── */}
+                    <div className="hidden lg:flex items-center gap-2 px-4 py-4">
+                      <span className="w-5 shrink-0" />
                       <div className="w-32 h-32 shrink-0 rounded-xl bg-muted flex items-center justify-center overflow-hidden">
                         {product.imageUrl ? (
                           // eslint-disable-next-line @next/next/no-img-element
@@ -340,18 +331,21 @@ export default function ShareListClient({
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5 flex-wrap">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <p className="font-medium text-sm">{product.name}</p>
-                          {isVariant && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted text-muted-foreground shrink-0 cursor-default">Wariant</span>}
-                          {!isVariant && product.optional && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium border border-dashed border-muted-foreground/40 text-muted-foreground shrink-0 cursor-default">Opcjonalny</span>}
+                          {isParent && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium shrink-0" style={{ background: '#EEF2FF', color: '#4F46E5' }}>Podstawowy</span>}
+                          {isVariant && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium text-muted-foreground shrink-0" style={{ background: '#EDEDED' }}>Opcjonalny</span>}
                         </div>
-                        {product.manufacturer && <p className="text-xs text-muted-foreground">{product.manufacturer}</p>}
-                        {orderStatusOpt && (
-                          <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium mt-0.5 ${orderStatusOpt.cls}`}>
-                            {orderStatusOpt.label}
-                          </span>
-                        )}
-                        <div className="flex items-center gap-4 mt-0.5 flex-wrap">
+                        <div className="flex items-center gap-1.5 mt-1.5">
+                          {approvalBadge}
+                          {orderStatusOpt && (
+                            <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${isVariant ? orderStatusOpt.cls.replace("bg-muted", "bg-[#EDEDED]") : orderStatusOpt.cls}`}>
+                              {orderStatusOpt.label}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-4 mt-1 flex-wrap">
+                          {product.manufacturer && <span className="text-xs text-muted-foreground">{t.listy.fieldManufacturer}: <span className="text-foreground">{product.manufacturer}</span></span>}
                           {product.color && <span className="text-xs text-muted-foreground">{t.listy.fieldColor}: <span className="text-foreground">{product.color}</span></span>}
                           {product.dimensions && <span className="text-xs text-muted-foreground">{t.listy.fieldDimensions}: <span className="text-foreground">{product.dimensions}</span></span>}
                           {product.deliveryTime && <span className="text-xs text-muted-foreground">{t.listy.fieldDelivery}: <span className="text-foreground">{product.deliveryTime}</span></span>}
@@ -364,22 +358,23 @@ export default function ShareListClient({
                           <span className="text-sm font-medium tabular-nums">{product.quantity}</span>
                         </div>
                         {totalPrice !== null && !hidePrices && (
-                          <div className="text-right min-w-[80px]">
+                          <div className="text-right min-w-[72px]">
                             <p className="text-sm font-semibold tabular-nums">{formatPriceNum(totalPrice)} {currency}</p>
                             {product.quantity > 1 && unitPrice !== null && <p className="text-xs text-muted-foreground tabular-nums">{formatPriceNum(unitPrice)} {t.listy.perUnit}</p>}
                           </div>
                         )}
-                        {product.url ? <a href={product.url} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors w-7 h-7 flex items-center justify-center rounded hover:bg-muted"><ExternalLink size={13} /></a> : <span className="w-7" />}
-                        {approvalButtons}
-                        {commentBtn(14)}
+                        {product.url ? <a href={product.url} target="_blank" rel="noopener noreferrer" className="w-7 h-7 flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"><ExternalLink size={14} /></a> : <span className="w-7" />}
+                        <button onClick={() => handleApproval(product.id, approval === "accepted" ? null : "accepted")} className={`w-7 h-7 rounded flex items-center justify-center transition-colors ${approval === "accepted" ? "bg-green-500 text-white" : "text-muted-foreground hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-950"}`} title={approval === "accepted" ? t.render.undoAcceptance : t.render.acceptBtn}><Check size={14} /></button>
+                        <button onClick={() => handleApproval(product.id, approval === "rejected" ? null : "rejected")} className={`w-7 h-7 rounded flex items-center justify-center transition-colors ${approval === "rejected" ? "bg-red-500 text-white" : "text-muted-foreground hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950"}`} title={approval === "rejected" ? t.listy.undoRejection : t.listy.rejectBtn}><X size={14} /></button>
+                        {commentBtn(15)}
                       </div>
                     </div>
 
-                    {/* ── MOBILE (< md) ── */}
-                    <div className="md:hidden px-3 py-3 hover:bg-muted/30 transition-colors">
-                      {/* Row 1: image + name + manufacturer */}
+                    {/* ── MOBILE (< lg) ── */}
+                    <div className={`lg:hidden py-3 pr-3 ${isVariant ? 'pl-6' : 'pl-3'}`}>
+                      {/* Row 1: image + name + tags */}
                       <div className="flex items-start gap-2">
-                        <div className="w-16 h-16 shrink-0 rounded-lg overflow-hidden bg-muted flex items-center justify-center">
+                        <div className="w-20 h-20 shrink-0 rounded-lg overflow-hidden bg-white flex items-center justify-center">
                           {product.imageUrl ? (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img src={product.imageUrl} alt={product.name} className="w-full h-full object-contain cursor-pointer" onClick={() => setLightbox(product.imageUrl!)} />
@@ -389,43 +384,32 @@ export default function ShareListClient({
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-sm text-foreground leading-tight">{product.name}</p>
-                          {isVariant && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted text-muted-foreground mt-0.5">Wariant</span>}
-                          {!isVariant && product.optional && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium border border-dashed border-muted-foreground/40 text-muted-foreground mt-0.5">Opcjonalny</span>}
+                          <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+                            {isParent && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium shrink-0" style={{ background: '#EEF2FF', color: '#4F46E5' }}>Podstawowy</span>}
+                            {isVariant && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium text-muted-foreground shrink-0" style={{ background: '#EDEDED' }}>Opcjonalny</span>}
+                          </div>
                         </div>
                       </div>
                       {/* Badges: approval + order status */}
-                      {(approval || orderStatusOpt) && (
-                        <div className="flex items-center gap-1.5 mt-1.5">
-                          {approval === "accepted" && (
-                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                              <Check size={9} />
-                              Zaakceptowany
-                            </span>
-                          )}
-                          {approval === "rejected" && (
-                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
-                              <X size={9} />
-                              Odrzucony
-                            </span>
-                          )}
-                          {orderStatusOpt && (
-                            <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${orderStatusOpt.cls}`}>
-                              {orderStatusOpt.label}
-                            </span>
-                          )}
-                        </div>
-                      )}
-                      {/* Attributes stacked */}
+                      <div className="flex items-center gap-1.5 mt-1.5">
+                        {approvalBadge}
+                        {orderStatusOpt && (
+                          <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${isVariant ? orderStatusOpt.cls.replace("bg-muted", "bg-[#EDEDED]") : orderStatusOpt.cls}`}>
+                            {orderStatusOpt.label}
+                          </span>
+                        )}
+                      </div>
+                      {/* Attributes — 2-column grid */}
                       {(product.manufacturer || product.color || product.dimensions || product.deliveryTime) && (
-                        <div className="mt-1.5 space-y-0.5">
-                          {product.manufacturer && <p className="text-xs text-muted-foreground">{t.listy.fieldManufacturer}: <span className="text-foreground font-medium">{product.manufacturer}</span></p>}
-                          {product.color && <p className="text-xs text-muted-foreground">{t.listy.fieldColor}: <span className="text-foreground font-medium">{product.color}</span></p>}
-                          {product.dimensions && <p className="text-xs text-muted-foreground">{t.listy.fieldDimensions}: <span className="text-foreground font-medium">{product.dimensions}</span></p>}
-                          {product.deliveryTime && <p className="text-xs text-muted-foreground">{t.listy.fieldDelivery}: <span className="text-foreground font-medium">{product.deliveryTime}</span></p>}
+                        <div className="grid grid-cols-2 gap-x-4 mt-1.5">
+                          {product.manufacturer && <p className="text-xs text-muted-foreground truncate py-0.5">{t.listy.fieldManufacturer}: {product.manufacturer}</p>}
+                          {product.color && <p className="text-xs text-muted-foreground truncate py-0.5">{t.listy.fieldColor}: {product.color}</p>}
+                          {product.dimensions && <p className="text-xs text-muted-foreground truncate py-0.5">{t.listy.fieldDimensions}: {product.dimensions}</p>}
+                          {product.deliveryTime && <p className="text-xs text-muted-foreground truncate py-0.5">{t.listy.fieldDelivery}: {product.deliveryTime}</p>}
                         </div>
                       )}
-                      {product.note && <p className="text-xs text-muted-foreground italic mt-1">📝 {product.note}</p>}
-                      {/* Qty + price */}
+                      {product.note && <p className="text-xs text-muted-foreground italic truncate mt-1">📝 {product.note}</p>}
+                      {/* Bottom row: qty + link | price */}
                       <div className="flex items-center justify-between mt-2">
                         <div className="flex items-center gap-2">
                           <span className="text-xs text-muted-foreground">{t.listy.qtyLabel} <span className="font-medium text-foreground">{product.quantity}</span></span>
@@ -438,43 +422,34 @@ export default function ShareListClient({
                           </div>
                         )}
                       </div>
-                      {/* Bottom: icons */}
+                      {/* Bottom icons: approval + comments */}
                       <div className="flex items-center justify-end gap-1 mt-2">
-                        <button
-                          onClick={() => handleApproval(product.id, approval === "accepted" ? null : "accepted")}
-                          className={`w-8 h-8 rounded flex items-center justify-center transition-colors ${approval === "accepted" ? "bg-green-500 text-white" : "text-muted-foreground hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-950"}`}
-                          title={approval === "accepted" ? t.render.undoAcceptance : t.render.acceptBtn}
-                        ><Check size={16} /></button>
-                        <button
-                          onClick={() => handleApproval(product.id, approval === "rejected" ? null : "rejected")}
-                          className={`w-8 h-8 rounded flex items-center justify-center transition-colors ${approval === "rejected" ? "bg-red-500 text-white" : "text-muted-foreground hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950"}`}
-                          title={approval === "rejected" ? t.listy.undoRejection : t.listy.rejectBtn}
-                        ><X size={16} /></button>
-                        {commentBtn(16)}
+                        <button onClick={() => handleApproval(product.id, approval === "accepted" ? null : "accepted")} className={`w-7 h-7 rounded flex items-center justify-center transition-colors ${approval === "accepted" ? "bg-green-500 text-white" : "text-muted-foreground hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-950"}`} title={approval === "accepted" ? t.render.undoAcceptance : t.render.acceptBtn}><Check size={14} /></button>
+                        <button onClick={() => handleApproval(product.id, approval === "rejected" ? null : "rejected")} className={`w-7 h-7 rounded flex items-center justify-center transition-colors ${approval === "rejected" ? "bg-red-500 text-white" : "text-muted-foreground hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950"}`} title={approval === "rejected" ? t.listy.undoRejection : t.listy.rejectBtn}><X size={14} /></button>
+                        {commentBtn(14)}
                       </div>
                     </div>
                   </div>
                 );
                 };
-                return topLevel.map((product, i) => {
+                return topLevel.map((product) => {
                   const variants = section.products.filter((p) => p.parentProductId === product.id).sort((a, b) => a.order - b.order);
-                  const isLastTopLevel = i === topLevel.length - 1;
+                  const isParent = variants.length > 0;
                   return (
-                    <Fragment key={product.id}>
-                      {renderProduct(product, false, isLastTopLevel && variants.length === 0)}
-                      {variants.length > 0 && (
-                        <div className="relative h-3 pointer-events-none">
-                          <div className="absolute left-4 inset-y-0 w-0.5 bg-border/60" />
-                        </div>
-                      )}
+                    <div key={product.id} className="bg-[#FAFAFB] border border-border rounded-[14px] overflow-hidden">
+                      {renderProduct(product, false, isParent)}
                       {variants.map((variant, vi) => (
-                        <div key={variant.id} className="relative">
-                          <div className={`absolute left-4 top-0 w-0.5 bg-border/60 pointer-events-none ${vi === variants.length - 1 ? 'h-1/2' : 'h-full'}`} />
-                          <div className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-0.5 bg-border/60 pointer-events-none" />
-                          {renderProduct(variant, true, isLastTopLevel && vi === variants.length - 1)}
+                        <div key={variant.id} className="relative border-t border-dashed border-border" style={{ background: '#F4F4F7' }}>
+                          {/* Desktop connector (lg+) — left: 20px sits in the w-5 spacer zone */}
+                          <div className={`hidden lg:block absolute w-px pointer-events-none ${vi === variants.length - 1 ? 'top-0 h-1/2' : 'top-0 bottom-0'}`} style={{ left: '20px', background: 'var(--border)' }} />
+                          <div className="hidden lg:block absolute h-px w-4 pointer-events-none top-1/2 -translate-y-1/2" style={{ left: '20px', background: 'var(--border)' }} />
+                          {/* Mobile connector (< lg) — ends at 12px, right at px-3 content edge */}
+                          <div className={`lg:hidden absolute w-px pointer-events-none ${vi === variants.length - 1 ? 'top-0 h-1/2' : 'top-0 bottom-0'}`} style={{ left: '4px', background: 'var(--border)' }} />
+                          <div className="lg:hidden absolute h-px pointer-events-none top-1/2 -translate-y-1/2" style={{ left: '4px', width: '20px', background: 'var(--border)' }} />
+                          {renderProduct(variant, true, false)}
                         </div>
                       ))}
-                    </Fragment>
+                    </div>
                   );
                 });
               })()}
