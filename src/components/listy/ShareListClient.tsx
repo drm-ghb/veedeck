@@ -424,21 +424,35 @@ export default function ShareListClient({
                           </div>
                         )}
                       </div>
-                      {/* Accept button — full width */}
-                      <button
-                        onClick={() => handleApproval(product.id, approval === "accepted" ? null : "accepted")}
-                        className={`w-full mt-2 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-colors ${approval === "accepted" ? "bg-green-600 text-white hover:bg-green-700" : "bg-green-500 text-white hover:bg-green-600"}`}
-                      >
-                        <Check size={16} />
-                        {approval === "accepted" ? t.render.undoAcceptance : t.render.acceptBtn}
-                      </button>
-                      {/* Reject + comment */}
-                      <div className="flex items-center justify-end gap-1 mt-1.5">
-                        <button
-                          onClick={() => handleApproval(product.id, approval === "rejected" ? null : "rejected")}
-                          className={`w-8 h-8 rounded flex items-center justify-center transition-colors ${approval === "rejected" ? "bg-red-500 text-white" : "text-muted-foreground hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950"}`}
-                        ><X size={16} /></button>
-                        {commentBtn(16)}
+                      {/* Approval row: badge + icons + comment */}
+                      <div className="flex items-center justify-between mt-2">
+                        <div>
+                          {approval === "accepted" && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                              <Check size={11} />
+                              {t.render.acceptBtn}
+                            </span>
+                          )}
+                          {approval === "rejected" && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                              <X size={11} />
+                              {t.listy.rejectBtn}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => handleApproval(product.id, approval === "accepted" ? null : "accepted")}
+                            className={`w-8 h-8 rounded flex items-center justify-center transition-colors ${approval === "accepted" ? "bg-green-500 text-white" : "text-muted-foreground hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-950"}`}
+                            title={approval === "accepted" ? t.render.undoAcceptance : t.render.acceptBtn}
+                          ><Check size={16} /></button>
+                          <button
+                            onClick={() => handleApproval(product.id, approval === "rejected" ? null : "rejected")}
+                            className={`w-8 h-8 rounded flex items-center justify-center transition-colors ${approval === "rejected" ? "bg-red-500 text-white" : "text-muted-foreground hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950"}`}
+                            title={approval === "rejected" ? t.listy.undoRejection : t.listy.rejectBtn}
+                          ><X size={16} /></button>
+                          {commentBtn(16)}
+                        </div>
                       </div>
                     </div>
                   </div>
