@@ -2345,7 +2345,8 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                             </SortableProduct>
                             {variants.map((variant, vi) => (
                               <div key={variant.id} className="relative border-t border-dashed border-border" style={{ background: '#F4F4F7' }}>
-                                <div className="absolute top-0 bottom-0 w-px pointer-events-none" style={{ left: '20px', background: 'var(--border)' }} />
+                                <div className={`absolute w-px pointer-events-none ${vi === variants.length - 1 ? 'top-0 h-1/2' : 'top-0 bottom-0'}`} style={{ left: '20px', background: 'var(--border)' }} />
+                                <div className="absolute h-px w-4 pointer-events-none top-1/2 -translate-y-1/2" style={{ left: '20px', background: 'var(--border)' }} />
                                 <ProductRow
                                   product={variant}
                                   index={vi}
@@ -2567,7 +2568,8 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                                       </SortableProduct>
                                       {variants.map((variant, vi) => (
                                         <div key={variant.id} className="relative border-t border-dashed border-border" style={{ background: '#F4F4F7' }}>
-                                          <div className="absolute top-0 bottom-0 w-px pointer-events-none" style={{ left: '20px', background: 'var(--border)' }} />
+                                          <div className={`absolute w-px pointer-events-none ${vi === variants.length - 1 ? 'top-0 h-1/2' : 'top-0 bottom-0'}`} style={{ left: '20px', background: 'var(--border)' }} />
+                                          <div className="absolute h-px w-4 pointer-events-none top-1/2 -translate-y-1/2" style={{ left: '20px', background: 'var(--border)' }} />
                                           <ProductRow
                                             product={variant}
                                             index={vi}
