@@ -690,7 +690,7 @@ function ProductRow({
             {isVariant && (
               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted text-muted-foreground shrink-0">
                 <Layers size={9} />
-                wariant
+                Opcjonalny
               </span>
             )}
             {/* Inline category badge */}
@@ -896,7 +896,7 @@ function ProductRow({
               {isVariant && (
                 <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted text-muted-foreground">
                   <Layers size={9} />
-                  wariant
+                  Opcjonalny
                 </span>
               )}
               <button
