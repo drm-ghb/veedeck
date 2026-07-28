@@ -2699,7 +2699,9 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                         }
                         applySnap(e, el);
                       }}
-                      onContextMenu={(e) => { e.evt.preventDefault(); setSelectedIds([el.id]); setContextMenu({ screenX: e.evt.clientX, screenY: e.evt.clientY, elementId: el.id }); }} />
+                      onContextMenu={(e) => { e.evt.preventDefault(); setSelectedIds([el.id]); setContextMenu({ screenX: e.evt.clientX, screenY: e.evt.clientY, elementId: el.id }); }}
+                      onMouseEnter={() => { if (stageRef.current) stageRef.current.container().style.cursor = "pointer"; }}
+                      onMouseLeave={() => { if (stageRef.current) stageRef.current.container().style.cursor = ""; }} />
                   );
                   return clipFunc
                     ? <Group key={el.id + "_cg"} clipFunc={clipFunc}>{imageNode}</Group>
