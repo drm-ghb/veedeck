@@ -324,6 +324,8 @@ function ProductRow({
   const [categoryMenuPos, setCategoryMenuPos] = useState({ top: 0, left: 0 });
   const [orderStatusMenuOpen, setOrderStatusMenuOpen] = useState(false);
   const [orderStatusMenuPos, setOrderStatusMenuPos] = useState({ top: 0, left: 0 });
+  const [approvalMenuOpen, setApprovalMenuOpen] = useState(false);
+  const [approvalMenuPos, setApprovalMenuPos] = useState({ top: 0, left: 0 });
   const [copyMenuOpen, setCopyMenuOpen] = useState(false);
   const [copyMenuPos, setCopyMenuPos] = useState({ top: 0, left: 0 });
   const [moveMenuOpen, setMoveMenuOpen] = useState(false);
@@ -558,6 +560,31 @@ function ProductRow({
     document.body
   ) : null;
 
+  const APPROVAL_OPTIONS = [
+    { value: null, label: "Oczekuje", cls: "bg-muted text-muted-foreground" },
+    { value: "accepted", label: "Zaakceptowane", cls: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" },
+    { value: "rejected", label: "Odrzucone", cls: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" },
+  ] as const;
+
+  const approvalPortal = approvalMenuOpen ? createPortal(
+    <>
+      <div className="fixed inset-0 z-[200]" onClick={() => setApprovalMenuOpen(false)} />
+      <div className="fixed z-[201] bg-popover border border-border rounded-lg shadow-lg py-1 min-w-[160px]" style={{ top: approvalMenuPos.top, left: approvalMenuPos.left }}>
+        {APPROVAL_OPTIONS.map((opt) => (
+          <button
+            key={String(opt.value)}
+            onClick={() => { onApprovalChange(opt.value ?? null); setApprovalMenuOpen(false); }}
+            className="w-full text-left px-3 py-1.5 text-xs hover:bg-muted transition-colors flex items-center gap-2 text-foreground"
+          >
+            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${approval === opt.value ? "bg-primary" : ""}`} />
+            {opt.label}
+          </button>
+        ))}
+      </div>
+    </>,
+    document.body
+  ) : null;
+
   const orderStatusPortal = orderStatusMenuOpen ? createPortal(
     <>
       <div className="fixed inset-0 z-[200]" onClick={() => setOrderStatusMenuOpen(false)} />
@@ -583,6 +610,7 @@ function ProductRow({
       {movePortal}
       {copyPortal}
       {categoryPortal}
+      {approvalPortal}
       {orderStatusPortal}
 
       {/* ── DESKTOP layout (lg+) — original ── */}
@@ -664,9 +692,14 @@ function ProductRow({
           </div>
           {/* Badges row — approval + order status */}
           <div className="flex items-center gap-1.5 mt-1">
-            <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium shrink-0 ${getApprovalLabel(approval).cls}`}>
+            <button
+              onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); const estH = 3 * 28 + 8; const top = (window.innerHeight - r.bottom) >= estH + 8 ? r.bottom + 4 : Math.max(4, r.top - estH - 4); setApprovalMenuPos({ top, left: r.left }); setApprovalMenuOpen((v) => !v); }}
+              className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors shrink-0 hover:opacity-80 ${getApprovalLabel(approval).cls}`}
+              title="Zmień status akceptacji"
+            >
               {getApprovalLabel(approval).label}
-            </span>
+              <ChevronDown size={9} />
+            </button>
             <button
               onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); const estH = ORDER_STATUS_OPTIONS.length * 28 + 8; const top = (window.innerHeight - r.bottom) >= estH + 8 ? r.bottom + 4 : Math.max(4, r.top - estH - 4); setOrderStatusMenuPos({ top, left: r.left }); setOrderStatusMenuOpen((v) => !v); }}
               className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors shrink-0 hover:opacity-80 ${getOrderStatusOption(orderStatus).cls}`}
@@ -910,9 +943,14 @@ function ProductRow({
             >
               {product.category ? getCategoryLabel(product.category, allCategories) : t.listy.addCategoryShort}
             </button>
-            <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium shrink-0 ${getApprovalLabel(approval).cls}`}>
+            <button
+              onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); const estH = 3 * 28 + 8; const top = (window.innerHeight - r.bottom) >= estH + 8 ? r.bottom + 4 : Math.max(4, r.top - estH - 4); setApprovalMenuPos({ top, left: r.left }); setApprovalMenuOpen((v) => !v); }}
+              className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors shrink-0 hover:opacity-80 ${getApprovalLabel(approval).cls}`}
+              title="Zmień status akceptacji"
+            >
               {getApprovalLabel(approval).label}
-            </span>
+              <ChevronDown size={9} />
+            </button>
             <button
               onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); const estH = ORDER_STATUS_OPTIONS.length * 28 + 8; const top = (window.innerHeight - r.bottom) >= estH + 8 ? r.bottom + 4 : Math.max(4, r.top - estH - 4); setOrderStatusMenuPos({ top, left: r.left }); setOrderStatusMenuOpen((v) => !v); }}
               className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium shrink-0 hover:opacity-80 ${getOrderStatusOption(orderStatus).cls}`}
