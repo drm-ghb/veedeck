@@ -1214,10 +1214,10 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
     const ny = e.target.y();
     // Use getElementBounds to correctly handle arrows/lines (points-based) and ellipses (center-based)
     const elBounds = getElementBounds(el);
-    const bboxOffsetX = elBounds.x - el.x;
-    const bboxOffsetY = elBounds.y - el.y;
-    const w = elBounds.width;
-    const h = elBounds.height;
+    const bboxOffsetX = elBounds.minX - el.x;
+    const bboxOffsetY = elBounds.minY - el.y;
+    const w = elBounds.maxX - elBounds.minX;
+    const h = elBounds.maxY - elBounds.minY;
     const snapX = nx + bboxOffsetX;
     const snapY = ny + bboxOffsetY;
     const threshold = 8 / stageScale;
@@ -1229,10 +1229,10 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
     for (const other of elements) {
       if (other.id === el.id || other.type === "connection" || selectedIds.includes(other.id)) continue;
       const ob = getElementBounds(other);
-      const ox = ob.x;
-      const oy = ob.y;
-      const ow = ob.width;
-      const oh = ob.height;
+      const ox = ob.minX;
+      const oy = ob.minY;
+      const ow = ob.maxX - ob.minX;
+      const oh = ob.maxY - ob.minY;
       for (const [dxc, oxc] of [
         [snapX, ox], [snapX, ox + ow / 2], [snapX, ox + ow],
         [snapX + w / 2, ox], [snapX + w / 2, ox + ow / 2], [snapX + w / 2, ox + ow],
