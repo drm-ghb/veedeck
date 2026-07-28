@@ -331,12 +331,12 @@ export default function ShareListClient({
                   <div key={product.id} className={`${!last ? "border-b border-border" : ""} ${isVariant ? "pl-8" : ""}`}>
                     {/* ── DESKTOP (md+) ── */}
                     <div className="hidden md:flex items-center gap-3 px-4 py-4 hover:bg-muted/30 transition-colors">
-                      <div className="w-14 h-14 shrink-0 rounded-xl bg-muted flex items-center justify-center overflow-hidden">
+                      <div className="w-32 h-32 shrink-0 rounded-xl bg-muted flex items-center justify-center overflow-hidden">
                         {product.imageUrl ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={product.imageUrl} alt={product.name} className="w-full h-full object-contain" />
                         ) : (
-                          <span className="text-2xl text-muted-foreground/30 select-none">📦</span>
+                          <span className="text-3xl text-muted-foreground/30 select-none">📦</span>
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
