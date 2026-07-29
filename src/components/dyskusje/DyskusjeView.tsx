@@ -285,6 +285,17 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
     selectedIdRef.current = selectedId;
   }, [selectedId]);
 
+  // Auto-open discussion linked from floating chat panel
+  useEffect(() => {
+    const pendingId = localStorage.getItem("float-open-discussion-id");
+    if (!pendingId) return;
+    localStorage.removeItem("float-open-discussion-id");
+    setSelectedId(pendingId);
+    markAsRead(pendingId);
+    setDiscussions((prev) => prev.map((x) => x.id === pendingId ? { ...x, unreadCount: 0 } : x));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Reload members panel when switching discussions
   useEffect(() => {
     if (showMembers && selectedId) {
@@ -424,6 +435,9 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
         setLoadingMessages(false);
         const lastMsgId = msgs.length > 0 ? msgs[msgs.length - 1].id : undefined;
         markAsRead(selectedId, lastMsgId);
+        // Restore draft typed in floating chat panel (if any)
+        const floatDraft = localStorage.getItem(`float-draft-${selectedId}`);
+        if (floatDraft) setInput(floatDraft);
         if (lastMsgId) {
           fetch(`/api/discussions/${selectedId}/read`, {
             method: "POST",
@@ -756,6 +770,7 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
       }
 
       setInput("");
+      if (selectedId) localStorage.removeItem(`float-draft-${selectedId}`);
       if (inputTextareaRef.current) { inputTextareaRef.current.style.height = "40px"; }
       setPendingAttachments([]);
       setReplyingToMsg(null);
@@ -2387,7 +2402,7 @@ function MessageBubble({ msg, isOwn, currentUserId, ownAvatarUrl, onImageClick, 
             <div className="relative">
               <div className={`relative w-fit flex flex-col gap-0.5 ${isOwn ? "items-end ml-auto" : "items-start"} ${reactions.length > 0 ? "pb-3" : ""}`}>
                 {msg.content && (
-                  <div className={`rounded-2xl px-3 py-2 text-sm ${isOwn ? "bg-primary text-primary-foreground" : "bg-background border border-border"}`}>
+                  <div className={`rounded-2xl px-3 py-2 text-sm ${isOwn ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"}`}>
                     {renderWithLinks(msg.content, isOwn)}
                     {msg.editedAt && <span className="text-[10px] opacity-50 ml-1.5">{t.dyskusje.editedLabel}</span>}
                     {!msg.attachmentType && (
@@ -2459,7 +2474,7 @@ function MessageBubble({ msg, isOwn, currentUserId, ownAvatarUrl, onImageClick, 
                     href={msg.attachmentUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`flex items-center gap-2 px-3 py-2 rounded-2xl border text-sm ${isOwn ? "bg-primary/10 border-primary/20 text-foreground" : "bg-background border-border"} hover:opacity-80 transition-opacity`}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-2xl text-sm ${isOwn ? "bg-primary/10 border border-primary/20 text-foreground" : "bg-muted text-foreground"} hover:opacity-80 transition-opacity`}
                   >
                     <DocumentIcon name={msg.attachmentName || ""} />
                     <span className="truncate max-w-[180px]">{msg.attachmentName}</span>

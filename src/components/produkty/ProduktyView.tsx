@@ -249,7 +249,7 @@ export default function ProduktyView({ initialProducts }: Props) {
 
       {/* Toolbar */}
       <div className="flex items-center gap-2">
-        <div className="relative flex-1">
+        <div className="relative w-full max-w-sm">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={query}
@@ -266,6 +266,7 @@ export default function ProduktyView({ initialProducts }: Props) {
             <SlidersHorizontal size={15} />
           </button>
         </div>
+        <div className="ml-auto">
         <DropdownMenu>
           <DropdownMenuTrigger render={
             <button className={`w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-md border transition-colors ${sortOption !== "default" ? "border-primary bg-primary text-white" : "border-input bg-background text-muted-foreground hover:text-foreground"}`}>
@@ -281,6 +282,7 @@ export default function ProduktyView({ initialProducts }: Props) {
             ))}
           </DropdownMenuContent>
         </DropdownMenu>
+        </div>
       </div>
 
       {/* Breadcrumb when inside folder */}

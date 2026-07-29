@@ -1825,7 +1825,7 @@ export const en: TranslationKeys = {
     archiveAction: "Archive",
     searchDiscussionsPlaceholder: "Search discussions...",
     filterInternal: "Internal",
-    filterProject: "Project",
+    filterProject: "Client",
     noDiscussions: "No discussions",
     noDiscussionsHint: "Project discussions are created automatically",
     contractorChat: "Contractor chat",
@@ -1862,6 +1862,9 @@ export const en: TranslationKeys = {
     annotateUndo: "Undo",
     annotateSending: "Sending...",
     annotateSend: "Send annotated",
+    floatTitle: "Chats",
+    floatNoChatsDesc: "Discussions with clients and contractors will appear here.",
+    floatOpenFull: "Open in Discussions",
   },
   guide: {
     title: "How to use the platform",

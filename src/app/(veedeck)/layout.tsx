@@ -11,6 +11,7 @@ import OnboardingTrigger from "@/components/dashboard/OnboardingTrigger";
 import CancelledBadge from "@/components/dashboard/CancelledBadge";
 import AppNavbar from "@/components/dashboard/AppNavbar";
 import { TrialContextProvider } from "@/lib/trial-context";
+import FloatingChatPanel from "@/components/dyskusje/FloatingChatPanel";
 
 export default async function VeedeckLayout({
   children,
@@ -73,6 +74,7 @@ export default async function VeedeckLayout({
       </div>
       <TrialCheck />
       <OnboardingModal show={showOnboarding} userId={session.user.id!} />
+      <FloatingChatPanel userId={session.user.id!} currentUserAvatarUrl={avatarUrl} />
     </div>
   );
 }

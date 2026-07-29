@@ -1214,6 +1214,7 @@ model Moodboard {
   isSharedWithClient Boolean  @default(false)
   canvasData         Json     @default("{}")
   archived           Boolean  @default(false)
+  pinned             Boolean  @default(false)
   slug               String?  @unique
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt

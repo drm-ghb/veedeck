@@ -310,7 +310,7 @@ export default function ListyView({ lists: initialLists, userId, veepickConnecte
       {/* Toolbar */}
       {tabLists.length > 0 && (
         <div className="flex items-center gap-2 mb-6">
-          <div className="relative flex-1">
+          <div className="relative w-full max-w-sm">
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
             <input
               type="text"
@@ -321,32 +321,34 @@ export default function ListyView({ lists: initialLists, userId, veepickConnecte
             />
           </div>
 
-          <div className={`relative sm:hidden w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-md border ${sort !== "newest" ? "border-primary/30 bg-primary/10" : "border-border bg-background"}`}>
-            <ArrowDownUp size={14} className={`pointer-events-none ${sort !== "newest" ? "text-primary" : "text-muted-foreground"}`} />
-            <select value={sort} onChange={(e) => setSort(e.target.value as SortOption)} className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" aria-label={t.common.sort}>
+          <div className="ml-auto flex items-center gap-2">
+            <div className={`relative sm:hidden w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-md border ${sort !== "newest" ? "border-primary/30 bg-primary/10" : "border-border bg-background"}`}>
+              <ArrowDownUp size={14} className={`pointer-events-none ${sort !== "newest" ? "text-primary" : "text-muted-foreground"}`} />
+              <select value={sort} onChange={(e) => setSort(e.target.value as SortOption)} className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" aria-label={t.common.sort}>
+                <option value="manual">{t.listy.sortManual}</option>
+                <option value="newest">{t.common.newest}</option>
+                <option value="oldest">{t.common.oldest}</option>
+                <option value="az">{t.common.az}</option>
+                <option value="za">{t.common.za}</option>
+              </select>
+            </div>
+
+            <select value={sort} onChange={(e) => setSort(e.target.value as SortOption)} className="hidden sm:block flex-shrink-0 text-xs border border-gray-200 dark:border-gray-700 rounded-md px-2 py-2 bg-white dark:bg-card text-gray-600 dark:text-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-300">
               <option value="manual">{t.listy.sortManual}</option>
               <option value="newest">{t.common.newest}</option>
               <option value="oldest">{t.common.oldest}</option>
               <option value="az">{t.common.az}</option>
               <option value="za">{t.common.za}</option>
             </select>
-          </div>
 
-          <select value={sort} onChange={(e) => setSort(e.target.value as SortOption)} className="hidden sm:block flex-shrink-0 text-xs border border-gray-200 dark:border-gray-700 rounded-md px-2 py-2 bg-white dark:bg-card text-gray-600 dark:text-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-300">
-            <option value="manual">{t.listy.sortManual}</option>
-            <option value="newest">{t.common.newest}</option>
-            <option value="oldest">{t.common.oldest}</option>
-            <option value="az">{t.common.az}</option>
-            <option value="za">{t.common.za}</option>
-          </select>
-
-          <div className="flex items-center gap-0.5 bg-muted rounded-md p-0.5 flex-shrink-0">
-            <button onClick={() => toggleView("grid")} className={`p-1.5 rounded transition-colors ${view === "grid" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`} title={t.listy.gridView}>
-              <LayoutGrid size={15} />
-            </button>
-            <button onClick={() => toggleView("list")} className={`p-1.5 rounded transition-colors ${view === "list" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`} title={t.listy.listView}>
-              <List size={15} />
-            </button>
+            <div className="flex items-center gap-0.5 bg-muted rounded-md p-0.5 flex-shrink-0">
+              <button onClick={() => toggleView("grid")} className={`p-1.5 rounded transition-colors ${view === "grid" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`} title={t.listy.gridView}>
+                <LayoutGrid size={15} />
+              </button>
+              <button onClick={() => toggleView("list")} className={`p-1.5 rounded transition-colors ${view === "list" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`} title={t.listy.listView}>
+                <List size={15} />
+              </button>
+            </div>
           </div>
         </div>
       )}

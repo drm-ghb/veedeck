@@ -26,6 +26,7 @@ const STR = {
     qty: "Ilość",
     unit: "szt.",
     remaining: "Pozostałe",
+    optional: "opcjonalny",
   },
   en: {
     preparedBy: "Prepared by",
@@ -42,6 +43,7 @@ const STR = {
     qty: "Qty",
     unit: "pcs.",
     remaining: "Other",
+    optional: "optional",
   },
 } as const;
 
@@ -395,6 +397,7 @@ async function renderViolet(
   y += 9;
 
   // ── Sections ───────────────────────────────────────────────────────────────
+  let productIndex = 0;
   for (const section of exportSections) {
     const products = section.products.filter((p) => !p.hidden);
     if (products.length === 0) continue;
@@ -472,6 +475,14 @@ async function renderViolet(
 
       if (p.url) doc.link(IML, rowY, IIMG, IIMG, { url: p.url });
 
+      // Index number (top-level only)
+      if (!isVariant) {
+        doc.setFont(FONT, "normal");
+        doc.setFontSize(7);
+        doc.setTextColor(...MUTED);
+        doc.text(String(productIndex), ML - 2, rowY + 4, { align: "right" });
+      }
+
       // Text column
       let cy = rowY + 4;
 
@@ -479,7 +490,7 @@ async function renderViolet(
         doc.setFont(FONT, "normal");
         doc.setFontSize(7);
         doc.setTextColor(...MUTED);
-        doc.text("wariant", ITEXT_X, cy - 0.5);
+        doc.text(s.optional, ITEXT_X, cy - 0.5);
         cy += 4;
       }
 
@@ -562,6 +573,7 @@ async function renderViolet(
       const p = topLevelProducts[i];
       const variants = products.filter((v) => v.parentProductId === p.id);
       const isLastTopLevel = i === topLevelProducts.length - 1;
+      productIndex++;
       renderPdfProduct(p, false, isLastTopLevel && variants.length === 0);
       for (let vi = 0; vi < variants.length; vi++) {
         renderPdfProduct(variants[vi], true, isLastTopLevel && vi === variants.length - 1);
@@ -742,6 +754,7 @@ async function renderEditorial(
 
   // ── Sections ──────────────────────────────────────────────────────────────
   let sectionIndex = 0;
+  let productIndex = 0;
   const PRICE_X = PAGE_W - MR;
   const TEXT_X = ML + IMG + 4;
   const TEXT_W = CW - IMG - 4 - PRICE_COL - 4;
@@ -819,13 +832,21 @@ async function renderEditorial(
       }
       if (p.url) doc.link(IML, rowY, IIMG, IIMG, { url: p.url });
 
+      // Index number (top-level only)
+      if (!isVariant) {
+        doc.setFont(FONT, "normal");
+        doc.setFontSize(7);
+        doc.setTextColor(...MUTED);
+        doc.text(String(productIndex), ML - 2, rowY + 5, { align: "right" });
+      }
+
       let cy = rowY + 5;
 
       if (isVariant) {
         doc.setFont(FONT, "normal");
         doc.setFontSize(7);
         doc.setTextColor(...MUTED);
-        doc.text("wariant", ITEXT_X, cy - 0.5);
+        doc.text(s.optional, ITEXT_X, cy - 0.5);
         cy += 4.5;
       }
 
@@ -881,6 +902,7 @@ async function renderEditorial(
       const p = topLevelProducts[i];
       const variants = products.filter((v) => v.parentProductId === p.id);
       const isLastTopLevel = i === topLevelProducts.length - 1;
+      productIndex++;
       renderEditorialProduct(p, false, isLastTopLevel && variants.length === 0);
       for (let vi = 0; vi < variants.length; vi++) {
         renderEditorialProduct(variants[vi], true, isLastTopLevel && vi === variants.length - 1);
@@ -1082,6 +1104,7 @@ async function renderAtelier(
 
   // ── Sections ──────────────────────────────────────────────────────────────
   let sectionIndex = 0;
+  let productIndex = 0;
   const PRICE_X = PAGE_W - MR;
   const TEXT_X = ML + IMG + 4;
   const TEXT_W = CW - IMG - 4 - PRICE_COL - 4;
@@ -1174,13 +1197,21 @@ async function renderAtelier(
       }
       if (p.url) doc.link(IML, rowY, IIMG, IIMG, { url: p.url });
 
+      // Index number (top-level only)
+      if (!isVariant) {
+        doc.setFont(FONT, "normal");
+        doc.setFontSize(7);
+        doc.setTextColor(...MUTED);
+        doc.text(String(productIndex), ML - 2, rowY + 5, { align: "right" });
+      }
+
       let cy = rowY + 5;
 
       if (isVariant) {
         doc.setFont(FONT, "normal");
         doc.setFontSize(7);
         doc.setTextColor(...MUTED);
-        doc.text("wariant", ITEXT_X, cy - 0.5);
+        doc.text(s.optional, ITEXT_X, cy - 0.5);
         cy += 4.5;
       }
 
@@ -1236,6 +1267,7 @@ async function renderAtelier(
       const p = topLevelProducts[i];
       const variants = products.filter((v) => v.parentProductId === p.id);
       const isLastTopLevel = i === topLevelProducts.length - 1;
+      productIndex++;
       renderAtelierProduct(p, false, isLastTopLevel && variants.length === 0);
       for (let vi = 0; vi < variants.length; vi++) {
         renderAtelierProduct(variants[vi], true, isLastTopLevel && vi === variants.length - 1);
@@ -1567,7 +1599,7 @@ async function renderArchitect(
         doc.setFont(FONT, "normal");
         doc.setFontSize(7);
         doc.setTextColor(...MUTED);
-        doc.text("wariant", ITEXT_X, cy - 0.5);
+        doc.text(s.optional, ITEXT_X, cy - 0.5);
         cy += 4.5;
       }
 
@@ -1835,6 +1867,7 @@ async function renderLinen(
   y += titleLines.length * 8.5 + 9;
 
   // ── Sections (white rounded cards) ────────────────────────────────────────
+  let productIndex = 0;
   const PRICE_X = PAGE_W - MR - CARD_PAD;
 
   for (const section of exportSections) {
@@ -1935,13 +1968,21 @@ async function renderLinen(
       }
       if (p.url) doc.link(IML_IMG, rowY, IIMG, IIMG, { url: p.url });
 
+      // Index number (top-level only)
+      if (!isVariant) {
+        doc.setFont(FONT, "normal");
+        doc.setFontSize(7);
+        doc.setTextColor(...MUTED);
+        doc.text(String(productIndex), ML - 2, rowY + 5, { align: "right" });
+      }
+
       let cy = rowY + 5;
 
       if (isVariant) {
         doc.setFont(FONT, "normal");
         doc.setFontSize(7);
         doc.setTextColor(...MUTED);
-        doc.text("wariant", ITEXT_X, cy - 0.5);
+        doc.text(s.optional, ITEXT_X, cy - 0.5);
         cy += 4.5;
       }
 
@@ -2005,6 +2046,7 @@ async function renderLinen(
       const p = topLevelProducts[i];
       const variants = products.filter((v) => v.parentProductId === p.id);
       const isLastTopLevel = i === topLevelProducts.length - 1;
+      productIndex++;
       renderLinenProduct(p, false, isLastTopLevel && variants.length === 0);
       for (let vi = 0; vi < variants.length; vi++) {
         renderLinenProduct(variants[vi], true, isLastTopLevel && vi === variants.length - 1);

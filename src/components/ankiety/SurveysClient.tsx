@@ -215,7 +215,7 @@ export default function SurveysClient({ surveys: initial, clients, customTemplat
 
       {/* Toolbar */}
       <div className="px-4 sm:px-6 py-3 flex items-center gap-2">
-        <div className="relative flex-1 min-w-0">
+        <div className="relative w-full max-w-sm">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
           <input
             type="text"
@@ -226,6 +226,7 @@ export default function SurveysClient({ surveys: initial, clients, customTemplat
           />
         </div>
 
+        <div className="ml-auto flex items-center gap-2">
         {/* Sort — mobile icon button */}
         <div className={`relative sm:hidden w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-md border ${sort !== "manual" ? "border-primary/30 bg-primary/10" : "border-border bg-background"}`}>
           <ArrowDownUp size={14} className={`pointer-events-none ${sort !== "manual" ? "text-primary" : "text-muted-foreground"}`} />
@@ -276,6 +277,7 @@ export default function SurveysClient({ surveys: initial, clients, customTemplat
           >
             <List size={15} />
           </button>
+        </div>
         </div>
       </div>
 

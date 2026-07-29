@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Interests, LayoutGrid, List, Search, MoreVertical, Trash2, Share2, Users, Edit2 } from "@/components/ui/icons";
+import { Interests, LayoutGrid, List, Search, MoreVertical, Trash2, Share2, Users, Edit2, Pin, PinOff, ArrowDownUp } from "@/components/ui/icons";
 import NewMoodboardDialog from "./NewMoodboardDialog";
 import EditMoodboardDialog from "./EditMoodboardDialog";
 
@@ -14,11 +14,14 @@ type Client = {
   projects: { id: string; title: string }[];
 };
 
+type SortOption = "newest" | "oldest" | "az" | "za";
+
 type Moodboard = {
   id: string;
   title: string;
   slug: string | null;
   isSharedWithClient: boolean;
+  pinned: boolean;
   createdAt: string;
   updatedAt: string;
   client: { id: string; name: string } | null;
@@ -53,6 +56,13 @@ export default function MoodboardList({ moodboards: initial, clients }: Props) {
     return "grid";
   });
   const [query, setQuery] = useState("");
+  const [sort, setSort] = useState<SortOption>(() => {
+    if (typeof window !== "undefined") {
+      const s = localStorage.getItem("moodboard-sort");
+      if (s === "newest" || s === "oldest" || s === "az" || s === "za") return s;
+    }
+    return "newest";
+  });
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
   const [editingMoodboard, setEditingMoodboard] = useState<Moodboard | null>(null);
 
@@ -72,6 +82,19 @@ export default function MoodboardList({ moodboards: initial, clients }: Props) {
     }
   }
 
+  async function handleTogglePin(id: string, current: boolean) {
+    const res = await fetch(`/api/moodboards/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pinned: !current }),
+    });
+    if (res.ok) {
+      setMoodboards((prev) => prev.map((m) => m.id === id ? { ...m, pinned: !current } : m));
+      toast.success(!current ? "Tablica przypięta" : "Tablica odpięta");
+    }
+    setMenuOpen(null);
+  }
+
   async function handleToggleShare(id: string, current: boolean) {
     const res = await fetch(`/api/moodboards/${id}`, {
       method: "PATCH",
@@ -89,10 +112,20 @@ export default function MoodboardList({ moodboards: initial, clients }: Props) {
     setMoodboards((prev) => prev.map((m) => m.id === id ? { ...m, ...updated } : m));
   }
 
-  const filtered = moodboards.filter((m) =>
-    m.title.toLowerCase().includes(query.toLowerCase()) ||
-    (m.client?.name ?? "").toLowerCase().includes(query.toLowerCase())
-  );
+  const filtered = moodboards
+    .filter((m) =>
+      m.title.toLowerCase().includes(query.toLowerCase()) ||
+      (m.client?.name ?? "").toLowerCase().includes(query.toLowerCase())
+    )
+    .sort((a, b) => {
+      if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
+      switch (sort) {
+        case "oldest": return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+        case "az": return a.title.localeCompare(b.title, "pl");
+        case "za": return b.title.localeCompare(a.title, "pl");
+        default: return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+      }
+    });
 
   return (
     <div>
@@ -114,8 +147,8 @@ export default function MoodboardList({ moodboards: initial, clients }: Props) {
       </div>
 
       {/* Toolbar */}
-      <div className="flex items-center gap-3 mb-5">
-        <div className="relative flex-1 max-w-sm">
+      <div className="flex items-center gap-2 mb-5">
+        <div className="relative w-full max-w-sm">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input
             value={query}
@@ -124,21 +157,50 @@ export default function MoodboardList({ moodboards: initial, clients }: Props) {
             className="w-full pl-9 pr-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
           />
         </div>
-        <div className="flex items-center border border-border rounded-lg overflow-hidden">
-          <button
-            onClick={() => setViewMode("grid")}
-            className={`px-2.5 py-2 transition-colors ${view === "grid" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"}`}
-            title="Widok kafelkowy"
+        <div className="ml-auto flex items-center gap-2">
+          {/* Sort — mobile icon */}
+          <div className={`relative sm:hidden w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-md border ${sort !== "newest" ? "border-primary/30 bg-primary/10" : "border-border bg-background"}`}>
+            <ArrowDownUp size={14} className={`pointer-events-none ${sort !== "newest" ? "text-primary" : "text-muted-foreground"}`} />
+            <select
+              value={sort}
+              onChange={(e) => { const v = e.target.value as SortOption; setSort(v); localStorage.setItem("moodboard-sort", v); }}
+              className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+              aria-label="Sortuj"
+            >
+              <option value="newest">Najnowsze</option>
+              <option value="oldest">Najstarsze</option>
+              <option value="az">A–Z</option>
+              <option value="za">Z–A</option>
+            </select>
+          </div>
+          {/* Sort — desktop select */}
+          <select
+            value={sort}
+            onChange={(e) => { const v = e.target.value as SortOption; setSort(v); localStorage.setItem("moodboard-sort", v); }}
+            className="hidden sm:block flex-shrink-0 text-xs border border-gray-200 dark:border-gray-700 rounded-md px-2 py-2 bg-white dark:bg-card text-gray-600 dark:text-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-300"
           >
-            <LayoutGrid size={16} />
-          </button>
-          <button
-            onClick={() => setViewMode("list")}
-            className={`px-2.5 py-2 transition-colors ${view === "list" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"}`}
-            title="Widok listowy"
-          >
-            <List size={16} />
-          </button>
+            <option value="newest">Najnowsze</option>
+            <option value="oldest">Najstarsze</option>
+            <option value="az">A–Z</option>
+            <option value="za">Z–A</option>
+          </select>
+          {/* View toggle */}
+          <div className="flex items-center gap-0.5 bg-muted rounded-md p-0.5 flex-shrink-0">
+            <button
+              onClick={() => setViewMode("grid")}
+              className={`p-1.5 rounded transition-colors ${view === "grid" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+              title="Widok kafelkowy"
+            >
+              <LayoutGrid size={15} />
+            </button>
+            <button
+              onClick={() => setViewMode("list")}
+              className={`p-1.5 rounded transition-colors ${view === "list" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+              title="Widok listowy"
+            >
+              <List size={15} />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -163,6 +225,11 @@ export default function MoodboardList({ moodboards: initial, clients }: Props) {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {filtered.map((m) => (
             <div key={m.id} className="group relative rounded-2xl border border-border bg-card overflow-hidden hover:border-primary/30 hover:shadow-md transition-all">
+              {m.pinned && (
+                <div className="absolute top-2 left-2 z-[4]">
+                  <Pin size={13} className="text-primary drop-shadow" />
+                </div>
+              )}
               <Link href={`/moodboardy/${m.id}`} className="block">
                 <div className="aspect-video bg-gradient-to-br from-primary/5 to-primary/15 flex items-center justify-center">
                   <Interests size={36} className="text-primary/30" />
@@ -202,6 +269,13 @@ export default function MoodboardList({ moodboards: initial, clients }: Props) {
                       >
                         <Edit2 size={14} /> Edytuj
                       </button>
+                      <button
+                        onClick={() => handleTogglePin(m.id, m.pinned)}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg hover:bg-muted transition-colors text-left"
+                      >
+                        {m.pinned ? <PinOff size={14} /> : <Pin size={14} />}
+                        {m.pinned ? "Odepnij" : "Przypnij"}
+                      </button>
                       {m.client && (
                         <button
                           onClick={() => handleToggleShare(m.id, m.isSharedWithClient)}
@@ -231,8 +305,9 @@ export default function MoodboardList({ moodboards: initial, clients }: Props) {
         <div className="rounded-2xl border border-border bg-card overflow-hidden divide-y divide-border">
           {filtered.map((m) => (
             <div key={m.id} className="group flex items-center gap-4 px-5 py-3.5 hover:bg-muted/50 transition-colors">
-              <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+              <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 relative">
                 <Interests size={18} className="text-primary" />
+                {m.pinned && <Pin size={10} className="absolute -top-1 -right-1 text-primary" />}
               </div>
               <Link href={`/moodboardy/${m.id}`} className="min-w-0 flex-1">
                 <p className="text-sm font-medium truncate">{m.title}</p>
@@ -264,6 +339,13 @@ export default function MoodboardList({ moodboards: initial, clients }: Props) {
                         className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg hover:bg-muted transition-colors text-left"
                       >
                         <Edit2 size={14} /> Edytuj
+                      </button>
+                      <button
+                        onClick={() => handleTogglePin(m.id, m.pinned)}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg hover:bg-muted transition-colors text-left"
+                      >
+                        {m.pinned ? <PinOff size={14} /> : <Pin size={14} />}
+                        {m.pinned ? "Odepnij" : "Przypnij"}
                       </button>
                       {m.client && (
                         <button

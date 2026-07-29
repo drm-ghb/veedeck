@@ -53,6 +53,10 @@ export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userI
     return () => window.removeEventListener("open-help-widget", handleOpenHelp);
   }, []);
 
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("help-widget-state", { detail: { open: helpOpen } }));
+  }, [helpOpen]);
+
   const [discussionUnread, setDiscussionUnread] = useState(0);
   const [contractorUnread, setContractorUnread] = useState(0);
   const pusherRef = useRef<Pusher | null>(null);
@@ -106,6 +110,7 @@ export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userI
                 const freshTotal = fresh.reduce((sum, d) => sum + (d.unreadCount ?? 0), 0);
                 localStorage.setItem("discussions-unread-count", String(freshTotal));
                 setDiscussionUnread(freshTotal);
+                window.dispatchEvent(new Event("discussions-unread-updated"));
               }).catch(() => {});
           }, 300);
         }
@@ -228,6 +233,12 @@ export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userI
 
   const forceCollapsed = HIDDEN_ON.some((pattern) => pattern.test(pathname));
   const isCollapsed = forceCollapsed || collapsed;
+
+  // Sync LogoBrand when route-based force-collapse changes (e.g. entering a list detail or moodboard)
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("sidebar-state-change", { detail: { collapsed: isCollapsed } }));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [forceCollapsed]);
 
   const normalizedSidebarOrder = sidebarOrder?.map((k) => k === "renderflow" ? "projectflow" : k === "listy" ? "listy-zakupowe" : k);
   const order = (() => {

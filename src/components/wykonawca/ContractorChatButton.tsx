@@ -12,6 +12,7 @@ import {
   ChevronLeft,
   Loader2,
   Camera,
+  ChatBubble,
 } from "@/components/ui/icons";
 import { useUploadThing } from "@/lib/uploadthing-client";
 import Pusher from "pusher-js";
@@ -77,6 +78,7 @@ export default function ContractorChatButton({ contractorUserId, assignments }: 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const isInitialScrollRef = useRef(false);
 
   const { startUpload } = useUploadThing("discussionAttachmentUploader");
 
@@ -151,10 +153,19 @@ export default function ContractorChatButton({ contractorUserId, assignments }: 
     };
   }, []);
 
-  // Auto-scroll when messages change
+  // Reset initial scroll flag when conversation changes
   useEffect(() => {
-    if (open && selectedAssignmentId) {
-      setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
+    isInitialScrollRef.current = false;
+  }, [selectedAssignmentId]);
+
+  // Auto-scroll — instant on first load, smooth on new messages
+  useEffect(() => {
+    if (!open || !selectedAssignmentId || currentMessages.length === 0) return;
+    if (!isInitialScrollRef.current) {
+      bottomRef.current?.scrollIntoView({ behavior: "instant" });
+      isInitialScrollRef.current = true;
+    } else {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
     }
   }, [currentMessages.length, open, selectedAssignmentId]);
 
@@ -317,10 +328,10 @@ export default function ContractorChatButton({ contractorUserId, assignments }: 
 
   return (
     <>
-      {/* Navbar button */}
+      {/* Navbar button — hidden on mobile, float button takes over */}
       <button
         onClick={handleOpen}
-        className="relative flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+        className="relative hidden sm:flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg bg-muted text-foreground hover:bg-muted/70 border border-border transition-colors"
       >
         <MessageSquare size={15} />
         <span className="hidden sm:inline">{t.wykonawcy.chatBtn}</span>
@@ -331,209 +342,257 @@ export default function ContractorChatButton({ contractorUserId, assignments }: 
         )}
       </button>
 
-      {/* Chat window */}
-      {open && (
-        <>
-          <div className="fixed inset-0 bg-black/40 z-40 sm:hidden" onClick={() => setOpen(false)} />
-          <div
-            className="fixed inset-x-0 bottom-0 sm:inset-auto sm:bottom-4 sm:right-4 sm:w-96 z-50 flex flex-col bg-background border border-border rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden"
-            style={{ height: "min(600px, 90dvh)" }}
-          >
+      {/* Floating chat button */}
+      <div className={`fixed bottom-6 right-6 z-[70] ${open ? "max-sm:hidden" : ""}`}>
+        <button
+          onClick={open ? () => setOpen(false) : handleOpen}
+          aria-label={open ? "Zamknij czat" : "Otwórz czat"}
+          className={`relative w-14 h-14 rounded-full flex items-center justify-center transition-all duration-200 hover:-translate-y-px ${
+            totalUnread > 0 ? "bg-[#4F46E5] text-white" : "bg-background text-[#4F46E5] border border-border"
+          }`}
+          style={{
+            boxShadow: totalUnread > 0
+              ? "0 6px 24px rgba(79,70,229,0.45), 0 2px 8px rgba(79,70,229,0.25)"
+              : "0 4px 16px rgba(79,70,229,0.15), 0 1px 4px rgba(0,0,0,0.08)",
+          }}
+        >
+          {open ? <X size={22} /> : <ChatBubble size={22} />}
+          {!open && totalUnread > 0 && (
+            <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold flex items-center justify-center leading-none bg-background text-[#4F46E5] border border-[#4F46E5]/30">
+              {totalUnread > 99 ? "99+" : totalUnread}
+            </span>
+          )}
+        </button>
+      </div>
+
+      {/* Chat panel — same size/style as FloatingChatPanel in designer's view */}
+      <div
+        className={`fixed z-[60] flex flex-col bg-card overflow-hidden shadow-2xl transition-transform duration-[200ms] ease-out
+          inset-0 rounded-none border-0
+          sm:inset-auto sm:border sm:border-border sm:bottom-[88px] sm:right-4 sm:w-[380px] sm:h-[600px] sm:rounded-2xl sm:max-w-[calc(100vw-1rem)]
+          ${open ? "translate-y-0 sm:translate-x-0" : "translate-y-full sm:translate-y-0 sm:translate-x-[calc(100%+1rem)]"}`}
+      >
+        {/* ── Assignment picker (list view) ─────────────────────────────────── */}
+        {assignments.length > 1 && !selectedAssignmentId ? (
+          <>
+            <div className="shrink-0 px-4 pt-4 pb-0">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="font-semibold text-base">{t.wykonawcy.chatBtn}</h2>
+                <button onClick={() => setOpen(false)} className="p-1 rounded-lg hover:bg-muted transition-colors text-muted-foreground" aria-label="Zamknij">
+                  <X size={16} />
+                </button>
+              </div>
+              <div className="border-b border-border pb-3">
+                <p className="text-xs text-muted-foreground">{t.wykonawcy.chatSelectProject}</p>
+              </div>
+            </div>
+            <div className="flex-1 overflow-y-auto divide-y divide-border">
+              {assignments.map((a) => {
+                const unread = unreadCounts[a.id] ?? 0;
+                return (
+                  <button
+                    key={a.id}
+                    onClick={() => handleSelectAssignment(a.id)}
+                    className={`w-full flex items-center gap-3 px-4 py-3.5 transition-colors text-left ${
+                      unread > 0 ? "bg-primary/5 hover:bg-primary/10" : "hover:bg-muted/40"
+                    }`}
+                  >
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-sm shrink-0">
+                      {a.projectTitle[0]?.toUpperCase() ?? "P"}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-sm truncate ${unread > 0 ? "font-semibold" : "font-medium"}`}>{a.projectTitle}</p>
+                      <p className="text-xs text-muted-foreground">{t.wykonawcy.chatBtn}</p>
+                    </div>
+                    {unread > 0 && (
+                      <span className="shrink-0 min-w-[20px] h-5 px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center">
+                        {unread > 99 ? "99+" : unread}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </>
+        ) : (
+          /* ── Conversation view ────────────────────────────────────────────── */
+          <>
             {/* Header */}
-            <div className="flex items-center gap-2 px-4 py-3 border-b border-border bg-card shrink-0">
-              {assignments.length > 1 && selectedAssignmentId && (
+            <div className="shrink-0 flex items-center gap-2 px-3 py-3 border-b border-border">
+              {assignments.length > 1 && (
                 <button
                   onClick={() => setSelectedAssignmentId(null)}
-                  className="text-muted-foreground hover:text-foreground"
+                  className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground shrink-0"
+                  aria-label="Wróć"
                 >
                   <ChevronLeft size={18} />
                 </button>
               )}
-              <MessageSquare size={15} className="text-primary shrink-0" />
-              <span className="font-semibold text-sm flex-1 truncate">
-                {selectedAssignment ? selectedAssignment.projectTitle : t.wykonawcy.chatBtn}
-              </span>
-              <button onClick={() => setOpen(false)} className="text-muted-foreground hover:text-foreground">
+              <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-xs shrink-0">
+                {(selectedAssignment?.projectTitle ?? "P")[0]?.toUpperCase()}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-sm truncate leading-snug">
+                  {selectedAssignment ? selectedAssignment.projectTitle : t.wykonawcy.chatBtn}
+                </p>
+                <p className="text-[11px] text-muted-foreground">{t.wykonawcy.chatBtn}</p>
+              </div>
+              <button onClick={() => setOpen(false)} className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground shrink-0" aria-label="Zamknij">
                 <X size={16} />
               </button>
             </div>
 
-            {/* Assignment picker */}
-            {assignments.length > 1 && !selectedAssignmentId ? (
-              <div className="flex-1 overflow-y-auto p-3 space-y-2">
-                <p className="text-xs text-muted-foreground px-1 pb-1">{t.wykonawcy.chatSelectProject}</p>
-                {assignments.map((a) => {
-                  const unread = unreadCounts[a.id] ?? 0;
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto px-4 py-4">
+              {loadingMessages ? (
+                <div className="animate-pulse space-y-2 w-full">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className={`flex items-end gap-2 ${i % 2 === 0 ? "justify-end" : "justify-start"}`}>
+                      {i % 2 !== 0 && <div className="w-7 h-7 rounded-full bg-muted shrink-0" />}
+                      <div className={`h-10 bg-muted rounded-2xl ${i % 2 === 0 ? "w-2/3" : "w-3/4"}`} />
+                      {i % 2 === 0 && <div className="w-7 h-7 rounded-full bg-muted shrink-0" />}
+                    </div>
+                  ))}
+                </div>
+              ) : currentMessages.length === 0 ? (
+                <div className="flex items-center justify-center h-full text-muted-foreground text-sm py-12">
+                  {t.wykonawcy.emptyChat}
+                </div>
+              ) : (
+                currentMessages.map((msg, i) => {
+                  const isOwn = msg.userId === contractorUserId;
+                  const prev = currentMessages[i - 1];
+                  const showDate = !prev || new Date(msg.createdAt).toDateString() !== new Date(prev.createdAt).toDateString();
                   return (
-                    <button
-                      key={a.id}
-                      onClick={() => handleSelectAssignment(a.id)}
-                      className="w-full flex items-center justify-between text-left px-3 py-2.5 rounded-xl border border-border bg-card hover:border-primary/40 transition-colors"
-                    >
-                      <span className="text-sm font-medium">{a.projectTitle}</span>
-                      {unread > 0 && (
-                        <span className="min-w-[20px] h-5 flex items-center justify-center rounded-full bg-red-500 text-white text-[11px] font-bold px-1">
-                          {unread}
-                        </span>
+                    <React.Fragment key={msg.id}>
+                      {showDate && (
+                        <div className="text-center py-2">
+                          <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                            {new Date(msg.createdAt).toLocaleDateString("pl-PL", { day: "numeric", month: "long" })}
+                          </span>
+                        </div>
                       )}
-                    </button>
-                  );
-                })}
-              </div>
-            ) : (
-              <>
-                {/* Messages */}
-                <div className="flex-1 overflow-y-auto px-3 py-3 space-y-1.5">
-                  {loadingMessages ? (
-                    <div className="flex items-center justify-center h-full">
-                      <Loader2 size={24} className="animate-spin text-muted-foreground" />
-                    </div>
-                  ) : currentMessages.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground gap-2 py-8">
-                      <MessageSquare size={32} className="opacity-20" />
-                      <p className="text-sm">{t.wykonawcy.emptyChat}</p>
-                    </div>
-                  ) : (
-                    currentMessages.map((msg, i) => {
-                      const isOwn = msg.userId === contractorUserId;
-                      const prev = currentMessages[i - 1];
-                      const showDate = !prev || new Date(msg.createdAt).toDateString() !== new Date(prev.createdAt).toDateString();
-                      return (
-                        <React.Fragment key={msg.id}>
-                          {showDate && (
-                            <div className="text-center py-1">
-                              <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
-                                {new Date(msg.createdAt).toLocaleDateString("pl-PL", { day: "numeric", month: "long" })}
-                              </span>
-                            </div>
-                          )}
-                          <div className={`flex ${isOwn ? "justify-end" : "justify-start"}`}>
-                            <div className={`max-w-[80%] rounded-2xl px-3 py-2 ${isOwn ? "bg-primary text-primary-foreground rounded-br-sm" : "bg-muted rounded-bl-sm"}`}>
-                              {!isOwn && (
-                                <p className="text-[11px] font-semibold opacity-60 mb-0.5">{msg.authorName}</p>
-                              )}
-                              {msg.attachmentType === "image" && msg.attachmentUrl && (
-                                <a href={msg.attachmentUrl} target="_blank" rel="noopener noreferrer">
-                                  <img src={msg.attachmentUrl} alt={msg.attachmentName ?? t.wykonawcy.photo} className="rounded-xl max-h-40 object-cover mb-1" />
-                                </a>
-                              )}
-                              {msg.attachmentType === "audio" && msg.attachmentUrl && (
-                                <audio controls src={msg.attachmentUrl} className="w-full max-w-[220px] mb-1" />
-                              )}
-                              {(msg.attachmentType === "document" || msg.attachmentType === "pdf") && msg.attachmentUrl && (
-                                <a href={msg.attachmentUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-xs underline mb-1 opacity-80">
-                                  <FileText size={12} />
-                                  {msg.attachmentName ?? t.wykonawcy.file}
-                                </a>
-                              )}
-                              {msg.content && (
-                                <p className="text-sm whitespace-pre-wrap break-words">{msg.content}</p>
-                              )}
-                              <p className={`text-[10px] mt-0.5 text-right ${isOwn ? "opacity-60" : "text-muted-foreground"}`}>
-                                {formatTime(msg.createdAt)}
-                              </p>
-                            </div>
+                      <div className={`flex items-end gap-2 mb-1.5 ${isOwn ? "justify-end" : "justify-start"}`}>
+                        {!isOwn && (
+                          <div title={msg.authorName} className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-xs font-semibold text-primary shrink-0 self-end mb-0.5">
+                            {msg.authorName.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) || "?"}
                           </div>
-                        </React.Fragment>
-                      );
-                    })
-                  )}
-                  <div ref={bottomRef} />
-                </div>
+                        )}
+                        <div className={`max-w-[75%] px-3.5 py-2 text-sm leading-relaxed ${
+                          isOwn
+                            ? "bg-primary text-primary-foreground rounded-2xl rounded-br-sm"
+                            : "bg-muted text-foreground rounded-2xl rounded-bl-sm"
+                        }`}>
+                          {!isOwn && <p className="text-[10px] font-medium opacity-60 mb-0.5">{msg.authorName}</p>}
+                          {msg.attachmentType === "image" && msg.attachmentUrl && (
+                            <a href={msg.attachmentUrl} target="_blank" rel="noopener noreferrer" className="block mb-1">
+                              <img src={msg.attachmentUrl} alt={msg.attachmentName ?? ""} className="max-w-[200px] rounded-lg object-cover" />
+                            </a>
+                          )}
+                          {msg.attachmentType === "audio" && msg.attachmentUrl && (
+                            <audio controls src={msg.attachmentUrl} className="w-full max-w-[220px] mb-1" />
+                          )}
+                          {(msg.attachmentType === "document" || msg.attachmentType === "pdf") && msg.attachmentUrl && (
+                            <a href={msg.attachmentUrl} target="_blank" rel="noopener noreferrer" className="text-xs underline opacity-80 mb-1 block">
+                              {msg.attachmentName ?? t.wykonawcy.file}
+                            </a>
+                          )}
+                          {msg.content && <p className="break-words whitespace-pre-wrap">{msg.content}</p>}
+                          <p className={`text-[10px] mt-0.5 text-right ${isOwn ? "opacity-60" : "text-muted-foreground"}`}>
+                            {formatTime(msg.createdAt)}
+                          </p>
+                        </div>
+                        {isOwn && (
+                          <div title={msg.authorName} className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-xs font-semibold text-primary shrink-0 self-end mb-0.5">
+                            {msg.authorName.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) || "?"}
+                          </div>
+                        )}
+                      </div>
+                    </React.Fragment>
+                  );
+                })
+              )}
+              <div ref={bottomRef} />
+            </div>
 
-                {/* Input */}
-                <div className="px-4 py-3 border-t border-border flex flex-col gap-2 shrink-0">
-                  {pendingAttachment && (
-                    <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-muted border border-border text-sm max-w-[200px]">
-                      {pendingAttachment.type === "image" ? (
-                        <img src={pendingAttachment.url} alt={pendingAttachment.name} className="h-8 w-8 rounded object-cover flex-shrink-0" />
-                      ) : pendingAttachment.type === "audio" ? (
-                        <audio src={pendingAttachment.url} controls className="h-7 w-32 min-w-0" />
-                      ) : (
-                        <FileText size={14} className="text-muted-foreground flex-shrink-0" />
-                      )}
-                      {pendingAttachment.type !== "audio" && (
-                        <span className="flex-1 truncate text-xs min-w-0">{pendingAttachment.name}</span>
-                      )}
-                      <button onClick={() => setPendingAttachment(null)} className="text-muted-foreground hover:text-foreground flex-shrink-0 ml-1">
-                        <X size={13} />
-                      </button>
-                    </div>
+            {/* Input bar */}
+            <div className="px-4 py-3 border-t border-border shrink-0 bg-background flex flex-col gap-2">
+              {pendingAttachment && (
+                <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-muted border border-border text-sm max-w-[220px]">
+                  {pendingAttachment.type === "image" ? (
+                    <img src={pendingAttachment.url} alt={pendingAttachment.name} className="h-8 w-8 rounded object-cover flex-shrink-0" />
+                  ) : pendingAttachment.type === "audio" ? (
+                    <audio src={pendingAttachment.url} controls className="h-7 w-32 min-w-0" />
+                  ) : (
+                    <FileText size={14} className="text-muted-foreground flex-shrink-0" />
                   )}
-                  {isRecording && (
-                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-destructive/10 border border-destructive/20 text-sm text-destructive">
-                      <span className="w-2 h-2 rounded-full bg-destructive animate-pulse flex-shrink-0" />
-                      <span className="flex-1 text-xs font-medium">{t.wykonawcy.recording} {recLabel}</span>
-                    </div>
+                  {pendingAttachment.type !== "audio" && (
+                    <span className="flex-1 truncate text-xs min-w-0">{pendingAttachment.name}</span>
                   )}
-                  <div className="flex items-end gap-2">
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      className="hidden"
-                      onChange={handleFileChange}
-                      accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
-                    />
-                    <input
-                      ref={cameraInputRef}
-                      type="file"
-                      accept="image/*"
-                      capture="environment"
-                      className="hidden"
-                      onChange={handleFileChange}
-                    />
-                    <button
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={uploading || isRecording}
-                      className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-primary text-white transition-colors disabled:opacity-40 hover:opacity-90"
-                      title={t.wykonawcy.attachFile}
-                    >
-                      {uploading ? <Loader2 size={16} className="animate-spin" /> : <Paperclip size={16} />}
-                    </button>
-                    <button
-                      onClick={() => cameraInputRef.current?.click()}
-                      disabled={uploading || isRecording}
-                      className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-primary text-white transition-colors disabled:opacity-40 hover:opacity-90"
-                      title={t.wykonawcy.takePhoto}
-                    >
-                      <Camera size={16} />
-                    </button>
-                    <textarea
-                      value={input}
-                      onChange={(e) => {
-                        setInput(e.target.value);
-                        e.target.style.height = "auto";
-                        e.target.style.height = Math.min(e.target.scrollHeight, 160) + "px";
-                        e.target.style.overflowY = e.target.scrollHeight > 160 ? "auto" : "hidden";
-                      }}
-                      onKeyDown={handleKeyDown}
-                      placeholder={t.wykonawcy.chatMessagePlaceholder}
-                      rows={1}
-                      style={{ height: "40px", overflowY: "hidden" }}
-                      className="flex-1 min-h-10 max-h-40 px-3 py-2 text-sm resize-none rounded-2xl bg-muted focus:outline-none"
-                    />
-                    <button
-                      onClick={isRecording ? stopRecording : (input.trim() || pendingAttachment ? sendMessage : startRecording)}
-                      disabled={sending || uploading}
-                      className="flex-shrink-0 flex items-center justify-center w-8 h-8 text-primary disabled:opacity-40 hover:opacity-90 transition-colors"
-                    >
-                      {sending ? (
-                        <Loader2 className="w-7 h-7 animate-spin" />
-                      ) : isRecording ? (
-                        <Square className="w-7 h-7 text-destructive" />
-                      ) : input.trim() || pendingAttachment ? (
-                        <Send className="w-7 h-7" />
-                      ) : (
-                        <Mic className="w-7 h-7" />
-                      )}
-                    </button>
-                  </div>
+                  <button onClick={() => setPendingAttachment(null)} className="text-muted-foreground hover:text-foreground flex-shrink-0 ml-1">
+                    <X size={13} />
+                  </button>
                 </div>
-              </>
-            )}
-          </div>
-        </>
-      )}
+              )}
+              {isRecording && (
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-destructive/10 border border-destructive/20 text-sm text-destructive">
+                  <span className="w-2 h-2 rounded-full bg-destructive animate-pulse flex-shrink-0" />
+                  <span className="flex-1 text-xs font-medium">{t.wykonawcy.recording} {recLabel}</span>
+                </div>
+              )}
+              <div className="flex items-end gap-2">
+                <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileChange} accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" />
+                <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileChange} />
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading || isRecording}
+                  className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-primary text-white transition-colors disabled:opacity-40 hover:opacity-90"
+                  title={t.wykonawcy.attachFile}
+                >
+                  {uploading ? <Loader2 size={16} className="animate-spin" /> : <Paperclip size={16} />}
+                </button>
+                <button
+                  onClick={() => cameraInputRef.current?.click()}
+                  disabled={uploading || isRecording}
+                  className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-primary text-white transition-colors disabled:opacity-40 hover:opacity-90"
+                  title={t.wykonawcy.takePhoto}
+                >
+                  <Camera size={16} />
+                </button>
+                <textarea
+                  value={input}
+                  onChange={(e) => {
+                    setInput(e.target.value);
+                    e.target.style.height = "auto";
+                    e.target.style.height = Math.min(e.target.scrollHeight, 160) + "px";
+                    e.target.style.overflowY = e.target.scrollHeight > 160 ? "auto" : "hidden";
+                  }}
+                  onKeyDown={handleKeyDown}
+                  placeholder={t.wykonawcy.chatMessagePlaceholder}
+                  rows={1}
+                  style={{ height: "40px", overflowY: "hidden" }}
+                  className="flex-1 min-h-10 max-h-40 px-3 py-2 text-sm resize-none rounded-2xl bg-muted focus:outline-none"
+                />
+                <button
+                  onClick={isRecording ? stopRecording : (input.trim() || pendingAttachment ? sendMessage : startRecording)}
+                  disabled={sending || uploading}
+                  className="flex-shrink-0 flex items-center justify-center w-8 h-8 text-primary disabled:opacity-40 hover:opacity-90 transition-colors"
+                >
+                  {sending ? (
+                    <Loader2 className="w-7 h-7 animate-spin" />
+                  ) : isRecording ? (
+                    <Square className="w-7 h-7 text-destructive" />
+                  ) : input.trim() || pendingAttachment ? (
+                    <Send className="w-7 h-7" />
+                  ) : (
+                    <Mic className="w-7 h-7" />
+                  )}
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
     </>
   );
 }

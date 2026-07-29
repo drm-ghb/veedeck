@@ -193,26 +193,28 @@ function DraggableKanbanCard({
           </span>
         )}
       </div>
-      {task.assignee && (
-        <div className="flex items-center gap-1.5">
-          <div className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[9px] font-semibold shrink-0 overflow-hidden">
-            {task.assignee.avatarUrl
-              ? <img src={task.assignee.avatarUrl} alt="" className="w-full h-full object-cover" />
-              : userInitials(task.assignee)
-            }
-          </div>
-          <span className="text-xs text-muted-foreground truncate">{userDisplayName(task.assignee)}</span>
+      <div className="flex items-center gap-1.5 pt-0.5">
+        {task.assignee && (
+          <>
+            <div className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[9px] font-semibold shrink-0 overflow-hidden">
+              {task.assignee.avatarUrl
+                ? <img src={task.assignee.avatarUrl} alt="" className="w-full h-full object-cover" />
+                : userInitials(task.assignee)
+              }
+            </div>
+            <span className="text-xs text-muted-foreground truncate">{userDisplayName(task.assignee)}</span>
+          </>
+        )}
+        <div className="ml-auto flex items-center gap-3 shrink-0">
+          <span className="flex items-center gap-1 text-xs text-muted-foreground">
+            <MessageSquare size={12} />
+            {task._count?.comments ?? 0}
+          </span>
+          <span className="flex items-center gap-1 text-xs text-muted-foreground">
+            <Paperclip size={12} />
+            {task.comments?.reduce((sum, c) => sum + c._count.attachments, 0) ?? 0}
+          </span>
         </div>
-      )}
-      <div className="flex items-center gap-3 pt-0.5">
-        <span className="flex items-center gap-1 text-xs text-muted-foreground">
-          <MessageSquare size={12} />
-          {task._count?.comments ?? 0}
-        </span>
-        <span className="flex items-center gap-1 text-xs text-muted-foreground">
-          <Paperclip size={12} />
-          {task.comments?.reduce((sum, c) => sum + c._count.attachments, 0) ?? 0}
-        </span>
       </div>
     </div>
   );
@@ -569,18 +571,6 @@ export default function TasksView() {
             <span className="text-sm font-medium truncate max-w-[260px]">
               {task.title}
             </span>
-            {!isSubTask && (
-              <span className="flex items-center gap-2 ml-auto shrink-0 pl-2">
-                <span className="flex items-center gap-0.5 text-xs text-muted-foreground">
-                  <MessageSquare size={12} />
-                  {task._count?.comments ?? 0}
-                </span>
-                <span className="flex items-center gap-0.5 text-xs text-muted-foreground">
-                  <Paperclip size={12} />
-                  {task.comments?.reduce((sum, c) => sum + c._count.attachments, 0) ?? 0}
-                </span>
-              </span>
-            )}
           </div>
         </td>
         {/* Klient */}
@@ -715,6 +705,21 @@ export default function TasksView() {
         <td className="px-4 py-2.5 text-sm text-muted-foreground whitespace-nowrap">
           {formatDate(task.createdAt)}
         </td>
+        {/* Komentarze / załączniki */}
+        <td className="px-4 py-2.5">
+          {!isSubTask && (
+            <span className="flex items-center gap-2">
+              <span className="flex items-center gap-0.5 text-xs text-muted-foreground">
+                <MessageSquare size={12} />
+                {task._count?.comments ?? 0}
+              </span>
+              <span className="flex items-center gap-0.5 text-xs text-muted-foreground">
+                <Paperclip size={12} />
+                {task.comments?.reduce((sum, c) => sum + c._count.attachments, 0) ?? 0}
+              </span>
+            </span>
+          )}
+        </td>
         {/* Akcje */}
         <td className="px-4 py-2.5 text-right">
           <button
@@ -784,6 +789,8 @@ export default function TasksView() {
           />
         </div>
 
+        {/* Grupuj po / Sortuj / Widok — skrajnie po prawej */}
+        <div className="ml-auto flex items-center gap-3 flex-wrap justify-end">
         {/* Grupuj po (tylko lista) / Filtr klienta (tylko kanban) */}
         {viewMode === "list" ? (
           <div className="flex items-center gap-1.5">
@@ -839,8 +846,8 @@ export default function TasksView() {
           </button>
         </div>
 
-        {/* Widok — skrajnie po prawej */}
-        <div className="ml-auto flex items-center gap-1 border border-border rounded-lg p-1">
+        {/* Widok */}
+        <div className="flex items-center gap-1 border border-border rounded-lg p-1">
           <button
             onClick={() => setViewMode("list")}
             className={`p-1.5 rounded transition-colors ${viewMode === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
@@ -855,6 +862,7 @@ export default function TasksView() {
           >
             <Columns3 size={16} />
           </button>
+        </div>
         </div>
       </div>
 
@@ -873,6 +881,7 @@ export default function TasksView() {
                     { label: t.tasks.colAssignee,  field: null },
                     { label: t.tasks.dueDateLabel, field: "dueDate" as SortField },
                     { label: t.tasks.colCreated,   field: "createdAt" as SortField },
+                    { label: "",                   field: null },
                     { label: "",                   field: null },
                   ]
                 ).map(({ label, field }, i) => (

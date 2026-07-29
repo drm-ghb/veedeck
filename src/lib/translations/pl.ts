@@ -1827,7 +1827,7 @@ export const pl = {
     archiveAction: "Zarchiwizuj",
     searchDiscussionsPlaceholder: "Szukaj w dyskusjach...",
     filterInternal: "Wewnętrzne",
-    filterProject: "Projektowe",
+    filterProject: "Klient",
     noDiscussions: "Brak dyskusji",
     noDiscussionsHint: "Dyskusje projektu tworzone są automatycznie",
     contractorChat: "Chat z wykonawcą",
@@ -1864,6 +1864,9 @@ export const pl = {
     annotateUndo: "Cofnij",
     annotateSending: "Wysyłanie...",
     annotateSend: "Wyślij zaznaczone",
+    floatTitle: "Chaty",
+    floatNoChatsDesc: "Dyskusje z klientami i wykonawcami pojawią się tutaj.",
+    floatOpenFull: "Otwórz w Dyskusjach",
   },
   guide: {
     title: "Jak korzystać z platformy",

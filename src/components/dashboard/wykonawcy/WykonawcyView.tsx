@@ -73,7 +73,7 @@ export default function WykonawcyView({ contractors, unreadPerContractor = {} }:
 
       {/* Search + controls */}
       <div className="flex items-center gap-2 mb-6">
-        <div className="relative flex-1">
+        <div className="relative w-full max-w-sm">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
           <input
             type="text"
@@ -84,7 +84,7 @@ export default function WykonawcyView({ contractors, unreadPerContractor = {} }:
           />
         </div>
         {contractors.length > 0 && (
-          <>
+          <div className="ml-auto flex items-center gap-2">
             <div className={`relative sm:hidden w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-md border ${sort !== "newest" ? "border-primary/30 bg-primary/10" : "border-border bg-background"}`}>
               <ArrowDownUp size={14} className={`pointer-events-none ${sort !== "newest" ? "text-primary" : "text-muted-foreground"}`} />
               <select
@@ -123,7 +123,7 @@ export default function WykonawcyView({ contractors, unreadPerContractor = {} }:
                 <List size={15} />
               </button>
             </div>
-          </>
+          </div>
         )}
       </div>
 

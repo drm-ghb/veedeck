@@ -950,7 +950,7 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
                           <div className={`relative w-fit ${reactions.length > 0 ? "pb-3" : ""}`}>
                             <div className={`flex flex-col gap-0.5 ${isOwn ? "items-end" : "items-start"}`}>
                               {msg.content && (
-                                <div className={`rounded-2xl px-3 py-2 text-sm ${isOwn ? "bg-primary text-primary-foreground" : "bg-background border border-border"}`}>
+                                <div className={`rounded-2xl px-3 py-2 text-sm ${isOwn ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"}`}>
                                   {renderWithLinks(msg.content, isOwn)}
                                   {msg.editedAt && <span className="text-[10px] opacity-50 ml-1.5">{t.dyskusje.editedLabel}</span>}
                                   {!msg.attachmentType && (
@@ -1022,7 +1022,7 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
                                   href={msg.attachmentUrl}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className={`flex items-center gap-2 px-3 py-2 rounded-2xl border text-sm ${isOwn ? "bg-primary/10 border-primary/20 text-foreground" : "bg-background border-border"} hover:opacity-80 transition-opacity`}
+                                  className={`flex items-center gap-2 px-3 py-2 rounded-2xl text-sm ${isOwn ? "bg-primary/10 border border-primary/20 text-foreground" : "bg-muted text-foreground"} hover:opacity-80 transition-opacity`}
                                 >
                                   <DocumentIcon name={msg.attachmentName || ""} />
                                   <span className="truncate max-w-[180px]">{msg.attachmentName}</span>

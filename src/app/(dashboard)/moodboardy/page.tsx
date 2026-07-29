@@ -26,12 +26,13 @@ export default async function MoodboardPage() {
         title: true,
         slug: true,
         isSharedWithClient: true,
+        pinned: true,
         createdAt: true,
         updatedAt: true,
         client: { select: { id: true, name: true } },
         project: { select: { id: true, title: true } },
       },
-      orderBy: { updatedAt: "desc" },
+      orderBy: [{ pinned: "desc" }, { updatedAt: "desc" }],
     }),
     prisma.client.findMany({
       where: {
