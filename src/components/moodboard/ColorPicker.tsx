@@ -130,17 +130,18 @@ export function ColorPicker({ value, onChange, openDown = false }: ColorPickerPr
     [commit]
   );
 
-  const rgb      = hsvToRgb(hsv.h, hsv.s, hsv.v);
-  const curHex   = toHex(rgb.r, rgb.g, rgb.b);
-  const hueColor = `hsl(${hsv.h}, 100%, 50%)`;
-  const swatchBg = value && value !== "transparent" ? value : "#ffffff";
+  const rgb           = hsvToRgb(hsv.h, hsv.s, hsv.v);
+  const curHex        = toHex(rgb.r, rgb.g, rgb.b);
+  const hueColor      = `hsl(${hsv.h}, 100%, 50%)`;
+  const swatchBg      = value && value !== "transparent" ? value : "#ffffff";
+  const hasEyeDropper = typeof window !== "undefined" && "EyeDropper" in window;
 
   const panelPos = openDown
     ? "top-[calc(100%+6px)]"
     : "bottom-[calc(100%+6px)]";
 
   return (
-    <div className="relative" ref={wrapperRef}>
+    <div className="relative" ref={wrapperRef} onMouseDown={(e) => e.stopPropagation()}>
       {/* Trigger */}
       <button
         type="button"
@@ -220,22 +221,66 @@ export function ColorPicker({ value, onChange, openDown = false }: ColorPickerPr
             <div className="px-2 py-1.5 rounded-lg bg-muted text-xs text-muted-foreground font-mono select-text">
               rgb({rgb.r}, {rgb.g}, {rgb.b})
             </div>
-            <input
-              type="text"
-              value={hexInput}
-              onChange={(e) => {
-                const v = e.target.value;
-                setHexInput(v);
-                if (/^#[0-9a-fA-F]{6}$/.test(v)) {
-                  const { r, g, b } = hexToRgb(v);
-                  setHsv(rgbToHsv(r, g, b));
-                  onChange(v);
-                }
-              }}
-              className="w-full px-2 py-1.5 rounded-lg bg-muted text-xs font-mono text-foreground outline-none focus:ring-1 focus:ring-primary/50"
-              placeholder="#000000"
-              spellCheck={false}
-            />
+            <div className="flex gap-1.5">
+              <input
+                type="text"
+                value={hexInput}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setHexInput(v);
+                  if (/^#[0-9a-fA-F]{6}$/.test(v)) {
+                    const { r, g, b } = hexToRgb(v);
+                    setHsv(rgbToHsv(r, g, b));
+                    onChange(v);
+                  }
+                }}
+                className="flex-1 px-2 py-1.5 rounded-lg bg-muted text-xs font-mono text-foreground outline-none focus:ring-1 focus:ring-primary/50"
+                placeholder="#000000"
+                spellCheck={false}
+              />
+              {hasEyeDropper ? (
+                <button
+                  type="button"
+                  title="Pobierz kolor z ekranu (pipetka)"
+                  className="w-8 h-7 rounded-lg border border-border flex items-center justify-center cursor-pointer hover:bg-muted transition-colors shrink-0"
+                  onClick={async () => {
+                    try {
+                      window.dispatchEvent(new CustomEvent("vp-eyedropper-active", { detail: true }));
+                      const dropper = new (window as any).EyeDropper();
+                      const { sRGBHex } = await dropper.open();
+                      const { r, g, b } = hexToRgb(sRGBHex);
+                      setHsv(rgbToHsv(r, g, b));
+                      setHexInput(sRGBHex);
+                      onChange(sRGBHex);
+                    } catch { /* anulowano */ }
+                    finally {
+                      window.dispatchEvent(new CustomEvent("vp-eyedropper-active", { detail: false }));
+                    }
+                  }}
+                >
+                  <Pipette size={13} className="text-muted-foreground" />
+                </button>
+              ) : (
+                <label
+                  className="w-8 h-7 rounded-lg border border-border flex items-center justify-center cursor-pointer hover:bg-muted transition-colors shrink-0"
+                  title="Pobierz kolor z ekranu (pipetka)"
+                >
+                  <Pipette size={13} className="text-muted-foreground" />
+                  <input
+                    type="color"
+                    value={curHex}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      const { r, g, b } = hexToRgb(v);
+                      setHsv(rgbToHsv(r, g, b));
+                      setHexInput(v);
+                      onChange(v);
+                    }}
+                    className="sr-only"
+                  />
+                </label>
+              )}
+            </div>
           </div>
         </div>
       )}

@@ -501,6 +501,8 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
   const canvasBgRef = useRef(initBg);
   canvasBgRef.current = canvasBg;
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const selectedIdsRef = useRef<string[]>([]);
+  selectedIdsRef.current = selectedIds;
   const [stagePos, setStagePos] = useState({ x: initViewport.x, y: initViewport.y });
   const [stageScale, setStageScale] = useState(initViewport.scale);
   const [isPanning, setIsPanning] = useState(false);
@@ -1365,7 +1367,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
   }
 
   function updateSelected(patch: Partial<CanvasElement>) {
-    const next = elements.map((el) => selectedIds.includes(el.id) ? { ...el, ...patch } : el);
+    const next = elementsRef.current.map((el) => selectedIdsRef.current.includes(el.id) ? { ...el, ...patch } : el);
     updateElements(next);
   }
 
