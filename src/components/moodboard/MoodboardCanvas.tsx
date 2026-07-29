@@ -1163,11 +1163,11 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
     if (tool === "frame") {
       newEl = { id: uid(), type: "frame", x: pos.x, y: pos.y, width: w, height: h, frameName: "Frame", fill: "#ffffff", stroke: "#94a3b8", strokeWidth: 1, opacity: 1 };
     } else if (tool === "rect") {
-      newEl = { id: uid(), type: "rect", x: pos.x, y: pos.y, width: w, height: h, fill: "#e2e8f0", stroke: "#94a3b8", strokeWidth: 1.5, opacity: 1, rotation: 0 };
+      newEl = { id: uid(), type: "rect", x: pos.x, y: pos.y, width: w, height: h, fill: "#e2e8f0", stroke: "transparent", strokeWidth: 0, opacity: 1, rotation: 0 };
     } else if (tool === "ellipse") {
-      newEl = { id: uid(), type: "ellipse", x: pos.x + w / 2, y: pos.y + h / 2, width: w, height: h, fill: "#e2e8f0", stroke: "#94a3b8", strokeWidth: 1.5, opacity: 1, rotation: 0 };
+      newEl = { id: uid(), type: "ellipse", x: pos.x + w / 2, y: pos.y + h / 2, width: w, height: h, fill: "#e2e8f0", stroke: "transparent", strokeWidth: 0, opacity: 1, rotation: 0 };
     } else if (tool === "triangle") {
-      newEl = { id: uid(), type: "triangle", x: pos.x, y: pos.y, width: w, height: h, fill: "#e2e8f0", stroke: "#94a3b8", strokeWidth: 1.5, opacity: 1, rotation: 0 };
+      newEl = { id: uid(), type: "triangle", x: pos.x, y: pos.y, width: w, height: h, fill: "#e2e8f0", stroke: "transparent", strokeWidth: 0, opacity: 1, rotation: 0 };
     } else if (tool === "arrow") {
       const end = stagePoint(e.evt.clientX, e.evt.clientY);
       newEl = { id: uid(), type: "arrow", x: drawStart.x, y: drawStart.y, points: [0, 0, end.x - drawStart.x, end.y - drawStart.y], stroke: "#334155", strokeWidth: 2, opacity: 1 };
