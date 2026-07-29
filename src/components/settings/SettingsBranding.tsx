@@ -46,6 +46,33 @@ export function SettingsBranding({
     const file = e.target.files?.[0];
     if (!file) return;
     e.target.value = "";
+
+    if (file.type === "image/svg+xml") {
+      // SVG-y mają niekontrolowane naturalne wymiary — rasteryzuj do PNG 512×512
+      // z przezroczystym tłem przed przekazaniem do croppera
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        const TARGET = 512;
+        const canvas = document.createElement("canvas");
+        canvas.width = TARGET;
+        canvas.height = TARGET;
+        const ctx = canvas.getContext("2d")!;
+        const nw = img.naturalWidth || TARGET;
+        const nh = img.naturalHeight || TARGET;
+        const scale = Math.min(TARGET / nw, TARGET / nh);
+        const w = nw * scale;
+        const h = nh * scale;
+        ctx.drawImage(img, (TARGET - w) / 2, (TARGET - h) / 2, w, h);
+        URL.revokeObjectURL(url);
+        setCropSrc(canvas.toDataURL("image/png"));
+        setCrop({ x: 0, y: 0 });
+        setZoom(0.5);
+      };
+      img.src = url;
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = () => { setCropSrc(reader.result as string); setCrop({ x: 0, y: 0 }); setZoom(1); };
     reader.readAsDataURL(file);
@@ -210,12 +237,12 @@ export function SettingsBranding({
             <button onClick={() => setCropSrc(null)} className="text-muted-foreground hover:text-foreground transition-colors"><X size={18} /></button>
           </div>
           <div className="relative flex-1">
-            <Cropper image={cropSrc} crop={crop} zoom={zoom} aspect={1} cropShape="round" showGrid={false} onCropChange={setCrop} onZoomChange={setZoom} onCropComplete={handleCropComplete} />
+            <Cropper image={cropSrc} crop={crop} zoom={zoom} minZoom={0.1} aspect={1} cropShape="round" showGrid={false} onCropChange={setCrop} onZoomChange={setZoom} onCropComplete={handleCropComplete} />
           </div>
           <div className="px-6 py-4 bg-card border-t border-border flex-shrink-0 space-y-4">
             <div className="flex items-center gap-3">
               <span className="text-xs text-muted-foreground w-10">Zoom</span>
-              <input type="range" min={1} max={3} step={0.01} value={zoom} onChange={(e) => setZoom(Number(e.target.value))} className="flex-1 accent-primary" />
+              <input type="range" min={0.1} max={3} step={0.01} value={zoom} onChange={(e) => setZoom(Number(e.target.value))} className="flex-1 accent-primary" />
             </div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setCropSrc(null)}>{t.common.cancel}</Button>

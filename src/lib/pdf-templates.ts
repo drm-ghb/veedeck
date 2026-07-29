@@ -437,7 +437,7 @@ async function renderViolet(
     const TEXT_W = CW - IMG - 4 - PRICE_COL - 4;
     const PRICE_X = ML + CW;
 
-    function renderPdfProduct(p: Product, isVariant: boolean, isLast: boolean) {
+    function renderPdfProduct(p: Product, isVariant: boolean, isLast: boolean, parentIdx?: number, variantIdx?: number) {
       const IML = isVariant ? ML + 8 : ML;
       const IIMG = isVariant ? IMG - 4 : IMG;
       const ITEXT_X = IML + IIMG + 4;
@@ -475,12 +475,14 @@ async function renderViolet(
 
       if (p.url) doc.link(IML, rowY, IIMG, IIMG, { url: p.url });
 
-      // Index number (top-level only)
+      // Index number
+      doc.setFont(FONT, "normal");
+      doc.setFontSize(7);
+      doc.setTextColor(...MUTED);
       if (!isVariant) {
-        doc.setFont(FONT, "normal");
-        doc.setFontSize(7);
-        doc.setTextColor(...MUTED);
         doc.text(String(productIndex), ML - 2, rowY + 4, { align: "right" });
+      } else if (parentIdx !== undefined && variantIdx !== undefined) {
+        doc.text(`${parentIdx}.${variantIdx}`, IML - 2, rowY + 4, { align: "right" });
       }
 
       // Text column
@@ -569,6 +571,7 @@ async function renderViolet(
       }
     }
 
+    productIndex = 0;
     for (let i = 0; i < topLevelProducts.length; i++) {
       const p = topLevelProducts[i];
       const variants = products.filter((v) => v.parentProductId === p.id);
@@ -576,7 +579,7 @@ async function renderViolet(
       productIndex++;
       renderPdfProduct(p, false, isLastTopLevel && variants.length === 0);
       for (let vi = 0; vi < variants.length; vi++) {
-        renderPdfProduct(variants[vi], true, isLastTopLevel && vi === variants.length - 1);
+        renderPdfProduct(variants[vi], true, isLastTopLevel && vi === variants.length - 1, productIndex, vi + 1);
       }
     }
 
@@ -800,7 +803,7 @@ async function renderEditorial(
     y += 5;
 
     // Products
-    function renderEditorialProduct(p: Product, isVariant: boolean, isLast: boolean) {
+    function renderEditorialProduct(p: Product, isVariant: boolean, isLast: boolean, parentIdx?: number, variantIdx?: number) {
       const IML = isVariant ? ML + 8 : ML;
       const IIMG = isVariant ? IMG - 4 : IMG;
       const ITEXT_X = IML + IIMG + 4;
@@ -832,12 +835,14 @@ async function renderEditorial(
       }
       if (p.url) doc.link(IML, rowY, IIMG, IIMG, { url: p.url });
 
-      // Index number (top-level only)
+      // Index number
+      doc.setFont(FONT, "normal");
+      doc.setFontSize(7);
+      doc.setTextColor(...MUTED);
       if (!isVariant) {
-        doc.setFont(FONT, "normal");
-        doc.setFontSize(7);
-        doc.setTextColor(...MUTED);
         doc.text(String(productIndex), ML - 2, rowY + 5, { align: "right" });
+      } else if (parentIdx !== undefined && variantIdx !== undefined) {
+        doc.text(`${parentIdx}.${variantIdx}`, IML - 2, rowY + 5, { align: "right" });
       }
 
       let cy = rowY + 5;
@@ -898,6 +903,7 @@ async function renderEditorial(
       }
     }
 
+    productIndex = 0;
     for (let i = 0; i < topLevelProducts.length; i++) {
       const p = topLevelProducts[i];
       const variants = products.filter((v) => v.parentProductId === p.id);
@@ -905,7 +911,7 @@ async function renderEditorial(
       productIndex++;
       renderEditorialProduct(p, false, isLastTopLevel && variants.length === 0);
       for (let vi = 0; vi < variants.length; vi++) {
-        renderEditorialProduct(variants[vi], true, isLastTopLevel && vi === variants.length - 1);
+        renderEditorialProduct(variants[vi], true, isLastTopLevel && vi === variants.length - 1, productIndex, vi + 1);
       }
     }
 
@@ -1165,7 +1171,7 @@ async function renderAtelier(
     y = CIRC_Y + CIRC_R + 5;
 
     // Products
-    function renderAtelierProduct(p: Product, isVariant: boolean, isLast: boolean) {
+    function renderAtelierProduct(p: Product, isVariant: boolean, isLast: boolean, parentIdx?: number, variantIdx?: number) {
       const IML = isVariant ? ML + 8 : ML;
       const IIMG = isVariant ? IMG - 4 : IMG;
       const ITEXT_X = IML + IIMG + 4;
@@ -1197,12 +1203,14 @@ async function renderAtelier(
       }
       if (p.url) doc.link(IML, rowY, IIMG, IIMG, { url: p.url });
 
-      // Index number (top-level only)
+      // Index number
+      doc.setFont(FONT, "normal");
+      doc.setFontSize(7);
+      doc.setTextColor(...MUTED);
       if (!isVariant) {
-        doc.setFont(FONT, "normal");
-        doc.setFontSize(7);
-        doc.setTextColor(...MUTED);
         doc.text(String(productIndex), ML - 2, rowY + 5, { align: "right" });
+      } else if (parentIdx !== undefined && variantIdx !== undefined) {
+        doc.text(`${parentIdx}.${variantIdx}`, IML - 2, rowY + 5, { align: "right" });
       }
 
       let cy = rowY + 5;
@@ -1263,6 +1271,7 @@ async function renderAtelier(
       }
     }
 
+    productIndex = 0;
     for (let i = 0; i < topLevelProducts.length; i++) {
       const p = topLevelProducts[i];
       const variants = products.filter((v) => v.parentProductId === p.id);
@@ -1270,7 +1279,7 @@ async function renderAtelier(
       productIndex++;
       renderAtelierProduct(p, false, isLastTopLevel && variants.length === 0);
       for (let vi = 0; vi < variants.length; vi++) {
-        renderAtelierProduct(variants[vi], true, isLastTopLevel && vi === variants.length - 1);
+        renderAtelierProduct(variants[vi], true, isLastTopLevel && vi === variants.length - 1, productIndex, vi + 1);
       }
     }
 
@@ -1548,7 +1557,7 @@ async function renderArchitect(
     // Products
     const LABEL_COL = 18;
 
-    function renderArchitectProduct(p: Product, isVariant: boolean, isLast: boolean) {
+    function renderArchitectProduct(p: Product, isVariant: boolean, isLast: boolean, parentIdx?: number, variantIdx?: number) {
       const IOFFSET = isVariant ? 8 : 0;
       const IML_IMG = ML + IDX_W + IOFFSET;
       const IIMG = isVariant ? IMG - 4 : IMG;
@@ -1569,12 +1578,14 @@ async function renderArchitect(
       ensureSpace(rowH + 6);
       const rowY = y;
 
-      // Index (top-level only)
+      // Index
+      doc.setFont(FONT, "normal");
+      doc.setFontSize(8);
+      doc.setTextColor(...MUTED);
       if (!isVariant) {
-        doc.setFont(FONT, "normal");
-        doc.setFontSize(8);
-        doc.setTextColor(...MUTED);
         doc.text(String(productIndex).padStart(3, "0"), ML, rowY + 5);
+      } else if (parentIdx !== undefined && variantIdx !== undefined) {
+        doc.text(`${String(parentIdx).padStart(3, "0")}.${variantIdx}`, ML, rowY + 5);
       }
 
       // Image
@@ -1651,6 +1662,7 @@ async function renderArchitect(
       }
     }
 
+    productIndex = 0;
     for (let i = 0; i < topLevelProducts.length; i++) {
       const p = topLevelProducts[i];
       const variants = products.filter((v) => v.parentProductId === p.id);
@@ -1658,7 +1670,7 @@ async function renderArchitect(
       productIndex++;
       renderArchitectProduct(p, false, isLastTopLevel && variants.length === 0);
       for (let vi = 0; vi < variants.length; vi++) {
-        renderArchitectProduct(variants[vi], true, isLastTopLevel && vi === variants.length - 1);
+        renderArchitectProduct(variants[vi], true, isLastTopLevel && vi === variants.length - 1, productIndex, vi + 1);
       }
     }
 
@@ -1946,7 +1958,7 @@ async function renderLinen(
     y += 4;
 
     // Products
-    function renderLinenProduct(p: Product, isVariant: boolean, isLast: boolean) {
+    function renderLinenProduct(p: Product, isVariant: boolean, isLast: boolean, parentIdx?: number, variantIdx?: number) {
       const IOFFSET = isVariant ? 8 : 0;
       const IML_IMG = cardInnerML + IOFFSET;
       const IIMG = isVariant ? IMG - 4 : IMG;
@@ -1968,12 +1980,14 @@ async function renderLinen(
       }
       if (p.url) doc.link(IML_IMG, rowY, IIMG, IIMG, { url: p.url });
 
-      // Index number (top-level only)
+      // Index number
+      doc.setFont(FONT, "normal");
+      doc.setFontSize(7);
+      doc.setTextColor(...MUTED);
       if (!isVariant) {
-        doc.setFont(FONT, "normal");
-        doc.setFontSize(7);
-        doc.setTextColor(...MUTED);
         doc.text(String(productIndex), ML - 2, rowY + 5, { align: "right" });
+      } else if (parentIdx !== undefined && variantIdx !== undefined) {
+        doc.text(`${parentIdx}.${variantIdx}`, ML - 2, rowY + 5, { align: "right" });
       }
 
       let cy = rowY + 5;
@@ -2042,6 +2056,7 @@ async function renderLinen(
       }
     }
 
+    productIndex = 0;
     for (let i = 0; i < topLevelProducts.length; i++) {
       const p = topLevelProducts[i];
       const variants = products.filter((v) => v.parentProductId === p.id);
@@ -2049,7 +2064,7 @@ async function renderLinen(
       productIndex++;
       renderLinenProduct(p, false, isLastTopLevel && variants.length === 0);
       for (let vi = 0; vi < variants.length; vi++) {
-        renderLinenProduct(variants[vi], true, isLastTopLevel && vi === variants.length - 1);
+        renderLinenProduct(variants[vi], true, isLastTopLevel && vi === variants.length - 1, productIndex, vi + 1);
       }
     }
 

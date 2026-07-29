@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { ChatBubble, X, ChevronLeft, ChevronDown, ExternalLink, Send, Paperclip, Mic, Loader2, Search, FolderOpen, MoreVertical } from "@/components/ui/icons";
+import { ChatBubble, X, ChevronLeft, ChevronDown, ExternalLink, Send, Paperclip, Mic, Loader2, Search, FolderOpen, MoreVertical, Edit2, Archive, ArchiveRestore, Trash2, Users } from "@/components/ui/icons";
 import { useT } from "@/lib/i18n";
+import { toast } from "sonner";
 import Pusher from "pusher-js";
 import { useUploadThing } from "@/lib/uploadthing-client";
 
@@ -64,7 +65,7 @@ export default function FloatingChatPanel({ userId, currentUserAvatarUrl }: { us
 
   const [panelOpen, setPanelOpen] = useState(false);
   const [helpWidgetOpen, setHelpWidgetOpen] = useState(false);
-  const [view, setView] = useState<"list" | "conversation">("list");
+  const [view, setView] = useState<"list" | "conversation" | "files" | "members">("list");
   const [typeFilter, setTypeFilter] = useState<"all" | "project" | "internal" | "contractor" | "support">("all");
   const [typeDropdownOpen, setTypeDropdownOpen] = useState(false);
   const [headerMenuOpen, setHeaderMenuOpen] = useState(false);
@@ -80,6 +81,10 @@ export default function FloatingChatPanel({ userId, currentUserAvatarUrl }: { us
   const [pulsing, setPulsing] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [pendingAttachment, setPendingAttachment] = useState<{ url: string; name: string; type: string } | null>(null);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
+  const [members, setMembers] = useState<{ id: string; name: string | null; fullName: string | null; avatarUrl: string | null; isOwner: boolean }[]>([]);
+  const [loadingMembers, setLoadingMembers] = useState(false);
 
   const prevUnreadRef = useRef(0);
   const selectedDiscUnreadRef = useRef(0);
@@ -417,6 +422,70 @@ export default function FloatingChatPanel({ userId, currentUserAvatarUrl }: { us
     }
   }
 
+  // ── Discussion actions ────────────────────────────────────────────────────
+  async function toggleArchive() {
+    if (!selectedId) return;
+    const disc = discussions.find((d) => d.id === selectedId);
+    if (!disc) return;
+    const res = await fetch(`/api/discussions/${selectedId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ archived: !disc.archived }),
+    });
+    if (res.ok) {
+      setDiscussions((prev) => prev.map((d) => d.id === selectedId ? { ...d, archived: !disc.archived } : d));
+    } else {
+      toast.error(disc.archived ? t.dyskusje.restoreError : t.dyskusje.archiveError);
+    }
+  }
+
+  async function deleteDiscussion() {
+    if (!selectedId) return;
+    if (!confirm(t.dyskusje.deleteDiscussionConfirm)) return;
+    const res = await fetch(`/api/discussions/${selectedId}`, { method: "DELETE" });
+    if (res.ok) {
+      setDiscussions((prev) => prev.filter((d) => d.id !== selectedId));
+      goBack();
+    } else {
+      toast.error(t.dyskusje.deleteDiscussionError);
+    }
+  }
+
+  async function saveTitle() {
+    if (!selectedId) return;
+    const disc = discussions.find((d) => d.id === selectedId);
+    if (!disc) return;
+    const trimmed = editTitle.trim();
+    if (!trimmed || trimmed === disc.title) { setEditModalOpen(false); return; }
+    const res = await fetch(`/api/discussions/${selectedId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: trimmed }),
+    });
+    if (res.ok) {
+      setDiscussions((prev) => prev.map((d) => d.id === selectedId ? { ...d, title: trimmed } : d));
+      setEditModalOpen(false);
+    } else {
+      toast.error("Błąd zapisu");
+    }
+  }
+
+  async function loadMembers(id: string) {
+    setLoadingMembers(true);
+    try {
+      const res = await fetch(`/api/discussions/${id}/participants`);
+      if (!res.ok) return;
+      const data = await res.json();
+      const owner = data.owner ? [{ id: data.owner.id, name: data.owner.name, fullName: data.owner.fullName, avatarUrl: data.owner.avatarUrl, isOwner: true }] : [];
+      const participants = (data.participants ?? []).map((p: { user: { id: string; name: string | null; fullName: string | null; avatarUrl: string | null } }) => ({
+        id: p.user.id, name: p.user.name, fullName: p.user.fullName, avatarUrl: p.user.avatarUrl, isOwner: false,
+      }));
+      setMembers([...owner, ...participants]);
+    } finally {
+      setLoadingMembers(false);
+    }
+  }
+
   // ── Open in full Dyskusje module ──────────────────────────────────────────
   function handleOpenFull() {
     if (selectedId) localStorage.setItem("float-open-discussion-id", selectedId);
@@ -484,7 +553,7 @@ export default function FloatingChatPanel({ userId, currentUserAvatarUrl }: { us
       <div
         ref={panelRef}
         aria-hidden={!panelOpen}
-        className={`fixed z-[60] flex flex-col bg-card overflow-hidden shadow-2xl transition-transform duration-[200ms] ease-out
+        className={`fixed z-[51] sm:z-[45] flex flex-col bg-card overflow-hidden shadow-2xl transition-transform duration-[200ms] ease-out
           inset-0 rounded-none border-0
           sm:inset-auto sm:border sm:border-border sm:bottom-[88px] sm:right-4 sm:w-[380px] sm:h-[600px] sm:rounded-2xl sm:max-w-[calc(100vw-1rem)]
           ${panelOpen ? "translate-y-0 sm:translate-x-0" : "translate-y-full sm:translate-y-0 sm:translate-x-[calc(100%+1rem)]"}`}
@@ -496,8 +565,8 @@ export default function FloatingChatPanel({ userId, currentUserAvatarUrl }: { us
             <div className="shrink-0 px-4 pt-4 pb-0">
               <div className="flex items-center justify-between mb-3">
                 <h2 className="font-semibold text-base">{t.dyskusje.floatTitle}</h2>
-                <button onClick={closePanel} className="p-1 rounded-lg hover:bg-muted transition-colors text-muted-foreground" aria-label="Zamknij">
-                  <X size={16} />
+                <button onClick={closePanel} className="p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground" aria-label="Zamknij">
+                  <X size={22} />
                 </button>
               </div>
               {/* Search */}
@@ -531,7 +600,7 @@ export default function FloatingChatPanel({ userId, currentUserAvatarUrl }: { us
                     <ChevronDown size={11} className="shrink-0" />
                   </button>
                   {typeDropdownOpen && (
-                    <div className="absolute top-full left-0 mt-1 bg-popover border border-border rounded-xl shadow-lg z-[80] overflow-hidden py-1 min-w-[140px]">
+                    <div className="absolute top-full left-0 mt-1 bg-popover border border-border rounded-xl shadow-lg z-[48] overflow-hidden py-1 min-w-[140px]">
                       {DROPDOWN_OPTIONS.map((o) => (
                         <button
                           key={o.value}
@@ -651,8 +720,15 @@ export default function FloatingChatPanel({ userId, currentUserAvatarUrl }: { us
                   <ExternalLink size={13} />
                 </button>
               </div>
-              <button className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground shrink-0" title="Pliki">
+              <button onClick={() => setView("files")} className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground shrink-0" title="Pliki">
                 <FolderOpen size={16} />
+              </button>
+              <button
+                onClick={() => { loadMembers(selectedId!); setView("members"); }}
+                className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground shrink-0"
+                title="Członkowie"
+              >
+                <Users size={16} />
               </button>
               <div className="relative shrink-0" ref={headerMenuRef}>
                 <button
@@ -663,13 +739,41 @@ export default function FloatingChatPanel({ userId, currentUserAvatarUrl }: { us
                   <MoreVertical size={16} />
                 </button>
                 {headerMenuOpen && (
-                  <div className="absolute top-full right-0 mt-1 bg-popover border border-border rounded-xl shadow-lg z-[80] overflow-hidden py-1 min-w-[160px]">
+                  <div className="absolute top-full right-0 mt-1 bg-popover border border-border rounded-xl shadow-lg z-[48] overflow-hidden py-1 min-w-[180px]">
                     <button
                       onClick={() => { handleOpenFull(); setHeaderMenuOpen(false); }}
-                      className="w-full text-left px-3 py-2 text-xs text-foreground hover:bg-muted transition-colors flex items-center gap-2"
+                      className="w-full text-left px-3 py-2.5 text-xs text-foreground hover:bg-muted transition-colors flex items-center gap-2"
                     >
                       <ExternalLink size={13} className="text-muted-foreground" />
                       {t.dyskusje.floatOpenFull}
+                    </button>
+                    {selectedDisc?.type !== "support" && (
+                      <>
+                        <button
+                          onClick={() => { setEditTitle(selectedDisc?.title ?? ""); setEditModalOpen(true); setHeaderMenuOpen(false); }}
+                          className="w-full text-left px-3 py-2.5 text-xs text-foreground hover:bg-muted transition-colors flex items-center gap-2"
+                        >
+                          <Edit2 size={13} className="text-muted-foreground" />
+                          {t.dyskusje.editTitle}
+                        </button>
+                        <button
+                          onClick={() => { toggleArchive(); setHeaderMenuOpen(false); }}
+                          className="w-full text-left px-3 py-2.5 text-xs text-foreground hover:bg-muted transition-colors flex items-center gap-2"
+                        >
+                          {selectedDisc?.archived
+                            ? <ArchiveRestore size={13} className="text-muted-foreground" />
+                            : <Archive size={13} className="text-muted-foreground" />}
+                          {selectedDisc?.archived ? t.dyskusje.restoreDiscussion : t.dyskusje.archiveAction}
+                        </button>
+                      </>
+                    )}
+                    <div className="border-t border-border my-1" />
+                    <button
+                      onClick={() => { deleteDiscussion(); setHeaderMenuOpen(false); }}
+                      className="w-full text-left px-3 py-2.5 text-xs text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors flex items-center gap-2"
+                    >
+                      <Trash2 size={13} />
+                      {t.dyskusje.deleteDiscussion}
                     </button>
                   </div>
                 )}
@@ -801,11 +905,133 @@ export default function FloatingChatPanel({ userId, currentUserAvatarUrl }: { us
             </div>
           </>
         )}
+        {/* ── Files view ─────────────────────────────────────────────────────── */}
+        {view === "files" && (
+          <>
+            <div className="shrink-0 flex items-center gap-1.5 px-3 py-3 border-b border-border">
+              <button onClick={() => setView("conversation")} className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground shrink-0" aria-label="Wróć do rozmowy">
+                <ChevronLeft size={18} />
+              </button>
+              <p className="font-semibold text-sm flex-1 min-w-0 truncate">Pliki</p>
+            </div>
+            <div className="flex-1 overflow-y-auto">
+              {(() => {
+                const attachments = messages.filter((m) => m.attachmentUrl);
+                if (loadingMessages) {
+                  return (
+                    <div className="animate-pulse space-y-2 px-4 py-4">
+                      {[1, 2, 3].map((i) => <div key={i} className="h-12 bg-muted rounded-xl" />)}
+                    </div>
+                  );
+                }
+                if (attachments.length === 0) {
+                  return (
+                    <div className="flex items-center justify-center h-full text-muted-foreground text-sm py-12">
+                      Brak plików w tej rozmowie
+                    </div>
+                  );
+                }
+                return (
+                  <div className="divide-y divide-border">
+                    {attachments.map((msg) => (
+                      <a
+                        key={msg.id}
+                        href={msg.attachmentUrl!}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-3 px-4 py-3 hover:bg-muted/40 transition-colors"
+                      >
+                        {msg.attachmentType === "image" ? (
+                          <img src={msg.attachmentUrl!} alt={msg.attachmentName ?? ""} className="w-10 h-10 rounded-lg object-cover shrink-0 border border-border" />
+                        ) : (
+                          <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0 border border-border">
+                            <Paperclip size={16} className="text-muted-foreground" />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{msg.attachmentName ?? "Plik"}</p>
+                          <p className="text-xs text-muted-foreground">{msg.authorName} · {formatTime(msg.createdAt)}</p>
+                        </div>
+                      </a>
+                    ))}
+                  </div>
+                );
+              })()}
+            </div>
+          </>
+        )}
+        {/* ── Members view ───────────────────────────────────────────────────── */}
+        {view === "members" && (
+          <>
+            <div className="shrink-0 flex items-center gap-1.5 px-3 py-3 border-b border-border">
+              <button onClick={() => setView("conversation")} className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground shrink-0" aria-label="Wróć do rozmowy">
+                <ChevronLeft size={18} />
+              </button>
+              <p className="font-semibold text-sm flex-1 min-w-0 truncate">Członkowie</p>
+            </div>
+            <div className="flex-1 overflow-y-auto">
+              {loadingMembers ? (
+                <div className="animate-pulse space-y-2 px-4 py-4">
+                  {[1, 2, 3].map((i) => <div key={i} className="h-12 bg-muted rounded-xl" />)}
+                </div>
+              ) : members.length === 0 ? (
+                <div className="flex items-center justify-center h-full text-muted-foreground text-sm py-12">
+                  Brak uczestników
+                </div>
+              ) : (
+                <div className="divide-y divide-border">
+                  {members.map((m) => (
+                    <div key={m.id} className="flex items-center gap-3 px-4 py-3">
+                      <DiscAvatar title={m.fullName || m.name || "?"} avatarUrl={m.avatarUrl} small />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{m.fullName || m.name || "Użytkownik"}</p>
+                        {m.isOwner && <p className="text-xs text-muted-foreground">Właściciel</p>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </>
+        )}
       </div>
 
-      {/* Floating button — z-[70] so it stays above the panel */}
+      {/* Edit title modal */}
+      {editModalOpen && (
+        <div className="fixed inset-0 z-[53] flex items-center justify-center bg-black/50 p-4" onClick={() => setEditModalOpen(false)}>
+          <div className="bg-card border border-border rounded-2xl shadow-2xl w-[360px] max-w-full" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+              <h3 className="font-semibold text-sm">{t.dyskusje.editTitle}</h3>
+              <button onClick={() => setEditModalOpen(false)} className="text-muted-foreground hover:text-foreground transition-colors">
+                <X size={16} />
+              </button>
+            </div>
+            <div className="px-5 py-4 space-y-4">
+              <input
+                autoFocus
+                type="text"
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") saveTitle(); if (e.key === "Escape") setEditModalOpen(false); }}
+                className="w-full px-3 py-2 text-sm rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/40"
+                placeholder="Nazwa rozmowy"
+              />
+              <div className="flex justify-end gap-2">
+                <button onClick={() => setEditModalOpen(false)} className="px-4 py-2 text-sm rounded-xl border border-border hover:bg-muted transition-colors">
+                  {t.common.cancel}
+                </button>
+                <button onClick={saveTitle} className="px-4 py-2 text-sm rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
+                  {t.common.save}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Floating button — z-[46] so it stays above the panel but below modals (z-50) */}
       <div
-        className={`fixed bottom-6 right-6 z-[70] transition-opacity duration-[180ms] ${panelOpen ? "max-sm:hidden" : ""}`}
+        className={`fixed bottom-6 right-6 z-[52] sm:z-[46] transition-opacity duration-[180ms] ${panelOpen ? "max-sm:hidden" : ""}`}
         style={{ opacity: (onDyskusje || helpWidgetOpen) ? 0 : 1, pointerEvents: (onDyskusje || helpWidgetOpen) ? "none" : "auto" }}
       >
         <button

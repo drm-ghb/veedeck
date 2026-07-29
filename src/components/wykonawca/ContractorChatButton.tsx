@@ -343,7 +343,7 @@ export default function ContractorChatButton({ contractorUserId, assignments }: 
       </button>
 
       {/* Floating chat button */}
-      <div className={`fixed bottom-6 right-6 z-[70] ${open ? "max-sm:hidden" : ""}`}>
+      <div className={`fixed bottom-6 right-6 z-[46] ${open ? "max-sm:hidden" : ""}`}>
         <button
           onClick={open ? () => setOpen(false) : handleOpen}
           aria-label={open ? "Zamknij czat" : "Otwórz czat"}
@@ -367,7 +367,7 @@ export default function ContractorChatButton({ contractorUserId, assignments }: 
 
       {/* Chat panel — same size/style as FloatingChatPanel in designer's view */}
       <div
-        className={`fixed z-[60] flex flex-col bg-card overflow-hidden shadow-2xl transition-transform duration-[200ms] ease-out
+        className={`fixed z-[45] flex flex-col bg-card overflow-hidden shadow-2xl transition-transform duration-[200ms] ease-out
           inset-0 rounded-none border-0
           sm:inset-auto sm:border sm:border-border sm:bottom-[88px] sm:right-4 sm:w-[380px] sm:h-[600px] sm:rounded-2xl sm:max-w-[calc(100vw-1rem)]
           ${open ? "translate-y-0 sm:translate-x-0" : "translate-y-full sm:translate-y-0 sm:translate-x-[calc(100%+1rem)]"}`}

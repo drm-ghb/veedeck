@@ -1228,6 +1228,10 @@ function translateFooterPomoc(html) {
   html = html.replace(/>Demo</g, '>Demo<');
   html = html.replace(/>Kontakt</g, '>Contact<');
   html = html.replace(/>Centrum pomocy</g, '>Help Center<');
+  html = html.replace(/>Zasoby</g, '>Resources<');
+  html = html.replace(/>Pomoc</g, '>Help<');
+  html = html.replace(/>Baza wiedzy</g, '>Knowledge base<');
+  html = html.replace(/>Migracja</g, '>Migration<');
   html = html.replace(/>Polityka prywatności veepick</g, '>Privacy Policy veepick<');
   html = html.replace(/>Polityka prywatności</g, '>Privacy Policy<');
   html = html.replace(/>Polityka cookies</g, '>Cookie Policy<');

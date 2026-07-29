@@ -94,7 +94,7 @@ export default function SettingsListyPage() {
         body: JSON.stringify({ pdfListTemplate: template }),
       });
       if (!res.ok) throw new Error();
-      toast.success(t.listSettings.saved);
+      toast.success(t.settings.saved);
       router.refresh();
     } catch {
       toast.error(t.listSettings.saveError);
@@ -139,6 +139,61 @@ export default function SettingsListyPage() {
       <div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t.settings.lists}</h1>
         <p className="text-sm text-gray-500 mt-1">{t.settings.listsDesc}</p>
+      </div>
+
+      {/* PDF template */}
+      <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
+        <div>
+          <h2 className="text-base font-semibold">{t.listSettings.pdfTemplate}</h2>
+          <p className="text-sm text-muted-foreground mt-1">{t.listSettings.pdfTemplateDesc}</p>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+          {PDF_TEMPLATES.map((value) => {
+            const info = t.listSettings.pdfTemplates[value];
+            const selected = pdfTemplate === value;
+            return (
+              <button
+                key={value}
+                type="button"
+                disabled={savingPdf}
+                onClick={() => handleSavePdfTemplate(value)}
+                className={`group relative flex flex-col rounded-xl border-2 overflow-hidden transition-all text-left ${
+                  selected ? "border-primary" : "border-border hover:border-primary/40"
+                }`}
+              >
+                {/* Thumbnail */}
+                <div className="relative w-full aspect-[3/4] bg-muted overflow-hidden">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={`/pdf-thumbs/${value}.png`}
+                    alt={info.name}
+                    className="absolute inset-0 w-full h-full object-cover object-top"
+                  />
+                  {selected && (
+                    <span className="absolute top-2 right-2 bg-primary rounded-full p-0.5 shadow">
+                      <Check size={12} className="text-white" />
+                    </span>
+                  )}
+                  {/* Preview button */}
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    onClick={(e) => { e.stopPropagation(); setPreviewTemplate(value); }}
+                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.stopPropagation(); setPreviewTemplate(value); } }}
+                    className="absolute bottom-2 right-2 bg-black/50 hover:bg-black/70 text-white rounded-md p-1 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                  >
+                    <Maximize2 size={12} />
+                  </div>
+                </div>
+                <div className="p-2.5 bg-background">
+                  <p className="text-xs font-semibold leading-tight">{info.name}</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5 leading-tight">{info.desc}</p>
+                </div>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
@@ -217,61 +272,6 @@ export default function SettingsListyPage() {
           <Button onClick={handleSave} disabled={saving || loading}>
             {saving ? t.listSettings.savingOrder : t.listSettings.saveOrder}
           </Button>
-        </div>
-      </div>
-
-      {/* PDF template */}
-      <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
-        <div>
-          <h2 className="text-base font-semibold">{t.listSettings.pdfTemplate}</h2>
-          <p className="text-sm text-muted-foreground mt-1">{t.listSettings.pdfTemplateDesc}</p>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-          {PDF_TEMPLATES.map((value) => {
-            const info = t.listSettings.pdfTemplates[value];
-            const selected = pdfTemplate === value;
-            return (
-              <button
-                key={value}
-                type="button"
-                disabled={savingPdf}
-                onClick={() => handleSavePdfTemplate(value)}
-                className={`group relative flex flex-col rounded-xl border-2 overflow-hidden transition-all text-left ${
-                  selected ? "border-primary" : "border-border hover:border-primary/40"
-                }`}
-              >
-                {/* Thumbnail */}
-                <div className="relative w-full aspect-[3/4] bg-muted overflow-hidden">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={`/pdf-thumbs/${value}.png`}
-                    alt={info.name}
-                    className="absolute inset-0 w-full h-full object-cover object-top"
-                  />
-                  {selected && (
-                    <span className="absolute top-2 right-2 bg-primary rounded-full p-0.5 shadow">
-                      <Check size={12} className="text-white" />
-                    </span>
-                  )}
-                  {/* Preview button */}
-                  <div
-                    role="button"
-                    tabIndex={0}
-                    onClick={(e) => { e.stopPropagation(); setPreviewTemplate(value); }}
-                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.stopPropagation(); setPreviewTemplate(value); } }}
-                    className="absolute bottom-2 right-2 bg-black/50 hover:bg-black/70 text-white rounded-md p-1 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-                  >
-                    <Maximize2 size={12} />
-                  </div>
-                </div>
-                <div className="p-2.5 bg-background">
-                  <p className="text-xs font-semibold leading-tight">{info.name}</p>
-                  <p className="text-[11px] text-muted-foreground mt-0.5 leading-tight">{info.desc}</p>
-                </div>
-              </button>
-            );
-          })}
         </div>
       </div>
     </div>

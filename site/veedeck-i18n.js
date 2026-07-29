@@ -58,7 +58,7 @@ window.VEEDECK_I18N = {
     "A free-form canvas with inspiration, material samples and products from your library.",
   "Swobodny canvas - układaj zdjęcia, próbki tkanin i notatki dokładnie tak, jak chcesz.":
     "Free-form canvas — arrange photos, fabric samples and notes exactly as you want.",
-  "Panel „Zasoby" - przeciągaj produkty prosto z listy zakupowej lub bazy produktów na moodboard. Wrzucaj rendery z ProjectFlow oraz grafiki dodane przez wtyczkę veepick.":
+  "Panel „Zasoby” - przeciągaj produkty prosto z listy zakupowej lub bazy produktów na moodboard. Wrzucaj rendery z ProjectFlow oraz grafiki dodane przez wtyczkę veepick.":
     "\"Assets\" panel — drag products straight from your shopping list or product library onto the moodboard. Add renders from ProjectFlow and images added via the veepick extension.",
   "Paleta kolorów i próbki materiałów - spójna narracja wizualna projektu.":
     "Colour palette and material samples — a cohesive visual narrative for the project.",
