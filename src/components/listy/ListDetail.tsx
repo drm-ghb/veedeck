@@ -1908,7 +1908,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
     // Use visual order (sortProducts) instead of .order field — after drag & drop the .order
     // fields in React state are stale, only the array position reflects actual visual order.
     let parentProductId: string | null = null;
-    if (optional) {
+    if (optional && section) {
       const currentSortBy = getSortBy(section.sortBy);
       const topLevelVisual = sortProducts(
         (section?.products ?? []).filter((p) => !p.parentProductId),
