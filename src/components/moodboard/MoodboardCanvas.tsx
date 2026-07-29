@@ -1073,7 +1073,10 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
       return;
     }
 
-    if (!isStage) return;
+    // Allow drawing on empty canvas AND on Frame surfaces (frames are transparent-background rects)
+    const targetId = (e.target as Konva.Node).id?.();
+    const isFrame = targetId ? elements.some(el => el.id === targetId && el.type === "frame") : false;
+    if (!isStage && !isFrame) return;
     const pos = stagePoint(e.evt.clientX, e.evt.clientY);
     setIsDrawing(true);
     setDrawStart(pos);
