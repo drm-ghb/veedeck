@@ -603,7 +603,15 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
   const exportDrawStartRef = useRef<{ x: number; y: number } | null>(null);
   // Clipboard for copy/paste
   const clipboardRef = useRef<CanvasElement[]>([]);
+  const eyeDropperActiveRef = useRef(false);
 
+
+  // EyeDropper active guard
+  useEffect(() => {
+    const handler = (e: Event) => { eyeDropperActiveRef.current = (e as CustomEvent).detail; };
+    window.addEventListener("vp-eyedropper-active", handler);
+    return () => window.removeEventListener("vp-eyedropper-active", handler);
+  }, []);
 
   // Measure container
   useEffect(() => {
@@ -1002,6 +1010,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
 
     if (tool === "select") {
       if (isStage) {
+        if (eyeDropperActiveRef.current) return;
         if (innerEditId) { setInnerEditId(null); return; }
         // Left-click drag on empty canvas = rubber-band selection
         const pos = stagePoint(e.evt.clientX, e.evt.clientY);
