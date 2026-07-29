@@ -141,11 +141,34 @@ export function SettingsExtension({ initialKey }: Props) {
 
       {/* API Key section */}
       <div className="border border-border rounded-xl p-5 space-y-4 bg-card">
-        <div>
-          <p className="text-sm font-medium text-foreground">{t.extension.apiKeyTitle}</p>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            {t.extension.apiKeyDesc}
-          </p>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-sm font-medium text-foreground">{t.extension.apiKeyTitle}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {t.extension.apiKeyDesc}
+            </p>
+          </div>
+          {/* Connection status badge */}
+          <span
+            className="flex-shrink-0 inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full border"
+            style={apiKey ? {
+              color: "#16a34a",
+              background: "rgba(22,163,74,0.08)",
+              borderColor: "rgba(22,163,74,0.22)",
+            } : {
+              color: "var(--muted-foreground)",
+              background: "var(--muted)",
+              borderColor: "var(--border)",
+            }}
+          >
+            <span
+              style={{
+                width: 6, height: 6, borderRadius: "50%", flexShrink: 0,
+                background: apiKey ? "#16a34a" : "var(--muted-foreground)",
+              }}
+            />
+            {apiKey ? "Połączono" : "Brak połączenia"}
+          </span>
         </div>
 
         {apiKey ? (

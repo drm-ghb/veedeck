@@ -12,6 +12,12 @@ export default async function ListyPage() {
   const userId = getWorkspaceUserId(session);
   const allowedIds = await getAllowedClientIds(session);
 
+  const userRecord = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { extensionKey: true },
+  });
+  const veepickConnected = !!userRecord?.extensionKey;
+
   const lists = await prisma.shoppingList.findMany({
     where: {
       userId,
@@ -34,6 +40,8 @@ export default async function ListyPage() {
 
   return (
     <ListyView
+      userId={userId}
+      veepickConnected={veepickConnected}
       lists={lists.map((l) => ({
         id: l.id,
         slug: l.slug,

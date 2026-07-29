@@ -4,7 +4,7 @@ import { useState, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Image as ImageIcon, Pencil, X } from "@/components/ui/icons";
+import { Image as ImageIcon, Pencil, X, Eye, RefreshCw } from "@/components/ui/icons";
 import { useT } from "@/lib/i18n";
 import Cropper from "react-easy-crop";
 import type { Area } from "react-easy-crop";
@@ -31,6 +31,8 @@ export function SettingsBranding({
   const [clientLogoUrl, setClientLogoUrl] = useState<string | null>(initialClientLogoUrl);
   const [welcomeMsg, setWelcomeMsg] = useState(initialClientWelcomeMessage ?? "");
   const [welcomeLoading, setWelcomeLoading] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [iframeKey, setIframeKey] = useState(0);
 
   const [cropSrc, setCropSrc] = useState<string | null>(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
@@ -97,11 +99,18 @@ export function SettingsBranding({
     } finally { setWelcomeLoading(false); }
   }
 
+
   return (
     <div className="max-w-3xl space-y-10">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Branding</h1>
-        <p className="text-sm text-gray-500 mt-1">Dostosuj wygląd panelu klienta i wykonawcy.</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Branding</h1>
+          <p className="text-sm text-gray-500 mt-1">Dostosuj wygląd panelu klienta i wykonawcy.</p>
+        </div>
+        <Button variant="outline" size="sm" onClick={() => setPreviewOpen(true)} className="shrink-0 mt-1">
+          <Eye size={14} className="mr-1.5" />
+          Podgląd panelu klienta
+        </Button>
       </div>
 
       <section className="space-y-4">
@@ -144,6 +153,54 @@ export function SettingsBranding({
           </div>
         </div>
       </section>
+
+      {/* Client panel preview modal */}
+      {previewOpen && (
+        <div
+          className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/70 p-4 sm:p-8"
+          onClick={() => setPreviewOpen(false)}
+        >
+          {/* Label + controls */}
+          <div className="flex items-center justify-between w-full max-w-5xl mb-3" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center gap-2 text-white/80 text-sm font-medium">
+              <Eye size={15} />
+              Podgląd panelu klienta — tak widzą go Twoi klienci
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setIframeKey(k => k + 1)}
+                className="flex items-center gap-1.5 text-white/60 hover:text-white transition-colors px-2.5 py-1.5 rounded-lg hover:bg-white/10 text-xs font-medium"
+                title="Odśwież podgląd (po zapisaniu zmian)"
+              >
+                <RefreshCw size={13} />
+                Odśwież
+              </button>
+              <button
+                onClick={() => setPreviewOpen(false)}
+                className="text-white/60 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-white/10"
+              >
+                <X size={18} />
+              </button>
+            </div>
+          </div>
+
+          {/* Preview iframe */}
+          <div
+            className="w-full max-w-5xl overflow-hidden rounded-2xl border border-white/10 shadow-2xl"
+            style={{ height: "min(600px, 82vh)" }}
+            onClick={e => e.stopPropagation()}
+          >
+            <iframe
+              key={iframeKey}
+              src="/branding-preview"
+              className="w-full h-full border-0"
+              title="Podgląd panelu klienta"
+            />
+          </div>
+
+          <p className="text-white/40 text-xs mt-3">Kliknij poza oknem, aby zamknąć · po zapisaniu zmian kliknij Odśwież</p>
+        </div>
+      )}
 
       {/* Logo crop modal */}
       {cropSrc && (

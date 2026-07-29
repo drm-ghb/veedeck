@@ -25,6 +25,7 @@ import { pusherClient } from "@/lib/pusher";
 import { getUnreadSet, syncListUnread } from "@/lib/list-unread-store";
 import NewListDialog from "./NewListDialog";
 import EditListDialog from "./EditListDialog";
+import VeepickPromoModal from "./VeepickPromoModal";
 import TrialGate from "@/components/ui/TrialGate";
 import { useIsTrialExpired } from "@/lib/trial-context";
 import { toast } from "sonner";
@@ -59,12 +60,14 @@ interface ShoppingList {
 
 interface ListyViewProps {
   lists: ShoppingList[];
+  userId?: string;
+  veepickConnected?: boolean;
 }
 
 type SortOption = "newest" | "oldest" | "az" | "za" | "manual";
 type Tab = "active" | "archived";
 
-export default function ListyView({ lists: initialLists }: ListyViewProps) {
+export default function ListyView({ lists: initialLists, userId, veepickConnected = false }: ListyViewProps) {
   const router = useRouter();
   const t = useT();
   const [lists, setLists] = useState<ShoppingList[]>(initialLists);
@@ -251,6 +254,9 @@ export default function ListyView({ lists: initialLists }: ListyViewProps) {
 
   return (
     <>
+      {userId && (
+        <VeepickPromoModal userId={userId} veepickConnected={veepickConnected} />
+      )}
     <div>
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-4">
