@@ -74,6 +74,9 @@ export function ColorPicker({ value, onChange, openDown = false }: ColorPickerPr
   const wrapperRef = useRef<HTMLDivElement>(null);
   const gradRef    = useRef<HTMLDivElement>(null);
   const hueRef     = useRef<HTMLDivElement>(null);
+  // Always-fresh ref — avoids stale closures in pointer handlers
+  const hsvRef     = useRef(hsv);
+  hsvRef.current   = hsv;
 
   // Sync when value prop changes externally (e.g. swatch click or element change)
   useEffect(() => {
@@ -109,10 +112,8 @@ export function ColorPicker({ value, onChange, openDown = false }: ColorPickerPr
       const rect = gradRef.current.getBoundingClientRect();
       const s = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
       const v = Math.max(0, Math.min(1, 1 - (e.clientY - rect.top) / rect.height));
-      setHsv((prev) => {
-        commit(prev.h, s, v);
-        return { ...prev, s, v };
-      });
+      setHsv((prev) => ({ ...prev, s, v }));
+      commit(hsvRef.current.h, s, v);
     },
     [commit]
   );
@@ -122,10 +123,8 @@ export function ColorPicker({ value, onChange, openDown = false }: ColorPickerPr
       if (!hueRef.current) return;
       const rect = hueRef.current.getBoundingClientRect();
       const h = Math.max(0, Math.min(360, ((e.clientX - rect.left) / rect.width) * 360));
-      setHsv((prev) => {
-        commit(h, prev.s, prev.v);
-        return { ...prev, h };
-      });
+      setHsv((prev) => ({ ...prev, h }));
+      commit(h, hsvRef.current.s, hsvRef.current.v);
     },
     [commit]
   );
