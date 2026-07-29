@@ -15,7 +15,7 @@ export default async function ListPage({ params, searchParams }: { params: Promi
   const userId = getWorkspaceUserId(session);
 
   const [userSettings, list] = await Promise.all([
-    prisma.user.findUnique({ where: { id: userId }, select: { listsCategoryOrder: true, clientLogoUrl: true, customCategories: true, pdfListTemplate: true } }),
+    prisma.user.findUnique({ where: { id: userId }, select: { listsCategoryOrder: true, clientLogoUrl: true, customCategories: true, pdfListTemplate: true, fullName: true, avatarUrl: true } }),
     prisma.shoppingList.findFirst({
       where: {
         userId,
@@ -59,6 +59,8 @@ export default async function ListPage({ params, searchParams }: { params: Promi
       designerName={(session.user as { name?: string }).name ?? "Projektant"}
       designerEmail={(session.user as { email?: string }).email ?? undefined}
       designerLogoUrl={userSettings?.clientLogoUrl ?? undefined}
+      designerFullName={userSettings?.fullName ?? undefined}
+      designerAvatarUrl={userSettings?.avatarUrl ?? undefined}
       initialOpenProductId={initialOpenProductId}
       categoryOrder={userSettings?.listsCategoryOrder ?? []}
       customCategories={userSettings?.customCategories ?? []}

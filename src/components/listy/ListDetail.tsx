@@ -27,6 +27,7 @@ import {
   useSensors,
   DragEndEvent,
   DragStartEvent,
+  DragOverEvent,
   DragOverlay,
 } from "@dnd-kit/core";
 import {
@@ -1134,7 +1135,7 @@ function sortProducts(products: Product[], sortBy: string, categoryOrder: string
   return sorted;
 }
 
-export default function ListDetail({ list, designerName, designerEmail, designerLogoUrl, initialOpenProductId, categoryOrder, customCategories, pdfTemplate }: ListDetailProps & { designerName?: string; designerEmail?: string; designerLogoUrl?: string; initialOpenProductId?: string }) {
+export default function ListDetail({ list, designerName, designerEmail, designerLogoUrl, designerFullName, designerAvatarUrl, initialOpenProductId, categoryOrder, customCategories, pdfTemplate }: ListDetailProps & { designerName?: string; designerEmail?: string; designerLogoUrl?: string; designerFullName?: string; designerAvatarUrl?: string; initialOpenProductId?: string }) {
   const { lang } = useLang();
   const t = useT();
   const expired = useIsTrialExpired();
@@ -1205,6 +1206,21 @@ export default function ListDetail({ list, designerName, designerEmail, designer
   const [copyState, setCopyState] = useState<{ product: Product; sectionId: string } | null>(null);
   const [activeDragProduct, setActiveDragProduct] = useState<Product | null>(null);
   const [activeDragVariants, setActiveDragVariants] = useState<Product[]>([]);
+  // Drag refs — updated via onDragOver, read in handleDragEnd
+  const dragOverSectionRef = useRef<string | null>(null);
+  const dragItemCurrentSectionRef = useRef<string | null>(null); // where item IS in state right now
+  const dragOriginalSectionsRef = useRef<typeof sections | null>(null); // for cancel restore
+
+  // Allow mouse wheel scroll while dragging — the scrollable container is <main>, not window
+  useEffect(() => {
+    if (!activeDragProduct) return;
+    function onWheel(e: WheelEvent) {
+      const main = document.querySelector("main");
+      if (main) main.scrollBy({ top: e.deltaY, behavior: "instant" as ScrollBehavior });
+    }
+    window.addEventListener("wheel", onWheel, { passive: true });
+    return () => window.removeEventListener("wheel", onWheel);
+  }, [activeDragProduct]);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [editingSectionId, setEditingSectionId] = useState<string | null>(null);
   const [editingSectionName, setEditingSectionName] = useState("");
@@ -1350,7 +1366,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
     }
   }
 
-  const authorName = designerName || t.listy.defaultDesigner;
+  const authorName = designerFullName || designerName || t.listy.defaultDesigner;
 
   const commentsPanelProductIdRef = useRef<string | null>(null);
   useEffect(() => {
@@ -1432,15 +1448,90 @@ export default function ListDetail({ list, designerName, designerEmail, designer
       const variants = section?.products.filter((p) => p.parentProductId === product?.id) ?? [];
       setActiveDragProduct(product ?? null);
       setActiveDragVariants(variants);
+      dragItemCurrentSectionRef.current = sectionId;
+      dragOriginalSectionsRef.current = sections;
     }
   }
 
+  function handleDragOver(event: DragOverEvent) {
+    if (event.active.data.current?.type !== "product") return;
+    const { active, over } = event;
+    if (!over) return;
+
+    const overType = over.data.current?.type;
+    let targetSectionId: string | null = null;
+    let overProductId: string | null = null;
+    if (overType === "section") {
+      targetSectionId = over.id as string;
+    } else if (overType === "product") {
+      targetSectionId = (over.data.current?.sectionId as string) ?? null;
+      overProductId = over.id as string;
+    }
+    if (!targetSectionId) return;
+
+    dragOverSectionRef.current = targetSectionId;
+
+    const currentSectionId = dragItemCurrentSectionRef.current;
+    if (!currentSectionId || targetSectionId === currentSectionId) return;
+    if (overProductId === (active.id as string)) return;
+
+    dragItemCurrentSectionRef.current = targetSectionId;
+
+    setSections((prev) => {
+      const srcSection = prev.find((s) => s.id === currentSectionId);
+      const tgtSection = prev.find((s) => s.id === targetSectionId);
+      if (!srcSection || !tgtSection) return prev;
+
+      const activeId = active.id as string;
+      const product = srcSection.products.find((p) => p.id === activeId);
+      if (!product) return prev;
+
+      const variants = srcSection.products.filter((p) => p.parentProductId === activeId);
+      const groupIds = new Set([activeId, ...variants.map((v) => v.id)]);
+
+      return prev.map((s) => {
+        if (s.id === currentSectionId) {
+          return { ...s, products: s.products.filter((p) => !groupIds.has(p.id)) };
+        }
+        if (s.id === targetSectionId) {
+          const existingTopLevel = s.products.filter((p) => !p.parentProductId);
+          const existingVariants = s.products.filter((p) => p.parentProductId);
+          const overIdx = overProductId ? existingTopLevel.findIndex((p) => p.id === overProductId) : -1;
+          const insertAt = overIdx >= 0 ? overIdx : existingTopLevel.length;
+          const newTopLevel = [...existingTopLevel];
+          newTopLevel.splice(insertAt, 0, product);
+          const rebuilt = newTopLevel.flatMap((p) =>
+            p.id === activeId
+              ? [p, ...variants]
+              : [p, ...existingVariants.filter((v) => v.parentProductId === p.id)]
+          );
+          return { ...s, products: rebuilt };
+        }
+        return s;
+      });
+    });
+  }
+
   async function handleDragEnd(event: DragEndEvent) {
+    // Snapshot before clearing
+    const draggedProduct = activeDragProduct;
+    const draggedVariants = activeDragVariants;
+    const snapshotTargetSection = dragOverSectionRef.current;
+    const originalSections = dragOriginalSectionsRef.current;
+
     setIsDraggingSection(false);
     setActiveDragProduct(null);
     setActiveDragVariants([]);
+    dragOverSectionRef.current = null;
+    dragItemCurrentSectionRef.current = null;
+    dragOriginalSectionsRef.current = null;
+
     const { active, over } = event;
-    if (!over || active.id === over.id) return;
+    if (!over || active.id === over.id) {
+      // No valid drop — restore original state
+      if (originalSections) setSections(originalSections);
+      return;
+    }
 
     const activeType = active.data.current?.type;
 
@@ -1465,13 +1556,17 @@ export default function ListDetail({ list, designerName, designerEmail, designer
     }
 
     if (activeType === "product") {
-      const sourceSectionId = active.data.current?.sectionId as string;
-      const targetSectionId = over.data.current?.sectionId as string;
-      if (!sourceSectionId || !targetSectionId) return;
+      const originalSectionId = active.data.current?.sectionId as string;
+      const finalTargetSectionId = snapshotTargetSection
+        ?? (over.data.current?.type === "section" ? over.id as string : over.data.current?.sectionId as string);
+      if (!originalSectionId || !finalTargetSectionId) {
+        if (originalSections) setSections(originalSections);
+        return;
+      }
 
-      if (sourceSectionId === targetSectionId) {
-        // Within-section reorder — reorder top-level only, variants follow their parent
-        const section = sections.find((s) => s.id === sourceSectionId);
+      if (finalTargetSectionId === originalSectionId) {
+        // Within-section reorder — state reflects current position (possibly after onDragOver A→B→A)
+        const section = sections.find((s) => s.id === originalSectionId);
         if (!section) return;
         const currentSortBy = getSortBy(section.sortBy);
         const topLevel = sortProducts(section.products.filter((p) => !p.parentProductId), currentSortBy, categoryOrder);
@@ -1484,16 +1579,16 @@ export default function ListDetail({ list, designerName, designerEmail, designer
           p,
           ...allVariants.filter((v) => v.parentProductId === p.id).sort((a, b) => a.order - b.order),
         ]);
-        setSections((prev) => prev.map((s) => s.id === sourceSectionId ? { ...s, sortBy: "manual", products: reordered } : s));
+        setSections((prev) => prev.map((s) => s.id === originalSectionId ? { ...s, sortBy: "manual", products: reordered } : s));
         try {
           await Promise.all([
-            fetch(`/api/lists/${list.id}/sections/${sourceSectionId}/products`, {
+            fetch(`/api/lists/${list.id}/sections/${originalSectionId}/products`, {
               method: "PATCH",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ order: reordered.map((p) => p.id) }),
             }),
             currentSortBy !== "manual"
-              ? fetch(`/api/lists/${list.id}/sections/${sourceSectionId}`, {
+              ? fetch(`/api/lists/${list.id}/sections/${originalSectionId}`, {
                   method: "PATCH",
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({ sortBy: "manual" }),
@@ -1504,56 +1599,32 @@ export default function ListDetail({ list, designerName, designerEmail, designer
           toast.error(t.listy.saveProductOrderError);
         }
       } else {
-        // Cross-section move — move parent + all its variants together
-        const sourceSection = sections.find((s) => s.id === sourceSectionId);
-        const product = sourceSection?.products.find((p) => p.id === active.id);
-        if (!product) return;
-        const productVariants = sourceSection?.products.filter((p) => p.parentProductId === product.id) ?? [];
-        const groupIds = new Set([product.id, ...productVariants.map((v) => v.id)]);
-
-        const overIndex = sections.find((s) => s.id === targetSectionId)?.products.filter((p) => !p.parentProductId).findIndex((p) => p.id === over.id) ?? -1;
-
-        setSections((prev) =>
-          prev.map((s) => {
-            if (s.id === sourceSectionId) return { ...s, products: s.products.filter((p) => !groupIds.has(p.id)) };
-            if (s.id === targetSectionId) {
-              const targetTopLevel = s.products.filter((p) => !p.parentProductId);
-              const insertAt = overIndex >= 0 ? overIndex : targetTopLevel.length;
-              const newTopLevel = [...targetTopLevel];
-              newTopLevel.splice(insertAt, 0, product);
-              const targetVariants = s.products.filter((p) => p.parentProductId);
-              // Rebuild: for each top-level, append its variants
-              const rebuilt = newTopLevel.flatMap((p) =>
-                p.id === product.id
-                  ? [p, ...productVariants]
-                  : [p, ...targetVariants.filter((v) => v.parentProductId === p.id)]
-              );
-              return { ...s, products: rebuilt };
-            }
-            return s;
-          })
-        );
-
+        // Cross-section move — onDragOver already moved item in state, just persist via API
+        if (!draggedProduct) {
+          if (originalSections) setSections(originalSections);
+          return;
+        }
+        const groupIds = new Set([draggedProduct.id, ...draggedVariants.map((v) => v.id)]);
         try {
           await Promise.all([
-            fetch(`/api/lists/${list.id}/sections/${sourceSectionId}/products/${product.id}`, {
+            fetch(`/api/lists/${list.id}/sections/${originalSectionId}/products/${draggedProduct.id}`, {
               method: "PATCH",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ sectionId: targetSectionId }),
+              body: JSON.stringify({ sectionId: finalTargetSectionId }),
             }),
-            ...productVariants.map((v) =>
-              fetch(`/api/lists/${list.id}/sections/${sourceSectionId}/products/${v.id}`, {
+            ...draggedVariants.map((v) =>
+              fetch(`/api/lists/${list.id}/sections/${originalSectionId}/products/${v.id}`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ sectionId: targetSectionId }),
+                body: JSON.stringify({ sectionId: finalTargetSectionId }),
               })
             ),
           ]);
-          // Update order in target section after state is set
+          // Persist order in target section
           setSections((prev) => {
-            const tgt = prev.find((s) => s.id === targetSectionId);
+            const tgt = prev.find((s) => s.id === finalTargetSectionId);
             if (!tgt) return prev;
-            fetch(`/api/lists/${list.id}/sections/${targetSectionId}/products`, {
+            fetch(`/api/lists/${list.id}/sections/${finalTargetSectionId}/products`, {
               method: "PATCH",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ order: tgt.products.map((p) => p.id) }),
@@ -1562,10 +1633,12 @@ export default function ListDetail({ list, designerName, designerEmail, designer
           });
           toast.success(t.listy.productMoved);
         } catch {
-          setSections((prev) =>
+          // Restore original state on API failure
+          if (originalSections) setSections(originalSections);
+          else setSections((prev) =>
             prev.map((s) => {
-              if (s.id === sourceSectionId) return { ...s, products: [...s.products, product, ...productVariants] };
-              if (s.id === targetSectionId) return { ...s, products: s.products.filter((p) => !groupIds.has(p.id)) };
+              if (s.id === originalSectionId) return { ...s, products: [...s.products, draggedProduct, ...draggedVariants] };
+              if (s.id === finalTargetSectionId) return { ...s, products: s.products.filter((p) => !groupIds.has(p.id)) };
               return s;
             })
           );
@@ -1832,15 +1905,19 @@ export default function ListDetail({ list, designerName, designerEmail, designer
     const optional = !product.optional;
 
     // When marking as optional: auto-assign to the nearest preceding top-level product
+    // Use visual order (sortProducts) instead of .order field — after drag & drop the .order
+    // fields in React state are stale, only the array position reflects actual visual order.
     let parentProductId: string | null = null;
     if (optional) {
-      const sorted = [...(section?.products ?? [])].sort((a, b) => a.order - b.order);
-      const idx = sorted.findIndex((p) => p.id === productId);
-      for (let i = idx - 1; i >= 0; i--) {
-        if (!sorted[i].parentProductId) {
-          parentProductId = sorted[i].id;
-          break;
-        }
+      const currentSortBy = getSortBy(section.sortBy);
+      const topLevelVisual = sortProducts(
+        (section?.products ?? []).filter((p) => !p.parentProductId),
+        currentSortBy,
+        categoryOrder
+      );
+      const idx = topLevelVisual.findIndex((p) => p.id === productId);
+      if (idx > 0) {
+        parentProductId = topLevelVisual[idx - 1].id;
       }
     }
 
@@ -2329,7 +2406,15 @@ export default function ListDetail({ list, designerName, designerEmail, designer
       )}
 
       {/* Sections + unsorted products (all inside one DnD context) */}
-      <DndContext id={`sections-${list.id}`} sensors={sensors} collisionDetection={closestCenter} onDragStart={handleSectionDragStart} onDragEnd={handleDragEnd} onDragCancel={() => { setIsDraggingSection(false); setActiveDragProduct(null); setActiveDragVariants([]); }}>
+      <DndContext id={`sections-${list.id}`} sensors={sensors} collisionDetection={closestCenter} onDragStart={handleSectionDragStart} onDragOver={handleDragOver} onDragEnd={handleDragEnd} onDragCancel={() => {
+        setIsDraggingSection(false);
+        setActiveDragProduct(null);
+        setActiveDragVariants([]);
+        dragOverSectionRef.current = null;
+        dragItemCurrentSectionRef.current = null;
+        if (dragOriginalSectionsRef.current) setSections(dragOriginalSectionsRef.current);
+        dragOriginalSectionsRef.current = null;
+      }}>
 
         {/* Unsorted products */}
         {(() => {
@@ -2771,7 +2856,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
             isDesigner={true}
             authorName={authorName}
             designerName={authorName}
-            designerLogoUrl={designerLogoUrl}
+            designerLogoUrl={designerAvatarUrl || designerLogoUrl}
             lastReadAt={panelLastReadAt}
             onClose={closeCommentsPanel}
             onCountChange={handleCountChange}
