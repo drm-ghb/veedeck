@@ -283,7 +283,7 @@ export default function NewListDialog() {
           </div>
 
           <p className="text-xs text-muted-foreground">
-            Aby udostępnić listę klientowi, utwórz konto klienta w{" "}
+            Aby udostępnić listę klientowi, wyślij mu link dostępowy z{" "}
             <span className="font-medium text-foreground">Klienci → [klient] → Kontakty</span>
           </p>
 

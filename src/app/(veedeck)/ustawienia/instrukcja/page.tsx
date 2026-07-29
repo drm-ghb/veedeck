@@ -38,11 +38,12 @@ interface DesignerStep {
 const DESIGNER_MODULES: DesignerStep[] = [
   {
     title: "1. Klienci",
-    desc: "Centralna baza klientów. Każdy klient może mieć wiele kontaktów, przypisane projekty z ProjectFlow, listy zakupowe, harmonogram etapów, plan płatności i dokumenty — wszystko w jednym miejscu. Klientowi możesz założyć konto w platformie, żeby sam logował się i przeglądał swoje materiały bez jednorazowych linków.",
+    desc: "Centralna baza klientów. Każdy klient może mieć wiele kontaktów, przypisane projekty z ProjectFlow, listy zakupowe, harmonogram etapów, plan płatności i dokumenty — wszystko w jednym miejscu. Klient trafia do swojego panelu przez link dostępowy, który wysyłasz mu e-mailem — może go używać wielokrotnie.",
     steps: [
       'Kliknij **Dodaj klienta** i wpisz nazwę (imię i nazwisko lub firma)',
       "Klient pojawia się na liście — kliknij jego kartę, żeby otworzyć profil",
       "Profil ma pięć zakładek: **Informacje**, **Kontakty**, **Płatności**, **Harmonogram**, **Dokumenty** — opisane poniżej",
+      "Aby udostępnić klientowi panel: przejdź do zakładki **Kontakty**, wybierz kontakt i kliknij **Wyślij link dostępowy** — klient dostanie e-mail z linkiem i od razu może wejść do swojego panelu",
     ],
     clientTabs: [
       {
@@ -62,8 +63,7 @@ const DESIGNER_MODULES: DesignerStep[] = [
           "Lista osób kontaktowych — może ich być kilka (np. inwestor i małżonek)",
           "Każdy kontakt ma: imię i nazwisko, email, telefon, oznaczenie czy jest **kontaktem głównym**",
           "Kolejność kontaktów zmieniasz przeciągając (ikona uchwytu po lewej stronie wiersza)",
-          "Kliknij **Utwórz konto** przy kontakcie — system generuje login (z emaila) i hasło; klient może się zalogować do platformy",
-          "Rozwiń sekcję **Dane logowania** przy kontakcie, żeby zmienić login lub ustawić nowe hasło",
+          "Kliknij **Wyślij link dostępowy** przy kontakcie — klient dostaje e-mail z linkiem i może od razu wejść do swojego panelu. Może wracać tym samym linkiem wielokrotnie (ważny 180 dni od ostatniego użycia, bez hasła)",
           "**Odłącz konto** — klient straci dostęp do panelu, ale jego dane kontaktowe zostają",
         ],
       },
@@ -217,14 +217,14 @@ const DESIGNER_MODULES: DesignerStep[] = [
   },
   {
     title: "7. Wykonawcy",
-    desc: "Moduł do zarządzania wykonawcami — hydraulikami, malarzami, elektrykami, firmami budowlanymi i innymi specjalistami. Każdy wykonawca ma własne konto i loguje się do swojego panelu, gdzie widzi wyłącznie przypisane mu foldery i pliki. Tworzysz strukturę folderów z dokumentacją techniczną, wgrywasz pliki i ukrywasz foldery, które nie są jeszcze gotowe.",
+    desc: "Moduł do zarządzania wykonawcami — hydraulikami, malarzami, elektrykami, firmami budowlanymi i innymi specjalistami. Każdy wykonawca wchodzi do swojego panelu przez link dostępowy wysyłany e-mailem i widzi wyłącznie przypisane mu foldery i pliki. Tworzysz strukturę folderów z dokumentacją techniczną, wgrywasz pliki i ukrywasz foldery, które nie są jeszcze gotowe.",
     tips: [
       "Folder możesz ukryć — wykonawca nie widzi go dopóki nie zmienisz ustawienia widoczności.",
       "Pliki z ProjectFlow możesz dodać bezpośrednio do folderu wykonawcy — bez duplikowania pliku, tylko powiązanie.",
     ],
     steps: [
       "Kliknij **Dodaj wykonawcę** i wpisz dane: imię lub firma, email, telefon",
-      "Przejdź do profilu wykonawcy i kliknij **Utwórz konto** — wykonawca dostanie login i hasło",
+      "Przejdź do profilu wykonawcy i kliknij **Wyślij link dostępowy** — wykonawca dostaje e-mail z linkiem i może od razu wejść do swojego panelu. Może wracać tym samym linkiem wielokrotnie (ważny 180 dni od ostatniego użycia, bez hasła)",
       "Przypisz wykonawcę do projektu: otwórz jego profil i kliknij **Przypisz do projektu**",
       "W projekcie wykonawcy twórz foldery — wybierz typ: **Rysunki**, **Wizualizacje** lub **Inne** (każdy ma inną ikonę)",
       "Możesz tworzyć podfoldery wewnątrz folderów głównych",
@@ -396,7 +396,7 @@ const CONTRACTOR_MODULES: ClientModule[] = [
     icon: <FolderOpen size={22} />,
     desc: "Wykonawca widzi listę projektów, do których został przypisany przez projektanta. Każdy projekt zawiera informacje o inwestycji (adres, opis) i strukturę folderów z dokumentacją. Badge przy projekcie sygnalizuje nowe, nieodczytane pliki.",
     steps: [
-      "Loguje się do swojego panelu (oddzielny login i hasło, nadane przez projektanta)",
+      "Wchodzi do swojego panelu klikając link dostępowy z emaila (wysłany przez projektanta) — bez hasła",
       "Widzi karty przypisanych projektów z nazwą inwestycji i adresem",
       "Otwiera projekt i widzi listę folderów pogrupowanych według typu",
       "**Badge** przy nazwie folderu informuje o liczbie nowych plików",

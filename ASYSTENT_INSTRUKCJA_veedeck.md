@@ -66,8 +66,8 @@ System działa w modelu trzech paneli:
 | Panel | Kto używa | Dostęp |
 |---|---|---|
 | Panel projektanta | Projektant i zaproszeni członkowie zespołu | Po zalogowaniu na konto veedeck |
-| Panel klienta | Klient lub inwestor | Po zalogowaniu na konto veedeck utworzone przez projektanta w module Klienc -> Kontakty |
-| Panel wykonawcy | Wykonawcy (hydraulicy, malarze itp.) | Przez konto zakładane przez projektanta |
+| Panel klienta | Klient lub inwestor | Przez link dostępowy (magic link) wysyłany emailem przez projektanta |
+| Panel wykonawcy | Wykonawcy (hydraulicy, malarze itp.) | Przez link dostępowy (magic link) wysyłany emailem przez projektanta |
 
 Dane każdego projektanta są izolowane. Klient widzi tylko to, co projektant mu udostępni. Wykonawca widzi tylko swoje foldery i pliki.
 
@@ -100,12 +100,12 @@ Osoba, której projektant udostępnia projekt:
 - Widzi tylko zawartość udostępnionego projektu (rendery, listy, czat).
 - Może dodawać komentarze/pinezki, akceptować pliki, rozmawiać z projektantem — jeśli projektant to włączy.
 - Nie ma wglądu w inne projekty ani w ustawienia konta projektanta.
-- Konto klienta zakłada projektant — klient nie może sam się zarejestrować jako klient.
+- Dostęp do panelu uzyskuje przez link dostępowy (magic link) wysyłany emailem przez projektanta — klient nie zakłada konta samodzielnie ani nie potrzebuje hasła.
 
 ### Wykonawca
 
-Osoba, której projektant zakłada konto:
-- Loguje się do oddzielnego panelu wykonawcy.
+Osoba, której projektant wysyła link dostępowy:
+- Wchodzi do oddzielnego panelu wykonawcy przez link z emaila.
 - Widzi tylko foldery i pliki ze swoich przypisań.
 - Może przeglądać pliki, dodawać pinezki/komentarze, pisać z projektantem na czacie.
 - Nie widzi danych innych wykonawców ani klientów.
@@ -158,7 +158,7 @@ Akcje dostępne w projekcie:
 - Edytuj ustawienia projektu — ikona ustawień w nagłówku
 
 **Dostęp klienta do projektu:**
-Klient uzyskuje dostęp do projektu przez panel klienta. Dostęp nadawany jest z modułu **Klienci → profil klienta → zakładka Kontakty** — projektant przypisuje tam osoby kontaktowe do projektu. Klient loguje się tak jak projektant, na app.veedeck.com/login, do panelu klienta kontem założonym przez projektanta i widzi przypisane projekty.
+Klient uzyskuje dostęp do projektu przez panel klienta. Projektant przypisuje go w module **Klienci → profil klienta → zakładka Kontakty**, a następnie wysyła mu link dostępowy emailem (przycisk "Wyślij link dostępowy" przy kontakcie). Klient klika link i jest od razu zalogowany do swojego panelu — bez hasła.
 
 **Ustawienia widoku klienta (per-projekt):**
 - Ukryte moduły — możliwość ukrycia ProjectFlow, List lub Dyskusji w widoku klienta
@@ -215,10 +215,10 @@ _Jak dodać plik do pokoju/folderu:_
 _Jak udostępnić projekt klientowi:_
 1. Przejdź do modułu Klienci.
 2. Otwórz profil klienta i przejdź do zakładki "Kontakty".
-3. Wybierz osobę kontaktową lub dodaj nową.
-4. Upewnij się,ze klient jest dodany do projektu w ProjectFlow
-5. Upewnij się, ze kontakt ma utworzone konto (jezeli nie, dodaj login i haslo)
-6. Klient loguje się do panelu klienta i widzi przypisany projekt.
+3. Wybierz osobę kontaktową lub dodaj nową (wymagany adres email).
+4. Upewnij się, że klient jest przypisany do projektu w ProjectFlow.
+5. Kliknij "Wyślij link dostępowy" przy danym kontakcie — klient dostanie email z linkiem.
+6. Klient klika link i jest od razu zalogowany do swojego panelu klienta.
 
 _Jak obsłużyć prośbę o zmianę statusu od klienta:_
 1. Przejdź do Panelu głównego → sekcja "Prośby o zmianę statusu".
@@ -228,7 +228,7 @@ _Jak obsłużyć prośbę o zmianę statusu od klienta:_
 **FAQ:**
 
 Q: Klient mówi, że nie może wejść w projekt.
-A: Sprawdź w module Klienci → profil klienta → zakładka Kontakty, czy klient ma konto i czy jest przypisany do tego projektu. Jeśli nie ma konta — wyślij zaproszenie. Jeśli nie jest przypisany do projektu — przypisz go. Jeśli konto i przypisanie są poprawne, a klient nadal nie może się zalogować — skieruj go do opcji "Nie pamiętam hasła" na stronie logowania.
+A: Sprawdź w module Klienci → profil klienta → zakładka Kontakty, czy klient jest przypisany do projektu i czy ma adres email. Jeśli tak — wyślij mu nowy link dostępowy (przycisk "Wyślij link dostępowy"). Linki wygasają po pewnym czasie, więc nowy link rozwiąże problem z dostępem. Jeśli klient nie jest przypisany do projektu — przypisz go najpierw w ProjectFlow.
 
 Q: Nie widzę opcji "Zezwól na komentarze klienta".
 A: Ta opcja jest w Ustawienia → ProjectFlow. Szukaj sekcji dotyczącej zachowania klienta.
@@ -309,10 +309,10 @@ _Jak dodać produkt do listy:_
 5. Kliknij "Dodaj".
 
 _Jak udostępnić listę klientowi:_
-1. Upewnij się, że klient ma konto i jest przypisany do projektu (Klienci → profil klienta → Kontakty).
+1. Upewnij się, że klient jest przypisany do projektu (Klienci → profil klienta → Kontakty).
 2. Przypisz listę do klienta podczas tworzenia lub w ustawieniach listy.
-3. Klient zobaczy listę w swoim panelu klienta po zalogowaniu.
-4. Opcjonalnie możesz skopiować bezpośredni link do listy z menu (3 kropki) i wysłać go klientowi.
+3. Wyślij klientowi link dostępowy (przycisk "Wyślij link dostępowy" w profilu klienta → Kontakty).
+4. Klient po wejściu przez link zobaczy listę w swoim panelu. Opcjonalnie możesz też skopiować bezpośredni link do listy z menu (3 kropki).
 
 **FAQ:**
 
@@ -338,10 +338,8 @@ Baza klientów projektanta. Każdy klient to rekord z nazwą powiązany z projek
 - Archiwizuj klientów (znikają z aktywnej listy, projekty pozostają)
 - Twórz i zarządzaj kontami klientów
 
-**Konta klientów:**
-Klient z kontem może się zalogować bezpośrednio do swojego panelu — nie potrzebuje linka za każdym razem. Projektant może założyć konto na dwa sposoby:
-- **Zaproszenie** — projektant wysyła e-mail z linkiem do ustawienia hasła (profil klienta → Kontakty → "Wyślij zaproszenie"). Klient sam ustawia hasło.
-- **Ręczne założenie konta** — projektant tworzy konto i przekazuje klientowi dane dostępowe bezpośrednio.
+**Dostęp klienta — link dostępowy (magic link):**
+Klient wchodzi do swojego panelu przez link dostępowy wysyłany emailem przez projektanta. Nie potrzebuje hasła — link loguje go od razu. Link można używać wielokrotnie i jest ważny przez 180 dni od ostatniego użycia (po tym czasie wygasa z powodu braku aktywności). Klient może też sam poprosić o nowy link na stronie logowania (wpisuje email → dostaje link).
 
 **Typowe zadania:**
 
@@ -351,29 +349,20 @@ _Jak dodać klienta:_
 3. Podaj nazwę klienta.
 4. Kliknij "Utwórz".
 
-_Jak założyć konto klienta:_
-
-Opcja 1 — Zaproszenie e-mail:
+_Jak wysłać klientowi dostęp:_
 1. Otwórz profil klienta.
 2. Przejdź do zakładki "Kontakty".
-3. Wybierz osobę kontaktową lub dodaj nową.
-4. Kliknij "Wyślij zaproszenie".
-5. Klient dostanie e-mail z linkiem do ustawienia hasła (link ważny 24 godziny).
-
-Opcja 2 — Ręczne założenie konta:
-1. Otwórz profil klienta.
-2. Przejdź do zakładki "Kontakty".
-3. Wybierz osobę kontaktową lub dodaj nową.
-4. Kliknij "Utwórz konto" i podaj dane dostępowe.
-5. Przekaż login i hasło klientowi bezpośrednio.
+3. Wybierz osobę kontaktową lub dodaj nową (wymagany adres email).
+4. Kliknij "Wyślij link dostępowy".
+5. Klient dostanie email z linkiem — klika go i jest od razu zalogowany do swojego panelu.
 
 **FAQ:**
 
-Q: Klient dostał zaproszenie, ale link nie działa.
-A: Linki do zaproszenia wygasają po 24 godzinach. Wyślij zaproszenie ponownie z profilu klienta.
+Q: Klient dostał link, ale nie działa.
+A: Linki wygasają po 180 dniach nieaktywności (lub jeśli projektant wysłał nowy, który unieważnił poprzedni). Wyślij nowy link z profilu klienta → Kontakty → "Wyślij link dostępowy". Klient może też sam poprosić o nowy link na stronie logowania veedeck — podaje swój email i dostaje nowy link.
 
-Q: Jak usunąć konto klienta, ale zachować jego dane w projekcie?
-A: W profilu klienta → kontakty → znajdź kontakt z kontem → opcja "Odłącz konto". Dane klienta (komentarze, statusy) pozostają, klient traci możliwość logowania.
+Q: Jak odebrać klientowi dostęp do panelu?
+A: W profilu klienta → Kontakty → znajdź kontakt → opcja "Odłącz konto". Dane klienta (komentarze, statusy) pozostają, klient nie może już wchodzić do panelu.
 
 ---
 
@@ -387,7 +376,7 @@ Kafelki lub lista wykonawców z wyszukiwarką i filtrowaniem.
 **Profil wykonawcy:**
 - Dane kontaktowe
 - Lista przypisań do projektów (aktywne i archiwalne)
-- Zarządzanie kontem wykonawcy (tworzenie, zmiana hasła, odłączanie)
+- Zarządzanie dostępem wykonawcy (wysyłanie linku dostępowego, odłączanie konta)
 
 **Przypisanie wykonawcy do projektu:**
 
@@ -417,19 +406,20 @@ _Jak dodać wykonawcę i przypisać do projektu:_
 4. Kliknij "Przypisz projekt" i wybierz projekt z listy.
 5. W przypisaniu dodaj foldery i wgraj pliki.
 
-_Jak założyć konto dla wykonawcy:_
+_Jak nadać wykonawcy dostęp do jego panelu:_
 1. Otwórz profil wykonawcy.
-2. Kliknij "Utwórz konto" lub "Zarządzaj kontem".
-3. Podaj e-mail i hasło dla wykonawcy.
-4. Przekaż dane logowania wykonawcy bezpośrednio (aplikacja nie wysyła hasła e-mailem automatycznie).
+2. Upewnij się że wykonawca ma przypisany adres e-mail.
+3. Kliknij "Wyślij link dostępowy" — system wyśle na jego e-mail link logowania.
+4. Wykonawca klika link i automatycznie zostaje zalogowany do swojego panelu (bez hasła).
+5. Link można używać wielokrotnie — wygasa po 180 dniach nieaktywności. Jeśli wygasł — wyślij nowy z profilu wykonawcy.
 
 **FAQ:**
 
 Q: Wykonawca nie widzi folderu w swoim panelu.
 A: Sprawdź w ustawieniach folderu, czy nie jest on ukryty (toggle "Widoczny"). Jeśli folder jest ukryty, wykonawca go nie zobaczy.
 
-Q: Jak zmienić hasło wykonawcy?
-A: Profil wykonawcy → sekcja konta → "Zmień hasło". Podaj nowe hasło i zapisz.
+Q: Wykonawca mówi, że link wygasł i nie może się zalogować.
+A: Przejdź do profilu wykonawcy i wyślij nowy link dostępowy. Link wygasa po 180 dniach nieaktywności lub gdy projektant wysłał nowy (co unieważnia poprzedni).
 
 Q: Jak zarchiwizować przypisanie?
 A: W widoku przypisania kliknij menu (3 kropki) i wybierz "Archiwizuj". Wykonawca przestaje widzieć ten projekt w swoim panelu.
@@ -550,11 +540,11 @@ Produkty są automatycznie zapisywane do biblioteki przy dodawaniu "przez link" 
 
 ## 4. PANEL KLIENTA — szczegółowy opis
 
-Panel klienta to widok projektu dostępny po zalogowaniu się na konto klienta.
+Panel klienta to widok projektu dostępny przez link dostępowy wysłany przez projektanta.
 
 ### 4.1 Wejście do panelu
 
-Klient loguje się na stronie logowania veedeck e-mailem i hasłem. Konto zakłada projektant (szczegóły w sekcji 3.4). Po zalogowaniu klient trafia do swojego panelu z dostępem do przypisanych projektów i list.
+Klient otrzymuje od projektanta link dostępowy (magic link) na swój adres e-mail. Po kliknięciu linku zostaje automatycznie zalogowany do swojego panelu — bez hasła. Link można używać wielokrotnie i wygasa po 180 dniach nieaktywności. Klient może zachować link i wracać nim do panelu. Jeśli link wygasł, klient może poprosić o nowy na stronie logowania veedeck (opcja "Wyślij nowy link") lub projektant może wysłać nowy z profilu klienta. Szczegóły w sekcji 3.4.
 
 ### 4.2 Pasek boczny klienta
 
@@ -618,11 +608,11 @@ Klienci z kontem mogą mieć dostęp do dodatkowych zakładek zależnie od planu
 
 ## 5. PANEL WYKONAWCY — szczegółowy opis
 
-Panel dostępny po zalogowaniu się jako wykonawca.
+Panel dostępny przez link dostępowy wysłany przez projektanta.
 
-### 5.1 Logowanie wykonawcy
+### 5.1 Wejście do panelu wykonawcy
 
-Wykonawca loguje się standardowym formularzem e-mail + hasło. Konto zakłada projektant — wykonawca nie może sam się zarejestrować.
+Wykonawca otrzymuje od projektanta link dostępowy (magic link) na swój adres e-mail. Po kliknięciu linku zostaje automatycznie zalogowany do swojego panelu — bez hasła. Link można używać wielokrotnie i wygasa po 180 dniach nieaktywności. Jeśli wygasł, projektant może wysłać nowy z profilu wykonawcy.
 
 ### 5.2 Dashboard wykonawcy
 
@@ -928,9 +918,9 @@ Przyczyna: Minęło 14 dni trialu bez aktywnej subskrypcji.
 3. Po pomyślnej płatności dostęp zostanie przywrócony (może zająć do kilku minut).
 
 
-**Objaw:** Klient dostał zaproszenie, ale link nie działa.
-Przyczyna: Linki do zaproszeń wygasają po 24 godzinach.
-Rozwiązanie: Projektant wysyła zaproszenie ponownie z profilu klienta.
+**Objaw:** Klient lub wykonawca dostał link dostępowy, ale link nie działa.
+Przyczyna: Link wygasł po 180 dniach nieaktywności, lub projektant wysłał nowy link, który unieważnił poprzedni.
+Rozwiązanie: Projektant wysyła nowy link z profilu klienta/wykonawcy ("Wyślij link dostępowy"). Klient może też samodzielnie poprosić o nowy link na stronie logowania.
 
 ### Rendery i pliki
 
