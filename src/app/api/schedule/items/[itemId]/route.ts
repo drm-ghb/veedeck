@@ -5,7 +5,15 @@ import { getWorkspaceUserId } from "@/lib/workspace";
 
 async function getItemAndVerify(itemId: string, userId: string) {
   return prisma.scheduleItem.findFirst({
-    where: { id: itemId, phase: { client: { project: { userId } } } },
+    where: {
+      id: itemId,
+      phase: {
+        OR: [
+          { client: { project: { userId } } },
+          { client: { client: { designerId: userId } } },
+        ],
+      },
+    },
   });
 }
 

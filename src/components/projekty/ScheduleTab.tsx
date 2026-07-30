@@ -434,9 +434,6 @@ function SortablePhaseRow({
           {collapsed ? <ChevronRight size={15} className="flex-shrink-0 text-muted-foreground" /> : <ChevronDown size={15} className="flex-shrink-0 text-muted-foreground" />}
           <span className="text-sm font-semibold truncate">{phase.rfProject?.title ?? phase.name}</span>
         </button>
-        {phase.rfProject && (
-          <span className="text-[11px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full flex-shrink-0">ProjectFlow</span>
-        )}
         {totalCount > 0 && (
           <span className="text-[11px] text-muted-foreground flex-shrink-0">{doneCount}/{totalCount}</span>
         )}
@@ -587,27 +584,40 @@ function NewScheduleDialog({
   onClose: () => void;
 }) {
   const t = useT();
-  const [rfProjectId, setRfProjectId] = useState(rfProjects[0]?.id ?? "");
+  const [rfProjectId, setRfProjectId] = useState("");
+  const [customName, setCustomName] = useState("");
+
+  const selectedProject = rfProjects.find((p) => p.id === rfProjectId);
+  const canConfirm = rfProjectId ? true : customName.trim().length > 0;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
       <div className="bg-card border border-border rounded-2xl shadow-xl w-full max-w-sm mx-4 p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
         <h2 className="font-semibold text-base">{t.schedule.newScheduleTitle}</h2>
 
-        {rfProjects.length === 0 ? (
-          <p className="text-sm text-muted-foreground">{t.schedule.noLinkedProjects}</p>
-        ) : (
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Projekt z ProjectFlow</label>
+          <select
+            value={rfProjectId}
+            onChange={(e) => setRfProjectId(e.target.value)}
+            className="w-full text-sm px-3 py-2 border border-border rounded-lg bg-background focus:outline-none focus:ring-1 focus:ring-primary/30"
+          >
+            <option value="">Brak przypisania</option>
+            {rfProjects.map((p) => (
+              <option key={p.id} value={p.id}>{p.title}</option>
+            ))}
+          </select>
+        </div>
+
+        {!rfProjectId && (
           <div className="space-y-2">
             <label className="text-sm font-medium">{t.schedule.projectLabel}</label>
-            <select
-              value={rfProjectId}
-              onChange={(e) => setRfProjectId(e.target.value)}
-              className="w-full text-sm px-3 py-2 border border-border rounded-lg bg-background focus:outline-none focus:ring-1 focus:ring-primary/30"
-            >
-              {rfProjects.map((p) => (
-                <option key={p.id} value={p.id}>{p.title}</option>
-              ))}
-            </select>
+            <Input
+              value={customName}
+              onChange={(e) => setCustomName(e.target.value)}
+              placeholder="Nazwa harmonogramu"
+              className="text-sm"
+            />
           </div>
         )}
 
@@ -615,10 +625,10 @@ function NewScheduleDialog({
           <Button variant="outline" size="sm" onClick={onClose}>{t.common.cancel}</Button>
           <Button
             size="sm"
-            disabled={!rfProjectId}
+            disabled={!canConfirm}
             onClick={() => {
-              const project = rfProjects.find((p) => p.id === rfProjectId);
-              if (project) onConfirm(project.id, project.title);
+              const title = selectedProject ? selectedProject.title : customName.trim();
+              onConfirm(rfProjectId, title);
             }}
           >
             {t.schedule.create}

@@ -5,7 +5,13 @@ import { getWorkspaceUserId } from "@/lib/workspace";
 
 async function getPhaseAndVerify(phaseId: string, userId: string) {
   return prisma.schedulePhase.findFirst({
-    where: { id: phaseId, client: { project: { userId } } },
+    where: {
+      id: phaseId,
+      OR: [
+        { client: { project: { userId } } },
+        { client: { client: { designerId: userId } } },
+      ],
+    },
   });
 }
 

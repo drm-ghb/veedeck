@@ -15,7 +15,13 @@ export async function POST(
   const { phaseId } = await params;
 
   const phase = await prisma.schedulePhase.findFirst({
-    where: { id: phaseId, client: { project: { userId } } },
+    where: {
+      id: phaseId,
+      OR: [
+        { client: { project: { userId } } },
+        { client: { client: { designerId: userId } } },
+      ],
+    },
     select: { id: true },
   });
   if (!phase) return NextResponse.json({ error: "Not found" }, { status: 404 });
