@@ -722,18 +722,16 @@ export default function TasksView() {
         </td>
         {/* Komentarze / załączniki */}
         <td className="px-4 py-2.5">
-          {!isSubTask && (
-            <span className="flex items-center gap-2">
-              <span className="flex items-center gap-0.5 text-xs text-muted-foreground">
-                <MessageSquare size={12} />
-                {task._count?.comments ?? 0}
-              </span>
-              <span className="flex items-center gap-0.5 text-xs text-muted-foreground">
-                <Paperclip size={12} />
-                {task.comments?.reduce((sum, c) => sum + c._count.attachments, 0) ?? 0}
-              </span>
+          <span className="flex items-center gap-2">
+            <span className="flex items-center gap-0.5 text-xs text-muted-foreground">
+              <MessageSquare size={12} />
+              {task._count?.comments ?? 0}
             </span>
-          )}
+            <span className="flex items-center gap-0.5 text-xs text-muted-foreground">
+              <Paperclip size={12} />
+              {task.comments?.reduce((sum, c) => sum + c._count.attachments, 0) ?? 0}
+            </span>
+          </span>
         </td>
         {/* Akcje */}
         <td className="px-4 py-2.5 text-right">

@@ -14,10 +14,12 @@ const taskInclude = {
       assignee: { select: { id: true, name: true, email: true, fullName: true, avatarUrl: true } },
       creator: { select: { id: true, name: true, email: true, fullName: true } },
       project: { select: { id: true, title: true } },
+      _count: { select: { comments: { where: { body: { not: "" } } } } },
+      comments: { select: { _count: { select: { attachments: true } } } },
     },
     orderBy: { createdAt: "asc" as const },
   },
-  _count: { select: { comments: true } },
+  _count: { select: { comments: { where: { body: { not: "" } } } } },
   comments: { select: { _count: { select: { attachments: true } } } },
 };
 
