@@ -7,17 +7,19 @@ import bcrypt from "bcryptjs";
 import { generateClientLogin } from "@/lib/client-login";
 import { checkTeamPermission, getAllowedClientIds, hasPermission } from "@/lib/permissions";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (!await hasPermission(session, "klienci", 1)) return NextResponse.json({ error: "Brak dostępu do modułu Klienci" }, { status: 403 });
   const userId = getWorkspaceUserId(session);
   const allowedIds = await getAllowedClientIds(session);
+  const activeOnly = new URL(req.url).searchParams.get("active") === "1";
 
   const projects = await prisma.project.findMany({
     where: {
       userId,
       ...(allowedIds ? { clientId: { in: allowedIds } } : {}),
+      ...(activeOnly ? { archived: false } : {}),
     },
     include: { _count: { select: { renders: true } } },
     orderBy: { createdAt: "desc" },

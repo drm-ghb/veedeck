@@ -330,7 +330,7 @@ export default function TasksView() {
     Promise.all([
       fetch("/api/team/invite").then((r) => r.json()),
       fetch("/api/user").then((r) => r.json()),
-      fetch("/api/projects").then((r) => r.json()),
+      fetch("/api/projects?active=1").then((r) => r.json()),
     ]).then(([team, me, projs]) => {
       const all: User[] = [];
       if (me?.id) all.push({ ...me, isSelf: true });
