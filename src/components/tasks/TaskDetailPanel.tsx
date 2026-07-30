@@ -163,7 +163,7 @@ export default function TaskDetailPanel({ task, onClose, onUpdated, isSubTask = 
     }).catch(() => {});
 
     Promise.all([
-      fetch("/api/projects?active=1").then((r) => r.json()),
+      fetch("/api/tasks/projects").then((r) => r.json()),
       fetch("/api/team/invite").then((r) => r.json()),
       fetch("/api/user").then((r) => r.json()),
     ]).then(([projs, team, me]) => {

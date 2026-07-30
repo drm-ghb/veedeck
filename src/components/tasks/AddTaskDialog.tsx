@@ -69,7 +69,7 @@ export default function AddTaskDialog({ trigger, parentId, onCreated, statusOpti
     if (!open) return;
     setTimeout(() => titleRef.current?.focus(), 50);
     Promise.all([
-      fetch("/api/projects").then((r) => r.json()),
+      fetch("/api/tasks/projects").then((r) => r.json()),
       fetch("/api/team/invite").then((r) => r.json()),
       fetch("/api/user").then((r) => r.json()),
     ]).then(([projs, team, me]) => {
