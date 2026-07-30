@@ -12,6 +12,7 @@ import CancelledBadge from "@/components/dashboard/CancelledBadge";
 import AppNavbar from "@/components/dashboard/AppNavbar";
 import { TrialContextProvider } from "@/lib/trial-context";
 import FloatingChatPanel from "@/components/dyskusje/FloatingChatPanel";
+import { getMemberHiddenModules } from "@/lib/permissions";
 
 export default async function VeedeckLayout({
   children,
@@ -29,15 +30,16 @@ export default async function VeedeckLayout({
   });
 
   const ownerId = dbUser?.ownerId;
-  const [ownerSettings, memberPerms] = await Promise.all([
+  const systemRole = (dbUser as any)?.systemRole ?? "member";
+  const [ownerSettings, memberGroupHidden] = await Promise.all([
     ownerId ? prisma.user.findUnique({ where: { id: ownerId }, select: { globalHiddenModules: true, clientLogoUrl: true, colorTheme: true, customTheme: true } }) : null,
-    ownerId ? prisma.teamMemberPermission.findUnique({ where: { memberId: session.user.id! }, select: { hiddenModules: true } }) : null,
+    ownerId ? getMemberHiddenModules(session.user.id!, ownerId, systemRole) : Promise.resolve([] as string[]),
   ]);
 
   const fullName = dbUser?.fullName ?? null;
   const firstName = (fullName || dbUser?.name)?.split(" ")[0] ?? dbUser?.email ?? null;
   const avatarUrl = dbUser?.avatarUrl ?? null;
-  const hiddenModules = [...new Set([...((ownerSettings ?? dbUser)?.globalHiddenModules ?? []), ...(memberPerms?.hiddenModules ?? [])])];
+  const hiddenModules = [...new Set([...((ownerSettings ?? dbUser)?.globalHiddenModules ?? []), ...memberGroupHidden])];
   const colorTheme = ((ownerSettings?.colorTheme ?? dbUser?.colorTheme) ?? "champagne") as ColorTheme;
   const viewPrefs = (dbUser?.viewPreferences ?? {}) as Record<string, unknown>;
   const sidebarOrder = (viewPrefs.sidebarOrder as string[]) ?? [];

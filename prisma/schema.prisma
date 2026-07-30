@@ -111,6 +111,10 @@ model User {
   pinHash                    String?
   passwordHintDismissedAt    DateTime?
   firstLoginAt               DateTime?
+  systemRole                 String                  @default("member")
+  permissionGroups           GroupMember[]
+  projectAssignments         ProjectAssignment[]
+  ownedPermissionGroups      PermissionGroup[]       @relation("WorkspaceGroups")
 }
 
 model AccessToken {
@@ -210,7 +214,42 @@ model Invitation {
   projectId      String?
   clientEntityId String?
   type           String   @default("team")
-  designer       User     @relation("InvitationDesigner", fields: [designerId], references: [id], onDelete: Cascade)
+  groupId        String?
+  designer       User            @relation("InvitationDesigner", fields: [designerId], references: [id], onDelete: Cascade)
+  group          PermissionGroup? @relation(fields: [groupId], references: [id], onDelete: SetNull)
+}
+
+model PermissionGroup {
+  id           String        @id @default(cuid())
+  workspaceId  String
+  name         String
+  isTemplate   Boolean       @default(false)
+  templateKey  String?
+  projectScope String        @default("assigned")
+  permissions  Json
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  workspace    User          @relation("WorkspaceGroups", fields: [workspaceId], references: [id], onDelete: Cascade)
+  members      GroupMember[]
+  invitations  Invitation[]
+}
+
+model GroupMember {
+  id      String          @id @default(cuid())
+  groupId String
+  userId  String
+  group   PermissionGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user    User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([groupId, userId])
+}
+
+model ProjectAssignment {
+  id        String  @id @default(cuid())
+  projectId String
+  userId    String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([projectId, userId])
 }
 
 model BillingRecord {
@@ -393,6 +432,7 @@ model Project {
   moodboards               Moodboard[]
   surveys                  Survey[]
   tasks                    Task[]
+  memberAssignments        ProjectAssignment[]
 }
 
 model ProjectClient {

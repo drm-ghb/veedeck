@@ -683,17 +683,6 @@ function ProductRow({
             ) : (
               <p className="font-medium text-sm text-foreground truncate">{product.name}</p>
             )}
-            {isParent && (
-              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium shrink-0" style={{ background: '#EEF2FF', color: '#4F46E5' }}>
-                Podstawowy
-              </span>
-            )}
-            {isVariant && (
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium text-muted-foreground shrink-0" style={{ background: '#EDEDED' }}>
-                <Layers size={9} />
-                Opcjonalny
-              </span>
-            )}
             {/* Inline category badge */}
             <button
               onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); const estH = (allCategories.length + 1) * 28 + 8; const top = (window.innerHeight - r.bottom) >= estH + 8 ? r.bottom + 4 : Math.max(4, r.top - estH - 4); setCategoryMenuPos({ top, left: r.left }); setCategoryMenuOpen((v) => !v); }}
@@ -704,8 +693,14 @@ function ProductRow({
               {product.category ? getCategoryLabel(product.category, allCategories) : t.listy.addCategory}
             </button>
           </div>
-          {/* Badges row — approval + order status */}
+          {/* Badges row — optional + approval + order status */}
           <div className="flex items-center gap-1.5 mt-1.5">
+            {isVariant && (
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium text-muted-foreground shrink-0" style={{ background: '#EDEDED' }}>
+                <Asterisk size={9} />
+                Opcjonalny
+              </span>
+            )}
             <button
               onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); const estH = 3 * 28 + 8; const top = (window.innerHeight - r.bottom) >= estH + 8 ? r.bottom + 4 : Math.max(4, r.top - estH - 4); setApprovalMenuPos({ top, left: r.left }); setApprovalMenuOpen((v) => !v); }}
               className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors shrink-0 hover:opacity-80 ${getApprovalLabel(approval).cls}`}
@@ -757,7 +752,11 @@ function ProductRow({
               }
               return (
                 <div key={field} className="group/field flex items-center gap-1 py-0.5 min-w-0">
-                  <p className="text-xs text-muted-foreground truncate">{labels[field]}: {val}</p>
+                  <p
+                    className="text-xs text-muted-foreground truncate cursor-pointer hover:text-foreground transition-colors"
+                    onClick={() => startFieldEdit(field, val)}
+                    title={`Edytuj ${labels[field].toLowerCase()}`}
+                  >{labels[field]}: {val}</p>
                   <button
                     onClick={() => startFieldEdit(field, val)}
                     className="opacity-0 group-hover/field:opacity-100 transition-opacity text-muted-foreground hover:text-foreground shrink-0"
@@ -888,19 +887,8 @@ function ProductRow({
               </div>
               <div className="shrink-0 -mt-0.5">{dropdown}</div>
             </div>
-            {/* Tags: variant + parent + category */}
+            {/* Tags: category */}
             <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
-              {isParent && (
-                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium shrink-0" style={{ background: '#EEF2FF', color: '#4F46E5' }}>
-                  Podstawowy
-                </span>
-              )}
-              {isVariant && (
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium text-muted-foreground" style={{ background: '#EDEDED' }}>
-                  <Layers size={9} />
-                  Opcjonalny
-                </span>
-              )}
               <button
                 onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); const estH = (allCategories.length + 1) * 28 + 8; const top = (window.innerHeight - r.bottom) >= estH + 8 ? r.bottom + 4 : Math.max(4, r.top - estH - 4); setCategoryMenuPos({ top, left: r.left }); setCategoryMenuOpen((v) => !v); }}
                 className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors shrink-0 ${product.category ? (isVariant ? "text-muted-foreground hover:opacity-80" : "bg-muted text-muted-foreground hover:bg-muted/70") : "border border-dashed border-border text-muted-foreground"}`}
@@ -911,8 +899,14 @@ function ProductRow({
             </div>
           </div>
         </div>
-        {/* Badges: approval + order status */}
+        {/* Badges: optional + approval + order status */}
         <div className="flex items-center gap-1.5 mt-1.5">
+          {isVariant && (
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium text-muted-foreground shrink-0" style={{ background: '#EDEDED' }}>
+              <Asterisk size={9} />
+              Opcjonalny
+            </span>
+          )}
           <button
             onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); const estH = 3 * 28 + 8; const top = (window.innerHeight - r.bottom) >= estH + 8 ? r.bottom + 4 : Math.max(4, r.top - estH - 4); setApprovalMenuPos({ top, left: r.left }); setApprovalMenuOpen((v) => !v); }}
             className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors shrink-0 hover:opacity-80 ${getApprovalLabel(approval).cls}`}

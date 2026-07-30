@@ -3,11 +3,12 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getWorkspaceUserId } from "@/lib/workspace";
 import { pusherServer } from "@/lib/pusher";
-import { getAllowedClientIds } from "@/lib/permissions";
+import { getAllowedClientIds, hasPermission } from "@/lib/permissions";
 
 export async function GET() {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!await hasPermission(session, "dyskusje", 1)) return NextResponse.json({ error: "Brak dostępu do modułu Dyskusje" }, { status: 403 });
   const userId = getWorkspaceUserId(session);
   // Use raw session ID for per-user read tracking (team members have independent read positions)
   const sessionUserId = session.user.id!;

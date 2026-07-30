@@ -8,7 +8,7 @@ export default function UzytkownicyPage() {
       <div className="mb-6">
         <h1 className="text-xl font-bold">Użytkownicy</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Zarządzaj członkami swojego zespołu. Zaproszeni użytkownicy będą mieć dostęp do Twoich projektów i list.
+          Zarządzaj członkami swojego zespołu i ich uprawnieniami. Zaproszeni użytkownicy widzą projekty i moduły zgodnie ze swoimi grupami.
         </p>
       </div>
       <TeamSettings />

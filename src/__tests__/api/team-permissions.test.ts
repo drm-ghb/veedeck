@@ -38,6 +38,7 @@ vi.mock("@/lib/permissions", () => ({
   checkClientAccess: vi.fn(),
   isTeamMember: vi.fn(),
   getTeamPermissions: vi.fn(),
+  hasPermission: vi.fn().mockResolvedValue(true),
 }));
 
 vi.mock("@/lib/prisma", () => ({

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import Pusher from "pusher-js";
-import { LayoutDashboard, Users, LocalMall, Package, PanelLeftClose, PanelLeftOpen, Settings, HelpCircle, PushPin, ShieldCheck, CalendarDays, NotebookText, ChatBubble, CheckSquare, VeezardIcon, BookOpen, ClipboardList, Engineering, Interests, Bug } from "@/components/ui/icons";
+import { LayoutDashboard, Users, LocalMall, Package, PanelLeftClose, PanelLeftOpen, Settings, HelpCircle, PushPin, ShieldCheck, CalendarDays, NotebookText, ChatBubble, CheckSquare, VeezardIcon, BookOpen, ClipboardList, Engineering, Interests, Bug, Sparkles } from "@/components/ui/icons";
 import { useT } from "@/lib/i18n";
 import HelpWidget from "@/components/dashboard/HelpWidget";
 
@@ -39,13 +39,13 @@ export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userI
   const [collapsed, setCollapsed] = useState(initialCollapsed);
   const [mounted, setMounted] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
-  const [helpTab, setHelpTab] = useState<"ai" | "contact">("ai");
+  const [helpTab, setHelpTab] = useState<"knowledge" | "ai" | "contact">("knowledge");
   const [helpCategory, setHelpCategory] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     function handleOpenHelp(e: Event) {
       const detail = (e as CustomEvent).detail ?? {};
-      setHelpTab(detail.tab ?? "ai");
+      setHelpTab(detail.tab ?? "knowledge");
       setHelpCategory(detail.category ?? undefined);
       setHelpOpen(true);
     }
@@ -336,9 +336,29 @@ export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userI
       )}
 
       <div className="p-2 space-y-0.5">
+        {/* Asystent AI */}
+        <button
+          onClick={() => {
+            if (helpOpen && helpTab === "ai") { setHelpOpen(false); return; }
+            setHelpTab("ai"); setHelpCategory(undefined);
+            if (helpOpen) { setHelpOpen(false); setTimeout(() => setHelpOpen(true), 50); } else { setHelpOpen(true); }
+          }}
+          title={isCollapsed ? "Asystent AI" : undefined}
+          className="flex items-center gap-3 px-2.5 py-2.5 rounded-lg text-sm font-medium transition-colors w-full opacity-60 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5"
+        >
+          <span className="flex-shrink-0 w-5 flex items-center justify-center">
+            <Sparkles size={18} />
+          </span>
+          {!isCollapsed && "Asystent AI"}
+        </button>
+
         {/* Zgłoś błąd */}
         <button
-          onClick={() => { setHelpTab("contact"); setHelpCategory("🐞 Zgłoś błąd"); setHelpOpen(true); }}
+          onClick={() => {
+            if (helpOpen && helpTab === "contact") { setHelpOpen(false); return; }
+            setHelpTab("contact"); setHelpCategory("🐞 Zgłoś błąd");
+            if (helpOpen) { setHelpOpen(false); setTimeout(() => setHelpOpen(true), 50); } else { setHelpOpen(true); }
+          }}
           title={isCollapsed ? "Zgłoś błąd" : undefined}
           className="flex items-center gap-3 px-2.5 py-2.5 rounded-lg text-sm font-medium transition-colors w-full opacity-60 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5"
         >
@@ -350,7 +370,11 @@ export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userI
 
         {/* Help */}
         <button
-          onClick={() => { setHelpTab("ai"); setHelpCategory(undefined); setHelpOpen(true); }}
+          onClick={() => {
+            if (helpOpen && helpTab === "knowledge") { setHelpOpen(false); return; }
+            setHelpTab("knowledge"); setHelpCategory(undefined);
+            if (helpOpen) { setHelpOpen(false); setTimeout(() => setHelpOpen(true), 50); } else { setHelpOpen(true); }
+          }}
           title={isCollapsed ? t.nav.help : undefined}
           className="flex items-center gap-3 px-2.5 py-2.5 rounded-lg text-sm font-medium transition-colors w-full opacity-60 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5"
         >

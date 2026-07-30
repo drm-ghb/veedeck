@@ -203,23 +203,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         try {
           const dbUser = await prisma.user.findUnique({
             where: { id: user.id as string },
-            select: { needsNameSetup: true, ownerId: true, role: true, trialEndsAt: true, isFree: true, subscription: { select: { status: true } } },
+            select: { needsNameSetup: true, ownerId: true, role: true, systemRole: true, trialEndsAt: true, isFree: true, subscription: { select: { status: true } } },
           });
           token.needsNameSetup = dbUser?.needsNameSetup ?? false;
           token.ownerId = dbUser?.ownerId ?? null;
           token.role = dbUser?.role ?? "designer";
+          token.systemRole = dbUser?.systemRole ?? "member";
           token.trialEndsAt = dbUser?.trialEndsAt?.toISOString() ?? null;
           token.isFree = dbUser?.isFree ?? false;
           token.hasActiveSubscription = dbUser?.subscription?.status === "active";
-          if (dbUser?.ownerId) {
-            const memberPerms = await prisma.teamMemberPermission.findUnique({
-              where: { memberId: user.id as string },
-              select: { hiddenModules: true },
-            });
-            token.memberHiddenModules = memberPerms?.hiddenModules ?? [];
-          } else {
-            token.memberHiddenModules = [];
-          }
+          token.memberHiddenModules = [];
           // isMainContact — for clients, determines who can accept renders/lists
           if (dbUser?.role === "client") {
             const contact = await prisma.projectClient.findFirst({
@@ -239,23 +232,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         try {
           const dbUser = await prisma.user.findUnique({
             where: { id: userId },
-            select: { ownerId: true, role: true, isAdmin: true, trialEndsAt: true, isFree: true, subscription: { select: { status: true } } },
+            select: { ownerId: true, role: true, isAdmin: true, systemRole: true, trialEndsAt: true, isFree: true, subscription: { select: { status: true } } },
           });
           token.ownerId = dbUser?.ownerId ?? null;
           token.role = dbUser?.role ?? "designer";
           token.isAdmin = dbUser?.isAdmin ?? false;
+          token.systemRole = dbUser?.systemRole ?? "member";
           token.trialEndsAt = dbUser?.trialEndsAt?.toISOString() ?? null;
           token.isFree = dbUser?.isFree ?? false;
           token.hasActiveSubscription = dbUser?.subscription?.status === "active";
-          if (dbUser?.ownerId) {
-            const memberPerms = await prisma.teamMemberPermission.findUnique({
-              where: { memberId: userId },
-              select: { hiddenModules: true },
-            });
-            token.memberHiddenModules = memberPerms?.hiddenModules ?? [];
-          } else {
-            token.memberHiddenModules = [];
-          }
+          token.memberHiddenModules = [];
         } catch (e) {
           console.error("[auth] JWT callback prisma error (refresh):", e);
           token.ownerId = null;
@@ -266,25 +252,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         try {
           const dbUser = await prisma.user.findUnique({
             where: { id: userId },
-            select: { needsNameSetup: true, name: true, ownerId: true, role: true, isAdmin: true, trialEndsAt: true, isFree: true, subscription: { select: { status: true } } },
+            select: { needsNameSetup: true, name: true, ownerId: true, role: true, isAdmin: true, systemRole: true, trialEndsAt: true, isFree: true, subscription: { select: { status: true } } },
           });
           token.needsNameSetup = dbUser?.needsNameSetup ?? false;
           token.name = dbUser?.name ?? token.name;
           token.ownerId = dbUser?.ownerId ?? null;
           token.role = dbUser?.role ?? "designer";
           token.isAdmin = dbUser?.isAdmin ?? false;
+          token.systemRole = dbUser?.systemRole ?? "member";
           token.trialEndsAt = dbUser?.trialEndsAt?.toISOString() ?? null;
           token.isFree = dbUser?.isFree ?? false;
           token.hasActiveSubscription = dbUser?.subscription?.status === "active";
-          if (dbUser?.ownerId) {
-            const memberPerms = await prisma.teamMemberPermission.findUnique({
-              where: { memberId: userId },
-              select: { hiddenModules: true },
-            });
-            token.memberHiddenModules = memberPerms?.hiddenModules ?? [];
-          } else {
-            token.memberHiddenModules = [];
-          }
+          token.memberHiddenModules = [];
         } catch (e) {
           console.error("[auth] JWT callback prisma error (update):", e);
         }
@@ -302,6 +281,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         (session.user as any).isFree = token.isFree ?? false;
         (session.user as any).hasActiveSubscription = token.hasActiveSubscription ?? false;
         (session.user as any).isMainContact = token.isMainContact ?? null;
+        (session.user as any).systemRole = token.systemRole ?? "member";
       }
       return session;
     },

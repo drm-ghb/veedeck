@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import TrialCheck from "@/components/dashboard/TrialCheck";
 import AppNavbar from "@/components/dashboard/AppNavbar";
 import { TrialContextProvider } from "@/lib/trial-context";
+import { getMemberHiddenModules } from "@/lib/permissions";
 
 export default async function KlienciLayout({
   children,
@@ -23,15 +24,16 @@ export default async function KlienciLayout({
   });
 
   const ownerId = dbUser?.ownerId;
-  const [ownerSettings, memberPerms] = await Promise.all([
+  const systemRole = (dbUser as any)?.systemRole ?? "member";
+  const [ownerSettings, memberGroupHidden] = await Promise.all([
     ownerId ? prisma.user.findUnique({ where: { id: ownerId }, select: { globalHiddenModules: true, clientLogoUrl: true } }) : null,
-    ownerId ? prisma.teamMemberPermission.findUnique({ where: { memberId: session.user.id! }, select: { hiddenModules: true } }) : null,
+    ownerId ? getMemberHiddenModules(session.user.id!, ownerId, systemRole) : Promise.resolve([] as string[]),
   ]);
 
   const fullName = dbUser?.fullName ?? null;
   const displayName = (fullName || dbUser?.name)?.split(" ")[0] ?? dbUser?.email ?? null;
   const avatarUrl = dbUser?.avatarUrl ?? null;
-  const hiddenModules = [...new Set([...((ownerSettings ?? dbUser)?.globalHiddenModules ?? []), ...(memberPerms?.hiddenModules ?? [])])];
+  const hiddenModules = [...new Set([...((ownerSettings ?? dbUser)?.globalHiddenModules ?? []), ...memberGroupHidden])];
   const sidebarOrder = ((dbUser?.viewPreferences as Record<string, unknown>)?.sidebarOrder as string[]) ?? [];
   const subStatus = dbUser?.subscription?.status ?? null;
   const cancelAt = dbUser?.subscription?.cancelAt ?? null;

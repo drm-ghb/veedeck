@@ -70,14 +70,12 @@ export async function POST(
       password: hashed,
       name: displayName,
       ownerId: invitation.designerId,
+      systemRole: "member",
     },
   });
 
   await prisma.$transaction([
-    prisma.invitation.update({
-      where: { token },
-      data: { status: "ACCEPTED" },
-    }),
+    prisma.invitation.update({ where: { token }, data: { status: "ACCEPTED" } }),
     prisma.notification.create({
       data: {
         userId: newUser.id,
@@ -86,6 +84,9 @@ export async function POST(
         type: "info",
       },
     }),
+    ...(invitation.groupId
+      ? [prisma.groupMember.create({ data: { groupId: invitation.groupId, userId: newUser.id } })]
+      : []),
   ]);
 
   // Powiadomienie dla projektanta — osobno, żeby mieć obiekt do Pushera

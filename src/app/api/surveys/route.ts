@@ -3,13 +3,12 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { uniqueSlug } from "@/lib/slug";
 import { getWorkspaceUserId } from "@/lib/workspace";
-import { checkTeamPermission, getAllowedClientIds } from "@/lib/permissions";
+import { checkTeamPermission, getAllowedClientIds, hasPermission } from "@/lib/permissions";
 
 export async function GET() {
   const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!await hasPermission(session, "ankiety", 1)) return NextResponse.json({ error: "Brak dostępu do modułu Ankiety" }, { status: 403 });
   const userId = getWorkspaceUserId(session);
   const allowedIds = await getAllowedClientIds(session);
 

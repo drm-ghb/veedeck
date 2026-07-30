@@ -3,13 +3,12 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getWorkspaceUserId } from "@/lib/workspace";
 import bcrypt from "bcryptjs";
-import { checkTeamPermission } from "@/lib/permissions";
+import { checkTeamPermission, hasPermission } from "@/lib/permissions";
 
 export async function GET() {
   const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!await hasPermission(session, "wykonawcy", 1)) return NextResponse.json({ error: "Brak dostępu do modułu Wykonawcy" }, { status: 403 });
   const designerId = getWorkspaceUserId(session);
 
   const contractors = await prisma.contractor.findMany({

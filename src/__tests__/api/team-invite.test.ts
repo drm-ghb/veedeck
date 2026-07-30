@@ -121,9 +121,9 @@ describe("POST /api/team/invite — wysyłanie zaproszenia", () => {
 
   it("zwraca 409 gdy użytkownik z tym emailem już istnieje", async () => {
     vi.mocked(auth).mockResolvedValue(SESSION as any);
-    // owner = enterprise (plan allows invitations)
+    // owner = agencja (plan allows invitations)
     vi.mocked(prisma.user.findUnique)
-      .mockResolvedValueOnce({ isFree: false, subscription: { plan: "enterprise", status: "active" } } as any)
+      .mockResolvedValueOnce({ isFree: false, subscription: { plan: "agencja", status: "active" } } as any)
       .mockResolvedValueOnce({ id: "existing-user" } as any);
 
     const res = await teamInvitePOST(makeRequest("POST", { email: "existing@example.com" }));
@@ -133,7 +133,7 @@ describe("POST /api/team/invite — wysyłanie zaproszenia", () => {
   it("zwraca 409 gdy zaproszenie do tego emaila już jest PENDING", async () => {
     vi.mocked(auth).mockResolvedValue(SESSION as any);
     vi.mocked(prisma.user.findUnique)
-      .mockResolvedValueOnce({ isFree: false, subscription: { plan: "enterprise", status: "active" } } as any)
+      .mockResolvedValueOnce({ isFree: false, subscription: { plan: "agencja", status: "active" } } as any)
       .mockResolvedValueOnce(null);
     vi.mocked(prisma.invitation.findFirst).mockResolvedValue(mockInvitation as any);
 
@@ -141,10 +141,10 @@ describe("POST /api/team/invite — wysyłanie zaproszenia", () => {
     expect(res.status).toBe(409);
   });
 
-  it("tworzy zaproszenie i wysyła email (plan enterprise)", async () => {
+  it("tworzy zaproszenie i wysyła email (plan agencja)", async () => {
     vi.mocked(auth).mockResolvedValue(SESSION as any);
     vi.mocked(prisma.user.findUnique)
-      .mockResolvedValueOnce({ isFree: false, subscription: { plan: "enterprise", status: "active" } } as any)
+      .mockResolvedValueOnce({ isFree: false, subscription: { plan: "agencja", status: "active" } } as any)
       .mockResolvedValueOnce(null) // brak istniejącego usera
       .mockResolvedValueOnce({ name: "Projektant", email: "designer@test.com" } as any); // designer info
     vi.mocked(prisma.invitation.findFirst).mockResolvedValue(null);
@@ -163,7 +163,7 @@ describe("POST /api/team/invite — wysyłanie zaproszenia", () => {
   it("normalizuje email do lowercase przed zapisem", async () => {
     vi.mocked(auth).mockResolvedValue(SESSION as any);
     vi.mocked(prisma.user.findUnique)
-      .mockResolvedValueOnce({ isFree: false, subscription: { plan: "commercial", status: "active" } } as any)
+      .mockResolvedValueOnce({ isFree: false, subscription: { plan: "studio", status: "active" } } as any)
       .mockResolvedValueOnce(null)
       .mockResolvedValueOnce({ name: "Projektant", email: "designer@test.com" } as any);
     vi.mocked(prisma.user.count).mockResolvedValue(0);
@@ -252,25 +252,25 @@ describe("POST /api/team/invite — ograniczenia planów subskrypcji", () => {
     expect(res.status).toBe(403);
   });
 
-  it("blokuje zaproszenie gdy subskrypcja commercial jest nieaktywna (cancelled)", async () => {
+  it("blokuje zaproszenie gdy subskrypcja studio jest nieaktywna (cancelled)", async () => {
     vi.mocked(auth).mockResolvedValue(SESSION as any);
     vi.mocked(prisma.user.findUnique).mockResolvedValue({
       isFree: false,
-      subscription: { plan: "commercial", status: "cancelled" },
+      subscription: { plan: "studio", status: "cancelled" },
     } as any);
 
     const res = await teamInvitePOST(makeRequest("POST", { email: "test@example.com" }));
     expect(res.status).toBe(403);
   });
 
-  it("zezwala na zaproszenie dla planu commercial gdy limit nie przekroczony", async () => {
+  it("zezwala na zaproszenie dla planu studio gdy limit nie przekroczony", async () => {
     vi.mocked(auth).mockResolvedValue(SESSION as any);
     vi.mocked(prisma.user.findUnique)
-      .mockResolvedValueOnce({ isFree: false, subscription: { plan: "commercial", status: "active" } } as any)
+      .mockResolvedValueOnce({ isFree: false, subscription: { plan: "studio", status: "active" } } as any)
       .mockResolvedValueOnce(null) // brak istniejącego usera
       .mockResolvedValueOnce({ name: "Projektant", email: "designer@test.com" } as any);
-    vi.mocked(prisma.user.count).mockResolvedValue(2);      // 2 istniejących członków
-    vi.mocked(prisma.invitation.count).mockResolvedValue(1); // 1 oczekujące zaproszenie (łącznie 3 < 5)
+    vi.mocked(prisma.user.count).mockResolvedValue(1);      // 1 istniejący członek
+    vi.mocked(prisma.invitation.count).mockResolvedValue(0); // 0 oczekujących (łącznie 1 < 2)
     vi.mocked(prisma.invitation.findFirst).mockResolvedValue(null);
     vi.mocked(prisma.invitation.create).mockResolvedValue(mockInvitation as any);
 
@@ -278,47 +278,47 @@ describe("POST /api/team/invite — ograniczenia planów subskrypcji", () => {
     expect(res.status).toBe(201);
   });
 
-  it("blokuje zaproszenie dla commercial gdy osiągnięto limit 5 członków (403)", async () => {
+  it("blokuje zaproszenie dla studio gdy osiągnięto limit 2 członków (403)", async () => {
     vi.mocked(auth).mockResolvedValue(SESSION as any);
     vi.mocked(prisma.user.findUnique).mockResolvedValue({
       isFree: false,
-      subscription: { plan: "commercial", status: "active" },
+      subscription: { plan: "studio", status: "active" },
     } as any);
-    vi.mocked(prisma.user.count).mockResolvedValue(4);      // 4 istniejących
-    vi.mocked(prisma.invitation.count).mockResolvedValue(1); // + 1 oczekujące = 5 (limit osiągnięty)
+    vi.mocked(prisma.user.count).mockResolvedValue(1);      // 1 istniejący
+    vi.mocked(prisma.invitation.count).mockResolvedValue(1); // + 1 oczekujące = 2 (limit osiągnięty)
 
     const res = await teamInvitePOST(makeRequest("POST", { email: "one-too-many@example.com" }));
     expect(res.status).toBe(403);
     const body = await res.json();
-    expect(body.error).toMatch(/5/);
+    expect(body.error).toMatch(/2/);
   });
 
-  it("blokuje gdy commercial ma dokładnie 5 aktywnych członków (bez pending)", async () => {
+  it("blokuje gdy studio ma dokładnie 2 aktywnych członków (bez pending)", async () => {
     vi.mocked(auth).mockResolvedValue(SESSION as any);
     vi.mocked(prisma.user.findUnique).mockResolvedValue({
       isFree: false,
-      subscription: { plan: "commercial", status: "active" },
+      subscription: { plan: "studio", status: "active" },
     } as any);
-    vi.mocked(prisma.user.count).mockResolvedValue(5);
+    vi.mocked(prisma.user.count).mockResolvedValue(2);
     vi.mocked(prisma.invitation.count).mockResolvedValue(0);
 
     const res = await teamInvitePOST(makeRequest("POST", { email: "blocked@example.com" }));
     expect(res.status).toBe(403);
   });
 
-  it("zezwala na zaproszenie dla planu enterprise bez limitu", async () => {
+  it("zezwala na zaproszenie dla planu agencja bez limitu", async () => {
     vi.mocked(auth).mockResolvedValue(SESSION as any);
     vi.mocked(prisma.user.findUnique)
-      .mockResolvedValueOnce({ isFree: false, subscription: { plan: "enterprise", status: "active" } } as any)
+      .mockResolvedValueOnce({ isFree: false, subscription: { plan: "agencja", status: "active" } } as any)
       .mockResolvedValueOnce(null)
       .mockResolvedValueOnce({ name: "Projektant", email: "designer@test.com" } as any);
-    // Enterprise nie sprawdza count — mockujemy wysoką liczbę
+    // Agencja nie sprawdza count — mockujemy wysoką liczbę
     vi.mocked(prisma.invitation.findFirst).mockResolvedValue(null);
     vi.mocked(prisma.invitation.create).mockResolvedValue(mockInvitation as any);
 
-    const res = await teamInvitePOST(makeRequest("POST", { email: "enterprise-member@example.com" }));
+    const res = await teamInvitePOST(makeRequest("POST", { email: "agencja-member@example.com" }));
     expect(res.status).toBe(201);
-    // Enterprise nie woła count
+    // Agencja nie woła count
     expect(vi.mocked(prisma.user.count)).not.toHaveBeenCalled();
   });
 
@@ -336,16 +336,16 @@ describe("POST /api/team/invite — ograniczenia planów subskrypcji", () => {
     expect(vi.mocked(prisma.user.count)).not.toHaveBeenCalled();
   });
 
-  it("commercial: sprawdza zarówno aktywnych członków jak i oczekujące zaproszenia", async () => {
+  it("studio: sprawdza zarówno aktywnych członków jak i oczekujące zaproszenia", async () => {
     vi.mocked(auth).mockResolvedValue(SESSION as any);
     vi.mocked(prisma.user.findUnique).mockResolvedValue({
       isFree: false,
-      subscription: { plan: "commercial", status: "active" },
+      subscription: { plan: "studio", status: "active" },
     } as any);
-    vi.mocked(prisma.user.count).mockResolvedValue(3);
-    vi.mocked(prisma.invitation.count).mockResolvedValue(2); // łącznie 5 = limit
+    vi.mocked(prisma.user.count).mockResolvedValue(1);
+    vi.mocked(prisma.invitation.count).mockResolvedValue(1); // łącznie 2 = limit
 
-    const res = await teamInvitePOST(makeRequest("POST", { email: "sixth@example.com" }));
+    const res = await teamInvitePOST(makeRequest("POST", { email: "third@example.com" }));
     expect(res.status).toBe(403);
 
     expect(vi.mocked(prisma.user.count)).toHaveBeenCalledWith({ where: { ownerId: "user-1" } });

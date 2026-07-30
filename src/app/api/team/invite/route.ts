@@ -14,11 +14,16 @@ export async function GET() {
   const [invitations, members, owner] = await Promise.all([
     prisma.invitation.findMany({
       where: { designerId: ownerId, status: "PENDING" },
+      include: { group: { select: { id: true, name: true } } },
       orderBy: { createdAt: "desc" },
     }),
     prisma.user.findMany({
       where: { ownerId },
-      select: { id: true, email: true, name: true, createdAt: true },
+      select: {
+        id: true, email: true, name: true, fullName: true, avatarUrl: true,
+        createdAt: true, systemRole: true,
+        permissionGroups: { include: { group: { select: { id: true, name: true } } } },
+      },
       orderBy: { createdAt: "asc" },
     }),
     prisma.user.findUnique({
@@ -40,7 +45,7 @@ export async function POST(req: NextRequest) {
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const ownerId = getWorkspaceUserId(session);
-  const { email } = await req.json();
+  const { email, groupId } = await req.json();
 
   if (!email || typeof email !== "string") {
     return NextResponse.json({ error: "Podaj adres e-mail" }, { status: 400 });
@@ -98,8 +103,15 @@ export async function POST(req: NextRequest) {
 
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 dni
 
+  // Verify groupId belongs to this workspace (if provided)
+  let resolvedGroupId: string | undefined;
+  if (groupId) {
+    const group = await prisma.permissionGroup.findFirst({ where: { id: groupId, workspaceId: ownerId } });
+    if (group) resolvedGroupId = group.id;
+  }
+
   const invitation = await prisma.invitation.create({
-    data: { email: normalized, designerId: ownerId, expiresAt },
+    data: { email: normalized, designerId: ownerId, expiresAt, groupId: resolvedGroupId },
   });
 
   await sendInvitationEmail({

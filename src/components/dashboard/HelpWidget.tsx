@@ -13,7 +13,7 @@ interface Message {
 interface HelpWidgetProps {
   open: boolean;
   onClose: () => void;
-  initialTab?: "ai" | "contact";
+  initialTab?: "knowledge" | "ai" | "contact";
   initialCategory?: string;
 }
 
@@ -68,7 +68,7 @@ function renderMarkdown(text: string): React.ReactNode[] {
 
 export default function HelpWidget({ open, onClose, initialTab, initialCategory }: HelpWidgetProps) {
   const t = useT();
-  const [activeTab, setActiveTab] = useState<"ai" | "contact">("ai");
+  const [activeTab, setActiveTab] = useState<"knowledge" | "ai" | "contact">("knowledge");
   const [expanded, setExpanded] = useState(false);
 
   // AI tab state
@@ -102,11 +102,11 @@ export default function HelpWidget({ open, onClose, initialTab, initialCategory 
 
   useEffect(() => {
     if (open) {
-      setActiveTab(initialTab ?? "ai");
+      setActiveTab(initialTab ?? "knowledge");
       setHelpSent(false);
       setHelpCategory(initialCategory ?? "");
     }
-  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [open, initialTab, initialCategory]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -184,8 +184,12 @@ export default function HelpWidget({ open, onClose, initialTab, initialCategory 
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-card shrink-0">
         <div className="flex items-center gap-2">
-          <HelpCircle size={16} className="text-primary" />
-          <span className="font-semibold text-sm">Pomoc</span>
+          {activeTab === "ai" ? (
+            <Sparkles size={16} className="text-primary" />
+          ) : (
+            <HelpCircle size={16} className="text-primary" />
+          )}
+          <span className="font-semibold text-sm">{activeTab === "ai" ? "Asystent AI" : "Pomoc"}</span>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={() => setExpanded((e) => !e)} className="text-muted-foreground hover:text-foreground transition-colors" title={expanded ? "Zmniejsz" : "Rozszerz"}>
@@ -197,29 +201,55 @@ export default function HelpWidget({ open, onClose, initialTab, initialCategory 
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex border-b border-border shrink-0">
-        <button
-          onClick={() => setActiveTab("ai")}
-          className={`flex-1 px-4 py-2.5 text-xs font-medium transition-colors ${
-            activeTab === "ai"
-              ? "text-primary border-b-2 border-primary bg-primary/5"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          Asystent AI
-        </button>
-        <button
-          onClick={() => setActiveTab("contact")}
-          className={`flex-1 px-4 py-2.5 text-xs font-medium transition-colors ${
-            activeTab === "contact"
-              ? "text-primary border-b-2 border-primary bg-primary/5"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          Kontakt
-        </button>
-      </div>
+      {/* Tabs — only for Pomoc mode (knowledge + contact) */}
+      {activeTab !== "ai" && (
+        <div className="flex border-b border-border shrink-0">
+          <button
+            onClick={() => setActiveTab("knowledge")}
+            className={`flex-1 px-4 py-2.5 text-xs font-medium transition-colors ${
+              activeTab === "knowledge"
+                ? "text-primary border-b-2 border-primary bg-primary/5"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Baza wiedzy
+          </button>
+          <button
+            onClick={() => setActiveTab("contact")}
+            className={`flex-1 px-4 py-2.5 text-xs font-medium transition-colors ${
+              activeTab === "contact"
+                ? "text-primary border-b-2 border-primary bg-primary/5"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Kontakt
+          </button>
+        </div>
+      )}
+
+      {/* Knowledge Base Tab */}
+      {activeTab === "knowledge" && (
+        <div className="flex flex-col flex-1 min-h-0 overflow-y-auto px-4 py-5 gap-4">
+          <p className="text-sm text-muted-foreground">Znajdź odpowiedzi na najczęstsze pytania dotyczące obsługi platformy.</p>
+          <a
+            href="https://veedeck.com/pomoc/dla-projektantow/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 px-4 py-3 rounded-xl border border-border bg-muted/30 hover:bg-muted/60 transition-colors group"
+          >
+            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+              <HelpCircle size={16} className="text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium">Pomoc dla projektantów</p>
+              <p className="text-xs text-muted-foreground truncate">veedeck.com/pomoc/dla-projektantow</p>
+            </div>
+            <svg className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+            </svg>
+          </a>
+        </div>
+      )}
 
       {/* AI Tab */}
       {activeTab === "ai" && (

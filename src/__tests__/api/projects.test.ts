@@ -9,6 +9,20 @@ vi.mock("@/lib/prisma", () => ({
       findMany: vi.fn(),
       create: vi.fn(),
       findUnique: vi.fn().mockResolvedValue(null), // dla uniqueSlug
+      update: vi.fn(),
+    },
+    projectClient: {
+      create: vi.fn(),
+    },
+    client: {
+      findFirst: vi.fn().mockResolvedValue(null),
+      create: vi.fn().mockResolvedValue({ id: "client-1" }),
+    },
+    groupMember: {
+      findMany: vi.fn().mockResolvedValue([]),
+    },
+    projectAssignment: {
+      findMany: vi.fn().mockResolvedValue([]),
     },
   },
 }));
