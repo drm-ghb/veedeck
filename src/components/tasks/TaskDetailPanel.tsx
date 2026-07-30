@@ -113,11 +113,20 @@ export default function TaskDetailPanel({ task, onClose, onUpdated, isSubTask = 
   const attachmentInputRef = useRef<HTMLInputElement>(null);
 
   const { startUpload, isUploading } = useUploadThing("taskAttachmentUploader", {
-    onClientUploadComplete: (files) => {
-      setPendingAttachments((prev) => [
-        ...prev,
-        ...files.map((f) => ({ fileUrl: f.url, fileName: f.name, fileSize: f.size })),
-      ]);
+    onClientUploadComplete: async (files) => {
+      const newAttachments = files.map((f) => ({ fileUrl: f.url, fileName: f.name, fileSize: f.size }));
+      try {
+        const res = await fetch(`/api/tasks/${task.id}/comments`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ body: "", attachments: newAttachments }),
+        });
+        if (!res.ok) throw new Error();
+        const comment = await res.json();
+        setComments((prev) => [...prev, comment]);
+      } catch {
+        toast.error("Błąd przesyłania pliku");
+      }
     },
     onUploadError: () => { toast.error("Błąd przesyłania pliku"); },
   });
@@ -464,48 +473,8 @@ export default function TaskDetailPanel({ task, onClose, onUpdated, isSubTask = 
                 <Plus size={13} />
               </button>
             </div>
-            {pendingAttachments.length > 0 && (
-              <div className="flex flex-wrap gap-1.5">
-                {pendingAttachments.map((a, i) => (
-                  <div key={i} className="flex items-center gap-1 px-2 py-1 rounded-lg bg-muted text-xs max-w-[180px]">
-                    <FileText size={11} className="shrink-0 text-muted-foreground" />
-                    <span className="truncate">{a.fileName}</span>
-                    <button
-                      type="button"
-                      onClick={() => setPendingAttachments((prev) => prev.filter((_, idx) => idx !== i))}
-                      className="shrink-0 text-muted-foreground hover:text-red-500 transition-colors ml-0.5"
-                    >
-                      <X size={11} />
-                    </button>
-                  </div>
-                ))}
-                <button
-                  type="button"
-                  onClick={async () => {
-                    if (pendingAttachments.length === 0) return;
-                    setSendingComment(true);
-                    try {
-                      const res = await fetch(`/api/tasks/${task.id}/comments`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ body: "", attachments: pendingAttachments }),
-                      });
-                      if (!res.ok) throw new Error();
-                      const comment = await res.json();
-                      setComments((prev) => [...prev, comment]);
-                      setPendingAttachments([]);
-                    } catch {
-                      toast.error(t.tasks.commentError);
-                    } finally {
-                      setSendingComment(false);
-                    }
-                  }}
-                  disabled={sendingComment || isUploading}
-                  className="px-2 py-1 text-xs bg-primary text-primary-foreground rounded-lg hover:opacity-90 disabled:opacity-40 transition-opacity"
-                >
-                  Zapisz
-                </button>
-              </div>
+            {isUploading && (
+              <p className="text-xs text-muted-foreground">Przesyłanie...</p>
             )}
             {comments.flatMap(c => c.attachments ?? []).length > 0 ? (
               <div className="flex flex-col gap-1">
