@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useT } from "@/lib/i18n";
@@ -273,6 +274,8 @@ export default function TasksView() {
   const [members, setMembers] = useState<User[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [dragActiveId, setDragActiveId] = useState<string | null>(null);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+  const addTaskTriggerRef = useRef<HTMLButtonElement>(null);
   const dndSensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
   );
@@ -298,6 +301,18 @@ export default function TasksView() {
   useEffect(() => {
     fetch("/api/task-statuses").then((r) => r.json()).then(setStatuses).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (!contextMenu) return;
+    function close() { setContextMenu(null); }
+    function onKey(e: KeyboardEvent) { if (e.key === "Escape") close(); }
+    document.addEventListener("mousedown", close);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", close);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [contextMenu]);
 
   useEffect(() => {
     if (!search) return;
@@ -745,8 +760,17 @@ export default function TasksView() {
     );
   }
 
+  function handleContextMenu(e: React.MouseEvent) {
+    e.preventDefault();
+    const target = e.target as HTMLElement;
+    if (target.closest('a, button, [role="button"], input, textarea')) return;
+    const x = Math.min(e.clientX + 2, window.innerWidth - 220);
+    const y = Math.min(e.clientY + 2, window.innerHeight - 80);
+    setContextMenu({ x, y });
+  }
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" onContextMenu={handleContextMenu}>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -998,6 +1022,33 @@ export default function TasksView() {
           onClose={() => { setSelectedTask(null); setSelectedTaskParent(null); setSelectedTaskIsSubTask(false); }}
           onUpdated={() => { fetchTasks(); router.refresh(); }}
         />
+      )}
+
+      {/* Hidden trigger for context menu */}
+      {!expired && (
+        <AddTaskDialog
+          trigger={<button ref={addTaskTriggerRef} className="hidden" />}
+          statusOptions={statusOptions}
+          onCreated={() => { fetchTasks(); router.refresh(); }}
+        />
+      )}
+
+      {/* Context menu portal */}
+      {typeof window !== "undefined" && contextMenu && createPortal(
+        <div
+          onMouseDown={(e) => e.stopPropagation()}
+          style={{ left: contextMenu.x, top: contextMenu.y }}
+          className="fixed z-[150] bg-popover border border-border rounded-lg shadow-lg py-1 min-w-[200px] overflow-hidden"
+        >
+          <button
+            className="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors text-left"
+            onClick={() => { setContextMenu(null); addTaskTriggerRef.current?.click(); }}
+          >
+            <Plus size={14} className="text-muted-foreground shrink-0" />
+            {t.tasks.addTask}
+          </button>
+        </div>,
+        document.body
       )}
     </div>
   );

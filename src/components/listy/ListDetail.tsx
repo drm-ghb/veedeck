@@ -837,7 +837,7 @@ function ProductRow({
                     </div>
                   )}
                 </div>
-                {qty > 1 && unitPrice !== null && <p className="text-xs text-muted-foreground tabular-nums">{formatPriceNum(unitPrice)} / szt.</p>}
+                {qty > 1 && unitPrice !== null && <p className="text-xs text-muted-foreground tabular-nums">{formatPriceNum(unitPrice)} zł / szt.</p>}
               </>
             ) : (
               <button
@@ -984,7 +984,7 @@ function ProductRow({
                   </button>
                   {product.productId && <AlertCircle size={14} className="text-red-500 cursor-default shrink-0" />}
                 </div>
-                {qty > 1 && unitPrice !== null && <p className="text-xs text-muted-foreground tabular-nums text-right">{formatPriceNum(unitPrice)} / szt.</p>}
+                {qty > 1 && unitPrice !== null && <p className="text-xs text-muted-foreground tabular-nums text-right">{formatPriceNum(unitPrice)} zł / szt.</p>}
               </div>
             ) : (
               <button

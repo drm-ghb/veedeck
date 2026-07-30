@@ -380,7 +380,7 @@ export default function TaskDetailPanel({ task, onClose, onUpdated, isSubTask = 
               />
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{t.tasks.clientLabel}</label>
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Projekt</label>
               <TaskSelectField
                 value={projectId}
                 onChange={(v) => { setProjectId(v); patch({ projectId: v || null }); }}
@@ -450,11 +450,89 @@ export default function TaskDetailPanel({ task, onClose, onUpdated, isSubTask = 
             )}
           </div>}
 
+          {/* Zalaczniki */}
+          <div className="space-y-2 border-t border-border pt-4">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium">{t.tasks.attachmentsLabel} ({comments.flatMap(c => c.attachments ?? []).length})</p>
+              <button
+                type="button"
+                onClick={() => attachmentInputRef.current?.click()}
+                disabled={isUploading}
+                className="w-6 h-6 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-foreground disabled:opacity-40 transition-colors"
+                title="Dodaj za\u0142\u0105cznik"
+              >
+                <Plus size={13} />
+              </button>
+            </div>
+            {pendingAttachments.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {pendingAttachments.map((a, i) => (
+                  <div key={i} className="flex items-center gap-1 px-2 py-1 rounded-lg bg-muted text-xs max-w-[180px]">
+                    <FileText size={11} className="shrink-0 text-muted-foreground" />
+                    <span className="truncate">{a.fileName}</span>
+                    <button
+                      type="button"
+                      onClick={() => setPendingAttachments((prev) => prev.filter((_, idx) => idx !== i))}
+                      className="shrink-0 text-muted-foreground hover:text-red-500 transition-colors ml-0.5"
+                    >
+                      <X size={11} />
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (pendingAttachments.length === 0) return;
+                    setSendingComment(true);
+                    try {
+                      const res = await fetch(`/api/tasks/${task.id}/comments`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ body: "", attachments: pendingAttachments }),
+                      });
+                      if (!res.ok) throw new Error();
+                      const comment = await res.json();
+                      setComments((prev) => [...prev, comment]);
+                      setPendingAttachments([]);
+                    } catch {
+                      toast.error(t.tasks.commentError);
+                    } finally {
+                      setSendingComment(false);
+                    }
+                  }}
+                  disabled={sendingComment || isUploading}
+                  className="px-2 py-1 text-xs bg-primary text-primary-foreground rounded-lg hover:opacity-90 disabled:opacity-40 transition-opacity"
+                >
+                  Zapisz
+                </button>
+              </div>
+            )}
+            {comments.flatMap(c => c.attachments ?? []).length > 0 ? (
+              <div className="flex flex-col gap-1">
+                {comments.flatMap(c => c.attachments ?? []).map((a) => (
+                  <a
+                    key={a.id}
+                    href={a.fileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline max-w-full"
+                  >
+                    <FileText size={12} className="shrink-0" />
+                    <span className="truncate">{a.fileName}</span>
+                    <Download size={11} className="shrink-0 text-muted-foreground" />
+                  </a>
+                ))}
+              </div>
+            ) : pendingAttachments.length === 0 && (
+              <p className="text-xs text-muted-foreground">Brak za\u0142\u0105cznik\u00f3w.</p>
+            )}
+          </div>
+
           {/* Komentarze */}
           <div className="space-y-3 border-t border-border pt-4">
-            <p className="text-sm font-medium">{t.tasks.commentsLabel} ({comments.length})</p>
+            <p className="text-sm font-medium">{t.tasks.commentsLabel} ({comments.filter(c => c.body.trim()).length})</p>
 
-            {comments.map((c) => (
+            {comments.filter(c => c.body.trim()).map((c) => (
               <div key={c.id} className="flex gap-3">
                 <div className="w-7 h-7 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-semibold shrink-0 overflow-hidden">
                   {c.author.avatarUrl
@@ -467,29 +545,12 @@ export default function TaskDetailPanel({ task, onClose, onUpdated, isSubTask = 
                     <span className="text-sm font-medium">{userDisplayName(c.author)}</span>
                     <span className="text-xs text-muted-foreground">{new Date(c.createdAt).toLocaleDateString("pl-PL")}</span>
                   </div>
-                  {c.body && <p className="text-sm text-foreground whitespace-pre-wrap">{c.body}</p>}
-                  {c.attachments?.length > 0 && (
-                    <div className="mt-1.5 flex flex-col gap-1">
-                      {c.attachments.map((a) => (
-                        <a
-                          key={a.id}
-                          href={a.fileUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline max-w-full"
-                        >
-                          <FileText size={12} className="shrink-0" />
-                          <span className="truncate">{a.fileName}</span>
-                          <Download size={11} className="shrink-0 text-muted-foreground" />
-                        </a>
-                      ))}
-                    </div>
-                  )}
+                  <p className="text-sm text-foreground whitespace-pre-wrap">{c.body}</p>
                 </div>
               </div>
             ))}
 
-            {comments.length === 0 && (
+            {comments.filter(c => c.body.trim()).length === 0 && (
               <p className="text-sm text-muted-foreground">{t.tasks.noComments}</p>
             )}
           </div>
@@ -497,23 +558,6 @@ export default function TaskDetailPanel({ task, onClose, onUpdated, isSubTask = 
 
         {/* Pole komentarza (Messenger style) */}
         <div className="px-4 py-3 border-t border-border shrink-0">
-          {pendingAttachments.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mb-2">
-              {pendingAttachments.map((a, i) => (
-                <div key={i} className="flex items-center gap-1 px-2 py-1 rounded-lg bg-muted text-xs max-w-[180px]">
-                  <FileText size={11} className="shrink-0 text-muted-foreground" />
-                  <span className="truncate">{a.fileName}</span>
-                  <button
-                    type="button"
-                    onClick={() => setPendingAttachments((prev) => prev.filter((_, idx) => idx !== i))}
-                    className="shrink-0 text-muted-foreground hover:text-red-500 transition-colors ml-0.5"
-                  >
-                    <X size={11} />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
           <div className="flex items-end gap-2">
             <input
               ref={attachmentInputRef}

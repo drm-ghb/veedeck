@@ -512,6 +512,7 @@ export default function DashboardView({
   const [actingOn, setActingOn] = useState<string | null>(null);
 
   const [viewedMessageIds, setViewedMessageIds] = useState<Set<string>>(new Set());
+  const [doneTaskIds, setDoneTaskIds] = useState<Set<string>>(new Set());
 
   // Filter to client's local "today" (server sends ±1 day to cover all timezones)
   const localToday = new Date();
@@ -568,7 +569,7 @@ export default function DashboardView({
   }
 
   const priorityOrder = { HIGH: 0, MEDIUM: 1, LOW: 2 };
-  const sortedTasks = [...dueTasks].sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
+  const sortedTasks = [...dueTasks].filter((t) => !doneTaskIds.has(t.id)).sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
 
   const taskCount = sortedTasks.length;
   const visiblePins = pins.filter((p) => !viewedPinIds.has(p.id));
@@ -925,20 +926,40 @@ export default function DashboardView({
                   const isToday = due && due.getFullYear() === todayDate.getFullYear() && due.getMonth() === todayDate.getMonth() && due.getDate() === todayDate.getDate();
                   const isOverdue = due && due < todayDate && !isToday;
                   return (
-                    <Link key={task.id} href="/zadania" className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors">
-                      <div className="w-8 h-8 rounded-lg bg-violet-100 dark:bg-violet-900/40 flex items-center justify-center shrink-0">
-                        <CheckSquare size={15} className="text-violet-600 dark:text-violet-400" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium truncate">{task.title}</p>
-                        <p className="text-xs text-muted-foreground truncate">{task.projectTitle ? `${task.projectTitle} · ` : ""}Zadanie</p>
-                      </div>
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        {task.priority === "HIGH" && <span className="text-xs font-medium px-1.5 py-0.5 rounded-md bg-red-100 text-red-600 dark:bg-red-950/40 dark:text-red-400">{t.tasks.priorityHigh}</span>}
-                        {task.priority === "MEDIUM" && <span className="text-xs font-medium px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400">{t.tasks.priorityMedium}</span>}
-                        {due && (isToday || isOverdue) && <span className="text-xs font-medium px-1.5 py-0.5 rounded-md bg-red-100 text-red-600 dark:bg-red-950/40 dark:text-red-400">{due.toLocaleDateString("pl-PL", { day: "numeric", month: "short" })}</span>}
-                      </div>
-                    </Link>
+                    <div key={task.id} className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors">
+                      <Link href="/zadania" className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className="w-8 h-8 rounded-lg bg-violet-100 dark:bg-violet-900/40 flex items-center justify-center shrink-0">
+                          <CheckSquare size={15} className="text-violet-600 dark:text-violet-400" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium truncate">{task.title}</p>
+                          <p className="text-xs text-muted-foreground truncate">{task.projectTitle ? `${task.projectTitle} · ` : ""}Zadanie</p>
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          {task.priority === "HIGH" && <span className="text-xs font-medium px-1.5 py-0.5 rounded-md bg-red-100 text-red-600 dark:bg-red-950/40 dark:text-red-400">{t.tasks.priorityHigh}</span>}
+                          {task.priority === "MEDIUM" && <span className="text-xs font-medium px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400">{t.tasks.priorityMedium}</span>}
+                          {due && (isToday || isOverdue) && <span className="text-xs font-medium px-1.5 py-0.5 rounded-md bg-red-100 text-red-600 dark:bg-red-950/40 dark:text-red-400">{due.toLocaleDateString("pl-PL", { day: "numeric", month: "short" })}</span>}
+                        </div>
+                      </Link>
+                      <button
+                        title="Oznacz jako zrobione"
+                        onClick={async () => {
+                          setDoneTaskIds((prev) => new Set([...prev, task.id]));
+                          try {
+                            await fetch(`/api/tasks/${task.id}`, {
+                              method: "PATCH",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ status: "DONE" }),
+                            });
+                          } catch {
+                            setDoneTaskIds((prev) => { const n = new Set(prev); n.delete(task.id); return n; });
+                          }
+                        }}
+                        className="shrink-0 w-7 h-7 rounded-full border-2 border-border hover:border-green-500 hover:bg-green-50 dark:hover:bg-green-950/30 flex items-center justify-center text-transparent hover:text-green-500 transition-all group"
+                      >
+                        <Check size={13} />
+                      </button>
+                    </div>
                   );
                 })}
               </div>
