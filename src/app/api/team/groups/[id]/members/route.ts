@@ -3,9 +3,10 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getWorkspaceUserId } from "@/lib/workspace";
 
-function isAdmin(session: Awaited<ReturnType<typeof auth>>) {
-  if (!session) return false;
-  const user = session.user as any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function isAdmin(session: any) {
+  if (!session?.user) return false;
+  const user = session.user;
   return !user.ownerId || user.systemRole === "admin";
 }
 
