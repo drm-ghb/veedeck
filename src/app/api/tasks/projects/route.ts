@@ -13,7 +13,7 @@ export async function GET() {
   const ownerId = getWorkspaceUserId(session);
 
   const projects = await prisma.project.findMany({
-    where: { userId: ownerId, archived: false },
+    where: { userId: ownerId, archived: false, modules: { has: "renderflow" } },
     select: { id: true, title: true },
     orderBy: { title: "asc" },
   });
