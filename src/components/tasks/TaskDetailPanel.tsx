@@ -292,7 +292,7 @@ export default function TaskDetailPanel({ task, onClose, onUpdated, isSubTask = 
     <>
     <div className="fixed inset-x-0 bottom-0 top-[57px] z-40">
       <div className="absolute inset-0 bg-black/30" onClick={onClose} />
-      <div className="absolute right-0 top-0 bottom-0 w-full max-w-xl bg-background border border-border flex flex-col overflow-hidden shadow-xl rounded-l-2xl">
+      <div className="absolute right-0 top-0 bottom-0 w-full max-w-xl bg-background border-t border-l border-border flex flex-col overflow-hidden shadow-xl rounded-tl-2xl">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-border shrink-0">
           <div className="flex items-center gap-2 min-w-0">

@@ -291,6 +291,10 @@ export default async function DashboardPage() {
           status: true,
           priority: true,
           project: { select: { title: true } },
+          subTasks: {
+            where: { status: { not: "DONE" }, priority: { not: "LOW" } },
+            select: { id: true, title: true, dueDate: true, status: true, priority: true },
+          },
         },
         orderBy: [{ priority: "desc" }, { createdAt: "asc" }],
         take: 20,
@@ -441,14 +445,30 @@ export default async function DashboardPage() {
         listName: c.product.section.list.name,
         listSlug: c.product.section.list.slug,
       }))}
-      dueTasks={dueTasks.map((t) => ({
-        id: t.id,
-        title: t.title,
-        dueDate: t.dueDate?.toISOString() ?? null,
-        status: t.status,
-        priority: t.priority,
-        projectTitle: t.project?.title ?? null,
-      }))}
+      dueTasks={[
+        ...dueTasks.map((t) => ({
+          id: t.id,
+          title: t.title,
+          dueDate: t.dueDate?.toISOString() ?? null,
+          status: t.status,
+          priority: t.priority as "LOW" | "MEDIUM" | "HIGH",
+          projectTitle: t.project?.title ?? null,
+          isSubTask: false,
+          parentTitle: null as string | null,
+        })),
+        ...dueTasks.flatMap((t) =>
+          (t.subTasks ?? []).map((s) => ({
+            id: s.id,
+            title: s.title,
+            dueDate: s.dueDate?.toISOString() ?? null,
+            status: s.status,
+            priority: s.priority as "LOW" | "MEDIUM" | "HIGH",
+            projectTitle: t.project?.title ?? null,
+            isSubTask: true,
+            parentTitle: t.title,
+          }))
+        ),
+      ]}
     />
   );
 }

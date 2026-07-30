@@ -538,7 +538,7 @@ export default function TasksView() {
       <tr
         key={task.id}
         onClick={() => { setSelectedTask(task); setSelectedTaskIsSubTask(isSubTask); }}
-        className={`border-b border-border/50 hover:bg-muted/30 transition-colors group cursor-pointer ${isSubTask ? "bg-muted/10" : ""} ${task.status === "DONE" ? "opacity-40" : ""}`}
+        className={`border-b border-border/50 hover:bg-muted/30 transition-colors group cursor-pointer ${isSubTask ? "bg-muted/10" : ""} ${task.status === "DONE" ? "opacity-40 hover:opacity-100" : ""}`}
       >
         {/* Nazwa */}
         <td className="px-4 py-2.5">

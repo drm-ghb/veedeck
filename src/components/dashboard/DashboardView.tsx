@@ -181,6 +181,8 @@ interface DueTask {
   status: string;
   priority: "LOW" | "MEDIUM" | "HIGH";
   projectTitle: string | null;
+  isSubTask?: boolean;
+  parentTitle?: string | null;
 }
 
 interface DashboardViewProps {
@@ -933,7 +935,10 @@ export default function DashboardView({
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="text-sm font-medium truncate">{task.title}</p>
-                          <p className="text-xs text-muted-foreground truncate">{task.projectTitle ? `${task.projectTitle} · ` : ""}Zadanie</p>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {task.projectTitle ? `${task.projectTitle} · ` : ""}
+                            {task.isSubTask ? `Podzadanie${task.parentTitle ? ` · ${task.parentTitle}` : ""}` : "Zadanie"}
+                          </p>
                         </div>
                         <div className="flex items-center gap-1.5 shrink-0">
                           {task.priority === "HIGH" && <span className="text-xs font-medium px-1.5 py-0.5 rounded-md bg-red-100 text-red-600 dark:bg-red-950/40 dark:text-red-400">{t.tasks.priorityHigh}</span>}
@@ -955,9 +960,9 @@ export default function DashboardView({
                             setDoneTaskIds((prev) => { const n = new Set(prev); n.delete(task.id); return n; });
                           }
                         }}
-                        className="shrink-0 w-7 h-7 rounded-full border-2 border-border hover:border-green-500 hover:bg-green-50 dark:hover:bg-green-950/30 flex items-center justify-center text-transparent hover:text-green-500 transition-all group"
+                        className="shrink-0 w-5 h-5 rounded-full border border-border hover:border-green-500 hover:bg-green-50 dark:hover:bg-green-950/30 flex items-center justify-center text-transparent hover:text-green-500 transition-all group"
                       >
-                        <Check size={13} />
+                        <Check size={10} />
                       </button>
                     </div>
                   );

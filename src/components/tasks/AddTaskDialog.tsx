@@ -150,7 +150,7 @@ export default function AddTaskDialog({ trigger, parentId, onCreated, statusOpti
       {open && (
         <div className="fixed inset-0 z-40">
           <div className="absolute inset-0 bg-black/30" onClick={close} />
-          <div className="absolute right-0 top-0 bottom-0 w-full max-w-md bg-background border border-border flex flex-col shadow-xl rounded-l-2xl overflow-hidden">
+          <div className="absolute right-0 top-[57px] bottom-0 w-full max-w-md bg-background border-t border-l border-border flex flex-col shadow-xl rounded-tl-2xl overflow-hidden">
             {/* Header */}
             <div className="flex items-center justify-between px-5 py-4 border-b border-border shrink-0">
               <h2 className="text-base font-semibold">
