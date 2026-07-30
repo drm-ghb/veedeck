@@ -386,6 +386,11 @@ export default function TasksView() {
 
   const sortTasks = useCallback((list: Task[]) => {
     return [...list].sort((a, b) => {
+      // Done tasks always go last regardless of sort field
+      const aDone = a.status === "DONE";
+      const bDone = b.status === "DONE";
+      if (aDone !== bDone) return aDone ? 1 : -1;
+
       let cmp = 0;
       if (sortField === "title") cmp = a.title.localeCompare(b.title);
       else if (sortField === "status") cmp = (statusOrder[a.status] ?? 99) - (statusOrder[b.status] ?? 99);
@@ -533,7 +538,7 @@ export default function TasksView() {
       <tr
         key={task.id}
         onClick={() => { setSelectedTask(task); setSelectedTaskIsSubTask(isSubTask); }}
-        className={`border-b border-border/50 hover:bg-muted/30 transition-colors group cursor-pointer ${isSubTask ? "bg-muted/10" : ""} ${isSubTask && task.status === "DONE" ? "opacity-40" : ""}`}
+        className={`border-b border-border/50 hover:bg-muted/30 transition-colors group cursor-pointer ${isSubTask ? "bg-muted/10" : ""} ${task.status === "DONE" ? "opacity-40" : ""}`}
       >
         {/* Nazwa */}
         <td className="px-4 py-2.5">
@@ -745,7 +750,7 @@ export default function TasksView() {
         </td>
       </tr>,
       ...(hasSubTasks && isExpanded
-        ? subTasks.flatMap((sub) => renderTableRow(sub as Task, true))
+        ? [...subTasks].sort((a, b) => (a.status === "DONE" ? 1 : 0) - (b.status === "DONE" ? 1 : 0)).flatMap((sub) => renderTableRow(sub as Task, true))
         : []),
     ];
   }
