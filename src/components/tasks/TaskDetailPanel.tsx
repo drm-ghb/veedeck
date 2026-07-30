@@ -124,6 +124,7 @@ export default function TaskDetailPanel({ task, onClose, onUpdated, isSubTask = 
         if (!res.ok) throw new Error();
         const comment = await res.json();
         setComments((prev) => [...prev, comment]);
+        onUpdated();
       } catch {
         toast.error("Błąd przesyłania pliku");
       }
@@ -229,6 +230,7 @@ export default function TaskDetailPanel({ task, onClose, onUpdated, isSubTask = 
       setComments((prev) => [...prev, comment]);
       setCommentBody("");
       setPendingAttachments([]);
+      onUpdated();
     } catch {
       toast.error(t.tasks.commentError);
     } finally {
