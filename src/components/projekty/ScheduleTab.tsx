@@ -213,6 +213,7 @@ function SortableItemRow({
           {editingName ? (
             <div className="flex items-center gap-1">
               <Input value={nameVal} onChange={(e) => setNameVal(e.target.value)}
+                onBlur={saveName}
                 onKeyDown={(e) => { if (e.key === "Enter") saveName(); if (e.key === "Escape") { setNameVal(item.name); setEditingName(false); } }}
                 className="h-6 text-sm font-semibold py-0 px-1.5" autoFocus />
               <button onClick={saveName} className="text-green-600"><Check size={14} /></button>
@@ -276,6 +277,7 @@ function SortableItemRow({
             <Input
               value={nameVal}
               onChange={(e) => setNameVal(e.target.value)}
+              onBlur={saveName}
               onKeyDown={(e) => { if (e.key === "Enter") saveName(); if (e.key === "Escape") { setNameVal(item.name); setEditingName(false); } }}
               className="h-6 text-sm py-0 px-1.5"
               autoFocus
@@ -300,6 +302,7 @@ function SortableItemRow({
               onChange={(e) => setDescVal(e.target.value)}
               placeholder={t.schedule.descriptionPlaceholder}
               rows={2}
+              onBlur={saveDesc}
               className="w-full text-xs px-2 py-1 border border-border rounded-md bg-background resize-none focus:outline-none focus:ring-1 focus:ring-primary/30"
             />
             <div className="flex gap-1">
@@ -411,6 +414,20 @@ function SortablePhaseRow({
     setNewItemName(""); setNewItemStartDate(""); setNewItemEndDate(""); setAddingItem(false);
   }
 
+  async function submitNewItem(type: "section" | "item" | false, name: string, startDate: string, endDate: string) {
+    if (!name.trim() || !type) { resetAddingItem(); return; }
+    setSavingItem(true);
+    await onAddItem({
+      phaseId: phase.id,
+      name: name.trim(),
+      startDate: type === "item" ? (startDate || null) : null,
+      endDate: type === "item" ? (endDate || null) : null,
+      isSection: type === "section",
+    });
+    setSavingItem(false);
+    resetAddingItem();
+  }
+
   const itemIds = phase.items.map((i) => i.id);
   const doneCount = phase.items.filter((i) => i.done && !i.isSection).length;
   const totalCount = phase.items.filter((i) => !i.isSection).length;
@@ -471,12 +488,19 @@ function SortablePhaseRow({
 
           {/* Add item/section inline form */}
           {addingItem ? (
-            <div className="flex flex-wrap items-center gap-2 py-1.5 pl-[3.25rem] pr-3">
+            <div
+              className="flex flex-wrap items-center gap-2 py-1.5 pl-[3.25rem] pr-3"
+              onBlur={(e) => {
+                if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                  submitNewItem(addingItem, newItemName, newItemStartDate, newItemEndDate);
+                }
+              }}
+            >
               <Input
                 ref={newItemRef}
                 value={newItemName}
                 onChange={(e) => setNewItemName(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Escape") resetAddingItem(); }}
+                onKeyDown={(e) => { if (e.key === "Enter") submitNewItem(addingItem, newItemName, newItemStartDate, newItemEndDate); if (e.key === "Escape") resetAddingItem(); }}
                 placeholder={addingItem === "section" ? t.schedule.sectionNamePlaceholder : t.schedule.actionNamePlaceholder}
                 className="h-7 text-sm min-w-[160px] flex-1"
               />
@@ -488,19 +512,7 @@ function SortablePhaseRow({
                 </>
               )}
               <button
-                onClick={async () => {
-                  if (!newItemName.trim()) return;
-                  setSavingItem(true);
-                  await onAddItem({
-                    phaseId: phase.id,
-                    name: newItemName.trim(),
-                    startDate: addingItem === "item" ? (newItemStartDate || null) : null,
-                    endDate: addingItem === "item" ? (newItemEndDate || null) : null,
-                    isSection: addingItem === "section",
-                  });
-                  setSavingItem(false);
-                  resetAddingItem();
-                }}
+                onClick={() => submitNewItem(addingItem, newItemName, newItemStartDate, newItemEndDate)}
                 disabled={!newItemName.trim() || savingItem}
                 className="flex-shrink-0 text-sm font-medium text-primary hover:underline disabled:opacity-40"
               >
@@ -611,7 +623,7 @@ function NewScheduleDialog({
 
         {!rfProjectId && (
           <div className="space-y-2">
-            <label className="text-sm font-medium">{t.schedule.projectLabel}</label>
+            <label className="text-sm font-medium">Nazwa</label>
             <Input
               value={customName}
               onChange={(e) => setCustomName(e.target.value)}
@@ -647,7 +659,7 @@ export function ScheduleTab({ clientId, projectId, scheduleSharedWithClient: ini
   const [rfProjects, setRfProjects] = useState<RfProject[]>([]);
   const [loading, setLoading] = useState(true);
   const [sharedByProject, setSharedByProject] = useState<Record<string, boolean>>(() =>
-    initialShared && projectId ? { [projectId]: initialShared } : {}
+    projectId ? { [projectId]: initialShared } : {}
   );
   const [sharingAll, setSharingAll] = useState(false);
   const [dndActiveId, setDndActiveId] = useState<string | null>(null);
@@ -714,15 +726,17 @@ export function ScheduleTab({ clientId, projectId, scheduleSharedWithClient: ini
   // ── Share toggle ───────────────────────────────────────────────────────
 
   async function handleToggleShareAll() {
-    const rfProjectIds = phases
+    const linkedIds = phases
       .map((p) => p.rfProjectId)
       .filter(Boolean)
       .filter((v, i, arr) => arr.indexOf(v) === i) as string[];
-    if (rfProjectIds.length === 0) return;
+    // If no phases are linked to rfProjects, use the current projectId
+    const idsToToggle = linkedIds.length > 0 ? linkedIds : (projectId ? [projectId] : []);
+    if (idsToToggle.length === 0) return;
     const newShared = !allShared;
     setSharingAll(true);
-    for (const rfProjectId of rfProjectIds) {
-      await fetch(`/api/projects/${rfProjectId}/schedule-share`, {
+    for (const id of idsToToggle) {
+      await fetch(`/api/projects/${id}/schedule-share`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ shared: newShared }),
@@ -731,7 +745,7 @@ export function ScheduleTab({ clientId, projectId, scheduleSharedWithClient: ini
     setSharingAll(false);
     setSharedByProject((prev) => {
       const map = { ...prev };
-      for (const id of rfProjectIds) map[id] = newShared;
+      for (const id of idsToToggle) map[id] = newShared;
       return map;
     });
     toast.success(newShared ? t.schedule.sharedSuccess : t.schedule.hiddenSuccess);
@@ -882,13 +896,14 @@ export function ScheduleTab({ clientId, projectId, scheduleSharedWithClient: ini
   const phaseIds = phases.map((p) => p.id);
   const activePhase = dndActiveId ? phases.find((p) => p.id === dndActiveId) : null;
   const rfProjectIds = phases.map((p) => p.rfProjectId).filter(Boolean).filter((v, i, arr) => arr.indexOf(v) === i) as string[];
-  const allShared = rfProjectIds.length > 0 && rfProjectIds.every((id) => sharedByProject[id] ?? false);
+  const sharingIds = rfProjectIds.length > 0 ? rfProjectIds : (projectId ? [projectId] : []);
+  const allShared = sharingIds.length > 0 && sharingIds.every((id) => sharedByProject[id] ?? false);
 
   return (
     <div className="space-y-4">
       {/* Top bar */}
       <div className="flex items-center justify-end gap-2 flex-wrap">
-        {rfProjectIds.length > 0 && (
+        {(phases.length > 0 && sharingIds.length > 0) && (
           <button
             onClick={handleToggleShareAll}
             disabled={sharingAll}

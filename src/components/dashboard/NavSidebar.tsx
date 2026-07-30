@@ -271,7 +271,8 @@ export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userI
   return (
     <>
     <aside className={`hidden md:flex flex-col flex-shrink-0 h-full ${mounted ? "transition-all duration-200" : ""} ${isCollapsed ? "w-14" : "w-60"}`} style={{ backgroundColor: 'var(--sidebar)', color: 'var(--sidebar-foreground)' }}>
-      <nav className="sidebar-nav flex-1 p-2 space-y-0.5 overflow-y-auto">
+      <div className="relative flex-1 min-h-0">
+      <nav className="sidebar-nav h-full p-2 space-y-0.5 overflow-y-auto">
         {visible.map((item) => {
           const active = pathname === item.href || pathname.startsWith(item.href + "/") || item.matchPrefixes.some((p) => pathname.startsWith(p));
           const badge = item.badge > 0 ? item.badge : null;
@@ -313,6 +314,8 @@ export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userI
           );
         })}
       </nav>
+      <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-14 bg-gradient-to-t from-[var(--sidebar)] to-transparent" />
+      </div>
 
       {isAdmin && (
         <div className="px-2 pb-1">

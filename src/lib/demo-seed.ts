@@ -493,7 +493,7 @@ async function seedDemoData(userId: string) {
     });
     if (taskData.subTasks?.length > 0) {
       await prisma.task.createMany({
-        data: taskData.subTasks.map((sub) => ({
+        data: taskData.subTasks.map((sub: any) => ({
           title: sub.title,
           description: sub.description ?? null,
           status: sub.status as any,

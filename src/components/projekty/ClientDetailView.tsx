@@ -65,6 +65,8 @@ interface Contact {
   isDecisionMaker: boolean;
   createdAt: string;
   userId: string | null;
+  projectId: string;
+  scheduleSharedWithClient: boolean;
   user: { id: string; login: string; email?: string | null; firstLoginAt?: string | null } | null;
 }
 
@@ -989,7 +991,8 @@ export default function ClientDetailView({ client: initialClient }: Props) {
         mainContact ? (
           <ScheduleTab
             clientId={mainContact.id}
-            scheduleSharedWithClient={false}
+            projectId={mainContact.projectId}
+            scheduleSharedWithClient={mainContact.scheduleSharedWithClient}
           />
         ) : (
           <div className="bg-card border border-border rounded-xl p-10 text-center text-muted-foreground">
