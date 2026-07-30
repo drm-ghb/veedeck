@@ -459,7 +459,7 @@ export default function TaskDetailPanel({ task, onClose, onUpdated, isSubTask = 
                 onClick={() => attachmentInputRef.current?.click()}
                 disabled={isUploading}
                 className="w-6 h-6 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-foreground disabled:opacity-40 transition-colors"
-                title="Dodaj za\u0142\u0105cznik"
+                title="Dodaj załącznik"
               >
                 <Plus size={13} />
               </button>
@@ -524,7 +524,7 @@ export default function TaskDetailPanel({ task, onClose, onUpdated, isSubTask = 
                 ))}
               </div>
             ) : pendingAttachments.length === 0 && (
-              <p className="text-xs text-muted-foreground">Brak za\u0142\u0105cznik\u00f3w.</p>
+              <p className="text-xs text-muted-foreground">Brak załączników.</p>
             )}
           </div>
 
