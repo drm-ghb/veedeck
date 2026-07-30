@@ -2,6 +2,7 @@ import { prisma } from "./prisma";
 import bcrypt from "bcryptjs";
 import demoListsData from "./demo-lists-data.json";
 import demoProductsData from "./demo-products-data.json";
+import snapshot from "./demo-snapshot.json";
 
 export const DEMO_EMAIL = "d.rychlik@veedeck.com";
 
@@ -461,26 +462,50 @@ async function seedDemoData(userId: string) {
     }),
   ]);
 
+  // ─── LOOKUP MAPS ──────────────────────────────────────────────────────────
+  const projectByTitle: Record<string, string> = Object.fromEntries(
+    [project1, project2, project3, project4, project5].map((p) => [p.title, p.id])
+  );
+  const memberByEmail: Record<string, string> = {
+    [DEMO_EMAIL]: userId,
+    "anna.kowalska@demo.veedeck.com": anna.id,
+    "piotr.wisniewski@demo.veedeck.com": piotr.id,
+    "marta.zielinska@demo.veedeck.com": marta.id,
+  };
+
   // ─── TASKS ────────────────────────────────────────────────────────────────
-  await prisma.task.createMany({
-    data: [
-      { title: "Przygotować moodboard dla salonu Nowak", status: "DONE", priority: "HIGH", projectId: project1.id, creatorId: userId, assigneeId: anna.id, ownerId: userId, dueDate: new Date("2025-08-01") },
-      { title: "Zamówić próbki tkanin do sypialni – Nowak", status: "IN_PROGRESS", priority: "MEDIUM", projectId: project1.id, creatorId: userId, assigneeId: userId, ownerId: userId, dueDate: new Date("2025-09-15") },
-      { title: "Wysłać wizualizacje kuchni do akceptacji", status: "TODO", priority: "HIGH", projectId: project1.id, creatorId: userId, assigneeId: piotr.id, ownerId: userId, dueDate: new Date("2025-09-30") },
-      { title: "Skontaktować się z hydraulikiem – łazienka Nowak", status: "TODO", priority: "MEDIUM", projectId: project1.id, creatorId: userId, assigneeId: userId, ownerId: userId, dueDate: new Date("2025-10-05") },
-      { title: "Opracować schemat oświetlenia – dom Wiśniewskich", status: "IN_PROGRESS", priority: "HIGH", projectId: project2.id, creatorId: userId, assigneeId: anna.id, ownerId: userId, dueDate: new Date("2025-09-20") },
-      { title: "Wizualizacja garderoby – Wiśniewscy", status: "TODO", priority: "LOW", projectId: project2.id, creatorId: userId, assigneeId: marta.id, ownerId: userId, dueDate: new Date("2025-10-10") },
-      { title: "Dobór płytek łazienkowych – Wiśniewscy", status: "DONE", priority: "MEDIUM", projectId: project2.id, creatorId: userId, assigneeId: piotr.id, ownerId: userId },
-      { title: "Wycena mebli na zamówienie – Kowalski", status: "IN_PROGRESS", priority: "HIGH", projectId: project3.id, creatorId: userId, assigneeId: userId, ownerId: userId, dueDate: new Date("2025-09-25") },
-      { title: "Zaprojektować układ gniazdek – Kowalski", status: "TODO", priority: "MEDIUM", projectId: project3.id, creatorId: userId, assigneeId: anna.id, ownerId: userId },
-      { title: "Przygotować listę zakupową – Kowalski", status: "TODO", priority: "LOW", projectId: project3.id, creatorId: userId, assigneeId: marta.id, ownerId: userId, dueDate: new Date("2025-10-01") },
-      { title: "Projekt systemu akustycznego – Grabowska", status: "IN_PROGRESS", priority: "HIGH", projectId: project4.id, creatorId: userId, assigneeId: piotr.id, ownerId: userId, dueDate: new Date("2025-09-10") },
-      { title: "Dobór krzeseł biurowych – Grabowska Design", status: "DONE", priority: "MEDIUM", projectId: project4.id, creatorId: userId, assigneeId: anna.id, ownerId: userId },
-      { title: "Koncepcja recepcji – Grabowska", status: "TODO", priority: "HIGH", projectId: project4.id, creatorId: userId, assigneeId: userId, ownerId: userId, dueDate: new Date("2025-09-30") },
-      { title: "Dobór kamienia na hol wejściowy – Malinowski", status: "TODO", priority: "HIGH", projectId: project5.id, creatorId: userId, assigneeId: marta.id, ownerId: userId, dueDate: new Date("2025-10-15") },
-      { title: "Harmonogram prac – Malinowski & Co.", status: "IN_PROGRESS", priority: "MEDIUM", projectId: project5.id, creatorId: userId, assigneeId: userId, ownerId: userId, dueDate: new Date("2025-09-05") },
-    ],
-  });
+  for (const taskData of snapshot.tasks) {
+    const projectId = taskData.projectTitle ? (projectByTitle[taskData.projectTitle] ?? null) : null;
+    const assigneeId = taskData.assigneeEmail ? (memberByEmail[taskData.assigneeEmail] ?? null) : null;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const task = await prisma.task.create({
+      data: {
+        title: taskData.title,
+        description: taskData.description ?? null,
+        status: taskData.status as any,
+        priority: taskData.priority as any,
+        dueDate: taskData.dueDate ? new Date(taskData.dueDate as string) : null,
+        projectId,
+        creatorId: userId,
+        ownerId: userId,
+        assigneeId,
+      },
+    });
+    if (taskData.subTasks?.length > 0) {
+      await prisma.task.createMany({
+        data: taskData.subTasks.map((sub) => ({
+          title: sub.title,
+          description: sub.description ?? null,
+          status: sub.status as any,
+          priority: sub.priority as any,
+          dueDate: sub.dueDate ? new Date(sub.dueDate as string) : null,
+          parentId: task.id,
+          creatorId: userId,
+          ownerId: userId,
+        })) as any,
+      });
+    }
+  }
 
   // ─── SURVEYS ──────────────────────────────────────────────────────────────
   const ts = Date.now();
@@ -630,49 +655,25 @@ async function seedDemoData(userId: string) {
 
   // ─── CALENDAR EVENTS ─────────────────────────────────────────────────────
   await prisma.calendarEvent.createMany({
-    data: [
-      { title: "Spotkanie – Nowakowie (przegląd koncepcji)", type: "WYDARZENIE", startAt: daysFromNow(5, 14), endAt: daysFromNow(5, 16), location: "Kraków, ul. Szewska 12", description: "Prezentacja koncepcji salonu i kuchni. Omówienie wyboru materiałów i kolorów.", userId },
-      { title: "Wizyta u dostawcy mebli tapicerowanych", type: "WYDARZENIE", startAt: daysFromNow(8, 10), endAt: daysFromNow(8, 13), location: "Warszawa, Galeria Meblowa Arkadia", description: "Oglądamy kolekcje dla domu Wiśniewskich.", userId },
-      { title: "Odbiór próbek tkanin i farb – Nowak", type: "ZADANIE", startAt: daysFromNow(3, 9), userId },
-      { title: "Termin oddania wizualizacji – Kowalski", type: "PRZYPOMNIENIE", startAt: daysFromNow(10, 8), userId },
-      { title: "Konsultacja z hydraulikiem – łazienka Nowak", type: "WYDARZENIE", startAt: daysFromNow(14, 11), endAt: daysFromNow(14, 12), location: "Kraków, ul. Szewska 12", description: "Omówienie zakresu prac instalacyjnych, lokalizacja odpływów.", userId },
-      { title: "Spotkanie – Grabowska Design (oświetlenie biura)", type: "WYDARZENIE", startAt: daysFromNow(18, 10), endAt: daysFromNow(18, 12), location: "Poznań, ul. Półwiejska 30", description: "Finalizacja schematu oświetlenia open space i sali konferencyjnej.", userId },
-      { title: "Przypomnienie: faktura za projekt Nowak", type: "PRZYPOMNIENIE", startAt: daysFromNow(21, 9), userId },
-      { title: "Targi Warsaw Home – zwiedzanie", type: "WYDARZENIE", startAt: daysFromNow(25, 10), endAt: daysFromNow(26, 17), location: "Warszawa, PTAK Warsaw Expo", description: "Szukamy inspiracji i nowych dostawców mebli i oświetlenia.", userId },
-      { title: "Prezentacja finalna – Malinowski & Co.", type: "WYDARZENIE", startAt: daysFromNow(35, 14), endAt: daysFromNow(35, 16), location: "Gdańsk, ul. Długa 50", description: "Prezentacja finalnego projektu zarządowi firmy.", userId },
-      { title: "Odbiór techniczny – Dom Wiśniewskich", type: "WYDARZENIE", startAt: daysFromNow(48, 10), endAt: daysFromNow(48, 14), location: "Warszawa, ul. Mokotowska 44", description: "Odbiór prac elektrycznych i instalacyjnych przed malowaniem.", userId },
-    ],
+    data: snapshot.calendarEvents.map((e) => ({
+      title: e.title,
+      description: (e as any).description ?? null,
+      startAt: new Date(e.startAt as string),
+      endAt: e.endAt ? new Date(e.endAt as string) : null,
+      type: e.type as any,
+      location: (e as any).location ?? null,
+      userId,
+    })) as any,
   });
 
   // ─── NOTES ────────────────────────────────────────────────────────────────
   await prisma.note.createMany({
-    data: [
-      {
-        userId,
-        title: "Dostawcy – notatki z targów",
-        content: "**Meble tapicerowane:** Sits, Olta – dobra jakość, czas realizacji 8–10 tygodni.\n\n**Oświetlenie:** Azzardo – szeroka gama opraw podtynkowych, polecam do projektu Grabowska.\n\n**Płytki:** Paradyż, kolekcja Marmo – świetna do łazienki Nowak.\n\n**Drewno podłogowe:** Barlinek, kolekcja Classico – dąb olejowany.",
-      },
-      {
-        userId,
-        title: "Projekt Nowak – notatki ze spotkania 12.06",
-        content: "Katarzyna preferuje ciepłe odcienie, Tomasz woli chłodniejszą paletę.\n\nKompromis: neutralna baza (biel/jasny szary) + ciepłe akcenty w tkaninach i drewnie.\n\n**Kuchnia:** koniecznie wyspa, dużo miejsca do przechowywania, blat kwarcytowy.\n\n**Sypialnia:** łóżko 180×200, garderoba w zabudowie ok. 3 mb.",
-      },
-      {
-        userId,
-        title: "Inspiracje – styl skandynawski dla Wiśniewskich",
-        content: "Wiśniewscy kochają styl skandynawski. Kluczowe elementy:\n- Drewno w naturalnych odcieniach (dąb, jesion)\n- Tkaniny boucle i len\n- Dużo roślin\n- Proste, funkcjonalne meble\n- Biel jako baza, akcenty musztardowe i zielone\n\nReferencje: Norm Architects, Muuto, Frama Studio",
-      },
-      {
-        userId,
-        title: "Cennik usług 2025 – wewnętrzny",
-        content: "Projekt koncepcyjny: 150 zł/h lub ryczałt od 3 000 zł\nProjekt wykonawczy: 200 zł/h\nNadzór autorski: 800 zł/dzień\nWizualizacje: 500 zł/ujęcie\nLista zakupowa: 100 zł/h\n\n*Stawki obowiązują od 01.01.2025*",
-      },
-      {
-        userId,
-        title: "Zaległości do odhaczenia",
-        content: "- [ ] Zaktualizować umowę z Malinowski & Co. – aneks dot. terminu\n- [ ] Odpowiedzieć na ofertę od dostawcy parkietu\n- [ ] Sprawdzić czy Agnieszka skończyła moodboard Grabowska\n- [ ] Zamówić archiwalne numery AD Polska 2024",
-      },
-    ],
+    data: snapshot.notes.map((n) => ({
+      userId,
+      title: n.title,
+      content: n.content,
+      archived: n.archived,
+    })),
   });
 
   // ─── DISCUSSIONS ─────────────────────────────────────────────────────────
