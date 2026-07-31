@@ -143,7 +143,7 @@ export default function ClientDetailView({ client: initialClient }: Props) {
   const [customHex, setCustomHex] = useState(() =>
     initialClient.accentColor?.startsWith("#") ? initialClient.accentColor : "#4f46e5"
   );
-  const saveColorDebounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const saveColorDebounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const [activeTab, setActiveTab] = useState<"info" | "contacts" | "payments" | "schedule" | "documents" | "history" | "settings">(
     searchParams.get("tab") === "contacts" ? "contacts" : "info"
   );

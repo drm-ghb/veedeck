@@ -29,7 +29,7 @@ export default async function MoodboardPage() {
         pinned: true,
         createdAt: true,
         updatedAt: true,
-        client: { select: { id: true, name: true } },
+        client: { select: { id: true, name: true, accentColor: true } },
         project: { select: { id: true, title: true } },
       },
       orderBy: [{ pinned: "desc" }, { updatedAt: "desc" }],

@@ -55,7 +55,7 @@ export default async function DashboardPage() {
       slug: true,
       title: true,
       clientName: true,
-      client: { select: { name: true } },
+      client: { select: { name: true, accentColor: true } },
       pinned: true,
       updatedAt: true,
       renders: {
@@ -77,7 +77,7 @@ export default async function DashboardPage() {
       name: true,
       pinned: true,
       updatedAt: true,
-      project: { select: { title: true, clientName: true, client: { select: { name: true } } } },
+      project: { select: { title: true, clientName: true, client: { select: { name: true, accentColor: true } } } },
       _count: { select: { sections: true } },
     },
     orderBy: [{ pinned: "desc" }, { updatedAt: "desc" }],
@@ -359,6 +359,7 @@ export default async function DashboardPage() {
         updatedAt: p.updatedAt.toISOString(),
         unreadPins: projectUnreadPins.get(p.id) ?? 0,
         unreadChat: projectUnreadChat.get(p.id) ?? 0,
+        accentColor: p.client?.accentColor ?? null,
       }))}
       pins={pins.map((c) => ({
         id: c.id,
@@ -399,6 +400,7 @@ export default async function DashboardPage() {
         clientName: l.project?.client?.name ?? l.project?.clientName ?? null,
         sectionCount: l._count.sections,
         updatedAt: l.updatedAt.toISOString(),
+        accentColor: l.project?.client?.accentColor ?? null,
       }))}
       renderDiscussions={renderDiscussions.map((c) => ({
         id: c.id,

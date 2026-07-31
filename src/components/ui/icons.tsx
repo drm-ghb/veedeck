@@ -72,6 +72,7 @@ export function PictureInPicture({ size = 20, className, color, style }: IconPro
 }
 export const ScrollText       = icon("list_alt");
 export const LocalMall        = icon("local_mall");
+export const Hub              = icon("hub");
 export const Package          = icon("package_2");
 export const CalendarDays     = icon("calendar_month");
 export const NotebookText     = icon("note_stack");
@@ -167,6 +168,8 @@ export const AlertTriangle    = icon("warning");
 export const AlertCircle      = icon("error");
 export const Info             = icon("info");
 export const Circle                = icon("circle");
+export const ChangeHistory    = icon("change_history");
+export const Favorite         = icon("favorite");
 export const RadioButtonUnchecked  = icon("radio_button_unchecked");
 export const Bell             = icon("notifications");
 

@@ -4,7 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Interests, LayoutGrid, List, Search, MoreVertical, Trash2, Share2, Users, Edit2, Pin, PinOff, ArrowDownUp } from "@/components/ui/icons";
+import { Interests, LayoutGrid, List, Search, MoreVertical, Trash2, Share2, Users, Edit2, Pin, PinOff, ArrowDownUp, ChangeHistory, Favorite, Circle, Square } from "@/components/ui/icons";
+import { accentColors } from "@/lib/accent-color";
 import NewMoodboardDialog from "./NewMoodboardDialog";
 import EditMoodboardDialog from "./EditMoodboardDialog";
 
@@ -24,7 +25,7 @@ type Moodboard = {
   pinned: boolean;
   createdAt: string;
   updatedAt: string;
-  client: { id: string; name: string } | null;
+  client: { id: string; name: string; accentColor?: string | null } | null;
   project: { id: string; title: string } | null;
 };
 
@@ -223,80 +224,93 @@ export default function MoodboardList({ moodboards: initial, clients }: Props) {
       {/* Grid view */}
       {filtered.length > 0 && view === "grid" && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {filtered.map((m) => (
-            <div key={m.id} className="group relative rounded-2xl border border-border bg-card overflow-hidden hover:border-primary/30 hover:shadow-md transition-all">
-              {m.pinned && (
-                <div className="absolute top-2 left-2 z-[4]">
-                  <Pin size={13} className="text-primary drop-shadow" />
-                </div>
-              )}
-              <Link href={`/moodboardy/${m.id}`} className="block">
-                <div className="aspect-video bg-gradient-to-br from-primary/5 to-primary/15 flex items-center justify-center">
-                  <Interests size={36} className="text-primary/30" />
-                </div>
-                <div className="p-4">
-                  <p className="text-sm font-semibold truncate">{m.title}</p>
-                  {m.client && (
-                    <p className="text-xs text-muted-foreground truncate mt-0.5 flex items-center gap-1">
-                      <Users size={11} /> {m.client.name}{m.project ? ` · ${m.project.title}` : ""}
-                    </p>
-                  )}
-                  <div className="flex items-center justify-between mt-2">
-                    <span className="text-xs text-muted-foreground">{timeAgo(m.updatedAt)}</span>
-                    {m.isSharedWithClient && (
-                      <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                        Udostępnione
-                      </span>
-                    )}
+          {filtered.map((m) => {
+            const accent = m.client?.accentColor ? accentColors(m.client.accentColor) : { bar: "#94a3b8", tint: "#F1F2F5", deep: "#64748b" };
+            return (
+              <div key={m.id} className="group relative rounded-xl border overflow-hidden transition-all hover:shadow-[0_10px_26px_-14px_rgba(24,24,50,.2)] hover:-translate-y-0.5"
+                style={{ background: "#FAFAFB", borderColor: "#E5E7EB" }}
+              >
+                {/* Accent bar */}
+                <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 3, background: accent.bar, zIndex: 2 }} />
+                {m.pinned && (
+                  <div className="absolute top-2 left-3 z-[4]">
+                    <Pin size={13} className="text-primary drop-shadow" />
                   </div>
-                </div>
-              </Link>
-              {/* Menu */}
-              <div className="absolute top-2 right-2">
-                <button
-                  onClick={(e) => { e.preventDefault(); setMenuOpen(menuOpen === m.id ? null : m.id); }}
-                  className="w-7 h-7 rounded-lg bg-card/80 backdrop-blur-sm border border-border flex items-center justify-center text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-all"
-                >
-                  <MoreVertical size={14} />
-                </button>
-                {menuOpen === m.id && (
-                  <>
-                    <div className="fixed inset-0 z-[5]" onClick={() => setMenuOpen(null)} />
-                    <div className="absolute right-0 top-[calc(100%+4px)] z-10 w-44 bg-card border border-border rounded-xl shadow-lg overflow-hidden p-1">
-                      <button
-                        onClick={() => { setEditingMoodboard(m); setMenuOpen(null); }}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg hover:bg-muted transition-colors text-left"
-                      >
-                        <Edit2 size={14} /> Edytuj
-                      </button>
-                      <button
-                        onClick={() => handleTogglePin(m.id, m.pinned)}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg hover:bg-muted transition-colors text-left"
-                      >
-                        {m.pinned ? <PinOff size={14} /> : <Pin size={14} />}
-                        {m.pinned ? "Odepnij" : "Przypnij"}
-                      </button>
-                      {m.client && (
+                )}
+                <Link href={`/moodboardy/${m.id}`} className="block">
+                  <div className="w-full flex items-center justify-center" style={{ aspectRatio: "16/11", background: accent.tint }}>
+                    <div className="grid grid-cols-2 gap-2" style={{ opacity: 0.55, color: accent.deep }}>
+                      <ChangeHistory size={22} />
+                      <Favorite size={22} />
+                      <Circle size={22} />
+                      <Square size={22} />
+                    </div>
+                  </div>
+                  <div className="px-3 pt-3 pb-3">
+                    <p className="text-[14px] font-semibold truncate">{m.title}</p>
+                    {m.client && (
+                      <p className="text-[12px] text-muted-foreground truncate mt-[3px] flex items-center gap-1.5">
+                        <span className="w-4 h-4 rounded-full shrink-0 inline-block" style={{ background: accent.bar }} />
+                        {m.client.name}{m.project ? ` · ${m.project.title}` : ""}
+                      </p>
+                    )}
+                    <div className="flex items-center justify-between mt-2">
+                      <span className="text-[11.5px] text-muted-foreground">{timeAgo(m.updatedAt)}</span>
+                      {m.isSharedWithClient && (
+                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                          Udostępnione
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </Link>
+                {/* Menu */}
+                <div className="absolute top-2 right-2">
+                  <button
+                    onClick={(e) => { e.preventDefault(); setMenuOpen(menuOpen === m.id ? null : m.id); }}
+                    className="w-7 h-7 rounded-lg bg-card/80 backdrop-blur-sm border border-border flex items-center justify-center text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-all"
+                  >
+                    <MoreVertical size={14} />
+                  </button>
+                  {menuOpen === m.id && (
+                    <>
+                      <div className="fixed inset-0 z-[5]" onClick={() => setMenuOpen(null)} />
+                      <div className="absolute right-0 top-[calc(100%+4px)] z-10 w-44 bg-card border border-border rounded-xl shadow-lg overflow-hidden p-1">
                         <button
-                          onClick={() => handleToggleShare(m.id, m.isSharedWithClient)}
+                          onClick={() => { setEditingMoodboard(m); setMenuOpen(null); }}
                           className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg hover:bg-muted transition-colors text-left"
                         >
-                          <Share2 size={14} />
-                          {m.isSharedWithClient ? "Cofnij udostępnianie" : "Udostępnij klientowi"}
+                          <Edit2 size={14} /> Edytuj
                         </button>
-                      )}
-                      <button
-                        onClick={() => { handleDelete(m.id); setMenuOpen(null); }}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg hover:bg-red-50 dark:hover:bg-red-950/20 text-red-600 transition-colors text-left"
-                      >
-                        <Trash2 size={14} /> Usuń
-                      </button>
-                    </div>
-                  </>
-                )}
+                        <button
+                          onClick={() => handleTogglePin(m.id, m.pinned)}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg hover:bg-muted transition-colors text-left"
+                        >
+                          {m.pinned ? <PinOff size={14} /> : <Pin size={14} />}
+                          {m.pinned ? "Odepnij" : "Przypnij"}
+                        </button>
+                        {m.client && (
+                          <button
+                            onClick={() => handleToggleShare(m.id, m.isSharedWithClient)}
+                            className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg hover:bg-muted transition-colors text-left"
+                          >
+                            <Share2 size={14} />
+                            {m.isSharedWithClient ? "Cofnij udostępnianie" : "Udostępnij klientowi"}
+                          </button>
+                        )}
+                        <button
+                          onClick={() => { handleDelete(m.id); setMenuOpen(null); }}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg hover:bg-red-50 dark:hover:bg-red-950/20 text-red-600 transition-colors text-left"
+                        >
+                          <Trash2 size={14} /> Usuń
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 

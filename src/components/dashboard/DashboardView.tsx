@@ -6,6 +6,7 @@ import { pusherClient } from "@/lib/pusher";
 import {
   Users,
   LocalMall,
+  Hub,
   Package,
   MapPin,
   Pin,
@@ -49,6 +50,7 @@ import NewProjectDialog from "./NewProjectDialog";
 import NewListDialog from "@/components/listy/NewListDialog";
 import PdfThumbnail from "@/components/render/PdfThumbnail";
 import { useT } from "@/lib/i18n";
+import { accentColors } from "@/lib/accent-color";
 import TrialGate from "@/components/ui/TrialGate";
 import { useIsTrialExpired } from "@/lib/trial-context";
 
@@ -72,6 +74,7 @@ interface RecentProject {
   updatedAt: string;
   unreadPins: number;
   unreadChat: number;
+  accentColor: string | null;
 }
 
 interface Pin {
@@ -164,6 +167,7 @@ interface RecentList {
   clientName: string | null;
   sectionCount: number;
   updatedAt: string;
+  accentColor: string | null;
 }
 
 interface TodayEvent {
@@ -619,49 +623,51 @@ export default function DashboardView({
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {recentProjects.map((project, i) => (
-                  <Link key={project.id} href={`/projekty/${project.id}`} className={`group flex flex-col rounded-xl border border-border bg-card overflow-hidden hover:border-primary/30 hover:shadow-md transition-all${i > 0 ? " hidden sm:flex" : ""}`}>
-                    <div className="w-full aspect-[4/3] bg-muted flex items-center justify-center overflow-hidden">
-                      {project.lastRenderUrl ? (
-                        project.lastRenderFileType === "pdf" ? (
-                          <PdfThumbnail fileUrl={project.lastRenderUrl} className="w-full h-full group-hover:scale-105 transition-transform duration-300" />
+                {recentProjects.map((project, i) => {
+                  const accent = project.accentColor ? accentColors(project.accentColor) : { bar: "#94a3b8", tint: "#F1F2F5", deep: "#64748b" };
+                  return (
+                    <Link key={project.id} href={`/projekty/${project.id}`}
+                      className={`group relative flex flex-col rounded-xl border overflow-hidden transition-all hover:shadow-[0_10px_26px_-14px_rgba(24,24,50,.2)] hover:-translate-y-0.5${i > 0 ? " hidden sm:flex" : ""}`}
+                      style={{ background: "#FAFAFB", borderColor: "#E5E7EB" }}
+                    >
+                      <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 3, background: accent.bar, zIndex: 2 }} />
+                      <div className="w-full overflow-hidden flex items-center justify-center" style={{ aspectRatio: "16/11", background: project.lastRenderUrl ? undefined : accent.tint }}>
+                        {project.lastRenderUrl ? (
+                          project.lastRenderFileType === "pdf" ? (
+                            <PdfThumbnail fileUrl={project.lastRenderUrl} className="w-full h-full group-hover:scale-105 transition-transform duration-300" />
+                          ) : (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={project.lastRenderUrl} alt={project.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                          )
                         ) : (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={project.lastRenderUrl} alt={project.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                        )
-                      ) : (
-                        <PushPin size={28} className="text-muted-foreground/30" />
-                      )}
-                    </div>
-                    <div className="p-3">
-                      <p className="text-sm font-medium truncate flex items-center gap-1.5">
-                        {project.pinned && <Pin size={11} className="text-red-500 fill-red-500 shrink-0" />}
-                        {project.title}
-                      </p>
-                      {project.clientName && <p className="text-xs text-muted-foreground truncate mt-0.5">{t.home.clientPrefix} {project.clientName}</p>}
-                      <div className="flex items-center justify-between mt-2">
-                        <span className="text-xs text-muted-foreground">
-                          {project.renderCount > 0 ? `${project.renderCount} ${project.renderCount === 1 ? t.home.renderSg : t.home.renderPl}` : t.home.noRenders}
-                        </span>
-                        <div className="flex items-center gap-1.5">
-                          {project.unreadPins > 0 && (
-                            <span className="flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300">
-                              <MapPin size={9} />{project.unreadPins}
-                            </span>
-                          )}
-                          {project.unreadChat > 0 && (
-                            <span className="flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">
-                              <ChatBubble size={9} />{project.unreadChat}
-                            </span>
-                          )}
-                          {project.unreadPins === 0 && project.unreadChat === 0 && (
-                            <span className="text-xs text-muted-foreground">{timeAgo(project.updatedAt, t)}</span>
-                          )}
+                          <Hub size={22} style={{ color: accent.deep, opacity: 0.5 }} />
+                        )}
+                      </div>
+                      <div className="pl-4 pr-3 pt-2.5 pb-3">
+                        <p className="text-[13.5px] font-semibold truncate">{project.title}</p>
+                        {project.clientName && <p className="text-[12px] text-muted-foreground truncate mt-0.5">{t.home.clientPrefix} {project.clientName}</p>}
+                        <div className="flex items-center justify-between mt-2">
+                          <span className="text-[11.5px] text-muted-foreground">
+                            {project.renderCount > 0 ? `${project.renderCount} ${project.renderCount === 1 ? t.home.renderSg : t.home.renderPl}` : t.home.noRenders}
+                          </span>
+                          <div className="flex items-center gap-1.5">
+                            {project.unreadPins > 0 && (
+                              <span className="flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300">
+                                <MapPin size={9} />{project.unreadPins}
+                              </span>
+                            )}
+                            {project.unreadChat > 0 && (
+                              <span className="flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">
+                                <ChatBubble size={9} />{project.unreadChat}
+                              </span>
+                            )}
+                            <span className="text-[11.5px] text-muted-foreground">{timeAgo(project.updatedAt, t)}</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </Link>
-                ))}
+                    </Link>
+                  );
+                })}
               </div>
             )}
         </div>
@@ -683,24 +689,31 @@ export default function DashboardView({
                 <TrialGate><NewListDialog /></TrialGate>
               </div>
             ) : (
-              <div className="rounded-xl border border-border bg-card divide-y divide-border overflow-hidden">
-                {recentLists.map((list) => (
-                  <Link key={list.id} href={`/listy-zakupowe/${list.slug ?? list.id}`} className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors">
-                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                      <LocalMall size={18} className="text-primary" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium truncate flex items-center gap-1.5">
-                        {list.pinned && <Pin size={10} className="text-red-500 fill-red-500 shrink-0" />}
-                        {list.name}
-                      </p>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {list.clientName ? `${t.home.clientPrefix} ${list.clientName}` : list.projectTitle ?? (list.sectionCount > 0 ? `${list.sectionCount} ${list.sectionCount === 1 ? t.home.sectionSg : list.sectionCount < 5 ? t.home.sectionFw : t.home.sectionPl}` : t.home.noSections)}
-                      </p>
-                    </div>
-                    <span className="shrink-0 text-xs text-muted-foreground">{timeAgo(list.updatedAt, t)}</span>
-                  </Link>
-                ))}
+              <div className="space-y-[10px]">
+                {recentLists.map((list) => {
+                  const accent = list.accentColor ? accentColors(list.accentColor) : { bar: "#94a3b8", tint: "#F1F2F5", deep: "#64748b" };
+                  return (
+                    <Link key={list.id} href={`/listy-zakupowe/${list.slug ?? list.id}`}
+                      className="relative flex items-center gap-3 px-4 py-3 rounded-xl border overflow-hidden transition-all hover:shadow-[0_8px_22px_-14px_rgba(24,24,50,.18)] hover:-translate-y-0.5"
+                      style={{ background: "#FAFAFB", borderColor: "#E5E7EB" }}
+                    >
+                      <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 3, background: accent.bar }} />
+                      <div className="w-[38px] h-[38px] rounded-[10px] flex items-center justify-center shrink-0 ml-1" style={{ background: accent.tint }}>
+                        <LocalMall size={18} style={{ color: accent.deep }} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[13.5px] font-semibold truncate flex items-center gap-1.5">
+                          {list.pinned && <Pin size={10} className="text-red-500 fill-red-500 shrink-0" />}
+                          {list.name}
+                        </p>
+                        <p className="text-[12px] text-muted-foreground truncate mt-0.5">
+                          {list.clientName ? `${t.home.clientPrefix} ${list.clientName}` : list.projectTitle ?? (list.sectionCount > 0 ? `${list.sectionCount} ${list.sectionCount === 1 ? t.home.sectionSg : list.sectionCount < 5 ? t.home.sectionFw : t.home.sectionPl}` : t.home.noSections)}
+                        </p>
+                      </div>
+                      <span className="shrink-0 text-[11.5px] text-muted-foreground">{timeAgo(list.updatedAt, t)}</span>
+                    </Link>
+                  );
+                })}
               </div>
             )}
         </div>
@@ -1054,28 +1067,30 @@ export default function DashboardView({
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6 lg:mb-5">
         <Link
           href="/klienci"
-          className="min-w-0 flex items-center gap-3 p-3 rounded-xl bg-card border border-border hover:border-primary/30 hover:bg-primary/5 transition-colors"
+          className="min-w-0 flex items-center gap-3 px-4 py-4 rounded-xl border transition-all hover:shadow-[0_8px_22px_-14px_rgba(24,24,50,.18)] hover:-translate-y-0.5"
+          style={{ background: "#FAFAFB", borderColor: "#E5E7EB" }}
         >
-          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-            <Users size={16} className="text-primary" />
+          <div className="w-[38px] h-[38px] rounded-[10px] flex items-center justify-center shrink-0 bg-indigo-50">
+            <Users size={19} className="text-primary" />
           </div>
           <div className="min-w-0">
-            <p className="text-xl font-bold leading-none">{stats.clients}</p>
-            <p className="text-xs text-muted-foreground mt-0.5 truncate">{t.home.statsClients}</p>
+            <p className="text-[22px] font-bold leading-none">{stats.clients}</p>
+            <p className="text-[12px] text-muted-foreground mt-[2px] truncate">{t.home.statsClients}</p>
           </div>
         </Link>
 
         {!hiddenModules.includes("renderflow") && (
           <Link
             href="/projectflow"
-            className="min-w-0 flex items-center gap-3 p-3 rounded-xl bg-card border border-border hover:border-primary/30 hover:bg-primary/5 transition-colors"
+            className="min-w-0 flex items-center gap-3 px-4 py-4 rounded-xl border transition-all hover:shadow-[0_8px_22px_-14px_rgba(24,24,50,.18)] hover:-translate-y-0.5"
+            style={{ background: "#FAFAFB", borderColor: "#E5E7EB" }}
           >
-            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-              <PushPin size={16} className="text-primary" />
+            <div className="w-[38px] h-[38px] rounded-[10px] flex items-center justify-center shrink-0 bg-indigo-50">
+              <Hub size={19} className="text-primary" />
             </div>
             <div className="min-w-0">
-              <p className="text-xl font-bold leading-none">{stats.renderflowProjects}</p>
-              <p className="text-xs text-muted-foreground mt-0.5 truncate">{t.home.statsProjects}</p>
+              <p className="text-[22px] font-bold leading-none">{stats.renderflowProjects}</p>
+              <p className="text-[12px] text-muted-foreground mt-[2px] truncate">{t.home.statsProjects}</p>
             </div>
           </Link>
         )}
@@ -1083,34 +1098,33 @@ export default function DashboardView({
         {!hiddenModules.includes("listy") && (
           <Link
             href="/listy-zakupowe"
-            className="min-w-0 flex items-center gap-3 p-3 rounded-xl bg-card border border-border hover:border-primary/30 hover:bg-primary/5 transition-colors"
+            className="min-w-0 flex items-center gap-3 px-4 py-4 rounded-xl border transition-all hover:shadow-[0_8px_22px_-14px_rgba(24,24,50,.18)] hover:-translate-y-0.5"
+            style={{ background: "#FAFAFB", borderColor: "#E5E7EB" }}
           >
-            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-              <LocalMall size={16} className="text-primary" />
+            <div className="w-[38px] h-[38px] rounded-[10px] flex items-center justify-center shrink-0 bg-indigo-50">
+              <LocalMall size={19} className="text-primary" />
             </div>
             <div className="min-w-0">
-              <p className="text-xl font-bold leading-none">{stats.lists}</p>
-              <p className="text-xs text-muted-foreground mt-0.5 truncate">{t.home.statsLists}</p>
+              <p className="text-[22px] font-bold leading-none">{stats.lists}</p>
+              <p className="text-[12px] text-muted-foreground mt-[2px] truncate">{t.home.statsLists}</p>
             </div>
           </Link>
         )}
 
         <Link
           href="/notifications"
-          className={`min-w-0 flex items-center gap-3 p-3 rounded-xl border transition-colors ${
-            notifCount > 0
-              ? "bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800 hover:border-amber-300 dark:hover:border-amber-700"
-              : "bg-card border-border hover:border-primary/30 hover:bg-primary/5"
-          }`}
+          className="min-w-0 flex items-center gap-3 px-4 py-4 rounded-xl border transition-all hover:shadow-[0_8px_22px_-14px_rgba(24,24,50,.18)] hover:-translate-y-0.5"
+          style={{ background: "#FAFAFB", borderColor: "#E5E7EB" }}
         >
-          <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${notifCount > 0 ? "bg-amber-100 dark:bg-amber-900/40" : "bg-muted"}`}>
-            {notifCount > 0
-              ? <Bell size={16} className="text-amber-600 dark:text-amber-400" />
-              : <CheckCircle2 size={16} className="text-muted-foreground" />}
+          <div
+            className="w-[38px] h-[38px] rounded-[10px] flex items-center justify-center shrink-0"
+            style={{ background: notifCount > 0 ? "color-mix(in oklch,#f59e0b 16%,transparent)" : "#EEF2FF" }}
+          >
+            <Bell size={19} style={{ color: notifCount > 0 ? "#b45309" : "#4F46E5" }} />
           </div>
           <div className="min-w-0">
-            <p className="text-xl font-bold leading-none">{notifCount}</p>
-            <p className="text-xs text-muted-foreground mt-0.5 truncate">{t.home.statsNotifications}</p>
+            <p className="text-[22px] font-bold leading-none">{notifCount}</p>
+            <p className="text-[12px] text-muted-foreground mt-[2px] truncate">{t.home.statsNotifications}</p>
           </div>
         </Link>
       </div>

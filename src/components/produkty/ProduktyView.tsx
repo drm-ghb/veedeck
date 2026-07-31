@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Package, ChevronLeft, ArrowUpDown, Pencil, Trash2, ExternalLink, Plus, Check, X, SlidersHorizontal, StarOutline, StarFilled, MoreHorizontal } from "@/components/ui/icons";
+import { Search, Package, Folder, ChevronLeft, ArrowUpDown, Pencil, Trash2, ExternalLink, Plus, Check, X, SlidersHorizontal, StarOutline, StarFilled, MoreHorizontal } from "@/components/ui/icons";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -299,7 +299,7 @@ export default function ProduktyView({ initialProducts }: Props) {
 
       {/* Folder grid */}
       {showFolders && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-[14px]">
           {folders.length === 0 ? (
             <p className="col-span-full text-sm text-muted-foreground py-8 text-center">{t.products.noProductsInDB}</p>
           ) : (
@@ -312,15 +312,14 @@ export default function ProduktyView({ initialProducts }: Props) {
                 <button
                   key={key}
                   onClick={() => handleFolderClick(key)}
-                  className="flex flex-col items-start gap-2 p-4 rounded-xl border border-border bg-card hover:bg-muted/50 transition-colors text-left"
+                  className="flex flex-col items-start p-[18px] rounded-xl border text-left transition-all hover:shadow-[0_8px_22px_-14px_rgba(24,24,50,.18)] hover:-translate-y-0.5"
+                  style={{ background: "#FAFAFB", borderColor: "#E5E7EB" }}
                 >
-                  <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <Package size={18} className="text-primary" />
+                  <div className="w-[38px] h-[38px] rounded-[10px] flex items-center justify-center mb-3 bg-indigo-50">
+                    <Folder size={19} className="text-primary" />
                   </div>
-                  <div>
-                    <p className="text-sm font-medium leading-tight">{label}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">{count} {count === 1 ? t.products.productCountUnit : count < 5 ? t.products.productCountUnitFew : t.products.productCountUnitMany}</p>
-                  </div>
+                  <p className="text-[14px] font-semibold leading-tight">{label}</p>
+                  <p className="text-[12px] text-muted-foreground mt-[3px]">{count} {count === 1 ? t.products.productCountUnit : count < 5 ? t.products.productCountUnitFew : t.products.productCountUnitMany}</p>
                 </button>
               );
             })
@@ -415,17 +414,20 @@ function ProductCard({
   const [lightbox, setLightbox] = useState(false);
 
   return (
-    <div className="flex gap-3 p-3 rounded-xl border border-border bg-card hover:bg-muted/30 transition-colors">
+    <div className="flex items-center gap-[14px] rounded-xl border transition-all hover:shadow-[0_8px_22px_-14px_rgba(24,24,50,.15)] hover:-translate-y-px"
+      style={{ background: "#FAFAFB", borderColor: "#E5E7EB", padding: "12px 16px" }}
+    >
       {/* Image */}
       <div
-        className={`w-20 h-20 rounded-lg overflow-hidden border border-border bg-muted flex-shrink-0 flex items-center justify-center ${product.imageUrl ? "cursor-zoom-in" : ""}`}
+        className={`w-14 h-14 rounded-[10px] overflow-hidden flex-shrink-0 flex items-center justify-center ${product.imageUrl ? "cursor-zoom-in" : ""}`}
+        style={{ background: "#fff", border: "1px solid #E5E7EB" }}
         onClick={() => product.imageUrl && setLightbox(true)}
       >
         {product.imageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={product.imageUrl} alt={product.name} className="w-full h-full object-contain" />
         ) : (
-          <Package size={24} className="text-muted-foreground/40" />
+          <Package size={22} style={{ color: "#c7cbe0" }} />
         )}
       </div>
 
@@ -454,32 +456,27 @@ function ProductCard({
 
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <div className="min-w-0">
-          <p className="font-medium text-sm truncate">{product.name}</p>
-          {product.manufacturer && (
-            <p className="text-xs text-muted-foreground truncate">{product.manufacturer}</p>
-          )}
-        </div>
-
-        <div className="flex items-center gap-3 mt-2 flex-wrap">
-          {product.price && (
-            <span className="text-sm font-semibold text-foreground">{product.price}</span>
-          )}
-          {product.color && (
-            <span className="text-xs text-muted-foreground">{product.color}</span>
-          )}
-          {product.dimensions && (
-            <span className="text-xs text-muted-foreground">{product.dimensions}</span>
-          )}
-          {product.deliveryTime && (
-            <span className="text-xs text-muted-foreground">{t.products.deliveryLabel} {product.deliveryTime}</span>
-          )}
-        </div>
+        <p className="text-[13.5px] font-semibold truncate" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{product.name}</p>
+        {product.manufacturer && (
+          <p className="text-[12px] text-muted-foreground truncate mt-[3px]">{product.manufacturer}</p>
+        )}
+        {product.price && (
+          <div className="flex items-center gap-2 mt-[5px] flex-wrap">
+            <span className="text-[13.5px] font-bold text-foreground">{product.price}</span>
+            {(product.color || product.dimensions) && (
+              <span className="text-[11.5px] text-muted-foreground">
+                {[product.color, product.dimensions].filter(Boolean).join(" · ")}
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Category badge */}
+      {/* Category chip */}
       {product.category && (
-        <span className="self-center shrink-0 text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+        <span className="self-center shrink-0 text-[11.5px] font-semibold px-[10px] py-1 rounded-full whitespace-nowrap"
+          style={{ background: "#EEF2FF", color: "#4F46E5" }}
+        >
           {CATEGORY_LABELS_T[product.category] ?? product.category}
         </span>
       )}
@@ -489,32 +486,32 @@ function ProductCard({
         <button
           onClick={onFavorite}
           title={product.favorite ? t.products.favoriteRemove : t.products.favoriteAdd}
-          className={`p-1.5 rounded-md transition-colors ${product.favorite ? "text-yellow-400 hover:text-yellow-500" : "text-muted-foreground hover:text-yellow-400 hover:bg-muted"}`}
+          className={`w-8 h-8 rounded-[8px] flex items-center justify-center transition-colors ${product.favorite ? "text-[#f59e0b] hover:text-[#f59e0b]" : "text-muted-foreground hover:bg-indigo-50 hover:text-primary"}`}
         >
-          {product.favorite ? <StarFilled size={14} /> : <StarOutline size={14} />}
+          {product.favorite ? <StarFilled size={15} /> : <StarOutline size={15} />}
         </button>
         {product.url && (
           <a
             href={product.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            className="w-8 h-8 rounded-[8px] flex items-center justify-center text-muted-foreground hover:bg-indigo-50 hover:text-primary transition-colors"
           >
-            <ExternalLink size={14} />
+            <ExternalLink size={15} />
           </a>
         )}
         <button
           onClick={onEdit}
-          className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+          className="w-8 h-8 rounded-[8px] flex items-center justify-center text-muted-foreground hover:bg-indigo-50 hover:text-primary transition-colors"
         >
-          <Pencil size={14} />
+          <Pencil size={15} />
         </button>
         <button
           onClick={onDelete}
           disabled={deleting}
-          className="p-1.5 rounded-md text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors disabled:opacity-40"
+          className="w-8 h-8 rounded-[8px] flex items-center justify-center text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors disabled:opacity-40"
         >
-          <Trash2 size={14} />
+          <Trash2 size={15} />
         </button>
       </div>
 
