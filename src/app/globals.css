@@ -129,7 +129,7 @@ body.lightbox-open #app-navbar { display: none; }
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
   --radius: 0.625rem;
-  --sidebar: #EDEEF2;
+  --sidebar: #F5F5F5;
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: #4F46E5;
   --sidebar-primary-foreground: #FFFFFF;
@@ -160,7 +160,7 @@ body.lightbox-open #app-navbar { display: none; }
   --input: oklch(0.922 0 0);
   --ring: #4F46E5;
   --radius: 0.625rem;
-  --sidebar: #EDEEF2;
+  --sidebar: #F5F5F5;
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: #4F46E5;
   --sidebar-primary-foreground: #FFFFFF;
