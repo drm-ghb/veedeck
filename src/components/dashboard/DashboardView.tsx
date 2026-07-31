@@ -624,7 +624,7 @@ export default function DashboardView({
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {recentProjects.map((project, i) => {
-                  const accent = project.accentColor ? accentColors(project.accentColor) : { bar: "#94a3b8", tint: "#F1F2F5", deep: "#64748b" };
+                  const accent = project.clientName ? accentColors(project.accentColor) : { bar: "#94a3b8", tint: "#F1F2F5", deep: "#64748b" };
                   return (
                     <Link key={project.id} href={`/projekty/${project.id}`}
                       className={`group relative flex flex-col rounded-xl border overflow-hidden transition-all hover:shadow-[0_10px_26px_-14px_rgba(24,24,50,.2)] hover:-translate-y-0.5${i > 0 ? " hidden sm:flex" : ""}`}
@@ -691,7 +691,7 @@ export default function DashboardView({
             ) : (
               <div className="space-y-[10px]">
                 {recentLists.map((list) => {
-                  const accent = list.accentColor ? accentColors(list.accentColor) : { bar: "#94a3b8", tint: "#F1F2F5", deep: "#64748b" };
+                  const accent = list.clientName ? accentColors(list.accentColor) : { bar: "#94a3b8", tint: "#F1F2F5", deep: "#64748b" };
                   return (
                     <Link key={list.id} href={`/listy-zakupowe/${list.slug ?? list.id}`}
                       className="relative flex items-center gap-3 px-4 py-3 rounded-xl border overflow-hidden transition-all hover:shadow-[0_8px_22px_-14px_rgba(24,24,50,.18)] hover:-translate-y-0.5"
