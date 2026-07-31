@@ -374,6 +374,7 @@ model Client {
   addressCountry    String?
   addressPostalCode String?
   addressStreet     String?
+  accentColor       String?
   clientCanUpload   Boolean         @default(false)
   description       String?
   endDate           DateTime?

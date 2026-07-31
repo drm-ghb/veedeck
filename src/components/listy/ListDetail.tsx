@@ -4,7 +4,7 @@ import { useState, useRef, useCallback, useEffect, Fragment } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, ChevronDown, ChevronUp, Plus, ExternalLink, Minus, MoreHorizontal, Pencil, Trash2, GripVertical, FileDown, Sheet, ArrowDownUp, Eye, EyeOff, Check, X, RotateCcw, FolderInput, Wallet, AlertCircle, AlertTriangle, DollarSign, Copy, Comment, CheckCircle, RadioButtonUnchecked, Search, FileText, Layers, Asterisk } from "@/components/ui/icons";
+import { ChevronLeft, ChevronDown, ChevronUp, Plus, ExternalLink, Minus, MoreHorizontal, Pencil, Trash2, GripVertical, FileDown, Sheet, ArrowDownUp, Eye, EyeOff, Check, X, RotateCcw, FolderInput, Wallet, AlertCircle, AlertTriangle, DollarSign, Copy, Comment, CheckCircle, RadioButtonUnchecked, Search, FileText, Layers, Asterisk, CheckSquare, Square, ListChecks } from "@/components/ui/icons";
 import ProductCommentPanel from "./ProductCommentPanel";
 import ListSectionNav from "./ListSectionNav";
 import { pusherClient } from "@/lib/pusher";
@@ -1200,6 +1200,16 @@ export default function ListDetail({ list, designerName, designerEmail, designer
   const [copyState, setCopyState] = useState<{ product: Product; sectionId: string } | null>(null);
   const [activeDragProduct, setActiveDragProduct] = useState<Product | null>(null);
   const [activeDragVariants, setActiveDragVariants] = useState<Product[]>([]);
+  const [bulkMode, setBulkMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [pendingAction, setPendingAction] = useState<{
+    type: "move" | "copy" | "duplicate" | "approval" | "orderStatus" | "delete";
+    sectionId?: string;
+    value?: string | null;
+    label?: string;
+  } | null>(null);
+  const [bulkDeleteConfirmOpen, setBulkDeleteConfirmOpen] = useState(false);
+  const [bulkLoading, setBulkLoading] = useState(false);
   // Drag refs — updated via onDragOver, read in handleDragEnd
   const dragOverSectionRef = useRef<string | null>(null);
   const dragItemCurrentSectionRef = useRef<string | null>(null); // where item IS in state right now
@@ -2015,6 +2025,186 @@ export default function ListDetail({ list, designerName, designerEmail, designer
     }
   }
 
+  // ── Bulk selection helpers ─────────────────────────────────────────────────
+
+  const allProductIds = sections.flatMap((s) => s.products.map((p) => p.id));
+  const allSelected = allProductIds.length > 0 && allProductIds.every((id) => selectedIds.has(id));
+
+  function toggleSelected(productId: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      const selecting = !next.has(productId);
+      if (selecting) {
+        next.add(productId);
+        // Also select all variants (products with this parentProductId)
+        for (const section of sections) {
+          for (const p of section.products) {
+            if (p.parentProductId === productId) next.add(p.id);
+          }
+        }
+      } else {
+        next.delete(productId);
+        // Also deselect all variants
+        for (const section of sections) {
+          for (const p of section.products) {
+            if (p.parentProductId === productId) next.delete(p.id);
+          }
+        }
+      }
+      return next;
+    });
+  }
+
+  function toggleSectionSelected(sectionId: string) {
+    const section = sections.find((s) => s.id === sectionId);
+    if (!section) return;
+    const ids = section.products.map((p) => p.id);
+    const allIn = ids.length > 0 && ids.every((id) => selectedIds.has(id));
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (allIn) ids.forEach((id) => next.delete(id));
+      else ids.forEach((id) => next.add(id));
+      return next;
+    });
+  }
+
+  function exitBulkMode() {
+    setBulkMode(false);
+    setSelectedIds(new Set());
+    setPendingAction(null);
+    setBulkDeleteConfirmOpen(false);
+  }
+
+  function toggleSelectAll() {
+    setSelectedIds(allSelected ? new Set() : new Set(allProductIds));
+  }
+
+  async function executeBulkAction() {
+    if (!pendingAction || selectedIds.size === 0) return;
+    setBulkLoading(true);
+
+    const selectedProducts: { product: Product; sectionId: string }[] = [];
+    for (const section of sections) {
+      for (const product of section.products) {
+        if (selectedIds.has(product.id)) {
+          selectedProducts.push({ product, sectionId: section.id });
+        }
+      }
+    }
+
+    try {
+      if (pendingAction.type === "move" && pendingAction.sectionId) {
+        await Promise.all(
+          selectedProducts.map(({ product, sectionId }) =>
+            fetch(`/api/lists/${list.id}/sections/${sectionId}/products/${product.id}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ sectionId: pendingAction.sectionId }),
+            })
+          )
+        );
+        toast.success(`Przeniesiono ${selectedProducts.length} produktów`);
+      } else if (pendingAction.type === "copy" && pendingAction.sectionId) {
+        await Promise.all(
+          selectedProducts.map(({ product }) =>
+            fetch(`/api/lists/${list.id}/sections/${pendingAction.sectionId!}/products`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                name: product.name, url: product.url, imageUrl: product.imageUrl,
+                price: product.price, manufacturer: product.manufacturer, color: product.color,
+                dimensions: product.dimensions, description: product.description,
+                deliveryTime: product.deliveryTime, quantity: product.quantity,
+                category: product.category, supplier: product.supplier,
+                catalogNumber: product.catalogNumber, productId: product.productId, note: product.note,
+              }),
+            })
+          )
+        );
+        toast.success(`Skopiowano ${selectedProducts.length} produktów`);
+      } else if (pendingAction.type === "duplicate") {
+        await Promise.all(
+          selectedProducts.map(({ product, sectionId }) =>
+            fetch(`/api/lists/${list.id}/sections/${sectionId}/products`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                name: product.name, url: product.url, imageUrl: product.imageUrl,
+                price: product.price, manufacturer: product.manufacturer, color: product.color,
+                dimensions: product.dimensions, description: product.description,
+                deliveryTime: product.deliveryTime, quantity: product.quantity,
+                category: product.category, supplier: product.supplier,
+                catalogNumber: product.catalogNumber, productId: product.productId, note: product.note,
+              }),
+            })
+          )
+        );
+        toast.success(`Zduplikowano ${selectedProducts.length} produktów`);
+      } else if (pendingAction.type === "approval") {
+        await Promise.all(
+          selectedProducts.map(({ product, sectionId }) =>
+            fetch(`/api/lists/${list.id}/sections/${sectionId}/products/${product.id}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ approval: pendingAction.value ?? null }),
+            })
+          )
+        );
+        setApprovals((prev) => {
+          const next = { ...prev };
+          selectedProducts.forEach(({ product }) => { next[product.id] = pendingAction.value ?? null; });
+          return next;
+        });
+        toast.success("Zmieniono status akceptacji");
+      } else if (pendingAction.type === "orderStatus") {
+        await Promise.all(
+          selectedProducts.map(({ product, sectionId }) =>
+            fetch(`/api/lists/${list.id}/sections/${sectionId}/products/${product.id}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ orderStatus: pendingAction.value ?? null }),
+            })
+          )
+        );
+        setOrderStatuses((prev) => {
+          const next = { ...prev };
+          selectedProducts.forEach(({ product }) => { next[product.id] = pendingAction.value ?? null; });
+          return next;
+        });
+        toast.success("Zmieniono status zamówienia");
+      } else if (pendingAction.type === "delete") {
+        await Promise.all(
+          selectedProducts.map(({ product, sectionId }) =>
+            fetch(`/api/lists/${list.id}/sections/${sectionId}/products/${product.id}`, {
+              method: "DELETE",
+            })
+          )
+        );
+        toast.success(`Usunięto ${selectedProducts.length} produktów`);
+      }
+
+      setSelectedIds(new Set());
+      setPendingAction(null);
+      router.refresh();
+    } catch {
+      toast.error("Błąd operacji masowej");
+    } finally {
+      setBulkLoading(false);
+      setBulkDeleteConfirmOpen(false);
+    }
+  }
+
+  async function handleBulkConfirm() {
+    if (!pendingAction || selectedIds.size === 0) return;
+    if (pendingAction.type === "delete") {
+      setBulkDeleteConfirmOpen(true);
+      return;
+    }
+    await executeBulkAction();
+  }
+
+  // ── /Bulk ──────────────────────────────────────────────────────────────────
+
   // Search filter
   const searchLower = searchQuery.toLowerCase().trim();
   const displaySections = searchLower
@@ -2241,6 +2431,156 @@ export default function ListDetail({ list, designerName, designerEmail, designer
       {/* Toolbar */}
       <div className="mb-6 lg:mb-0 lg:sticky lg:top-0 lg:z-20 lg:-mx-6 lg:px-6 lg:bg-background lg:pb-3 lg:pt-2">
         <div className="lg:max-w-[75%] lg:mx-auto">
+          {bulkMode ? (
+            /* ── Bulk toolbar ── */
+            <div className="flex flex-wrap items-center gap-2 p-2 bg-primary/5 border border-primary/30 rounded-xl shadow-sm">
+              {/* Counter + select all */}
+              <div className="flex items-center gap-2 shrink-0">
+                <ListChecks size={15} className="text-primary shrink-0" />
+                <span className="text-xs font-semibold text-primary tabular-nums">{selectedIds.size} zaznaczonych</span>
+                <button
+                  onClick={toggleSelectAll}
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors underline underline-offset-2 shrink-0"
+                >
+                  {allSelected ? "Odznacz wszystkie" : "Zaznacz wszystkie"}
+                </button>
+              </div>
+
+              <div className="w-px h-5 bg-border shrink-0" />
+
+              {/* Actions */}
+              <DropdownMenu>
+                <DropdownMenuTrigger render={
+                  <button className={`flex items-center gap-1 h-8 px-2.5 text-xs rounded-lg border transition-colors ${pendingAction?.type === "move" ? "border-primary/50 bg-primary/10 text-primary" : "border-border bg-background hover:bg-muted text-foreground"}`}>
+                    <FolderInput size={13} />
+                    <span className="hidden sm:inline">Przenieś do</span>
+                    <ChevronDown size={11} />
+                  </button>
+                } />
+                <DropdownMenuContent align="start" className="w-48">
+                  <DropdownMenuGroup>
+                    <DropdownMenuLabel className="text-[10px]">Przenieś zaznaczone do</DropdownMenuLabel>
+                    {sections.filter((s) => !s.unsorted).map((s) => (
+                      <DropdownMenuItem key={s.id} onClick={() => setPendingAction({ type: "move", sectionId: s.id, label: s.name })}>
+                        {s.name}
+                        {pendingAction?.type === "move" && pendingAction.sectionId === s.id && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-primary shrink-0" />}
+                      </DropdownMenuItem>
+                    ))}
+                    {sections.filter((s) => !s.unsorted).length === 0 && (
+                      <p className="px-3 py-1.5 text-xs text-muted-foreground">Brak sekcji</p>
+                    )}
+                  </DropdownMenuGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger render={
+                  <button className={`flex items-center gap-1 h-8 px-2.5 text-xs rounded-lg border transition-colors ${pendingAction?.type === "copy" ? "border-primary/50 bg-primary/10 text-primary" : "border-border bg-background hover:bg-muted text-foreground"}`}>
+                    <Copy size={13} />
+                    <span className="hidden sm:inline">Kopiuj do</span>
+                    <ChevronDown size={11} />
+                  </button>
+                } />
+                <DropdownMenuContent align="start" className="w-48">
+                  <DropdownMenuGroup>
+                    <DropdownMenuLabel className="text-[10px]">Kopiuj zaznaczone do</DropdownMenuLabel>
+                    {sections.filter((s) => !s.unsorted).map((s) => (
+                      <DropdownMenuItem key={s.id} onClick={() => setPendingAction({ type: "copy", sectionId: s.id, label: s.name })}>
+                        {s.name}
+                        {pendingAction?.type === "copy" && pendingAction.sectionId === s.id && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-primary shrink-0" />}
+                      </DropdownMenuItem>
+                    ))}
+                    {sections.filter((s) => !s.unsorted).length === 0 && (
+                      <p className="px-3 py-1.5 text-xs text-muted-foreground">Brak sekcji</p>
+                    )}
+                  </DropdownMenuGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <button
+                onClick={() => setPendingAction({ type: "duplicate", label: "Duplikuj" })}
+                className={`flex items-center gap-1 h-8 px-2.5 text-xs rounded-lg border transition-colors ${pendingAction?.type === "duplicate" ? "border-primary/50 bg-primary/10 text-primary" : "border-border bg-background hover:bg-muted text-foreground"}`}
+              >
+                <Layers size={13} />
+                <span className="hidden sm:inline">Duplikuj</span>
+              </button>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger render={
+                  <button className={`flex items-center gap-1 h-8 px-2.5 text-xs rounded-lg border transition-colors ${pendingAction?.type === "approval" ? "border-primary/50 bg-primary/10 text-primary" : "border-border bg-background hover:bg-muted text-foreground"}`}>
+                    <Check size={13} />
+                    <span className="hidden sm:inline">Akceptacja</span>
+                    <ChevronDown size={11} />
+                  </button>
+                } />
+                <DropdownMenuContent align="start" className="w-44">
+                  <DropdownMenuGroup>
+                    <DropdownMenuLabel className="text-[10px]">Status akceptacji</DropdownMenuLabel>
+                    {([
+                      { value: "accepted", label: "Zaakceptowane" },
+                      { value: "rejected", label: "Odrzucone" },
+                      { value: null, label: "Oczekuje" },
+                    ] as const).map((opt) => (
+                      <DropdownMenuItem key={String(opt.value)} onClick={() => setPendingAction({ type: "approval", value: opt.value ?? null, label: opt.label })}>
+                        {opt.label}
+                        {pendingAction?.type === "approval" && pendingAction.value === opt.value && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-primary shrink-0" />}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger render={
+                  <button className={`flex items-center gap-1 h-8 px-2.5 text-xs rounded-lg border transition-colors ${pendingAction?.type === "orderStatus" ? "border-primary/50 bg-primary/10 text-primary" : "border-border bg-background hover:bg-muted text-foreground"}`}>
+                    <ArrowDownUp size={13} />
+                    <span className="hidden sm:inline">Status zam.</span>
+                    <ChevronDown size={11} />
+                  </button>
+                } />
+                <DropdownMenuContent align="start" className="w-44">
+                  <DropdownMenuGroup>
+                    <DropdownMenuLabel className="text-[10px]">Status zamówienia</DropdownMenuLabel>
+                    {ORDER_STATUS_OPTIONS.map((opt) => (
+                      <DropdownMenuItem key={String(opt.value)} onClick={() => setPendingAction({ type: "orderStatus", value: opt.value ?? null, label: opt.label })}>
+                        {opt.label}
+                        {pendingAction?.type === "orderStatus" && pendingAction.value === opt.value && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-primary shrink-0" />}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <button
+                onClick={() => setPendingAction({ type: "delete", label: "Usuń" })}
+                className={`flex items-center gap-1 h-8 px-2.5 text-xs rounded-lg border transition-colors ${pendingAction?.type === "delete" ? "border-destructive/50 bg-destructive/10 text-destructive" : "border-border bg-background hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 text-foreground"}`}
+              >
+                <Trash2 size={13} />
+                <span className="hidden sm:inline">Usuń</span>
+              </button>
+
+              {/* Confirm + Exit — pushed to right */}
+              <div className="flex items-center gap-2 ml-auto shrink-0">
+                {pendingAction && selectedIds.size > 0 && (
+                  <Button
+                    onClick={handleBulkConfirm}
+                    disabled={bulkLoading}
+                    className="h-8 px-3 text-xs"
+                  >
+                    {bulkLoading ? "…" : `Potwierdź (${selectedIds.size})`}
+                  </Button>
+                )}
+                <button
+                  onClick={exitBulkMode}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                  title="Zakończ zaznaczanie"
+                >
+                  <X size={15} />
+                </button>
+              </div>
+            </div>
+          ) : (
+          /* ── Normal toolbar ── */
           <div className="flex flex-wrap items-center justify-between gap-2 p-2 bg-muted/40 border border-border rounded-xl shadow-sm">
         <div className="flex items-center gap-1.5 flex-wrap">
           <TrialGate>
@@ -2325,6 +2665,14 @@ export default function ListDetail({ list, designerName, designerEmail, designer
               </div>
             )}
           </div>
+          <div className="w-px h-5 bg-border mx-0.5 hidden sm:block" />
+          <button
+            onClick={() => { setBulkMode(true); setSelectedIds(new Set()); setPendingAction(null); }}
+            className="w-8 h-8 flex items-center justify-center rounded-lg border border-border bg-background hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+            title="Zaznacz produkty (operacje masowe)"
+          >
+            <ListChecks size={13} />
+          </button>
         </div>
         {hasTotal && (
           <div className="flex flex-col items-end gap-1 shrink-0 pr-1 min-w-0">
@@ -2352,6 +2700,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
           </div>
         )}
           </div>
+          )}
         </div>
       </div>
 
@@ -2428,7 +2777,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                         return (
                           <SortableProduct key={product.id} id={product.id} sectionId={unsortedSection.id}>
                             {(dragHandle, ref, style) => (
-                            <div ref={ref} style={style} className="bg-[#FAFAFB] border border-border rounded-[14px] overflow-hidden">
+                            <div ref={ref} style={style} className={`${selectedIds.has(product.id) ? "bg-primary/5 border-primary/30" : "bg-[#FAFAFB] border-border"} border rounded-[14px] overflow-hidden transition-colors`}>
                               <ProductRow
                                 product={product}
                                 index={i}
@@ -2456,12 +2805,16 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                                 unreadCount={unreadProducts.has(product.id) ? Math.max(0, (commentCounts[product.id] ?? 0) - (seenCounts[product.id] ?? 0)) : 0}
                                 unread={unreadProducts.has(product.id)}
                                 deleting={deletingId === product.id}
-                                dragHandle={dragHandle}
+                                dragHandle={bulkMode ? (
+                                  <button onClick={() => toggleSelected(product.id)} className="p-1 flex items-center justify-center shrink-0 touch-none">
+                                    {selectedIds.has(product.id) ? <CheckSquare size={15} className="text-primary" /> : <Square size={15} className="text-muted-foreground/40" />}
+                                  </button>
+                                ) : dragHandle}
                                 allCategories={allCategories}
                                 sections={sections}
                               />
                               {variants.map((variant, vi) => (
-                              <div key={variant.id} className="relative border-t border-dashed border-border" style={{ background: '#F4F4F7' }}>
+                              <div key={variant.id} className={`relative border-t border-dashed transition-colors ${selectedIds.has(variant.id) ? "bg-primary/5 border-primary/20" : "border-border"}`} style={selectedIds.has(variant.id) ? undefined : { background: '#F4F4F7' }}>
                                 <div className={`hidden lg:block absolute w-px pointer-events-none ${vi === variants.length - 1 ? 'top-0 h-1/2' : 'top-0 bottom-0'}`} style={{ left: '20px', background: 'var(--border)' }} />
                                 <div className="hidden lg:block absolute h-px w-4 pointer-events-none top-1/2 -translate-y-1/2" style={{ left: '20px', background: 'var(--border)' }} />
                                 <div className={`lg:hidden absolute w-px pointer-events-none ${vi === variants.length - 1 ? 'top-0 h-1/2' : 'top-0 bottom-0'}`} style={{ left: '4px', background: 'var(--border)' }} />
@@ -2493,6 +2846,11 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                                   unreadCount={unreadProducts.has(variant.id) ? Math.max(0, (commentCounts[variant.id] ?? 0) - (seenCounts[variant.id] ?? 0)) : 0}
                                   unread={unreadProducts.has(variant.id)}
                                   deleting={deletingId === variant.id}
+                                  dragHandle={bulkMode ? (
+                                    <button onClick={() => toggleSelected(variant.id)} className="p-1 flex items-center justify-center shrink-0 touch-none">
+                                      {selectedIds.has(variant.id) ? <CheckSquare size={15} className="text-primary" /> : <Square size={15} className="text-muted-foreground/40" />}
+                                    </button>
+                                  ) : undefined}
                                   allCategories={allCategories}
                                   sections={sections}
                                 />
@@ -2537,7 +2895,17 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                     {/* Section header */}
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2 min-w-0">
-                        {dragHandle}
+                        {bulkMode ? (
+                          <button
+                            onClick={() => toggleSectionSelected(section.id)}
+                            className="p-1 flex items-center justify-center shrink-0 text-primary"
+                            title="Zaznacz wszystkie w sekcji"
+                          >
+                            {section.products.length > 0 && section.products.every((p) => selectedIds.has(p.id))
+                              ? <CheckSquare size={15} />
+                              : <Square size={15} className="text-muted-foreground/50" />}
+                          </button>
+                        ) : dragHandle}
                         <button
                           onClick={() => setCollapsedSections((prev) => {
                             const next = new Set(prev);
@@ -2653,7 +3021,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                                   return (
                                     <SortableProduct key={product.id} id={product.id} sectionId={section.id}>
                                       {(dragHandle, ref, style) => (
-                                      <div ref={ref} style={style} className="bg-[#FAFAFB] border border-border rounded-[14px] overflow-hidden">
+                                      <div ref={ref} style={style} className={`${selectedIds.has(product.id) ? "bg-primary/5 border-primary/30" : "bg-[#FAFAFB] border-border"} border rounded-[14px] overflow-hidden transition-colors`}>
                                         <ProductRow
                                           product={product}
                                           index={i}
@@ -2681,12 +3049,16 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                                           unreadCount={unreadProducts.has(product.id) ? Math.max(0, (commentCounts[product.id] ?? 0) - (seenCounts[product.id] ?? 0)) : 0}
                                           unread={unreadProducts.has(product.id)}
                                           deleting={deletingId === product.id}
-                                          dragHandle={dragHandle}
+                                          dragHandle={bulkMode ? (
+                                            <button onClick={() => toggleSelected(product.id)} className="p-1 flex items-center justify-center shrink-0 touch-none">
+                                              {selectedIds.has(product.id) ? <CheckSquare size={15} className="text-primary" /> : <Square size={15} className="text-muted-foreground/40" />}
+                                            </button>
+                                          ) : dragHandle}
                                           allCategories={allCategories}
                                           sections={sections}
                                         />
                                         {variants.map((variant, vi) => (
-                                          <div key={variant.id} className="relative border-t border-dashed border-border" style={{ background: '#F4F4F7' }}>
+                                          <div key={variant.id} className={`relative border-t border-dashed transition-colors ${selectedIds.has(variant.id) ? "bg-primary/5 border-primary/20" : "border-border"}`} style={selectedIds.has(variant.id) ? undefined : { background: '#F4F4F7' }}>
                                             <div className={`hidden lg:block absolute w-px pointer-events-none ${vi === variants.length - 1 ? 'top-0 h-1/2' : 'top-0 bottom-0'}`} style={{ left: '20px', background: 'var(--border)' }} />
                                             <div className="hidden lg:block absolute h-px w-4 pointer-events-none top-1/2 -translate-y-1/2" style={{ left: '20px', background: 'var(--border)' }} />
                                             <div className={`lg:hidden absolute w-px pointer-events-none ${vi === variants.length - 1 ? 'top-0 h-1/2' : 'top-0 bottom-0'}`} style={{ left: '4px', background: 'var(--border)' }} />
@@ -2718,6 +3090,11 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                                               unreadCount={unreadProducts.has(variant.id) ? Math.max(0, (commentCounts[variant.id] ?? 0) - (seenCounts[variant.id] ?? 0)) : 0}
                                               unread={unreadProducts.has(variant.id)}
                                               deleting={deletingId === variant.id}
+                                              dragHandle={bulkMode ? (
+                                                <button onClick={() => toggleSelected(variant.id)} className="p-1 flex items-center justify-center shrink-0 touch-none">
+                                                  {selectedIds.has(variant.id) ? <CheckSquare size={15} className="text-primary" /> : <Square size={15} className="text-muted-foreground/40" />}
+                                                </button>
+                                              ) : undefined}
                                               allCategories={allCategories}
                                               sections={sections}
                                             />
@@ -2839,6 +3216,30 @@ export default function ListDetail({ list, designerName, designerEmail, designer
           onCopy={(targetSectionId) => handleCopyProduct(copyState.sectionId, copyState.product, targetSectionId)}
         />
       )}
+
+      {/* Bulk delete confirmation */}
+      <Dialog open={bulkDeleteConfirmOpen} onOpenChange={(v) => { if (!v) setBulkDeleteConfirmOpen(false); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Usuń zaznaczone produkty</DialogTitle>
+            <DialogDescription>
+              Czy na pewno chcesz usunąć <strong>{selectedIds.size}</strong> {selectedIds.size === 1 ? "produkt" : "produktów"}? Tej operacji nie można cofnąć.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-2 justify-end mt-2">
+            <Button variant="outline" onClick={() => setBulkDeleteConfirmOpen(false)} disabled={bulkLoading}>
+              Anuluj
+            </Button>
+            <Button
+              onClick={executeBulkAction}
+              disabled={bulkLoading}
+              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+            >
+              {bulkLoading ? "Usuwanie…" : `Usuń (${selectedIds.size})`}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {commentsPanelProductId && (() => {
         const product = sections.flatMap((s) => s.products).find((p) => p.id === commentsPanelProductId);

@@ -5,6 +5,7 @@ import { getWorkspaceUserId } from "@/lib/workspace";
 import { generateClientLogin } from "@/lib/client-login";
 import bcrypt from "bcryptjs";
 import { getAllowedClientIds, hasPermission } from "@/lib/permissions";
+import { randomAccentHue } from "@/lib/accent-color";
 
 export async function GET() {
   const session = await auth();
@@ -46,6 +47,7 @@ export async function POST(req: NextRequest) {
       designerId,
       name: name.trim(),
       description: description?.trim() || null,
+      accentColor: randomAccentHue(),
     },
   });
 

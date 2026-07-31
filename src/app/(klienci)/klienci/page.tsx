@@ -84,6 +84,7 @@ export default async function KlienciPage() {
   const serialize = (c: typeof allClients[0]) => ({
     id: c.id,
     name: c.name,
+    accentColor: c.accentColor ?? null,
     createdAt: c.createdAt.toISOString(),
     archived: c.archived,
     _count: { projects: c._count.projects },

@@ -19,6 +19,7 @@ interface Project {
   id: string;
   title: string;
   clientName: string | null;
+  accentColor?: string | null;
   clientEmail: string | null;
   description: string | null;
   renderCount: number;

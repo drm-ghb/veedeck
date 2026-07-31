@@ -70,6 +70,7 @@ export async function PATCH(
   if (body.addressCountry !== undefined) data.addressCountry = body.addressCountry?.trim() || null;
   if (body.hiddenModules !== undefined) data.hiddenModules = body.hiddenModules;
   if (body.clientCanUpload !== undefined) data.clientCanUpload = body.clientCanUpload;
+  if (body.accentColor !== undefined) data.accentColor = body.accentColor ?? null;
 
   const updated = await prisma.client.update({ where: { id }, data });
   return NextResponse.json(updated);

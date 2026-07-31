@@ -13,7 +13,7 @@ export default async function DashboardPage() {
 
   const projectInclude = {
     _count: { select: { renders: true } },
-    client: { select: { name: true } },
+    client: { select: { name: true, accentColor: true } },
     clients: { where: { isMainContact: true as const }, select: { userId: true }, take: 1 },
   };
 
@@ -37,6 +37,7 @@ export default async function DashboardPage() {
       id: p.id,
       title: p.title,
       clientName: p.client?.name ?? p.clientName,
+      accentColor: p.client?.accentColor ?? null,
       clientEmail: p.clientEmail,
       description: p.description,
       renderCount: p._count.renders,

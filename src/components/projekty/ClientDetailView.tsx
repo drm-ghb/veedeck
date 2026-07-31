@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -53,6 +53,8 @@ import {
 } from "@/components/ui/dialog";
 import { useT } from "@/lib/i18n";
 import ClientHistoryTab from "@/components/projekty/ClientHistoryTab";
+import { ACCENT_HUES, accentColors } from "@/lib/accent-color";
+import { ColorPicker } from "@/components/moodboard/ColorPicker";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -74,6 +76,7 @@ interface ClientData {
   id: string;
   name: string;
   description: string | null;
+  accentColor: string | null;
   startDate: string | null;
   endDate: string | null;
   addressStreet: string | null;
@@ -135,7 +138,13 @@ export default function ClientDetailView({ client: initialClient }: Props) {
   const [clientCanUpload, setClientCanUpload] = useState(initialClient.clientCanUpload);
 
   const [contacts, setContacts] = useState<Contact[]>(initialClient.contacts);
-  const [activeTab, setActiveTab] = useState<"info" | "contacts" | "payments" | "schedule" | "documents" | "history">(
+  const [accentColor, setAccentColor] = useState<string | null>(initialClient.accentColor);
+  const [savingColor, setSavingColor] = useState(false);
+  const [customHex, setCustomHex] = useState(() =>
+    initialClient.accentColor?.startsWith("#") ? initialClient.accentColor : "#4f46e5"
+  );
+  const saveColorDebounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const [activeTab, setActiveTab] = useState<"info" | "contacts" | "payments" | "schedule" | "documents" | "history" | "settings">(
     searchParams.get("tab") === "contacts" ? "contacts" : "info"
   );
 
@@ -420,10 +429,28 @@ export default function ClientDetailView({ client: initialClient }: Props) {
     }
   }
 
+  async function saveAccentColor(hue: string) {
+    setSavingColor(true);
+    setAccentColor(hue);
+    try {
+      await fetch(`/api/clients/${initialClient.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ accentColor: hue }),
+      });
+      toast.success(t.common.saved);
+      router.refresh();
+    } catch {
+      toast.error(t.settings.saveError);
+    } finally {
+      setSavingColor(false);
+    }
+  }
+
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="max-w-5xl mx-auto">
       {/* Back nav */}
       <div className="mb-6">
         <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
@@ -463,7 +490,7 @@ export default function ClientDetailView({ client: initialClient }: Props) {
 
       {/* Tabs */}
       <div className="flex gap-1 border-b border-border mb-6 overflow-x-auto scrollbar-none">
-        {(["info", "contacts", "payments", "schedule", "documents", "history"] as const).map((tab) => (
+        {(["info", "contacts", "payments", "schedule", "documents", "history", "settings"] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -479,6 +506,7 @@ export default function ClientDetailView({ client: initialClient }: Props) {
             {tab === "schedule" && t.projekty.tabSchedule}
             {tab === "history" && "Historia klienta"}
             {tab === "documents" && t.projekty.tabDocuments}
+            {tab === "settings" && "Ustawienia klienta"}
           </button>
         ))}
       </div>
@@ -1017,6 +1045,63 @@ export default function ClientDetailView({ client: initialClient }: Props) {
       {/* ── Tab: Historia klienta ────────────────────────────────────────── */}
       {activeTab === "history" && (
         <ClientHistoryTab apiUrl={`/api/klienci/${initialClient.id}/client-history`} />
+      )}
+
+      {/* ── Tab: Ustawienia klienta ───────────────────────────────────────── */}
+      {activeTab === "settings" && (
+        <section className="bg-card border border-border rounded-xl p-5 space-y-4">
+          <div>
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground mb-1">Kolor klienta</h2>
+            <p className="text-sm text-muted-foreground">Kolor pojawia się na liście klientów i kafelkach projektów przypisanych do tego klienta.</p>
+          </div>
+          <div className="flex flex-wrap gap-3 items-center">
+            {ACCENT_HUES.map((hue) => {
+              const c = accentColors(hue);
+              const selected = accentColor === hue;
+              return (
+                <button
+                  key={hue}
+                  disabled={savingColor}
+                  onClick={() => saveAccentColor(hue)}
+                  title={`Hue ${hue}`}
+                  className="w-9 h-9 rounded-full flex items-center justify-center transition-transform hover:scale-110 disabled:opacity-60"
+                  style={{
+                    background: c.bar,
+                    outline: selected ? `3px solid ${c.bar}` : "none",
+                    outlineOffset: selected ? "2px" : "0",
+                  }}
+                >
+                  {selected && (
+                    <span className="material-symbols-rounded text-white" style={{ fontSize: 18, fontVariationSettings: "'wght' 600" }}>
+                      check
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+
+            {/* Divider */}
+            <div className="w-px h-8 bg-border" />
+
+            {/* Custom color picker */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Własny:</span>
+              <div style={accentColor?.startsWith("#") ? { outline: `3px solid ${customHex}`, outlineOffset: "2px", borderRadius: "10px" } : {}}>
+                <ColorPicker
+                  value={customHex}
+                  onChange={(hex) => {
+                    setCustomHex(hex);
+                    clearTimeout(saveColorDebounceRef.current);
+                    saveColorDebounceRef.current = setTimeout(() => {
+                      saveAccentColor(hex);
+                    }, 600);
+                  }}
+                  openDown
+                />
+              </div>
+            </div>
+          </div>
+        </section>
       )}
 
     </div>

@@ -30,7 +30,7 @@ export default async function ListyPage() {
         select: {
           id: true, title: true, hiddenModules: true, slug: true,
           clientName: true,
-          client: { select: { name: true } },
+          client: { select: { name: true, accentColor: true } },
           clients: { where: { isMainContact: true }, select: { userId: true }, take: 1 },
         },
       },
@@ -56,6 +56,7 @@ export default async function ListyPage() {
           id: l.project.id,
           title: l.project.title,
           clientName: l.project.client?.name ?? l.project.clientName ?? null,
+          accentColor: l.project.client?.accentColor ?? null,
           hiddenModules: l.project.hiddenModules,
           clientHasNoAccount: !!(l.project.clientName) && !(l.project.clients[0]?.userId),
         } : null,

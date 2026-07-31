@@ -21,6 +21,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useT } from "@/lib/i18n";
 import { LocalMall, Search, LayoutGrid, List, ArrowDownUp, Link2, MoreHorizontal, Pencil, Archive, ArchiveRestore, Trash2, Pin, PinOff, AlertTriangle, Check, Comment, GripVertical, KeyRound, Eye } from "@/components/ui/icons";
+import { accentColors } from "@/lib/accent-color";
 import { pusherClient } from "@/lib/pusher";
 import { getUnreadSet, syncListUnread } from "@/lib/list-unread-store";
 import NewListDialog from "./NewListDialog";
@@ -55,7 +56,7 @@ interface ShoppingList {
   order: number;
   createdAt: string;
   viewCount?: number;
-  project: { id: string; title: string; clientName: string | null; hiddenModules: string[]; clientHasNoAccount: boolean } | null;
+  project: { id: string; title: string; clientName: string | null; accentColor: string | null; hiddenModules: string[]; clientHasNoAccount: boolean } | null;
 }
 
 interface ListyViewProps {
@@ -395,12 +396,11 @@ export default function ListyView({ lists: initialLists, userId, veepickConnecte
       {filtered.length > 0 && view === "list" && (
         <DndContext id={dndIdList} sensors={sensors} collisionDetection={closestCenter} onDragEnd={tab === "active" ? handleDragEnd : undefined}>
         <SortableContext items={filtered.map((l) => l.id)} strategy={rectSortingStrategy}>
-        <div className="bg-card border border-border rounded-xl overflow-hidden">
-          {filtered.map((list, i) => (
+        <div className="space-y-[10px]">
+          {filtered.map((list) => (
             <SortableListRowItem
               key={list.id}
               list={list}
-              isLast={i === filtered.length - 1}
               unreadCount={unreadListCounts[list.id] ?? 0}
               onNavigate={() => router.push(`/listy-zakupowe/${list.slug ?? list.id}`)}
               onCopyLink={handleCopyLink}
@@ -521,9 +521,8 @@ function SortableListGridCard({ list, unreadCount, onCopyLink, menu }: {
   );
 }
 
-function SortableListRowItem({ list, isLast, unreadCount, onNavigate, onCopyLink, menu }: {
+function SortableListRowItem({ list, unreadCount, onNavigate, onCopyLink, menu }: {
   list: ShoppingList;
-  isLast: boolean;
   unreadCount: number;
   onNavigate: () => void;
   onCopyLink: (l: ShoppingList) => void;
@@ -531,66 +530,69 @@ function SortableListRowItem({ list, isLast, unreadCount, onNavigate, onCopyLink
 }) {
   const t = useT();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: list.id });
-  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
+  const colors = list.project?.clientName
+    ? accentColors(list.project.accentColor)
+    : { bar: "#94a3b8", tint: "#F1F2F5", deep: "#64748b" };
+
   return (
     <div
       ref={setNodeRef}
-      style={style}
+      style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 }}
       onClick={onNavigate}
-      className={`flex items-center gap-3 px-4 py-3 hover:bg-muted/30 transition-colors cursor-pointer ${!isLast ? "border-b border-border" : ""}`}
+      className="relative overflow-hidden rounded-xl border border-[#E5E7EB] bg-[#FAFAFB] px-4 py-[14px] flex items-center gap-3 cursor-pointer transition-[box-shadow,transform] duration-[180ms] hover:shadow-[0_8px_24px_-12px_rgba(24,24,50,.15)] hover:-translate-y-px"
     >
+      {/* Accent bar */}
+      <div className="absolute left-0 top-0 bottom-0 w-[3px]" style={{ background: colors.bar }} />
+
+      {/* Drag handle */}
       <div
         {...attributes}
         {...listeners}
         onClick={(e) => e.stopPropagation()}
-        className="text-muted-foreground hover:text-foreground cursor-grab active:cursor-grabbing flex-shrink-0"
+        className="text-muted-foreground/40 hover:text-muted-foreground cursor-grab active:cursor-grabbing flex-shrink-0 transition-colors"
         title={t.projekty.dragToReorder}
       >
         <GripVertical size={15} />
       </div>
-      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-        <LocalMall size={14} className="text-primary" />
+
+      {/* Icon */}
+      <div className="w-[38px] h-[38px] rounded-[10px] flex items-center justify-center shrink-0" style={{ background: colors.tint }}>
+        <LocalMall size={19} style={{ color: colors.deep }} />
       </div>
+
+      {/* Content */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
-          {list.pinned && <Pin size={11} className="text-red-500 fill-red-500 flex-shrink-0" />}
-          <span className="font-semibold text-sm text-foreground truncate">{list.name}</span>
+          {list.pinned && <Pin size={13} className="text-red-500 fill-red-500 flex-shrink-0" />}
+          <span className="font-semibold text-[14.5px] text-[#24252B] truncate">{list.name}</span>
         </div>
-        <div className="flex flex-col gap-0 mt-0.5">
-          {list.project && <span className="text-xs text-muted-foreground truncate">{list.project.clientName ? `${t.home.clientPrefix} ${list.project.clientName}` : list.project.title}</span>}
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground whitespace-nowrap">
-              {t.listy.createdPrefix} {new Date(list.createdAt).toLocaleDateString("pl-PL", { day: "2-digit", month: "short", year: "numeric" })}
-            </span>
-            <span className="flex items-center gap-1 text-[11px] text-muted-foreground/70 whitespace-nowrap">
-              <Eye size={11} />
-              {list.viewCount ?? 0}
-            </span>
-          </div>
+        <div className="flex items-center gap-[14px] mt-[3px] flex-wrap">
+          <span className="text-[12px] text-[#8A8D98] whitespace-nowrap">
+            {list.project?.clientName ? `${t.home.clientPrefix} ${list.project.clientName}` : t.listy.noProject}
+          </span>
+          <span className="text-[12px] text-[#8A8D98] whitespace-nowrap">
+            {t.listy.createdPrefix} {new Date(list.createdAt).toLocaleDateString("pl-PL", { day: "2-digit", month: "short", year: "numeric" })}
+          </span>
+          <span className="flex items-center gap-1 text-[12px] text-[#8A8D98] whitespace-nowrap">
+            <Eye size={12} />
+            {list.viewCount ?? 0}
+          </span>
         </div>
       </div>
-      <div className="flex items-center gap-0.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+
+      {/* Right side */}
+      <div className="flex items-center gap-[10px] shrink-0" onClick={(e) => e.stopPropagation()}>
         {unreadCount > 0 && (
-          <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-primary text-white text-[10px] font-bold leading-none mr-1">
-            <Comment size={10} />
+          <div className="flex items-center gap-1 px-[9px] py-[3px] rounded-full bg-primary text-white text-[11.5px] font-bold leading-none">
+            <Comment size={11} />
             {unreadCount}
           </div>
         )}
-        {list.project?.clientHasNoAccount && (
-          <Link
-            href={`/klienci/${list.project.id}?tab=contacts`}
-            onClick={(e) => e.stopPropagation()}
-            className="flex items-center gap-1 px-1.5 py-0.5 rounded text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/30 text-[11px] font-medium transition-colors"
-          >
-            <KeyRound size={12} />
-            {t.projekty.noAccount}
-          </Link>
-        )}
         <button
           onClick={() => onCopyLink(list)}
-          className="w-7 h-7 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+          className="w-[30px] h-[30px] rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
         >
-          <Link2 size={14} />
+          <Link2 size={15} />
         </button>
         {menu}
       </div>

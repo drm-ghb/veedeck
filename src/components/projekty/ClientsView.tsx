@@ -11,6 +11,7 @@ import EditClientDialog from "@/components/projekty/EditClientDialog";
 import { useT } from "@/lib/i18n";
 import TrialGate from "@/components/ui/TrialGate";
 import { useIsTrialExpired } from "@/lib/trial-context";
+import { accentColors } from "@/lib/accent-color";
 
 interface ClientProject {
   id: string;
@@ -22,6 +23,7 @@ interface ClientProject {
 interface Client {
   id: string;
   name: string;
+  accentColor?: string | null;
   createdAt: string;
   archived: boolean;
   _count: { projects: number };
@@ -231,33 +233,33 @@ export default function ClientsView({ clients, archivedClients }: Props) {
 
       {/* List */}
       {filtered.length > 0 && (
-        <div className="border border-border rounded-xl overflow-hidden divide-y divide-border">
+        <div className="space-y-[10px]">
           {filtered.map((client) => (
-            <div key={client.id} className="flex items-center gap-4 px-4 py-3.5 hover:bg-muted/30 transition-colors">
-              <Link href={`/klienci/klient/${client.id}`} className="flex-1 min-w-0">
+            <div key={client.id} className="relative flex items-center gap-3 px-4 py-[14px] overflow-hidden rounded-xl border border-[#E5E7EB] bg-[#FAFAFB] transition-[box-shadow,transform] duration-[180ms] hover:shadow-[0_8px_24px_-12px_rgba(24,24,50,.15)] hover:-translate-y-px">
+              <div className="absolute left-0 top-0 bottom-0 w-[3px]" style={{ background: accentColors(client.accentColor).bar }} />
+              <Link href={`/klienci/klient/${client.id}`} className="flex-1 min-w-0 pl-2">
                 <div className="flex items-center gap-2">
-                  <p className="font-semibold text-foreground truncate">{client.name}</p>
+                  <p className="font-semibold text-[14.5px] text-[#24252B] truncate">{client.name}</p>
                   {client.hasContactsWithoutAccount && (
-                    <span title={t.projekty.contactsWithoutAccount} className="flex-shrink-0 text-amber-500">
-                      <AlertTriangle size={14} />
+                    <span title={t.projekty.contactsWithoutAccount} className="flex-shrink-0" style={{ color: "#f59e0b" }}>
+                      <AlertTriangle size={15} />
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-muted-foreground mt-0.5">
+                <p className="text-[12px] text-[#8A8D98] mt-[3px]">
                   {client._count.projects === 0
                     ? t.projekty.clientNoProjects
                     : `${client._count.projects} ${client._count.projects === 1 ? t.projekty.clientProjectSg : client._count.projects < 5 ? t.projekty.clientProjectFw : t.projekty.clientProjectPl}`}
                 </p>
               </Link>
 
-
               {/* Menu */}
               <div className="relative">
                 <button
                   onClick={(e) => { e.stopPropagation(); const rect = e.currentTarget.getBoundingClientRect(); setMenuUp(rect.bottom > window.innerHeight - 160); setMenuOpen(menuOpen === client.id ? null : client.id); }}
-                  className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                  className="p-1.5 rounded-md text-[#8A8D98] hover:text-foreground hover:bg-muted transition-colors"
                 >
-                  <MoreVertical size={16} />
+                  <MoreVertical size={18} />
                 </button>
                 {menuOpen === client.id && (
                   <>
