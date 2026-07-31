@@ -448,11 +448,11 @@ function SurveyTable({ surveys, openMenuId, setOpenMenuId, onArchive, onPin, onD
       <table className="w-full text-sm table-fixed">
         <thead>
           <tr className="bg-muted/50 border-b border-border">
-            <th className="text-left px-3 sm:px-4 py-3 font-medium text-muted-foreground rounded-tl-xl w-full">{t.ankiety.colName}</th>
+            <th className="text-left px-3 sm:px-4 py-3 font-medium text-muted-foreground rounded-tl-xl w-[40%]">{t.ankiety.colName}</th>
             <th className="text-left px-3 sm:px-4 py-3 font-medium text-muted-foreground w-28 sm:w-32">{t.ankiety.colStatus}</th>
             <th className="text-left px-3 sm:px-4 py-3 font-medium text-muted-foreground hidden md:table-cell w-36">{t.ankiety.colClient}</th>
             <th className="text-left px-3 sm:px-4 py-3 font-medium text-muted-foreground hidden md:table-cell w-32">{t.ankiety.colDate}</th>
-            <th className="text-left px-3 sm:px-4 py-3 font-medium text-muted-foreground hidden sm:table-cell w-24">{t.ankiety.colResponses}</th>
+            <th className="text-left px-3 sm:px-4 py-3 font-medium text-muted-foreground hidden sm:table-cell w-32">{t.ankiety.colResponses}</th>
             <th className="px-3 sm:px-4 py-3 rounded-tr-xl w-16 sm:w-28" />
           </tr>
         </thead>
