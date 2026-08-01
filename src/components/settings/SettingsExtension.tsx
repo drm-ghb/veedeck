@@ -121,22 +121,18 @@ export function SettingsExtension({ initialKey }: Props) {
             Edge
           </button>
 
-          {/* Firefox — disabled */}
-          <button
-            disabled
-            className="inline-flex items-center gap-2 h-9 px-4 rounded-lg border border-border bg-background text-sm font-medium text-muted-foreground opacity-40 cursor-not-allowed"
-            title="Wkrótce dostępne"
+          {/* Firefox — active */}
+          <a
+            href="https://addons.mozilla.org/pl/firefox/addon/veepick/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 h-9 px-4 rounded-lg border border-border bg-background text-sm font-medium text-foreground hover:bg-muted transition-colors"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-              <circle cx="12" cy="12" r="10.5" fill="#FF9500"/>
-              <circle cx="12" cy="12" r="7" fill="#FF6000"/>
-              <circle cx="12" cy="12" r="4" fill="#FF3750"/>
-              <circle cx="12" cy="12" r="2" fill="#FF6000"/>
-            </svg>
-            Firefox
-          </button>
+            <img src="/firefox-logo.svg" width="16" height="16" alt="" aria-hidden="true" />
+            Firefox Add-ons
+          </a>
         </div>
-        <p className="text-xs text-muted-foreground">Opera, Edge i Firefox — wkrótce dostępne.</p>
+        <p className="text-xs text-muted-foreground">Opera i Edge — wkrótce dostępne.</p>
       </div>
 
       {/* API Key section */}
