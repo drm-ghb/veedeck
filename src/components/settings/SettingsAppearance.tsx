@@ -49,7 +49,7 @@ export function SettingsAppearance({
   const { theme, setTheme, colorTheme, setColorTheme, setCustomTheme } = useTheme();
   const { lang, setLang } = useLang();
 
-  const DEFAULT_CUSTOM: CustomThemeColors = { primary: "#4F46E5", background: "#FFFFFF", sidebar: "#EDEEF2", sidebarText: "#111111", contentText: "#111111" };
+  const DEFAULT_CUSTOM: CustomThemeColors = { primary: "#4F46E5", background: "#FFFFFF", sidebar: "#F5F5F5", sidebarText: "#111111", contentText: "#111111" };
   const [customColors, setCustomColors] = useState<CustomThemeColors>({ ...DEFAULT_CUSTOM, ...(initialCustomTheme ?? {}) });
   const [showCustomEditor, setShowCustomEditor] = useState(false);
   const [savingCustomTheme, setSavingCustomTheme] = useState(false);
@@ -98,7 +98,7 @@ export function SettingsAppearance({
   ];
 
   const COLOR_THEMES: { slug: ColorTheme; name: string; subtitle: string; sidebar: string; background: string; primary: string; accent: string }[] = [
-    { slug: "violet",    name: "Violet",          subtitle: t.settings.colorThemeViolet,    sidebar: "#EDEEF2", background: "#FFFFFF", primary: "#4F46E5", accent: "#A5B4FC" },
+    { slug: "violet",    name: "Violet",          subtitle: t.settings.colorThemeViolet,    sidebar: "#F5F5F5", background: "#FFFFFF", primary: "#4F46E5", accent: "#A5B4FC" },
     { slug: "champagne", name: "Champagne Linen",  subtitle: t.settings.colorThemeChampagne, sidebar: "#F7F3EA", background: "#EEE9DF", primary: "#8B613C", accent: "#C2A878" },
     { slug: "obsidian",  name: "Obsidian Gold",    subtitle: t.settings.colorThemeObsidian,  sidebar: "#12110F", background: "#F7F5F0", primary: "#C7A46C", accent: "#8A6A3A" },
     { slug: "navy",      name: "Royal Navy",       subtitle: t.settings.colorThemeNavy,      sidebar: "#0A1230", background: "#F2F3F6", primary: "#15224F", accent: "#B8C0DB" },
@@ -263,9 +263,10 @@ export function SettingsAppearance({
                 ))}
               </div>
             ))}
-            <div className="flex gap-2 pt-1">
+            <div className="flex items-center gap-2 pt-1">
               <Button onClick={handleSaveCustomTheme} disabled={savingCustomTheme} size="sm">{savingCustomTheme ? "Zapisywanie…" : "Zapisz i aktywuj"}</Button>
               <Button variant="outline" size="sm" onClick={() => setShowCustomEditor(false)}>Anuluj</Button>
+              <Button variant="outline" size="sm" className="ml-auto" onClick={() => setCustomColors(DEFAULT_CUSTOM)}>Przywróć domyślne</Button>
             </div>
           </div>
         )}

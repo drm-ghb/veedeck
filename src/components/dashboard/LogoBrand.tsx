@@ -2,11 +2,8 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { useTheme } from "@/lib/theme";
-
 export function LogoBrand({ initialCollapsed = false }: { initialCollapsed?: boolean }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(initialCollapsed);
-  const { colorTheme } = useTheme();
 
   useEffect(() => {
     function handler(e: Event) {
@@ -17,7 +14,7 @@ export function LogoBrand({ initialCollapsed = false }: { initialCollapsed?: boo
   }, []);
 
   const showWordmark = !sidebarCollapsed;
-  const iconSrc = colorTheme === "violet" ? "/logo_violet.png" : "/veedeck_ikona_vsg.svg";
+  const iconSrc = "/veedeck_ikona_vsg.svg";
 
   return (
     <Link href="/panel-glowny" className="flex items-center gap-2 shrink-0">
