@@ -15,7 +15,7 @@ export default async function ListPage({ params, searchParams }: { params: Promi
   const userId = getWorkspaceUserId(session);
 
   const [userSettings, list] = await Promise.all([
-    prisma.user.findUnique({ where: { id: userId }, select: { listsCategoryOrder: true, clientLogoUrl: true, customCategories: true, pdfListTemplate: true, fullName: true, avatarUrl: true } }),
+    prisma.user.findUnique({ where: { id: userId }, select: { listsCategoryOrder: true, clientLogoUrl: true, customCategories: true, pdfListTemplate: true, fullName: true, avatarUrl: true, defaultCurrency: true } }),
     prisma.shoppingList.findFirst({
       where: {
         userId,
@@ -73,6 +73,7 @@ export default async function ListPage({ params, searchParams }: { params: Promi
       categoryOrder={userSettings?.listsCategoryOrder ?? []}
       customCategories={userSettings?.customCategories ?? []}
       pdfTemplate={(userSettings?.pdfListTemplate as PdfTemplate) ?? "violet"}
+      defaultCurrency={userSettings?.defaultCurrency ?? "PLN"}
       list={{
         id: list.id,
         name: list.name,

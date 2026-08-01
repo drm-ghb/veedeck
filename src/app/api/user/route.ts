@@ -58,6 +58,10 @@ export async function PATCH(req: NextRequest) {
     "emailNotifEnabled",
   ] as const;
   const stringFields = ["clientWelcomeMessage", "clientLogoUrl", "accentColor", "defaultRenderOrder", "defaultRenderStatus", "navMode", "avatarUrl", "fullName", "phone", "phonePrefix", "contactEmail"] as const;
+  const VALID_CURRENCIES = ["PLN", "EUR", "USD", "GBP"] as const;
+  if (body.defaultCurrency !== undefined && !VALID_CURRENCIES.includes(body.defaultCurrency)) {
+    return NextResponse.json({ error: "Nieprawidłowa waluta" }, { status: 400 });
+  }
 
   const VALID_COLOR_THEMES = ["violet", "champagne", "obsidian", "navy", "plum", "mono", "custom"] as const;
   if (body.colorTheme !== undefined && !VALID_COLOR_THEMES.includes(body.colorTheme)) {
@@ -90,6 +94,7 @@ export async function PATCH(req: NextRequest) {
     if (!VALID_INTERVALS.includes(interval)) return NextResponse.json({ error: "Nieprawidłowy interwał" }, { status: 400 });
     data.emailNotifDigestInterval = interval;
   }
+  if (body.defaultCurrency !== undefined) data.defaultCurrency = body.defaultCurrency;
   if (body.colorTheme !== undefined) data.colorTheme = body.colorTheme;
   if (body.customTheme !== undefined) data.customTheme = body.customTheme ?? null;
   if (body.pdfListTemplate !== undefined) data.pdfListTemplate = body.pdfListTemplate;

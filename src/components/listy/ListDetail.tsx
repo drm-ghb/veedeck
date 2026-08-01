@@ -132,6 +132,7 @@ interface ListDetailProps {
   categoryOrder: string[];
   customCategories: string[];
   pdfTemplate?: PdfTemplate;
+  defaultCurrency?: string;
 }
 
 function getSortBy(sortBy: string | null | undefined): string {
@@ -1130,7 +1131,7 @@ function sortProducts(products: Product[], sortBy: string, categoryOrder: string
   return sorted;
 }
 
-export default function ListDetail({ list, designerName, designerEmail, designerLogoUrl, designerFullName, designerAvatarUrl, initialOpenProductId, categoryOrder, customCategories, pdfTemplate }: ListDetailProps & { designerName?: string; designerEmail?: string; designerLogoUrl?: string; designerFullName?: string; designerAvatarUrl?: string; initialOpenProductId?: string }) {
+export default function ListDetail({ list, designerName, designerEmail, designerLogoUrl, designerFullName, designerAvatarUrl, initialOpenProductId, categoryOrder, customCategories, pdfTemplate, defaultCurrency = "PLN" }: ListDetailProps & { designerName?: string; designerEmail?: string; designerLogoUrl?: string; designerFullName?: string; designerAvatarUrl?: string; initialOpenProductId?: string }) {
   const { lang } = useLang();
   const t = useT();
   const expired = useIsTrialExpired();
@@ -2769,7 +2770,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
               </span>
               {budget != null && budget > 0 && (
                 <span className="text-xs text-muted-foreground tabular-nums">
-                  / {formatPriceNum(budget)} {grandCurrency}
+                  / {formatPriceNum(budget)} {{ PLN: "zł", EUR: "€", USD: "$", GBP: "£" }[defaultCurrency] ?? defaultCurrency}
                 </span>
               )}
               {budget != null && budget > 0 && (
@@ -3464,7 +3465,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                       </button>
                     )}
                   </div>
-                  <span className="text-sm text-muted-foreground shrink-0">zł</span>
+                  <span className="text-sm text-muted-foreground shrink-0">{{ PLN: "zł", EUR: "€", USD: "$", GBP: "£" }[defaultCurrency] ?? defaultCurrency}</span>
                 </div>
               </div>
 
@@ -3495,7 +3496,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                             </button>
                           )}
                         </div>
-                        <span className="text-sm text-muted-foreground shrink-0">zł</span>
+                        <span className="text-sm text-muted-foreground shrink-0">{{ PLN: "zł", EUR: "€", USD: "$", GBP: "£" }[defaultCurrency] ?? defaultCurrency}</span>
                       </div>
                     </div>
                   ))}

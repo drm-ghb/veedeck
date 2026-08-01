@@ -269,6 +269,8 @@ export const pl = {
     navSidebar: "Panel boczny",
     navSidebarDesc: "Stały pasek po lewej stronie z listą modułów widoczny przez cały czas.",
     interfaceSettings: "Ustawienia interfejsu",
+    defaultCurrency: "Waluta domyślna",
+    defaultCurrencyDesc: "Stosowana w Płatnościach klienta i budżetach list zakupowych.",
     renderflow: "ProjectFlow",
     renderflowDesc2: "Ustawienia modułu wizualizacji i feedbacku",
     lists: "Listy zakupowe",

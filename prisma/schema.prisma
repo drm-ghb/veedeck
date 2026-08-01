@@ -60,6 +60,7 @@ model User {
   trialDay3SentAt            DateTime?
   trialEndedSentAt           DateTime?
   contactEmail               String?
+  defaultCurrency            String                  @default("PLN")
   taskReminderHours          Json?
   emailNotifEnabled          Boolean                 @default(false)
   emailNotifModules          String[]                @default(["renderflow", "listy", "dyskusje", "ankiety", "wykonawcy"])

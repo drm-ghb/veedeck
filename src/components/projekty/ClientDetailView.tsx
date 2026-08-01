@@ -91,6 +91,7 @@ interface ClientData {
 
 interface Props {
   client: ClientData;
+  defaultCurrency?: string;
 }
 
 // ── Sortable contact row ─────────────────────────────────────────────────────
@@ -113,7 +114,7 @@ function SortableContactItem({ contact, children }: { contact: Contact; children
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-export default function ClientDetailView({ client: initialClient }: Props) {
+export default function ClientDetailView({ client: initialClient, defaultCurrency = "PLN" }: Props) {
   const t = useT();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -1008,6 +1009,7 @@ export default function ClientDetailView({ client: initialClient }: Props) {
           <PaymentsTab
             clientId={mainContact.id}
             paymentsSharedWithClient={false}
+            defaultCurrency={defaultCurrency}
           />
         ) : (
           <div className="bg-card border border-border rounded-xl p-10 text-center text-muted-foreground">

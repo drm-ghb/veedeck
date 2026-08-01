@@ -271,6 +271,8 @@ export const en: TranslationKeys = {
     navSidebar: "Sidebar",
     navSidebarDesc: "Persistent left sidebar with module list always visible.",
     interfaceSettings: "Interface settings",
+    defaultCurrency: "Default currency",
+    defaultCurrencyDesc: "Used in Client payments and shopping list budgets.",
     renderflow: "ProjectFlow",
     renderflowDesc2: "Visualization and feedback module settings",
     lists: "Shopping Lists",

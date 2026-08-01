@@ -10,7 +10,9 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
   const designerId = getWorkspaceUserId(session as any);
   const { id } = await params;
 
-  const client = await prisma.client.findFirst({
+  const [userSettings, client] = await Promise.all([
+    prisma.user.findUnique({ where: { id: designerId }, select: { defaultCurrency: true } }),
+    prisma.client.findFirst({
     where: { id, designerId },
     select: {
       id: true,
@@ -34,7 +36,8 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
         },
       },
     },
-  });
+  }),
+  ]);
 
   if (!client) notFound();
 
@@ -69,5 +72,5 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
     })),
   };
 
-  return <ClientDetailView client={serialized} />;
+  return <ClientDetailView client={serialized} defaultCurrency={userSettings?.defaultCurrency ?? "PLN"} />;
 }

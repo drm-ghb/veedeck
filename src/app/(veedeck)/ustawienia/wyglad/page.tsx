@@ -17,6 +17,7 @@ export default async function SettingsWygladPage() {
       colorTheme: true,
       customTheme: true,
       viewPreferences: true,
+      defaultCurrency: true,
     },
   });
   if (!user) redirect("/login");
@@ -27,6 +28,7 @@ export default async function SettingsWygladPage() {
       initialCustomTheme={(user.customTheme as unknown as import("@/lib/theme").CustomThemeColors) ?? null}
       initialGlobalHiddenModules={user.globalHiddenModules}
       initialSidebarOrder={((user.viewPreferences as Record<string, unknown>)?.sidebarOrder as string[]) ?? []}
+      initialDefaultCurrency={user.defaultCurrency ?? "PLN"}
     />
   );
 }

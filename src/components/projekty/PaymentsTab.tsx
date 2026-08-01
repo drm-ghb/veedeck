@@ -104,12 +104,16 @@ interface Props {
   clientId: string;
   projectId?: string;
   paymentsSharedWithClient: boolean;
+  defaultCurrency?: string;
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-function formatPLN(amount: number) {
-  return new Intl.NumberFormat("pl-PL", { style: "currency", currency: "PLN" }).format(amount);
+const CURRENCY_LOCALES: Record<string, string> = { PLN: "pl-PL", EUR: "de-DE", USD: "en-US", GBP: "en-GB" };
+
+function formatPLN(amount: number, currency = "PLN") {
+  const locale = CURRENCY_LOCALES[currency] ?? "pl-PL";
+  return new Intl.NumberFormat(locale, { style: "currency", currency }).format(amount);
 }
 
 function buildTree(groups: PaymentGroup[], parentId: string | null): PaymentGroup[] {
@@ -255,6 +259,7 @@ interface GroupRowProps {
   children?: React.ReactNode;
   addGroupForm?: React.ReactNode;
   addPaymentForm?: React.ReactNode;
+  currency?: string;
   onToggleCollapse: () => void;
   onStartEdit: () => void;
   onSaveEdit: () => void;
@@ -267,7 +272,7 @@ interface GroupRowProps {
 
 function GroupRow({
   group, depth, isDndActive, isEditing, editingName, isCollapsed, groupTotal,
-  children, addGroupForm, addPaymentForm,
+  children, addGroupForm, addPaymentForm, currency = "PLN",
   onToggleCollapse, onStartEdit, onSaveEdit, onCancelEdit, onEditNameChange,
   onDelete, onAddSubgroup, onAddPayment,
 }: GroupRowProps) {
@@ -320,7 +325,7 @@ function GroupRow({
             {isDropTarget && (
               <span className="text-xs text-primary font-medium flex-shrink-0 mr-1">{t.payments.dropHere}</span>
             )}
-            <span className="text-sm font-medium tabular-nums text-muted-foreground">{formatPLN(groupTotal)}</span>
+            <span className="text-sm font-medium tabular-nums text-muted-foreground">{formatPLN(groupTotal, currency)}</span>
             <div className="relative flex-shrink-0">
               <button
                 onClick={(e) => { e.stopPropagation(); setShowMenu((v) => !v); }}
@@ -388,6 +393,7 @@ interface PaymentRowProps {
   isEditing: boolean;
   editingName: string;
   editingAmount: string;
+  currency?: string;
   onStartEdit: () => void;
   onSaveEdit: () => void;
   onCancelEdit: () => void;
@@ -405,7 +411,7 @@ function formatDate(iso: string) {
 }
 
 function PaymentRow({
-  payment, depth, isEditing, editingName, editingAmount,
+  payment, depth, isEditing, editingName, editingAmount, currency = "PLN",
   onStartEdit, onSaveEdit, onCancelEdit, onEditNameChange, onEditAmountChange,
   onToggleStatus, onDelete, onUploadComplete, onSaveAmountInline,
 }: PaymentRowProps) {
@@ -495,7 +501,7 @@ function PaymentRow({
               className={`text-sm font-medium tabular-nums whitespace-nowrap flex-shrink-0 cursor-default ${payment.status === "paid" ? "text-muted-foreground" : ""}`}
               onClick={() => { setInlineAmountValue(String(payment.amount)); setInlineAmountEdit(true); }}
             >
-              {formatPLN(payment.amount)}
+              {formatPLN(payment.amount, currency)}
             </span>
           )}
           <span className={`text-[11px] px-1.5 py-0.5 rounded-full font-medium flex-shrink-0 ${
@@ -644,7 +650,7 @@ function ProjectSection({
 
 // ── Main component ───────────────────────────────────────────────────────────
 
-export function PaymentsTab({ clientId, projectId, paymentsSharedWithClient: initialShared }: Props) {
+export function PaymentsTab({ clientId, projectId, paymentsSharedWithClient: initialShared, defaultCurrency = "PLN" }: Props) {
   const t = useT();
   const [groups, setGroups] = useState<PaymentGroup[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
@@ -1038,6 +1044,7 @@ export function PaymentsTab({ clientId, projectId, paymentsSharedWithClient: ini
         groupTotal={sumGroup(group.id, payments, groups)}
         addGroupForm={renderAddGroupForm(group.id)}
         addPaymentForm={renderAddPaymentForm(group.id)}
+        currency={defaultCurrency}
         onToggleCollapse={() => setCollapsed((c) => ({ ...c, [group.id]: !c[group.id] }))}
         onStartEdit={() => { setEditingGroupId(group.id); setEditingGroupName(group.name); }}
         onSaveEdit={() => handleSaveGroup(group.id)}
@@ -1064,6 +1071,7 @@ export function PaymentsTab({ clientId, projectId, paymentsSharedWithClient: ini
         isEditing={editingPaymentId === payment.id}
         editingName={editingPaymentName}
         editingAmount={editingPaymentAmount}
+        currency={defaultCurrency}
         onStartEdit={() => { setEditingPaymentId(payment.id); setEditingPaymentName(payment.name); setEditingPaymentAmount(String(payment.amount)); }}
         onSaveEdit={() => handleSavePayment(payment.id)}
         onCancelEdit={() => setEditingPaymentId(null)}
@@ -1089,7 +1097,7 @@ export function PaymentsTab({ clientId, projectId, paymentsSharedWithClient: ini
       <div className="flex items-center gap-2 py-1.5 px-3 rounded-lg bg-card border border-primary/40 shadow-lg opacity-95">
         <GripVertical size={14} className="text-muted-foreground flex-shrink-0" />
         <span className="text-sm font-medium flex-1">{payment.name}</span>
-        <span className="text-sm font-medium tabular-nums">{formatPLN(payment.amount)}</span>
+        <span className="text-sm font-medium tabular-nums">{formatPLN(payment.amount, defaultCurrency)}</span>
       </div>
     );
     const group = groups.find((g) => g.id === dndActiveId);
@@ -1253,7 +1261,7 @@ export function PaymentsTab({ clientId, projectId, paymentsSharedWithClient: ini
         <div className="flex items-center justify-between pt-3 border-t border-border">
           <span className="text-sm text-muted-foreground">{t.payments.totalDue}</span>
           <span className={`text-sm font-bold tabular-nums ${remaining <= 0 ? "text-green-600 dark:text-green-400" : "text-foreground"}`}>
-            {formatPLN(Math.max(0, remaining))}
+            {formatPLN(Math.max(0, remaining), defaultCurrency)}
           </span>
         </div>
       )}

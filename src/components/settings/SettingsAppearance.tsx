@@ -22,6 +22,7 @@ interface Props {
   initialCustomTheme: CustomThemeColors | null;
   initialGlobalHiddenModules: string[];
   initialSidebarOrder: string[];
+  initialDefaultCurrency: string;
 }
 
 function SortableSidebarItem({ id, label, icon: Icon }: { id: string; label: string; icon: React.ElementType }) {
@@ -43,6 +44,7 @@ export function SettingsAppearance({
   initialCustomTheme,
   initialGlobalHiddenModules,
   initialSidebarOrder,
+  initialDefaultCurrency,
 }: Props) {
   const router = useRouter();
   const t = useT();
@@ -52,6 +54,14 @@ export function SettingsAppearance({
   const DEFAULT_CUSTOM: CustomThemeColors = { primary: "#4F46E5", background: "#FFFFFF", sidebar: "#F5F5F5", sidebarText: "#111111", contentText: "#111111" };
   const [customColors, setCustomColors] = useState<CustomThemeColors>({ ...DEFAULT_CUSTOM, ...(initialCustomTheme ?? {}) });
   const [showCustomEditor, setShowCustomEditor] = useState(false);
+  const [defaultCurrency, setDefaultCurrencyState] = useState(initialDefaultCurrency);
+
+  async function handleCurrencyChange(currency: string) {
+    setDefaultCurrencyState(currency);
+    const res = await patchUser({ defaultCurrency: currency });
+    if (!res.ok) { toast.error("Nie udało się zapisać waluty"); setDefaultCurrencyState(defaultCurrency); }
+    else router.refresh();
+  }
   const [savingCustomTheme, setSavingCustomTheme] = useState(false);
 
   const [globalHiddenModules, setGlobalHiddenModules] = useState<string[]>(initialGlobalHiddenModules);
@@ -303,6 +313,25 @@ export function SettingsAppearance({
                 </button>
               ))}
             </div>
+          </div>
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold text-gray-800 dark:text-gray-200">{t.settings.defaultCurrency}</h3>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {([
+                { value: "PLN", label: "PLN — złoty (zł)" },
+                { value: "EUR", label: "EUR — euro (€)" },
+                { value: "USD", label: "USD — dolar ($)" },
+                { value: "GBP", label: "GBP — funt (£)" },
+              ] as const).map(({ value, label }) => (
+                <button key={value} type="button" onClick={() => handleCurrencyChange(value)}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm border transition-colors ${defaultCurrency === value ? "bg-primary text-primary-foreground border-primary" : "border-border text-foreground hover:bg-muted"}`}>
+                  {label}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">{t.settings.defaultCurrencyDesc}</p>
           </div>
         </div>
       </section>
