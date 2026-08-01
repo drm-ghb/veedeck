@@ -15,16 +15,17 @@ import { toast } from "sonner";
 import { Search, ChevronRight } from "@/components/ui/icons";
 import { useT } from "@/lib/i18n";
 
-interface Project {
+interface ClientItem {
   id: string;
-  title: string;
-  clientName: string | null;
+  name: string;
 }
 
 interface EditListDialogProps {
   list: {
     id: string;
     name: string;
+    directClientId: string | null;
+    directClientName: string | null;
     project: { id: string; title: string } | null;
   };
   open: boolean;
@@ -35,11 +36,11 @@ export default function EditListDialog({ list, open, onOpenChange }: EditListDia
   const router = useRouter();
   const t = useT();
   const [name, setName] = useState(list.name);
-  const [mode, setMode] = useState<"none" | "project">(list.project ? "project" : "none");
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loadingProjects, setLoadingProjects] = useState(false);
-  const [selectedProject, setSelectedProject] = useState<Project | null>(
-    list.project ? { id: list.project.id, title: list.project.title, clientName: null } : null
+  const [mode, setMode] = useState<"none" | "client">(list.directClientId ? "client" : "none");
+  const [clients, setClients] = useState<ClientItem[]>([]);
+  const [loadingClients, setLoadingClients] = useState(false);
+  const [selectedClient, setSelectedClient] = useState<ClientItem | null>(
+    list.directClientId ? { id: list.directClientId, name: list.directClientName ?? "" } : null
   );
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
@@ -47,43 +48,42 @@ export default function EditListDialog({ list, open, onOpenChange }: EditListDia
   useEffect(() => {
     if (open) {
       setName(list.name);
-      setMode(list.project ? "project" : "none");
-      setSelectedProject(list.project ? { id: list.project.id, title: list.project.title, clientName: null } : null);
+      setMode(list.directClientId ? "client" : "none");
+      setSelectedClient(list.directClientId ? { id: list.directClientId, name: list.directClientName ?? "" } : null);
       setSearch("");
     }
   }, [open, list]);
 
-  async function fetchProjects() {
-    setLoadingProjects(true);
+  async function fetchClients() {
+    setLoadingClients(true);
     try {
-      const res = await fetch("/api/projects");
+      const res = await fetch("/api/clients");
       if (res.ok) {
         const data = await res.json();
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        setProjects(data.filter((p: any) => !p.archived).map((p: any) => ({
-          id: p.id,
-          title: p.title,
-          clientName: p.clientName ?? null,
+        setClients(data.filter((c: any) => !c.archived).map((c: any) => ({
+          id: c.id,
+          name: c.name,
         })));
       }
     } finally {
-      setLoadingProjects(false);
+      setLoadingClients(false);
     }
   }
 
-  function handleModeChange(newMode: "none" | "project") {
+  function handleModeChange(newMode: "none" | "client") {
     setMode(newMode);
-    setSelectedProject(null);
+    setSelectedClient(null);
     setSearch("");
-    if (newMode === "project" && projects.length === 0) {
-      fetchProjects();
+    if (newMode === "client" && clients.length === 0) {
+      fetchClients();
     }
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!name.trim()) return;
-    if (mode === "project" && !selectedProject) return;
+    if (mode === "client" && !selectedClient) return;
 
     setLoading(true);
     try {
@@ -92,7 +92,7 @@ export default function EditListDialog({ list, open, onOpenChange }: EditListDia
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: name.trim(),
-          projectId: mode === "project" ? selectedProject?.id : null,
+          clientId: mode === "client" ? selectedClient?.id : null,
         }),
       });
 
@@ -108,15 +108,9 @@ export default function EditListDialog({ list, open, onOpenChange }: EditListDia
     }
   }
 
-  const filtered = projects.filter((p) => {
-    const q = search.toLowerCase();
-    return (
-      p.title.toLowerCase().includes(q) ||
-      (p.clientName?.toLowerCase().includes(q) ?? false)
-    );
-  });
+  const filtered = clients.filter((c) => c.name.toLowerCase().includes(search.toLowerCase()));
 
-  const canSubmit = name.trim() && (mode === "none" || selectedProject !== null);
+  const canSubmit = name.trim() && (mode === "none" || selectedClient !== null);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -154,30 +148,25 @@ export default function EditListDialog({ list, open, onOpenChange }: EditListDia
               </button>
               <button
                 type="button"
-                onClick={() => handleModeChange("project")}
+                onClick={() => handleModeChange("client")}
                 className={`flex-1 text-sm py-2 px-3 rounded-lg border font-medium transition-colors ${
-                  mode === "project"
+                  mode === "client"
                     ? "bg-primary text-white border-primary"
                     : "border-border text-muted-foreground hover:text-foreground hover:border-foreground/30"
                 }`}
               >
-                {t.listy.selectProject}
+                {t.listy.existingClientTab}
               </button>
             </div>
 
-            {mode === "project" && (
+            {mode === "client" && (
               <div className="space-y-2 pt-1">
-                {selectedProject ? (
+                {selectedClient ? (
                   <div className="flex items-center justify-between px-3 py-2.5 rounded-lg bg-muted border border-border">
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium truncate">{selectedProject.title}</p>
-                      {selectedProject.clientName && (
-                        <p className="text-xs text-muted-foreground truncate">{selectedProject.clientName}</p>
-                      )}
-                    </div>
+                    <p className="text-sm font-medium truncate">{selectedClient.name}</p>
                     <button
                       type="button"
-                      onClick={() => setSelectedProject(null)}
+                      onClick={() => setSelectedClient(null)}
                       className="text-xs text-muted-foreground hover:text-foreground ml-2 shrink-0"
                     >
                       {t.listy.changeBtn}
@@ -188,35 +177,30 @@ export default function EditListDialog({ list, open, onOpenChange }: EditListDia
                     <div className="relative">
                       <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
                       <Input
-                        placeholder={t.listy.searchProject}
+                        placeholder={t.listy.searchClientPlaceholder}
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         className="pl-9"
                       />
                     </div>
                     <div className="max-h-48 overflow-y-auto rounded-lg border border-border">
-                      {loadingProjects ? (
+                      {loadingClients ? (
                         <p className="text-sm text-muted-foreground text-center py-6">{t.common.loading}</p>
                       ) : filtered.length === 0 ? (
                         <p className="text-sm text-muted-foreground text-center py-6">
-                          {search ? t.common.noResults : t.listy.noProjects}
+                          {search ? t.common.noResults : t.listy.noClients}
                         </p>
                       ) : (
-                        filtered.map((p, i) => (
+                        filtered.map((c, i) => (
                           <button
-                            key={p.id}
+                            key={c.id}
                             type="button"
-                            onClick={() => setSelectedProject(p)}
+                            onClick={() => setSelectedClient(c)}
                             className={`w-full flex items-center justify-between px-4 py-3 text-left hover:bg-muted/50 transition-colors ${
                               i !== filtered.length - 1 ? "border-b border-border" : ""
                             }`}
                           >
-                            <div className="min-w-0">
-                              <p className="text-sm font-medium text-foreground truncate">{p.title}</p>
-                              {p.clientName && (
-                                <p className="text-xs text-muted-foreground truncate">{p.clientName}</p>
-                              )}
-                            </div>
+                            <p className="text-sm font-medium text-foreground truncate">{c.name}</p>
                             <ChevronRight size={14} className="text-muted-foreground ml-3 shrink-0" />
                           </button>
                         ))

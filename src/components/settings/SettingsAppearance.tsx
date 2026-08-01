@@ -11,7 +11,7 @@ import {
   Sun, Moon, Monitor, Palette, Globe, Pencil,
   GripVertical, LayoutDashboard, Users, PushPin, LocalMall, Package,
   CheckSquare, CalendarDays, NotebookText, ChatBubble, VeezardIcon,
-  Engineering, ClipboardList, ChevronDown,
+  Engineering, ClipboardList, ChevronDown, Interests,
 } from "@/components/ui/icons";
 import { useTheme, type Theme, type ColorTheme, type CustomThemeColors } from "@/lib/theme";
 import { useT, useLang } from "@/lib/i18n";
@@ -57,12 +57,13 @@ export function SettingsAppearance({
   const [globalHiddenModules, setGlobalHiddenModules] = useState<string[]>(initialGlobalHiddenModules);
   const [modulesExpanded, setModulesExpanded] = useState(false);
 
-  const DEFAULT_SIDEBAR_ORDER = ["klienci", "renderflow", "listy", "zadania", "ankiety", "produkty", "wykonawcy", "kalendarz", "notatnik", "dyskusje", "veezard"];
+  const DEFAULT_SIDEBAR_ORDER = ["klienci", "renderflow", "listy", "moodboardy", "zadania", "ankiety", "produkty", "wykonawcy", "kalendarz", "notatnik", "dyskusje", "veezard"];
   const SIDEBAR_ITEM_META: Record<string, { label: string; icon: React.ElementType }> = {
     klienci:    { label: t.nav.projects,    icon: Users },
     wykonawcy:  { label: t.nav.contractors, icon: Engineering },
     renderflow: { label: t.nav.renderflow,  icon: PushPin },
     listy:      { label: t.nav.lists,       icon: LocalMall },
+    moodboardy: { label: t.nav.moodboard,  icon: Interests },
     zadania:    { label: t.nav.tasks,       icon: CheckSquare },
     produkty:   { label: t.nav.products,    icon: Package },
     kalendarz:  { label: t.nav.calendar,    icon: CalendarDays },
@@ -71,9 +72,21 @@ export function SettingsAppearance({
     ankiety:    { label: t.nav.surveys,     icon: ClipboardList },
     veezard:    { label: t.nav.veezard,     icon: VeezardIcon },
   };
-  const initialOrder = initialSidebarOrder.length > 0
-    ? [...initialSidebarOrder, ...DEFAULT_SIDEBAR_ORDER.filter((k) => !initialSidebarOrder.includes(k))]
-    : DEFAULT_SIDEBAR_ORDER;
+  const initialOrder = (() => {
+    if (initialSidebarOrder.length === 0) return DEFAULT_SIDEBAR_ORDER;
+    const result = [...initialSidebarOrder];
+    const missing = DEFAULT_SIDEBAR_ORDER.filter((k) => !initialSidebarOrder.includes(k));
+    for (const mod of missing) {
+      const defaultIdx = DEFAULT_SIDEBAR_ORDER.indexOf(mod);
+      let insertAfter = -1;
+      for (let i = defaultIdx - 1; i >= 0; i--) {
+        const pos = result.indexOf(DEFAULT_SIDEBAR_ORDER[i]);
+        if (pos !== -1) { insertAfter = pos; break; }
+      }
+      result.splice(insertAfter + 1, 0, mod);
+    }
+    return result;
+  })();
   const [sidebarOrder, setSidebarOrder] = useState<string[]>(initialOrder);
   const [sidebarOrderSaving, setSidebarOrderSaving] = useState(false);
   const sidebarSensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
@@ -150,6 +163,7 @@ export function SettingsAppearance({
     { slug: "renderflow", label: t.nav.renderflow, description: t.settings.renderflowModuleDesc, icon: <PushPin size={18} className="text-muted-foreground shrink-0" /> },
     { slug: "klienci",    label: t.nav.projects,   description: t.settings.klienciModuleDesc,    icon: <Users size={18} className="text-muted-foreground shrink-0" /> },
     { slug: "listy",      label: t.nav.lists,      description: t.settings.listsModuleDesc,      icon: <LocalMall size={18} className="text-muted-foreground shrink-0" /> },
+    { slug: "moodboardy", label: t.nav.moodboard,  description: t.settings.moodboardyModuleDesc, icon: <Interests size={18} className="text-muted-foreground shrink-0" /> },
     { slug: "wykonawcy",  label: t.nav.contractors,description: t.settings.wykonawcyModuleDesc,  icon: <Engineering size={18} className="text-muted-foreground shrink-0" /> },
     { slug: "zadania",    label: t.nav.tasks,      description: t.settings.zadaniaModuleDesc,    icon: <CheckSquare size={18} className="text-muted-foreground shrink-0" /> },
     { slug: "produkty",   label: t.nav.products,   description: t.settings.productsModuleDesc,   icon: <Package size={18} className="text-muted-foreground shrink-0" /> },
@@ -333,7 +347,7 @@ export function SettingsAppearance({
           <div className="flex items-center gap-3 px-3 py-2.5 bg-muted/50 border border-border rounded-xl opacity-60">
             <span className="w-4 h-4 shrink-0" />
             <LayoutDashboard size={15} className="text-muted-foreground shrink-0" />
-            <span className="text-sm font-medium">Dashboard</span>
+            <span className="text-sm font-medium">{t.nav.dashboard}</span>
           </div>
           <DndContext sensors={sidebarSensors} collisionDetection={closestCenter} onDragEnd={handleSidebarDragEnd}>
             <SortableContext items={sidebarOrder} strategy={verticalListSortingStrategy}>

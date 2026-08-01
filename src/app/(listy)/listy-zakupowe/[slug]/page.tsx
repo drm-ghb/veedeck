@@ -22,12 +22,20 @@ export default async function ListPage({ params, searchParams }: { params: Promi
         OR: [{ slug }, { id: slug }],
       },
       select: {
-        id: true, name: true, shareToken: true, budget: true, hidePrices: true, viewCount: true,
+        id: true, name: true, shareToken: true, budget: true, hidePrices: true, viewCount: true, isSharedWithClient: true,
+        client: { select: { id: true, name: true } },
         project: {
           select: {
             id: true, title: true, hiddenModules: true,
             addressStreet: true, addressCity: true, addressPostalCode: true, addressCountry: true,
             clients: { where: { isMainContact: true }, select: { name: true, userId: true }, take: 1 },
+            // Client-portal projects (auto-created when a contact's account is set up) have no
+            // ProjectClient rows of their own — the contact lives on the linked Client entity instead.
+            client: {
+              select: {
+                contacts: { where: { isMainContact: true }, select: { name: true, userId: true }, take: 1 },
+              },
+            },
           },
         },
         sections: {
@@ -72,12 +80,14 @@ export default async function ListPage({ params, searchParams }: { params: Promi
         budget: list.budget ?? null,
         hidePrices: list.hidePrices,
         viewCount: list.viewCount,
+        isSharedWithClient: list.isSharedWithClient,
+        client: list.client ? { id: list.client.id, name: list.client.name } : null,
         project: list.project ? {
           id: list.project.id,
           title: list.project.title,
           hiddenModules: list.project.hiddenModules,
-          clientName: list.project.clients[0]?.name ?? null,
-          clientHasAccount: !!(list.project.clients[0]?.userId),
+          clientName: list.project.clients[0]?.name ?? list.project.client?.contacts[0]?.name ?? null,
+          clientHasAccount: !!(list.project.clients[0]?.userId ?? list.project.client?.contacts[0]?.userId),
           addressStreet: list.project.addressStreet ?? null,
           addressCity: list.project.addressCity ?? null,
           addressPostalCode: list.project.addressPostalCode ?? null,

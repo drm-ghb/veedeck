@@ -385,6 +385,7 @@ model Client {
   contacts          ProjectClient[] @relation("ClientContacts")
   assignedSurveys   Survey[]        @relation("SurveyAssignedClient")
   moodboards        Moodboard[]
+  shoppingLists     ShoppingList[]
 }
 
 model Project {
@@ -417,6 +418,7 @@ model Project {
   clientPinRequired        Boolean                @default(false)
   clientPin                String?
   clientId                 String?
+  isPortalProject          Boolean                @default(false)
   contractorAssignments    ContractorAssignment[]
   discussion               Discussion?
   accessTokens             AccessToken[]
@@ -510,11 +512,14 @@ model ShoppingList {
   slug       String?       @unique
   budget     Float?
   hidePrices Boolean       @default(false)
-  order      Int           @default(0)
-  viewCount  Int           @default(0)
-  sections   ListSection[]
-  project    Project?      @relation(fields: [projectId], references: [id])
-  user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  order                Int           @default(0)
+  viewCount            Int           @default(0)
+  isSharedWithClient   Boolean       @default(true)
+  clientId             String?
+  sections             ListSection[]
+  client               Client?       @relation(fields: [clientId], references: [id])
+  project              Project?      @relation(fields: [projectId], references: [id])
+  user                 User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model ListSection {

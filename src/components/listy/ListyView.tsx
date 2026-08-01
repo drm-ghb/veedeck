@@ -56,6 +56,9 @@ interface ShoppingList {
   order: number;
   createdAt: string;
   viewCount?: number;
+  directClientId: string | null;
+  directClientName: string | null;
+  directClientAccentColor: string | null;
   project: { id: string; title: string; clientName: string | null; accentColor: string | null; hiddenModules: string[]; clientHasNoAccount: boolean } | null;
 }
 
@@ -483,6 +486,8 @@ function SortableListGridCard({ list, unreadCount, onCopyLink, menu }: {
             <p className="text-xs text-muted-foreground truncate mt-0.5">
               {list.project.clientName ? `${t.home.clientPrefix} ${list.project.clientName}` : list.project.title}
             </p>
+          ) : list.directClientName ? (
+            <p className="text-xs text-muted-foreground truncate mt-0.5">{t.home.clientPrefix} {list.directClientName}</p>
           ) : (
             <p className="text-xs text-muted-foreground/50 mt-0.5">{t.listy.noProject}</p>
           )}
@@ -530,8 +535,8 @@ function SortableListRowItem({ list, unreadCount, onNavigate, onCopyLink, menu }
 }) {
   const t = useT();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: list.id });
-  const colors = list.project?.clientName
-    ? accentColors(list.project.accentColor)
+  const colors = (list.project?.clientName || list.directClientName)
+    ? accentColors(list.project?.accentColor ?? list.directClientAccentColor)
     : { bar: "#94a3b8", tint: "#F1F2F5", deep: "#64748b" };
 
   return (
@@ -568,7 +573,11 @@ function SortableListRowItem({ list, unreadCount, onNavigate, onCopyLink, menu }
         </div>
         <div className="flex items-center gap-[14px] mt-[3px] flex-wrap">
           <span className="text-[12px] text-[#8A8D98] whitespace-nowrap">
-            {list.project?.clientName ? `${t.home.clientPrefix} ${list.project.clientName}` : t.listy.noProject}
+            {list.project?.clientName
+              ? `${t.home.clientPrefix} ${list.project.clientName}`
+              : list.directClientName
+              ? `${t.home.clientPrefix} ${list.directClientName}`
+              : t.listy.noProject}
           </span>
           <span className="text-[12px] text-[#8A8D98] whitespace-nowrap">
             {t.listy.createdPrefix} {new Date(list.createdAt).toLocaleDateString("pl-PL", { day: "2-digit", month: "short", year: "numeric" })}

@@ -26,7 +26,7 @@ interface Client {
   accentColor?: string | null;
   createdAt: string;
   archived: boolean;
-  _count: { projects: number };
+  _count: { projects: number; shoppingLists: number };
   hasContactsWithoutAccount: boolean;
   projects: ClientProject[];
 }
@@ -63,7 +63,7 @@ export default function ClientsView({ clients, archivedClients }: Props) {
   const [addOpen, setAddOpen] = useState(false);
   const [editClient, setEditClient] = useState<Client | null>(null);
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
-  const [menuUp, setMenuUp] = useState(false);
+  const [menuPos, setMenuPos] = useState<{ top: number; right: number } | null>(null);
   const [sortBy, setSortBy] = useState<SortBy>(() => {
     if (typeof window === "undefined") return "name";
     const saved = localStorage.getItem("klienci-sort");
@@ -246,58 +246,84 @@ export default function ClientsView({ clients, archivedClients }: Props) {
                     </span>
                   )}
                 </div>
-                <p className="text-[12px] text-[#8A8D98] mt-[3px]">
-                  {client._count.projects === 0
-                    ? t.projekty.clientNoProjects
-                    : `${client._count.projects} ${client._count.projects === 1 ? t.projekty.clientProjectSg : client._count.projects < 5 ? t.projekty.clientProjectFw : t.projekty.clientProjectPl}`}
+                <p className="text-[12px] text-[#8A8D98] mt-[2px]">
+                  Utworzono: {new Date(client.createdAt).toLocaleDateString("pl-PL", { day: "2-digit", month: "2-digit", year: "numeric" })}
                 </p>
               </Link>
 
-              {/* Menu */}
-              <div className="relative">
-                <button
-                  onClick={(e) => { e.stopPropagation(); const rect = e.currentTarget.getBoundingClientRect(); setMenuUp(rect.bottom > window.innerHeight - 160); setMenuOpen(menuOpen === client.id ? null : client.id); }}
-                  className="p-1.5 rounded-md text-[#8A8D98] hover:text-foreground hover:bg-muted transition-colors"
-                >
-                  <MoreVertical size={18} />
-                </button>
-                {menuOpen === client.id && (
-                  <>
-                    <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(null)} />
-                    <div className={`absolute right-0 z-20 bg-popover border border-border rounded-lg shadow-lg py-1 w-44 text-sm ${menuUp ? "bottom-8" : "top-8"}`}>
-                      <button
-                        disabled={expired}
-                        onClick={() => { setEditClient(client); setMenuOpen(null); }}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-muted transition-colors disabled:opacity-40 disabled:pointer-events-none"
-                        title={expired ? "Dostępne w płatnym planie" : undefined}
-                      >
-                        <Pencil size={14} /> {t.projekty.editClientLabel}
-                      </button>
-                      <button
-                        disabled={expired}
-                        onClick={() => handleArchive(client)}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-muted transition-colors disabled:opacity-40 disabled:pointer-events-none"
-                        title={expired ? "Dostępne w płatnym planie" : undefined}
-                      >
-                        {client.archived ? <ArchiveRestore size={14} /> : <Archive size={14} />}
-                        {client.archived ? t.projekty.restoreClientLabel : t.projekty.archiveClientLabel}
-                      </button>
-                      <button
-                        disabled={expired}
-                        onClick={() => handleDelete(client)}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-muted text-destructive transition-colors disabled:opacity-40 disabled:pointer-events-none"
-                        title={expired ? "Dostępne w płatnym planie" : undefined}
-                      >
-                        <Trash2 size={14} /> {t.projekty.deleteClientLabel}
-                      </button>
-                    </div>
-                  </>
-                )}
+              {/* Stats */}
+              <div className="flex items-center gap-2 shrink-0 mr-1">
+                <div className="flex items-center gap-1 text-[11.5px] text-[#8A8D98]" title="Projekty ProjectFlow">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+                  <span className="font-medium text-[#4B5063]">{client._count.projects}</span>
+                </div>
+                <div className="w-px h-3 bg-border" />
+                <div className="flex items-center gap-1 text-[11.5px] text-[#8A8D98]" title="Listy zakupowe">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
+                  <span className="font-medium text-[#4B5063]">{client._count.shoppingLists}</span>
+                </div>
               </div>
+
+              {/* Menu trigger only — dropdown rendered outside this overflow-hidden card */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (menuOpen === client.id) { setMenuOpen(null); return; }
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const spaceBelow = window.innerHeight - rect.bottom;
+                  const top = spaceBelow < 160 ? rect.top - 104 : rect.bottom + 4;
+                  setMenuPos({ top, right: window.innerWidth - rect.right });
+                  setMenuOpen(client.id);
+                }}
+                className="p-1.5 rounded-md text-[#8A8D98] hover:text-foreground hover:bg-muted transition-colors shrink-0"
+              >
+                <MoreVertical size={18} />
+              </button>
             </div>
           ))}
         </div>
       )}
+
+      {/* Global client menu — outside overflow-hidden/transform ancestors */}
+      {menuOpen && menuPos && (() => {
+        const client = filtered.find((c) => c.id === menuOpen);
+        if (!client) return null;
+        return (
+          <>
+            <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(null)} />
+            <div
+              className="fixed z-50 bg-popover border border-border rounded-lg shadow-lg py-1 w-44 text-sm"
+              style={{ top: menuPos.top, right: menuPos.right }}
+            >
+              <button
+                disabled={expired}
+                onClick={() => { setEditClient(client); setMenuOpen(null); }}
+                className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-muted transition-colors disabled:opacity-40 disabled:pointer-events-none"
+                title={expired ? "Dostępne w płatnym planie" : undefined}
+              >
+                <Pencil size={14} /> {t.projekty.editClientLabel}
+              </button>
+              <button
+                disabled={expired}
+                onClick={() => handleArchive(client)}
+                className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-muted transition-colors disabled:opacity-40 disabled:pointer-events-none"
+                title={expired ? "Dostępne w płatnym planie" : undefined}
+              >
+                {client.archived ? <ArchiveRestore size={14} /> : <Archive size={14} />}
+                {client.archived ? t.projekty.restoreClientLabel : t.projekty.archiveClientLabel}
+              </button>
+              <button
+                disabled={expired}
+                onClick={() => handleDelete(client)}
+                className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-muted text-destructive transition-colors disabled:opacity-40 disabled:pointer-events-none"
+                title={expired ? "Dostępne w płatnym planie" : undefined}
+              >
+                <Trash2 size={14} /> {t.projekty.deleteClientLabel}
+              </button>
+            </div>
+          </>
+        );
+      })()}
 
       <AddClientDialog open={addOpen} onOpenChange={setAddOpen} onCreated={() => router.refresh()} />
       {editClient && (

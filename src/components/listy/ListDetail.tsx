@@ -4,7 +4,7 @@ import { useState, useRef, useCallback, useEffect, Fragment } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, ChevronDown, ChevronUp, Plus, ExternalLink, Minus, MoreHorizontal, Pencil, Trash2, GripVertical, FileDown, Sheet, ArrowDownUp, Eye, EyeOff, Check, X, RotateCcw, FolderInput, Wallet, AlertCircle, AlertTriangle, DollarSign, Copy, Comment, CheckCircle, RadioButtonUnchecked, Search, FileText, Layers, Asterisk, CheckSquare, Square, ListChecks } from "@/components/ui/icons";
+import { ChevronLeft, ChevronDown, ChevronUp, Plus, ExternalLink, Minus, MoreHorizontal, Pencil, Trash2, GripVertical, FileDown, Sheet, ArrowDownUp, Eye, EyeOff, Check, X, RotateCcw, FolderInput, Wallet, AlertCircle, AlertTriangle, DollarSign, Copy, Comment, CheckCircle, RadioButtonUnchecked, Search, FileText, Layers, Asterisk, CheckSquare, Square, ListChecks, Share2 } from "@/components/ui/icons";
 import ProductCommentPanel from "./ProductCommentPanel";
 import ListSectionNav from "./ListSectionNav";
 import { pusherClient } from "@/lib/pusher";
@@ -39,7 +39,6 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import AddProductDialog from "./AddProductDialog";
 import EditProductDialog from "./EditProductDialog";
-import ShareDialog from "@/components/dashboard/ShareDialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 import { getUnreadSet, syncListUnread } from "@/lib/list-unread-store";
@@ -115,6 +114,8 @@ interface ListDetailProps {
     budget: number | null;
     hidePrices: boolean;
     viewCount?: number;
+    isSharedWithClient: boolean;
+    client: { id: string; name: string } | null;
     project: {
       id: string;
       title: string;
@@ -1162,6 +1163,48 @@ export default function ListDetail({ list, designerName, designerEmail, designer
   ];
 
   const [sections, setSections] = useState<Section[]>(list.sections);
+  const [shared, setShared] = useState(list.isSharedWithClient);
+  const [sharing, setSharing] = useState(false);
+  const hasClient = !!list.project?.clientName || !!list.client;
+
+  async function toggleShare() {
+    if (!hasClient || sharing) return;
+    setSharing(true);
+    try {
+      const res = await fetch(`/api/lists/${list.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isSharedWithClient: !shared }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setShared(!shared);
+        if (!shared && data.accountCreated) {
+          toast.success("Utworzono konto klienta i udostępniono listę");
+        } else {
+          toast.success(shared ? "Cofnięto udostępnienie" : "Udostępniono klientowi");
+        }
+      } else {
+        toast.error("Nie udało się zmienić widoczności listy");
+      }
+    } catch {
+      toast.error("Błąd połączenia");
+    } finally {
+      setSharing(false);
+    }
+  }
+
+  async function copyClientLink() {
+    try {
+      const res = await fetch(`/api/lists/${list.id}`);
+      if (!res.ok) throw new Error("no-client");
+      const { url } = await res.json();
+      await navigator.clipboard.writeText(url);
+      toast.success("Link skopiowany");
+    } catch {
+      toast.error("Nie udało się skopiować linku");
+    }
+  }
 
   // Sync sections from server props after router.refresh() (e.g. product added via extension)
   useEffect(() => {
@@ -2406,12 +2449,50 @@ export default function ListDetail({ list, designerName, designerEmail, designer
             <span className="text-xs text-muted-foreground shrink-0 hidden sm:inline">· {list.project.title}</span>
           )}
         </div>
-        <ShareDialog
-          shareUrl={typeof window !== "undefined" ? `${window.location.origin}/share/list/${list.shareToken}` : `/share/list/${list.shareToken}`}
-          moduleSlug="listy"
-          moduleName="Listy zakupowe"
-          hiddenModules={list.project?.hiddenModules ?? []}
-        />
+        <div className="flex items-center gap-1.5 shrink-0">
+          {/* Share with client toggle */}
+          <button
+            onClick={toggleShare}
+            disabled={!hasClient || sharing}
+            title={
+              !hasClient
+                ? "Przypisz listę do projektu z klientem"
+                : shared
+                ? "Cofnij udostępnienie klientowi"
+                : "Udostępnij klientowi"
+            }
+            className={`flex items-center gap-1.5 h-8 px-2.5 rounded-lg text-xs font-medium transition-colors border shrink-0 ${
+              !hasClient
+                ? "opacity-40 cursor-not-allowed border-border text-muted-foreground bg-background"
+                : shared
+                ? "border-green-400/60 bg-green-50 text-green-700 hover:bg-green-100 dark:bg-green-950/30 dark:text-green-400 dark:border-green-700/50"
+                : "border-border bg-background text-foreground hover:bg-muted"
+            }`}
+          >
+            {shared ? <Check size={13} /> : <Share2 size={13} />}
+            <span className="hidden sm:inline">{shared ? "Udostępnione" : "Udostępnij klientowi"}</span>
+          </button>
+
+          {/* Copy client link */}
+          <button
+            onClick={copyClientLink}
+            disabled={!hasClient || !shared}
+            title={
+              !hasClient
+                ? "Przypisz listę do projektu z klientem"
+                : !shared
+                ? "Najpierw udostępnij listę klientowi"
+                : "Kopiuj link do listy"
+            }
+            className={`flex items-center justify-center h-8 w-8 rounded-lg border transition-colors shrink-0 ${
+              !hasClient || !shared
+                ? "opacity-40 cursor-not-allowed border-border text-muted-foreground bg-background"
+                : "border-border bg-background text-muted-foreground hover:bg-muted hover:text-foreground"
+            }`}
+          >
+            <Copy size={14} />
+          </button>
+        </div>
       </div>
       </div>
 

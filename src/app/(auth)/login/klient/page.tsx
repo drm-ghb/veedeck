@@ -173,7 +173,10 @@ export default function LoginKlientPage() {
     }
     const session = await getSession();
     const role = (session?.user as any)?.role;
-    router.push(role === "contractor" ? "/wykonawca" : "/client");
+    const sp = new URLSearchParams(window.location.search);
+    const callbackUrl = sp.get("callbackUrl");
+    const destination = callbackUrl || (role === "contractor" ? "/wykonawca" : "/client");
+    router.push(destination);
     router.refresh();
   }
 

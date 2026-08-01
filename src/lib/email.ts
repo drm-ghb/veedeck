@@ -211,16 +211,7 @@ export async function sendInvitationEmail({
 
 async function sendNotificationEmail(to: string, subject: string, html: string): Promise<void> {
   if (!to || !to.includes("@") || to.endsWith("@client.internal")) return;
-
-  // TODO: zastąp poniższy log wywołaniem Resend lub transporter.sendMail():
-  //
-  // await transporter.sendMail({ from: FROM, to, subject, html });
-  //
-  // lub Resend:
-  // const resend = new Resend(process.env.RESEND_API_KEY);
-  // await resend.emails.send({ from: "noreply@veedeck.com", to, subject, html });
-
-  console.log(`[EMAIL NOTIF] to=${to} subject="${subject}"`);
+  await transporter.sendMail({ from: FROM, to, subject, html });
 }
 
 function emailBase(content: string): string {
@@ -794,6 +785,25 @@ export async function notifyAdminNewTicket(opts: {
       ${emailBtn("Otwórz zgłoszenie", `${APP_URL}/admin/tickets`)}
     `),
   }).catch((err) => console.error("[EMAIL] notifyAdminNewTicket failed:", err));
+}
+
+export async function notifyClientListShared(opts: {
+  clientEmail: string;
+  clientName: string;
+  listName: string;
+  designerName: string;
+  projectTitle: string;
+  listUrl: string;
+}) {
+  await sendNotificationEmail(
+    opts.clientEmail,
+    `Projektant udostępnił Ci listę zakupową „${opts.listName}"`,
+    emailBase(`
+      <h2 style="margin:0 0 8px;font-size:18px;color:#111;">Nowa lista zakupowa</h2>
+      <p style="margin:0;font-size:14px;color:#6b7280;"><strong>${escapeHtml(opts.designerName)}</strong> udostępnił(a) Ci listę <strong>${escapeHtml(opts.listName)}</strong> w projekcie <strong>${escapeHtml(opts.projectTitle)}</strong>.</p>
+      ${emailBtn("Przejdź do listy", opts.listUrl)}
+    `),
+  );
 }
 
 export async function notifyDesignerSurveySubmitted(opts: {

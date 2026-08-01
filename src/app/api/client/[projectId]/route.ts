@@ -45,7 +45,14 @@ export async function GET(
   });
 
   const shoppingLists = await prisma.shoppingList.findMany({
-    where: { projectId, archived: false },
+    where: {
+      archived: false,
+      isSharedWithClient: true,
+      OR: [
+        { projectId },
+        ...(project.clientId ? [{ clientId: project.clientId }] : []),
+      ],
+    },
     select: { id: true, name: true, shareToken: true },
   });
 
@@ -99,6 +106,12 @@ export async function GET(
     where: { projectId, isSharedWithClient: true, archived: false },
   }).then((n) => n > 0);
 
+  // Contact name for the logged-in client user (authoritative name from ProjectClient)
+  const userContact = await prisma.projectClient.findFirst({
+    where: { userId: session.user.id },
+    select: { name: true },
+  });
+
   const { user, sharePassword, shareExpiresAt, ...rest } = project;
   const { name, showProfileName, showClientLogo, clientLogoUrl, ...userSettings } = user;
 
@@ -113,5 +126,6 @@ export async function GET(
     discussionId: discussion?.id ?? null,
     hasSurveys,
     hasMoodboard,
+    contactName: userContact?.name ?? null,
   });
 }

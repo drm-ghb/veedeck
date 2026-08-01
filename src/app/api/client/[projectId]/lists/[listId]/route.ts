@@ -15,8 +15,15 @@ export async function GET(
   const project = await getClientProject(session, projectId);
   if (!project) return NextResponse.json({ error: "Nie znaleziono" }, { status: 404 });
 
-  const list = await prisma.shoppingList.findUnique({
-    where: { id: listId, projectId, archived: false },
+  const list = await prisma.shoppingList.findFirst({
+    where: {
+      id: listId,
+      archived: false,
+      OR: [
+        { projectId },
+        ...(project.clientId ? [{ clientId: project.clientId }] : []),
+      ],
+    },
     include: {
       sections: {
         orderBy: { order: "asc" },

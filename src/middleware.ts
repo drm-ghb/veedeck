@@ -79,7 +79,9 @@ export default auth((req) => {
   // Protect /client/* — require authenticated client or designer
   if (pathname.startsWith("/client") && !pathname.startsWith("/api/")) {
     if (!isLoggedIn) {
-      return NextResponse.redirect(new URL("/login/klient", req.url));
+      const loginUrl = new URL("/login/klient", req.url);
+      loginUrl.searchParams.set("callbackUrl", req.nextUrl.pathname + req.nextUrl.search);
+      return NextResponse.redirect(loginUrl);
     }
   }
 

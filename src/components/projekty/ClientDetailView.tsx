@@ -381,7 +381,9 @@ export default function ClientDetailView({ client: initialClient }: Props) {
   }
 
   async function createContactAccount(contactId: string) {
-    const accEmail = createAccountEmail[contactId]?.trim();
+    const contact = contacts.find((c) => c.id === contactId);
+    // Use explicitly entered email, or fall back to contact's existing email
+    const accEmail = (createAccountEmail[contactId]?.trim() || contact?.email || "").toLowerCase();
     if (accEmail && !accEmail.includes("@")) {
       toast.error(t.projekty.emailInvalid);
       return;
@@ -395,7 +397,7 @@ export default function ClientDetailView({ client: initialClient }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           password: autoPassword,
-          ...(accEmail ? { email: accEmail.toLowerCase() } : {}),
+          ...(accEmail ? { email: accEmail } : {}),
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -863,7 +865,7 @@ export default function ClientDetailView({ client: initialClient }: Props) {
                             {!contact.user.firstLoginAt && (
                               <span className="text-xs text-muted-foreground">Nie aktywowano</span>
                             )}
-                            {contact.user.email && !contact.user.email.endsWith(".internal") && (
+                            {(contact.email || (contact.user.email && !contact.user.email.endsWith(".internal"))) && (
                               <button
                                 className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg border border-border text-foreground hover:bg-muted transition-colors disabled:opacity-50 ml-auto"
                                 disabled={!!sendingLink[contact.id]}

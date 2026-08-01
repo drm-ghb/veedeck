@@ -69,6 +69,7 @@ export default function NewListDialog() {
     setLoading(true);
     try {
       let projectId: string | null = null;
+      let clientId: string | null = null;
 
       if (clientTab === "new") {
         const projRes = await fetch("/api/projects", {
@@ -85,13 +86,17 @@ export default function NewListDialog() {
         const proj = await projRes.json();
         projectId = proj.id;
       } else if (clientTab === "existing" && selectedClient) {
-        projectId = selectedClient.projects[0]?.id ?? null;
+        if (selectedClient.projects.length > 0) {
+          projectId = selectedClient.projects[0].id;
+        } else {
+          clientId = selectedClient.id;
+        }
       }
 
       const res = await fetch("/api/lists", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim(), projectId }),
+        body: JSON.stringify({ name: name.trim(), projectId, clientId }),
       });
 
       if (!res.ok) throw new Error();

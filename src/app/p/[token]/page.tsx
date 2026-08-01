@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { signIn, getSession } from "next-auth/react";
 
 const CSS = `
@@ -68,6 +68,7 @@ type Status = "loading" | "error" | "expired" | "revoked";
 export default function AccessTokenPage() {
   const { token } = useParams<{ token: string }>();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [status, setStatus] = useState<Status>("loading");
 
   useEffect(() => {
@@ -100,7 +101,8 @@ export default function AccessTokenPage() {
       if (role === "contractor") {
         router.replace("/wykonawca");
       } else {
-        router.replace("/client");
+        const listId = searchParams.get("listId");
+        router.replace(listId ? `/client?listId=${listId}` : "/client");
       }
     })();
   }, [token, router]);

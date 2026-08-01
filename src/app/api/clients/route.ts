@@ -51,8 +51,8 @@ export async function POST(req: NextRequest) {
     },
   });
 
-  // Create main contact if contactName provided
-  if (contactName?.trim()) {
+  // Create main contact if any contact field provided
+  if (contactName?.trim() || contactEmail?.trim() || contactPhone?.trim()) {
     let clientUserId: string | null = null;
 
     if (contactPassword?.trim() && contactPassword.trim().length >= 4) {
@@ -107,7 +107,7 @@ export async function POST(req: NextRequest) {
 
     await prisma.projectClient.create({
       data: {
-        name: contactName.trim(),
+        name: contactName?.trim() || "",
         email: contactEmail?.trim() || null,
         phone: contactPhone?.trim() || null,
         isMainContact: true,

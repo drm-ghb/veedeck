@@ -1,9 +1,13 @@
 import { redirect } from "next/navigation";
-import { auth, signOut } from "@/lib/auth";
+import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { LogOut } from "@/components/ui/icons";
 
-export default async function ClientIndexPage() {
+export default async function ClientIndexPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ listId?: string }>;
+}) {
+  const { listId } = await searchParams;
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
   if ((session.user as any).role !== "client") redirect("/panel-glowny");
@@ -23,6 +27,7 @@ export default async function ClientIndexPage() {
           id: true,
           title: true,
           archived: true,
+          isPortalProject: true,
           user: { select: { name: true, showProfileName: true } },
         },
       },
@@ -41,37 +46,29 @@ export default async function ClientIndexPage() {
   const clientEntityProjects = clientIds.length > 0
     ? await prisma.project.findMany({
         where: { clientId: { in: clientIds }, archived: false },
-        select: { id: true, title: true, user: { select: { name: true, showProfileName: true } } },
+        select: { id: true, title: true, isPortalProject: true, user: { select: { name: true, showProfileName: true } } },
       })
     : [];
 
   // Deduplicate
-  const seen = new Map<string, { id: string; title: string; user: { name: string | null; showProfileName: boolean } }>();
+  const seen = new Map<string, { id: string; title: string; isPortalProject: boolean; user: { name: string | null; showProfileName: boolean } }>();
   for (const p of [...directProjects, ...clientEntityProjects]) seen.set(p.id, p);
-  const active = [...seen.values()];
+  const all = [...seen.values()];
 
-  if (active.length === 0) {
-    const logoutForm = (
-      <form action={async () => {
-        "use server";
-        await signOut({ redirectTo: "/login" });
-      }}>
-        <button
-          type="submit"
-          className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <LogOut size={16} />
-          Wyloguj
-        </button>
-      </form>
-    );
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-background gap-4">
-        <p className="text-muted-foreground text-sm">Nie masz jeszcze przypisanych projektów.</p>
-        {logoutForm}
-      </div>
-    );
+  // If real projects exist, exclude portal-only ones
+  const hasRealProject = all.some((p) => !p.isPortalProject);
+  const active = hasRealProject ? all.filter((p) => !p.isPortalProject) : all;
+
+  // If client has a project — go straight there
+  if (active.length > 0) {
+    const suffix = listId ? `?view=list&listId=${listId}` : "";
+    redirect(`/client/${active[0].id}${suffix}`);
   }
 
-  redirect(`/client/${active[0].id}`);
+  // No projects — show empty state
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen bg-background gap-4 px-4 text-center">
+      <p className="text-muted-foreground text-sm max-w-sm">Na ten moment Twój projektant nie udostępnił Ci żadnej zawartości. Skontaktuj się z nim bezpośrednio!</p>
+    </div>
+  );
 }

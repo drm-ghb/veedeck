@@ -24,6 +24,7 @@ export async function GET() {
           description: true,
           createdAt: true,
           archived: true,
+          isPortalProject: true,
           _count: { select: { renders: true } },
           user: { select: { name: true, clientLogoUrl: true, showProfileName: true, showClientLogo: true } },
         },
@@ -36,6 +37,7 @@ export async function GET() {
     title: true,
     description: true,
     createdAt: true,
+    isPortalProject: true,
     _count: { select: { renders: true } },
     user: { select: { name: true, clientLogoUrl: true, showProfileName: true, showClientLogo: true } },
   } as const;
@@ -55,11 +57,16 @@ export async function GET() {
     : [];
 
   // Deduplicate
-  type ProjectEntry = { id: string; title: string; description: string | null; createdAt: Date; _count: { renders: number }; user: { name: string | null; clientLogoUrl: string | null; showProfileName: boolean; showClientLogo: boolean } };
+  type ProjectEntry = { id: string; title: string; description: string | null; createdAt: Date; isPortalProject: boolean; _count: { renders: number }; user: { name: string | null; clientLogoUrl: string | null; showProfileName: boolean; showClientLogo: boolean } };
   const seen = new Map<string, ProjectEntry>();
   for (const p of [...directProjects, ...clientEntityProjects]) seen.set(p.id, p);
 
-  const projects = [...seen.values()].map((p) => ({
+  // If real projects exist, exclude portal-only ones
+  const all = [...seen.values()];
+  const hasReal = all.some((p) => !p.isPortalProject);
+  const filtered = hasReal ? all.filter((p) => !p.isPortalProject) : all;
+
+  const projects = filtered.map((p) => ({
     id: p.id,
     title: p.title,
     description: p.description ?? null,

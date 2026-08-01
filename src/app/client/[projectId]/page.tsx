@@ -61,6 +61,8 @@ interface Project {
   scheduleSharedWithClient: boolean;
   hasSurveys: boolean;
   hasMoodboard: boolean;
+  contactName: string | null;
+  isPortalProject: boolean;
 }
 
 interface HomeData {
@@ -127,7 +129,9 @@ export default function ClientProjectPage() {
     if (v === "projects") {
       setView("projects"); setSelectedRoom(null); setSelectedFolder(null); setSelectedRender(null);
     } else if (v === "rooms") {
-      setView("rooms"); setSelectedRoom(null); setSelectedFolder(null); setSelectedRender(null);
+      if (data.rooms.length > 0) {
+        setView("rooms"); setSelectedRoom(null); setSelectedFolder(null); setSelectedRender(null);
+      }
     } else if ((v === "room" || v === "render") && roomId) {
       const room = data.rooms.find((r) => r.id === roomId);
       if (room) {
@@ -242,7 +246,7 @@ export default function ClientProjectPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId]);
 
-  const authorName = (session?.user as any)?.name || session?.user?.name || "Klient";
+  const authorName = project?.contactName || (session?.user as any)?.name || "Klient";
   const currentUserId = session?.user?.id;
   const userEmail = session?.user?.email ?? "";
 
@@ -331,6 +335,19 @@ export default function ClientProjectPage() {
     fetch(`/api/client/${projectId}`)
       .then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
       .then((data) => {
+        // If this is a portal project and a real project exists, redirect there
+        if (data.isPortalProject) {
+          return fetch("/api/client")
+            .then((r) => r.ok ? r.json() : [])
+            .then((list: { id: string }[]) => {
+              if (list.length > 0 && list[0].id !== projectId) {
+                router.replace(`/client/${list[0].id}`);
+              } else {
+                setProject(data);
+                setLoading(false);
+              }
+            });
+        }
         setProject(data);
         try { sessionStorage.setItem(`client-project-${projectId}`, JSON.stringify(data)); } catch {}
         if (!hasRestoredParams.current) {
@@ -653,7 +670,7 @@ export default function ClientProjectPage() {
   const sidebarProps = {
     token: "",
     discussionId: project.discussionId,
-    showProjectFlow: !project.hiddenModules.includes("renderflow"),
+    showProjectFlow: !project.hiddenModules.includes("renderflow") && (!project.isPortalProject || project.rooms.length > 0),
     showListy: !project.hiddenModules.includes("listy"),
     showDyskusje: !project.hiddenModules.includes("dyskusje"),
     showPayments: project.paymentsSharedWithClient,
@@ -663,7 +680,7 @@ export default function ClientProjectPage() {
     showMoodboard: project.hasMoodboard,
     shoppingLists: project.shoppingLists,
     onHomeClick: () => { setView("home"); setSelectedRoom(null); setSelectedFolder(null); navigate({}); },
-    onProjectFlowClick: () => { if (clientProjects.length > 1) { setView("projects"); setSelectedRoom(null); setSelectedFolder(null); navigate({ view: "projects" }); } else if (project.rooms.length === 1) { setActiveRooms(null); setActiveProjectId(projectId); setSelectedRoom(project.rooms[0]); setSelectedFolder(null); setView("room"); navigate({ view: "room", roomId: project.rooms[0].id }); } else { setActiveRooms(null); setActiveProjectId(projectId); setView("rooms"); navigate({ view: "rooms" }); }},
+    onProjectFlowClick: () => { if (clientProjects.length > 1) { setView("projects"); setSelectedRoom(null); setSelectedFolder(null); navigate({ view: "projects" }); } else { setActiveRooms(null); setActiveProjectId(projectId); setView("rooms"); navigate({ view: "rooms" }); }},
     onDiscussionClick: () => { setView("discussion"); navigate({ view: "discussion" }); },
     onSettingsClick: () => { setView("settings"); navigate({ view: "settings" }); },
     onListClick: () => { if (project.shoppingLists.length === 1) { openList(project.shoppingLists[0].id); } else { setView("lists"); navigate({ view: "lists" }); } },
@@ -730,12 +747,12 @@ export default function ClientProjectPage() {
           <ShareSidebar
             token=""
             discussionId={project.discussionId}
-            showProjectFlow={!project.hiddenModules.includes("renderflow")}
+            showProjectFlow={!project.hiddenModules.includes("renderflow") && (!project.isPortalProject || project.rooms.length > 0)}
             showListy={!project.hiddenModules.includes("listy")}
             showDyskusje={!project.hiddenModules.includes("dyskusje")}
             shoppingLists={project.shoppingLists}
             onHomeClick={() => { setView("home"); setSelectedRoom(null); setSelectedFolder(null); navigate({}); }}
-            onProjectFlowClick={() => { if (clientProjects.length > 1) { setView("projects"); setSelectedRoom(null); setSelectedFolder(null); navigate({ view: "projects" }); } else if (project.rooms.length === 1) { setActiveRooms(null); setActiveProjectId(projectId); setSelectedRoom(project.rooms[0]); setSelectedFolder(null); setView("room"); navigate({ view: "room", roomId: project.rooms[0].id }); } else { setActiveRooms(null); setActiveProjectId(projectId); setView("rooms"); navigate({ view: "rooms" }); }}}
+            onProjectFlowClick={() => { if (clientProjects.length > 1) { setView("projects"); setSelectedRoom(null); setSelectedFolder(null); navigate({ view: "projects" }); } else { setActiveRooms(null); setActiveProjectId(projectId); setView("rooms"); navigate({ view: "rooms" }); }}}
             onDiscussionClick={() => { setView("discussion"); navigate({ view: "discussion" }); }}
             onSettingsClick={() => { setView("settings"); navigate({ view: "settings" }); }}
             onListClick={() => { if (project.shoppingLists.length === 1) { openList(project.shoppingLists[0].id); } else { setView("lists"); navigate({ view: "lists" }); } }}
@@ -870,7 +887,7 @@ export default function ClientProjectPage() {
               {/* ── Left column ── */}
               <div>
                 {/* ProjectFlow — recent renders */}
-                {!project.hiddenModules.includes("renderflow") && (
+                {!project.hiddenModules.includes("renderflow") && (!project.isPortalProject || project.rooms.length > 0) && (
                   <>
                     <div className="flex items-center justify-between mb-[10px]">
                       <h3 className="text-[13px] font-bold text-foreground">Ostatnio dodane w ProjectFlow</h3>
@@ -1774,12 +1791,12 @@ export default function ClientProjectPage() {
         <ShareSidebar
           token=""
           discussionId={project.discussionId}
-          showProjectFlow={!project.hiddenModules.includes("renderflow")}
+          showProjectFlow={!project.hiddenModules.includes("renderflow") && (!project.isPortalProject || project.rooms.length > 0)}
           showListy={!project.hiddenModules.includes("listy")}
           showDyskusje={!project.hiddenModules.includes("dyskusje")}
           shoppingLists={project.shoppingLists}
           onHomeClick={() => { setView("home"); setSelectedRoom(null); setSelectedFolder(null); navigate({}); }}
-          onProjectFlowClick={() => { if (clientProjects.length > 1) { setView("projects"); setSelectedRoom(null); setSelectedFolder(null); navigate({ view: "projects" }); } else if (project.rooms.length === 1) { setActiveRooms(null); setActiveProjectId(projectId); setSelectedRoom(project.rooms[0]); setSelectedFolder(null); setView("room"); navigate({ view: "room", roomId: project.rooms[0].id }); } else { setActiveRooms(null); setActiveProjectId(projectId); setView("rooms"); navigate({ view: "rooms" }); }}}
+          onProjectFlowClick={() => { if (clientProjects.length > 1) { setView("projects"); setSelectedRoom(null); setSelectedFolder(null); navigate({ view: "projects" }); } else { setActiveRooms(null); setActiveProjectId(projectId); setView("rooms"); navigate({ view: "rooms" }); }}}
           onDiscussionClick={() => { setView("discussion"); navigate({ view: "discussion" }); }}
           onSettingsClick={() => { setView("settings"); navigate({ view: "settings" }); }}
           onListClick={() => { if (project.shoppingLists.length === 1) { openList(project.shoppingLists[0].id); } else { setView("lists"); navigate({ view: "lists" }); } }}

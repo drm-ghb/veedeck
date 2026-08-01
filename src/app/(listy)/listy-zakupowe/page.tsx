@@ -21,11 +21,18 @@ export default async function ListyPage() {
   const lists = await prisma.shoppingList.findMany({
     where: {
       userId,
-      ...(allowedIds ? { project: { clientId: { in: allowedIds } } } : {}),
+      ...(allowedIds ? {
+        OR: [
+          { project: { clientId: { in: allowedIds } } },
+          { clientId: { in: allowedIds } },
+        ],
+      } : {}),
     },
     select: {
       id: true, slug: true, name: true, shareToken: true, archived: true,
       pinned: true, order: true, createdAt: true, viewCount: true,
+      clientId: true,
+      client: { select: { id: true, name: true, accentColor: true } },
       project: {
         select: {
           id: true, title: true, hiddenModules: true, slug: true,
@@ -52,6 +59,9 @@ export default async function ListyPage() {
         order: l.order,
         createdAt: l.createdAt.toISOString(),
         viewCount: l.viewCount,
+        directClientId: l.clientId ?? l.client?.id ?? null,
+        directClientName: l.client?.name ?? null,
+        directClientAccentColor: l.client?.accentColor ?? null,
         project: l.project ? {
           id: l.project.id,
           title: l.project.title,

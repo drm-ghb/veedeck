@@ -106,6 +106,22 @@ export async function PATCH(
         },
       });
 
+      // Auto-create a client portal project if none exists for this client entity
+      const existingProject = await prisma.project.findFirst({
+        where: { clientId: id },
+        select: { id: true },
+      });
+      if (!existingProject) {
+        await prisma.project.create({
+          data: {
+            title: client.name,
+            userId: designerId,
+            clientId: id,
+            isPortalProject: true,
+          },
+        });
+      }
+
       const updated = await prisma.projectClient.findFirst({
         where: { id: contactId },
         include: { user: { select: { id: true, login: true, email: true } } },

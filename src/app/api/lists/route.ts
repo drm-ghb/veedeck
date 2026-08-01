@@ -15,7 +15,12 @@ export async function GET() {
   const lists = await prisma.shoppingList.findMany({
     where: {
       userId,
-      ...(allowedIds ? { project: { clientId: { in: allowedIds } } } : {}),
+      ...(allowedIds ? {
+        OR: [
+          { project: { clientId: { in: allowedIds } } },
+          { clientId: { in: allowedIds } },
+        ],
+      } : {}),
     },
     include: { project: { select: { id: true, title: true } } },
     orderBy: { createdAt: "desc" },
@@ -34,7 +39,7 @@ export async function POST(req: NextRequest) {
   }
   const userId = getWorkspaceUserId(session);
 
-  const { name, projectId } = await req.json();
+  const { name, projectId, clientId } = await req.json();
   if (!name?.trim()) {
     return NextResponse.json({ error: "Nazwa jest wymagana" }, { status: 400 });
   }
@@ -48,6 +53,15 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  if (clientId) {
+    const client = await prisma.client.findFirst({
+      where: { id: clientId, designerId: userId },
+    });
+    if (!client) {
+      return NextResponse.json({ error: "Klient nie istnieje" }, { status: 403 });
+    }
+  }
+
   try {
     const slug = await uniqueSlug(name.trim(), (s) =>
       prisma.shoppingList.findUnique({ where: { slug: s } }).then(Boolean)
@@ -58,7 +72,9 @@ export async function POST(req: NextRequest) {
         slug,
         userId,
         projectId: projectId ?? null,
+        clientId: clientId ?? null,
         shareToken: crypto.randomUUID(),
+        isSharedWithClient: false,
       },
     });
     return NextResponse.json(list, { status: 201 });

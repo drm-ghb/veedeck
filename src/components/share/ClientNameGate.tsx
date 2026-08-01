@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
+import { useSearchParams } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useT } from "@/lib/i18n";
@@ -17,6 +18,7 @@ interface Props {
 export default function ClientNameGate({ token, requireClientEmail, clientLogoUrl, designerName, children }: Props) {
   const { data: session, status } = useSession();
   const t = useT();
+  const searchParams = useSearchParams();
   const [nameSet, setNameSet] = useState<boolean | null>(null);
   const [nameInput, setNameInput] = useState("");
   const [emailInput, setEmailInput] = useState("");
@@ -28,8 +30,17 @@ export default function ClientNameGate({ token, requireClientEmail, clientLogoUr
   useEffect(() => {
     if (isClientAccount) { setNameSet(true); return; }
     const saved = localStorage.getItem(`veedeck-author-${token}`);
-    setNameSet(!!saved);
-  }, [token, isClientAccount]);
+    if (saved) { setNameSet(true); return; }
+    // Auto-set name from URL param (sent in email link)
+    const cn = searchParams.get("cn");
+    if (cn) {
+      localStorage.setItem(`veedeck-author-${token}`, cn);
+      window.dispatchEvent(new Event("storage"));
+      setNameSet(true);
+      return;
+    }
+    setNameSet(false);
+  }, [token, isClientAccount, searchParams]);
 
   function handleSetName() {
     if (!nameInput.trim()) return;

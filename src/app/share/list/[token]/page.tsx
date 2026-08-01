@@ -66,12 +66,20 @@ export default async function PublicListPage({ params }: { params: Promise<{ tok
   if (!list || list.archived || list.project?.archived) notFound();
 
   const session = await auth();
-  if (!session?.user) {
-    redirect(`/login?callbackUrl=/share/list/${token}`);
-  }
   // Logged-in clients go directly to their client panel
-  if ((session.user as any).role === "client" && list.project) {
-    redirect(`/client/${list.project.id}`);
+  if (session?.user && (session.user as any).role === "client") {
+    if (list.project) {
+      redirect(`/client/${list.project.id}`);
+    }
+    // List linked via clientId (no direct project) — find the portal/host project
+    if (list.clientId) {
+      const hostProject = await prisma.project.findFirst({
+        where: { clientId: list.clientId, archived: false },
+        select: { id: true },
+        orderBy: { isPortalProject: "asc" }, // prefer real projects over portal
+      });
+      if (hostProject) redirect(`/client/${hostProject.id}?view=list&listId=${list.id}`);
+    }
   }
 
   const allProducts = list.sections.flatMap((s) => s.products);

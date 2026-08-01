@@ -14,7 +14,7 @@ export default async function KlienciPage() {
   let allClients = await prisma.client.findMany({
     where: { designerId, ...(allowedIds ? { id: { in: allowedIds } } : {}) },
     include: {
-      _count: { select: { projects: { where: { archived: false } } } },
+      _count: { select: { projects: { where: { archived: false, isPortalProject: false } }, shoppingLists: { where: { archived: false } } } },
       projects: {
         where: { archived: false },
         select: { id: true, title: true, slug: true, createdAt: true },
@@ -70,7 +70,7 @@ export default async function KlienciPage() {
   allClients = await prisma.client.findMany({
     where: { designerId, ...(allowedIds ? { id: { in: allowedIds } } : {}) },
     include: {
-      _count: { select: { projects: { where: { archived: false } } } },
+      _count: { select: { projects: { where: { archived: false, isPortalProject: false } }, shoppingLists: { where: { archived: false } } } },
       projects: {
         where: { archived: false },
         select: { id: true, title: true, slug: true, createdAt: true },
@@ -87,7 +87,7 @@ export default async function KlienciPage() {
     accentColor: c.accentColor ?? null,
     createdAt: c.createdAt.toISOString(),
     archived: c.archived,
-    _count: { projects: c._count.projects },
+    _count: { projects: c._count.projects, shoppingLists: c._count.shoppingLists },
     hasContactsWithoutAccount: c.contacts.some((contact) => !contact.userId),
     projects: c.projects.map((p) => ({
       id: p.id,
