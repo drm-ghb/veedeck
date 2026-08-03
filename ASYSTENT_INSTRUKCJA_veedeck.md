@@ -158,7 +158,7 @@ Akcje dostępne w projekcie:
 - Edytuj ustawienia projektu — ikona ustawień w nagłówku
 
 **Dostęp klienta do projektu:**
-Klient uzyskuje dostęp do projektu przez panel klienta. Projektant przypisuje go w module **Klienci → profil klienta → zakładka Kontakty**, a następnie wysyła mu link dostępowy emailem (przycisk "Wyślij link dostępowy" przy kontakcie). Klient klika link i jest od razu zalogowany do swojego panelu — bez hasła.
+Klient uzyskuje dostęp do projektu przez panel klienta. Projektant dodaje go jako kontakt w module **Klienci → profil klienta → zakładka "Informacje o kliencie"** (sekcja Kontakty), a następnie tworzy mu konto w zakładce **"Konto klienta"** → "Dodaj konto". Po założeniu konta wysyła link dostępowy emailem — klient klika link i jest od razu zalogowany do swojego panelu bez hasła.
 
 **Ustawienia widoku klienta (per-projekt):**
 - Ukryte moduły — możliwość ukrycia ProjectFlow, List lub Dyskusji w widoku klienta
@@ -214,11 +214,12 @@ _Jak dodać plik do pokoju/folderu:_
 
 _Jak udostępnić projekt klientowi:_
 1. Przejdź do modułu Klienci.
-2. Otwórz profil klienta i przejdź do zakładki "Kontakty".
-3. Wybierz osobę kontaktową lub dodaj nową (wymagany adres email).
-4. Upewnij się, że klient jest przypisany do projektu w ProjectFlow.
-5. Kliknij "Wyślij link dostępowy" przy danym kontakcie — klient dostanie email z linkiem.
-6. Klient klika link i jest od razu zalogowany do swojego panelu klienta.
+2. Otwórz profil klienta i przejdź do zakładki "Informacje o kliencie".
+3. W sekcji Kontakty dodaj osobę kontaktową (wymagany adres email) lub wybierz istniejącą.
+4. Przejdź do zakładki "Konto klienta" i kliknij "Dodaj konto".
+5. Upewnij się, że klient jest przypisany do projektu w ProjectFlow.
+6. Kliknij "Wyślij link dostępowy" przy koncie klienta — klient dostanie email z linkiem.
+7. Klient klika link i jest od razu zalogowany do swojego panelu klienta.
 
 _Jak obsłużyć prośbę o zmianę statusu od klienta:_
 1. Przejdź do Panelu głównego → sekcja "Prośby o zmianę statusu".
@@ -228,7 +229,7 @@ _Jak obsłużyć prośbę o zmianę statusu od klienta:_
 **FAQ:**
 
 Q: Klient mówi, że nie może wejść w projekt.
-A: Sprawdź w module Klienci → profil klienta → zakładka Kontakty, czy klient jest przypisany do projektu i czy ma adres email. Jeśli tak — wyślij mu nowy link dostępowy (przycisk "Wyślij link dostępowy"). Linki wygasają po pewnym czasie, więc nowy link rozwiąże problem z dostępem. Jeśli klient nie jest przypisany do projektu — przypisz go najpierw w ProjectFlow.
+A: Sprawdź w module Klienci → profil klienta → zakładka "Konto klienta", czy klient ma założone konto i czy ma adres email. Jeśli tak — wyślij mu nowy link dostępowy (przycisk "Wyślij link dostępowy"). Linki wygasają po pewnym czasie, więc nowy link rozwiąże problem z dostępem. Jeśli klient nie ma jeszcze konta — dodaj go jako kontakt w zakładce "Informacje o kliencie", a następnie utwórz konto w zakładce "Konto klienta". Jeśli klient nie jest przypisany do projektu — przypisz go najpierw w ProjectFlow.
 
 Q: Nie widzę opcji "Zezwól na komentarze klienta".
 A: Ta opcja jest w Ustawienia → ProjectFlow. Szukaj sekcji dotyczącej zachowania klienta.
@@ -309,9 +310,9 @@ _Jak dodać produkt do listy:_
 5. Kliknij "Dodaj".
 
 _Jak udostępnić listę klientowi:_
-1. Upewnij się, że klient jest przypisany do projektu (Klienci → profil klienta → Kontakty).
+1. Upewnij się, że klient ma konto (Klienci → profil klienta → zakładka "Konto klienta").
 2. Przypisz listę do klienta podczas tworzenia lub w ustawieniach listy.
-3. Wyślij klientowi link dostępowy (przycisk "Wyślij link dostępowy" w profilu klienta → Kontakty).
+3. Wyślij klientowi link dostępowy (przycisk "Wyślij link dostępowy" w zakładce "Konto klienta").
 4. Klient po wejściu przez link zobaczy listę w swoim panelu. Opcjonalnie możesz też skopiować bezpośredni link do listy z menu (3 kropki).
 
 **FAQ:**
@@ -351,18 +352,18 @@ _Jak dodać klienta:_
 
 _Jak wysłać klientowi dostęp:_
 1. Otwórz profil klienta.
-2. Przejdź do zakładki "Kontakty".
-3. Wybierz osobę kontaktową lub dodaj nową (wymagany adres email).
-4. Kliknij "Wyślij link dostępowy".
+2. Przejdź do zakładki "Informacje o kliencie" i w sekcji Kontakty dodaj osobę kontaktową (wymagany adres email).
+3. Przejdź do zakładki "Konto klienta" i kliknij "Dodaj konto".
+4. Kliknij "Wyślij link dostępowy" przy koncie klienta.
 5. Klient dostanie email z linkiem — klika go i jest od razu zalogowany do swojego panelu.
 
 **FAQ:**
 
 Q: Klient dostał link, ale nie działa.
-A: Linki wygasają po 180 dniach nieaktywności (lub jeśli projektant wysłał nowy, który unieważnił poprzedni). Wyślij nowy link z profilu klienta → Kontakty → "Wyślij link dostępowy". Klient może też sam poprosić o nowy link na stronie logowania veedeck — podaje swój email i dostaje nowy link.
+A: Linki wygasają po 180 dniach nieaktywności (lub jeśli projektant wysłał nowy, który unieważnił poprzedni). Wyślij nowy link z profilu klienta → zakładka "Konto klienta" → "Wyślij link dostępowy". Klient może też sam poprosić o nowy link na stronie logowania veedeck — podaje swój email i dostaje nowy link.
 
 Q: Jak odebrać klientowi dostęp do panelu?
-A: W profilu klienta → Kontakty → znajdź kontakt → opcja "Odłącz konto". Dane klienta (komentarze, statusy) pozostają, klient nie może już wchodzić do panelu.
+A: W profilu klienta → zakładka "Konto klienta" → menu (3 kropki) przy koncie → "Dezaktywuj konto". Dane klienta (komentarze, statusy) pozostają, klient nie może już wchodzić do panelu.
 
 ---
 

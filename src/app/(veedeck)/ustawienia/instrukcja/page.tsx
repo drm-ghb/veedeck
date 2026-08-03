@@ -42,8 +42,8 @@ const DESIGNER_MODULES: DesignerStep[] = [
     steps: [
       'Kliknij **Dodaj klienta** i wpisz nazwę (imię i nazwisko lub firma)',
       "Klient pojawia się na liście — kliknij jego kartę, żeby otworzyć profil",
-      "Profil ma pięć zakładek: **Informacje**, **Kontakty**, **Płatności**, **Harmonogram**, **Dokumenty** — opisane poniżej",
-      "Aby udostępnić klientowi panel: przejdź do zakładki **Kontakty**, wybierz kontakt i kliknij **Wyślij link dostępowy** — klient dostanie e-mail z linkiem i od razu może wejść do swojego panelu",
+      "Profil ma zakładki: **Informacje o kliencie**, **Konto klienta**, **Płatności**, **Harmonogram**, **Dokumenty** — opisane poniżej",
+      "Aby udostępnić klientowi panel: dodaj kontakt w zakładce **Informacje o kliencie**, a następnie przejdź do zakładki **Konto klienta** i kliknij **Dodaj konto** — potem wyślij link dostępowy",
     ],
     clientTabs: [
       {
@@ -58,13 +58,12 @@ const DESIGNER_MODULES: DesignerStep[] = [
         ],
       },
       {
-        name: "Kontakty",
+        name: "Konto klienta",
         items: [
-          "Lista osób kontaktowych — może ich być kilka (np. inwestor i małżonek)",
-          "Każdy kontakt ma: imię i nazwisko, email, telefon, oznaczenie czy jest **kontaktem głównym**",
-          "Kolejność kontaktów zmieniasz przeciągając (ikona uchwytu po lewej stronie wiersza)",
-          "Kliknij **Wyślij link dostępowy** przy kontakcie — klient dostaje e-mail z linkiem i może od razu wejść do swojego panelu. Może wracać tym samym linkiem wielokrotnie (ważny 180 dni od ostatniego użycia, bez hasła)",
-          "**Odłącz konto** — klient straci dostęp do panelu, ale jego dane kontaktowe zostają",
+          "Lista kont klienta powiązanych z kontaktami",
+          "Kliknij **Dodaj konto** — wybierz kontakt z listy (kontakty dodajesz w zakładce **Informacje o kliencie**)",
+          "Kliknij **Wyślij link dostępowy** przy koncie — klient dostaje e-mail z linkiem i może od razu wejść do swojego panelu. Może wracać tym samym linkiem wielokrotnie (ważny 180 dni od ostatniego użycia, bez hasła)",
+          "**Dezaktywuj konto** (menu 3 kropki) — klient straci dostęp do panelu, ale jego dane kontaktowe zostają",
         ],
       },
       {
