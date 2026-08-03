@@ -22,6 +22,7 @@ import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/ca
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useTheme } from "@/lib/theme";
+import { useLang } from "@/lib/i18n";
 import { SectionHeader } from "@/components/settings/SettingsShared";
 import Cropper from "react-easy-crop";
 import type { Area } from "react-easy-crop";
@@ -252,6 +253,7 @@ export default function ClientProjectPage() {
 
   // Settings state
   const { theme, setTheme } = useTheme();
+  const { lang, setLang } = useLang();
   const [settingsName, setSettingsName] = useState("");
   const [settingsFullName, setSettingsFullName] = useState("");
   const [settingsEmail, setSettingsEmail] = useState("");
@@ -1726,7 +1728,7 @@ export default function ClientProjectPage() {
 
           <section className="space-y-4">
             <SectionHeader title="Wygląd" />
-            <div className="bg-card border border-border rounded-2xl p-6">
+            <div className="bg-card border border-border rounded-2xl p-6 space-y-5">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-semibold text-gray-800 dark:text-gray-200">Motyw</p>
@@ -1738,6 +1740,21 @@ export default function ClientProjectPage() {
                 >
                   <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all ${theme === "dark" ? "left-5" : "left-0.5"}`} />
                 </button>
+              </div>
+              <div className="border-t border-border pt-4 space-y-3">
+                <p className="font-semibold text-gray-800 dark:text-gray-200">Język / Language</p>
+                <div className="flex gap-2">
+                  {(["pl", "en"] as const).map((value) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => setLang(value)}
+                      className={`px-4 py-2 rounded-xl text-sm border transition-colors ${lang === value ? "bg-primary text-primary-foreground border-primary" : "border-border text-foreground hover:bg-muted"}`}
+                    >
+                      {value === "pl" ? "Polski" : "English"}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </section>

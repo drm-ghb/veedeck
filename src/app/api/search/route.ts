@@ -162,7 +162,7 @@ export async function GET(req: NextRequest) {
       })),
       clients: clients.flatMap((c) => {
         if (!c.project) return [];
-        return [{ id: c.id, title: c.name, subtitle: c.email ?? c.project.title, href: `/klienci/${c.project.slug ?? c.projectId}?tab=contacts` }];
+        return [{ id: c.id, title: c.name, subtitle: c.email ?? c.project.title, href: `/klienci/${c.project.slug ?? c.projectId}?tab=accounts` }];
       }),
       products: products.map((p) => ({
         id: p.id,

@@ -2181,12 +2181,12 @@ export function paymentFailedEmailEN(billingUrl: string): string {
 
 export function accessLinkEmailPL({ link, personName, designerName }: { link: string; personName: string; designerName: string }): string {
   const safe = link.replace(/"/g, "&quot;");
-  return `<!DOCTYPE html><html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light only"><title>veedeck — dostep do panelu</title><style>body{margin:0;padding:0;background:#D9D6FF;}a{color:#4F46E5;}@media(max-width:620px){.vd-card-pad{padding:32px 24px!important;}.vd-outer-pad{padding:24px 12px!important;}}</style></head><body style="margin:0;padding:0;background:#D9D6FF;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#D9D6FF;"><tr><td align="center" class="vd-outer-pad" style="padding:40px 16px;font-family:'DM Sans',-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;"><table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:600px;"><tr><td style="padding:0 6px 22px;"><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td style="vertical-align:middle;padding-right:10px;"><img src="${ICON_URL}" width="30" height="30" alt="veedeck" style="display:block;"></td><td style="vertical-align:middle;font-family:'Nunito',Arial,sans-serif;font-size:19px;font-weight:300;letter-spacing:-0.05em;color:#24252B;">veedeck</td></tr></table></td></tr><tr><td style="background:#FFFFFF;border:1px solid #E5E7EB;border-radius:18px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td class="vd-card-pad" style="padding:44px 48px;"><div style="font-family:'Inter',Arial,sans-serif;font-size:12px;font-weight:700;letter-spacing:0.09em;text-transform:uppercase;color:#8A8D9A;">Panel projektu</div><h1 style="margin:10px 0 0;font-family:'Inter',Arial,sans-serif;font-size:30px;line-height:1.2;font-weight:700;letter-spacing:-0.025em;color:#24252B;">Czesc, ${personName}.</h1><p style="margin:16px 0 0;font-size:16px;line-height:1.6;color:#565A69;">${designerName} udostepnil Ci panel projektu w veedeck.</p><table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:32px 0 0;"><tr><td style="border-radius:12px;background:#4F46E5;"><a href="${safe}" style="display:inline-block;padding:15px 30px;font-family:'DM Sans',Arial,sans-serif;font-size:15px;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:12px;">Otworz panel projektu</a></td></tr></table><p style="margin:28px 0 0;font-size:14px;line-height:1.6;color:#8A8D9A;">Wolisz logowac sie haslem? Ustawisz je w panelu, w ustawieniach konta.</p><div style="border-top:1px solid #E5E7EB;margin:32px 0;"></div><p style="margin:0;font-size:13px;color:#8A8D9A;">Przycisk nie dziala? Wklej ten link do przegladarki:</p><p style="margin:10px 0 0;font-size:13px;word-break:break-all;"><a href="${safe}" style="color:#4F46E5;text-decoration:underline;">${link}</a></p></td></tr></table></td></tr></table></td></tr></table></body></html>`;
+  return `<!DOCTYPE html><html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light only"><meta name="supported-color-schemes" content="light only"><title>veedeck — dostęp do panelu</title><style>body{margin:0;padding:0;background:#F5F5F5;}a{color:#4F46E5;}a:hover{color:#4338CA;}@media(max-width:620px){.vd-card-pad{padding:32px 24px!important;}.vd-outer-pad{padding:24px 12px!important;}.vd-h1{font-size:26px!important;}}</style></head><body style="margin:0;padding:0;background:#F5F5F5;"><div style="display:none;max-height:0;overflow:hidden;opacity:0;color:#F5F5F5;font-size:1px;line-height:1px;">${designerName} udostępnił(a) Ci panel projektu w veedeck. Kliknij, aby go otworzyć.</div><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#F5F5F5;"><tr><td align="center" class="vd-outer-pad" style="padding:40px 16px;font-family:'DM Sans',-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;"><table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:600px;"><tr><td style="background:#FFFFFF;border:1px solid #E5E7EB;border-radius:18px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td class="vd-card-pad" style="padding:44px 48px;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 28px;"><tr><td style="vertical-align:middle;padding-right:10px;"><img src="${ICON_URL}" width="30" height="30" alt="veedeck" style="display:block;width:30px;height:30px;"></td><td style="vertical-align:middle;line-height:1;font-family:'Nunito',Arial,sans-serif;font-size:19px;font-weight:300;letter-spacing:-0.05em;color:#24252B;">veedeck</td></tr></table><div style="font-family:'Inter',Arial,sans-serif;font-size:12px;font-weight:700;letter-spacing:0.09em;text-transform:uppercase;color:#8A8D9A;">Panel projektu</div><h1 class="vd-h1" style="margin:10px 0 0;font-family:'Inter',Arial,sans-serif;font-size:30px;line-height:1.2;font-weight:700;letter-spacing:-0.025em;color:#24252B;">Cześć, ${personName}.</h1><p style="margin:16px 0 0;font-size:16px;line-height:1.6;color:#565A69;"><b style="color:#24252B;">${designerName}</b> udostępnił(a) Ci panel projektu w&nbsp;veedeck.</p><table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:32px 0 0;"><tr><td style="border-radius:12px;background:#4F46E5;"><a href="${safe}" style="display:inline-block;padding:15px 30px;font-family:'DM Sans',Arial,sans-serif;font-size:15px;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:12px;">Otwórz panel projektu</a></td></tr></table><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:32px 0 0;"><tr><td style="background:#F2F3F7;border-radius:14px;padding:22px 24px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:0 0 10px;vertical-align:top;width:32px;font-size:16px;line-height:1;">🔗</td><td style="padding:0 0 10px;vertical-align:top;font-size:14px;line-height:1.6;color:#565A69;">Ten link jest <b style="color:#24252B;">stały i nie wygaśnie</b> — możesz z niego korzystać zawsze, gdy chcesz zalogować się do panelu.</td></tr><tr><td style="vertical-align:top;width:32px;font-size:16px;line-height:1;">🔑</td><td style="vertical-align:top;font-size:14px;line-height:1.6;color:#565A69;">Wolisz logować się hasłem? Ustaw je w panelu w ustawieniach konta, a następnie loguj się na <a href="https://veedeck.com/login" style="color:#4F46E5;text-decoration:underline;">veedeck.com/login</a>.</td></tr></table></td></tr></table><div style="border-top:1px solid #E5E7EB;margin:32px 0;"></div><p style="margin:0;font-size:13px;line-height:1.5;color:#8A8D9A;">Przycisk nie działa? Wklej ten link do przeglądarki:</p><p style="margin:10px 0 0;font-size:13px;line-height:1.6;word-break:break-all;"><a href="${safe}" style="color:#4F46E5;text-decoration:underline;">${link}</a></p><div style="border-top:1px solid #E5E7EB;margin:32px 0;"></div><p style="margin:0;font-size:13px;line-height:1.6;color:#A0A3AE;">Jeśli nie spodziewałeś(aś) się tej wiadomości, zignoruj ją.</p></td></tr></table></td></tr></table><tr><td style="padding:26px 24px 8px;text-align:center;"><p style="margin:0;font-size:13px;line-height:1.6;color:#8A8D9A;">veedeck - Visualize, Design, Deliver. Platforma dla projektantów wnętrz.</p><p style="margin:10px 0 0;font-size:13px;line-height:1.6;color:#A0A3AE;"><a href="https://veedeck.com/polityka-prywatnosci.html" style="color:#8A8D9A;text-decoration:none;">Polityka prywatności</a>&nbsp;·&nbsp;<a href="https://veedeck.com/polityka-cookies.html" style="color:#8A8D9A;text-decoration:none;">Cookies</a>&nbsp;·&nbsp;<a href="mailto:contact@veedeck.com" style="color:#8A8D9A;text-decoration:none;">contact@veedeck.com</a></p></td></tr></table></td></tr></table></body></html>`;
 }
 
 export function accessLinkEmailEN({ link, personName, designerName }: { link: string; personName: string; designerName: string }): string {
   const safe = link.replace(/"/g, "&quot;");
-  return `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>veedeck — panel access</title><style>body{margin:0;padding:0;background:#D9D6FF;}a{color:#4F46E5;}@media(max-width:620px){.vd-card-pad{padding:32px 24px!important;}.vd-outer-pad{padding:24px 12px!important;}}</style></head><body style="margin:0;padding:0;background:#D9D6FF;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#D9D6FF;"><tr><td align="center" class="vd-outer-pad" style="padding:40px 16px;font-family:'DM Sans',-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;"><table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:600px;"><tr><td style="padding:0 6px 22px;"><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td style="vertical-align:middle;padding-right:10px;"><img src="${ICON_URL}" width="30" height="30" alt="veedeck" style="display:block;"></td><td style="vertical-align:middle;font-family:'Nunito',Arial,sans-serif;font-size:19px;font-weight:300;letter-spacing:-0.05em;color:#24252B;">veedeck</td></tr></table></td></tr><tr><td style="background:#FFFFFF;border:1px solid #E5E7EB;border-radius:18px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td class="vd-card-pad" style="padding:44px 48px;"><div style="font-family:'Inter',Arial,sans-serif;font-size:12px;font-weight:700;letter-spacing:0.09em;text-transform:uppercase;color:#8A8D9A;">Project panel</div><h1 style="margin:10px 0 0;font-family:'Inter',Arial,sans-serif;font-size:30px;line-height:1.2;font-weight:700;letter-spacing:-0.025em;color:#24252B;">Hi, ${personName}.</h1><p style="margin:16px 0 0;font-size:16px;line-height:1.6;color:#565A69;">${designerName} has shared a project panel with you on veedeck.</p><table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:32px 0 0;"><tr><td style="border-radius:12px;background:#4F46E5;"><a href="${safe}" style="display:inline-block;padding:15px 30px;font-family:'DM Sans',Arial,sans-serif;font-size:15px;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:12px;">Open project panel</a></td></tr></table><p style="margin:28px 0 0;font-size:14px;line-height:1.6;color:#8A8D9A;">Prefer a password? You can set one in the panel settings.</p><div style="border-top:1px solid #E5E7EB;margin:32px 0;"></div><p style="margin:0;font-size:13px;color:#8A8D9A;">Button not working? Paste this link:</p><p style="margin:10px 0 0;font-size:13px;word-break:break-all;"><a href="${safe}" style="color:#4F46E5;text-decoration:underline;">${link}</a></p></td></tr></table></td></tr></table></td></tr></table></body></html>`;
+  return `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light only"><meta name="supported-color-schemes" content="light only"><title>veedeck — project panel</title><style>body{margin:0;padding:0;background:#F5F5F5;}a{color:#4F46E5;}a:hover{color:#4338CA;}@media(max-width:620px){.vd-card-pad{padding:32px 24px!important;}.vd-outer-pad{padding:24px 12px!important;}.vd-h1{font-size:26px!important;}}</style></head><body style="margin:0;padding:0;background:#F5F5F5;"><div style="display:none;max-height:0;overflow:hidden;opacity:0;color:#F5F5F5;font-size:1px;line-height:1px;">${designerName} has shared a project panel with you on veedeck. Click to open it.</div><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#F5F5F5;"><tr><td align="center" class="vd-outer-pad" style="padding:40px 16px;font-family:'DM Sans',-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;"><table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:600px;"><tr><td style="background:#FFFFFF;border:1px solid #E5E7EB;border-radius:18px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td class="vd-card-pad" style="padding:44px 48px;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 28px;"><tr><td style="vertical-align:middle;padding-right:10px;"><img src="${ICON_URL}" width="30" height="30" alt="veedeck" style="display:block;width:30px;height:30px;"></td><td style="vertical-align:middle;line-height:1;font-family:'Nunito',Arial,sans-serif;font-size:19px;font-weight:300;letter-spacing:-0.05em;color:#24252B;">veedeck</td></tr></table><div style="font-family:'Inter',Arial,sans-serif;font-size:12px;font-weight:700;letter-spacing:0.09em;text-transform:uppercase;color:#8A8D9A;">Project panel</div><h1 class="vd-h1" style="margin:10px 0 0;font-family:'Inter',Arial,sans-serif;font-size:30px;line-height:1.2;font-weight:700;letter-spacing:-0.025em;color:#24252B;">Hi, ${personName}.</h1><p style="margin:16px 0 0;font-size:16px;line-height:1.6;color:#565A69;"><b style="color:#24252B;">${designerName}</b> has shared a project panel with you on&nbsp;veedeck.</p><table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:32px 0 0;"><tr><td style="border-radius:12px;background:#4F46E5;"><a href="${safe}" style="display:inline-block;padding:15px 30px;font-family:'DM Sans',Arial,sans-serif;font-size:15px;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:12px;">Open project panel</a></td></tr></table><p style="margin:28px 0 0;font-size:14px;line-height:1.6;color:#8A8D9A;">Prefer a password? You can set one in the panel settings, then log in at <a href="https://veedeck.com/login" style="color:#4F46E5;text-decoration:underline;">veedeck.com/login</a>.</p><div style="border-top:1px solid #E5E7EB;margin:32px 0;"></div><p style="margin:0;font-size:13px;line-height:1.5;color:#8A8D9A;">Button not working? Paste this link into your browser:</p><p style="margin:10px 0 0;font-size:13px;line-height:1.6;word-break:break-all;"><a href="${safe}" style="color:#4F46E5;text-decoration:underline;">${link}</a></p><div style="border-top:1px solid #E5E7EB;margin:32px 0;"></div><p style="margin:0;font-size:13px;line-height:1.6;color:#A0A3AE;">If you didn't expect this email, you can safely ignore it.</p></td></tr></table></td></tr></table><tr><td style="padding:26px 24px 8px;text-align:center;"><p style="margin:0;font-size:13px;line-height:1.6;color:#8A8D9A;">veedeck - Visualize, Design, Deliver. The platform for interior designers.</p><p style="margin:10px 0 0;font-size:13px;line-height:1.6;color:#A0A3AE;"><a href="https://veedeck.com/privacy-policy.html" style="color:#8A8D9A;text-decoration:none;">Privacy Policy</a>&nbsp;·&nbsp;<a href="https://veedeck.com/polityka-cookies.html" style="color:#8A8D9A;text-decoration:none;">Cookies</a>&nbsp;·&nbsp;<a href="mailto:contact@veedeck.com" style="color:#8A8D9A;text-decoration:none;">contact@veedeck.com</a></p></td></tr></table></td></tr></table></body></html>`;
 }
 
 export function reminderEmailPL({ link, personName, designerName }: { link: string; personName: string; designerName: string }): string {
@@ -2196,6 +2196,219 @@ export function reminderEmailPL({ link, personName, designerName }: { link: stri
 
 export function firstLoginNotificationEmailPL({ personName, role, date, time }: { personName: string; role: string; date: string; time: string }): string {
   return `<!DOCTYPE html><html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>veedeck</title><style>body{margin:0;padding:0;background:#D9D6FF;}</style></head><body style="margin:0;padding:0;background:#D9D6FF;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#D9D6FF;"><tr><td align="center" style="padding:40px 16px;font-family:'DM Sans',-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;"><table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:600px;"><tr><td style="padding:0 6px 22px;"><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td style="vertical-align:middle;padding-right:10px;"><img src="${ICON_URL}" width="30" height="30" alt="veedeck" style="display:block;"></td><td style="vertical-align:middle;font-family:'Nunito',Arial,sans-serif;font-size:19px;font-weight:300;letter-spacing:-0.05em;color:#24252B;">veedeck</td></tr></table></td></tr><tr><td style="background:#FFFFFF;border:1px solid #E5E7EB;border-radius:18px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:44px 48px;"><div style="font-family:'Inter',Arial,sans-serif;font-size:12px;font-weight:700;letter-spacing:0.09em;text-transform:uppercase;color:#4F46E5;">Aktywacja panelu</div><h1 style="margin:10px 0 0;font-family:'Inter',Arial,sans-serif;font-size:26px;line-height:1.2;font-weight:700;letter-spacing:-0.025em;color:#24252B;">${role} ${personName} otworzyl panel.</h1><p style="margin:16px 0 0;font-size:16px;line-height:1.6;color:#565A69;">${personName} po raz pierwszy zalogowal sie do panelu w veedeck.</p><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0 0;"><tr><td style="background:#F2F3F7;border-radius:14px;padding:18px 22px;font-size:14px;line-height:1.8;color:#565A69;">Data: <b style="color:#24252B;">${date}</b><br>Godzina: <b style="color:#24252B;">${time}</b></td></tr></table></td></tr></table></td></tr></table></td></tr></table></body></html>`;
+}
+
+export function listSharedClientEmailPL({ listUrl, listName, designerName, projectTitle }: {
+  listUrl: string;
+  listName: string;
+  designerName: string;
+  projectTitle: string;
+}): string {
+  const safe = listUrl.replace(/"/g, "&quot;");
+  return `<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light only">
+<meta name="supported-color-schemes" content="light only">
+<title>veedeck — nowa lista zakupowa</title>
+<!--[if mso]><style>* { font-family: Arial, sans-serif !important; }</style><![endif]-->
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Inter:wght@600;700&family=Nunito:wght@300&display=swap');
+  body { margin: 0; padding: 0; background: #F5F5F5; }
+  a { color: #4F46E5; }
+  a:hover { color: #4338CA; }
+  @media (max-width: 620px) {
+    .vd-card-pad { padding: 32px 24px !important; }
+    .vd-outer-pad { padding: 24px 12px !important; }
+    .vd-h1 { font-size: 26px !important; }
+  }
+</style>
+</head>
+<body style="margin:0;padding:0;background:#F5F5F5;">
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:#F5F5F5;font-size:1px;line-height:1px;">Projektant udostępnił Ci nową listę zakupową. Kliknij, aby ją zobaczyć.</div>
+
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#F5F5F5;">
+    <tr>
+      <td align="center" class="vd-outer-pad" style="padding:40px 16px;font-family:'DM Sans',-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:600px;">
+
+          <!-- Card -->
+          <tr>
+            <td style="background:#FFFFFF;border:1px solid #E5E7EB;border-radius:18px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td class="vd-card-pad" style="padding:44px 48px;">
+
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 28px;">
+                      <tr>
+                        <td style="vertical-align:middle;padding-right:10px;"><img src="${ICON_URL}" width="30" height="30" alt="veedeck" style="display:block;width:30px;height:30px;"></td>
+                        <td style="vertical-align:middle;line-height:1;font-family:'Nunito',Arial,sans-serif;font-size:19px;font-weight:300;letter-spacing:-0.05em;color:#24252B;">veedeck</td>
+                      </tr>
+                    </table>
+
+                    <div style="font-family:'Inter',Arial,sans-serif;font-size:12px;font-weight:700;letter-spacing:0.09em;text-transform:uppercase;color:#8A8D9A;">Lista zakupowa</div>
+
+                    <h1 class="vd-h1" style="margin:10px 0 0;font-family:'Inter',Arial,sans-serif;font-size:30px;line-height:1.2;font-weight:700;letter-spacing:-0.025em;color:#24252B;">
+                      Nowa lista zakupowa
+                    </h1>
+
+                    <p style="margin:16px 0 0;font-size:16px;line-height:1.6;color:#565A69;">
+                      <b style="color:#24252B;">${designerName}</b> udostępnił(a) Ci listę zakupową <b style="color:#24252B;">„${listName}"</b> w&nbsp;projekcie <b style="color:#24252B;">${projectTitle}</b>.
+                    </p>
+
+                    <!-- CTA -->
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:32px 0 0;">
+                      <tr>
+                        <td style="border-radius:12px;background:#4F46E5;">
+                          <a href="${safe}" style="display:inline-block;padding:15px 30px;font-family:'DM Sans',Arial,sans-serif;font-size:15px;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:12px;">Przejdź do listy</a>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <!-- Info box -->
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:32px 0 0;">
+                      <tr>
+                        <td style="background:#F2F3F7;border-radius:14px;padding:22px 24px;">
+                          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                            <tr>
+                              <td style="padding:0 0 10px;vertical-align:top;width:32px;font-size:16px;line-height:1;">🛒</td>
+                              <td style="padding:0 0 10px;vertical-align:top;font-size:14px;line-height:1.6;color:#565A69;">Na liście znajdziesz produkty dobrane przez projektanta do Twojego projektu — z cenami, linkami i&nbsp;zdjęciami.</td>
+                            </tr>
+                            <tr>
+                              <td style="vertical-align:top;width:32px;font-size:16px;line-height:1;">✅</td>
+                              <td style="vertical-align:top;font-size:14px;line-height:1.6;color:#565A69;">Możesz zaakceptować lub odrzucić każdy produkt bezpośrednio z&nbsp;poziomu listy.</td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <div style="border-top:1px solid #E5E7EB;margin:32px 0;"></div>
+
+                    <p style="margin:0;font-size:13px;line-height:1.5;color:#8A8D9A;">Przycisk nie działa? Wklej ten link do przeglądarki:</p>
+                    <p style="margin:10px 0 0;font-size:13px;line-height:1.6;word-break:break-all;"><a href="${safe}" style="color:#4F46E5;text-decoration:underline;">${listUrl}</a></p>
+
+                    <div style="border-top:1px solid #E5E7EB;margin:32px 0;"></div>
+
+                    <p style="margin:0;font-size:13px;line-height:1.6;color:#A0A3AE;">Jeśli nie spodziewałeś(aś) się tej wiadomości, zignoruj ją.</p>
+
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding:26px 24px 8px;text-align:center;">
+              <p style="margin:0;font-size:13px;line-height:1.6;color:#8A8D9A;">veedeck - Visualize, Design, Deliver. Platforma dla projektantów wnętrz.</p>
+              <p style="margin:10px 0 0;font-size:13px;line-height:1.6;color:#A0A3AE;">
+                <a href="${PRIVACY_URL_PL}" style="color:#8A8D9A;text-decoration:none;">Polityka prywatności</a>
+                &nbsp;·&nbsp;
+                <a href="${COOKIES_URL_PL}" style="color:#8A8D9A;text-decoration:none;">Cookies</a>
+                &nbsp;·&nbsp;
+                <a href="mailto:${CONTACT_EMAIL}" style="color:#8A8D9A;text-decoration:none;">${CONTACT_EMAIL}</a>
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
+
+export function accountDeactivationEmailPL({ designerName }: { designerName: string }): string {
+  const safe = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  return `<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light only">
+<meta name="supported-color-schemes" content="light only">
+<!--[if mso]><style>* { font-family: Arial, sans-serif !important; }</style><![endif]-->
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Inter:wght@600;700&family=Nunito:wght@300&display=swap');
+  body { margin: 0; padding: 0; background: #F5F5F5; }
+  @media (max-width: 620px) {
+    .vd-card-pad { padding: 32px 24px !important; }
+    .vd-outer-pad { padding: 24px 12px !important; }
+    .vd-h1 { font-size: 26px !important; }
+  }
+</style>
+</head>
+<body style="margin:0;padding:0;background:#F5F5F5;">
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:#F5F5F5;font-size:1px;line-height:1px;">Twój dostęp do panelu klienta veedeck został dezaktywowany.</div>
+
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#F5F5F5;">
+    <tr>
+      <td align="center" class="vd-outer-pad" style="padding:40px 16px;font-family:'DM Sans',-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:600px;">
+
+          <tr>
+            <td style="padding:0 6px 22px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td style="vertical-align:middle;padding-right:10px;"><img src="${ICON_URL}" width="30" height="30" alt="veedeck" style="display:block;width:30px;height:30px;"></td>
+                  <td style="vertical-align:middle;font-family:'Nunito',Arial,sans-serif;font-size:19px;font-weight:300;letter-spacing:-0.05em;color:#24252B;">veedeck</td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="background:#FFFFFF;border:1px solid #E5E7EB;border-radius:18px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td class="vd-card-pad" style="padding:44px 48px;">
+                    <div style="font-family:'Inter',Arial,sans-serif;font-size:12px;font-weight:700;letter-spacing:0.09em;text-transform:uppercase;color:#8A8D9A;">Dezaktywacja dostępu</div>
+
+                    <h1 class="vd-h1" style="margin:10px 0 0;font-family:'Inter',Arial,sans-serif;font-size:30px;line-height:1.2;font-weight:700;letter-spacing:-0.025em;color:#24252B;">
+                      Twój dostęp został dezaktywowany
+                    </h1>
+
+                    <p style="margin:16px 0 0;font-size:16px;line-height:1.6;color:#565A69;">
+                      Projektant <strong>${safe(designerName)}</strong> dezaktywował Twój dostęp do panelu klienta veedeck. Od teraz nie możesz logować się do platformy.
+                    </p>
+
+                    <p style="margin:16px 0 0;font-size:16px;line-height:1.6;color:#565A69;">
+                      Jeśli uważasz, że to pomyłka lub masz pytania — skontaktuj się bezpośrednio ze swoim projektantem.
+                    </p>
+
+                    <div style="border-top:1px solid #E5E7EB;margin:32px 0;"></div>
+
+                    <p style="margin:0;font-size:13px;line-height:1.6;color:#A0A3AE;">Jeśli nie korzystałeś/aś z konta klienta veedeck, zignoruj tę wiadomość.</p>
+
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:26px 24px 8px;text-align:center;">
+              <p style="margin:0;font-size:13px;line-height:1.6;color:#8A8D9A;">veedeck — Visualize, Design, Deliver. Platforma dla projektantów wnętrz.</p>
+              <p style="margin:10px 0 0;font-size:13px;line-height:1.6;color:#A0A3AE;">
+                <a href="${PRIVACY_URL_PL}" style="color:#8A8D9A;text-decoration:none;">Polityka prywatności</a>
+                &nbsp;·&nbsp;
+                <a href="${COOKIES_URL_PL}" style="color:#8A8D9A;text-decoration:none;">Cookies</a>
+                &nbsp;·&nbsp;
+                <a href="mailto:${CONTACT_EMAIL}" style="color:#8A8D9A;text-decoration:none;">${CONTACT_EMAIL}</a>
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
 }
 
 export function passwordSetEmailPL(personName: string): string {

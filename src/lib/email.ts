@@ -14,6 +14,8 @@ import {
   reminderEmailPL,
   firstLoginNotificationEmailPL,
   passwordSetEmailPL,
+  listSharedClientEmailPL,
+  accountDeactivationEmailPL,
 } from "@/lib/email-templates";
 
 const transporter = nodemailer.createTransport({
@@ -795,15 +797,17 @@ export async function notifyClientListShared(opts: {
   projectTitle: string;
   listUrl: string;
 }) {
-  await sendNotificationEmail(
-    opts.clientEmail,
-    `Projektant udostępnił Ci listę zakupową „${opts.listName}"`,
-    emailBase(`
-      <h2 style="margin:0 0 8px;font-size:18px;color:#111;">Nowa lista zakupowa</h2>
-      <p style="margin:0;font-size:14px;color:#6b7280;"><strong>${escapeHtml(opts.designerName)}</strong> udostępnił(a) Ci listę <strong>${escapeHtml(opts.listName)}</strong> w projekcie <strong>${escapeHtml(opts.projectTitle)}</strong>.</p>
-      ${emailBtn("Przejdź do listy", opts.listUrl)}
-    `),
-  );
+  await transporter.sendMail({
+    from: FROM,
+    to: opts.clientEmail,
+    subject: `Nowa lista zakupowa — ${escapeHtml(opts.listName)}`,
+    html: listSharedClientEmailPL({
+      listUrl: opts.listUrl,
+      listName: escapeHtml(opts.listName),
+      designerName: escapeHtml(opts.designerName),
+      projectTitle: escapeHtml(opts.projectTitle),
+    }),
+  }).catch((err) => console.error("[EMAIL] notifyClientListShared failed:", err));
 }
 
 export async function notifyDesignerSurveySubmitted(opts: {
@@ -969,4 +973,19 @@ export async function sendPasswordSetConfirmation({
     subject: "Hasło zostało ustawione — veedeck",
     html: passwordSetEmailPL(personName),
   }).catch((err) => console.error("[EMAIL] sendPasswordSetConfirmation failed:", err));
+}
+
+export async function sendAccountDeactivationEmail({
+  to,
+  designerName,
+}: {
+  to: string;
+  designerName: string;
+}) {
+  await transporter.sendMail({
+    from: FROM,
+    to,
+    subject: "Twój dostęp do panelu klienta został dezaktywowany — veedeck",
+    html: accountDeactivationEmailPL({ designerName }),
+  }).catch((err) => console.error("[EMAIL] sendAccountDeactivationEmail failed:", err));
 }

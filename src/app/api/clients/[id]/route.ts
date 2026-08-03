@@ -88,7 +88,25 @@ export async function DELETE(
   const existing = await getClient(id, designerId);
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  // Unlink projects before deleting
+  // Collect user IDs linked to contacts before deleting
+  const contacts = await prisma.projectClient.findMany({
+    where: { clientId: id },
+    select: { id: true, userId: true },
+  });
+  const userIds = contacts.map((c) => c.userId).filter(Boolean) as string[];
+
+  // Delete contacts
+  await prisma.projectClient.deleteMany({ where: { clientId: id } });
+
+  // Delete user accounts that have no other contact links
+  for (const userId of userIds) {
+    const otherLinks = await prisma.projectClient.count({ where: { userId } });
+    if (otherLinks === 0) {
+      await prisma.user.delete({ where: { id: userId } }).catch(() => null);
+    }
+  }
+
+  // Unlink projects before deleting client
   await prisma.project.updateMany({ where: { clientId: id }, data: { clientId: null } });
   await prisma.client.delete({ where: { id } });
 

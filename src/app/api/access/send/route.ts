@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { createAccessToken, buildAccessLink } from "@/lib/access-token";
+import { sendAccessLinkEmail } from "@/lib/email";
 
 // POST /api/access/send — designer sends a magic link to a client or contractor
 // Body: { userId: string; locale?: "pl" | "en" }
@@ -75,13 +76,14 @@ export async function POST(req: NextRequest) {
   const rawToken = await createAccessToken(userId);
   const link = buildAccessLink(rawToken);
 
-  const { sendAccessLinkEmail } = await import("@/lib/email");
-  await sendAccessLinkEmail({
-    to: targetUser.email,
-    link,
-    personName: targetUser.name ?? "Użytkowniku",
-    designerName: designer?.name ?? "Twój projektant",
-    locale,
+  after(async () => {
+    await sendAccessLinkEmail({
+      to: targetUser.email!,
+      link,
+      personName: targetUser.name ?? "Użytkowniku",
+      designerName: designer?.name ?? "Twój projektant",
+      locale,
+    });
   });
 
   return NextResponse.json({ ok: true, link });

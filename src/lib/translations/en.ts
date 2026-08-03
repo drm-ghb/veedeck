@@ -59,7 +59,7 @@ export const en: TranslationKeys = {
   },
   nav: {
     dashboard: "Dashboard",
-    projects: "Projects",
+    projects: "Clients",
     contractors: "Contractors",
     renderflow: "ProjectFlow",
     lists: "Shopping Lists",

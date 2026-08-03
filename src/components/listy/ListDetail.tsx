@@ -1166,6 +1166,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
   const [sections, setSections] = useState<Section[]>(list.sections);
   const [shared, setShared] = useState(list.isSharedWithClient);
   const [sharing, setSharing] = useState(false);
+  const [emptyShareWarning, setEmptyShareWarning] = useState(false);
   const hasClient = !!list.project?.clientName || !!list.client;
 
   async function toggleShare() {
@@ -1520,8 +1521,32 @@ export default function ListDetail({ list, designerName, designerEmail, designer
     dragOverSectionRef.current = targetSectionId;
 
     const currentSectionId = dragItemCurrentSectionRef.current;
-    if (!currentSectionId || targetSectionId === currentSectionId) return;
+    if (!currentSectionId) return;
     if (overProductId === (active.id as string)) return;
+
+    if (targetSectionId === currentSectionId) {
+      // Within-section repositioning — only handle if item was already moved cross-section
+      // (otherwise handleDragEnd handles it via arrayMove on over.id)
+      const originalSectionId = active.data.current?.sectionId as string;
+      if (targetSectionId === originalSectionId || !overProductId) return;
+      setSections((prev) => {
+        const section = prev.find((s) => s.id === targetSectionId);
+        if (!section) return prev;
+        const activeId = active.id as string;
+        const topLevel = section.products.filter((p) => !p.parentProductId);
+        const activeIdx = topLevel.findIndex((p) => p.id === activeId);
+        const overIdx = topLevel.findIndex((p) => p.id === overProductId);
+        if (activeIdx === -1 || overIdx === -1 || activeIdx === overIdx) return prev;
+        const reorderedTopLevel = arrayMove(topLevel, activeIdx, overIdx);
+        const allVariants = section.products.filter((p) => p.parentProductId);
+        const rebuilt = reorderedTopLevel.flatMap((p) => [
+          p,
+          ...allVariants.filter((v) => v.parentProductId === p.id).sort((a, b) => a.order - b.order),
+        ]);
+        return prev.map((s) => s.id === targetSectionId ? { ...s, products: rebuilt } : s);
+      });
+      return;
+    }
 
     dragItemCurrentSectionRef.current = targetSectionId;
 
@@ -2453,7 +2478,14 @@ export default function ListDetail({ list, designerName, designerEmail, designer
         <div className="flex items-center gap-1.5 shrink-0">
           {/* Share with client toggle */}
           <button
-            onClick={toggleShare}
+            onClick={() => {
+              if (!hasClient || sharing) return;
+              if (!shared && sections.every((s) => s.products.length === 0)) {
+                setEmptyShareWarning(true);
+                return;
+              }
+              toggleShare();
+            }}
             disabled={!hasClient || sharing}
             title={
               !hasClient
@@ -3300,6 +3332,24 @@ export default function ListDetail({ list, designerName, designerEmail, designer
       )}
 
       {/* Bulk delete confirmation */}
+      {/* Empty list share warning */}
+      <Dialog open={emptyShareWarning} onOpenChange={(v) => { if (!v) setEmptyShareWarning(false); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Udostępnić pustą listę?</DialogTitle>
+          </DialogHeader>
+          <DialogDescription>
+            Ta lista nie zawiera żadnych produktów. Czy na pewno chcesz udostępnić klientowi <strong>pustą listę</strong>?
+          </DialogDescription>
+          <div className="flex gap-2 justify-end pt-2">
+            <Button variant="outline" onClick={() => setEmptyShareWarning(false)}>Anuluj</Button>
+            <Button onClick={() => { setEmptyShareWarning(false); toggleShare(); }}>
+              Udostępnij mimo to
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={bulkDeleteConfirmOpen} onOpenChange={(v) => { if (!v) setBulkDeleteConfirmOpen(false); }}>
         <DialogContent className="max-w-sm">
           <DialogHeader>

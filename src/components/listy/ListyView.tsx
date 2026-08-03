@@ -502,7 +502,7 @@ function SortableListGridCard({ list, unreadCount, onCopyLink, menu }: {
         )}
         {list.project?.clientHasNoAccount && (
           <Link
-            href={`/klienci/${list.project.id}?tab=contacts`}
+            href={`/klienci/${list.project.id}?tab=accounts`}
             onClick={(e) => e.stopPropagation()}
             className="flex items-center gap-1 px-1.5 py-0.5 rounded text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/30 text-[11px] font-medium transition-colors"
           >

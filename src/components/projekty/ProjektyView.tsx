@@ -191,7 +191,7 @@ export default function ProjektyView({ projects, archivedProjects }: ProjektyVie
                         <p className="text-xs text-muted-foreground truncate">{p.clientName}</p>
                         {p.clientHasNoAccount && (
                           <Link
-                            href={`/klienci/${p.slug ?? p.id}?tab=contacts`}
+                            href={`/klienci/${p.slug ?? p.id}?tab=accounts`}
                             onClick={(e) => e.stopPropagation()}
                             className="flex items-center gap-1 text-amber-500 hover:text-amber-600 text-[11px] font-medium flex-shrink-0 transition-colors"
                           >

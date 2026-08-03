@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getWorkspaceUserId } from "@/lib/workspace";
 import { generateClientLogin } from "@/lib/client-login";
 import bcrypt from "bcryptjs";
+import { sendAccountDeactivationEmail } from "@/lib/email";
 
 export async function PATCH(
   req: NextRequest,
@@ -25,7 +26,32 @@ export async function PATCH(
   if (!contact) return NextResponse.json({ error: "Nie znaleziono kontaktu" }, { status: 404 });
 
   const body = await req.json();
-  const { isMainContact, email, phone, startDate, endDate, login: newLogin, password: newPassword } = body;
+  const { isMainContact, name, email, phone, description, startDate, endDate, login: newLogin, password: newPassword } = body;
+
+  if (body.action === "deactivate") {
+    const userId = contact.userId;
+    if (!userId) return NextResponse.json({ error: "Kontakt nie ma konta" }, { status: 400 });
+
+    await prisma.projectClient.update({ where: { id: contactId }, data: { userId: null } });
+
+    const otherLinks = await prisma.projectClient.count({ where: { userId } });
+    if (otherLinks === 0) {
+      await prisma.user.delete({ where: { id: userId } });
+    }
+
+    const contactEmail = contact.email;
+    if (contactEmail) {
+      const designer = await prisma.user.findUnique({ where: { id: designerId }, select: { fullName: true, name: true } });
+      const designerName = designer?.fullName || designer?.name || "projektant";
+      await sendAccountDeactivationEmail({ to: contactEmail, designerName });
+    }
+
+    const updated = await prisma.projectClient.findFirst({
+      where: { id: contactId },
+      include: { user: { select: { id: true, login: true, email: true } } },
+    });
+    return NextResponse.json(updated);
+  }
 
   if (newLogin !== undefined || newPassword !== undefined) {
     if (!contact.userId || !contact.user) {
@@ -51,6 +77,7 @@ export async function PATCH(
             const created = await prisma.user.create({
               data: {
                 name: contact.name,
+                fullName: contact.name,
                 email: emailLogin,
                 login: emailLogin,
                 password: hashedPassword,
@@ -83,6 +110,7 @@ export async function PATCH(
           const created = await prisma.user.create({
             data: {
               name: contact.name,
+              fullName: contact.name,
               email: internalEmail,
               login: baseLogin,
               password: hashedPassword,
@@ -163,8 +191,10 @@ export async function PATCH(
   }
 
   const contactUpdateData: Record<string, unknown> = {};
+  if (name !== undefined) contactUpdateData.name = name?.trim() || contact.name;
   if (email !== undefined) contactUpdateData.email = email?.trim() || null;
   if (phone !== undefined) contactUpdateData.phone = phone?.trim() || null;
+  if (description !== undefined) contactUpdateData.description = description?.trim() || null;
   if (startDate !== undefined) contactUpdateData.startDate = startDate ? new Date(startDate) : null;
   if (endDate !== undefined) contactUpdateData.endDate = endDate ? new Date(endDate) : null;
 

@@ -1144,7 +1144,7 @@ export function PaymentsTab({ clientId, projectId, paymentsSharedWithClient: ini
   const allShared = sections.length > 0 && sections.every((s) => s.rfProjectId ? (sharedByProject[s.rfProjectId] ?? false) : false);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 mt-4">
       {/* Header */}
       <div className="flex items-center justify-end gap-2 flex-wrap">
         {sections.length > 0 && (

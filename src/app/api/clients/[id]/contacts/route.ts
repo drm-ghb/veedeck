@@ -38,7 +38,7 @@ export async function POST(
   const client = await prisma.client.findFirst({ where: { id, designerId } });
   if (!client) return NextResponse.json({ error: "Nie znaleziono" }, { status: 404 });
 
-  const { name, email, phone, isMainContact, password, login: customLogin } = await req.json();
+  const { name, email, phone, description, isMainContact, password, login: customLogin } = await req.json();
   if (!name?.trim()) return NextResponse.json({ error: "Imię jest wymagane" }, { status: 400 });
 
   if (isMainContact) {
@@ -111,6 +111,7 @@ export async function POST(
       name: name.trim(),
       email: email?.trim() || null,
       phone: phone?.trim() || null,
+      description: description?.trim() || null,
       isMainContact: !!isMainContact,
       clientId: id,
       userId: clientUserId,

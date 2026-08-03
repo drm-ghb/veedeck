@@ -31,7 +31,7 @@ export default function AdminUsersClient({
 }) {
   const t = useT();
   const [list, setList] = useState(initialUsers);
-  const [roleFilter, setRoleFilter] = useState<"all" | "designer" | "client" | "contractor">("all");
+  const [roleFilter, setRoleFilter] = useState<"all" | "designer" | "client" | "contractor" | "demo">("all");
   const [statusFilter, setStatusFilter] = useState<"all" | "trial" | "trial_expired" | "free" | "solo" | "studio" | "biuro">("all");
   const [search, setSearch] = useState("");
   const [passwordModal, setPasswordModal] = useState<{ id: string; name: string | null } | null>(null);
@@ -122,11 +122,14 @@ export default function AdminUsersClient({
     return { text: `${t.admin.trialDaysLabel2} ${days}d`, color: days <= 5 ? "text-amber-400" : "text-white/50" };
   }
 
+  const isDemo = (u: User) => u.email.endsWith("@demo.veedeck.com");
+
   const ROLE_FILTERS: { key: typeof roleFilter; label: string }[] = [
     { key: "all", label: "Wszyscy" },
     { key: "designer", label: "Projektant" },
     { key: "client", label: "Klient" },
     { key: "contractor", label: "Wykonawca" },
+    { key: "demo", label: "Konto testowe" },
   ];
 
   const STATUS_FILTERS: { key: typeof statusFilter; label: string }[] = [
@@ -161,8 +164,13 @@ export default function AdminUsersClient({
 
   const q = search.trim().toLowerCase();
   const filtered = list.filter((u) => {
-    if (roleFilter !== "all" && u.role !== roleFilter) return false;
-    if (!matchesStatus(u)) return false;
+    if (roleFilter === "demo") {
+      if (!isDemo(u)) return false;
+    } else {
+      if (isDemo(u)) return false;
+      if (roleFilter !== "all" && u.role !== roleFilter) return false;
+      if (!matchesStatus(u)) return false;
+    }
     if (q) {
       const name = (u.fullName ?? u.name ?? "").toLowerCase();
       const email = u.email.toLowerCase();
@@ -192,7 +200,10 @@ export default function AdminUsersClient({
       {/* Role filter tabs */}
       <div className="flex gap-1 mb-2">
         {ROLE_FILTERS.map(({ key, label }) => {
-          const count = key === "all" ? list.length : list.filter((u) => u.role === key).length;
+          const count =
+            key === "all" ? list.filter((u) => !isDemo(u)).length :
+            key === "demo" ? list.filter((u) => isDemo(u)).length :
+            list.filter((u) => !isDemo(u) && u.role === key).length;
           return (
             <button
               key={key}
@@ -202,7 +213,7 @@ export default function AdminUsersClient({
               }}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                 roleFilter === key
-                  ? "bg-white/12 text-white"
+                  ? key === "demo" ? "bg-cyan-500/15 text-cyan-300" : "bg-white/12 text-white"
                   : "text-white/40 hover:text-white/70 hover:bg-white/5"
               }`}
             >
@@ -286,6 +297,9 @@ export default function AdminUsersClient({
                     <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 flex-shrink-0">
                       {t.admin.freeBadge}
                     </span>
+                  )}
+                  {isDemo(user) && (
+                    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-cyan-500/15 text-cyan-400 border border-cyan-500/20 flex-shrink-0">Konto testowe</span>
                   )}
                   {user.id === currentUserId && (
                     <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-white/8 text-white/40 flex-shrink-0">{t.admin.selfBadge}</span>

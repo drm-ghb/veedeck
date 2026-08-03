@@ -6,6 +6,7 @@ import { SignOutButton } from "@/components/dashboard/SignOutButton";
 import { Engineering } from "@/components/ui/icons";
 import ContractorChatButton from "@/components/wykonawca/ContractorChatButton";
 import ContractorSetPasswordButton from "@/components/wykonawca/ContractorSetPasswordButton";
+import ContractorLangToggle from "@/components/wykonawca/ContractorLangToggle";
 import { ForceLightMode } from "@/components/wykonawca/ForceLightMode";
 import NotificationBell from "@/components/dashboard/NotificationBell";
 import Image from "next/image";
@@ -57,6 +58,7 @@ export default async function ContractorLayout({ children }: { children: React.R
         </Link>
         <div className="ml-auto flex items-center gap-3">
           <span className="text-sm text-muted-foreground hidden sm:inline">{displayName}</span>
+          <ContractorLangToggle />
           <ContractorSetPasswordButton />
           <NotificationBell userId={session.user.id!} viewAllHref="/wykonawca/powiadomienia" />
           <ContractorChatButton

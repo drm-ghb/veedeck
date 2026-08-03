@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Search, Plus, MoreVertical, Users, Trash2, Pencil, Archive, ArchiveRestore, ArrowUpDown, Check, AlertTriangle } from "@/components/ui/icons";
+import { Search, Plus, MoreVertical, Users, Trash2, Pencil, Archive, ArchiveRestore, ArrowUpDown, Check, AlertTriangle, PushPin } from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import AddClientDialog from "@/components/projekty/AddClientDialog";
@@ -254,7 +254,7 @@ export default function ClientsView({ clients, archivedClients }: Props) {
               {/* Stats */}
               <div className="flex items-center gap-2 shrink-0 mr-1">
                 <div className="flex items-center gap-1 text-[11.5px] text-[#8A8D98]" title="Projekty ProjectFlow">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+                  <PushPin size={13} />
                   <span className="font-medium text-[#4B5063]">{client._count.projects}</span>
                 </div>
                 <div className="w-px h-3 bg-border" />

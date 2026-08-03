@@ -1,16 +1,14 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
   Plus,
-  Pencil,
   Trash2,
   AlertTriangle,
   X,
   KeyRound,
-  GripVertical,
   Check,
   Mail,
   Phone,
@@ -19,7 +17,21 @@ import {
   PushPin,
   LocalMall,
   Info,
+  Copy,
+  Clock,
+  ChevronDown,
+  MoreVertical,
+  Pencil,
 } from "@/components/ui/icons";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { PaymentsTab } from "@/components/projekty/PaymentsTab";
+import { ScheduleTab } from "@/components/projekty/ScheduleTab";
+import DocumentsTab from "@/components/projekty/DocumentsTab";
+import { toast } from "sonner";
 import {
   DndContext,
   closestCenter,
@@ -35,40 +47,33 @@ import {
   useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
-import { PaymentsTab } from "@/components/projekty/PaymentsTab";
-import { ScheduleTab } from "@/components/projekty/ScheduleTab";
-import DocumentsTab from "@/components/projekty/DocumentsTab";
-import { toast } from "sonner";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+import { GripVertical } from "@/components/ui/icons";
 import { useT } from "@/lib/i18n";
 import ClientHistoryTab from "@/components/projekty/ClientHistoryTab";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
 import { ACCENT_HUES, accentColors } from "@/lib/accent-color";
 import { ColorPicker } from "@/components/moodboard/ColorPicker";
 
-// ── Types ────────────────────────────────────────────────────────────────────
+// ── Types ─────────────────────────────────────────────────────────────────────
 
 interface Contact {
   id: string;
   name: string;
   email: string | null;
   phone: string | null;
+  description: string | null;
   isMainContact: boolean;
   isDecisionMaker: boolean;
   createdAt: string;
   userId: string | null;
   projectId: string | null;
   scheduleSharedWithClient: boolean;
+  lastLoginAt: string | null;
   user: { id: string; login: string; email?: string | null; firstLoginAt?: string | null } | null;
 }
 
@@ -94,7 +99,12 @@ interface Props {
   defaultCurrency?: string;
 }
 
-// ── Sortable contact row ─────────────────────────────────────────────────────
+function formatDate(iso: string | null | undefined) {
+  if (!iso) return null;
+  return new Date(iso).toLocaleDateString("pl-PL", { day: "numeric", month: "short", year: "numeric" });
+}
+
+// ── Sortable contact row (accounts tab) ───────────────────────────────────────
 
 function SortableContactItem({ contact, children }: { contact: Contact; children: React.ReactNode }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: contact.id });
@@ -112,13 +122,14 @@ function SortableContactItem({ contact, children }: { contact: Contact; children
   );
 }
 
-// ── Main component ────────────────────────────────────────────────────────────
+// ── Main component ─────────────────────────────────────────────────────────────
 
 export default function ClientDetailView({ client: initialClient, defaultCurrency = "PLN" }: Props) {
   const t = useT();
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  // ── Client info state ────────────────────────────────────────────────────
   const [clientName, setClientName] = useState(initialClient.name);
   const [clientDescription, setClientDescription] = useState(initialClient.description ?? "");
   const [clientStartDate, setClientStartDate] = useState(
@@ -145,27 +156,64 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
     initialClient.accentColor?.startsWith("#") ? initialClient.accentColor : "#4f46e5"
   );
   const saveColorDebounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const [activeTab, setActiveTab] = useState<"info" | "contacts" | "payments" | "schedule" | "documents" | "history" | "settings">(
-    searchParams.get("tab") === "contacts" ? "contacts" : "info"
+
+  // ── Tab ──────────────────────────────────────────────────────────────────
+  const [activeTab, setActiveTab] = useState<"info" | "accounts" | "payments" | "schedule" | "documents" | "history" | "settings">(
+    searchParams.get("tab") === "accounts" ? "accounts" : "info"
   );
 
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+  // ── Accordion (info tab) ─────────────────────────────────────────────────
+  const [accordionOpen, setAccordionOpen] = useState<Record<string, boolean>>({});
+  function toggleAccordion(key: string) {
+    setAccordionOpen((prev) => ({ ...prev, [key]: !prev[key] }));
+  }
+
+  // ── Contact context menu ─────────────────────────────────────────────────
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  useEffect(() => {
+    if (!openMenuId) return;
+    function handle(e: MouseEvent) {
+      if (!(e.target as HTMLElement).closest("[data-contact-menu]")) {
+        setOpenMenuId(null);
+      }
+    }
+    document.addEventListener("mousedown", handle);
+    return () => document.removeEventListener("mousedown", handle);
+  }, [openMenuId]);
+
+  // ── Edit drawer ──────────────────────────────────────────────────────────
+  const [drawerContact, setDrawerContact] = useState<Contact | null>(null);
+  const [drawerName, setDrawerName] = useState("");
+  const [drawerRole, setDrawerRole] = useState("");
+  const [drawerEmail, setDrawerEmail] = useState("");
+  const [drawerPhone, setDrawerPhone] = useState("");
+  const [drawerIsMain, setDrawerIsMain] = useState(false);
+  const [savingDrawer, setSavingDrawer] = useState(false);
+
+  function openDrawer(contact: Contact) {
+    setOpenMenuId(null);
+    setDrawerContact(contact);
+    setDrawerName(contact.name);
+    setDrawerRole(contact.description ?? "");
+    setDrawerEmail(contact.email ?? "");
+    setDrawerPhone(contact.phone ?? "");
+    setDrawerIsMain(contact.isMainContact);
+  }
+
+  function closeDrawer() {
+    setDrawerContact(null);
+  }
 
   // ── Add contact form ─────────────────────────────────────────────────────
   const [showAddContact, setShowAddContact] = useState(false);
   const [newName, setNewName] = useState("");
   const [newEmail, setNewEmail] = useState("");
   const [newPhone, setNewPhone] = useState("");
-  const [newIsMain, setNewIsMain] = useState(false);
+  const [newDescription, setNewDescription] = useState("");
   const [addingContact, setAddingContact] = useState(false);
 
-  // ── Inline edit ──────────────────────────────────────────────────────────
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editEmail, setEditEmail] = useState("");
-  const [editPhone, setEditPhone] = useState("");
-  const [savingEdit, setSavingEdit] = useState(false);
-
-  // ── Create account inline ────────────────────────────────────────────────
+  // ── Accounts tab state ────────────────────────────────────────────────────
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
   const [createAccountOpen, setCreateAccountOpen] = useState<Record<string, boolean>>(() =>
     Object.fromEntries(initialClient.contacts.filter((c) => !c.userId).map((c) => [c.id, true]))
   );
@@ -173,15 +221,19 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
     Object.fromEntries(initialClient.contacts.filter((c) => !c.userId && c.email).map((c) => [c.id, c.email!]))
   );
   const [creatingAccount, setCreatingAccount] = useState<Record<string, boolean>>({});
-
-  // ── Send access link ─────────────────────────────────────────────────────
+  const [deactivatingAccount, setDeactivatingAccount] = useState<Record<string, boolean>>({});
+  const [showAddAccount, setShowAddAccount] = useState(false);
+  const [addAccountContactId, setAddAccountContactId] = useState("");
+  const [addAccountEmail, setAddAccountEmail] = useState("");
+  const [addingAccount, setAddingAccount] = useState(false);
   const [sendingLink, setSendingLink] = useState<Record<string, boolean>>({});
-
+  const [copyingLink, setCopyingLink] = useState<Record<string, boolean>>({});
 
   // ── No-account banner ────────────────────────────────────────────────────
   const [bannerDismissed, setBannerDismissed] = useState(false);
 
   const mainContact = contacts.find((c) => c.isMainContact) ?? contacts[0] ?? null;
+  const nonMainContacts = contacts.filter((c) => !c.isMainContact);
 
   // ── Handlers ─────────────────────────────────────────────────────────────
 
@@ -263,18 +315,47 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
     }
   }
 
-  function handleContactDragEnd(event: DragEndEvent) {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-    const oldIndex = contacts.findIndex((c) => c.id === active.id);
-    const newIndex = contacts.findIndex((c) => c.id === over.id);
-    const reordered = arrayMove(contacts, oldIndex, newIndex);
-    setContacts(reordered);
-    fetch(`/api/clients/${initialClient.id}/contacts/reorder`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ids: reordered.map((c) => c.id) }),
-    }).catch(() => {});
+  async function saveDrawer() {
+    if (!drawerContact) return;
+    if (!drawerName.trim()) { toast.error("Imię jest wymagane"); return; }
+    setSavingDrawer(true);
+    try {
+      const res = await fetch(`/api/clients/${initialClient.id}/contacts/${drawerContact.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: drawerName.trim(),
+          email: drawerEmail.trim() || null,
+          phone: drawerPhone.trim() || null,
+          description: drawerRole.trim() || null,
+          ...(drawerIsMain && !drawerContact.isMainContact ? { isMainContact: true } : {}),
+        }),
+      });
+      if (!res.ok) throw new Error();
+      const updated = await res.json();
+      setContacts((prev) =>
+        prev.map((c) => {
+          if (c.id === drawerContact.id) {
+            return {
+              ...c,
+              name: updated.name ?? drawerName.trim(),
+              email: updated.email,
+              phone: updated.phone,
+              description: updated.description ?? null,
+              isMainContact: drawerIsMain,
+            };
+          }
+          if (drawerIsMain) return { ...c, isMainContact: false };
+          return c;
+        })
+      );
+      closeDrawer();
+      toast.success(t.common.saved);
+    } catch {
+      toast.error(t.settings.saveError);
+    } finally {
+      setSavingDrawer(false);
+    }
   }
 
   async function addContact() {
@@ -292,16 +373,22 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
           name: newName.trim(),
           email: newEmail.trim() || null,
           phone: newPhone.trim() || null,
-          isMainContact: newIsMain,
+          description: newDescription.trim() || null,
+          isMainContact: false,
         }),
       });
       if (!res.ok) throw new Error();
       const created = await res.json();
-      setContacts((prev) => [...prev, created]);
-      setNewName("");
-      setNewEmail("");
-      setNewPhone("");
-      setNewIsMain(false);
+      setContacts((prev) => [...prev, {
+        ...created,
+        description: created.description ?? null,
+        isDecisionMaker: created.isDecisionMaker ?? false,
+        projectId: created.projectId ?? null,
+        scheduleSharedWithClient: false,
+        lastLoginAt: null,
+        user: created.user ?? null,
+      }]);
+      setNewName(""); setNewEmail(""); setNewPhone(""); setNewDescription("");
       setShowAddContact(false);
       toast.success(t.projekty.contactAdded);
     } catch {
@@ -311,39 +398,15 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
     }
   }
 
-  function startEditing(contact: Contact) {
-    setEditingId(contact.id);
-    setEditEmail(contact.email ?? "");
-    setEditPhone(contact.phone ?? "");
-  }
-
-  function cancelEditing() {
-    setEditingId(null);
-    setEditEmail("");
-    setEditPhone("");
-  }
-
-  async function saveContactEdit(contactId: string) {
-    if (editEmail.trim() && !editEmail.includes("@")) {
-      toast.error(t.projekty.emailInvalid);
-      return;
-    }
-    setSavingEdit(true);
+  async function removeContact(contactId: string) {
+    if (!confirm("Czy na pewno chcesz usunąć ten kontakt?")) return;
     try {
-      const res = await fetch(`/api/clients/${initialClient.id}/contacts/${contactId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: editEmail.trim() || null, phone: editPhone.trim() || null }),
-      });
+      const res = await fetch(`/api/clients/${initialClient.id}/contacts/${contactId}`, { method: "DELETE" });
       if (!res.ok) throw new Error();
-      const updated = await res.json();
-      setContacts((prev) => prev.map((c) => c.id === contactId ? { ...c, email: updated.email, phone: updated.phone } : c));
-      cancelEditing();
-      toast.success(t.common.saved);
+      setContacts((prev) => prev.filter((c) => c.id !== contactId));
+      toast.success(t.projekty.contactDeleted);
     } catch {
-      toast.error(t.settings.saveError);
-    } finally {
-      setSavingEdit(false);
+      toast.error(t.projekty.contactDeleteError);
     }
   }
 
@@ -366,52 +429,63 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
     }
   }
 
-  async function setMainContact(contactId: string) {
+  async function copyAccessLink(userId: string) {
+    setCopyingLink((prev) => ({ ...prev, [userId]: true }));
     try {
-      const res = await fetch(`/api/clients/${initialClient.id}/contacts/${contactId}`, {
+      const res = await fetch("/api/access/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error((data as { error?: string }).error || "Błąd");
+      await navigator.clipboard.writeText((data as { link: string }).link);
+      toast.success("Link skopiowany do schowka");
+    } catch {
+      toast.error("Nie udało się skopiować linku");
+    } finally {
+      setCopyingLink((prev) => ({ ...prev, [userId]: false }));
+    }
+  }
+
+  async function deactivateAccount(contact: Contact) {
+    if (!confirm(`Czy na pewno chcesz dezaktywować konto klienta „${contact.name}"? Klient straci dostęp do panelu.`)) return;
+    setDeactivatingAccount((prev) => ({ ...prev, [contact.id]: true }));
+    try {
+      const res = await fetch(`/api/clients/${initialClient.id}/contacts/${contact.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isMainContact: true }),
+        body: JSON.stringify({ action: "deactivate" }),
       });
-      if (!res.ok) throw new Error();
-      setContacts((prev) => prev.map((c) => ({ ...c, isMainContact: c.id === contactId })));
-      toast.success(t.projekty.mainContactSet);
-    } catch {
-      toast.error(t.settings.saveError);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error((data as { error?: string }).error || "Błąd dezaktywacji");
+      setContacts((prev) => prev.map((c) => c.id === contact.id ? { ...c, userId: null, user: null } : c));
+      toast.success("Konto zostało dezaktywowane");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Błąd dezaktywacji");
+    } finally {
+      setDeactivatingAccount((prev) => ({ ...prev, [contact.id]: false }));
     }
   }
 
   async function createContactAccount(contactId: string) {
     const contact = contacts.find((c) => c.id === contactId);
-    // Use explicitly entered email, or fall back to contact's existing email
     const accEmail = (createAccountEmail[contactId]?.trim() || contact?.email || "").toLowerCase();
-    if (accEmail && !accEmail.includes("@")) {
-      toast.error(t.projekty.emailInvalid);
-      return;
-    }
+    if (accEmail && !accEmail.includes("@")) { toast.error(t.projekty.emailInvalid); return; }
     setCreatingAccount((prev) => ({ ...prev, [contactId]: true }));
     try {
-      // Generate a random password — user will log in via magic link
       const autoPassword = Math.random().toString(36).slice(2, 10) + "Aa1!";
       const res = await fetch(`/api/clients/${initialClient.id}/contacts/${contactId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          password: autoPassword,
-          ...(accEmail ? { email: accEmail } : {}),
-        }),
+        body: JSON.stringify({ password: autoPassword, ...(accEmail ? { email: accEmail } : {}) }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error((data as { error?: string }).error || t.projekty.accountCreateError);
-      setContacts((prev) =>
-        prev.map((c) => c.id === contactId ? { ...c, userId: data.userId, user: data.user } : c)
-      );
+      setContacts((prev) => prev.map((c) => c.id === contactId ? { ...c, userId: data.userId, user: data.user } : c));
       setCreateAccountOpen((prev) => ({ ...prev, [contactId]: false }));
       toast.success(t.projekty.accountCreated);
-      // Auto-send magic link if user has a real email
-      if (data.user?.id && accEmail) {
-        await sendAccessLink(data.user.id, contactId);
-      }
+      if (data.user?.id && accEmail) await sendAccessLink(data.user.id, contactId);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t.projekty.accountCreateError);
     } finally {
@@ -419,17 +493,45 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
     }
   }
 
-  async function removeContact(contactId: string) {
+  async function addContactAccount() {
+    if (!addAccountContactId) { toast.error("Wybierz kontakt"); return; }
+    const contact = contacts.find((c) => c.id === addAccountContactId);
+    const email = addAccountEmail.trim() || contact?.email || "";
+    setAddingAccount(true);
     try {
-      const res = await fetch(`/api/clients/${initialClient.id}/contacts/${contactId}`, {
-        method: "DELETE",
+      const autoPassword = Math.random().toString(36).slice(2, 10) + "Aa1!";
+      const res = await fetch(`/api/clients/${initialClient.id}/contacts/${addAccountContactId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: autoPassword, ...(email ? { email } : {}) }),
       });
-      if (!res.ok) throw new Error();
-      setContacts((prev) => prev.filter((c) => c.id !== contactId));
-      toast.success(t.projekty.contactDeleted);
-    } catch {
-      toast.error(t.projekty.contactDeleteError);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error((data as { error?: string }).error || t.projekty.accountCreateError);
+      setContacts((prev) => prev.map((c) => c.id === addAccountContactId ? { ...c, userId: data.userId, user: data.user } : c));
+      setShowAddAccount(false); setAddAccountContactId(""); setAddAccountEmail("");
+      toast.success(t.projekty.accountCreated);
+      if (data.user?.id && email) await sendAccessLink(data.user.id, addAccountContactId);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t.projekty.accountCreateError);
+    } finally {
+      setAddingAccount(false);
     }
+  }
+
+  function handleContactDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = nonMainContacts.findIndex((c) => c.id === active.id);
+    const newIndex = nonMainContacts.findIndex((c) => c.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+    const reordered = arrayMove(nonMainContacts, oldIndex, newIndex);
+    const newContacts = mainContact ? [mainContact, ...reordered] : reordered;
+    setContacts(newContacts);
+    fetch(`/api/clients/${initialClient.id}/contacts/reorder`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids: newContacts.map((c) => c.id) }),
+    }).catch(() => {});
   }
 
   async function saveAccentColor(hue: string) {
@@ -453,7 +555,7 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="max-w-5xl mx-auto">
+    <div>
       {/* Back nav */}
       <div className="mb-6">
         <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
@@ -461,29 +563,16 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
           <span>/</span>
           <span className="text-foreground font-medium truncate max-w-[200px]">{initialClient.name}</span>
         </div>
-        <h1 className="text-2xl font-bold mt-2">{initialClient.name}</h1>
+        <h1 className="text-[19px] font-bold mt-1.5 font-[Inter]">{initialClient.name}</h1>
       </div>
 
-      {/* No-account banner */}
-      {!bannerDismissed && contacts.some((c) => !c.userId) && (
+      {/* No-account banner — only when main contact has no account */}
+      {!bannerDismissed && mainContact && !mainContact.userId && (
         <div className="mb-5 flex items-start gap-2 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 px-3 py-2.5 text-sm text-amber-800 dark:text-amber-300">
           <AlertTriangle size={15} className="flex-shrink-0 mt-0.5" />
           <div className="flex-1">
-            {contacts.filter((c) => !c.userId).length === 1 ? (
-              <>
-                {t.projekty.bannerNoAccountSingle.replace("{name}", contacts.find((c) => !c.userId)?.name ?? "")}{" "}
-                <button onClick={() => setActiveTab("contacts")} className="underline hover:no-underline">
-                  {t.projekty.bannerContactsTabLink}
-                </button>
-              </>
-            ) : (
-              <>
-                {t.projekty.bannerNoAccountMultiple.replace("{count}", String(contacts.filter((c) => !c.userId).length))}{" "}
-                <button onClick={() => setActiveTab("contacts")} className="underline hover:no-underline">
-                  {t.projekty.bannerContactsTabLinkMultiple}
-                </button>
-              </>
-            )}
+            {t.projekty.bannerNoAccountSingle.replace("{name}", mainContact.name)}{" "}
+            <button onClick={() => setActiveTab("accounts")} className="underline hover:no-underline">{t.projekty.bannerContactsTabLink}</button>
           </div>
           <button onClick={() => setBannerDismissed(true)} className="text-amber-500 hover:text-amber-700 flex-shrink-0 p-0.5">
             <X size={14} />
@@ -492,19 +581,19 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
       )}
 
       {/* Tabs */}
-      <div className="flex gap-1 border-b border-border mb-6 overflow-x-auto scrollbar-none">
-        {(["info", "contacts", "payments", "schedule", "documents", "history", "settings"] as const).map((tab) => (
+      <div className="flex gap-1 border-b border-border mb-0 overflow-x-auto scrollbar-none">
+        {(["info", "accounts", "payments", "schedule", "documents", "history", "settings"] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px whitespace-nowrap flex-shrink-0 ${
+            className={`px-4 py-2.5 text-[13px] font-semibold transition-colors border-b-2 -mb-px whitespace-nowrap flex-shrink-0 ${
               activeTab === tab
-                ? "border-primary text-foreground"
+                ? "border-primary text-primary"
                 : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
-            {tab === "info" && t.projekty.tabInfo}
-            {tab === "contacts" && t.projekty.clients}
+            {tab === "info" && "Informacje o kliencie"}
+            {tab === "accounts" && "Konto klienta"}
             {tab === "payments" && t.projekty.tabPayments}
             {tab === "schedule" && t.projekty.tabSchedule}
             {tab === "history" && "Historia klienta"}
@@ -514,428 +603,519 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
         ))}
       </div>
 
-      {/* ── Tab: Informacje ogólne ─────────────────────────────────────────── */}
+      {/* ── Tab: Informacje o kliencie ─────────────────────────────────────── */}
       {activeTab === "info" && (
-        <div className="space-y-4">
-          {/* Section 1: Informacje o kliencie */}
-          <section className="bg-card border border-border rounded-xl p-5 space-y-4">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">{t.projekty.projectInfo}</h2>
-            <div className="space-y-1.5">
-              <Label htmlFor="client-name">{t.projekty.clientNameInputLabel}</Label>
-              <Input
-                id="client-name"
-                value={clientName}
-                onChange={(e) => setClientName(e.target.value)}
-                placeholder={t.projekty.clientNameInputLabel}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="client-desc">{t.projekty.descriptionLabel}</Label>
-              <Textarea
-                id="client-desc"
-                value={clientDescription}
-                onChange={(e) => setClientDescription(e.target.value)}
-                placeholder={t.projekty.descriptionPlaceholder}
-                rows={3}
-              />
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="space-y-1.5 min-w-0">
-                <Label htmlFor="start-date">{t.projekty.startDateLabel}</Label>
-                <div className="relative overflow-hidden">
-                  <Input
-                    id="start-date"
-                    type="date"
-                    value={clientStartDate}
-                    onChange={(e) => setClientStartDate(e.target.value)}
-                    className="pr-7 w-full max-w-full"
-                  />
-                  {clientStartDate && (
-                    <button
-                      type="button"
-                      onClick={() => setClientStartDate("")}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                    >
-                      <X size={14} />
-                    </button>
-                  )}
-                </div>
-              </div>
-              <div className="space-y-1.5 min-w-0">
-                <Label htmlFor="end-date">{t.projekty.endDateLabel}</Label>
-                <div className="relative overflow-hidden">
-                  <Input
-                    id="end-date"
-                    type="date"
-                    value={clientEndDate}
-                    onChange={(e) => setClientEndDate(e.target.value)}
-                    className="pr-7 w-full max-w-full"
-                  />
-                  {clientEndDate && (
-                    <button
-                      type="button"
-                      onClick={() => setClientEndDate("")}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                    >
-                      <X size={14} />
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-            <div className="flex items-center justify-between pt-1">
-              <span className="text-sm text-muted-foreground">
-                {t.projekty.createdAt} {new Date(initialClient.createdAt).toLocaleDateString("pl-PL", { day: "numeric", month: "long", year: "numeric" })}
-              </span>
-              <Button onClick={saveInfo} disabled={savingInfo || !clientName.trim()} size="sm">
-                {savingInfo ? t.common.saving : t.common.save}
-              </Button>
-            </div>
-          </section>
+        <div className="pt-4">
+          {/* Created date */}
+          <p className="text-[12px] text-muted-foreground mb-[18px]">
+            Utworzono: {new Date(initialClient.createdAt).toLocaleDateString("pl-PL", { day: "numeric", month: "long", year: "numeric" })}
+          </p>
 
-          {/* Section 2: Adres inwestycji */}
-          <section className="bg-card border border-border rounded-xl p-5 space-y-4">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">{t.projekty.address}</h2>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="addr-street">{t.projekty.street}</Label>
-                <Input
-                  id="addr-street"
-                  value={addrStreet}
-                  onChange={(e) => setAddrStreet(e.target.value)}
-                  placeholder={t.projekty.streetPlaceholder}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="addr-city">{t.projekty.city}</Label>
-                <Input
-                  id="addr-city"
-                  value={addrCity}
-                  onChange={(e) => setAddrCity(e.target.value)}
-                  placeholder={t.projekty.cityPlaceholder}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="addr-postal">{t.projekty.postalCode}</Label>
-                <Input
-                  id="addr-postal"
-                  value={addrPostal}
-                  onChange={(e) => setAddrPostal(e.target.value)}
-                  placeholder={t.projekty.postalCodePlaceholder}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="addr-country">{t.projekty.country}</Label>
-                <Input
-                  id="addr-country"
-                  value={addrCountry}
-                  onChange={(e) => setAddrCountry(e.target.value)}
-                  placeholder={t.projekty.countryPlaceholder}
-                />
-              </div>
+          {/* Contacts section */}
+          <div className="border-t border-border pt-4 mb-[18px]">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-[13px] font-bold text-foreground">Kontakty</h2>
+              <button
+                onClick={() => setShowAddContact((v) => !v)}
+                className="inline-flex items-center gap-1 text-[12px] font-semibold text-white bg-primary rounded-lg px-3 py-1.5 hover:bg-primary/90 transition-colors"
+              >
+                <Plus size={15} />
+                Dodaj
+              </button>
             </div>
-            <div className="flex justify-end">
-              <Button onClick={saveAddress} disabled={savingAddr} size="sm">
-                {savingAddr ? t.common.saving : t.common.save}
-              </Button>
-            </div>
-          </section>
 
-          {/* Section 3: Moduły */}
-          <section className="bg-card border border-border rounded-xl p-5 space-y-4">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">{t.projekty.modules}</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {/* RenderFlow tile */}
-              <div className="border border-border rounded-xl p-4 space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center flex-shrink-0">
-                    <PushPin size={20} className="text-primary-foreground" />
+            {/* Add contact form */}
+            {showAddContact && (
+              <div className="mb-3 p-4 border border-border rounded-[10px] bg-[#FAFAFB] dark:bg-muted/30 space-y-3">
+                <p className="text-[13px] font-semibold">{t.projekty.newContact}</p>
+                <div className="space-y-2">
+                  <div className="space-y-1">
+                    <Label className="text-[12.5px] font-medium">{t.projekty.clientFullName}</Label>
+                    <Input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Jan Kowalski" autoFocus className="border-border rounded-lg" />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-medium text-sm">{t.projekty.moduleRenderflow}</span>
-                      <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
-                        !hiddenModules.includes("renderflow")
-                          ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
-                          : "bg-muted text-muted-foreground"
-                      }`}>
-                        {!hiddenModules.includes("renderflow") ? t.projekty.moduleActive : t.projekty.moduleHidden}
-                      </span>
+                  <div className="space-y-1">
+                    <Label className="text-[12.5px] font-medium">Rola</Label>
+                    <Input value={newDescription} onChange={(e) => setNewDescription(e.target.value)} placeholder="np. Inwestor, Architekt..." className="border-border rounded-lg" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <Label className="text-[12.5px] font-medium">{t.projekty.emailLabel}</Label>
+                      <Input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="jan@domena.pl" className="border-border rounded-lg" />
                     </div>
-                    <p className="text-xs text-muted-foreground">{t.projekty.moduleDescRenderflow}</p>
+                    <div className="space-y-1">
+                      <Label className="text-[12.5px] font-medium">{t.projekty.phoneLabel}</Label>
+                      <Input value={newPhone} onChange={(e) => setNewPhone(e.target.value)} placeholder="+48 123 456 789" className="border-border rounded-lg" />
+                    </div>
                   </div>
                 </div>
-                <div className="space-y-2 border-t border-border pt-3">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <Switch
-                      checked={!hiddenModules.includes("renderflow")}
-                      onCheckedChange={() => toggleModule("renderflow")}
-                    />
-                    <span className="text-sm">{t.projekty.moduleVisibleClient}</span>
+                <div className="flex gap-2 justify-end">
+                  <Button size="sm" variant="outline" onClick={() => { setShowAddContact(false); setNewName(""); setNewEmail(""); setNewPhone(""); setNewDescription(""); }}>
+                    {t.common.cancel}
+                  </Button>
+                  <Button size="sm" disabled={addingContact || !newName.trim()} onClick={addContact}>
+                    {addingContact ? t.projekty.adding : t.common.add}
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {contacts.length === 0 && !showAddContact ? (
+              <p className="text-[12.5px] text-muted-foreground py-4">{t.projekty.noContactsHint}</p>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-[10px]">
+                {contacts.map((contact) => {
+                  const isMain = contact.isMainContact;
+                  const initials = contact.name.split(" ").map((p) => p[0]).join("").toUpperCase().slice(0, 2);
+                  return (
+                    <div
+                      key={contact.id}
+                      className={`flex items-center gap-[10px] rounded-[10px] px-3 py-2.5 border transition-shadow hover:shadow-[0_8px_22px_-14px_rgba(24,24,50,0.15)] ${
+                        isMain
+                          ? "bg-[#EEF2FF] dark:bg-indigo-950/40 border-[#E0E7FF] dark:border-indigo-800"
+                          : "bg-white dark:bg-card border-border"
+                      }`}
+                    >
+                      {/* Avatar */}
+                      <div
+                        className="w-[34px] h-[34px] rounded-full flex items-center justify-center flex-shrink-0 text-white text-[12px] font-bold"
+                        style={{ background: isMain ? "#4F46E5" : "#c7cbe0" }}
+                      >
+                        {initials}
+                      </div>
+
+                      {/* Info */}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[13px] font-semibold leading-tight flex items-center gap-1.5 flex-wrap">
+                          {contact.name}
+                          {isMain && (
+                            <span className="text-[10px] font-bold bg-primary text-white px-2 py-0.5 rounded-full tracking-wide">
+                              GŁÓWNY
+                            </span>
+                          )}
+                        </p>
+                        {contact.description && (
+                          <p className="text-[11px] text-muted-foreground mt-[1px] truncate">{contact.description}</p>
+                        )}
+                        <div className="flex flex-col gap-0 mt-[2px]">
+                          {contact.email && (
+                            <p className="text-[11px] text-muted-foreground flex items-center gap-1 truncate">
+                              <Mail size={10} className="flex-shrink-0" />{contact.email}
+                            </p>
+                          )}
+                          {contact.phone && (
+                            <p className="text-[11px] text-muted-foreground flex items-center gap-1 truncate">
+                              <Phone size={10} className="flex-shrink-0" />{contact.phone}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex items-center gap-1 flex-shrink-0" data-contact-menu>
+                        {isMain && contact.phone && (
+                          <a
+                            href={`tel:${contact.phone}`}
+                            className="w-[26px] h-[26px] rounded-lg flex items-center justify-center text-muted-foreground hover:bg-[#EEF2FF] hover:text-primary transition-colors"
+                            title={contact.phone}
+                          >
+                            <Phone size={15} />
+                          </a>
+                        )}
+                        {isMain && contact.email && (
+                          <a
+                            href={`mailto:${contact.email}`}
+                            className="w-[26px] h-[26px] rounded-lg flex items-center justify-center text-muted-foreground hover:bg-[#EEF2FF] hover:text-primary transition-colors"
+                            title={contact.email}
+                          >
+                            <Mail size={15} />
+                          </a>
+                        )}
+                        {/* Three dots */}
+                        <div className="relative" data-contact-menu>
+                          <button
+                            onClick={() => setOpenMenuId(openMenuId === contact.id ? null : contact.id)}
+                            className="w-[26px] h-[26px] rounded-lg flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                          >
+                            <MoreVertical size={15} />
+                          </button>
+                          {openMenuId === contact.id && (
+                            <div className="absolute top-[30px] right-0 bg-white dark:bg-popover border border-border rounded-lg shadow-[0_12px_28px_-12px_rgba(24,24,50,0.25)] min-w-[140px] z-10 p-1" data-contact-menu>
+                              <button
+                                onClick={() => openDrawer(contact)}
+                                className="w-full flex items-center gap-2 text-[12.5px] font-medium px-[10px] py-2 rounded-md hover:bg-[#FAFAFB] dark:hover:bg-muted transition-colors text-left"
+                              >
+                                <Pencil size={15} />
+                                Edytuj
+                              </button>
+                              {!isMain && (
+                                <button
+                                  onClick={() => { setOpenMenuId(null); removeContact(contact.id); }}
+                                  className="w-full flex items-center gap-2 text-[12.5px] font-medium px-[10px] py-2 rounded-md hover:bg-[#FAFAFB] dark:hover:bg-muted transition-colors text-left text-destructive"
+                                >
+                                  <Trash2 size={15} />
+                                  Usuń
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Accordion: Informacje o kliencie */}
+          <div className="border border-border rounded-[10px] mb-3 overflow-hidden">
+            <button
+              onClick={() => toggleAccordion("info")}
+              className="w-full flex items-center justify-between px-[18px] py-[14px] bg-[#FAFAFB] dark:bg-muted/30 text-left"
+            >
+              <span className="text-[11px] font-bold tracking-[0.05em] uppercase text-muted-foreground">Informacje o kliencie</span>
+              <ChevronDown
+                size={18}
+                className={`text-muted-foreground transition-transform duration-150 ${accordionOpen["info"] ? "rotate-180" : ""}`}
+              />
+            </button>
+            {!accordionOpen["info"] && (
+              <div className="px-[14px] py-[10px] bg-[#FAFAFB] dark:bg-muted/30 border-t border-border flex flex-col gap-[2px]">
+                <p className="text-[11.5px] font-medium text-foreground">{clientName}</p>
+                {clientDescription && <p className="text-[11px] text-muted-foreground">{clientDescription}</p>}
+                {(clientStartDate || clientEndDate) && (
+                  <p className="text-[11px] text-muted-foreground">
+                    {clientStartDate && `Od: ${formatDate(clientStartDate + "T00:00:00")}`}
+                    {clientStartDate && clientEndDate && " · "}
+                    {clientEndDate && `Do: ${formatDate(clientEndDate + "T00:00:00")}`}
+                  </p>
+                )}
+                {!clientDescription && !clientStartDate && !clientEndDate && (
+                  <p className="text-[11px] text-muted-foreground">Brak szczegółowych danych</p>
+                )}
+              </div>
+            )}
+            {accordionOpen["info"] && (
+              <div className="px-[18px] pb-[18px] pt-0.5 space-y-3.5">
+                <div className="space-y-1.5">
+                  <Label className="text-[12.5px] font-medium">{t.projekty.clientNameInputLabel}</Label>
+                  <Input value={clientName} onChange={(e) => setClientName(e.target.value)} className="border-border rounded-lg" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-[12.5px] font-medium">{t.projekty.descriptionLabel}</Label>
+                  <Textarea value={clientDescription} onChange={(e) => setClientDescription(e.target.value)} placeholder={t.projekty.descriptionPlaceholder} rows={2} className="border-border rounded-lg" />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label className="text-[12.5px] font-medium">{t.projekty.startDateLabel}</Label>
+                    <div className="relative">
+                      <Input type="date" value={clientStartDate} onChange={(e) => setClientStartDate(e.target.value)} className="pr-7 border-border rounded-lg" />
+                      {clientStartDate && <button type="button" onClick={() => setClientStartDate("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"><X size={13} /></button>}
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-[12.5px] font-medium">{t.projekty.endDateLabel}</Label>
+                    <div className="relative">
+                      <Input type="date" value={clientEndDate} onChange={(e) => setClientEndDate(e.target.value)} className="pr-7 border-border rounded-lg" />
+                      {clientEndDate && <button type="button" onClick={() => setClientEndDate("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"><X size={13} /></button>}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex justify-end">
+                  <Button onClick={saveInfo} disabled={savingInfo || !clientName.trim()} size="sm">
+                    {savingInfo ? t.common.saving : t.common.save}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Accordion: Adres inwestycji */}
+          <div className="border border-border rounded-[10px] mb-4 overflow-hidden">
+            <button
+              onClick={() => toggleAccordion("address")}
+              className="w-full flex items-center justify-between px-[18px] py-[14px] bg-[#FAFAFB] dark:bg-muted/30 text-left"
+            >
+              <span className="text-[11px] font-bold tracking-[0.05em] uppercase text-muted-foreground">Adres inwestycji</span>
+              <ChevronDown
+                size={18}
+                className={`text-muted-foreground transition-transform duration-150 ${accordionOpen["address"] ? "rotate-180" : ""}`}
+              />
+            </button>
+            {!accordionOpen["address"] && (
+              <div className="px-[14px] py-[10px] bg-[#FAFAFB] dark:bg-muted/30 border-t border-border flex flex-col gap-[2px]">
+                {(addrStreet || addrCity || addrPostal || addrCountry) ? (
+                  <>
+                    {(addrStreet || addrCity) && (
+                      <p className="text-[11.5px] font-medium text-foreground">{[addrStreet, addrCity].filter(Boolean).join(", ")}</p>
+                    )}
+                    {(addrPostal || addrCountry) && (
+                      <p className="text-[11px] text-muted-foreground">{[addrPostal, addrCountry].filter(Boolean).join(", ")}</p>
+                    )}
+                  </>
+                ) : (
+                  <p className="text-[11px] text-muted-foreground">Brak adresu inwestycji</p>
+                )}
+              </div>
+            )}
+            {accordionOpen["address"] && (
+              <div className="px-[18px] pb-[18px] pt-0.5 space-y-3.5">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label className="text-[12.5px] font-medium">{t.projekty.street}</Label>
+                    <Input value={addrStreet} onChange={(e) => setAddrStreet(e.target.value)} placeholder="" className="border-border rounded-lg" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-[12.5px] font-medium">{t.projekty.city}</Label>
+                    <Input value={addrCity} onChange={(e) => setAddrCity(e.target.value)} placeholder="" className="border-border rounded-lg" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-[12.5px] font-medium">{t.projekty.postalCode}</Label>
+                    <Input value={addrPostal} onChange={(e) => setAddrPostal(e.target.value)} placeholder="" className="border-border rounded-lg" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-[12.5px] font-medium">{t.projekty.country}</Label>
+                    <Input value={addrCountry} onChange={(e) => setAddrCountry(e.target.value)} placeholder="" className="border-border rounded-lg" />
+                  </div>
+                </div>
+                <div className="flex justify-end">
+                  <Button onClick={saveAddress} disabled={savingAddr} size="sm">
+                    {savingAddr ? t.common.saving : t.common.save}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Modules card */}
+          <div className="bg-white dark:bg-card border border-border rounded-[12px] px-5 py-[18px]">
+            <p className="text-[11px] font-bold tracking-[0.04em] uppercase text-muted-foreground mb-[14px]">Moduły</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-[14px]">
+              {/* RenderFlow */}
+              <div className="border border-border rounded-[10px] p-[14px]">
+                <div className="flex gap-[10px] items-start">
+                  <div className="w-8 h-8 rounded-lg bg-[#EEF2FF] dark:bg-indigo-950/40 flex items-center justify-center flex-shrink-0">
+                    <PushPin size={17} className="text-primary" />
+                  </div>
+                  <div>
+                    <h4 className="text-[13.5px] font-semibold flex items-center gap-1.5">
+                      {t.projekty.moduleRenderflow}
+                      <span className={`text-[10.5px] font-bold px-2 py-0.5 rounded-full ${!hiddenModules.includes("renderflow") ? "bg-[#dcfce7] text-[#16a34a]" : "bg-muted text-muted-foreground"}`}>
+                        {!hiddenModules.includes("renderflow") ? "Aktywny" : t.projekty.moduleHidden}
+                      </span>
+                    </h4>
+                    <p className="text-[11.5px] text-muted-foreground mt-0.5">{t.projekty.moduleDescRenderflow}</p>
+                  </div>
+                </div>
+                <div className="mt-3 pt-3 border-t border-border space-y-2">
+                  <label className="flex items-center justify-between cursor-pointer">
+                    <span className="text-[12px]">{t.projekty.moduleVisibleClient}</span>
+                    <Switch checked={!hiddenModules.includes("renderflow")} onCheckedChange={() => toggleModule("renderflow")} />
                   </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <Switch
-                      checked={clientCanUpload}
-                      onCheckedChange={toggleClientUpload}
-                    />
-                    <span className="text-sm">{t.projekty.clientCanUploadLabel}</span>
+                  <label className="flex items-center justify-between cursor-pointer">
+                    <span className="text-[12px]">{t.projekty.clientCanUploadLabel}</span>
+                    <Switch checked={clientCanUpload} onCheckedChange={toggleClientUpload} />
                   </label>
                 </div>
               </div>
 
-              {/* Listy tile */}
-              <div className="border border-border rounded-xl p-4 space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center flex-shrink-0">
-                    <LocalMall size={20} className="text-primary-foreground" />
+              {/* Listy */}
+              <div className="border border-border rounded-[10px] p-[14px]">
+                <div className="flex gap-[10px] items-start">
+                  <div className="w-8 h-8 rounded-lg bg-[#EEF2FF] dark:bg-indigo-950/40 flex items-center justify-center flex-shrink-0">
+                    <LocalMall size={17} className="text-primary" />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-medium text-sm">{t.projekty.moduleLists}</span>
-                      <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
-                        !hiddenModules.includes("listy")
-                          ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
-                          : "bg-muted text-muted-foreground"
-                      }`}>
-                        {!hiddenModules.includes("listy") ? t.projekty.moduleActive : t.projekty.moduleHidden}
+                  <div>
+                    <h4 className="text-[13.5px] font-semibold flex items-center gap-1.5">
+                      {t.projekty.moduleLists}
+                      <span className={`text-[10.5px] font-bold px-2 py-0.5 rounded-full ${!hiddenModules.includes("listy") ? "bg-[#dcfce7] text-[#16a34a]" : "bg-muted text-muted-foreground"}`}>
+                        {!hiddenModules.includes("listy") ? "Aktywny" : t.projekty.moduleHidden}
                       </span>
-                    </div>
-                    <p className="text-xs text-muted-foreground">{t.projekty.moduleDescLists}</p>
+                    </h4>
+                    <p className="text-[11.5px] text-muted-foreground mt-0.5">{t.projekty.moduleDescLists}</p>
                   </div>
                 </div>
-                <div className="space-y-2 border-t border-border pt-3">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <Switch
-                      checked={!hiddenModules.includes("listy")}
-                      onCheckedChange={() => toggleModule("listy")}
-                    />
-                    <span className="text-sm">{t.projekty.moduleVisibleClient}</span>
+                <div className="mt-3 pt-3 border-t border-border">
+                  <label className="flex items-center justify-between cursor-pointer">
+                    <span className="text-[12px]">{t.projekty.moduleVisibleClient}</span>
+                    <Switch checked={!hiddenModules.includes("listy")} onCheckedChange={() => toggleModule("listy")} />
                   </label>
                 </div>
               </div>
             </div>
-          </section>
+          </div>
         </div>
       )}
 
-      {/* ── Tab: Kontakty ──────────────────────────────────────────────────── */}
-      {activeTab === "contacts" && (
-        <section className="bg-card border border-border rounded-xl p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">{t.projekty.clients}</h2>
-            <div className="flex items-center gap-2">
-              <Button
-                size="sm"
-                className="gap-1.5"
-                onClick={() => setShowAddContact(true)}
-              >
-                <Plus size={13} />
-                {t.projekty.addClient}
-              </Button>
-            </div>
+      {/* ── Tab: Konto klienta ─────────────────────────────────────────────── */}
+      {activeTab === "accounts" && (
+        <section className="bg-card border border-border rounded-xl p-5 mt-4">
+          {/* Info note */}
+          <div className="flex items-start gap-[10px] bg-[#EEF2FF] dark:bg-indigo-950/40 border border-[#E0E7FF] dark:border-indigo-800 rounded-[10px] px-[14px] py-3 mb-4">
+            <Info size={18} className="text-primary flex-shrink-0 mt-[1px]" />
+            <p className="text-[12.5px] text-foreground leading-relaxed">Konto umożliwia klientowi dostęp do panelu projektu przez indywidualny link lub hasło. Link jest stały i nie wygasa.</p>
           </div>
 
-          {contacts.length === 0 && !showAddContact ? (
-            <div className="text-center py-10 text-muted-foreground">
-              <p className="text-sm">{t.projekty.noContactsHint}</p>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Konto klienta</h2>
+            <Button size="sm" className="gap-1.5" onClick={() => setShowAddAccount((v) => !v)}>
+              <Plus size={13} />
+              Dodaj konto
+            </Button>
+          </div>
+
+          {showAddAccount && (
+            <div className="mb-4 p-4 border border-border rounded-xl bg-muted/30 space-y-3">
+              <p className="text-sm font-medium">Dodaj konto dostępowe</p>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Wybierz kontakt</Label>
+                <select
+                  value={addAccountContactId}
+                  onChange={(e) => {
+                    setAddAccountContactId(e.target.value);
+                    const c = contacts.find((c) => c.id === e.target.value);
+                    setAddAccountEmail(c?.email ?? "");
+                  }}
+                  className="w-full h-9 rounded-lg border border-border bg-background px-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                >
+                  <option value="">— wybierz kontakt —</option>
+                  {contacts.filter((c) => !c.userId).map((c) => (
+                    <option key={c.id} value={c.id}>{c.name}{c.email ? ` (${c.email})` : ""}</option>
+                  ))}
+                </select>
+              </div>
+              {addAccountContactId && (
+                <div className="space-y-1.5">
+                  <Label className="text-xs">E-mail logowania</Label>
+                  <Input type="email" value={addAccountEmail} onChange={(e) => setAddAccountEmail(e.target.value)} placeholder="email@domena.pl (opcjonalnie)" className="h-8 text-sm" />
+                  <p className="text-xs text-muted-foreground">Pozostaw puste, jeśli kontakt ma już przypisany e-mail</p>
+                </div>
+              )}
+              <div className="flex gap-2 justify-end">
+                <Button size="sm" variant="outline" onClick={() => { setShowAddAccount(false); setAddAccountContactId(""); setAddAccountEmail(""); }}>{t.common.cancel}</Button>
+                <Button size="sm" disabled={addingAccount || !addAccountContactId} onClick={addContactAccount}>
+                  {addingAccount ? t.projekty.creatingAccount : t.projekty.createAccount}
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {contacts.filter((c) => c.userId).length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <p className="text-sm">Brak kont. Kliknij „Dodaj konto" aby przypisać dostęp do jednego z kontaktów.</p>
             </div>
           ) : (
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleContactDragEnd}>
-              <SortableContext items={contacts.map((c) => c.id)} strategy={verticalListSortingStrategy}>
+              <SortableContext items={nonMainContacts.filter((c) => c.userId).map((c) => c.id)} strategy={verticalListSortingStrategy}>
                 <div className="space-y-2">
-                  {contacts.map((contact) => (
+                  {contacts.filter((c) => c.userId).map((contact) => (
                     <SortableContactItem key={contact.id} contact={contact}>
-                      <div className="pl-7 pr-3 py-3 bg-card border border-border rounded-xl">
+                      <div className={`pl-7 pr-4 py-3 bg-card border border-border rounded-xl ${contact.isMainContact ? "pl-4" : ""}`}>
                         <div className="flex items-start gap-3">
-                          {/* Avatar */}
                           <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                            <span className="text-sm font-semibold text-primary">
-                              {contact.name.charAt(0).toUpperCase()}
-                            </span>
+                            <span className="text-sm font-semibold text-primary">{contact.name.charAt(0).toUpperCase()}</span>
                           </div>
-
-                          {/* Content */}
                           <div className="flex-1 min-w-0">
-                            {/* Name + badges */}
                             <div className="flex items-center gap-1.5 flex-wrap">
                               <span className="font-semibold text-sm text-foreground">{contact.name}</span>
                               {contact.isMainContact && (
-                                <span className="inline-flex items-center text-[11px] px-1.5 py-0.5 rounded-md bg-primary/10 text-primary font-medium">
-                                  {t.projekty.mainContactBadge}
-                                </span>
-                              )}
-                              {contact.isDecisionMaker && (
-                                <span className="text-[11px] px-1.5 py-0.5 rounded-md bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 font-medium">Decydent</span>
+                                <span className="text-[11px] px-1.5 py-0.5 rounded-md bg-primary/10 text-primary font-medium">{t.projekty.mainContactBadge}</span>
                               )}
                               {!contact.userId && (
                                 <span className="text-[11px] px-1.5 py-0.5 rounded-md bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 font-medium">{t.projekty.noAccount}</span>
                               )}
+                              {contact.userId && contact.user && !contact.user.firstLoginAt && (
+                                <span className="text-[11px] px-1.5 py-0.5 rounded-md bg-muted text-muted-foreground font-medium">Nie aktywowano</span>
+                              )}
                               {contact.userId && contact.user?.firstLoginAt && (
                                 <span className="text-[11px] px-1.5 py-0.5 rounded-md bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 font-medium flex items-center gap-1">
-                                  <CheckCircle size={10} />
-                                  Aktywne
+                                  <CheckCircle size={10} />Aktywne
                                 </span>
                               )}
                             </div>
-
-                            {/* Edit form or contact details */}
-                            {editingId === contact.id ? (
-                              <div className="mt-2 space-y-2">
-                                <div className="flex gap-2">
-                                  <div className="relative flex-1">
-                                    <Mail size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-                                    <Input
-                                      value={editEmail}
-                                      onChange={(e) => setEditEmail(e.target.value)}
-                                      placeholder={t.projekty.emailLabel}
-                                      className="text-xs h-8 pl-7"
-                                      type="email"
-                                    />
-                                  </div>
-                                  <div className="relative flex-1">
-                                    <Phone size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-                                    <Input
-                                      value={editPhone}
-                                      onChange={(e) => setEditPhone(e.target.value)}
-                                      placeholder={t.projekty.phonePlaceholder}
-                                      className="text-xs h-8 pl-7"
-                                    />
-                                  </div>
-                                </div>
-                                <div className="flex gap-1.5">
-                                  <Button size="sm" className="h-7 text-xs" disabled={savingEdit} onClick={() => saveContactEdit(contact.id)}>
-                                    {savingEdit ? t.common.saving : t.common.save}
-                                  </Button>
-                                  <Button size="sm" variant="outline" className="h-7 text-xs" onClick={cancelEditing}>{t.common.cancel}</Button>
-                                </div>
-                              </div>
-                            ) : (
-                              <div className="mt-1 space-y-0.5">
-                                {contact.email && (
-                                  <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                                    <Mail size={11} className="flex-shrink-0" />
-                                    {contact.email}
-                                  </p>
-                                )}
-                                {contact.phone && (
-                                  <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                                    <Phone size={11} className="flex-shrink-0" />
-                                    {contact.phone}
-                                  </p>
-                                )}
-                              </div>
-                            )}
-
+                            {contact.email && <p className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5"><Mail size={11} className="flex-shrink-0" />{contact.email}</p>}
+                            {contact.phone && <p className="text-xs text-muted-foreground flex items-center gap-1.5"><Phone size={11} className="flex-shrink-0" />{contact.phone}</p>}
                           </div>
-
-                          {/* Actions */}
-                          <div className="flex items-center gap-0.5 flex-shrink-0">
-                            {!contact.isMainContact && (
-                              <button
-                                title={t.projekty.setAsMain}
-                                onClick={() => setMainContact(contact.id)}
-                                className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
-                              >
-                                <Check size={14} />
-                              </button>
-                            )}
-                            <button
-                              title={t.projekty.editContactShort}
-                              onClick={() => editingId === contact.id ? cancelEditing() : startEditing(contact)}
-                              className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                            >
-                              <Pencil size={14} />
-                            </button>
-                            <button
-                              title={t.projekty.deleteContact}
-                              onClick={() => removeContact(contact.id)}
-                              className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                          </div>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger className="p-1 rounded-md hover:bg-muted text-muted-foreground flex-shrink-0 mt-0.5 disabled:opacity-40" disabled={!!deactivatingAccount[contact.id]}>
+                              <MoreVertical size={15} />
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem variant="destructive" onClick={() => deactivateAccount(contact)}>
+                                <Trash2 size={14} />Dezaktywuj konto
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
 
-                        {/* Account section — pełna szerokość pod głównym wierszem */}
                         {contact.userId && contact.user && (
-                          <div className="mt-2 pt-2 border-t border-border flex flex-wrap items-center gap-x-3 gap-y-1">
-                            <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                              <KeyRound size={11} />
-                              <span className="font-mono">{contact.user.login}</span>
-                            </span>
-                            {!contact.user.firstLoginAt && (
-                              <span className="text-xs text-muted-foreground">Nie aktywowano</span>
-                            )}
+                          <div className="mt-2 pt-2 border-t border-border space-y-1.5">
+                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                              <span className="flex items-center gap-1 text-xs text-muted-foreground"><KeyRound size={11} /><span className="font-mono">{contact.user.login}</span></span>
+                              {contact.user.firstLoginAt && (
+                                <span className="flex items-center gap-1 text-xs text-muted-foreground"><CheckCircle size={11} />Aktywny od: {formatDate(contact.user.firstLoginAt)}</span>
+                              )}
+                              {contact.lastLoginAt && (
+                                <span className="flex items-center gap-1 text-xs text-muted-foreground"><Clock size={11} />Ostatnio aktywny: {formatDate(contact.lastLoginAt)}</span>
+                              )}
+                            </div>
                             {(contact.email || (contact.user.email && !contact.user.email.endsWith(".internal"))) && (
-                              <button
-                                className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg border border-border text-foreground hover:bg-muted transition-colors disabled:opacity-50 ml-auto"
-                                disabled={!!sendingLink[contact.id]}
-                                onClick={() => sendAccessLink(contact.user!.id, contact.id)}
-                              >
-                                <Send size={11} />
-                                {sendingLink[contact.id] ? "Wysyłanie..." : "Wyślij link"}
-                              </button>
+                              <div className="flex gap-1.5 flex-wrap">
+                                <button
+                                  className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg border border-border text-foreground hover:bg-muted transition-colors disabled:opacity-50"
+                                  disabled={!!sendingLink[contact.id]}
+                                  onClick={() => sendAccessLink(contact.user!.id, contact.id)}
+                                >
+                                  <Send size={11} />{sendingLink[contact.id] ? "Wysyłanie..." : "Wyślij link"}
+                                </button>
+                                <button
+                                  className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg border border-border text-foreground hover:bg-muted transition-colors disabled:opacity-50"
+                                  disabled={!!copyingLink[contact.user.id]}
+                                  onClick={() => copyAccessLink(contact.user!.id)}
+                                >
+                                  <Copy size={11} />{copyingLink[contact.user.id] ? "Kopiowanie..." : "Kopiuj link"}
+                                </button>
+                              </div>
                             )}
                           </div>
                         )}
 
-                        {/* Create account section — pełna szerokość pod głównym wierszem */}
                         {!contact.userId && (
                           <div className="mt-2 pt-2 border-t border-border">
                             <div className="flex items-center gap-2 flex-wrap">
                               {!contact.email && (
                                 <p className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1 flex-1 min-w-0">
-                                  <Info size={11} className="flex-shrink-0" />
-                                  <span>Brak adresu e-mail - dodaj, aby utworzyć konto.</span>
+                                  <Info size={11} className="flex-shrink-0" /><span>Brak adresu e-mail - dodaj, aby utworzyć konto.</span>
                                 </p>
                               )}
                               <button
                                 onClick={() => setCreateAccountOpen((prev) => ({ ...prev, [contact.id]: !prev[contact.id] }))}
                                 className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 hover:bg-amber-200 dark:hover:bg-amber-900/50 transition-colors ml-auto shrink-0"
                               >
-                                <KeyRound size={11} />
-                                {createAccountOpen[contact.id] ? t.projekty.hide : t.projekty.createAccount}
+                                <KeyRound size={11} />{createAccountOpen[contact.id] ? t.projekty.hide : t.projekty.createAccount}
                               </button>
                             </div>
                             {createAccountOpen[contact.id] && (
                               <div className="mt-2 p-2.5 rounded-lg bg-muted/50 border border-border space-y-2">
-                                <div className="space-y-1">
-                                  {contact.email ? (
-                                    <div className="flex items-center gap-1.5">
-                                      <Button
-                                        size="sm"
-                                        className="h-7 text-xs"
-                                        disabled={!!creatingAccount[contact.id]}
-                                        onClick={() => createContactAccount(contact.id)}
-                                      >
+                                {contact.email ? (
+                                  <div className="flex items-center gap-1.5">
+                                    <Button size="sm" className="h-7 text-xs" disabled={!!creatingAccount[contact.id]} onClick={() => createContactAccount(contact.id)}>
+                                      {creatingAccount[contact.id] ? t.projekty.creatingAccount : t.projekty.createAccount}
+                                    </Button>
+                                    <span className="text-xs text-muted-foreground">dla {contact.email}</span>
+                                  </div>
+                                ) : (
+                                  <>
+                                    <p className="text-xs text-muted-foreground font-medium">{t.projekty.emailLoginLabel}</p>
+                                    <div className="flex gap-1.5">
+                                      <Input type="email" value={createAccountEmail[contact.id] ?? ""} onChange={(e) => setCreateAccountEmail((prev) => ({ ...prev, [contact.id]: e.target.value }))} placeholder={t.projekty.emailLoginHintShort} className="text-xs h-7 flex-1" />
+                                      <Button size="sm" className="h-7 text-xs" disabled={!!creatingAccount[contact.id]} onClick={() => createContactAccount(contact.id)}>
                                         {creatingAccount[contact.id] ? t.projekty.creatingAccount : t.projekty.createAccount}
                                       </Button>
-                                      <span className="text-xs text-muted-foreground">dla {contact.email}</span>
                                     </div>
-                                  ) : (
-                                    <>
-                                      <p className="text-xs text-muted-foreground font-medium">{t.projekty.emailLoginLabel}</p>
-                                      <div className="flex gap-1.5">
-                                        <Input
-                                          type="email"
-                                          value={createAccountEmail[contact.id] ?? ""}
-                                          onChange={(e) => setCreateAccountEmail((prev) => ({ ...prev, [contact.id]: e.target.value }))}
-                                          placeholder={t.projekty.emailLoginHintShort}
-                                          className="text-xs h-7 flex-1"
-                                        />
-                                        <Button
-                                          size="sm"
-                                          className="h-7 text-xs"
-                                          disabled={!!creatingAccount[contact.id]}
-                                          onClick={() => createContactAccount(contact.id)}
-                                        >
-                                          {creatingAccount[contact.id] ? t.projekty.creatingAccount : t.projekty.createAccount}
-                                        </Button>
-                                      </div>
-                                    </>
-                                  )}
-                                  <p className="text-xs text-muted-foreground">Klient zaloguje się przez link wysłany e-mailem.</p>
-                                </div>
+                                  </>
+                                )}
+                                <p className="text-xs text-muted-foreground">Klient zaloguje się przez link wysłany e-mailem.</p>
                               </div>
                             )}
                           </div>
@@ -947,73 +1127,16 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
               </SortableContext>
             </DndContext>
           )}
-
-          {/* Add contact form */}
-          {showAddContact && (
-            <div className="mt-4 p-4 border border-border rounded-xl bg-muted/30 space-y-3">
-              <p className="text-sm font-medium">{t.projekty.newContact}</p>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="col-span-2 space-y-1">
-                  <Label className="text-xs">{t.projekty.clientFullName}</Label>
-                  <Input
-                    value={newName}
-                    onChange={(e) => setNewName(e.target.value)}
-                    placeholder="Jan Kowalski"
-                    autoFocus
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">{t.projekty.emailLabel}</Label>
-                  <Input
-                    type="email"
-                    value={newEmail}
-                    onChange={(e) => setNewEmail(e.target.value)}
-                    placeholder="jan@domena.pl"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">{t.projekty.phoneLabel}</Label>
-                  <Input
-                    value={newPhone}
-                    onChange={(e) => setNewPhone(e.target.value)}
-                    placeholder="+48 123 456 789"
-                  />
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="new-main"
-                  checked={newIsMain}
-                  onChange={(e) => setNewIsMain(e.target.checked)}
-                  className="rounded border-border"
-                />
-                <Label htmlFor="new-main" className="text-xs cursor-pointer">{t.projekty.mainContact}</Label>
-              </div>
-              <div className="flex gap-2 justify-end">
-                <Button size="sm" variant="outline" onClick={() => { setShowAddContact(false); setNewName(""); setNewEmail(""); setNewPhone(""); }}>
-                  {t.common.cancel}
-                </Button>
-                <Button size="sm" disabled={addingContact || !newName.trim()} onClick={addContact}>
-                  {addingContact ? t.projekty.adding : t.common.add}
-                </Button>
-              </div>
-            </div>
-          )}
         </section>
       )}
 
       {/* ── Tab: Płatności ─────────────────────────────────────────────────── */}
       {activeTab === "payments" && (
         mainContact ? (
-          <PaymentsTab
-            clientId={mainContact.id}
-            paymentsSharedWithClient={false}
-            defaultCurrency={defaultCurrency}
-          />
+          <PaymentsTab clientId={mainContact.id} paymentsSharedWithClient={false} defaultCurrency={defaultCurrency} />
         ) : (
-          <div className="bg-card border border-border rounded-xl p-10 text-center text-muted-foreground">
-            <p className="text-sm">{t.projekty.addContactHint} <button onClick={() => setActiveTab("contacts")} className="underline hover:no-underline">{t.projekty.clients}</button>, {t.projekty.paymentsConfigSuffix}</p>
+          <div className="bg-card border border-border rounded-xl p-10 text-center text-muted-foreground mt-4">
+            <p className="text-sm">{t.projekty.addContactHint} <button onClick={() => setActiveTab("accounts")} className="underline hover:no-underline">Konto klienta</button>, {t.projekty.paymentsConfigSuffix}</p>
           </div>
         )
       )}
@@ -1021,14 +1144,10 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
       {/* ── Tab: Harmonogram ───────────────────────────────────────────────── */}
       {activeTab === "schedule" && (
         mainContact ? (
-          <ScheduleTab
-            clientId={mainContact.id}
-            projectId={mainContact.projectId ?? undefined}
-            scheduleSharedWithClient={mainContact.scheduleSharedWithClient}
-          />
+          <ScheduleTab clientId={mainContact.id} projectId={mainContact.projectId ?? undefined} scheduleSharedWithClient={mainContact.scheduleSharedWithClient} />
         ) : (
-          <div className="bg-card border border-border rounded-xl p-10 text-center text-muted-foreground">
-            <p className="text-sm">{t.projekty.addContactHint} <button onClick={() => setActiveTab("contacts")} className="underline hover:no-underline">{t.projekty.clients}</button>, {t.projekty.scheduleConfigSuffix}</p>
+          <div className="bg-card border border-border rounded-xl p-10 text-center text-muted-foreground mt-4">
+            <p className="text-sm">{t.projekty.addContactHint} <button onClick={() => setActiveTab("accounts")} className="underline hover:no-underline">Konto klienta</button>, {t.projekty.scheduleConfigSuffix}</p>
           </div>
         )
       )}
@@ -1036,24 +1155,26 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
       {/* ── Tab: Dokumenty ─────────────────────────────────────────────────── */}
       {activeTab === "documents" && (
         mainContact ? (
-          <section className="bg-card border border-border rounded-xl p-5">
+          <section className="bg-card border border-border rounded-xl p-5 mt-4">
             <DocumentsTab clientId={mainContact.id} />
           </section>
         ) : (
-          <div className="bg-card border border-border rounded-xl p-10 text-center text-muted-foreground">
-            <p className="text-sm">{t.projekty.addContactHint} <button onClick={() => setActiveTab("contacts")} className="underline hover:no-underline">{t.projekty.clients}</button>, {t.projekty.documentsConfigSuffix}</p>
+          <div className="bg-card border border-border rounded-xl p-10 text-center text-muted-foreground mt-4">
+            <p className="text-sm">{t.projekty.addContactHint} <button onClick={() => setActiveTab("accounts")} className="underline hover:no-underline">Konto klienta</button>, {t.projekty.documentsConfigSuffix}</p>
           </div>
         )
       )}
 
-      {/* ── Tab: Historia klienta ────────────────────────────────────────── */}
+      {/* ── Tab: Historia klienta ──────────────────────────────────────────── */}
       {activeTab === "history" && (
-        <ClientHistoryTab apiUrl={`/api/klienci/${initialClient.id}/client-history`} />
+        <div className="mt-4">
+          <ClientHistoryTab apiUrl={`/api/klienci/${initialClient.id}/client-history`} />
+        </div>
       )}
 
       {/* ── Tab: Ustawienia klienta ───────────────────────────────────────── */}
       {activeTab === "settings" && (
-        <section className="bg-card border border-border rounded-xl p-5 space-y-4">
+        <section className="bg-card border border-border rounded-xl p-5 space-y-4 mt-4">
           <div>
             <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground mb-1">Kolor klienta</h2>
             <p className="text-sm text-muted-foreground">Kolor pojawia się na liście klientów i kafelkach projektów przypisanych do tego klienta.</p>
@@ -1069,25 +1190,13 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
                   onClick={() => saveAccentColor(hue)}
                   title={`Hue ${hue}`}
                   className="w-9 h-9 rounded-full flex items-center justify-center transition-transform hover:scale-110 disabled:opacity-60"
-                  style={{
-                    background: c.bar,
-                    outline: selected ? `3px solid ${c.bar}` : "none",
-                    outlineOffset: selected ? "2px" : "0",
-                  }}
+                  style={{ background: c.bar, outline: selected ? `3px solid ${c.bar}` : "none", outlineOffset: selected ? "2px" : "0" }}
                 >
-                  {selected && (
-                    <span className="material-symbols-rounded text-white" style={{ fontSize: 18, fontVariationSettings: "'wght' 600" }}>
-                      check
-                    </span>
-                  )}
+                  {selected && <span className="material-symbols-rounded text-white" style={{ fontSize: 18, fontVariationSettings: "'wght' 600" }}>check</span>}
                 </button>
               );
             })}
-
-            {/* Divider */}
             <div className="w-px h-8 bg-border" />
-
-            {/* Custom color picker */}
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">Własny:</span>
               <div style={accentColor?.startsWith("#") ? { outline: `3px solid ${customHex}`, outlineOffset: "2px", borderRadius: "10px" } : {}}>
@@ -1096,9 +1205,7 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
                   onChange={(hex) => {
                     setCustomHex(hex);
                     clearTimeout(saveColorDebounceRef.current);
-                    saveColorDebounceRef.current = setTimeout(() => {
-                      saveAccentColor(hex);
-                    }, 600);
+                    saveColorDebounceRef.current = setTimeout(() => { saveAccentColor(hex); }, 600);
                   }}
                   openDown
                 />
@@ -1108,6 +1215,126 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
         </section>
       )}
 
+      {/* ── Edit contact drawer ───────────────────────────────────────────── */}
+      {drawerContact && (
+        <>
+          {/* Overlay */}
+          <div
+            className="fixed inset-0 bg-black/35 z-40"
+            onClick={closeDrawer}
+          />
+          {/* Drawer */}
+          <div className="fixed right-0 top-0 h-full w-[380px] bg-white dark:bg-card shadow-[-16px_0_40px_-20px_rgba(24,24,50,0.35)] z-50 flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-[18px] border-b border-border flex-shrink-0">
+              <h3 className="text-[15px] font-semibold">Edytuj kontakt</h3>
+              <button
+                onClick={closeDrawer}
+                className="w-[30px] h-[30px] rounded-lg flex items-center justify-center text-muted-foreground hover:bg-[#FAFAFB] dark:hover:bg-muted transition-colors"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="flex-1 overflow-y-auto p-5 space-y-[14px]">
+              {/* Avatar */}
+              <div className="flex items-center gap-[14px] mb-[18px]">
+                <div
+                  className="w-14 h-14 rounded-full flex items-center justify-center text-white text-[18px] font-bold flex-shrink-0"
+                  style={{ background: drawerContact.isMainContact ? "#4F46E5" : "#c7cbe0" }}
+                >
+                  {drawerContact.name.split(" ").map((p) => p[0]).join("").toUpperCase().slice(0, 2)}
+                </div>
+              </div>
+
+              {/* Fields */}
+              <div className="space-y-1.5">
+                <Label className="text-[12.5px] font-medium">Imię i nazwisko</Label>
+                <Input
+                  value={drawerName}
+                  onChange={(e) => setDrawerName(e.target.value)}
+                  className="border-border rounded-lg"
+                  autoFocus
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-[12.5px] font-medium">Rola</Label>
+                <Input
+                  value={drawerRole}
+                  onChange={(e) => setDrawerRole(e.target.value)}
+                  placeholder="np. Inwestor, Architekt..."
+                  className="border-border rounded-lg"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-[12.5px] font-medium">Adres e-mail</Label>
+                <Input
+                  type="email"
+                  value={drawerEmail}
+                  onChange={(e) => setDrawerEmail(e.target.value)}
+                  className="border-border rounded-lg"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-[12.5px] font-medium">Numer telefonu</Label>
+                <Input
+                  value={drawerPhone}
+                  onChange={(e) => setDrawerPhone(e.target.value)}
+                  className="border-border rounded-lg"
+                />
+              </div>
+
+              {/* Set as main */}
+              <div className="space-y-1">
+                <label className="flex items-center gap-2 text-[13px] cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={drawerIsMain}
+                    onChange={(e) => setDrawerIsMain(e.target.checked)}
+                    className="rounded border-border w-4 h-4"
+                  />
+                  Ustaw jako kontakt główny
+                </label>
+                <p className="text-[12.5px] text-muted-foreground ml-6">
+                  Kontakt główny jest wyróżniony na liście i widoczny jako pierwszy punkt kontaktu.
+                </p>
+              </div>
+
+              {/* Danger zone */}
+              {!drawerContact.isMainContact && (
+                <div className="mt-[22px] pt-[18px] border-t border-border">
+                  <p className="text-[11px] font-bold tracking-[0.04em] uppercase text-destructive mb-2">Strefa zagrożenia</p>
+                  <button
+                    onClick={() => { closeDrawer(); removeContact(drawerContact.id); }}
+                    className="inline-flex items-center gap-1.5 text-[12.5px] font-semibold px-[14px] py-[9px] rounded-lg border border-red-200 bg-[#fef2f2] text-destructive hover:bg-red-100 transition-colors"
+                  >
+                    <Trash2 size={14} />
+                    Usuń kontakt
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-end gap-[10px] px-5 py-4 border-t border-border flex-shrink-0">
+              <button
+                onClick={closeDrawer}
+                className="border border-border rounded-lg px-4 py-[9px] text-[13px] font-semibold text-foreground bg-white dark:bg-card hover:bg-muted transition-colors"
+              >
+                Anuluj
+              </button>
+              <button
+                onClick={saveDrawer}
+                disabled={savingDrawer || !drawerName.trim()}
+                className="bg-primary text-white rounded-lg px-4 py-[9px] text-[13px] font-semibold hover:bg-primary/90 transition-colors disabled:opacity-60"
+              >
+                {savingDrawer ? t.common.saving : "Zapisz zmiany"}
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

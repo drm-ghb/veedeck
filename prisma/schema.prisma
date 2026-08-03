@@ -453,6 +453,7 @@ model ProjectClient {
   order          Int               @default(0)
   totalAmount    Float?
   isDecisionMaker Boolean          @default(false)
+  description    String?
   lastReminderSentAt DateTime?
   clientId       String?
   docs           ClientDoc[]

@@ -900,7 +900,7 @@ export function ScheduleTab({ clientId, projectId, scheduleSharedWithClient: ini
   const allShared = sharingIds.length > 0 && sharingIds.every((id) => sharedByProject[id] ?? false);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 mt-4">
       {/* Top bar */}
       <div className="flex items-center justify-end gap-2 flex-wrap">
         {(phases.length > 0 && sharingIds.length > 0) && (

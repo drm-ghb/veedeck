@@ -41,6 +41,18 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
 
   if (!client) notFound();
 
+  // Fetch last login date for each contact's user account
+  const userIds = client.contacts.filter((c) => c.userId).map((c) => c.userId!);
+  const lastLogins = userIds.length > 0
+    ? await prisma.loginLog.findMany({
+        where: { userId: { in: userIds }, success: true },
+        orderBy: { createdAt: "desc" },
+        distinct: ["userId"],
+        select: { userId: true, createdAt: true },
+      })
+    : [];
+  const lastLoginMap = new Map(lastLogins.map((l) => [l.userId!, l.createdAt.toISOString()]));
+
   const serialized = {
     id: client.id,
     name: client.name,
@@ -60,12 +72,14 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
       name: c.name,
       email: c.email,
       phone: c.phone ?? null,
+      description: (c as { description?: string | null }).description ?? null,
       isMainContact: c.isMainContact,
       isDecisionMaker: c.isDecisionMaker,
       createdAt: c.createdAt.toISOString(),
       userId: c.userId ?? null,
       projectId: c.projectId,
       scheduleSharedWithClient: c.project?.scheduleSharedWithClient ?? false,
+      lastLoginAt: c.userId ? (lastLoginMap.get(c.userId) ?? null) : null,
       user: c.user
         ? { id: c.user.id, login: c.user.login ?? "", email: c.user.email ?? null, firstLoginAt: c.user.firstLoginAt?.toISOString() ?? null }
         : null,

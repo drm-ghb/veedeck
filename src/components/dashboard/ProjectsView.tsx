@@ -409,7 +409,7 @@ function NoAccountWarning({ projectId }: { projectId: string }) {
   const t = useT();
   return (
     <Link
-      href={`/klienci/${projectId}?tab=contacts`}
+      href={`/klienci/${projectId}?tab=accounts`}
       className="flex items-center gap-1 text-amber-500 hover:text-amber-600 text-xs font-medium flex-shrink-0"
       onClick={(e) => e.stopPropagation()}
     >
