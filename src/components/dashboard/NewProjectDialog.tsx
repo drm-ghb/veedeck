@@ -310,7 +310,7 @@ export default function NewProjectDialog({ module, label, iconOnly, clientMode, 
 
             <p className="text-xs text-muted-foreground">
               Aby udostępnić projekt klientowi, utwórz konto klienta w{" "}
-              <span className="font-medium text-foreground">Klienci → [klient] → Kontakty</span>
+              <span className="font-medium text-foreground">Klienci → [klient] → Konto klienta</span>
             </p>
 
             <div className="flex gap-2 justify-end pt-1">
@@ -344,7 +344,7 @@ export default function NewProjectDialog({ module, label, iconOnly, clientMode, 
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Aby udostępnić projekt klientowi, utwórz konto klienta w{" "}
-                  <span className="font-medium text-foreground">Klienci → [klient] → Kontakty</span>
+                  <span className="font-medium text-foreground">Klienci → [klient] → Konto klienta</span>
                 </p>
                 <div className="flex gap-2 justify-end pt-1">
                   <Button type="button" variant="outline" onClick={() => setOpen(false)}>

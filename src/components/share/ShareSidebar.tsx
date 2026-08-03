@@ -644,18 +644,6 @@ export default function ShareSidebar({
           </div>
         )}
 
-        {/* Help */}
-        <button
-          onClick={() => { setHelpOpen(true); setHelpSent(false); setHelpSubject(""); setHelpDesc(""); }}
-          title={isCollapsed ? t.nav.help : undefined}
-          className="flex items-center gap-3 px-2.5 py-2.5 rounded-lg text-sm font-medium transition-colors w-full opacity-60 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5"
-        >
-          <span className="flex-shrink-0 w-5 flex items-center justify-center">
-            <HelpCircle size={18} />
-          </span>
-          {showLabels && t.nav.help}
-        </button>
-
         {/* Settings */}
         <button
           onClick={() => {
@@ -704,70 +692,6 @@ export default function ShareSidebar({
       </div>
     </aside>
 
-    {/* Help modal */}
-    {helpOpen && (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setHelpOpen(false)}>
-        <div className="bg-card rounded-2xl shadow-xl w-full max-w-md mx-4 p-6" onClick={(e) => e.stopPropagation()}>
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="text-lg font-semibold">{t.nav.helpTitle}</h2>
-            <button onClick={() => setHelpOpen(false)} className="text-muted-foreground hover:text-foreground transition-colors">
-              <X size={18} />
-            </button>
-          </div>
-
-          {helpSent ? (
-            <div className="flex flex-col items-center text-center py-6 gap-3">
-              <CheckCircle size={48} className="text-green-500" />
-              <p className="font-semibold text-lg">{t.nav.helpSent}</p>
-              <p className="text-sm text-muted-foreground">{t.nav.helpSentDesc}</p>
-              <button
-                onClick={() => setHelpOpen(false)}
-                className="mt-2 px-4 py-2 text-sm bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity"
-              >
-                {t.common.close}
-              </button>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 rounded-lg px-3 py-2">
-                <span>{t.nav.helpEmail}:</span>
-                <a href="mailto:support@veedeck.com" className="text-primary font-medium hover:underline">support@veedeck.com</a>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-sm font-medium">{t.nav.helpSubject}</label>
-                <input
-                  type="text"
-                  value={helpSubject}
-                  onChange={(e) => setHelpSubject(e.target.value)}
-                  placeholder={t.nav.helpSubjectPlaceholder}
-                  className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-sm font-medium">{t.nav.helpDescription}</label>
-                <textarea
-                  value={helpDesc}
-                  onChange={(e) => setHelpDesc(e.target.value)}
-                  placeholder={t.nav.helpDescriptionPlaceholder}
-                  rows={4}
-                  className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
-                />
-              </div>
-
-              <button
-                onClick={() => { if (helpSubject.trim() || helpDesc.trim()) setHelpSent(true); }}
-                disabled={!helpSubject.trim() && !helpDesc.trim()}
-                className="w-full py-2 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                {t.nav.helpSend}
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-    )}
     {/* Settings modal */}
     {settingsOpen && (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" onClick={() => setSettingsOpen(false)}>

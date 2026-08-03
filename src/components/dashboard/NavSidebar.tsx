@@ -387,22 +387,6 @@ export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userI
           {!isCollapsed && t.nav.help}
         </button>
 
-        {isTrial && (
-          <Link
-            href="/ustawienia/instrukcja"
-            title={isCollapsed ? "Instrukcja" : undefined}
-            className={`flex items-center gap-3 px-2.5 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-              pathname.startsWith("/ustawienia/instrukcja")
-                ? "bg-primary/10 text-primary"
-                : "opacity-60 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5"
-            }`}
-          >
-            <span className="flex-shrink-0 w-5 flex items-center justify-center">
-              <BookOpen size={18} />
-            </span>
-            {!isCollapsed && "Instrukcja"}
-          </Link>
-        )}
         <Link
           href={getSettingsHref(pathname)}
           title={isCollapsed ? t.nav.settings : undefined}

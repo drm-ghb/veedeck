@@ -289,7 +289,7 @@ export default function NewListDialog() {
 
           <p className="text-xs text-muted-foreground">
             Aby udostępnić listę klientowi, wyślij mu link dostępowy z{" "}
-            <span className="font-medium text-foreground">Klienci → [klient] → Kontakty</span>
+            <span className="font-medium text-foreground">Klienci → [klient] → Konto klienta</span>
           </p>
 
           <div className="flex gap-2 justify-end pt-1">

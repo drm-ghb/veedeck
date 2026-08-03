@@ -165,17 +165,6 @@ export default function MobileMenu({ userName, logoUrl, hiddenModules = [], isTr
 
           {isTrial && (
             <>
-              <Link
-                href="/ustawienia/instrukcja"
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                  pathname === "/ustawienia/instrukcja"
-                    ? "bg-primary/10 text-primary"
-                    : "text-gray-400 hover:bg-muted hover:text-foreground"
-                }`}
-              >
-                <span className="w-5 flex items-center justify-center"><BookOpen size={18} /></span>
-                Instrukcja
-              </Link>
               <button
                 onClick={() => { window.dispatchEvent(new CustomEvent("open-onboarding")); setOpen(false); }}
                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-primary hover:bg-primary/10 transition-colors"
