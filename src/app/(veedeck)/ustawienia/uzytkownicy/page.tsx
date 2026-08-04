@@ -5,12 +5,6 @@ import TeamSettings from "@/components/settings/TeamSettings";
 export default function UzytkownicyPage() {
   return (
     <div className="max-w-7xl">
-      <div className="mb-6">
-        <h1 className="text-xl font-bold">Użytkownicy</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Zarządzaj członkami swojego zespołu i ich uprawnieniami. Zaproszeni użytkownicy widzą projekty i moduły zgodnie ze swoimi grupami.
-        </p>
-      </div>
       <TeamSettings />
     </div>
   );

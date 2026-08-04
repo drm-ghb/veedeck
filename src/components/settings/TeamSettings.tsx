@@ -162,6 +162,39 @@ export default function TeamSettings() {
   return (
     <div className="space-y-6">
 
+      {/* Page header row — title + seats card on the right */}
+      <div className="flex items-start justify-between gap-6">
+        <div>
+          <h1 className="text-xl font-bold">Użytkownicy</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Zarządzaj członkami swojego zespołu i ich uprawnieniami. Zaproszeni użytkownicy widzą projekty i moduły zgodnie ze swoimi grupami.
+          </p>
+        </div>
+        {!loading && canInvite && memberLimit !== null && (
+          <div className="shrink-0 border border-border rounded-xl p-4 w-56 space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-sm font-semibold text-foreground">Miejsca w zespole</p>
+              <span className="text-sm font-semibold text-foreground">{totalUsed}/{memberLimit}</span>
+            </div>
+            <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all duration-500 ${atLimit ? "bg-amber-500" : "bg-primary"}`}
+                style={{ width: `${Math.min(100, (totalUsed / memberLimit) * 100)}%` }}
+              />
+            </div>
+            {atLimit && (
+              <p className="text-xs text-muted-foreground">
+                Potrzebujesz więcej miejsc?{" "}
+                <a href="https://veedeck.com/kontakt" target="_blank" rel="noopener noreferrer"
+                  className="text-primary hover:underline font-medium">
+                  Skontaktuj się z nami ↗
+                </a>
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+
       {/* Solo upsell */}
       {!loading && !canInvite && (
         <div className="bg-card border border-border rounded-2xl p-6 flex flex-col gap-4">
@@ -184,30 +217,6 @@ export default function TeamSettings() {
         </div>
       )}
 
-      {/* Member count card */}
-      {!loading && canInvite && memberLimit !== null && (
-        <div className="bg-card border border-border rounded-2xl p-5 space-y-3">
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-semibold text-foreground">Miejsca w zespole</p>
-            <span className="text-sm font-semibold text-foreground">{totalUsed}/{memberLimit}</span>
-          </div>
-          <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
-            <div
-              className={`h-full rounded-full transition-all duration-500 ${atLimit ? "bg-amber-500" : "bg-primary"}`}
-              style={{ width: `${Math.min(100, (totalUsed / memberLimit) * 100)}%` }}
-            />
-          </div>
-          {atLimit && (
-            <p className="text-xs text-muted-foreground">
-              Potrzebujesz więcej miejsc?{" "}
-              <a href="https://veedeck.com/kontakt" target="_blank" rel="noopener noreferrer"
-                className="text-primary hover:underline font-medium">
-                Skontaktuj się z nami ↗
-              </a>
-            </p>
-          )}
-        </div>
-      )}
 
       {/* Tabs */}
       {canInvite && (

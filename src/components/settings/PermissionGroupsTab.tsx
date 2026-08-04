@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { toast } from "sonner";
 import {
   Plus, Loader2, Users, Lock, Shield, ChevronRight,
   PushPin, LocalMall, Engineering, CheckSquare, Package,
   CalendarDays, NotebookText, ChatBubble, ClipboardList,
-  Interests, Settings, UserPlus, X, ArrowLeft,
+  Interests, Settings, UserPlus, X, ArrowLeft, MoreVertical,
 } from "@/components/ui/icons";
 import type { ModuleSlug } from "@/lib/permissions";
 import { showConfirm } from "@/lib/confirm";
@@ -135,6 +135,10 @@ export default function PermissionGroupsTab({
   const [expandedMemberId, setExpandedMemberId] = useState<string | null>(null);
   const [memberClientsMap, setMemberClientsMap] = useState<Record<string, string[]>>({});
   const [togglingClientId, setTogglingClientId] = useState<string | null>(null);
+  const [openMenuGroupId, setOpenMenuGroupId] = useState<string | null>(null);
+  const [renamingGroupId, setRenamingGroupId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState("");
+  const cancelRenameRef = useRef(false);
 
   const loadGroups = useCallback(async () => {
     const res = await fetch("/api/team/groups");
@@ -339,6 +343,38 @@ export default function PermissionGroupsTab({
     onGroupsChanged?.();
   }
 
+  async function handleRenameGroup(id: string) {
+    const name = renameValue.trim();
+    setRenamingGroupId(null);
+    setRenameValue("");
+    if (!name) return;
+    const res = await fetch(`/api/team/groups/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name }),
+    });
+    if (!res.ok) { toast.error("Nie udało się zmienić nazwy"); return; }
+    toast.success("Nazwa zmieniona");
+    setGroups((prev) => prev.map((g) => g.id === id ? { ...g, name } : g));
+    if (draft?.id === id) setDraft((d) => d ? { ...d, name } : d);
+    onGroupsChanged?.();
+  }
+
+  async function handleDeleteGroup(group: PermissionGroup) {
+    if (!await showConfirm(`Usunąć grupę „${group.name}"? Członkowie stracą dostęp do modułów przypisanych przez tę grupę.`)) return;
+    const res = await fetch(`/api/team/groups/${group.id}`, { method: "DELETE" });
+    if (!res.ok) { toast.error("Nie udało się usunąć grupy"); return; }
+    toast.success("Usunięto grupę");
+    const newGroups = groups.filter((g) => g.id !== group.id);
+    setGroups(newGroups);
+    if (selectedId === group.id) {
+      const next = newGroups[0] ?? null;
+      setSelectedId(next?.id ?? null);
+      setDraft(next ? { ...next, permissions: { ...(next.permissions as Record<ModuleSlug, number>) } } : null);
+    }
+    onGroupsChanged?.();
+  }
+
   const selected = draft;
   const canEdit = plan === "studio" || plan === "agencja";
   const clientsLevel = selected?.permissions["klienci"] ?? 0;
@@ -362,18 +398,67 @@ export default function PermissionGroupsTab({
             <Plus size={15} />
           </button>
         </div>
+        {openMenuGroupId && (
+          <div className="fixed inset-0 z-[9]" onClick={() => setOpenMenuGroupId(null)} />
+        )}
         {groups.map((g) => (
-          <button
-            key={g.id}
-            onClick={() => selectGroup(g)}
-            className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm text-left transition-colors w-full ${selectedId === g.id ? "bg-[#EEEDFE]" : "hover:bg-muted/50"}`}
-          >
-            <GroupAvatar name={g.name} active={selectedId === g.id} />
-            <div className="flex-1 min-w-0">
-              <p className="truncate text-[13px] font-medium">{g.name}</p>
-              <p className="text-[11px] text-muted-foreground">{g._count?.members ?? 0} os.</p>
-            </div>
-          </button>
+          <div key={g.id} className="relative group/item">
+            {renamingGroupId === g.id ? (
+              <div className="flex gap-1 px-1 py-0.5">
+                <input
+                  autoFocus
+                  type="text"
+                  value={renameValue}
+                  onChange={(e) => setRenameValue(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleRenameGroup(g.id);
+                    if (e.key === "Escape") { cancelRenameRef.current = true; setRenamingGroupId(null); setRenameValue(""); }
+                  }}
+                  onBlur={() => {
+                    if (cancelRenameRef.current) { cancelRenameRef.current = false; return; }
+                    handleRenameGroup(g.id);
+                  }}
+                  className="flex-1 min-w-0 px-2 py-1 text-[13px] border border-primary/40 rounded-md bg-background focus:outline-none"
+                />
+              </div>
+            ) : (
+              <button
+                onClick={() => selectGroup(g)}
+                className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-sm text-left transition-colors w-full ${selectedId === g.id ? "bg-[#EEEDFE]" : "hover:bg-muted/50"}`}
+              >
+                <GroupAvatar name={g.name} active={selectedId === g.id} />
+                <div className="flex-1 min-w-0">
+                  <p className="truncate text-[13px] font-medium">{g.name}</p>
+                  <p className="text-[11px] text-muted-foreground">{g._count?.members ?? 0} os.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); setOpenMenuGroupId(openMenuGroupId === g.id ? null : g.id); }}
+                  className="shrink-0 opacity-0 group-hover/item:opacity-100 transition-opacity w-5 h-5 flex items-center justify-center rounded hover:bg-black/10 text-muted-foreground"
+                >
+                  <MoreVertical size={13} />
+                </button>
+              </button>
+            )}
+            {openMenuGroupId === g.id && (
+              <div className="absolute right-0 top-full z-10 mt-0.5 w-36 rounded-lg border border-border bg-background shadow-lg py-1">
+                <button
+                  type="button"
+                  onClick={() => { setRenamingGroupId(g.id); setRenameValue(g.name); setOpenMenuGroupId(null); }}
+                  className="w-full px-3 py-1.5 text-[13px] text-left hover:bg-muted/50 transition-colors"
+                >
+                  Zmień nazwę
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setOpenMenuGroupId(null); handleDeleteGroup(g); }}
+                  className="w-full px-3 py-1.5 text-[13px] text-left text-destructive hover:bg-muted/50 transition-colors"
+                >
+                  Usuń grupę
+                </button>
+              </div>
+            )}
+          </div>
         ))}
         {creatingGroup && (
           <div className="mt-1 flex flex-col gap-1.5">

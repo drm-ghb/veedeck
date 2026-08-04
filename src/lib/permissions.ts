@@ -174,18 +174,28 @@ export async function getEffectivePermissions(
 /**
  * Checks if the session user has at least `minLevel` for `module`.
  * Owners/admins always pass. Members without groups always fail (level 0).
+ *
+ * Queries DB directly to avoid stale-JWT bypasses (sessions created before
+ * ownerId/systemRole were added would have ownerId=null and be treated as owner).
  */
 export async function hasPermission(
   session: Session,
   module: ModuleSlug,
   minLevel: PermissionLevel
 ): Promise<boolean> {
-  const role = getSystemRole(session);
-  if (role === "owner" || role === "admin") return true;
-  if (!isTeamMember(session)) return true;
+  const userId = session.user!.id!;
+  const dbUser = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { ownerId: true, systemRole: true },
+  });
 
-  const ownerId = getOwnerId(session);
-  const effective = await getEffectivePermissions(session.user!.id!, ownerId, role);
+  // Workspace owner (no ownerId) or user not found → full access
+  if (!dbUser?.ownerId) return true;
+
+  // System admin → full access
+  if (dbUser.systemRole === "admin") return true;
+
+  const effective = await getEffectivePermissions(userId, dbUser.ownerId, "member");
   return (effective[module] as number) >= minLevel;
 }
 
@@ -193,12 +203,16 @@ export async function hasPermission(
  * Returns 'assigned' or 'all' project scope for the session user.
  */
 export async function getProjectScope(session: Session): Promise<"assigned" | "all"> {
-  const role = getSystemRole(session);
-  if (role === "owner" || role === "admin") return "all";
-  if (!isTeamMember(session)) return "all";
+  const userId = session.user!.id!;
+  const dbUser = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { ownerId: true, systemRole: true },
+  });
 
-  const ownerId = getOwnerId(session);
-  const effective = await getEffectivePermissions(session.user!.id!, ownerId, role);
+  if (!dbUser?.ownerId) return "all";
+  if (dbUser.systemRole === "admin") return "all";
+
+  const effective = await getEffectivePermissions(userId, dbUser.ownerId, "member");
   return effective.projectScope;
 }
 
@@ -207,7 +221,6 @@ export async function getProjectScope(session: Session): Promise<"assigned" | "a
  * or null for unrestricted access.
  */
 export async function getAllowedClientIds(session: Session): Promise<string[] | null> {
-  if (!isTeamMember(session)) return null;
   const scope = await getProjectScope(session);
   if (scope === "all") return null;
 
