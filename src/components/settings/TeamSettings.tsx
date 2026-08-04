@@ -163,7 +163,7 @@ export default function TeamSettings() {
     <div className="space-y-6">
 
       {/* Page header row — title + seats card on the right */}
-      <div className="flex items-start justify-between gap-6">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold">Użytkownicy</h1>
           <p className="text-sm text-muted-foreground mt-1">
@@ -171,7 +171,7 @@ export default function TeamSettings() {
           </p>
         </div>
         {!loading && canInvite && memberLimit !== null && (
-          <div className="shrink-0 border border-border rounded-xl p-4 w-56 space-y-2">
+          <div className="sm:shrink-0 border border-border rounded-xl p-4 sm:w-56 space-y-2">
             <div className="flex items-center justify-between gap-2">
               <p className="text-sm font-semibold text-foreground">Miejsca w zespole</p>
               <span className="text-sm font-semibold text-foreground">{totalUsed}/{memberLimit}</span>
