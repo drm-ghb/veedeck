@@ -659,7 +659,7 @@ export default function PermissionGroupsTab({
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-medium truncate">{m.fullName || m.name || m.email}</p>
-                        <p className="text-[10px] text-muted-foreground truncate">{m._count.clientAssignments} kl.</p>
+                        <p className="text-[10px] text-muted-foreground truncate">{(() => { const n = m._count.clientAssignments; return n === 1 ? "1 klient" : n >= 2 && n <= 4 ? `${n} klientów` : `${n} klientów`; })()}</p>
                       </div>
                       <button
                         onClick={() => toggleMemberExpanded(m.id)}
