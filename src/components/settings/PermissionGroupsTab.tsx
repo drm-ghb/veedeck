@@ -384,10 +384,10 @@ export default function PermissionGroupsTab({
   }
 
   return (
-    <div className="flex gap-6 min-h-[500px]">
+    <div className="flex flex-col lg:flex-row gap-6">
 
       {/* Left column — group list */}
-      <div className="w-48 shrink-0 flex flex-col gap-1 border-r border-border pr-6">
+      <div className="lg:w-48 lg:shrink-0 flex flex-col gap-1 lg:border-r lg:border-border lg:pr-6">
         <div className="flex items-center justify-between mb-2">
           <span className="text-[11px] font-semibold tracking-widest text-muted-foreground uppercase">Grupy</span>
           <button
@@ -401,6 +401,7 @@ export default function PermissionGroupsTab({
         {openMenuGroupId && (
           <div className="fixed inset-0 z-[9]" onClick={() => setOpenMenuGroupId(null)} />
         )}
+        <div className="flex flex-row lg:flex-col gap-1 overflow-x-auto pb-1 lg:pb-0 -mx-1 px-1">
         {groups.map((g) => (
           <div key={g.id} className="relative group/item">
             {renamingGroupId === g.id ? (
@@ -424,7 +425,7 @@ export default function PermissionGroupsTab({
             ) : (
               <button
                 onClick={() => selectGroup(g)}
-                className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-sm text-left transition-colors w-full ${selectedId === g.id ? "bg-[#EEEDFE]" : "hover:bg-muted/50"}`}
+                className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-sm text-left transition-colors w-full lg:w-full shrink-0 lg:shrink ${selectedId === g.id ? "bg-[#EEEDFE]" : "hover:bg-muted/50"}`}
               >
                 <GroupAvatar name={g.name} active={selectedId === g.id} />
                 <div className="flex-1 min-w-0">
@@ -460,6 +461,7 @@ export default function PermissionGroupsTab({
             )}
           </div>
         ))}
+        </div>
         {creatingGroup && (
           <div className="mt-1 flex flex-col gap-1.5">
             <input
@@ -499,14 +501,14 @@ export default function PermissionGroupsTab({
         <div className="flex-1 flex flex-col gap-4 min-w-0">
 
           {/* Group header */}
-          <div className="flex items-start justify-between gap-4">
+          <div className="flex flex-wrap items-start justify-between gap-2">
             <div>
               <p className="font-semibold text-base">{selected.name}</p>
               <p className="text-xs text-muted-foreground">
                 {selected.isTemplate ? "Grupa szablonowa" : "Grupa własna"}
               </p>
             </div>
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex flex-wrap items-center gap-2">
               {/* Project scope */}
               <div className="flex items-center gap-1 bg-muted/40 rounded-full p-0.5">
                 {(["assigned", "all"] as const).map((s) => (
@@ -514,7 +516,7 @@ export default function PermissionGroupsTab({
                     key={s}
                     type="button"
                     onClick={() => setScope(s)}
-                    className={`px-3 py-1 text-xs font-medium rounded-full transition-all duration-150 ${
+                    className={`px-2.5 py-1 text-xs font-medium rounded-full transition-all duration-150 ${
                       selected.projectScope === s ? "text-white" : "text-muted-foreground hover:bg-muted/60"
                     }`}
                     style={selected.projectScope === s ? { background: "#4F46E5" } : {}}
@@ -604,7 +606,7 @@ export default function PermissionGroupsTab({
 
       {/* Right — members sidebar */}
       {selected && (
-        <div className="w-96 shrink-0 flex flex-col gap-3 border-l border-border pl-6">
+        <div className="lg:w-96 lg:shrink-0 flex flex-col gap-3 lg:border-l lg:border-border lg:pl-6 border-t border-border pt-4 lg:pt-0 lg:border-t-0">
           <div className="flex items-center justify-between">
             <p className="text-[11px] font-semibold tracking-widest text-muted-foreground uppercase">Członkowie</p>
             <span className="text-[11px] text-muted-foreground">{groupMembers.length} os.</span>
