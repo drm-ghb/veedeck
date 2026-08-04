@@ -9,23 +9,28 @@ import {
 } from "@/components/ui/icons";
 import { useT } from "@/lib/i18n";
 
-export default function SettingsSidebar() {
+export default function SettingsSidebar({ isOwner = true }: { isOwner?: boolean }) {
   const pathname = usePathname();
   const router = useRouter();
   const t = useT();
 
-  const items = [
+  const personalItems = [
     { href: "/ustawienia/profil",        label: "Profil",                   icon: <UserCircle size={16} /> },
-    { href: "/ustawienia/branding",      label: "Branding",                 icon: <Image size={16} /> },
     { href: "/ustawienia/wyglad",        label: "Wygląd",                   icon: <Palette size={16} /> },
-    { href: "/ustawienia/uzytkownicy",   label: t.settings.usersNav,        icon: <Users size={16} /> },
-    { href: "/ustawienia/powiadomienia", label: "Powiadomienia",             icon: <Bell size={16} /> },
-    { href: "/ustawienia/wtyczka",       label: t.settings.pluginNav,       icon: <Puzzle size={16} /> },
-    { href: "/ustawienia/integracje",    label: "Integracje",               icon: <Link2 size={16} /> },
+    { href: "/ustawienia/powiadomienia", label: "Powiadomienia",            icon: <Bell size={16} /> },
     { href: "/ustawienia/instrukcja",    label: t.settings.guideNav,        icon: <BookOpen size={16} /> },
-    { href: "/ustawienia/plan-i-rozliczenia",   label: "Plan i rozliczenia",       icon: <Payments size={16} /> },
     { href: "/ustawienia/konto",         label: "Konto",                    icon: <UserMinus size={16} /> },
   ];
+
+  const workspaceItems = [
+    { href: "/ustawienia/branding",           label: "Branding",           icon: <Image size={16} /> },
+    { href: "/ustawienia/uzytkownicy",        label: t.settings.usersNav,  icon: <Users size={16} /> },
+    { href: "/ustawienia/wtyczka",            label: t.settings.pluginNav, icon: <Puzzle size={16} /> },
+    { href: "/ustawienia/integracje",         label: "Integracje",         icon: <Link2 size={16} /> },
+    { href: "/ustawienia/plan-i-rozliczenia", label: "Plan i rozliczenia", icon: <Payments size={16} /> },
+  ];
+
+  const items = isOwner ? [...personalItems, ...workspaceItems] : personalItems;
 
   const moduleItems = [
     { href: "/ustawienia/projectflow",   label: "ProjectFlow",              icon: <Eye size={16} /> },

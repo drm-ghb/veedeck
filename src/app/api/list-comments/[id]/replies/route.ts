@@ -4,6 +4,7 @@ import { pusherServer } from "@/lib/pusher";
 import { auth } from "@/lib/auth";
 import { getWorkspaceUserId } from "@/lib/workspace";
 import { notifyClientDesignerListReply } from "@/lib/email";
+import { hasPermission } from "@/lib/permissions";
 
 export async function POST(
   req: NextRequest,
@@ -11,7 +12,15 @@ export async function POST(
 ) {
   const session = await auth();
   const { id } = await params;
-  const { content, author } = await req.json();
+  const { content, author, listShareToken } = await req.json();
+
+  if (session?.user?.id) {
+    if (!await hasPermission(session, "listy", 2)) {
+      return NextResponse.json({ error: "Brak uprawnień do dodawania odpowiedzi" }, { status: 403 });
+    }
+  } else if (!listShareToken) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   if (!content || !author) {
     return NextResponse.json({ error: "Brakujące pola" }, { status: 400 });

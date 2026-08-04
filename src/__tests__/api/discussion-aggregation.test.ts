@@ -28,6 +28,7 @@ vi.mock("@/lib/prisma", () => ({
     notification: { create: vi.fn() },
     listProductComment: { create: vi.fn() },
     listProduct: { findUnique: vi.fn() },
+    user: { findUnique: vi.fn() },
   },
 }));
 
@@ -190,6 +191,7 @@ describe("Dyskusje — POST /api/list-comments (brak agregacji)", () => {
   it("zwraca 201 po dodaniu komentarza do produktu", async () => {
     const res = await PostListComment(makeRequest("POST", {
       productId: "prod-1", content: "Treść", author: "Klient",
+      listShareToken: "share-tok", // wymagane od czasu dodania auth check
     }));
 
     expect(res.status).toBe(201);

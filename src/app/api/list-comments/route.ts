@@ -4,6 +4,7 @@ import { pusherServer } from "@/lib/pusher";
 import { auth } from "@/lib/auth";
 import { getWorkspaceUserId } from "@/lib/workspace";
 import { queueEmailNotif } from "@/lib/email-queue";
+import { hasPermission } from "@/lib/permissions";
 
 export async function GET(req: NextRequest) {
   const productId = req.nextUrl.searchParams.get("productId");
@@ -21,6 +22,16 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const session = await auth();
   const { productId, content, author, listShareToken, imageUrl } = await req.json();
+
+  // Authenticated users (designers, team members) must have at least edit permission.
+  // Unauthenticated requests must provide a share token (public share link for clients).
+  if (session?.user?.id) {
+    if (!await hasPermission(session, "listy", 2)) {
+      return NextResponse.json({ error: "Brak uprawnień do dodawania komentarzy" }, { status: 403 });
+    }
+  } else if (!listShareToken) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   const finalContent = content?.trim() || (imageUrl ? "[zdjęcie]" : "");
   if (!productId || !finalContent || !author) {

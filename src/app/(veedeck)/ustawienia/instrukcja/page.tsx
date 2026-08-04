@@ -304,7 +304,26 @@ const DESIGNER_MODULES: DesignerStep[] = [
     featuresTitle: "Dostępne funkcje",
   },
   {
-    title: "11. Veezard",
+    title: "11. Użytkownicy i uprawnienia",
+    desc: "Zaproś współpracowników do swojego workspace i precyzyjnie określ, do czego mają dostęp. Uprawnienia działają modułowo — możesz dać komuś pełny dostęp do list zakupowych, ale zablokować edycję projektów. Zmiany działają natychmiast, bez wylogowywania membera.",
+    steps: [
+      "Przejdź do **Ustawienia → Użytkownicy** i kliknij **Zaproś użytkownika**",
+      "Wpisz adres e-mail — zaproszony dostanie link do założenia konta i dołączenia do Twojego workspace",
+      "Przypisz go do istniejącej **grupy uprawnień** lub utwórz nową w zakładce **Uprawnienia** (ikona tarczy)",
+      "Każda grupa definiuje poziomy dostępu osobno dla każdego modułu: **Brak**, **Podgląd**, **Edycja** lub **Zarządzanie**",
+      "Moduł z poziomem **Brak** znika z sidebara membera — jest całkowicie niewidoczny i niedostępny",
+      "Member ma własne ustawienia osobiste (profil, wygląd, powiadomienia, konto) — nie może zmieniać ustawień workspace (branding, użytkownicy, integracje, plan)",
+      "Wygląd panelu klienta (motyw, branding) jest zawsze sterowany przez ownera workspace — member nie ma na to wpływu",
+    ],
+    features: [
+      { icon: <Users size={16} />, label: "Owner workspace", desc: "Osoba, która założyła konto — ma pełny dostęp do wszystkiego i jako jedyna kontroluje ustawienia workspace oraz wygląd panelu klienta" },
+      { icon: <Eye size={16} />, label: "Grupy uprawnień", desc: "Gotowe szablony (np. Asystent, Fotograf, Manager) lub własne grupy — jeden member = jedna grupa" },
+      { icon: <CheckCircle size={16} />, label: "Poziomy dostępu", desc: "Brak (moduł niewidoczny) → Podgląd (tylko odczyt) → Edycja (tworzenie i edycja) → Zarządzanie (pełen dostęp + usuwanie)" },
+    ],
+    featuresTitle: "Kluczowe pojęcia",
+  },
+  {
+    title: "12. Veezard",
     desc: "Wkrótce dostępny w veedeck.",
     steps: [],
   },

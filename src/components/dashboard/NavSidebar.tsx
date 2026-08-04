@@ -209,17 +209,17 @@ export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userI
 
   const items = [
     { label: t.nav.dashboard, href: "/panel-glowny", icon: <LayoutDashboard size={18} />, slug: null, badge: 0, matchPrefixes: [] as string[] },
-    { label: t.nav.projects, href: "/klienci", icon: <Users size={18} />, slug: null, badge: 0, matchPrefixes: [] as string[] },
-    { label: t.nav.renderflow, href: "/projectflow", icon: <PushPin size={18} />, slug: "renderflow", badge: 0, matchPrefixes: ["/projekty/"] },
+    { label: t.nav.projects, href: "/klienci", icon: <Users size={18} />, slug: "klienci", badge: 0, matchPrefixes: [] as string[] },
+    { label: t.nav.renderflow, href: "/projectflow", icon: <PushPin size={18} />, slug: "projectflow", badge: 0, matchPrefixes: ["/projekty/"] },
     { label: t.nav.lists, href: "/listy-zakupowe", icon: <LocalMall size={18} />, slug: "listy", badge: 0, matchPrefixes: [] as string[] },
     { label: t.nav.moodboard, href: "/moodboardy", icon: <Interests size={18} />, slug: "moodboardy", badge: 0, matchPrefixes: [] as string[] },
-    { label: t.nav.contractors, href: "/wykonawcy", icon: <Engineering size={18} />, slug: null, badge: contractorUnread, matchPrefixes: [] as string[] },
-    { label: t.nav.tasks, href: "/zadania", icon: <CheckSquare size={18} />, slug: null, badge: 0, matchPrefixes: [] as string[] },
-    { label: t.nav.surveys, href: "/ankiety", icon: <ClipboardList size={18} />, slug: null, badge: 0, matchPrefixes: [] as string[] },
+    { label: t.nav.contractors, href: "/wykonawcy", icon: <Engineering size={18} />, slug: "wykonawcy", badge: contractorUnread, matchPrefixes: [] as string[] },
+    { label: t.nav.tasks, href: "/zadania", icon: <CheckSquare size={18} />, slug: "zadania", badge: 0, matchPrefixes: [] as string[] },
+    { label: t.nav.surveys, href: "/ankiety", icon: <ClipboardList size={18} />, slug: "ankiety", badge: 0, matchPrefixes: [] as string[] },
     { label: t.nav.products, href: "/produkty", icon: <Package size={18} />, slug: "produkty", badge: 0, matchPrefixes: [] as string[] },
-    { label: t.nav.calendar, href: "/kalendarz", icon: <CalendarDays size={18} />, slug: null, badge: 0, matchPrefixes: [] as string[] },
-    { label: t.nav.notes, href: "/notatnik", icon: <NotebookText size={18} />, slug: null, badge: 0, matchPrefixes: [] as string[] },
-    { label: t.nav.discussions, href: "/dyskusje", icon: <ChatBubble size={18} />, slug: null, badge: discussionUnread, matchPrefixes: [] as string[] },
+    { label: t.nav.calendar, href: "/kalendarz", icon: <CalendarDays size={18} />, slug: "kalendarz", badge: 0, matchPrefixes: [] as string[] },
+    { label: t.nav.notes, href: "/notatnik", icon: <NotebookText size={18} />, slug: "notatnik", badge: 0, matchPrefixes: [] as string[] },
+    { label: t.nav.discussions, href: "/dyskusje", icon: <ChatBubble size={18} />, slug: "dyskusje", badge: discussionUnread, matchPrefixes: [] as string[] },
     { label: t.nav.veezard, href: "/veezard", icon: <VeezardIcon size={18} />, slug: "veezard", badge: 0, matchPrefixes: [] as string[], soon: true },
   ];
 

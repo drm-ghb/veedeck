@@ -211,7 +211,7 @@ export async function PATCH(
 ) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if (!await hasPermission(session, "listy", 2)) return NextResponse.json({ error: "Brak uprawnień do edycji listy" }, { status: 403 });
+  if (!await hasPermission(session, "listy", 3)) return NextResponse.json({ error: "Brak uprawnień do zarządzania listą" }, { status: 403 });
   const userId = getWorkspaceUserId(session);
 
   const { id } = await params;

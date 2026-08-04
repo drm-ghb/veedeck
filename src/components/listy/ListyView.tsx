@@ -67,12 +67,13 @@ interface ListyViewProps {
   lists: ShoppingList[];
   userId?: string;
   veepickConnected?: boolean;
+  canManage?: boolean;
 }
 
 type SortOption = "newest" | "oldest" | "az" | "za" | "manual";
 type Tab = "active" | "archived";
 
-export default function ListyView({ lists: initialLists, userId, veepickConnected = false }: ListyViewProps) {
+export default function ListyView({ lists: initialLists, userId, veepickConnected = false, canManage = true }: ListyViewProps) {
   const router = useRouter();
   const t = useT();
   const [lists, setLists] = useState<ShoppingList[]>(initialLists);
@@ -273,7 +274,7 @@ export default function ListyView({ lists: initialLists, userId, veepickConnecte
               : `${activeLists.length} ${t.listy.activeLabel}`}
           </p>
         </div>
-        <TrialGate><NewListDialog /></TrialGate>
+        {canManage && <TrialGate><NewListDialog /></TrialGate>}
       </div>
 
       {/* Tabs */}
@@ -390,7 +391,7 @@ export default function ListyView({ lists: initialLists, userId, veepickConnecte
         <SortableContext items={filtered.map((l) => l.id)} strategy={rectSortingStrategy}>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4">
           {filtered.map((list) => (
-            <SortableListGridCard key={list.id} list={list} unreadCount={unreadListCounts[list.id] ?? 0} onCopyLink={handleCopyLink} menu={<ListMenu list={list} />} />
+            <SortableListGridCard key={list.id} list={list} unreadCount={unreadListCounts[list.id] ?? 0} onCopyLink={handleCopyLink} menu={canManage ? <ListMenu list={list} /> : null} canManage={canManage} />
           ))}
         </div>
         </SortableContext>
@@ -408,7 +409,8 @@ export default function ListyView({ lists: initialLists, userId, veepickConnecte
               unreadCount={unreadListCounts[list.id] ?? 0}
               onNavigate={() => router.push(`/listy-zakupowe/${list.slug ?? list.id}`)}
               onCopyLink={handleCopyLink}
-              menu={<ListMenu list={list} />}
+              menu={canManage ? <ListMenu list={list} /> : null}
+              canManage={canManage}
             />
           ))}
         </div>
@@ -453,11 +455,12 @@ export default function ListyView({ lists: initialLists, userId, veepickConnecte
   );
 }
 
-function SortableListGridCard({ list, unreadCount, onCopyLink, menu }: {
+function SortableListGridCard({ list, unreadCount, onCopyLink, menu, canManage = true }: {
   list: ShoppingList;
   unreadCount: number;
   onCopyLink: (l: ShoppingList) => void;
   menu: React.ReactNode;
+  canManage?: boolean;
 }) {
   const t = useT();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: list.id });
@@ -469,14 +472,14 @@ function SortableListGridCard({ list, unreadCount, onCopyLink, menu }: {
           <Pin size={12} className="text-red-500 fill-red-500" />
         </div>
       )}
-      <div
+      {canManage && <div
         {...attributes}
         {...listeners}
         className="absolute top-3 left-3 z-10 p-0.5 rounded text-muted-foreground opacity-0 group-hover:opacity-100 cursor-grab active:cursor-grabbing"
         style={{ left: list.pinned ? "20px" : undefined }}
       >
         <GripVertical size={13} />
-      </div>
+      </div>}
       <Link href={`/listy-zakupowe/${list.slug ?? list.id}`} className={`flex items-start gap-3 p-4 pr-16 block ${list.pinned ? "pl-8" : ""}`}>
         <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
           <LocalMall size={16} className="text-primary" />
@@ -527,12 +530,13 @@ function SortableListGridCard({ list, unreadCount, onCopyLink, menu }: {
   );
 }
 
-function SortableListRowItem({ list, unreadCount, onNavigate, onCopyLink, menu }: {
+function SortableListRowItem({ list, unreadCount, onNavigate, onCopyLink, menu, canManage = true }: {
   list: ShoppingList;
   unreadCount: number;
   onNavigate: () => void;
   onCopyLink: (l: ShoppingList) => void;
   menu: React.ReactNode;
+  canManage?: boolean;
 }) {
   const t = useT();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: list.id });
@@ -551,7 +555,7 @@ function SortableListRowItem({ list, unreadCount, onNavigate, onCopyLink, menu }
       <div className="absolute left-0 top-0 bottom-0 w-[3px]" style={{ background: colors.bar }} />
 
       {/* Drag handle */}
-      <div
+      {canManage && <div
         {...attributes}
         {...listeners}
         onClick={(e) => e.stopPropagation()}
@@ -559,7 +563,7 @@ function SortableListRowItem({ list, unreadCount, onNavigate, onCopyLink, menu }
         title={t.projekty.dragToReorder}
       >
         <GripVertical size={15} />
-      </div>
+      </div>}
 
       {/* Icon */}
       <div className="w-[38px] h-[38px] rounded-[10px] flex items-center justify-center shrink-0" style={{ background: colors.tint }}>

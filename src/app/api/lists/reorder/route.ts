@@ -2,10 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getWorkspaceUserId } from "@/lib/workspace";
+import { hasPermission } from "@/lib/permissions";
 
 export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!await hasPermission(session, "listy", 3)) return NextResponse.json({ error: "Brak uprawnień do zarządzania listami" }, { status: 403 });
   const userId = getWorkspaceUserId(session);
 
   const { ids } = await req.json();

@@ -35,6 +35,7 @@ interface ProductCommentPanelProps {
   onClose: () => void;
   onCountChange?: (productId: string, count: number) => void;
   listShareToken?: string;
+  canComment?: boolean;
 }
 
 function formatDate(iso: string) {
@@ -79,6 +80,7 @@ export default function ProductCommentPanel({
   onClose,
   onCountChange,
   listShareToken,
+  canComment = true,
 }: ProductCommentPanelProps) {
   const t = useT();
   const [comments, setComments] = useState<Comment[]>([]);
@@ -472,7 +474,7 @@ export default function ProductCommentPanel({
       </div>
 
       {/* Input */}
-      <div className="px-4 py-3 border-t border-border shrink-0">
+      {canComment && <div className="px-4 py-3 border-t border-border shrink-0">
         {replyingToComment && (
           <div className="flex items-center gap-2 px-2 py-1.5 mb-2 bg-muted/60 rounded-lg border-l-2 border-primary/50">
             <CornerDownLeft size={11} className="text-primary flex-shrink-0" />
@@ -557,7 +559,7 @@ export default function ProductCommentPanel({
             <Send className="w-7 h-7" />
           </button>
         </div>
-      </div>
+      </div>}
       </div>
     </div>
   );

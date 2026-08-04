@@ -13,6 +13,7 @@ export default async function SettingsWygladPage() {
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
     select: {
+      ownerId: true,
       globalHiddenModules: true,
       colorTheme: true,
       customTheme: true,
@@ -22,6 +23,8 @@ export default async function SettingsWygladPage() {
   });
   if (!user) redirect("/login");
 
+  const isOwner = !user.ownerId;
+
   return (
     <SettingsAppearance
       initialColorTheme={(user.colorTheme ?? "champagne") as ColorTheme}
@@ -29,6 +32,7 @@ export default async function SettingsWygladPage() {
       initialGlobalHiddenModules={user.globalHiddenModules}
       initialSidebarOrder={((user.viewPreferences as Record<string, unknown>)?.sidebarOrder as string[]) ?? []}
       initialDefaultCurrency={user.defaultCurrency ?? "PLN"}
+      isOwner={isOwner}
     />
   );
 }

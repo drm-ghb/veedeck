@@ -2,7 +2,7 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getWorkspaceUserId } from "@/lib/workspace";
-import { getAllowedClientIds } from "@/lib/permissions";
+import { getAllowedClientIds, hasPermission } from "@/lib/permissions";
 import ListyView from "@/components/listy/ListyView";
 
 export default async function ListyPage() {
@@ -10,7 +10,10 @@ export default async function ListyPage() {
   if (!session?.user?.id) redirect("/login");
 
   const userId = getWorkspaceUserId(session);
-  const allowedIds = await getAllowedClientIds(session);
+  const [allowedIds, canManage] = await Promise.all([
+    getAllowedClientIds(session),
+    hasPermission(session, "listy", 3),
+  ]);
 
   const userRecord = await prisma.user.findUnique({
     where: { id: userId },
@@ -49,6 +52,7 @@ export default async function ListyPage() {
     <ListyView
       userId={userId}
       veepickConnected={veepickConnected}
+      canManage={canManage}
       lists={lists.map((l) => ({
         id: l.id,
         slug: l.slug,

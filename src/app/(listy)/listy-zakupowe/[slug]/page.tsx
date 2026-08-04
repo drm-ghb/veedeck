@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { redirect, notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getWorkspaceUserId } from "@/lib/workspace";
+import { hasPermission } from "@/lib/permissions";
 import ListDetail from "@/components/listy/ListDetail";
 import type { PdfTemplate } from "@/lib/pdf-templates";
 
@@ -14,7 +15,9 @@ export default async function ListPage({ params, searchParams }: { params: Promi
 
   const userId = getWorkspaceUserId(session);
 
-  const [userSettings, list] = await Promise.all([
+  const [canEdit, canManage, userSettings, list] = await Promise.all([
+    hasPermission(session, "listy", 2),
+    hasPermission(session, "listy", 3),
     prisma.user.findUnique({ where: { id: userId }, select: { listsCategoryOrder: true, clientLogoUrl: true, customCategories: true, pdfListTemplate: true, fullName: true, avatarUrl: true, defaultCurrency: true } }),
     prisma.shoppingList.findFirst({
       where: {
@@ -64,6 +67,8 @@ export default async function ListPage({ params, searchParams }: { params: Promi
 
   return (
     <ListDetail
+      canEdit={canEdit}
+      canManage={canManage}
       designerName={(session.user as { name?: string }).name ?? "Projektant"}
       designerEmail={(session.user as { email?: string }).email ?? undefined}
       designerLogoUrl={userSettings?.clientLogoUrl ?? undefined}

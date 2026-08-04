@@ -108,6 +108,8 @@ interface Section {
 }
 
 interface ListDetailProps {
+  canEdit?: boolean;
+  canManage?: boolean;
   list: {
     id: string;
     name: string;
@@ -292,6 +294,7 @@ function ProductRow({
   isVariant,
   isParent,
   productNumber,
+  canEdit = true,
 }: {
   product: Product;
   index: number;
@@ -323,6 +326,7 @@ function ProductRow({
   isVariant?: boolean;
   isParent?: boolean;
   productNumber?: string;
+  canEdit?: boolean;
 }) {
   const [qty, setQty] = useState(product.quantity);
   const [saving, setSaving] = useState(false);
@@ -808,9 +812,9 @@ function ProductRow({
         </div>
         <div className="flex items-center gap-3 shrink-0">
           <div className="flex items-center gap-1">
-            <button onClick={() => updateQty(qty - 1)} disabled={qty <= 1 || saving} className="w-6 h-6 rounded flex items-center justify-center border border-border text-muted-foreground hover:text-foreground hover:border-foreground/30 disabled:opacity-30 transition-colors"><Minus size={11} /></button>
+            {canEdit && <button onClick={() => updateQty(qty - 1)} disabled={qty <= 1 || saving} className="w-6 h-6 rounded flex items-center justify-center border border-border text-muted-foreground hover:text-foreground hover:border-foreground/30 disabled:opacity-30 transition-colors"><Minus size={11} /></button>}
             <span className="w-6 text-center text-sm font-medium tabular-nums">{qty}</span>
-            <button onClick={() => updateQty(qty + 1)} disabled={saving} className="w-6 h-6 rounded flex items-center justify-center border border-border text-muted-foreground hover:text-foreground hover:border-foreground/30 disabled:opacity-30 transition-colors"><Plus size={11} /></button>
+            {canEdit && <button onClick={() => updateQty(qty + 1)} disabled={saving} className="w-6 h-6 rounded flex items-center justify-center border border-border text-muted-foreground hover:text-foreground hover:border-foreground/30 disabled:opacity-30 transition-colors"><Plus size={11} /></button>}
           </div>
           <div className="text-right min-w-[72px]">
             {editingField === "price" ? (
@@ -860,7 +864,7 @@ function ProductRow({
             <Comment size={15} className={`transition-colors ${unread ? "text-blue-500" : ""}`} />
             {commentCount > 0 && <span className={`absolute -top-1 -right-1 min-w-[14px] h-[14px] rounded-full text-white text-[9px] font-bold flex items-center justify-center px-0.5 leading-none transition-colors ${unread ? "bg-primary" : "bg-muted-foreground/40"}`}>{(unread ? unreadCount : commentCount) > 99 ? "99+" : (unread ? unreadCount : commentCount)}</span>}
           </button>
-          {dropdown}
+          {canEdit && dropdown}
         </div>
           </>
         )}
@@ -897,7 +901,7 @@ function ProductRow({
                   )}
                 </div>
               </div>
-              <div className="shrink-0 -mt-0.5">{dropdown}</div>
+              {canEdit && <div className="shrink-0 -mt-0.5">{dropdown}</div>}
             </div>
             {/* Tags: category */}
             <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
@@ -964,9 +968,9 @@ function ProductRow({
         <div className="flex items-center justify-between mt-2">
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-0.5">
-              <button onClick={() => updateQty(qty - 1)} disabled={qty <= 1 || saving} className="w-6 h-6 rounded flex items-center justify-center border border-border text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors"><Minus size={10} /></button>
+              {canEdit && <button onClick={() => updateQty(qty - 1)} disabled={qty <= 1 || saving} className="w-6 h-6 rounded flex items-center justify-center border border-border text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors"><Minus size={10} /></button>}
               <span className="w-6 text-center text-xs font-medium tabular-nums">{qty}</span>
-              <button onClick={() => updateQty(qty + 1)} disabled={saving} className="w-6 h-6 rounded flex items-center justify-center border border-border text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors"><Plus size={10} /></button>
+              {canEdit && <button onClick={() => updateQty(qty + 1)} disabled={saving} className="w-6 h-6 rounded flex items-center justify-center border border-border text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors"><Plus size={10} /></button>}
             </div>
             {product.url && (
               <a href={product.url} target="_blank" rel="noopener noreferrer" className="w-6 h-6 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
@@ -1141,7 +1145,7 @@ function sortProducts(products: Product[], sortBy: string, categoryOrder: string
   return sorted;
 }
 
-export default function ListDetail({ list, designerName, designerEmail, designerLogoUrl, designerFullName, designerAvatarUrl, initialOpenProductId, categoryOrder, customCategories, pdfTemplate, defaultCurrency = "PLN" }: ListDetailProps & { designerName?: string; designerEmail?: string; designerLogoUrl?: string; designerFullName?: string; designerAvatarUrl?: string; initialOpenProductId?: string }) {
+export default function ListDetail({ list, designerName, designerEmail, designerLogoUrl, designerFullName, designerAvatarUrl, initialOpenProductId, categoryOrder, customCategories, pdfTemplate, defaultCurrency = "PLN", canEdit = true, canManage = true }: ListDetailProps & { designerName?: string; designerEmail?: string; designerLogoUrl?: string; designerFullName?: string; designerAvatarUrl?: string; initialOpenProductId?: string }) {
   const { lang } = useLang();
   const t = useT();
   const expired = useIsTrialExpired();
@@ -2519,7 +2523,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
           {/* Share with client toggle */}
-          <button
+          {canManage && <button
             onClick={() => {
               if (!hasClient || sharing) return;
               if (!shared && sections.every((s) => s.products.length === 0)) {
@@ -2546,7 +2550,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
           >
             {shared ? <Check size={13} /> : <Share2 size={13} />}
             <span className="hidden sm:inline">{shared ? "Udostępnione" : "Udostępnij klientowi"}</span>
-          </button>
+          </button>}
 
           {/* Copy client link */}
           <button
@@ -2739,14 +2743,14 @@ export default function ListDetail({ list, designerName, designerEmail, designer
           /* ── Normal toolbar ── */
           <div className="flex flex-wrap items-center justify-between gap-2 p-2 bg-muted/40 border border-border rounded-xl shadow-sm">
         <div className="flex items-center gap-1.5 flex-wrap">
-          <TrialGate>
+          {canEdit && <TrialGate>
             <Button onClick={openAddSection} className="flex items-center gap-1.5 h-8 px-3 text-xs">
               <Plus size={13} />
               <span className="hidden xs:inline">{t.listy.addSection}</span>
               <span className="xs:hidden">{t.listy.sectionLabel}</span>
             </Button>
-          </TrialGate>
-          <TrialGate>
+          </TrialGate>}
+          {canEdit && <TrialGate>
             <Button
               variant="outline"
               onClick={() => setDialogState({ open: true, sectionId: null })}
@@ -2755,7 +2759,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
               <Plus size={13} />
               {t.products.addProduct}
             </Button>
-          </TrialGate>
+          </TrialGate>}
           <div className="w-px h-5 bg-border mx-0.5 hidden sm:block" />
           <DropdownMenu>
             <DropdownMenuTrigger render={
@@ -2775,22 +2779,22 @@ export default function ListDetail({ list, designerName, designerEmail, designer
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <button
+          {canManage && <button
             onClick={() => { setBudgetInput(budget != null ? String(budget) : ""); setBudgetModalOpen(true); }}
             className="flex items-center gap-1 h-8 px-2 sm:px-3 text-xs rounded-lg border border-border bg-background hover:bg-muted transition-colors text-foreground"
             title={t.listy.setBudget}
           >
             <Wallet size={13} />
             <span className="hidden sm:inline">{budget != null ? t.listy.budget : t.listy.setBudget}</span>
-          </button>
-          <button
+          </button>}
+          {canManage && <button
             onClick={toggleHidePrices}
             className={`flex items-center gap-1 h-8 px-2 sm:px-3 text-xs rounded-lg border transition-colors ${hidePrices ? "border-amber-400 bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-700" : "border-border bg-background hover:bg-muted text-foreground"}`}
             title={hidePrices ? t.listy.pricesHiddenTitle : t.listy.hidePricesTitle}
           >
             <DollarSign size={13} />
             <span className="hidden sm:inline">{hidePrices ? t.listy.pricesHiddenBtn : t.listy.hidePricesBtn}</span>
-          </button>
+          </button>}
           <div className="w-px h-5 bg-border mx-0.5 hidden sm:block" />
           <div className="relative">
             <button
@@ -2979,6 +2983,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                                 ) : dragHandle}
                                 allCategories={allCategories}
                                 sections={sections}
+                                canEdit={canEdit}
                               />
                               {variants.length > 0 && (
                                 <button
@@ -3030,6 +3035,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                                   ) : undefined}
                                   allCategories={allCategories}
                                   sections={sections}
+                                  canEdit={canEdit}
                                 />
                               </div>
                             ))}
@@ -3115,7 +3121,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                             {section.name}
                           </h2>
                         )}
-                        {!expired && (
+                        {!expired && canEdit && (
                           <button
                             onClick={() => setDialogState({ open: true, sectionId: section.id })}
                             className="hidden sm:flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground border border-border hover:border-foreground/30 rounded-md px-2 py-0.5 transition-colors shrink-0"
@@ -3165,13 +3171,13 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                           )}
                         </div>
                         <SectionTotal products={section.products} budget={sectionBudgets[section.id]} />
-                        <button
+                        {canEdit && <button
                           onClick={() => handleDeleteSection(section.id)}
                           className="w-7 h-7 flex items-center justify-center rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
                           title={t.listy.deleteSectionTitle}
                         >
                           <Trash2 size={13} />
-                        </button>
+                        </button>}
                       </div>
                     </div>
 
@@ -3233,6 +3239,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                                           ) : dragHandle}
                                           allCategories={allCategories}
                                           sections={sections}
+                                          canEdit={canEdit}
                                         />
                                         {variants.length > 0 && (
                                           <button
@@ -3284,6 +3291,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                                               ) : undefined}
                                               allCategories={allCategories}
                                               sections={sections}
+                                              canEdit={canEdit}
                                             />
                                           </div>
                                         ))}
@@ -3295,7 +3303,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                               </SortableContext>
                             );
                           })()}
-                        {!expired && (
+                        {!expired && canEdit && (
                           <button
                             onClick={() => setDialogState({ open: true, sectionId: section.id })}
                             className="w-full flex items-center justify-center gap-1.5 px-4 py-2 text-xs text-muted-foreground hover:text-foreground border border-dashed border-border rounded-[10px] transition-colors"
@@ -3460,6 +3468,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
             lastReadAt={panelLastReadAt}
             onClose={closeCommentsPanel}
             onCountChange={handleCountChange}
+            canComment={canEdit}
           />
         ) : null;
       })()}

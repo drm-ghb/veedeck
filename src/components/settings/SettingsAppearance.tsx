@@ -23,6 +23,7 @@ interface Props {
   initialGlobalHiddenModules: string[];
   initialSidebarOrder: string[];
   initialDefaultCurrency: string;
+  isOwner?: boolean;
 }
 
 function SortableSidebarItem({ id, label, icon: Icon }: { id: string; label: string; icon: React.ElementType }) {
@@ -45,6 +46,7 @@ export function SettingsAppearance({
   initialGlobalHiddenModules,
   initialSidebarOrder,
   initialDefaultCurrency,
+  isOwner = true,
 }: Props) {
   const router = useRouter();
   const t = useT();
@@ -336,8 +338,8 @@ export function SettingsAppearance({
         </div>
       </section>
 
-      {/* Widoczność modułów */}
-      <section className="space-y-4">
+      {/* Widoczność modułów — tylko owner workspace */}
+      {isOwner && <section className="space-y-4">
         <SectionHeader title={t.settings.modulesVisibility} />
         <div className="bg-card border border-border rounded-2xl overflow-hidden">
           <div className="px-6 pt-6 pb-2">
@@ -367,7 +369,7 @@ export function SettingsAppearance({
             {modulesExpanded ? t.common.collapse : t.common.showAll}
           </button>
         </div>
-      </section>
+      </section>}
 
       {/* Kolejność sidebar */}
       <section className="space-y-4">
