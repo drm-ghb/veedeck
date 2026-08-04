@@ -30,6 +30,22 @@ const MODULE_LIST: { slug: ModuleSlug; label: string; icon: React.ReactNode }[] 
 
 const LEVEL_LABELS = ["Brak", "Podgląd", "Edycja", "Zarządzanie"] as const;
 
+// Tooltips per module × level (index = level 0–3)
+const LEVEL_TOOLTIPS: Record<ModuleSlug, [string, string, string, string]> = {
+  klienci:     ["Brak dostępu do listy klientów", "Może przeglądać listę klientów", "Może dodawać i edytować klientów", "Może zapraszać klientów i publikować im materiały"],
+  projectflow: ["Brak dostępu do renderów i pokoi", "Może przeglądać rendery i pokoje", "Może przesyłać pliki i dodawać komentarze", "Może zarządzać pokojami i usuwać rendery"],
+  listy:       ["Brak dostępu do list zakupowych", "Może przeglądać listy i produkty", "Może tworzyć i edytować listy zakupowe", "Może usuwać listy i w pełni nimi zarządzać"],
+  moodboardy:  ["Brak dostępu do moodboardów", "Może przeglądać moodboardy", "Może tworzyć i edytować moodboardy", "Może usuwać moodboardy i zarządzać nimi"],
+  zadania:     ["Brak dostępu do zadań", "Może przeglądać zadania", "Może tworzyć i edytować zadania", "Może usuwać zadania i zarządzać nimi"],
+  ankiety:     ["Brak dostępu do ankiet", "Może przeglądać ankiety i odpowiedzi", "Może tworzyć i edytować ankiety", "Może usuwać ankiety i zarządzać szablonami"],
+  produkty:    ["Brak dostępu do bazy produktów", "Może przeglądać produkty", "Może dodawać i edytować produkty", "Może usuwać produkty i zarządzać bazą"],
+  wykonawcy:   ["Brak dostępu do wykonawców", "Może przeglądać wykonawców i ich foldery", "Może dodawać wykonawców i pliki", "Może usuwać wykonawców i zarządzać przypisaniami"],
+  kalendarz:   ["Brak dostępu do kalendarza", "Może przeglądać wydarzenia", "Może dodawać i edytować wydarzenia", "Może zarządzać kalendarzem i usuwać wydarzenia"],
+  notatnik:    ["Brak dostępu do notatnika", "Może przeglądać notatki", "Może tworzyć i edytować notatki", "Może usuwać notatki i zarządzać nimi"],
+  dyskusje:    ["Brak dostępu do dyskusji", "Może przeglądać dyskusje", "Może uczestniczyć i wysyłać wiadomości", "Może zarządzać dyskusjami i je usuwać"],
+  ustawienia:  ["Brak dostępu do ustawień workspace", "Może przeglądać ustawienia", "Może edytować ustawienia workspace", "Pełen dostęp do ustawień, integracji i eksportu"],
+};
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 interface PermissionGroup {
@@ -50,20 +66,20 @@ interface GroupMemberUser {
   avatarUrl: string | null;
   systemRole: string;
   permissionGroups: { group: { id: string; name: string } }[];
-  _count: { projectAssignments: number };
+  _count: { clientAssignments: number };
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
 function LevelSegment({
-  level, active, onClick, readOnly,
-}: { level: number; active: boolean; onClick: () => void; readOnly?: boolean }) {
+  level, active, onClick, readOnly, tooltip,
+}: { level: number; active: boolean; onClick: () => void; readOnly?: boolean; tooltip?: string }) {
   return (
     <button
       type="button"
       disabled={readOnly}
       onClick={onClick}
-      title={readOnly ? "Edycja grup dostępna w planie Agencja" : undefined}
+      title={tooltip}
       className={`px-2.5 py-1 text-xs font-medium rounded-full transition-all duration-150 ${
         active
           ? "text-white"
@@ -97,7 +113,7 @@ export default function PermissionGroupsTab({
   plan: string | null;
   onGroupsChanged?: () => void;
 }) {
-  const canEdit = plan === "agencja";
+  const canManageScope = true; // scope toggle + project assignments always available
 
   const [groups, setGroups] = useState<PermissionGroup[]>([]);
   const [loading, setLoading] = useState(true);
@@ -111,6 +127,14 @@ export default function PermissionGroupsTab({
   const [workspaceMembers, setWorkspaceMembers] = useState<GroupMemberUser[]>([]);
   const [addingUserId, setAddingUserId] = useState<string | null>(null);
   const [removingUserId, setRemovingUserId] = useState<string | null>(null);
+  const [creatingGroup, setCreatingGroup] = useState(false);
+  const [newGroupName, setNewGroupName] = useState("");
+  const [editMode, setEditMode] = useState(false);
+  const [editSnapshot, setEditSnapshot] = useState<PermissionGroup | null>(null);
+  const [allClients, setAllClients] = useState<{ id: string; name: string }[]>([]);
+  const [expandedMemberId, setExpandedMemberId] = useState<string | null>(null);
+  const [memberClientsMap, setMemberClientsMap] = useState<Record<string, string[]>>({});
+  const [togglingClientId, setTogglingClientId] = useState<string | null>(null);
 
   const loadGroups = useCallback(async () => {
     const res = await fetch("/api/team/groups");
@@ -133,7 +157,30 @@ export default function PermissionGroupsTab({
     setSelectedId(group.id);
     setDraft({ ...group, permissions: { ...(group.permissions as Record<ModuleSlug, number>) } });
     setDirty(false);
-    setMembersView(false);
+    setEditMode(false);
+    setEditSnapshot(null);
+    setExpandedMemberId(null);
+    setMemberClientsMap({});
+    // Auto-load members for the selected group
+    setLoadingMembers(true);
+    const [membRes, wsRes, clientRes] = await Promise.all([
+      fetch(`/api/team/groups/${group.id}/members`),
+      fetch("/api/team/invite"),
+      fetch("/api/clients"),
+    ]);
+    if (membRes.ok) {
+      const data = await membRes.json();
+      setGroupMembers(data.map((m: { user: GroupMemberUser }) => m.user));
+    }
+    if (wsRes.ok) {
+      const data = await wsRes.json();
+      setWorkspaceMembers(data.members ?? []);
+    }
+    if (clientRes.ok) {
+      const data = await clientRes.json();
+      setAllClients(data.map((c: { id: string; name: string }) => ({ id: c.id, name: c.name })));
+    }
+    setLoadingMembers(false);
   }
 
   function setLevel(slug: ModuleSlug, level: number) {
@@ -143,7 +190,7 @@ export default function PermissionGroupsTab({
   }
 
   function setScope(scope: "assigned" | "all") {
-    if (!draft || !canEdit) return;
+    if (!draft || !canManageScope) return;
     setDraft((d) => d ? { ...d, projectScope: scope } : d);
     setDirty(true);
   }
@@ -160,6 +207,8 @@ export default function PermissionGroupsTab({
     if (!res.ok) { toast.error("Nie udało się zapisać"); return; }
     toast.success("Zapisano zmiany grupy");
     setDirty(false);
+    setEditMode(false);
+    setEditSnapshot(null);
     await loadGroups();
     onGroupsChanged?.();
   }
@@ -180,15 +229,17 @@ export default function PermissionGroupsTab({
   }
 
   async function handleCreate() {
-    const name = prompt("Nazwa nowej grupy:");
-    if (!name?.trim()) return;
+    const name = newGroupName.trim();
+    if (!name) return;
     const res = await fetch("/api/team/groups", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: name.trim() }),
+      body: JSON.stringify({ name }),
     });
     if (!res.ok) { toast.error("Nie udało się utworzyć grupy"); return; }
     const created: PermissionGroup = await res.json();
+    setNewGroupName("");
+    setCreatingGroup(false);
     await loadGroups();
     setSelectedId(created.id);
     setDraft({ ...created, permissions: { ...(created.permissions as Record<ModuleSlug, number>) } });
@@ -201,9 +252,12 @@ export default function PermissionGroupsTab({
     if (!draft) return;
     setMembersView(true);
     setLoadingMembers(true);
-    const [membRes, wsRes] = await Promise.all([
+    setExpandedMemberId(null);
+    setMemberClientsMap({});
+    const [membRes, wsRes, clientRes] = await Promise.all([
       fetch(`/api/team/groups/${draft.id}/members`),
       fetch("/api/team/invite"),
+      fetch("/api/clients"),
     ]);
     if (membRes.ok) {
       const data = await membRes.json();
@@ -213,7 +267,48 @@ export default function PermissionGroupsTab({
       const data = await wsRes.json();
       setWorkspaceMembers(data.members ?? []);
     }
+    if (clientRes.ok) {
+      const data = await clientRes.json();
+      setAllClients(data.map((c: { id: string; name: string }) => ({ id: c.id, name: c.name })));
+    }
     setLoadingMembers(false);
+  }
+
+  async function toggleMemberExpanded(memberId: string) {
+    if (expandedMemberId === memberId) {
+      setExpandedMemberId(null);
+      return;
+    }
+    setExpandedMemberId(memberId);
+    if (!memberClientsMap[memberId]) {
+      const res = await fetch(`/api/team/members/${memberId}/clients`);
+      if (res.ok) {
+        const data: { id: string; name: string }[] = await res.json();
+        setMemberClientsMap((prev) => ({ ...prev, [memberId]: data.map((c) => c.id) }));
+      }
+    }
+  }
+
+  async function toggleClientAssignment(memberId: string, clientId: string, isAssigned: boolean) {
+    setTogglingClientId(clientId);
+    const res = await fetch(`/api/team/members/${memberId}/clients`, {
+      method: isAssigned ? "DELETE" : "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ clientId }),
+    });
+    setTogglingClientId(null);
+    if (!res.ok) { toast.error("Nie udało się zmienić przypisania"); return; }
+    setMemberClientsMap((prev) => ({
+      ...prev,
+      [memberId]: isAssigned
+        ? (prev[memberId] ?? []).filter((id) => id !== clientId)
+        : [...(prev[memberId] ?? []), clientId],
+    }));
+    setGroupMembers((prev) => prev.map((m) => {
+      if (m.id !== memberId) return m;
+      const delta = isAssigned ? -1 : 1;
+      return { ...m, _count: { ...m._count, clientAssignments: m._count.clientAssignments + delta } };
+    }));
   }
 
   async function addToGroup(userId: string) {
@@ -245,6 +340,7 @@ export default function PermissionGroupsTab({
   }
 
   const selected = draft;
+  const canEdit = plan === "studio" || plan === "agencja";
   const clientsLevel = selected?.permissions["klienci"] ?? 0;
 
   if (loading) {
@@ -255,20 +351,22 @@ export default function PermissionGroupsTab({
     <div className="flex gap-6 min-h-[500px]">
 
       {/* Left column — group list */}
-      <div className="w-44 shrink-0 flex flex-col gap-1">
+      <div className="w-48 shrink-0 flex flex-col gap-1 border-r border-border pr-6">
         <div className="flex items-center justify-between mb-2">
           <span className="text-[11px] font-semibold tracking-widest text-muted-foreground uppercase">Grupy</span>
-          {canEdit && (
-            <button onClick={handleCreate} className="text-primary hover:opacity-70 transition-opacity" title="Nowa grupa">
-              <Plus size={15} />
-            </button>
-          )}
+          <button
+            onClick={() => { setCreatingGroup(true); setNewGroupName(""); }}
+            className="text-primary hover:opacity-70 transition-opacity"
+            title="Nowa grupa"
+          >
+            <Plus size={15} />
+          </button>
         </div>
         {groups.map((g) => (
           <button
             key={g.id}
             onClick={() => selectGroup(g)}
-            className="flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm text-left transition-colors hover:bg-muted/50 w-full"
+            className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm text-left transition-colors w-full ${selectedId === g.id ? "bg-[#EEEDFE]" : "hover:bg-muted/50"}`}
           >
             <GroupAvatar name={g.name} active={selectedId === g.id} />
             <div className="flex-1 min-w-0">
@@ -277,45 +375,77 @@ export default function PermissionGroupsTab({
             </div>
           </button>
         ))}
+        {creatingGroup && (
+          <div className="mt-1 flex flex-col gap-1.5">
+            <input
+              autoFocus
+              type="text"
+              value={newGroupName}
+              onChange={(e) => setNewGroupName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleCreate();
+                if (e.key === "Escape") { setCreatingGroup(false); setNewGroupName(""); }
+              }}
+              placeholder="Nazwa grupy…"
+              className="w-full px-2 py-1.5 text-[13px] border border-primary/40 rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
+            />
+            <div className="flex gap-1">
+              <button
+                onClick={handleCreate}
+                disabled={!newGroupName.trim()}
+                className="flex-1 py-1 text-[11px] font-medium rounded-md hover:opacity-90 transition-opacity disabled:opacity-40"
+                style={{ background: "#4F46E5", color: "#fff" }}
+              >
+                Utwórz
+              </button>
+              <button
+                onClick={() => { setCreatingGroup(false); setNewGroupName(""); }}
+                className="px-2 py-1 text-[11px] rounded-md border border-border text-muted-foreground hover:bg-muted/40 transition-colors"
+              >
+                Anuluj
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Right panel */}
-      {selected && !membersView && (
+      {/* Center — permissions panel */}
+      {selected && (
         <div className="flex-1 flex flex-col gap-4 min-w-0">
 
           {/* Group header */}
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="font-semibold text-base">{selected.name}</p>
-              <button
-                onClick={openMembersView}
-                className="text-xs text-muted-foreground hover:text-primary transition-colors flex items-center gap-1"
-              >
-                <Users size={12} />
-                {selected._count?.members ?? 0} os.
-                {selected.isTemplate ? " · grupa szablonowa" : " · grupa własna"}
-              </button>
+              <p className="text-xs text-muted-foreground">
+                {selected.isTemplate ? "Grupa szablonowa" : "Grupa własna"}
+              </p>
             </div>
-
-            {/* Project scope */}
-            <div className="flex items-center gap-1 bg-muted/40 rounded-full p-0.5 shrink-0">
-              {(["assigned", "all"] as const).map((s) => (
+            <div className="flex items-center gap-2 shrink-0">
+              {/* Project scope */}
+              <div className="flex items-center gap-1 bg-muted/40 rounded-full p-0.5">
+                {(["assigned", "all"] as const).map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => setScope(s)}
+                    className={`px-3 py-1 text-xs font-medium rounded-full transition-all duration-150 ${
+                      selected.projectScope === s ? "text-white" : "text-muted-foreground hover:bg-muted/60"
+                    }`}
+                    style={selected.projectScope === s ? { background: "#4F46E5" } : {}}
+                  >
+                    {s === "assigned" ? "Przypisani klienci" : "Wszyscy klienci"}
+                  </button>
+                ))}
+              </div>
+              {!editMode && canEdit && (
                 <button
-                  key={s}
-                  type="button"
-                  disabled={!canEdit}
-                  onClick={() => setScope(s)}
-                  className={`px-3 py-1 text-xs font-medium rounded-full transition-all duration-150 ${
-                    selected.projectScope === s
-                      ? "text-white"
-                      : "text-muted-foreground hover:bg-muted/60"
-                  } ${!canEdit ? "cursor-default" : ""}`}
-                  style={selected.projectScope === s ? { background: "#4F46E5" } : {}}
-                  title={!canEdit ? "Edycja dostępna w planie Agencja" : undefined}
+                  onClick={() => { setEditSnapshot({ ...draft! }); setEditMode(true); }}
+                  className="px-3 py-1.5 text-xs font-medium border border-border rounded-lg hover:bg-muted/40 transition-colors"
                 >
-                  {s === "assigned" ? "Przypisane projekty" : "Wszystkie projekty"}
+                  Edytuj
                 </button>
-              ))}
+              )}
             </div>
           </div>
 
@@ -324,25 +454,16 @@ export default function PermissionGroupsTab({
             <p className="text-[11px] font-semibold tracking-widest text-muted-foreground uppercase mb-2">
               Uprawnienia w modułach
             </p>
-            <div className="border border-border rounded-xl overflow-hidden">
+            <div className={`border border-border rounded-xl overflow-hidden transition-opacity ${!editMode ? "opacity-50 pointer-events-none" : ""}`}>
               {MODULE_LIST.map(({ slug, label, icon }, i) => {
                 const level = (selected.permissions[slug] as number) ?? 0;
                 return (
-                  <div
-                    key={slug}
-                    className={`flex items-center gap-3 px-4 py-2.5 ${i > 0 ? "border-t border-border/50" : ""}`}
-                  >
+                  <div key={slug} className={`flex items-center gap-3 px-4 py-2.5 ${i > 0 ? "border-t border-border/50" : ""}`}>
                     <span className="text-muted-foreground shrink-0">{icon}</span>
                     <span className="flex-1 text-sm">{label}</span>
                     <div className="flex items-center gap-0.5 bg-muted/40 rounded-full p-0.5">
                       {([0, 1, 2, 3] as const).map((l) => (
-                        <LevelSegment
-                          key={l}
-                          level={l}
-                          active={level === l}
-                          onClick={() => setLevel(slug, l)}
-                          readOnly={!canEdit}
-                        />
+                        <LevelSegment key={l} level={l} active={level === l} onClick={() => setLevel(slug, l)} readOnly={false} tooltip={LEVEL_TOOLTIPS[slug][l]} />
                       ))}
                     </div>
                   </div>
@@ -351,165 +472,169 @@ export default function PermissionGroupsTab({
             </div>
           </div>
 
-          {/* Note: Klienci < 3 */}
           {clientsLevel < 3 && (
-            <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl text-xs"
-              style={{ background: "#EEEDFE", color: "#3C3489" }}>
+            <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl text-xs" style={{ background: "#EEEDFE", color: "#3C3489" }}>
               <Lock size={13} className="shrink-0 mt-0.5" />
-              <p>
-                <strong>„Zarządzanie"</strong> w module Klienci obejmuje zapraszanie klientów i publikowanie im materiałów.
-                Ta grupa przygotowuje treści, ale nie publikuje ich klientowi.
-              </p>
+              <p><strong>„Zarządzanie"</strong> w module Klienci obejmuje zapraszanie klientów i publikowanie im materiałów.</p>
             </div>
           )}
 
-          {/* Note: system limits */}
           <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl text-xs bg-muted/40 text-muted-foreground">
             <Shield size={13} className="shrink-0 mt-0.5" />
-            <p>
-              Zapraszanie nowych osób do workspace i zarządzanie rolami systemowymi znajdziesz w zakładce Członkowie.
-              Billing zarządza wyłącznie Właściciel — w Ustawieniach → Plan i rozliczenia.
-            </p>
+            <p>Zapraszanie nowych osób do workspace i zarządzanie rolami systemowymi znajdziesz w zakładce Członkowie.</p>
           </div>
 
-          {/* Footer actions */}
-          <div className="flex items-center gap-2 pt-1">
-            {selected.isTemplate && canEdit && (
+          {editMode && (
+            <div className="flex items-center gap-2 pt-1">
+              {selected.isTemplate && (
+                <button onClick={handleRestore} className="px-4 py-2 text-sm border border-border rounded-lg hover:bg-muted/40 transition-colors">
+                  Przywróć domyślne
+                </button>
+              )}
               <button
-                onClick={handleRestore}
+                onClick={() => {
+                  if (editSnapshot) setDraft({ ...editSnapshot, permissions: { ...(editSnapshot.permissions as Record<ModuleSlug, number>) } });
+                  setDirty(false);
+                  setEditMode(false);
+                  setEditSnapshot(null);
+                }}
                 className="px-4 py-2 text-sm border border-border rounded-lg hover:bg-muted/40 transition-colors"
               >
-                Przywróć domyślne
+                Anuluj
               </button>
-            )}
-            <button
-              onClick={handleSave}
-              disabled={!dirty || saving || !canEdit}
-              className="ml-auto flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
-              style={{ background: "#4F46E5", color: "#fff" }}
-            >
-              {saving && <Loader2 size={13} className="animate-spin" />}
-              Zapisz zmiany
-            </button>
-          </div>
-
-          {!canEdit && (
-            <p className="text-xs text-muted-foreground text-center">
-              Edycja macierzy uprawnień dostępna w planie Agencja.{" "}
-              <a href="/ustawienia/plan-i-rozliczenia" className="text-primary hover:underline">Upgrade ↗</a>
-            </p>
+              <button
+                onClick={handleSave}
+                disabled={!dirty || saving}
+                className="ml-auto flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+                style={{ background: "#4F46E5", color: "#fff" }}
+              >
+                {saving && <Loader2 size={13} className="animate-spin" />}
+                Zapisz zmiany
+              </button>
+            </div>
           )}
+
         </div>
       )}
 
-      {/* Members subview */}
-      {selected && membersView && (
-        <div className="flex-1 flex flex-col gap-4 min-w-0">
-          <button
-            onClick={() => setMembersView(false)}
-            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors self-start"
-          >
-            <ArrowLeft size={14} />
-            Powrót do uprawnień
-          </button>
-          <div className="flex items-center gap-3">
-            <GroupAvatar name={selected.name} active />
-            <div>
-              <p className="font-semibold">{selected.name} · członkowie</p>
-              <p className="text-xs text-muted-foreground">{groupMembers.length} os.</p>
-            </div>
+      {/* Right — members sidebar */}
+      {selected && (
+        <div className="w-96 shrink-0 flex flex-col gap-3 border-l border-border pl-6">
+          <div className="flex items-center justify-between">
+            <p className="text-[11px] font-semibold tracking-widest text-muted-foreground uppercase">Członkowie</p>
+            <span className="text-[11px] text-muted-foreground">{groupMembers.length} os.</span>
           </div>
 
           {/* Add member picker */}
-          {canEdit && (
-            <div>
-              <p className="text-xs font-semibold text-muted-foreground mb-2">Dodaj osobę z workspace do grupy</p>
-              <div className="flex flex-col gap-1">
-                {workspaceMembers
-                  .filter((m) => !groupMembers.find((gm) => gm.id === m.id))
-                  .map((m) => (
-                    <div key={m.id} className="flex items-center gap-3 px-3 py-2 rounded-lg border border-border hover:bg-muted/30 transition-colors">
-                      <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold shrink-0"
-                        style={{ background: "#EEEDFE", color: "#3C3489" }}>
-                        {((m.fullName || m.name || m.email)[0] ?? "?").toUpperCase()}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm truncate">{m.fullName || m.name || m.email}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {m.permissionGroups.length > 0
-                            ? `obecnie: ${m.permissionGroups.map((g) => g.group.name).join(", ")}`
-                            : "bez grupy"}
-                        </p>
-                      </div>
-                      <button
-                        onClick={() => addToGroup(m.id)}
-                        disabled={addingUserId === m.id}
-                        className="p-1.5 rounded-md text-primary hover:bg-primary/10 transition-colors"
-                        title="Dodaj do grupy"
-                      >
-                        {addingUserId === m.id ? <Loader2 size={13} className="animate-spin" /> : <UserPlus size={13} />}
-                      </button>
+          {workspaceMembers.filter((m) => !groupMembers.find((gm) => gm.id === m.id)).length > 0 && (
+            <div className="flex flex-col gap-1">
+              {workspaceMembers
+                .filter((m) => !groupMembers.find((gm) => gm.id === m.id))
+                .map((m) => (
+                  <div key={m.id} className="flex items-center gap-2 px-2 py-1.5 rounded-lg border border-dashed border-border hover:bg-muted/30 transition-colors">
+                    <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-semibold shrink-0"
+                      style={{ background: "#F3F4F6", color: "#6B7280" }}>
+                      {((m.fullName || m.name || m.email)[0] ?? "?").toUpperCase()}
                     </div>
-                  ))}
-                {workspaceMembers.filter((m) => !groupMembers.find((gm) => gm.id === m.id)).length === 0 && (
-                  <p className="text-xs text-muted-foreground px-1">Wszyscy członkowie workspace są już w tej grupie.</p>
-                )}
-              </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs truncate text-muted-foreground">{m.fullName || m.name || m.email}</p>
+                    </div>
+                    <button
+                      onClick={() => addToGroup(m.id)}
+                      disabled={addingUserId === m.id}
+                      className="p-1 rounded text-primary hover:bg-primary/10 transition-colors"
+                      title="Dodaj do grupy"
+                    >
+                      {addingUserId === m.id ? <Loader2 size={11} className="animate-spin" /> : <UserPlus size={11} />}
+                    </button>
+                  </div>
+                ))}
+              <div className="border-t border-border/50 my-1" />
             </div>
           )}
 
           {/* Current members */}
           {loadingMembers ? (
-            <div className="flex justify-center py-8"><Loader2 size={20} className="animate-spin text-muted-foreground" /></div>
+            <div className="flex justify-center py-6"><Loader2 size={18} className="animate-spin text-muted-foreground" /></div>
           ) : groupMembers.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-6">Brak członków w tej grupie</p>
+            <p className="text-xs text-muted-foreground py-4 text-center">Brak członków w tej grupie</p>
           ) : (
-            <div className="border border-border rounded-xl overflow-hidden">
-              {groupMembers.map((m, i) => (
-                <div key={m.id}
-                  className={`flex items-center gap-3 px-4 py-3 ${i > 0 ? "border-t border-border" : ""}`}>
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold shrink-0"
-                    style={{ background: "#EEEDFE", color: "#3C3489" }}>
-                    {((m.fullName || m.name || m.email)[0] ?? "?").toUpperCase()}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <p className="text-sm font-medium truncate">{m.fullName || m.name || m.email}</p>
-                      <span className="text-[11px] text-muted-foreground">{m._count.projectAssignments} proj.</span>
-                      {/* Current group chip */}
-                      <span className="text-[11px] font-medium px-2 py-0.5 rounded-full"
-                        style={{ background: "#EEEDFE", color: "#3C3489" }}>{selected.name}</span>
-                      {/* Other groups */}
-                      {m.permissionGroups
-                        .filter((g) => g.group.id !== selected.id)
-                        .map(({ group }) => (
-                          <span key={group.id} className="text-[11px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
-                            {group.name}
-                          </span>
-                        ))}
+            <div className="flex flex-col gap-0 border border-border rounded-xl overflow-hidden">
+              {groupMembers.map((m, i) => {
+                const isExpanded = expandedMemberId === m.id;
+                const assignedIds = memberClientsMap[m.id] ?? null;
+                return (
+                  <div key={m.id} className={i > 0 ? "border-t border-border" : ""}>
+                    <div className="flex items-center gap-2 px-3 py-2.5">
+                      <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-semibold shrink-0"
+                        style={{ background: "#EEEDFE", color: "#3C3489" }}>
+                        {((m.fullName || m.name || m.email)[0] ?? "?").toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium truncate">{m.fullName || m.name || m.email}</p>
+                        <p className="text-[10px] text-muted-foreground truncate">{m._count.clientAssignments} kl.</p>
+                      </div>
+                      <button
+                        onClick={() => toggleMemberExpanded(m.id)}
+                        className={`flex items-center gap-1 px-2 py-1 text-[11px] font-medium rounded-md border transition-colors shrink-0 ${
+                          isExpanded ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                        }`}
+                        title="Przypisz klientów"
+                      >
+                        <ChevronRight size={10} className={`transition-transform ${isExpanded ? "rotate-90" : ""}`} />
+                        Klienci
+                      </button>
+                      <button
+                        onClick={() => removeFromGroup(m.id, m.permissionGroups.length)}
+                        disabled={removingUserId === m.id}
+                        className="p-1 rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                        title="Usuń z grupy"
+                      >
+                        {removingUserId === m.id ? <Loader2 size={11} className="animate-spin" /> : <X size={11} />}
+                      </button>
                     </div>
-                    {(m.fullName || m.name) && (
-                      <p className="text-xs text-muted-foreground truncate">{m.email}</p>
+
+                    {isExpanded && (
+                      <div className="px-3 pb-2.5 pt-1 border-t border-border/50 bg-muted/20">
+                        {assignedIds === null ? (
+                          <div className="flex items-center gap-1.5 py-1">
+                            <Loader2 size={11} className="animate-spin text-muted-foreground" />
+                            <span className="text-[11px] text-muted-foreground">Ładowanie...</span>
+                          </div>
+                        ) : allClients.length === 0 ? (
+                          <p className="text-[11px] text-muted-foreground">Brak klientów.</p>
+                        ) : (
+                          <div className="flex flex-col gap-0.5">
+                            {allClients.map((client) => {
+                              const isAssigned = assignedIds.includes(client.id);
+                              const isToggling = togglingClientId === client.id;
+                              return (
+                                <div key={client.id} className="flex items-center gap-2 py-0.5">
+                                  <button
+                                    onClick={() => toggleClientAssignment(m.id, client.id, isAssigned)}
+                                    disabled={isToggling}
+                                    className={`w-3.5 h-3.5 rounded flex items-center justify-center border transition-colors shrink-0 ${
+                                      isAssigned ? "border-primary bg-primary text-white" : "border-border bg-background hover:border-primary/60"
+                                    }`}
+                                  >
+                                    {isToggling ? <Loader2 size={8} className="animate-spin" /> : isAssigned ? <span style={{ fontSize: 8, lineHeight: 1 }}>✓</span> : null}
+                                  </button>
+                                  <span className={`text-[11px] truncate ${isAssigned ? "text-foreground" : "text-muted-foreground"}`}>{client.name}</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
                     )}
                   </div>
-                  {canEdit && (
-                    <button
-                      onClick={() => removeFromGroup(m.id, m.permissionGroups.length)}
-                      disabled={removingUserId === m.id}
-                      className="p-1.5 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-                      title="Usuń z grupy"
-                    >
-                      {removingUserId === m.id ? <Loader2 size={13} className="animate-spin" /> : <X size={13} />}
-                    </button>
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
 
-          <p className="text-xs text-muted-foreground bg-muted/40 rounded-lg px-3 py-2">
+          <p className="text-[11px] text-muted-foreground">
             Uprawnienia się sumują — obowiązuje najszerszy poziom ze wszystkich grup.
-            Nowe osoby do workspace zaprosisz w zakładce Członkowie.
           </p>
         </div>
       )}

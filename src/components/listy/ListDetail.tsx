@@ -880,13 +880,21 @@ function ProductRow({
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-1">
               <div className="min-w-0 flex-1">
-                {product.url ? (
-                  <a href={product.url} target="_blank" rel="noopener noreferrer" className="font-medium text-sm text-foreground hover:text-primary hover:underline leading-tight block transition-colors">
-                    {product.name}
-                  </a>
-                ) : (
-                  <p className="font-medium text-sm text-foreground leading-tight">{product.name}</p>
-                )}
+                <div
+                  className="overflow-hidden max-h-[2.25rem]"
+                  style={{
+                    WebkitMaskImage: "linear-gradient(to bottom, black 50%, transparent 50%), linear-gradient(to right, black 60%, transparent 100%)",
+                    maskImage: "linear-gradient(to bottom, black 50%, transparent 50%), linear-gradient(to right, black 60%, transparent 100%)",
+                  }}
+                >
+                  {product.url ? (
+                    <a href={product.url} target="_blank" rel="noopener noreferrer" className="font-medium text-sm text-foreground hover:text-primary hover:underline leading-tight block transition-colors">
+                      {product.name}
+                    </a>
+                  ) : (
+                    <p className="font-medium text-sm text-foreground leading-tight">{product.name}</p>
+                  )}
+                </div>
               </div>
               <div className="shrink-0 -mt-0.5">{dropdown}</div>
             </div>

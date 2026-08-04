@@ -116,6 +116,7 @@ model User {
   systemRole                 String                  @default("member")
   permissionGroups           GroupMember[]
   projectAssignments         ProjectAssignment[]
+  clientAssignments          ClientAssignment[]
   ownedPermissionGroups      PermissionGroup[]       @relation("WorkspaceGroups")
 }
 
@@ -254,6 +255,15 @@ model ProjectAssignment {
   @@unique([projectId, userId])
 }
 
+model ClientAssignment {
+  id       String  @id @default(cuid())
+  clientId String
+  userId   String
+  client   Client  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([clientId, userId])
+}
+
 model BillingRecord {
   id         String   @id @default(cuid())
   userId     String
@@ -388,6 +398,7 @@ model Client {
   assignedSurveys   Survey[]        @relation("SurveyAssignedClient")
   moodboards        Moodboard[]
   shoppingLists     ShoppingList[]
+  memberAssignments ClientAssignment[]
 }
 
 model Project {

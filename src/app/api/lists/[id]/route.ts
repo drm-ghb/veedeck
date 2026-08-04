@@ -5,7 +5,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { uniqueSlug } from "@/lib/slug";
 import { getWorkspaceUserId } from "@/lib/workspace";
-import { checkTeamPermission } from "@/lib/permissions";
+import { checkTeamPermission, hasPermission } from "@/lib/permissions";
 import { notifyClientListShared } from "@/lib/email";
 import { createAccessToken } from "@/lib/access-token";
 
@@ -211,6 +211,7 @@ export async function PATCH(
 ) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!await hasPermission(session, "listy", 2)) return NextResponse.json({ error: "Brak uprawnień do edycji listy" }, { status: 403 });
   const userId = getWorkspaceUserId(session);
 
   const { id } = await params;

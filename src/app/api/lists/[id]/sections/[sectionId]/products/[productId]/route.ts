@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { pusherServer } from "@/lib/pusher";
 import { getWorkspaceUserId } from "@/lib/workspace";
 import { logListChange } from "@/lib/list-changelog";
+import { hasPermission } from "@/lib/permissions";
 
 async function findProduct(productId: string, sectionId: string, listId: string, userId: string) {
   return prisma.listProduct.findFirst({
@@ -21,6 +22,7 @@ export async function PATCH(
 ) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!await hasPermission(session, "listy", 2)) return NextResponse.json({ error: "Brak uprawnień do edycji listy" }, { status: 403 });
 
   const { id, sectionId, productId } = await params;
   const body = await req.json();
@@ -165,6 +167,7 @@ export async function PUT(
 ) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!await hasPermission(session, "listy", 2)) return NextResponse.json({ error: "Brak uprawnień do edycji listy" }, { status: 403 });
 
   const { id, sectionId, productId } = await params;
   const body = await req.json();
@@ -215,6 +218,7 @@ export async function DELETE(
 ) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!await hasPermission(session, "listy", 2)) return NextResponse.json({ error: "Brak uprawnień do edycji listy" }, { status: 403 });
 
   const { id, sectionId, productId } = await params;
 

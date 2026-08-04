@@ -150,7 +150,7 @@ export default function TeamSettings() {
   const totalUsed = members.length + invitations.length;
   const atLimit = memberLimit !== null && totalUsed >= memberLimit;
   const canInvite = plan === "studio" || plan === "agencja";
-  const canEditGroups = plan === "agencja";
+  const canEditGroups = plan === "studio" || plan === "agencja";
 
   const tabClass = (active: boolean) =>
     `px-4 py-2.5 text-sm font-medium transition-colors border-b-2 ${
@@ -223,7 +223,7 @@ export default function TeamSettings() {
 
           {/* ── Tab: Członkowie ── */}
           {activeTab === "members" && (
-            <div className="space-y-6 pt-2">
+            <div className="space-y-6 pt-6">
 
               {/* Invite form */}
               {!atLimit && (
@@ -380,7 +380,7 @@ export default function TeamSettings() {
 
           {/* ── Tab: Grupy uprawnień ── */}
           {activeTab === "groups" && (
-            <div className="pt-2">
+            <div className="pt-6">
               <PermissionGroupsTab plan={plan} onGroupsChanged={load} />
             </div>
           )}

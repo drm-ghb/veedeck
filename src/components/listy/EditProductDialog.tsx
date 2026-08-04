@@ -132,12 +132,12 @@ export default function EditProductDialog({
                 </button>
               </div>
             ) : (
-              <div className="rounded-lg border-2 border-dashed border-border h-32 flex flex-col items-center justify-center gap-2 bg-muted/30">
+              <div className="rounded-lg border-2 border-dashed border-border h-32 flex items-center justify-center bg-muted/30 relative cursor-pointer hover:bg-muted/40 transition-colors group">
                 {uploading ? (
-                  <><Loader2 size={18} className="animate-spin text-muted-foreground" /><p className="text-xs text-muted-foreground">{t.products.uploading}</p></>
+                  <Loader2 size={20} className="animate-spin text-muted-foreground" />
                 ) : (
                   <>
-                    <ImagePlus size={20} className="text-muted-foreground" />
+                    <ImagePlus size={24} className="text-muted-foreground group-hover:text-foreground transition-colors pointer-events-none" />
                     <UploadButton<OurFileRouter, "productImageUploader">
                       endpoint="productImageUploader"
                       onUploadBegin={() => setUploading(true)}
@@ -151,10 +151,11 @@ export default function EditProductDialog({
                         setUploading(false);
                       }}
                       appearance={{
-                        button: "bg-transparent text-xs text-muted-foreground hover:text-foreground underline cursor-pointer ut-uploading:opacity-50",
+                        container: "absolute inset-0 flex",
+                        button: "absolute inset-0 opacity-0 cursor-pointer w-full h-full",
                         allowedContent: "hidden",
                       }}
-                      content={{ button: t.products.chooseImage }}
+                      content={{ button: <span /> }}
                     />
                   </>
                 )}

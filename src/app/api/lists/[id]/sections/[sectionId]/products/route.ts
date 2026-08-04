@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { hasPermission } from "@/lib/permissions";
 
 export async function PATCH(
   req: NextRequest,
@@ -8,6 +9,7 @@ export async function PATCH(
 ) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!await hasPermission(session, "listy", 2)) return NextResponse.json({ error: "Brak uprawnień do edycji listy" }, { status: 403 });
 
   const { id, sectionId } = await params;
   const { order } = await req.json();
@@ -33,9 +35,8 @@ export async function POST(
   { params }: { params: Promise<{ id: string; sectionId: string }> }
 ) {
   const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!await hasPermission(session, "listy", 2)) return NextResponse.json({ error: "Brak uprawnień do edycji listy" }, { status: 403 });
 
   const { id, sectionId } = await params;
   const body = await req.json();

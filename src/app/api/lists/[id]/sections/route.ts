@@ -3,10 +3,12 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getWorkspaceUserId } from "@/lib/workspace";
 import { logListChange } from "@/lib/list-changelog";
+import { hasPermission } from "@/lib/permissions";
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!await hasPermission(session, "listy", 2)) return NextResponse.json({ error: "Brak uprawnień do edycji listy" }, { status: 403 });
 
   const { id } = await params;
   const { order }: { order: string[] } = await req.json();
@@ -30,9 +32,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!await hasPermission(session, "listy", 2)) return NextResponse.json({ error: "Brak uprawnień do edycji listy" }, { status: 403 });
 
   const { id } = await params;
   const { name } = await req.json();

@@ -84,6 +84,17 @@ export default function ProductCommentPanel({
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState(false);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setVisible(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
+
+  function handleClose() {
+    setVisible(false);
+    setTimeout(onClose, 280);
+  }
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
   const [replyingToComment, setReplyingToComment] = useState<{ id: string; content: string; author: string } | null>(null);
@@ -288,7 +299,7 @@ export default function ProductCommentPanel({
   }
 
   return (
-    <div className="fixed left-0 right-0 md:left-auto top-0 h-full z-50 flex flex-row items-end">
+    <div className={`fixed left-0 right-0 md:left-auto top-0 h-full z-50 flex flex-row items-end transition-transform duration-300 ease-out ${visible ? "translate-x-0" : "translate-x-full"}`}>
       {/* Expand handle on left edge */}
       <button
         onClick={() => setExpanded(v => !v)}
@@ -313,7 +324,7 @@ export default function ProductCommentPanel({
           </div>
         </div>
         <button
-          onClick={onClose}
+          onClick={handleClose}
           className="w-7 h-7 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
         >
           <X size={16} />

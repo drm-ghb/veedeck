@@ -203,36 +203,38 @@ export async function getProjectScope(session: Session): Promise<"assigned" | "a
 }
 
 /**
- * Returns the list of project IDs the user may access, or null for unrestricted access.
+ * Returns the list of client IDs accessible to the session user (via ClientAssignment),
+ * or null for unrestricted access.
+ */
+export async function getAllowedClientIds(session: Session): Promise<string[] | null> {
+  if (!isTeamMember(session)) return null;
+  const scope = await getProjectScope(session);
+  if (scope === "all") return null;
+
+  const assignments = await prisma.clientAssignment.findMany({
+    where: { userId: session.user!.id! },
+    select: { clientId: true },
+  });
+  return assignments.map((a) => a.clientId);
+}
+
+/**
+ * Returns the list of project IDs the user may access (via assigned clients),
+ * or null for unrestricted access.
  */
 export async function getAllowedProjectIds(session: Session): Promise<string[] | null> {
   const scope = await getProjectScope(session);
   if (scope === "all") return null;
 
-  const assignments = await prisma.projectAssignment.findMany({
-    where: { userId: session.user!.id! },
-    select: { projectId: true },
-  });
-  return assignments.map((a) => a.projectId);
-}
+  const clientIds = await getAllowedClientIds(session);
+  if (clientIds === null) return null;
+  if (clientIds.length === 0) return [];
 
-/**
- * Returns the list of client IDs accessible to the session user (via assigned projects),
- * or null for unrestricted access. Used by routes that filter by clientId.
- */
-export async function getAllowedClientIds(session: Session): Promise<string[] | null> {
-  if (!isTeamMember(session)) return null;
-  const projectIds = await getAllowedProjectIds(session);
-  if (projectIds === null) return null;
-  if (projectIds.length === 0) return [];
-
-  const ownerId = getOwnerId(session);
   const projects = await prisma.project.findMany({
-    where: { id: { in: projectIds }, userId: ownerId },
-    select: { clientId: true },
+    where: { clientId: { in: clientIds } },
+    select: { id: true },
   });
-  const ids = projects.map((p) => p.clientId).filter(Boolean) as string[];
-  return [...new Set(ids)];
+  return projects.map((p) => p.id);
 }
 
 /**

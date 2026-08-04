@@ -32,7 +32,7 @@ export async function GET(
         select: {
           id: true, name: true, email: true, fullName: true, avatarUrl: true, systemRole: true,
           permissionGroups: { include: { group: { select: { id: true, name: true } } } },
-          _count: { select: { projectAssignments: true } },
+          _count: { select: { clientAssignments: true } },
         },
       },
     },
