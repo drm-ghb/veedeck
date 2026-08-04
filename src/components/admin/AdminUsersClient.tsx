@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Trash2, ShieldCheck, FolderOpen, KeyRound, X, Clock, Gift, Search, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useT } from "@/lib/i18n";
+import { showConfirm } from "@/lib/confirm";
 
 interface User {
   id: string;
@@ -43,7 +44,7 @@ export default function AdminUsersClient({
   const router = useRouter();
 
   async function handleDelete(id: string, name: string | null) {
-    if (!confirm(`${t.admin.confirmDeleteUser} "${name ?? t.admin.noNameLabel}"? ${t.admin.confirmDeleteUserSuffix}`)) return;
+    if (!await showConfirm(`${t.admin.confirmDeleteUser} "${name ?? t.admin.noNameLabel}"? ${t.admin.confirmDeleteUserSuffix}`)) return;
     const res = await fetch(`/api/admin/users/${id}`, { method: "DELETE" });
     if (res.ok) {
       setList((prev) => prev.filter((u) => u.id !== id));

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getWorkspaceUserId } from "@/lib/workspace";
+import { logListChange } from "@/lib/list-changelog";
 
 export async function POST(
   req: NextRequest,
@@ -96,6 +97,14 @@ export async function POST(
       order: count,
       productId: finalProductId,
     },
+  });
+
+  await logListChange({
+    listId: id,
+    userId: session.user.id,
+    userName: session.user.name ?? session.user.email ?? "Projektant",
+    action: "Dodano produkt",
+    details: product.name,
   });
 
   return NextResponse.json(product, { status: 201 });

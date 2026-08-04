@@ -113,6 +113,7 @@ export async function POST(
       phone: phone?.trim() || null,
       description: description?.trim() || null,
       isMainContact: !!isMainContact,
+      emailNotifications: !!isMainContact && clientUserId !== null,
       clientId: id,
       userId: clientUserId,
     },

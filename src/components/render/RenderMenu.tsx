@@ -24,6 +24,7 @@ import { toast } from "sonner";
 import MoveRenderDialog from "./MoveRenderDialog";
 import { useT } from "@/lib/i18n";
 import { useIsTrialExpired } from "@/lib/trial-context";
+import { showConfirm } from "@/lib/confirm";
 
 interface RenderMenuProps {
   render: { id: string; name: string; pinned?: boolean };
@@ -75,7 +76,7 @@ export default function RenderMenu({ render, projectId, currentRoomId, currentFo
   }
 
   async function handleDelete() {
-    if (!confirm(`${t.render.renderDeleted} "${render.name}"?`)) return;
+    if (!await showConfirm(`${t.render.renderDeleted} "${render.name}"?`)) return;
     const res = await fetch(`/api/renders/${render.id}`, { method: "DELETE" });
     if (res.ok) {
       toast.success(t.render.renderDeleted);

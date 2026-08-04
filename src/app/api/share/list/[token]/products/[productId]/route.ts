@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { pusherServer } from "@/lib/pusher";
 import { queueEmailNotif } from "@/lib/email-queue";
+import { logListChange } from "@/lib/list-changelog";
 
 const VALID_APPROVALS = ["accepted", "rejected", null];
 
@@ -40,6 +41,9 @@ export async function PATCH(
   });
 
   const list = product.section.list;
+
+  const approvalLabel = approval === "accepted" ? "zaakceptował produkt" : approval === "rejected" ? "odrzucił produkt" : "cofnął decyzję o produkcie";
+  await logListChange({ listId: list.id, userId: null, userName: clientName ?? "Klient", action: approvalLabel, details: product.name, source: "client" });
 
   try {
     await pusherServer.trigger(`shopping-list-${list.id}`, "approval-change", {

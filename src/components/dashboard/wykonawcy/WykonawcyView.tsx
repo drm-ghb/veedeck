@@ -13,6 +13,7 @@ import ContractorCard from "./ContractorCard";
 import AddContractorDialog from "./AddContractorDialog";
 import TrialGate from "@/components/ui/TrialGate";
 import { useIsTrialExpired } from "@/lib/trial-context";
+import { showConfirm } from "@/lib/confirm";
 
 interface Contractor {
   id: string;
@@ -174,7 +175,7 @@ function ContractorListView({ contractors, unreadPerContractor = {}, onDeleted }
   const expired = useIsTrialExpired();
 
   async function handleDelete(id: string, name: string) {
-    if (!confirm(`${t.common.delete} "${name}"? ${t.wykonawcy.deleteConfirmMsg}`)) return;
+    if (!await showConfirm(`${t.common.delete} "${name}"? ${t.wykonawcy.deleteConfirmMsg}`)) return;
     const res = await fetch(`/api/contractors/${id}`, { method: "DELETE" });
     if (res.ok) {
       toast.success(t.wykonawcy.deletedOk);

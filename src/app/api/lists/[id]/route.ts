@@ -244,15 +244,52 @@ export async function PATCH(
         accountCreated = target.accountCreated;
         const designer = await prisma.user.findUnique({ where: { id: userId }, select: { name: true, fullName: true } });
         const designerName = designer?.fullName || designer?.name || "Projektant";
+
+        // Resolve effectiveClientId for multi-contact notification lookup
+        let effectiveClientId: string | null = updated.clientId ?? null;
+        if (!effectiveClientId && updated.projectId) {
+          const proj = await prisma.project.findUnique({ where: { id: updated.projectId }, select: { clientId: true } });
+          effectiveClientId = proj?.clientId ?? null;
+        }
+
+        // Find all other contacts with emailNotifications enabled
+        const extraContacts = effectiveClientId
+          ? await prisma.projectClient.findMany({
+              where: {
+                clientId: effectiveClientId,
+                emailNotifications: true,
+                userId: { not: null },
+                email: { not: null },
+                id: { not: target.mainContact.id },
+              },
+              select: { id: true, name: true, email: true, userId: true },
+            })
+          : [];
+
         // Fire-and-forget — account/token setup above is already done, response doesn't need to wait on SMTP.
-        notifyClientListShared({
-          clientEmail: target.mainContact.email!,
-          clientName: target.mainContact.name,
-          listName: list.name,
-          designerName,
-          projectTitle: target.displayTitle,
-          listUrl: target.listUrl,
-        }).catch((err) => console.error("[PATCH /api/lists] share email error:", err));
+        (async () => {
+          await notifyClientListShared({
+            clientEmail: target.mainContact.email!,
+            clientName: target.mainContact.name,
+            listName: list.name,
+            designerName,
+            projectTitle: target.displayTitle,
+            listUrl: target.listUrl,
+          }).catch((err) => console.error("[PATCH /api/lists] share email (main) error:", err));
+
+          for (const c of extraContacts) {
+            const rawToken = await createAccessToken(c.userId!);
+            const link = `${APP_URL}/p/${encodeURIComponent(rawToken)}?listId=${updated.id}`;
+            await notifyClientListShared({
+              clientEmail: c.email!,
+              clientName: c.name,
+              listName: list.name,
+              designerName,
+              projectTitle: target.displayTitle,
+              listUrl: link,
+            }).catch((err) => console.error("[PATCH /api/lists] share email (extra) error:", err));
+          }
+        })();
       }
     } catch (err) {
       console.error("[PATCH /api/lists] share setup error:", err);

@@ -10,6 +10,7 @@ import NewSurveyDialog from "./NewSurveyDialog";
 import TemplatesTab from "./TemplatesTab";
 import { useT } from "@/lib/i18n";
 import { useIsTrialExpired } from "@/lib/trial-context";
+import { showConfirm } from "@/lib/confirm";
 
 type Client = { id: string; name: string };
 type Survey = {
@@ -144,7 +145,7 @@ export default function SurveysClient({ surveys: initial, clients, customTemplat
 
   async function handleDelete(survey: Survey) {
     setOpenMenuId(null);
-    if (!confirm(t.ankiety.confirmDelete)) return;
+    if (!await showConfirm(t.ankiety.confirmDelete)) return;
     const res = await fetch(`/api/surveys/${survey.id}`, { method: "DELETE" });
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));

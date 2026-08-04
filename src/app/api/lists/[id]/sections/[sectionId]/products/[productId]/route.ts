@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { pusherServer } from "@/lib/pusher";
 import { getWorkspaceUserId } from "@/lib/workspace";
+import { logListChange } from "@/lib/list-changelog";
 
 async function findProduct(productId: string, sectionId: string, listId: string, userId: string) {
   return prisma.listProduct.findFirst({
@@ -40,6 +41,8 @@ export async function PATCH(
         productId,
         approval: body.approval,
       }).catch((e) => console.error("[approval] pusher trigger failed:", e));
+      const approvalLabel = body.approval === "accepted" ? "zaakceptował produkt" : body.approval === "rejected" ? "odrzucił produkt" : "cofnął decyzję o produkcie";
+      await logListChange({ listId: id, userId: session.user.id, userName: session.user.name ?? session.user.email ?? "Projektant", action: approvalLabel, details: product.name });
       return NextResponse.json(updated);
     }
 
@@ -52,6 +55,9 @@ export async function PATCH(
         where: { id: productId },
         data: { orderStatus: body.orderStatus },
       });
+      const statusLabels: Record<string, string> = { do_wyceny: "Do wyceny", w_wycenie: "W wycenie", zamowione: "Zamówione", do_reklamacji: "Do reklamacji" };
+      const statusLabel = body.orderStatus ? statusLabels[body.orderStatus] ?? body.orderStatus : "brak";
+      await logListChange({ listId: id, userId: session.user.id, userName: session.user.name ?? session.user.email ?? "Projektant", action: "Zmieniono status zamówienia", details: `${product.name} → ${statusLabel}` });
       return NextResponse.json(updated);
     }
 
@@ -141,6 +147,9 @@ export async function PATCH(
         where: { id: productId },
         data: { [patchField]: body[patchField] || null },
       });
+      const fieldLabels: Record<string, string> = { price: "cenę", name: "nazwę", color: "kolor", dimensions: "wymiary", manufacturer: "producenta", supplier: "dostawcę", deliveryTime: "czas dostawy", catalogNumber: "nr katalogowy", category: "kategorię", note: "notatkę" };
+      const fieldLabel = fieldLabels[patchField] ?? patchField;
+      await logListChange({ listId: id, userId: session.user.id, userName: session.user.name ?? session.user.email ?? "Projektant", action: `Zmieniono ${fieldLabel}`, details: `${product.name}${body[patchField] ? ` → ${body[patchField]}` : ""}` });
       return NextResponse.json(updated);
     } catch (err) {
       return NextResponse.json({ error: "Błąd aktualizacji pola", detail: String(err) }, { status: 500 });
@@ -195,6 +204,8 @@ export async function PUT(
     });
   }
 
+  await logListChange({ listId: id, userId: session.user.id, userName: session.user.name ?? session.user.email ?? "Projektant", action: "Edytowano produkt", details: updated.name });
+
   return NextResponse.json(updated);
 }
 
@@ -211,6 +222,8 @@ export async function DELETE(
   if (!product) return NextResponse.json({ error: "Nie znaleziono produktu" }, { status: 404 });
 
   await prisma.listProduct.delete({ where: { id: productId } });
+
+  await logListChange({ listId: id, userId: session.user.id, userName: session.user.name ?? session.user.email ?? "Projektant", action: "Usunięto produkt", details: product.name });
 
   return NextResponse.json({ ok: true });
 }

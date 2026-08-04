@@ -79,6 +79,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
       userId: c.userId ?? null,
       projectId: c.projectId,
       scheduleSharedWithClient: c.project?.scheduleSharedWithClient ?? false,
+      emailNotifications: c.emailNotifications ?? false,
       lastLoginAt: c.userId ? (lastLoginMap.get(c.userId) ?? null) : null,
       user: c.user
         ? { id: c.user.id, login: c.user.login ?? "", email: c.user.email ?? null, firstLoginAt: c.user.firstLoginAt?.toISOString() ?? null }

@@ -16,6 +16,7 @@ import { useIsTrialExpired } from "@/lib/trial-context";
 import Cropper from "react-easy-crop";
 import type { Area } from "react-easy-crop";
 import { getCroppedImg } from "@/components/settings/SettingsShared";
+import { showConfirm } from "@/lib/confirm";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -916,7 +917,7 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
   }
 
   async function handleDeleteMsg(msgId: string) {
-    if (!confirm(t.dyskusje.deleteConfirm)) return;
+    if (!await showConfirm(t.dyskusje.deleteConfirm)) return;
     const res = await fetch(`/api/discussions/${selectedId}/messages/${msgId}`, { method: "DELETE" });
     if (res.ok) {
       setMessages((prev) => prev.filter((m) => m.id !== msgId));
@@ -951,7 +952,7 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
     const msg = d?.type === "project"
       ? t.dyskusje.deleteDiscussionProjectConfirm
       : t.dyskusje.deleteDiscussionConfirm;
-    if (!confirm(msg)) return;
+    if (!await showConfirm(msg)) return;
     try {
       const res = await fetch(`/api/discussions/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error();
@@ -1902,9 +1903,9 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                                     <p className="text-xs text-muted-foreground">{p.user.role === "client" ? t.dyskusje.clientRole : t.dyskusje.teamRole}</p>
                                   </div>
                                   <button
-                                    onClick={() => {
+                                    onClick={async () => {
                                       const name = p.user.fullName || p.user.name || "tego uczestnika";
-                                      if (!confirm(t.dyskusje.removeMemberConfirm.replace("{name}", name))) return;
+                                      if (!await showConfirm(t.dyskusje.removeMemberConfirm.replace("{name}", name))) return;
                                       removeMember(selected.id, p.userId);
                                     }}
                                     className="p-1.5 rounded-lg text-destructive hover:bg-destructive/10 transition-colors flex-shrink-0"

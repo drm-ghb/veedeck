@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import MoveFolderDialog from "./MoveFolderDialog";
 import { useT } from "@/lib/i18n";
 import { useIsTrialExpired } from "@/lib/trial-context";
+import { showConfirm } from "@/lib/confirm";
 
 interface FolderMenuProps {
   folder: { id: string; name: string; pinned?: boolean; archived?: boolean };
@@ -86,7 +87,7 @@ export default function FolderMenu({ folder, projectId, currentRoomId }: FolderM
   }
 
   async function handleDelete() {
-    if (!confirm(`${t.render.deleteFolder} "${folder.name}"?`)) return;
+    if (!await showConfirm(`${t.render.deleteFolder} "${folder.name}"?`)) return;
     const res = await fetch(`/api/folders/${folder.id}`, { method: "DELETE" });
     if (res.ok) {
       toast.success(t.render.folderDeleted);

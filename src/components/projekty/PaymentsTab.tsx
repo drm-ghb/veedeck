@@ -27,6 +27,7 @@ import {
   arrayMove,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { showConfirm } from "@/lib/confirm";
 
 // ── Upload button ────────────────────────────────────────────────────────────
 
@@ -768,7 +769,7 @@ export function PaymentsTab({ clientId, projectId, paymentsSharedWithClient: ini
   async function handleDeleteSection(rfProjectId: string) {
     const sectionGroups = groups.filter((g) => g.rfProjectId === rfProjectId && g.parentId === null);
     const sectionPayments = payments.filter((p) => p.rfProjectId === rfProjectId && p.groupId === null);
-    if (!confirm(t.payments.deleteSectionConfirm)) return;
+    if (!await showConfirm(t.payments.deleteSectionConfirm)) return;
     for (const g of sectionGroups) {
       await fetch(`/api/payment-groups/${g.id}`, { method: "DELETE" });
     }

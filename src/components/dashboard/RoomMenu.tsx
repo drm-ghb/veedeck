@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import EditRoomDialog from "./EditRoomDialog";
 import { useT } from "@/lib/i18n";
 import { useIsTrialExpired } from "@/lib/trial-context";
+import { showConfirm } from "@/lib/confirm";
 
 interface RoomMenuProps {
   room: {
@@ -60,7 +61,7 @@ export default function RoomMenu({ room }: RoomMenuProps) {
   }
 
   async function handleDelete() {
-    if (!confirm(t.projekty.confirmDeleteRoom)) return;
+    if (!await showConfirm(t.projekty.confirmDeleteRoom)) return;
     const res = await fetch(`/api/rooms/${room.id}`, { method: "DELETE" });
     if (res.ok) {
       toast.success(t.projekty.roomDeleted);

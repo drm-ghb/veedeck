@@ -45,6 +45,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { showConfirm } from "@/lib/confirm";
 
 interface ShoppingList {
   id: string;
@@ -165,7 +166,7 @@ export default function ListyView({ lists: initialLists, userId, veepickConnecte
   }
 
   async function deleteList(id: string) {
-    if (!confirm(t.listy.confirmDelete)) return;
+    if (!await showConfirm(t.listy.confirmDelete)) return;
     setLists((prev) => prev.filter((l) => l.id !== id));
     try {
       const res = await fetch(`/api/lists/${id}`, { method: "DELETE" });

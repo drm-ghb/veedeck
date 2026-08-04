@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import EditProjectDialog from "./EditProjectDialog";
 import { useT } from "@/lib/i18n";
 import TrialGate from "@/components/ui/TrialGate";
+import { showConfirm } from "@/lib/confirm";
 
 interface ProjectMenuProps {
   project: {
@@ -61,7 +62,7 @@ export default function ProjectMenu({ project }: ProjectMenuProps) {
   }
 
   async function handleDelete() {
-    if (!confirm(t.projekty.confirmRemoveFromFlow.replace("{title}", project.title))) return;
+    if (!await showConfirm(t.projekty.confirmRemoveFromFlow.replace("{title}", project.title))) return;
     const res = await fetch(`/api/projects/${project.id}`, { method: "DELETE" });
     if (res.ok) {
       toast.success(t.projekty.projectDeleted);

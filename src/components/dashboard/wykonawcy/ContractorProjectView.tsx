@@ -20,6 +20,7 @@ import AddContractorFileDialog, { type AddedFile } from "./AddContractorFileDial
 import EditProjectInfoDialog, { type ProjectInfoData } from "./EditProjectInfoDialog";
 import { useT } from "@/lib/i18n";
 import { useViewPreference } from "@/hooks/useViewPreference";
+import { showConfirm } from "@/lib/confirm";
 
 interface ContractorFile {
   id: string;
@@ -492,7 +493,7 @@ export default function ContractorProjectView({
 
   async function deleteSelected(folderId: string) {
     if (selectedFileIds.length === 0) return;
-    if (!confirm(t.wykonawcy.confirmDeleteFiles)) return;
+    if (!await showConfirm(t.wykonawcy.confirmDeleteFiles)) return;
     const idsToDelete = [...selectedFileIds];
     flushSync(() => {
       setDeletedFileIds((prev) => new Set([...prev, ...idsToDelete]));
@@ -540,7 +541,7 @@ export default function ContractorProjectView({
   }
 
   async function deleteSubfolder(subfolderId: string, name: string) {
-    if (!confirm(`"${name}" — ${t.wykonawcy.confirmDeleteFolder}`)) return;
+    if (!await showConfirm(`"${name}" — ${t.wykonawcy.confirmDeleteFolder}`)) return;
     setSubfolderOrder((prev) => {
       const updated: Record<string, ContractorSubfolder[]> = {};
       for (const [key, subs] of Object.entries(prev)) {
@@ -597,7 +598,7 @@ export default function ContractorProjectView({
   }
 
   async function deleteFile(folderId: string, fileId: string, fileName: string) {
-    if (!confirm(`"${fileName}" — ${t.wykonawcy.confirmDeleteFile}`)) return;
+    if (!await showConfirm(`"${fileName}" — ${t.wykonawcy.confirmDeleteFile}`)) return;
     flushSync(() => setDeletedFileIds((prev) => new Set([...prev, fileId])));
     toast.success(t.wykonawcy.fileDeletedOk);
     const res = await fetch(

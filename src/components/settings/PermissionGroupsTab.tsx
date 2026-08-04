@@ -9,6 +9,7 @@ import {
   Interests, Settings, UserPlus, X, ArrowLeft,
 } from "@/components/ui/icons";
 import type { ModuleSlug } from "@/lib/permissions";
+import { showConfirm } from "@/lib/confirm";
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -125,9 +126,9 @@ export default function PermissionGroupsTab({
 
   useEffect(() => { loadGroups(); }, []);
 
-  function selectGroup(group: PermissionGroup) {
+  async function selectGroup(group: PermissionGroup) {
     if (dirty) {
-      if (!confirm("Masz niezapisane zmiany. Odrzucić?")) return;
+      if (!await showConfirm("Masz niezapisane zmiany. Odrzucić?")) return;
     }
     setSelectedId(group.id);
     setDraft({ ...group, permissions: { ...(group.permissions as Record<ModuleSlug, number>) } });
@@ -233,7 +234,7 @@ export default function PermissionGroupsTab({
   async function removeFromGroup(userId: string, userGroups: number) {
     if (!draft) return;
     if (userGroups <= 1) {
-      if (!confirm("To ostatnia grupa tej osoby. Po usunięciu straci dostęp do wszystkich modułów. Usunąć?")) return;
+      if (!await showConfirm("To ostatnia grupa tej osoby. Po usunięciu straci dostęp do wszystkich modułów. Usunąć?")) return;
     }
     setRemovingUserId(userId);
     await fetch(`/api/team/groups/${draft.id}/members/${userId}`, { method: "DELETE" });

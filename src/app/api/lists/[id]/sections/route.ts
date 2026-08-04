@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getWorkspaceUserId } from "@/lib/workspace";
+import { logListChange } from "@/lib/list-changelog";
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
@@ -53,6 +54,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const section = await prisma.listSection.create({
     data: { name: name.trim(), listId: id, order: count },
     include: { products: true },
+  });
+
+  await logListChange({
+    listId: id,
+    userId: session.user.id,
+    userName: session.user.name ?? session.user.email ?? "Projektant",
+    action: "Dodano sekcję",
+    details: section.name,
   });
 
   return NextResponse.json(section, { status: 201 });

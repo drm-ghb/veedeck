@@ -30,6 +30,7 @@ import {
 import SurveyTemplateDialog from "./SurveyTemplateDialog";
 import { useT } from "@/lib/i18n";
 import type { TranslationKeys } from "@/lib/translations/pl";
+import { showConfirm } from "@/lib/confirm";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -409,7 +410,7 @@ export default function SurveyEditor({ survey: initial }: Props) {
   // ── Delete section ─────────────────────────────────────────────────────
 
   async function handleDeleteSection(sectionId: string) {
-    if (!confirm(t.ankiety.deleteSectionConfirm)) return;
+    if (!await showConfirm(t.ankiety.deleteSectionConfirm)) return;
     const res = await fetch(`/api/surveys/${survey.id}/sections/${sectionId}`, { method: "DELETE" });
     if (!res.ok) { toast.error(t.ankiety.deleteSectionError); return; }
     setSections((prev) => prev.filter((s) => s.id !== sectionId));

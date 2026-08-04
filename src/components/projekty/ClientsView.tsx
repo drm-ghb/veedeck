@@ -12,6 +12,7 @@ import { useT } from "@/lib/i18n";
 import TrialGate from "@/components/ui/TrialGate";
 import { useIsTrialExpired } from "@/lib/trial-context";
 import { accentColors } from "@/lib/accent-color";
+import { showConfirm } from "@/lib/confirm";
 
 interface ClientProject {
   id: string;
@@ -99,7 +100,7 @@ export default function ClientsView({ clients, archivedClients }: Props) {
   }
 
   async function handleDelete(client: Client) {
-    if (!confirm(`${t.projekty.confirmDeleteProject.replace("{title}", client.name)}`)) return;
+    if (!await showConfirm(`${t.projekty.confirmDeleteProject.replace("{title}", client.name)}`)) return;
     const res = await fetch(`/api/clients/${client.id}`, { method: "DELETE" });
     if (res.ok) {
       toast.success(t.projekty.clientDeleted);

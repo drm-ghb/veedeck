@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
-import { ExternalLink, Comment, Check, X, RotateCcw } from "@/components/ui/icons";
+import { ExternalLink, Comment, Check, X, RotateCcw, ChevronDown, ChevronUp } from "@/components/ui/icons";
 import ProductCommentPanel from "./ProductCommentPanel";
 import ListSectionNav from "./ListSectionNav";
 import { pusherClient } from "@/lib/pusher";
@@ -104,6 +104,7 @@ export default function ShareListClient({
   designerLogoUrl,
   trackView = true,
 }: ShareListClientProps) {
+  const [collapsedVariants, setCollapsedVariants] = useState<Set<string>>(new Set());
   const [commentsPanelProductId, setCommentsPanelProductId] = useState<string | null>(null);
   const [panelLastReadAt, setPanelLastReadAt] = useState<string | null>(null);
   const [approvals, setApprovals] = useState<Record<string, string | null>>(() => {
@@ -438,7 +439,17 @@ export default function ShareListClient({
                   return (
                     <div key={product.id} className="bg-[#FAFAFB] border border-border rounded-[14px] overflow-hidden">
                       {renderProduct(product, false, isParent)}
-                      {variants.map((variant, vi) => (
+                      {isParent && (
+                        <button
+                          onClick={() => setCollapsedVariants((prev) => { const next = new Set(prev); next.has(product.id) ? next.delete(product.id) : next.add(product.id); return next; })}
+                          className="w-full flex items-center gap-1.5 border-t border-dashed border-border px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors"
+                          style={{ background: '#F4F4F7' }}
+                        >
+                          {collapsedVariants.has(product.id) ? <ChevronDown size={11} /> : <ChevronUp size={11} />}
+                          <span>{variants.length} opcjonalne</span>
+                        </button>
+                      )}
+                      {!collapsedVariants.has(product.id) && variants.map((variant, vi) => (
                         <div key={variant.id} className="relative border-t border-dashed border-border" style={{ background: '#F4F4F7' }}>
                           {/* Desktop connector (lg+) — left: 20px sits in the w-5 spacer zone */}
                           <div className={`hidden lg:block absolute w-px pointer-events-none ${vi === variants.length - 1 ? 'top-0 h-1/2' : 'top-0 bottom-0'}`} style={{ left: '20px', background: 'var(--border)' }} />

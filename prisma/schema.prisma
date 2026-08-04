@@ -92,6 +92,7 @@ model User {
   projectClientAccounts      ProjectClient[]         @relation("ProjectClientUser")
   sessions                   Session[]
   shoppingLists              ShoppingList[]
+  listChangeLogs             ListChangeLog[]
   moodboards                 Moodboard[]
   billingRecords             BillingRecord[]
   subscription               Subscription?
@@ -453,6 +454,7 @@ model ProjectClient {
   order          Int               @default(0)
   totalAmount    Float?
   isDecisionMaker Boolean          @default(false)
+  emailNotifications Boolean       @default(false)
   description    String?
   lastReminderSentAt DateTime?
   clientId       String?
@@ -519,6 +521,7 @@ model ShoppingList {
   isSharedWithClient   Boolean       @default(true)
   clientId             String?
   sections             ListSection[]
+  changeLogs           ListChangeLog[]
   client               Client?       @relation(fields: [clientId], references: [id])
   project              Project?      @relation(fields: [projectId], references: [id])
   user                 User          @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -1269,4 +1272,17 @@ model Moodboard {
   user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   client             Client?  @relation(fields: [clientId], references: [id])
   project            Project? @relation(fields: [projectId], references: [id])
+}
+
+model ListChangeLog {
+  id        String       @id @default(cuid())
+  listId    String
+  userId    String?
+  userName  String
+  action    String
+  details   String?
+  source    String       @default("internal")
+  createdAt DateTime     @default(now())
+  list      ShoppingList @relation(fields: [listId], references: [id], onDelete: Cascade)
+  user      User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
 }

@@ -5,6 +5,7 @@ import { X, Clock, MapPin, Users, FileText, Trash2, Pencil } from "@/components/
 import { toast } from "sonner";
 import { useT } from "@/lib/i18n";
 import type { CalendarEvent, EventType } from "./CalendarView";
+import { showConfirm } from "@/lib/confirm";
 
 interface Props {
   event: CalendarEvent;
@@ -32,7 +33,7 @@ export default function EventDetailDialog({
   const colors = typeColors[event.type];
 
   async function handleDelete() {
-    if (!confirm(`${t.calendar.deleteConfirmMsg} "${event.title}"?`)) return;
+    if (!await showConfirm(`${t.calendar.deleteConfirmMsg} "${event.title}"?`)) return;
     setDeleting(true);
     try {
       const res = await fetch(`/api/calendar/${event.id}`, { method: "DELETE" });

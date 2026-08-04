@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { useUploadThing } from "@/lib/uploadthing-client";
 import { useT } from "@/lib/i18n";
 import { useIsTrialExpired } from "@/lib/trial-context";
+import { showConfirm } from "@/lib/confirm";
 
 type RenderStatus = "REVIEW" | "ACCEPTED" | "REJECTED";
 
@@ -153,7 +154,7 @@ prevRenderIdsRef.current = currentIds;
 
   async function handleBulkAction(action: "archive" | "delete") {
     if (expired) return;
-    if (action === "delete" && !confirm(t.render.confirmDeleteSelectedFiles)) return;
+    if (action === "delete" && !await showConfirm(t.render.confirmDeleteSelectedFiles)) return;
     setBulkLoading(true);
     try {
       const res = await fetch("/api/renders/bulk", {

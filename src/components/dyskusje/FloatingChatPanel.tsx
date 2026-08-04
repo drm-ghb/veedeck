@@ -7,6 +7,7 @@ import { useT } from "@/lib/i18n";
 import { toast } from "sonner";
 import Pusher from "pusher-js";
 import { useUploadThing } from "@/lib/uploadthing-client";
+import { showConfirm } from "@/lib/confirm";
 
 interface DiscussionItem {
   id: string;
@@ -441,7 +442,7 @@ export default function FloatingChatPanel({ userId, currentUserAvatarUrl }: { us
 
   async function deleteDiscussion() {
     if (!selectedId) return;
-    if (!confirm(t.dyskusje.deleteDiscussionConfirm)) return;
+    if (!await showConfirm(t.dyskusje.deleteDiscussionConfirm)) return;
     const res = await fetch(`/api/discussions/${selectedId}`, { method: "DELETE" });
     if (res.ok) {
       setDiscussions((prev) => prev.filter((d) => d.id !== selectedId));

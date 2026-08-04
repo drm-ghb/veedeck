@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { MoreVertical, Trash2, Edit2 } from "@/components/ui/icons";
 import EditContractorDialog from "./EditContractorDialog";
 import { useT } from "@/lib/i18n";
+import { showConfirm } from "@/lib/confirm";
 
 interface Props {
   id: string;
@@ -26,7 +27,7 @@ export default function ContractorCard({ id, name, company, trade, activeAssignm
   const [editOpen, setEditOpen] = useState(false);
 
   async function handleDelete() {
-    if (!confirm(`${t.common.delete} "${name}"? ${t.wykonawcy.deleteConfirmMsg}`)) return;
+    if (!await showConfirm(`${t.common.delete} "${name}"? ${t.wykonawcy.deleteConfirmMsg}`)) return;
     const res = await fetch(`/api/contractors/${id}`, { method: "DELETE" });
     if (res.ok) {
       toast.success(t.wykonawcy.deletedOk);

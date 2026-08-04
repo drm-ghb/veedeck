@@ -14,6 +14,7 @@ import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useT } from "@/lib/i18n";
 import TrialGate from "@/components/ui/TrialGate";
+import { showConfirm } from "@/lib/confirm";
 
 interface Project {
   id: string;
@@ -83,7 +84,7 @@ export default function ProjectsView({ projects, archivedProjects }: ProjectsVie
   }
 
   async function handleDelete(id: string, title: string) {
-    if (!confirm(t.projekty.confirmRemoveFromFlow.replace("{title}", title))) return;
+    if (!await showConfirm(t.projekty.confirmRemoveFromFlow.replace("{title}", title))) return;
     const res = await fetch(`/api/projects/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },

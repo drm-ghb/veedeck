@@ -58,6 +58,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ACCENT_HUES, accentColors } from "@/lib/accent-color";
 import { ColorPicker } from "@/components/moodboard/ColorPicker";
+import { showConfirm } from "@/lib/confirm";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -69,6 +70,7 @@ interface Contact {
   description: string | null;
   isMainContact: boolean;
   isDecisionMaker: boolean;
+  emailNotifications: boolean;
   createdAt: string;
   userId: string | null;
   projectId: string | null;
@@ -399,7 +401,7 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
   }
 
   async function removeContact(contactId: string) {
-    if (!confirm("Czy na pewno chcesz usunąć ten kontakt?")) return;
+    if (!await showConfirm("Czy na pewno chcesz usunąć ten kontakt?")) return;
     try {
       const res = await fetch(`/api/clients/${initialClient.id}/contacts/${contactId}`, { method: "DELETE" });
       if (!res.ok) throw new Error();
@@ -449,7 +451,7 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
   }
 
   async function deactivateAccount(contact: Contact) {
-    if (!confirm(`Czy na pewno chcesz dezaktywować konto klienta „${contact.name}"? Klient straci dostęp do panelu.`)) return;
+    if (!await showConfirm(`Czy na pewno chcesz dezaktywować konto klienta „${contact.name}"? Klient straci dostęp do panelu.`)) return;
     setDeactivatingAccount((prev) => ({ ...prev, [contact.id]: true }));
     try {
       const res = await fetch(`/api/clients/${initialClient.id}/contacts/${contact.id}`, {
@@ -465,6 +467,21 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
       toast.error(err instanceof Error ? err.message : "Błąd dezaktywacji");
     } finally {
       setDeactivatingAccount((prev) => ({ ...prev, [contact.id]: false }));
+    }
+  }
+
+  async function toggleEmailNotifications(contactId: string, value: boolean) {
+    setContacts((prev) => prev.map((c) => c.id === contactId ? { ...c, emailNotifications: value } : c));
+    try {
+      const res = await fetch(`/api/clients/${initialClient.id}/contacts/${contactId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ emailNotifications: value }),
+      });
+      if (!res.ok) throw new Error();
+    } catch {
+      setContacts((prev) => prev.map((c) => c.id === contactId ? { ...c, emailNotifications: !value } : c));
+      toast.error("Nie udało się zmienić ustawień powiadomień");
     }
   }
 
@@ -1077,6 +1094,20 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
                                 </button>
                               </div>
                             )}
+                            <div className="flex items-center gap-2 pt-1">
+                              <Switch
+                                size="sm"
+                                checked={contact.emailNotifications ?? false}
+                                onCheckedChange={(val) => toggleEmailNotifications(contact.id, val)}
+                              />
+                              <span className="text-xs text-muted-foreground">Powiadomienia e-mail</span>
+                              <span
+                                title="Gdy włączone, kontakt otrzyma e-mail z linkiem przy każdym udostępnieniu listy zakupowej przez projektanta."
+                                className="flex items-center text-muted-foreground/60 hover:text-muted-foreground cursor-help"
+                              >
+                                <Info size={12} />
+                              </span>
+                            </div>
                           </div>
                         )}
 

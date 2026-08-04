@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/lib/theme";
 import { Providers } from "@/components/providers";
 import { LanguageProvider } from "@/lib/i18n";
+import { ConfirmDialogProvider } from "@/lib/confirm";
 import type { Lang } from "@/lib/i18n";
 
 const inter = Inter({
@@ -71,6 +72,7 @@ export default async function RootLayout({
             <ThemeProvider>
               {children}
               <Toaster richColors />
+              <ConfirmDialogProvider />
             </ThemeProvider>
           </LanguageProvider>
         </Providers>

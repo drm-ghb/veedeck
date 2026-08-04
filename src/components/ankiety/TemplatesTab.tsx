@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Plus, Edit2, Trash2, ClipboardList, Eye, X } from "@/components/ui/icons";
 import { surveyTemplates, type SurveyTemplate } from "@/lib/surveyTemplates";
 import { useT } from "@/lib/i18n";
+import { showConfirm } from "@/lib/confirm";
 
 type Client = { id: string; name: string };
 
@@ -318,7 +319,7 @@ export default function TemplatesTab({ customTemplates: initial, clients }: Prop
   }
 
   async function handleDeleteCustom(template: CustomTemplate) {
-    if (!confirm(t.ankiety.deleteTemplateConfirm.replace("{name}", template.name))) return;
+    if (!await showConfirm(t.ankiety.deleteTemplateConfirm.replace("{name}", template.name))) return;
     const res = await fetch(`/api/surveys/${template.id}`, { method: "DELETE" });
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));

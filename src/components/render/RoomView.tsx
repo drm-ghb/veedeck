@@ -34,6 +34,7 @@ import PdfThumbnail from "./PdfThumbnail";
 import BulkActionBar from "./BulkActionBar";
 import BulkMoveDialog from "./BulkMoveDialog";
 import { useT } from "@/lib/i18n";
+import { showConfirm } from "@/lib/confirm";
 
 type RenderStatus = "REVIEW" | "ACCEPTED" | "REJECTED";
 type SortBy = "manual" | "name" | "createdAt";
@@ -350,7 +351,7 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
   }
 
   async function handleBulkAction(action: "archive" | "delete") {
-    if (action === "delete" && !confirm(t.render.confirmDeleteSelectedFiles)) return;
+    if (action === "delete" && !await showConfirm(t.render.confirmDeleteSelectedFiles)) return;
     const ids = Array.from(selectedIds);
     setBulkLoading(true);
     setLocalRenders((prev) => prev.filter((r) => !ids.includes(r.id)));
@@ -417,7 +418,7 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
   }
 
   async function handleDeleteFolder(folderId: string, name: string) {
-    if (!confirm(t.render.confirmDeleteFolder.replace("{name}", name))) return;
+    if (!await showConfirm(t.render.confirmDeleteFolder.replace("{name}", name))) return;
     setLocalFolders((prev) => prev.filter((f) => f.id !== folderId));
     const res = await fetch(`/api/folders/${folderId}`, { method: "DELETE" });
     if (res.ok) {
@@ -430,7 +431,7 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
   }
 
   async function handleDelete(renderId: string, name: string) {
-    if (!confirm(t.render.confirmDeleteRender.replace("{name}", name))) return;
+    if (!await showConfirm(t.render.confirmDeleteRender.replace("{name}", name))) return;
     setLocalRenders((prev) => prev.filter((r) => r.id !== renderId));
     const res = await fetch(`/api/renders/${renderId}`, { method: "DELETE" });
     if (res.ok) {

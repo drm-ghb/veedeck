@@ -33,6 +33,7 @@ import { Card } from "@/components/ui/card";
 import BulkActionBar from "@/components/render/BulkActionBar";
 import BulkMoveDialog from "@/components/render/BulkMoveDialog";
 import TrialGate from "@/components/ui/TrialGate";
+import { showConfirm } from "@/lib/confirm";
 
 interface Room {
   id: string;
@@ -150,7 +151,7 @@ export default function ProjectView({ projectId, rooms, archivedRooms, allRender
   }
 
   async function handleBulkAction(action: "archive" | "delete") {
-    if (action === "delete" && !confirm(t.render.confirmDeleteFiles)) return;
+    if (action === "delete" && !await showConfirm(t.render.confirmDeleteFiles)) return;
     setBulkLoading(true);
     try {
       const res = await fetch("/api/renders/bulk", {
@@ -194,7 +195,7 @@ export default function ProjectView({ projectId, rooms, archivedRooms, allRender
   }
 
   async function handleDelete(roomId: string, name: string) {
-    if (!confirm(t.projekty.confirmDeleteRoom)) return;
+    if (!await showConfirm(t.projekty.confirmDeleteRoom)) return;
     const res = await fetch(`/api/rooms/${roomId}`, { method: "DELETE" });
     if (res.ok) {
       toast.success(t.projekty.roomDeleted);

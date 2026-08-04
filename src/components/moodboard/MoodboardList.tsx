@@ -8,6 +8,7 @@ import { Interests, LayoutGrid, List, Search, MoreVertical, Trash2, Share2, User
 import { accentColors } from "@/lib/accent-color";
 import NewMoodboardDialog from "./NewMoodboardDialog";
 import EditMoodboardDialog from "./EditMoodboardDialog";
+import { showConfirm } from "@/lib/confirm";
 
 type Client = {
   id: string;
@@ -73,7 +74,7 @@ export default function MoodboardList({ moodboards: initial, clients }: Props) {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("Usunąć tę tablicę? Tej operacji nie można cofnąć.")) return;
+    if (!await showConfirm("Usunąć tę tablicę? Tej operacji nie można cofnąć.")) return;
     const res = await fetch(`/api/moodboards/${id}`, { method: "DELETE" });
     if (res.ok) {
       setMoodboards((prev) => prev.filter((m) => m.id !== id));

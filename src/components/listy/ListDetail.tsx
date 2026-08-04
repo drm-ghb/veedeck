@@ -4,7 +4,7 @@ import { useState, useRef, useCallback, useEffect, Fragment } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, ChevronDown, ChevronUp, Plus, ExternalLink, Minus, MoreHorizontal, Pencil, Trash2, GripVertical, FileDown, Sheet, ArrowDownUp, Eye, EyeOff, Check, X, RotateCcw, FolderInput, Wallet, AlertCircle, AlertTriangle, DollarSign, Copy, Comment, CheckCircle, RadioButtonUnchecked, Search, FileText, Layers, Asterisk, CheckSquare, Square, ListChecks, Share2 } from "@/components/ui/icons";
+import { ChevronLeft, ChevronDown, ChevronUp, Plus, ExternalLink, Minus, MoreHorizontal, Pencil, Trash2, GripVertical, FileDown, Sheet, ArrowDownUp, Eye, EyeOff, Check, X, RotateCcw, FolderInput, Wallet, AlertCircle, AlertTriangle, DollarSign, Copy, Comment, CheckCircle, RadioButtonUnchecked, Search, FileText, Layers, Asterisk, CheckSquare, Square, ListChecks, Share2, History } from "@/components/ui/icons";
 import ProductCommentPanel from "./ProductCommentPanel";
 import ListSectionNav from "./ListSectionNav";
 import { pusherClient } from "@/lib/pusher";
@@ -46,6 +46,7 @@ import { generateListPDF, type PdfTemplate } from "@/lib/pdf-templates";
 import { useLang, useT } from "@/lib/i18n";
 import TrialGate from "@/components/ui/TrialGate";
 import { useIsTrialExpired } from "@/lib/trial-context";
+import { showConfirm } from "@/lib/confirm";
 
 const BUILT_IN_CATEGORIES = [
   { value: "OSWIETLENIE", label: "Oświetlenie" },
@@ -1240,6 +1241,12 @@ export default function ListDetail({ list, designerName, designerEmail, designer
     sectionId: null,
   });
   const [fabMenuOpen, setFabMenuOpen] = useState(false);
+  const [collapsedVariants, setCollapsedVariants] = useState<Set<string>>(new Set());
+  const [changelogOpen, setChangelogOpen] = useState(false);
+  const [changelogEntries, setChangelogEntries] = useState<{ id: string; actorName: string; action: string; details: string | null; source: string; createdAt: string }[]>([]);
+  const [changelogFilter, setChangelogFilter] = useState<"all" | "internal" | "client">("all");
+  const [changelogSortAsc, setChangelogSortAsc] = useState(false);
+  const [changelogLoading, setChangelogLoading] = useState(false);
   const [editState, setEditState] = useState<{ product: Product; sectionId: string } | null>(null);
   const [moveState, setMoveState] = useState<{ product: Product; sectionId: string } | null>(null);
   const [copyState, setCopyState] = useState<{ product: Product; sectionId: string } | null>(null);
@@ -1259,6 +1266,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
   const dragOverSectionRef = useRef<string | null>(null);
   const dragItemCurrentSectionRef = useRef<string | null>(null); // where item IS in state right now
   const dragOriginalSectionsRef = useRef<typeof sections | null>(null); // for cancel restore
+  const dragPreCollapseSnapshot = useRef<Set<string> | null>(null); // collapsed state before drag
 
   // Allow mouse wheel scroll while dragging — the scrollable container is <main>, not window
   useEffect(() => {
@@ -1350,7 +1358,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
 
 
   async function handleDeleteSection(sectionId: string) {
-    if (!confirm(t.listy.confirmDeleteSection)) return;
+    if (!await showConfirm(t.listy.confirmDeleteSection)) return;
     setSections((prev) => prev.filter((s) => s.id !== sectionId));
     try {
       const res = await fetch(`/api/lists/${list.id}/sections/${sectionId}`, { method: "DELETE" });
@@ -1499,6 +1507,15 @@ export default function ListDetail({ list, designerName, designerEmail, designer
       setActiveDragVariants(variants);
       dragItemCurrentSectionRef.current = sectionId;
       dragOriginalSectionsRef.current = sections;
+      // Collapse all parents during drag, snapshot current state for restore
+      dragPreCollapseSnapshot.current = new Set(collapsedVariants);
+      const allParentIds = new Set<string>();
+      for (const s of sections) {
+        for (const p of s.products) {
+          if (p.parentProductId) allParentIds.add(p.parentProductId);
+        }
+      }
+      if (allParentIds.size > 0) setCollapsedVariants(allParentIds);
     }
   }
 
@@ -1598,6 +1615,10 @@ export default function ListDetail({ list, designerName, designerEmail, designer
     dragOverSectionRef.current = null;
     dragItemCurrentSectionRef.current = null;
     dragOriginalSectionsRef.current = null;
+    if (dragPreCollapseSnapshot.current !== null) {
+      setCollapsedVariants(dragPreCollapseSnapshot.current);
+      dragPreCollapseSnapshot.current = null;
+    }
 
     const { active, over } = event;
     if (!over || active.id === over.id) {
@@ -2298,6 +2319,17 @@ export default function ListDetail({ list, designerName, designerEmail, designer
     : "";
   const hasTotal = allProducts.some((p) => parsePrice(p.price) !== null);
 
+  async function openChangelog() {
+    setChangelogOpen(true);
+    setChangelogLoading(true);
+    try {
+      const res = await fetch(`/api/lists/${list.id}/changelog`);
+      if (res.ok) setChangelogEntries(await res.json());
+    } finally {
+      setChangelogLoading(false);
+    }
+  }
+
   function openExportPdfDialog() {
     setExportSelectedSections(new Set(sections.filter((s) => !s.unsorted).map((s) => s.id)));
     setExportHidePrices(false);
@@ -2457,6 +2489,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
   }
 
   return (
+    <>
     <div className="pb-24">
       <div className="lg:max-w-[75%] lg:mx-auto">
       {/* Header */}
@@ -2781,6 +2814,13 @@ export default function ListDetail({ list, designerName, designerEmail, designer
           </div>
           <div className="w-px h-5 bg-border mx-0.5 hidden sm:block" />
           <button
+            onClick={openChangelog}
+            className={`w-8 h-8 flex items-center justify-center rounded-lg border transition-colors ${changelogOpen ? "border-primary/60 bg-primary/8 text-primary" : "border-border bg-background hover:bg-muted text-muted-foreground hover:text-foreground"}`}
+            title="Dziennik zmian"
+          >
+            <History size={13} />
+          </button>
+          <button
             onClick={() => { setBulkMode(true); setSelectedIds(new Set()); setPendingAction(null); }}
             className="w-8 h-8 flex items-center justify-center rounded-lg border border-border bg-background hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
             title="Zaznacz produkty (operacje masowe)"
@@ -2871,6 +2911,10 @@ export default function ListDetail({ list, designerName, designerEmail, designer
         dragItemCurrentSectionRef.current = null;
         if (dragOriginalSectionsRef.current) setSections(dragOriginalSectionsRef.current);
         dragOriginalSectionsRef.current = null;
+        if (dragPreCollapseSnapshot.current !== null) {
+          setCollapsedVariants(dragPreCollapseSnapshot.current);
+          dragPreCollapseSnapshot.current = null;
+        }
       }}>
 
         {/* Unsorted products */}
@@ -2927,7 +2971,17 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                                 allCategories={allCategories}
                                 sections={sections}
                               />
-                              {variants.map((variant, vi) => (
+                              {variants.length > 0 && (
+                                <button
+                                  onClick={() => setCollapsedVariants((prev) => { const next = new Set(prev); next.has(product.id) ? next.delete(product.id) : next.add(product.id); return next; })}
+                                  className="w-full flex items-center gap-1.5 border-t border-dashed border-border px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors"
+                                  style={{ background: '#F4F4F7' }}
+                                >
+                                  {collapsedVariants.has(product.id) ? <ChevronDown size={11} /> : <ChevronUp size={11} />}
+                                  <span>{variants.length} opcjonalne</span>
+                                </button>
+                              )}
+                              {!collapsedVariants.has(product.id) && variants.map((variant, vi) => (
                               <div key={variant.id} className={`relative border-t border-dashed transition-colors ${selectedIds.has(variant.id) ? "bg-primary/5 border-primary/20" : "border-border"}`} style={selectedIds.has(variant.id) ? undefined : { background: '#F4F4F7' }}>
                                 <div className={`hidden lg:block absolute w-px pointer-events-none ${vi === variants.length - 1 ? 'top-0 h-1/2' : 'top-0 bottom-0'}`} style={{ left: '20px', background: 'var(--border)' }} />
                                 <div className="hidden lg:block absolute h-px w-4 pointer-events-none top-1/2 -translate-y-1/2" style={{ left: '20px', background: 'var(--border)' }} />
@@ -2970,7 +3024,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                                 />
                               </div>
                             ))}
-                            {variants.length > 0 && !expired && (
+                            {variants.length > 0 && !expired && !collapsedVariants.has(product.id) && (
                               <div className="border-t border-dashed border-border" style={{ background: '#F4F4F7', padding: '7px 12px 9px 44px' }}>
                                 <button
                                   onClick={() => setDialogState({ open: true, sectionId: unsortedSection.id })}
@@ -3171,7 +3225,17 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                                           allCategories={allCategories}
                                           sections={sections}
                                         />
-                                        {variants.map((variant, vi) => (
+                                        {variants.length > 0 && (
+                                          <button
+                                            onClick={() => setCollapsedVariants((prev) => { const next = new Set(prev); next.has(product.id) ? next.delete(product.id) : next.add(product.id); return next; })}
+                                            className="w-full flex items-center gap-1.5 border-t border-dashed border-border px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors"
+                                            style={{ background: '#F4F4F7' }}
+                                          >
+                                            {collapsedVariants.has(product.id) ? <ChevronDown size={11} /> : <ChevronUp size={11} />}
+                                            <span>{variants.length} opcjonalne</span>
+                                          </button>
+                                        )}
+                                        {!collapsedVariants.has(product.id) && variants.map((variant, vi) => (
                                           <div key={variant.id} className={`relative border-t border-dashed transition-colors ${selectedIds.has(variant.id) ? "bg-primary/5 border-primary/20" : "border-border"}`} style={selectedIds.has(variant.id) ? undefined : { background: '#F4F4F7' }}>
                                             <div className={`hidden lg:block absolute w-px pointer-events-none ${vi === variants.length - 1 ? 'top-0 h-1/2' : 'top-0 bottom-0'}`} style={{ left: '20px', background: 'var(--border)' }} />
                                             <div className="hidden lg:block absolute h-px w-4 pointer-events-none top-1/2 -translate-y-1/2" style={{ left: '20px', background: 'var(--border)' }} />
@@ -3613,5 +3677,78 @@ export default function ListDetail({ list, designerName, designerEmail, designer
       )}
       </div>
     </div>
+
+    {/* Changelog sidebar */}
+    {changelogOpen && (
+      <>
+        <div className="fixed inset-0 z-40 bg-black/20" onClick={() => setChangelogOpen(false)} />
+        <div className="fixed top-0 right-0 h-full w-full max-w-sm z-50 bg-card border-l border-border shadow-2xl flex flex-col">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
+            <div className="flex items-center gap-2">
+              <History size={16} className="text-muted-foreground" />
+              <h2 className="text-sm font-semibold">Dziennik zmian</h2>
+            </div>
+            <button onClick={() => setChangelogOpen(false)} className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+              <X size={16} />
+            </button>
+          </div>
+          <div className="flex items-center gap-1 px-4 py-2 border-b border-border shrink-0">
+            {(["all", "internal", "client"] as const).map((f) => (
+              <button
+                key={f}
+                onClick={() => setChangelogFilter(f)}
+                className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${changelogFilter === f ? "bg-primary text-white" : "text-muted-foreground hover:bg-muted"}`}
+              >
+                {f === "all" ? "Wszystkie" : f === "internal" ? "Wewnętrzne" : "Klient"}
+              </button>
+            ))}
+            <button
+              onClick={() => setChangelogSortAsc((v) => !v)}
+              title={changelogSortAsc ? "Sortuj: od najnowszego" : "Sortuj: od najstarszego"}
+              className={`ml-auto p-1.5 rounded-md transition-colors ${changelogSortAsc ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"}`}
+            >
+              <ArrowDownUp size={13} />
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto p-4">
+            {changelogLoading ? (
+              <div className="flex items-center justify-center py-12 text-muted-foreground text-sm">Ładowanie…</div>
+            ) : changelogEntries.filter((e) => changelogFilter === "all" || e.source === changelogFilter).sort((a, b) => changelogSortAsc ? new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime() : new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 gap-2 text-center">
+                <History size={32} className="text-muted-foreground/40" />
+                <p className="text-sm text-muted-foreground">Brak wpisów w dzienniku zmian.<br />Historia zdarzeń pojawi się tutaj.</p>
+              </div>
+            ) : (
+              <ol className="relative border-l border-border ml-2 space-y-0">
+                {changelogEntries.filter((e) => changelogFilter === "all" || e.source === changelogFilter).sort((a, b) => changelogSortAsc ? new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime() : new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map((entry) => {
+                  const date = new Date(entry.createdAt);
+                  const dateStr = date.toLocaleDateString("pl-PL", { day: "numeric", month: "short", year: "numeric" });
+                  const timeStr = date.toLocaleTimeString("pl-PL", { hour: "2-digit", minute: "2-digit" });
+                  return (
+                    <li key={entry.id} className="ml-4 pb-5">
+                      <div className="absolute -left-1.5 mt-1.5 w-3 h-3 rounded-full border-2 border-background bg-border" />
+                      <p className="text-xs text-muted-foreground mb-0.5">{dateStr}, {timeStr}</p>
+                      <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
+                        <span className="text-sm font-semibold text-foreground">{entry.actorName}</span>
+                        {entry.source === "internal" ? (
+                          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground">Wewnętrzne</span>
+                        ) : (
+                          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">Klient</span>
+                        )}
+                      </div>
+                      <p className="text-sm text-foreground leading-snug">{entry.action}</p>
+                      {entry.details && (
+                        <p className="text-xs text-muted-foreground mt-0.5 leading-snug">{entry.details}</p>
+                      )}
+                    </li>
+                  );
+                })}
+              </ol>
+            )}
+          </div>
+        </div>
+      </>
+    )}
+    </>
   );
 }

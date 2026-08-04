@@ -26,7 +26,7 @@ export async function PATCH(
   if (!contact) return NextResponse.json({ error: "Nie znaleziono kontaktu" }, { status: 404 });
 
   const body = await req.json();
-  const { isMainContact, name, email, phone, description, startDate, endDate, login: newLogin, password: newPassword } = body;
+  const { isMainContact, name, email, phone, description, startDate, endDate, login: newLogin, password: newPassword, emailNotifications } = body;
 
   if (body.action === "deactivate") {
     const userId = contact.userId;
@@ -131,6 +131,7 @@ export async function PATCH(
         data: {
           userId: newUserId,
           ...(email?.trim() ? { email: email.trim().toLowerCase() } : {}),
+          ...(contact.isMainContact ? { emailNotifications: true } : {}),
         },
       });
 
@@ -197,6 +198,7 @@ export async function PATCH(
   if (description !== undefined) contactUpdateData.description = description?.trim() || null;
   if (startDate !== undefined) contactUpdateData.startDate = startDate ? new Date(startDate) : null;
   if (endDate !== undefined) contactUpdateData.endDate = endDate ? new Date(endDate) : null;
+  if (emailNotifications !== undefined) contactUpdateData.emailNotifications = Boolean(emailNotifications);
 
   if (isMainContact) {
     await prisma.projectClient.updateMany({

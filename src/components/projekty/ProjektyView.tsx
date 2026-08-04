@@ -10,6 +10,7 @@ import NewProjectDialog from "@/components/dashboard/NewProjectDialog";
 import ProjektyMenu from "@/components/projekty/ProjektyMenu";
 import { useT } from "@/lib/i18n";
 import TrialGate from "@/components/ui/TrialGate";
+import { showConfirm } from "@/lib/confirm";
 
 interface Project {
   id: string;
@@ -68,7 +69,7 @@ export default function ProjektyView({ projects, archivedProjects }: ProjektyVie
   }
 
   async function handleDelete(id: string, title: string) {
-    if (!confirm(t.projekty.confirmDeleteProject.replace("{title}", title))) return;
+    if (!await showConfirm(t.projekty.confirmDeleteProject.replace("{title}", title))) return;
     const res = await fetch(`/api/projects/${id}`, { method: "DELETE" });
     if (res.ok) { toast.success(t.projekty.clientDeleted); router.refresh(); }
     else toast.error(t.projekty.projectDeleteError);

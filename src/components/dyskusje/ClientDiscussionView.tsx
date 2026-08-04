@@ -10,6 +10,7 @@ import ImageAnnotationModal from "./ImageAnnotationModal";
 import { SwipeableMessage } from "@/components/ui/swipeable-message";
 import { playMessageSound } from "@/lib/notification-sound";
 import { useT } from "@/lib/i18n";
+import { showConfirm } from "@/lib/confirm";
 
 interface MessageReaction {
   userId: string;
@@ -505,7 +506,7 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
   }, [msgApiBase, apiBasePath, authorName]);
 
   const handleDeleteMsg = useCallback(async (msgId: string) => {
-    if (!confirm(t.dyskusje.deleteConfirm)) return;
+    if (!await showConfirm(t.dyskusje.deleteConfirm)) return;
     const body: Record<string, string> = {};
     if (!apiBasePath) body.authorName = authorName ?? "";
     const res = await fetch(`${msgApiBase}/messages/${msgId}`, {

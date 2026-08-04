@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Copy, RefreshCw, Trash2, Eye, EyeOff, Puzzle } from "@/components/ui/icons";
 import { useT } from "@/lib/i18n";
+import { showConfirm } from "@/lib/confirm";
 
 interface Props {
   initialKey: string | null;
@@ -35,7 +36,7 @@ export function SettingsExtension({ initialKey }: Props) {
   }
 
   async function revokeKey() {
-    if (!confirm(t.extension.revokeConfirm)) return;
+    if (!await showConfirm(t.extension.revokeConfirm)) return;
     setLoading(true);
     try {
       await fetch("/api/extension/key", { method: "DELETE" });

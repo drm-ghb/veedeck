@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/icons";
 import { useT } from "@/lib/i18n";
 import AssignProjectDialog from "./AssignProjectDialog";
+import { showConfirm } from "@/lib/confirm";
 
 const TRADE_VALUES = ["malarz", "hydraulik", "elektryk", "firma wykończeniowa", "inne"] as const;
 
@@ -89,7 +90,7 @@ export default function ContractorProfile({ contractor }: Props) {
   const displayed = tab === "active" ? active : archived;
 
   async function deleteAssignment(assignment: Assignment) {
-    if (!confirm(`Usunąć przypisanie projektu "${assignment.project.title}"? Spowoduje to usunięcie wszystkich folderów i plików przypisanych do tego wykonawcy.`)) return;
+    if (!await showConfirm(`Usunąć przypisanie projektu "${assignment.project.title}"? Spowoduje to usunięcie wszystkich folderów i plików przypisanych do tego wykonawcy.`)) return;
     const res = await fetch(`/api/contractors/${contractor.id}/assignments/${assignment.id}`, {
       method: "DELETE",
     });
