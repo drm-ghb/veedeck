@@ -348,11 +348,12 @@ function ProductRow({
     if (next < 1 || saving) return;
     setSaving(true);
     try {
-      await fetch(`/api/lists/${listId}/sections/${sectionId}/products/${product.id}`, {
+      const res = await fetch(`/api/lists/${listId}/sections/${sectionId}/products/${product.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ quantity: next }),
       });
+      if (!res.ok) throw new Error();
       setQty(next);
       onQuantityChange(product.id, next);
     } catch {
