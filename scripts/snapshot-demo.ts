@@ -36,7 +36,7 @@ const DEMO_HELPER_EMAILS = [
 ];
 
 async function main() {
-  const demoUser = await prisma.user.findUnique({
+  const demoUser = await prisma.user.findFirst({
     where: { email: DEMO_EMAIL },
     select: {
       id: true, name: true, fullName: true, email: true, phone: true,
