@@ -53,6 +53,7 @@ export const en: TranslationKeys = {
     justNow: "just now",
     minutesAgo: "min ago",
     hoursAgo: "hrs ago",
+    daysAgo: "days ago",
   },
   lang: {
     label: "Interface language",

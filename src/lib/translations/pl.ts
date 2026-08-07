@@ -51,6 +51,7 @@ export const pl = {
     justNow: "przed chwilą",
     minutesAgo: "min. temu",
     hoursAgo: "godz. temu",
+    daysAgo: "dni temu",
   },
   lang: {
     label: "Język interfejsu",
