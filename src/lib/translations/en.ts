@@ -246,7 +246,6 @@ export const en: TranslationKeys = {
     reqNum: "Number",
     repeatPasswordLabel: "Repeat password",
     passwordsMismatch: "Passwords do not match.",
-    saving: "Saving...",
     saveNewPassword: "Save new password",
     rememberPassword2: "Remembered your password?",
     passwordChangedH1: "Password changed.",
