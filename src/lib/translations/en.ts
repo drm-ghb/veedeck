@@ -522,7 +522,6 @@ export const en: TranslationKeys = {
     pinterestDesc: "Import boards and pins as inspiration for your projects.",
     integrationsIdea: "Have an integration idea?",
     integrationsContact: "Write to us",
-    saveError: "Error saving",
   },
   renderflow: {
     clientPermissions: "Client permissions",

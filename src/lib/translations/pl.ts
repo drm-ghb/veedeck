@@ -244,7 +244,6 @@ export const pl = {
     reqNum: "Cyfra",
     repeatPasswordLabel: "Powtórz hasło",
     passwordsMismatch: "Hasła nie są identyczne.",
-    saving: "Zapisujemy...",
     saveNewPassword: "Zapisz nowe hasło",
     rememberPassword2: "Przypomniałeś sobie hasło?",
     passwordChangedH1: "Hasło zmienione.",
@@ -522,7 +521,6 @@ export const pl = {
     pinterestDesc: "Importuj tablice i piny jako inspiracje do projektów.",
     integrationsIdea: "Masz pomysł na integrację?",
     integrationsContact: "Napisz do nas",
-    saveError: "Błąd podczas zapisywania",
   },
   renderflow: {
     clientPermissions: "Uprawnienia klientów",
