@@ -44,7 +44,7 @@ export async function PATCH(req: NextRequest) {
   const { name, email } = body;
 
   if (email && email !== session.user.email) {
-    const existing = await prisma.user.findUnique({ where: { email } });
+    const existing = await prisma.user.findFirst({ where: { email, primaryAccountId: null } });
     if (existing) {
       return NextResponse.json({ error: "Adres email jest już zajęty" }, { status: 409 });
     }

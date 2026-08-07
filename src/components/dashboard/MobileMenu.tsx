@@ -3,18 +3,27 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X, LayoutDashboard, Users, LocalMall, Package, Settings, LogOut, HelpCircle, CheckCircle, CalendarDays, NotebookText, PushPin, ChatBubble, VeezardIcon, BookOpen, ClipboardList, CheckSquare, Engineering, Interests } from "@/components/ui/icons";
-import { signOut } from "next-auth/react";
+import { Menu, X, LayoutDashboard, Users, LocalMall, Package, Settings, LogOut, HelpCircle, CheckCircle, CalendarDays, NotebookText, PushPin, ChatBubble, VeezardIcon, BookOpen, ClipboardList, CheckSquare, Engineering, Interests, Check, ChevronDown } from "@/components/ui/icons";
+import { signIn, signOut } from "next-auth/react";
 import { useT } from "@/lib/i18n";
+
+interface WorkspaceInfo {
+  userId: string;
+  name: string;
+  avatarUrl: string | null;
+  isCurrent: boolean;
+}
 
 interface MobileMenuProps {
   userName: string | null;
   logoUrl?: string | null;
   hiddenModules?: string[];
   isTrial?: boolean;
+  hasWorkspaces?: boolean;
+  workspaceName?: string | null;
 }
 
-export default function MobileMenu({ userName, logoUrl, hiddenModules = [], isTrial }: MobileMenuProps) {
+export default function MobileMenu({ userName, logoUrl, hiddenModules = [], isTrial, hasWorkspaces = false, workspaceName }: MobileMenuProps) {
   const [open, setOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [helpSubject, setHelpSubject] = useState("");
@@ -23,6 +32,9 @@ export default function MobileMenu({ userName, logoUrl, hiddenModules = [], isTr
   const pathname = usePathname();
   const t = useT();
 
+  const [workspaces, setWorkspaces] = useState<WorkspaceInfo[] | null>(null);
+  const [switching, setSwitching] = useState<string | null>(null);
+  const [workspaceExpanded, setWorkspaceExpanded] = useState(false);
   const [discussionUnread, setDiscussionUnread] = useState(0);
 
   useEffect(() => {
@@ -55,8 +67,33 @@ export default function MobileMenu({ userName, logoUrl, hiddenModules = [], isTr
     { label: t.nav.veezard, href: "/veezard", icon: <VeezardIcon size={18} />, slug: null, soon: true },
   ];
 
-  // Close on route change
-  useEffect(() => { setOpen(false); }, [pathname]);
+  // Fetch workspaces when workspace section is first expanded
+  useEffect(() => {
+    if (!workspaceExpanded || !hasWorkspaces || workspaces !== null) return;
+    fetch("/api/workspace/accounts")
+      .then((r) => r.json())
+      .then((data) => setWorkspaces(data.workspaces ?? []))
+      .catch(() => setWorkspaces([]));
+  }, [workspaceExpanded, hasWorkspaces, workspaces]);
+
+  async function handleSwitch(targetUserId: string) {
+    setSwitching(targetUserId);
+    try {
+      const res = await fetch("/api/workspace/switch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ targetUserId }),
+      });
+      const data = await res.json();
+      if (!data.token) { setSwitching(null); return; }
+      await signIn("credentials", { impersonateToken: data.token, callbackUrl: "/panel-glowny" });
+    } catch {
+      setSwitching(null);
+    }
+  }
+
+  // Close on route change; collapse workspace panel when drawer closes
+  useEffect(() => { setOpen(false); setWorkspaceExpanded(false); }, [pathname]);
 
   // Prevent body scroll when open
   useEffect(() => {
@@ -99,23 +136,82 @@ export default function MobileMenu({ userName, logoUrl, hiddenModules = [], isTr
         }`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-semibold shrink-0 overflow-hidden">
-              {logoUrl
-                ? <img src={logoUrl} alt="Logo" className="w-full h-full object-cover" />
-                : userName ? userName[0].toUpperCase() : "?"}
-            </div>
-            {userName && (
-              <span className="text-sm font-semibold text-foreground truncate">{userName}</span>
+        <div className="border-b border-border">
+          <div className="flex items-center justify-between px-4 py-3">
+            {hasWorkspaces ? (
+              <button
+                onClick={() => setWorkspaceExpanded((v) => !v)}
+                className="flex items-center gap-2.5 min-w-0 flex-1 text-left rounded-lg hover:bg-muted transition-colors -ml-1 pl-1 pr-2 py-1"
+              >
+                <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-semibold shrink-0 overflow-hidden">
+                  {logoUrl
+                    ? <img src={logoUrl} alt="Logo" className="w-full h-full object-cover" />
+                    : userName ? userName[0].toUpperCase() : "?"}
+                </div>
+                {userName && (
+                  <span className="flex flex-col min-w-0 flex-1">
+                    <span className="text-sm font-semibold text-foreground truncate leading-tight">{userName}</span>
+                    {workspaceName && (
+                      <span className="text-[11px] text-muted-foreground truncate leading-tight">{workspaceName}</span>
+                    )}
+                  </span>
+                )}
+                <ChevronDown size={14} className={`opacity-50 shrink-0 transition-transform ${workspaceExpanded ? "rotate-180" : ""}`} />
+              </button>
+            ) : (
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-semibold shrink-0 overflow-hidden">
+                  {logoUrl
+                    ? <img src={logoUrl} alt="Logo" className="w-full h-full object-cover" />
+                    : userName ? userName[0].toUpperCase() : "?"}
+                </div>
+                {userName && (
+                  <span className="flex flex-col min-w-0">
+                    <span className="text-sm font-semibold text-foreground truncate leading-tight">{userName}</span>
+                    {workspaceName && (
+                      <span className="text-[11px] text-muted-foreground truncate leading-tight">{workspaceName}</span>
+                    )}
+                  </span>
+                )}
+              </div>
             )}
+            <button
+              onClick={() => setOpen(false)}
+              className="ml-2 p-1.5 rounded-md text-gray-500 hover:bg-muted transition-colors shrink-0"
+            >
+              <X size={18} />
+            </button>
           </div>
-          <button
-            onClick={() => setOpen(false)}
-            className="ml-2 p-1.5 rounded-md text-gray-500 hover:bg-muted transition-colors shrink-0"
-          >
-            <X size={18} />
-          </button>
+
+          {/* Inline workspace switcher */}
+          {hasWorkspaces && workspaceExpanded && (
+            <div className="px-3 pb-3">
+              {workspaces === null ? (
+                <p className="text-xs text-muted-foreground px-2 py-1">Ładowanie...</p>
+              ) : workspaces.length > 1 ? (
+                <div className="space-y-0.5">
+                  {workspaces.map((ws) => (
+                    <button
+                      key={ws.userId}
+                      disabled={ws.isCurrent || switching !== null}
+                      onClick={() => !ws.isCurrent && handleSwitch(ws.userId)}
+                      className="w-full flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm font-medium transition-colors text-gray-600 dark:text-gray-400 hover:bg-muted hover:text-foreground disabled:pointer-events-none"
+                    >
+                      <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-semibold shrink-0 overflow-hidden">
+                        {ws.avatarUrl
+                          ? <img src={ws.avatarUrl} alt="" className="w-full h-full object-cover" />
+                          : (ws.name[0] ?? "?").toUpperCase()
+                        }
+                      </div>
+                      <span className="flex-1 text-left truncate">{ws.name}</span>
+                      {ws.isCurrent && <Check size={14} className="text-primary shrink-0" />}
+                      {switching === ws.userId && <span className="text-xs text-muted-foreground shrink-0">...</span>}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          )}
         </div>
 
         {/* Nav items */}

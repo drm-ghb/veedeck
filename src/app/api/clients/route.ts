@@ -84,7 +84,7 @@ export async function POST(req: NextRequest) {
           const internalEmail = `${baseLogin}@client.internal`;
           const [existingLogin, existingEmail] = await Promise.all([
             prisma.user.findUnique({ where: { login: baseLogin } }),
-            prisma.user.findUnique({ where: { email: internalEmail } }),
+            prisma.user.findFirst({ where: { email: internalEmail } }),
           ]);
           if (!existingLogin && !existingEmail) {
             const hashedPassword = await bcrypt.hash(contactPassword.trim(), 10);

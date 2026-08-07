@@ -38,7 +38,10 @@ vi.mock("@/lib/prisma", () => ({
 }));
 vi.mock("@/lib/pusher", () => ({ pusherServer: { trigger: vi.fn() } }));
 vi.mock("@/lib/workspace", () => ({ getWorkspaceUserId: vi.fn().mockReturnValue("user-1") }));
-vi.mock("@/lib/email", () => ({ sendInvitationEmail: vi.fn().mockResolvedValue(undefined) }));
+vi.mock("@/lib/email", () => ({
+  sendInvitationEmail: vi.fn().mockResolvedValue(undefined),
+  sendWorkspaceJoinEmail: vi.fn().mockResolvedValue(undefined),
+}));
 vi.mock("bcryptjs", () => ({
   default: { hash: vi.fn().mockResolvedValue("hashed_pw"), compare: vi.fn() },
   hash: vi.fn().mockResolvedValue("hashed_pw"),
@@ -47,7 +50,7 @@ vi.mock("bcryptjs", () => ({
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { pusherServer } from "@/lib/pusher";
-import { sendInvitationEmail } from "@/lib/email";
+import { sendInvitationEmail, sendWorkspaceJoinEmail } from "@/lib/email";
 import { GET as teamInviteGET, POST as teamInvitePOST } from "@/app/api/team/invite/route";
 import { DELETE as memberDELETE } from "@/app/api/team/members/[id]/route";
 import { GET as inviteTokenGET, POST as inviteTokenPOST } from "@/app/api/invite/[token]/route";
@@ -123,8 +126,9 @@ describe("POST /api/team/invite — wysyłanie zaproszenia", () => {
     vi.mocked(auth).mockResolvedValue(SESSION as any);
     // owner = agencja (plan allows invitations)
     vi.mocked(prisma.user.findUnique)
-      .mockResolvedValueOnce({ isFree: false, subscription: { plan: "agencja", status: "active" } } as any)
-      .mockResolvedValueOnce({ id: "existing-user" } as any);
+      .mockResolvedValueOnce({ isFree: false, subscription: { plan: "agencja", status: "active" } } as any);
+    vi.mocked(prisma.invitation.findFirst).mockResolvedValueOnce(null); // brak istniejącego zaproszenia
+    vi.mocked(prisma.user.findFirst).mockResolvedValueOnce({ id: "existing-user" } as any); // już jest członkiem
 
     const res = await teamInvitePOST(makeRequest("POST", { email: "existing@example.com" }));
     expect(res.status).toBe(409);
@@ -133,8 +137,7 @@ describe("POST /api/team/invite — wysyłanie zaproszenia", () => {
   it("zwraca 409 gdy zaproszenie do tego emaila już jest PENDING", async () => {
     vi.mocked(auth).mockResolvedValue(SESSION as any);
     vi.mocked(prisma.user.findUnique)
-      .mockResolvedValueOnce({ isFree: false, subscription: { plan: "agencja", status: "active" } } as any)
-      .mockResolvedValueOnce(null);
+      .mockResolvedValueOnce({ isFree: false, subscription: { plan: "agencja", status: "active" } } as any);
     vi.mocked(prisma.invitation.findFirst).mockResolvedValue(mockInvitation as any);
 
     const res = await teamInvitePOST(makeRequest("POST", { email: "member@example.com" }));
@@ -145,9 +148,9 @@ describe("POST /api/team/invite — wysyłanie zaproszenia", () => {
     vi.mocked(auth).mockResolvedValue(SESSION as any);
     vi.mocked(prisma.user.findUnique)
       .mockResolvedValueOnce({ isFree: false, subscription: { plan: "agencja", status: "active" } } as any)
-      .mockResolvedValueOnce(null) // brak istniejącego usera
       .mockResolvedValueOnce({ name: "Projektant", email: "designer@test.com" } as any); // designer info
     vi.mocked(prisma.invitation.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.user.findFirst).mockResolvedValue(null); // nie jest członkiem, brak primary account
     vi.mocked(prisma.invitation.create).mockResolvedValue(mockInvitation as any);
 
     const res = await teamInvitePOST(makeRequest("POST", { email: "newmember@example.com" }));
@@ -164,11 +167,11 @@ describe("POST /api/team/invite — wysyłanie zaproszenia", () => {
     vi.mocked(auth).mockResolvedValue(SESSION as any);
     vi.mocked(prisma.user.findUnique)
       .mockResolvedValueOnce({ isFree: false, subscription: { plan: "studio", status: "active" } } as any)
-      .mockResolvedValueOnce(null)
       .mockResolvedValueOnce({ name: "Projektant", email: "designer@test.com" } as any);
     vi.mocked(prisma.user.count).mockResolvedValue(0);
     vi.mocked(prisma.invitation.count).mockResolvedValue(0);
     vi.mocked(prisma.invitation.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
     vi.mocked(prisma.invitation.create).mockResolvedValue({ ...mockInvitation, email: "member@example.com" } as any);
 
     await teamInvitePOST(makeRequest("POST", { email: "MEMBER@EXAMPLE.COM" }));
@@ -267,11 +270,11 @@ describe("POST /api/team/invite — ograniczenia planów subskrypcji", () => {
     vi.mocked(auth).mockResolvedValue(SESSION as any);
     vi.mocked(prisma.user.findUnique)
       .mockResolvedValueOnce({ isFree: false, subscription: { plan: "studio", status: "active" } } as any)
-      .mockResolvedValueOnce(null) // brak istniejącego usera
       .mockResolvedValueOnce({ name: "Projektant", email: "designer@test.com" } as any);
     vi.mocked(prisma.user.count).mockResolvedValue(1);      // 1 istniejący członek
     vi.mocked(prisma.invitation.count).mockResolvedValue(0); // 0 oczekujących (łącznie 1 < 2)
     vi.mocked(prisma.invitation.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
     vi.mocked(prisma.invitation.create).mockResolvedValue(mockInvitation as any);
 
     const res = await teamInvitePOST(makeRequest("POST", { email: "new@example.com" }));
@@ -310,10 +313,10 @@ describe("POST /api/team/invite — ograniczenia planów subskrypcji", () => {
     vi.mocked(auth).mockResolvedValue(SESSION as any);
     vi.mocked(prisma.user.findUnique)
       .mockResolvedValueOnce({ isFree: false, subscription: { plan: "agencja", status: "active" } } as any)
-      .mockResolvedValueOnce(null)
       .mockResolvedValueOnce({ name: "Projektant", email: "designer@test.com" } as any);
     // Agencja nie sprawdza count — mockujemy wysoką liczbę
     vi.mocked(prisma.invitation.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
     vi.mocked(prisma.invitation.create).mockResolvedValue(mockInvitation as any);
 
     const res = await teamInvitePOST(makeRequest("POST", { email: "agencja-member@example.com" }));
@@ -326,9 +329,9 @@ describe("POST /api/team/invite — ograniczenia planów subskrypcji", () => {
     vi.mocked(auth).mockResolvedValue(SESSION as any);
     vi.mocked(prisma.user.findUnique)
       .mockResolvedValueOnce({ isFree: true, subscription: null } as any)
-      .mockResolvedValueOnce(null)
       .mockResolvedValueOnce({ name: "Projektant", email: "designer@test.com" } as any);
     vi.mocked(prisma.invitation.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
     vi.mocked(prisma.invitation.create).mockResolvedValue(mockInvitation as any);
 
     const res = await teamInvitePOST(makeRequest("POST", { email: "free-user-member@example.com" }));

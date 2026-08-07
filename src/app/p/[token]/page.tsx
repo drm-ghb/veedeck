@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { signIn, getSession } from "next-auth/react";
+import { useT } from "@/lib/i18n";
 
 const CSS = `
   .vd-body {
@@ -66,6 +67,7 @@ const CSS = `
 type Status = "loading" | "error" | "expired" | "revoked";
 
 export default function AccessTokenPage() {
+  const t = useT();
   const { token } = useParams<{ token: string }>();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -131,8 +133,8 @@ export default function AccessTokenPage() {
               {status === "loading" && (
                 <div className="vd-card">
                   <div className="vd-spinner" />
-                  <p className="vd-h2" style={{ fontSize: 18 }}>Otwieramy panel…</p>
-                  <p className="vd-body-text">Trwa weryfikacja linku dostępowego.</p>
+                  <p className="vd-h2" style={{ fontSize: 18 }}>{t.token.opening}</p>
+                  <p className="vd-body-text">{t.token.verifying}</p>
                 </div>
               )}
 
@@ -143,12 +145,9 @@ export default function AccessTokenPage() {
                       <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
                     </svg>
                   </div>
-                  <p className="vd-h2">Link wygasł</p>
-                  <p className="vd-body-text">
-                    Ten link dostępowy wygasł lub nie był używany przez długi czas.
-                    Skontaktuj się z projektantem, aby wysłał nowy link.
-                  </p>
-                  <p className="vd-meta-note">Linki są ważne przez 180 dni od ostatniego użycia.</p>
+                  <p className="vd-h2">{t.token.expired}</p>
+                  <p className="vd-body-text">{t.token.expiredDesc}</p>
+                  <p className="vd-meta-note">{t.token.expiredNote}</p>
                 </div>
               )}
 
@@ -159,10 +158,8 @@ export default function AccessTokenPage() {
                       <circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" />
                     </svg>
                   </div>
-                  <p className="vd-h2">Link został odwołany</p>
-                  <p className="vd-body-text">
-                    Ten link dostępowy został unieważniony. Skontaktuj się z projektantem, aby wysłał nowy link.
-                  </p>
+                  <p className="vd-h2">{t.token.revoked}</p>
+                  <p className="vd-body-text">{t.token.revokedDesc}</p>
                 </div>
               )}
 
@@ -173,11 +170,9 @@ export default function AccessTokenPage() {
                       <circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" />
                     </svg>
                   </div>
-                  <p className="vd-h2">Nieprawidłowy link</p>
-                  <p className="vd-body-text">
-                    Ten link jest nieprawidłowy lub wygasł. Skontaktuj się z projektantem, aby wysłał nowy link dostępowy.
-                  </p>
-                  <a href="/login" className="vd-btn">Zaloguj się inaczej</a>
+                  <p className="vd-h2">{t.token.invalid}</p>
+                  <p className="vd-body-text">{t.token.invalidDesc}</p>
+                  <a href="/login" className="vd-btn">{t.token.loginDifferently}</a>
                 </div>
               )}
 
@@ -186,7 +181,7 @@ export default function AccessTokenPage() {
 
           <footer className="vd-footer">
             © 2026 veedeck ·{" "}
-            <a href="https://veedeck.com/polityka-prywatnosci.html">Polityka prywatności</a>
+            <a href="https://veedeck.com/polityka-prywatnosci.html">{t.auth.privacyPolicy}</a>
           </footer>
         </div>
       </div>

@@ -1878,6 +1878,246 @@ export function teamInvitationEmailEN({ inviteUrl, designerName }: { inviteUrl: 
 </html>`;
 }
 
+export function workspaceJoinEmailPL({ inviteUrl, workspaceName, designerName }: { inviteUrl: string; workspaceName: string; designerName: string }): string {
+  const safe = inviteUrl.replace(/"/g, "&quot;");
+  const safeName = workspaceName.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  return `<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light only">
+<meta name="supported-color-schemes" content="light only">
+<title>veedeck — dołącz do workspace</title>
+<!--[if mso]><style>* { font-family: Arial, sans-serif !important; }</style><![endif]-->
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Inter:wght@600;700&family=Nunito:wght@300&display=swap');
+  body { margin: 0; padding: 0; background: #F5F5F5; }
+  a { color: #4F46E5; }
+  a:hover { color: #4338CA; }
+  @media (max-width: 620px) {
+    .vd-card-pad { padding: 32px 24px !important; }
+    .vd-outer-pad { padding: 24px 12px !important; }
+    .vd-h1 { font-size: 26px !important; }
+  }
+</style>
+</head>
+<body style="margin:0;padding:0;background:#F5F5F5;">
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:#F5F5F5;font-size:1px;line-height:1px;">Masz zaproszenie do workspace ${safeName} w veedeck. Kliknij, aby dołączyć — nie musisz tworzyć nowego hasła.</div>
+
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#F5F5F5;">
+    <tr>
+      <td align="center" class="vd-outer-pad" style="padding:40px 16px;font-family:'DM Sans',-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:600px;">
+
+          <!-- Card -->
+          <tr>
+            <td style="background:#FFFFFF;border:1px solid #E5E7EB;border-radius:18px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td class="vd-card-pad" style="padding:44px 48px;">
+
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 28px;">
+                      <tr>
+                        <td style="vertical-align:middle;padding-right:10px;"><svg width="20" height="20" viewBox="0 0 414 414" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="414" height="414" rx="30" fill="#4F46E5"/><path d="M285.35 137.708C276.079 121.583 264.61 106.1 251.437 91.8967C247.681 87.8474 241.335 87.8601 237.429 91.7654L220.356 108.839C217.788 111.406 216.814 115.164 217.811 118.656L249.875 230.935C251.461 236.489 250.019 242.375 245.959 245.959C242.375 250.019 236.216 251.734 230.662 250.148L118.382 218.085C114.891 217.088 111.133 218.062 108.565 220.629L91.7654 237.429C87.8601 241.335 87.8474 247.681 91.8967 251.437C106.1 264.61 121.583 276.079 137.708 285.35C156.603 296.214 176.008 303.847 194.816 307.816C213.624 311.784 231.466 312.009 247.323 308.478C263.18 304.947 276.743 297.729 287.236 287.236C297.729 276.743 304.947 263.18 308.478 247.323C312.009 231.466 311.784 213.624 307.816 194.816C303.848 176.008 296.214 156.603 285.35 137.708Z" fill="white"/><path d="M209.499 201.188C210.695 205.649 206.612 209.732 202.151 208.536L147.777 193.967C143.316 192.772 141.822 187.195 145.088 183.929L184.892 144.125C188.158 140.859 193.735 142.353 194.93 146.814L209.499 201.188Z" fill="white"/></svg></td>
+                        <td style="vertical-align:middle;line-height:1;font-family:'Nunito',Arial,sans-serif;font-size:19px;font-weight:300;letter-spacing:-0.05em;color:#24252B;">veedeck</td>
+                      </tr>
+                    </table>
+
+                    <div style="font-family:'Inter',Arial,sans-serif;font-size:12px;font-weight:700;letter-spacing:0.09em;text-transform:uppercase;color:#8A8D9A;">Zaproszenie do workspace</div>
+
+                    <h1 class="vd-h1" style="margin:10px 0 0;font-family:'Inter',Arial,sans-serif;font-size:30px;line-height:1.2;font-weight:700;letter-spacing:-0.025em;color:#24252B;">
+                      Dołącz do ${safeName}
+                    </h1>
+
+                    <p style="margin:16px 0 0;font-size:16px;line-height:1.6;color:#565A69;">
+                      <b style="color:#24252B;">${designerName}</b> zaprasza Cię do workspace <b style="color:#24252B;">${safeName}</b> w&nbsp;<span style="font-family:'Nunito',Arial,sans-serif;font-weight:300;letter-spacing:-0.05em;">veedeck</span>. Masz już konto — kliknij poniżej, żeby dołączyć i&nbsp;ustawić swój profil w&nbsp;tym workspace.
+                    </p>
+
+                    <!-- CTA -->
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:32px 0 0;">
+                      <tr>
+                        <td style="border-radius:12px;background:#4F46E5;">
+                          <a href="${safe}" style="display:inline-block;padding:15px 30px;font-family:'DM Sans',Arial,sans-serif;font-size:15px;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:12px;">Dołącz do ${safeName}</a>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <!-- Info box -->
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:32px 0 0;">
+                      <tr>
+                        <td style="background:#F2F3F7;border-radius:14px;padding:22px 24px;">
+                          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                            <tr>
+                              <td style="padding:0 0 10px;vertical-align:top;width:32px;font-size:16px;line-height:1;">🔑</td>
+                              <td style="padding:0 0 10px;vertical-align:top;font-size:14px;line-height:1.6;color:#565A69;">Link jest ważny przez <b style="color:#24252B;font-weight:600;">7&nbsp;dni</b>.</td>
+                            </tr>
+                            <tr>
+                              <td style="vertical-align:top;width:32px;font-size:16px;line-height:1;">💡</td>
+                              <td style="vertical-align:top;font-size:14px;line-height:1.6;color:#565A69;">Nie musisz tworzyć nowego hasła — logujesz się swoim istniejącym kontem veedeck.</td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <div style="border-top:1px solid #E5E7EB;margin:32px 0;"></div>
+
+                    <p style="margin:0;font-size:13px;line-height:1.5;color:#8A8D9A;">Przycisk nie działa? Wklej ten link do przeglądarki:</p>
+                    <p style="margin:10px 0 0;font-size:13px;line-height:1.6;word-break:break-all;"><a href="${safe}" style="color:#4F46E5;text-decoration:underline;">${inviteUrl}</a></p>
+
+                    <div style="border-top:1px solid #E5E7EB;margin:32px 0;"></div>
+
+                    <p style="margin:0;font-size:13px;line-height:1.6;color:#A0A3AE;">Jeśli nie spodziewałeś(aś) się tego zaproszenia, zignoruj tę wiadomość.</p>
+
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding:26px 24px 8px;text-align:center;">
+              <p style="margin:0;font-size:13px;line-height:1.6;color:#8A8D9A;">veedeck - Visualize, Design, Deliver. Platforma dla projektantów wnętrz.</p>
+              <p style="margin:10px 0 0;font-size:13px;line-height:1.6;color:#A0A3AE;">
+                <a href="${PRIVACY_URL_PL}" style="color:#8A8D9A;text-decoration:none;">Polityka prywatności</a>
+                &nbsp;·&nbsp;
+                <a href="${COOKIES_URL_PL}" style="color:#8A8D9A;text-decoration:none;">Cookies</a>
+                &nbsp;·&nbsp;
+                <a href="mailto:${CONTACT_EMAIL}" style="color:#8A8D9A;text-decoration:none;">${CONTACT_EMAIL}</a>
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
+
+export function workspaceJoinEmailEN({ inviteUrl, workspaceName, designerName }: { inviteUrl: string; workspaceName: string; designerName: string }): string {
+  const safe = inviteUrl.replace(/"/g, "&quot;");
+  const safeName = workspaceName.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light only">
+<meta name="supported-color-schemes" content="light only">
+<title>veedeck — join workspace</title>
+<!--[if mso]><style>* { font-family: Arial, sans-serif !important; }</style><![endif]-->
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Inter:wght@600;700&family=Nunito:wght@300&display=swap');
+  body { margin: 0; padding: 0; background: #F5F5F5; }
+  a { color: #4F46E5; }
+  a:hover { color: #4338CA; }
+  @media (max-width: 620px) {
+    .vd-card-pad { padding: 32px 24px !important; }
+    .vd-outer-pad { padding: 24px 12px !important; }
+    .vd-h1 { font-size: 26px !important; }
+  }
+</style>
+</head>
+<body style="margin:0;padding:0;background:#F5F5F5;">
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:#F5F5F5;font-size:1px;line-height:1px;">You have been invited to join the ${safeName} workspace on veedeck. Click to join — no new password needed.</div>
+
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#F5F5F5;">
+    <tr>
+      <td align="center" class="vd-outer-pad" style="padding:40px 16px;font-family:'DM Sans',-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:600px;">
+
+          <!-- Card -->
+          <tr>
+            <td style="background:#FFFFFF;border:1px solid #E5E7EB;border-radius:18px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td class="vd-card-pad" style="padding:44px 48px;">
+
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 28px;">
+                      <tr>
+                        <td style="vertical-align:middle;padding-right:10px;"><svg width="20" height="20" viewBox="0 0 414 414" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="414" height="414" rx="30" fill="#4F46E5"/><path d="M285.35 137.708C276.079 121.583 264.61 106.1 251.437 91.8967C247.681 87.8474 241.335 87.8601 237.429 91.7654L220.356 108.839C217.788 111.406 216.814 115.164 217.811 118.656L249.875 230.935C251.461 236.489 250.019 242.375 245.959 245.959C242.375 250.019 236.216 251.734 230.662 250.148L118.382 218.085C114.891 217.088 111.133 218.062 108.565 220.629L91.7654 237.429C87.8601 241.335 87.8474 247.681 91.8967 251.437C106.1 264.61 121.583 276.079 137.708 285.35C156.603 296.214 176.008 303.847 194.816 307.816C213.624 311.784 231.466 312.009 247.323 308.478C263.18 304.947 276.743 297.729 287.236 287.236C297.729 276.743 304.947 263.18 308.478 247.323C312.009 231.466 311.784 213.624 307.816 194.816C303.848 176.008 296.214 156.603 285.35 137.708Z" fill="white"/><path d="M209.499 201.188C210.695 205.649 206.612 209.732 202.151 208.536L147.777 193.967C143.316 192.772 141.822 187.195 145.088 183.929L184.892 144.125C188.158 140.859 193.735 142.353 194.93 146.814L209.499 201.188Z" fill="white"/></svg></td>
+                        <td style="vertical-align:middle;line-height:1;font-family:'Nunito',Arial,sans-serif;font-size:19px;font-weight:300;letter-spacing:-0.05em;color:#24252B;">veedeck</td>
+                      </tr>
+                    </table>
+
+                    <div style="font-family:'Inter',Arial,sans-serif;font-size:12px;font-weight:700;letter-spacing:0.09em;text-transform:uppercase;color:#8A8D9A;">Workspace invitation</div>
+
+                    <h1 class="vd-h1" style="margin:10px 0 0;font-family:'Inter',Arial,sans-serif;font-size:30px;line-height:1.2;font-weight:700;letter-spacing:-0.025em;color:#24252B;">
+                      Join ${safeName}
+                    </h1>
+
+                    <p style="margin:16px 0 0;font-size:16px;line-height:1.6;color:#565A69;">
+                      <b style="color:#24252B;">${designerName}</b> is inviting you to join the <b style="color:#24252B;">${safeName}</b> workspace on&nbsp;<span style="font-family:'Nunito',Arial,sans-serif;font-weight:300;letter-spacing:-0.05em;">veedeck</span>. You already have an account — click below to join and set up your profile in this workspace.
+                    </p>
+
+                    <!-- CTA -->
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:32px 0 0;">
+                      <tr>
+                        <td style="border-radius:12px;background:#4F46E5;">
+                          <a href="${safe}" style="display:inline-block;padding:15px 30px;font-family:'DM Sans',Arial,sans-serif;font-size:15px;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:12px;">Join ${safeName}</a>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <!-- Info box -->
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:32px 0 0;">
+                      <tr>
+                        <td style="background:#F2F3F7;border-radius:14px;padding:22px 24px;">
+                          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                            <tr>
+                              <td style="padding:0 0 10px;vertical-align:top;width:32px;font-size:16px;line-height:1;">🔑</td>
+                              <td style="padding:0 0 10px;vertical-align:top;font-size:14px;line-height:1.6;color:#565A69;">This link is valid for <b style="color:#24252B;font-weight:600;">7&nbsp;days</b>.</td>
+                            </tr>
+                            <tr>
+                              <td style="vertical-align:top;width:32px;font-size:16px;line-height:1;">💡</td>
+                              <td style="vertical-align:top;font-size:14px;line-height:1.6;color:#565A69;">No new password needed — you'll log in with your existing veedeck account.</td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <div style="border-top:1px solid #E5E7EB;margin:32px 0;"></div>
+
+                    <p style="margin:0;font-size:13px;line-height:1.5;color:#8A8D9A;">Button not working? Paste this link into your browser:</p>
+                    <p style="margin:10px 0 0;font-size:13px;line-height:1.6;word-break:break-all;"><a href="${safe}" style="color:#4F46E5;text-decoration:underline;">${inviteUrl}</a></p>
+
+                    <div style="border-top:1px solid #E5E7EB;margin:32px 0;"></div>
+
+                    <p style="margin:0;font-size:13px;line-height:1.6;color:#A0A3AE;">If you weren't expecting this invitation, you can safely ignore this email.</p>
+
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding:26px 24px 8px;text-align:center;">
+              <p style="margin:0;font-size:13px;line-height:1.6;color:#8A8D9A;">veedeck - Visualize, Design, Deliver. The platform for interior designers.</p>
+              <p style="margin:10px 0 0;font-size:13px;line-height:1.6;color:#A0A3AE;">
+                <a href="${PRIVACY_URL_EN}" style="color:#8A8D9A;text-decoration:none;">Privacy Policy</a>
+                &nbsp;·&nbsp;
+                <a href="${COOKIES_URL_EN}" style="color:#8A8D9A;text-decoration:none;">Cookies</a>
+                &nbsp;·&nbsp;
+                <a href="mailto:${CONTACT_EMAIL}" style="color:#8A8D9A;text-decoration:none;">${CONTACT_EMAIL}</a>
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
+
 export function activationEmailEN(activationUrl: string): string {
   const safe = activationUrl.replace(/"/g, "&quot;");
   return `<!DOCTYPE html>

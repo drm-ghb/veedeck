@@ -19,10 +19,12 @@ import { useIsTrialExpired } from "@/lib/trial-context";
 
 export default function AddFolderDialog({
   roomId,
+  parentId,
   open: externalOpen,
   onOpenChange: externalOnOpenChange,
 }: {
   roomId: string;
+  parentId?: string;
   open?: boolean;
   onOpenChange?: (v: boolean) => void;
 }) {
@@ -48,7 +50,7 @@ export default function AddFolderDialog({
     const res = await fetch("/api/folders", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, roomId }),
+      body: JSON.stringify({ name, roomId, ...(parentId ? { parentId } : {}) }),
     });
     setLoading(false);
     if (res.ok) {

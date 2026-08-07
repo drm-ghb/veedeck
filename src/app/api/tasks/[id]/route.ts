@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getWorkspaceUserId } from "@/lib/workspace";
 import { pusherServer } from "@/lib/pusher";
+import { hasPermission } from "@/lib/permissions";
 
 const taskInclude = {
   project: { select: { id: true, title: true } },
@@ -48,6 +49,8 @@ export async function PATCH(
 
   const ownerId = getWorkspaceUserId(session);
   const { id } = await params;
+
+  if (!await hasPermission(session, "zadania", 2)) return NextResponse.json({ error: "Brak uprawnień do edycji zadań" }, { status: 403 });
 
   const existing = await prisma.task.findUnique({ where: { id } });
   if (!existing) return NextResponse.json({ error: "Nie znaleziono zadania" }, { status: 404 });
@@ -114,6 +117,8 @@ export async function DELETE(
 
   const ownerId = getWorkspaceUserId(session);
   const { id } = await params;
+
+  if (!await hasPermission(session, "zadania", 3)) return NextResponse.json({ error: "Brak uprawnień do usuwania zadań" }, { status: 403 });
 
   const existing = await prisma.task.findUnique({ where: { id } });
   if (!existing) return NextResponse.json({ error: "Nie znaleziono zadania" }, { status: 404 });

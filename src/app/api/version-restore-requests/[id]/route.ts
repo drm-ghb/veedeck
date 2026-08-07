@@ -44,21 +44,47 @@ export async function PATCH(
 
     if (render && version) {
       const versionNumber = render._count.versions + 1;
-      await prisma.$transaction([
-        prisma.renderVersion.create({
-          data: {
-            renderId: render.id,
-            fileUrl: render.fileUrl,
-            fileKey: render.fileKey,
-            versionNumber,
-            archivedAt: new Date(),
-          },
-        }),
-        prisma.render.update({
+      const currentActiveVersionId = (render as any).activeVersionId as string | null;
+
+      await prisma.$transaction(async (tx) => {
+        let archiveVersionId: string;
+
+        if (currentActiveVersionId) {
+          archiveVersionId = currentActiveVersionId;
+        } else {
+          const snapshot = await tx.renderVersion.create({
+            data: {
+              renderId: render.id,
+              fileUrl: render.fileUrl,
+              fileKey: render.fileKey,
+              versionNumber,
+              archivedAt: new Date(),
+            },
+          });
+          archiveVersionId = snapshot.id;
+        }
+
+        await tx.comment.updateMany({
+          where: { renderId: render.id, archivedVersionId: null, posX: { not: null } },
+          data: { archivedVersionId: archiveVersionId },
+        });
+        await tx.renderProductPin.updateMany({
+          where: { renderId: render.id, archivedVersionId: null },
+          data: { archivedVersionId: archiveVersionId },
+        });
+        await tx.comment.updateMany({
+          where: { renderId: render.id, archivedVersionId: request.versionId },
+          data: { archivedVersionId: null },
+        });
+        await tx.renderProductPin.updateMany({
+          where: { renderId: render.id, archivedVersionId: request.versionId },
+          data: { archivedVersionId: null },
+        });
+        await tx.render.update({
           where: { id: render.id },
-          data: { fileUrl: version.fileUrl, fileKey: version.fileKey ?? render.fileKey },
-        }),
-      ]);
+          data: { fileUrl: version.fileUrl, fileKey: version.fileKey ?? render.fileKey, activeVersionId: request.versionId } as any,
+        });
+      });
     }
   }
 

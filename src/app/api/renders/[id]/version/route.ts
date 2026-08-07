@@ -25,28 +25,79 @@ export async function POST(
       return NextResponse.json({ error: "Brak dostępu" }, { status: 403 });
     }
 
-    const versionNumber = render._count.versions + 1;
+    let newVersionNumber = 0;
 
     await prisma.$transaction(async (tx) => {
+      let archiveVersionId: string;
+
+      if ((render as any).activeVersionId) {
+        // Already tracking: archive pins under the currently-active version
+        archiveVersionId = (render as any).activeVersionId as string;
+        newVersionNumber = render._count.versions + 1;
+      } else if (render._count.versions === 0) {
+        // First version ever: create "Oryginał" snapshot first, then new version
+        const original = await tx.renderVersion.create({
+          data: {
+            renderId: id,
+            fileUrl: render.fileUrl,
+            fileKey: render.fileKey,
+            versionNumber: 1,
+            label: "Oryginał",
+            archivedAt: new Date(),
+          },
+        });
+        archiveVersionId = original.id;
+        newVersionNumber = 2;
+      } else {
+        // Old render (versions exist but no activeVersionId tracking) — one-time snapshot transition
+        const snapshot = await tx.renderVersion.create({
+          data: {
+            renderId: id,
+            fileUrl: render.fileUrl,
+            fileKey: render.fileKey,
+            versionNumber: render._count.versions + 1,
+            archivedAt: new Date(),
+          },
+        });
+        archiveVersionId = snapshot.id;
+        newVersionNumber = render._count.versions + 2;
+      }
+
+      // Archive current pin comments (posX not null) — chat messages preserved
+      await tx.comment.updateMany({
+        where: { renderId: id, archivedVersionId: null, posX: { not: null } },
+        data: { archivedVersionId: archiveVersionId },
+      });
+      await tx.renderProductPin.updateMany({
+        where: { renderId: id, archivedVersionId: null },
+        data: { archivedVersionId: archiveVersionId },
+      });
+
+      // Create the new version
       const newVersion = await tx.renderVersion.create({
         data: {
           renderId: id,
-          fileUrl: render.fileUrl,
-          fileKey: render.fileKey,
-          versionNumber,
+          fileUrl,
+          fileKey,
+          versionNumber: newVersionNumber,
           label: label || null,
           archivedAt: new Date(),
         },
       });
-      await tx.comment.updateMany({
-        where: { renderId: id, archivedVersionId: null },
-        data: { archivedVersionId: newVersion.id },
+
+      await tx.render.update({
+        where: { id },
+        data: { fileUrl, fileKey, activeVersionId: newVersion.id } as any,
       });
-      await tx.renderProductPin.updateMany({
-        where: { renderId: id, archivedVersionId: null },
-        data: { archivedVersionId: newVersion.id },
-      });
-      await tx.render.update({ where: { id }, data: { fileUrl, fileKey } });
+    });
+
+    // Log version upload as system chat message
+    await prisma.comment.create({
+      data: {
+        renderId: id,
+        author: "__system__",
+        content: JSON.stringify({ event: "version_upload", versionNumber: newVersionNumber, label: label || null }),
+      },
     });
 
     return NextResponse.json({ success: true });

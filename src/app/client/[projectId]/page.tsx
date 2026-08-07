@@ -22,7 +22,7 @@ import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/ca
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useTheme } from "@/lib/theme";
-import { useLang } from "@/lib/i18n";
+import { useLang, useT } from "@/lib/i18n";
 import { SectionHeader } from "@/components/settings/SettingsShared";
 import Cropper from "react-easy-crop";
 import type { Area } from "react-easy-crop";
@@ -47,7 +47,7 @@ interface Reply { id: string; content: string; author: string; createdAt: string
 interface Comment { id: string; title?: string | null; content: string; posX: number; posY: number; posPage: number | null; status: "NEW" | "IN_PROGRESS" | "DONE"; author: string; createdAt: string; replies: Reply[]; }
 interface RenderVersion { id: string; fileUrl: string; versionNumber: number; label?: string | null; archivedAt: string; }
 interface Render { id: string; name: string; fileUrl: string; fileType?: string; status: RenderStatus; comments: Comment[]; versions: RenderVersion[]; folder?: { id: string; name: string } | null; }
-interface ShareFolder { id: string; name: string; pinned: boolean; }
+interface ShareFolder { id: string; name: string; pinned: boolean; subfolders: Array<{id: string; name: string; pinned: boolean}>; }
 interface Room { id: string; name: string; type: string; icon?: string | null; folders: ShareFolder[]; renders: Render[]; }
 interface Project {
   id: string; title: string; description: string | null;
@@ -87,17 +87,17 @@ interface HomeData {
   }[] | null;
 }
 
-function relTime(iso: string): string {
+function relTime(iso: string, cp: { justNow: string; minutesAgo: string; hoursAgo: string; yesterday: string; daysAgo: string }, lang: string): string {
   const diff = Date.now() - new Date(iso).getTime();
   const min = Math.floor(diff / 60000);
-  if (min < 2) return "przed chwilą";
-  if (min < 60) return `${min} min. temu`;
+  if (min < 2) return cp.justNow;
+  if (min < 60) return cp.minutesAgo.replace("{n}", String(min));
   const h = Math.floor(min / 60);
-  if (h < 24) return `${h} godz. temu`;
+  if (h < 24) return cp.hoursAgo.replace("{n}", String(h));
   const d = Math.floor(h / 24);
-  if (d === 1) return "wczoraj";
-  if (d < 7) return `${d} dni temu`;
-  return new Date(iso).toLocaleDateString("pl-PL");
+  if (d === 1) return cp.yesterday;
+  if (d < 7) return cp.daysAgo.replace("{n}", String(d));
+  return new Date(iso).toLocaleDateString(lang === "en" ? "en-GB" : "pl-PL");
 }
 
 function HomeCategoryIcon({ category }: { category: string | null }) {
@@ -137,8 +137,24 @@ export default function ClientProjectPage() {
       const room = data.rooms.find((r) => r.id === roomId);
       if (room) {
         setSelectedRoom(room);
-        const folder = folderId ? room.folders.find((f) => f.id === folderId) ?? null : null;
+        const subfolderId = sp.get("subfolderId");
+        let folder: ShareFolder | null = null;
+        let subfolder: {id: string; name: string; pinned: boolean} | null = null;
+        if (folderId) {
+          folder = room.folders.find((f) => f.id === folderId) ?? null;
+          if (!folder) {
+            // folderId might be a subfolder ID — find parent
+            for (const f of room.folders) {
+              const sub = f.subfolders.find((s) => s.id === folderId);
+              if (sub) { folder = f; subfolder = sub; break; }
+            }
+          }
+        }
+        if (subfolderId && folder) {
+          subfolder = folder.subfolders.find((s) => s.id === subfolderId) ?? null;
+        }
         setSelectedFolder(folder);
+        setSelectedSubfolder(subfolder);
         if (v === "render" && renderId) {
           const render = room.renders.find((r) => r.id === renderId);
           if (render) { setSelectedRender(render); setView("render"); }
@@ -176,7 +192,8 @@ export default function ClientProjectPage() {
   const [activeRooms, setActiveRooms] = useState<Room[] | null>(null);
   const [view, setView] = useState<"home" | "projects" | "rooms" | "room" | "render" | "discussion" | "settings" | "lists" | "list" | "payments" | "schedule" | "ankiety" | "survey">("home");
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
-  const [selectedFolder, setSelectedFolder] = useState<{ id: string; name: string } | null>(null);
+  const [selectedFolder, setSelectedFolder] = useState<ShareFolder | null>(null);
+  const [selectedSubfolder, setSelectedSubfolder] = useState<{id: string; name: string; pinned: boolean} | null>(null);
   const [selectedRender, setSelectedRender] = useState<Render | null>(null);
   const [selectedListId, setSelectedListId] = useState<string | null>(null);
   const [selectedListData, setSelectedListData] = useState<ListData | null>(null);
@@ -238,7 +255,7 @@ export default function ClientProjectPage() {
       setSelectedListData(data);
       fetch(`/api/client/${projectId}/lists/${listId}/view`, { method: "POST" }).catch(() => {});
     } catch {
-      toast.error("Nie udało się załadować listy");
+      toast.error(t.clientPage.listLoadError);
       setView("lists");
       navigate({ view: "lists" });
     } finally {
@@ -254,6 +271,7 @@ export default function ClientProjectPage() {
   // Settings state
   const { theme, setTheme } = useTheme();
   const { lang, setLang } = useLang();
+  const t = useT();
   const [settingsName, setSettingsName] = useState("");
   const [settingsFullName, setSettingsFullName] = useState("");
   const [settingsEmail, setSettingsEmail] = useState("");
@@ -363,7 +381,7 @@ export default function ClientProjectPage() {
         if (status === 403 || status === 404 || status === 410) {
           router.replace("/client");
         } else {
-          toast.error("Nie udało się załadować projektu");
+          toast.error(t.clientPage.projectLoadError);
           setLoading(false);
         }
       });
@@ -404,19 +422,19 @@ export default function ClientProjectPage() {
     setNameLoading(true);
     try {
       const res = await fetch("/api/user", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: settingsName.trim() }) });
-      if (!res.ok) { const d = await res.json(); toast.error(d.error || "Nie udało się zapisać nazwy"); return; }
-      toast.success("Nazwa zaktualizowana");
+      if (!res.ok) { const d = await res.json(); toast.error(d.error || t.settings.saveError); return; }
+      toast.success(t.settings.nameUpdated);
     } finally { setNameLoading(false); }
   }
 
   async function handleEmailSave() {
     if (!settingsEmail.trim()) return;
-    if (!settingsEmail.includes("@")) { toast.error("Podaj poprawny adres e-mail (brak znaku @)"); return; }
+    if (!settingsEmail.includes("@")) { toast.error(t.listy.invalidEmail); return; }
     setEmailLoading(true);
     try {
       const res = await fetch("/api/user", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contactEmail: settingsEmail.trim() }) });
-      if (!res.ok) { const d = await res.json(); toast.error(d.error || "Nie udało się zapisać emaila"); return; }
-      toast.success("Email zaktualizowany");
+      if (!res.ok) { const d = await res.json(); toast.error(d.error || t.settings.saveError); return; }
+      toast.success(t.clientPage.emailSaved);
     } finally { setEmailLoading(false); }
   }
 
@@ -425,8 +443,8 @@ export default function ClientProjectPage() {
     setFullNameLoading(true);
     try {
       const res = await fetch("/api/user", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ fullName: settingsFullName.trim() }) });
-      if (!res.ok) { const d = await res.json(); toast.error(d.error || "Nie udało się zapisać"); return; }
-      toast.success("Imię i nazwisko zaktualizowane");
+      if (!res.ok) { const d = await res.json(); toast.error(d.error || t.settings.saveError); return; }
+      toast.success(t.settings.fullNameUpdated);
     } finally { setFullNameLoading(false); }
   }
 
@@ -458,9 +476,9 @@ export default function ClientProjectPage() {
       await fetch("/api/user", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ avatarUrl: url }) });
       setClientAvatarUrl(url);
       setAvatarCropSrc(null);
-      toast.success("Avatar zapisany");
+      toast.success(t.settings.avatarSaved);
     } catch {
-      toast.error("Błąd przesyłania avatara");
+      toast.error(t.settings.avatarUploadError);
     } finally {
       setAvatarCropUploading(false);
     }
@@ -469,33 +487,33 @@ export default function ClientProjectPage() {
   async function handleRemoveAvatar() {
     await fetch("/api/user", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ avatarUrl: null }) });
     setClientAvatarUrl(null);
-    toast.success("Avatar usunięty");
+    toast.success(t.settings.avatarDeleted);
   }
 
   async function handlePasswordSave() {
-    if (newPassword !== confirmPassword) { toast.error("Hasła nie są identyczne"); return; }
+    if (newPassword !== confirmPassword) { toast.error(t.settings.passwordMismatch); return; }
     const valid = newPassword.length >= 8 && /[a-z]/.test(newPassword) && /[A-Z]/.test(newPassword) && /[0-9]/.test(newPassword);
-    if (!valid) { toast.error("Hasło nie spełnia wymagań bezpieczeństwa"); return; }
+    if (!valid) { toast.error(t.settings.passwordTooWeak); return; }
     setPasswordLoading(true);
     try {
       const res = await fetch("/api/user/password", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ currentPassword, newPassword }) });
       const data = await res.json();
-      if (!res.ok) { toast.error(data.error || "Nie udało się zmienić hasła"); return; }
-      toast.success("Hasło zostało zmienione");
+      if (!res.ok) { toast.error(data.error || t.settings.passwordError); return; }
+      toast.success(t.settings.passwordChanged);
       setCurrentPassword(""); setNewPassword(""); setConfirmPassword("");
     } finally { setPasswordLoading(false); }
   }
 
   async function handleSetInitialPassword() {
-    if (initialPwd !== initialPwdConfirm) { toast.error("Hasła nie są identyczne"); return; }
+    if (initialPwd !== initialPwdConfirm) { toast.error(t.settings.passwordMismatch); return; }
     const valid = initialPwd.length >= 8 && /[a-z]/.test(initialPwd) && /[A-Z]/.test(initialPwd) && /[0-9]/.test(initialPwd);
-    if (!valid) { toast.error("Hasło nie spełnia wymagań bezpieczeństwa"); return; }
+    if (!valid) { toast.error(t.settings.passwordTooWeak); return; }
     setInitialPwdLoading(true);
     try {
       const res = await fetch("/api/user/set-initial-password", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ newPassword: initialPwd }) });
       const data = await res.json();
-      if (!res.ok) { toast.error(data.error || "Nie udało się ustawić hasła"); return; }
-      toast.success("Hasło zostało ustawione. Możesz teraz logować się bezpośrednio.");
+      if (!res.ok) { toast.error(data.error || t.clientPage.setPasswordError); return; }
+      toast.success(t.clientPage.passwordSet);
       setInitialPwd(""); setInitialPwdConfirm(""); setShowSetInitialPwd(false);
     } finally { setInitialPwdLoading(false); }
   }
@@ -544,6 +562,7 @@ export default function ClientProjectPage() {
   useEffect(() => {
     setSelectionMode(false);
     setSelectedRenderIds(new Set());
+    setSelectedSubfolder(null);
   }, [selectedFolder]);
 
   useEffect(() => {
@@ -601,7 +620,7 @@ export default function ClientProjectPage() {
       }
       zip(fileMap, (err, data) => {
         setDownloadingAll(false);
-        if (err) { toast.error("Błąd tworzenia archiwum"); return; }
+        if (err) { toast.error(t.clientPage.zipError); return; }
         const blob = new Blob([data], { type: "application/zip" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
@@ -611,7 +630,7 @@ export default function ClientProjectPage() {
         URL.revokeObjectURL(url);
       });
     } catch {
-      toast.error("Błąd pobierania plików");
+      toast.error(t.clientPage.downloadError);
       setDownloadingAll(false);
     }
   }
@@ -643,9 +662,9 @@ export default function ClientProjectPage() {
         setActiveRooms(updated.rooms);
       }
       setSelectedRoom((prev) => prev ? (updated.rooms.find((r) => r.id === prev.id) ?? prev) : prev);
-      toast.success(`Zatwierdzono ${toApprove.length} plik${toApprove.length === 1 ? "" : toApprove.length < 5 ? "i" : "ów"}`);
+      { const n = toApprove.length; const approveKey = n === 1 ? t.share.approvedSg : n < 5 ? t.share.approvedFew : t.share.approvedMany; toast.success(approveKey.replace("{n}", String(n))); }
     } catch {
-      toast.error("Błąd podczas zatwierdzania");
+      toast.error(t.share.approveError);
     } finally {
       setBatchApproving(false);
     }
@@ -654,7 +673,7 @@ export default function ClientProjectPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
-        <p className="text-gray-400 animate-pulse">Ładowanie...</p>
+        <p className="text-gray-400 animate-pulse">{t.common.loading}</p>
       </div>
     );
   }
@@ -662,7 +681,7 @@ export default function ClientProjectPage() {
   if (!project) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
-        <p className="text-gray-500">Projekt nie został znaleziony lub brak dostępu.</p>
+        <p className="text-gray-500">{t.clientPage.projectNotFound}</p>
       </div>
     );
   }
@@ -777,14 +796,22 @@ export default function ClientProjectPage() {
 
   // Compute render viewer data (used below when view === "render")
   const isRenderView = view === "render" && !!selectedRender && !!selectedRoom;
+  const effectiveSubfolder = isRenderView && selectedRender && selectedRoom && !selectedSubfolder
+    ? (selectedRender.folder
+        ? selectedRoom.folders.flatMap((f) => f.subfolders).find((s) => s.id === selectedRender.folder!.id) ?? null
+        : null)
+    : selectedSubfolder;
   const effectiveFolder = isRenderView && selectedRender && selectedRoom
     ? (selectedFolder ?? (selectedRender.folder
-        ? (selectedRoom.folders.find((f) => f.id === selectedRender.folder!.id) ?? selectedRender.folder)
+        ? (selectedRoom.folders.find((f) => f.id === selectedRender.folder!.id)
+          ?? selectedRoom.folders.find((f) => f.subfolders.some((s) => s.id === selectedRender.folder!.id))
+          ?? selectedRender.folder as unknown as ShareFolder)
         : null))
     : null;
+  const effectiveScopeFolderId = (effectiveSubfolder ?? effectiveFolder)?.id ?? null;
   const scopedRenders = isRenderView && selectedRoom
-    ? (effectiveFolder
-        ? selectedRoom.renders.filter((r) => r.folder?.id === effectiveFolder.id)
+    ? (effectiveScopeFolderId
+        ? selectedRoom.renders.filter((r) => r.folder?.id === effectiveScopeFolderId)
         : selectedRoom.renders.filter((r) => !r.folder))
     : [];
   const roomRenders = scopedRenders.map((r) => ({ id: r.id, name: r.name, fileUrl: r.fileUrl, fileType: r.fileType }));
@@ -798,17 +825,17 @@ export default function ClientProjectPage() {
             <div className="flex items-start gap-3 bg-primary/8 border border-primary/20 rounded-xl px-4 py-3.5 mb-5">
               <Info size={16} className="text-primary mt-0.5 flex-shrink-0" />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-foreground mb-0.5">Witaj w panelu klienta!</p>
+                <p className="text-sm font-semibold text-foreground mb-0.5">{t.clientPage.welcomeTitle}</p>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  Dostęp uzyskujesz przez unikalny link — nie musisz pamiętać hasła. Jeśli chcesz logować się e-mailem i hasłem,{" "}
+                  {t.clientPage.welcomeDescStart}{" "}
                   <button
                     type="button"
                     onClick={() => { setView("settings"); setShowSetInitialPwd(true); navigate({ view: "settings" }); }}
                     className="text-primary underline underline-offset-2 hover:opacity-80 transition-opacity"
                   >
-                    ustaw hasło w ustawieniach
+                    {t.clientPage.setPasswordLink}
                   </button>
-                  .
+                  {" "}{t.clientPage.welcomeDescEnd}
                 </p>
               </div>
               <button
@@ -818,7 +845,7 @@ export default function ClientProjectPage() {
                   localStorage.setItem(`client-welcome-shown-${projectId}`, "1");
                 }}
                 className="text-muted-foreground hover:text-foreground transition-colors flex-shrink-0 mt-0.5"
-                aria-label="Zamknij"
+                aria-label={t.common.close}
               >
                 <X size={15} />
               </button>
@@ -828,7 +855,7 @@ export default function ClientProjectPage() {
           {/* ── Welcome row ── */}
           <div className="flex items-center justify-between flex-wrap gap-3.5 mb-[22px]">
             <h2 className="text-[23px] font-bold tracking-tight text-foreground">
-              Witaj{authorName && authorName !== "Klient" ? `, ${authorName}` : ""}! 👋
+              {authorName && authorName !== "Klient" ? `${lang === "en" ? "Hi" : "Witaj"}, ${authorName}! 👋` : (lang === "en" ? "Hi! 👋" : "Witaj! 👋")}
             </h2>
 
             {/* Project switcher */}
@@ -836,7 +863,7 @@ export default function ClientProjectPage() {
               {clientProjects.length <= 1 ? (
                 <div className="inline-flex items-center gap-2 bg-card border border-border rounded-[10px] px-3.5 py-2 text-[13.5px] font-semibold text-foreground">
                   <HomeWork size={17} className="text-primary" />
-                  Projekt: {clientProjects[0]?.title ?? project.title}
+                  {t.clientPage.projectPrefix} {clientProjects[0]?.title ?? project.title}
                 </div>
               ) : (
                 <>
@@ -854,7 +881,7 @@ export default function ClientProjectPage() {
                     className="inline-flex items-center gap-2 bg-card border border-border rounded-[10px] px-3.5 py-2 text-[13.5px] font-semibold text-foreground"
                   >
                     <HomeWork size={17} className="text-primary" />
-                    Projekt: {clientProjects.find((p) => p.id === projectId)?.title ?? project.title}
+                    {t.clientPage.projectPrefix} {clientProjects.find((p) => p.id === projectId)?.title ?? project.title}
                     <ChevronDown size={16} className={`text-muted-foreground ml-0.5 transition-transform ${projectSwitcherOpen ? "rotate-180" : ""}`} />
                   </button>
                   {projectSwitcherOpen && (
@@ -882,7 +909,7 @@ export default function ClientProjectPage() {
           </div>
 
           {homeLoading && !homeData ? (
-            <div className="flex items-center justify-center py-16 text-sm text-muted-foreground animate-pulse">Ładowanie...</div>
+            <div className="flex items-center justify-center py-16 text-sm text-muted-foreground animate-pulse">{t.common.loading}</div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-5 items-start">
 
@@ -892,12 +919,12 @@ export default function ClientProjectPage() {
                 {!project.hiddenModules.includes("renderflow") && (!project.isPortalProject || project.rooms.length > 0) && (
                   <>
                     <div className="flex items-center justify-between mb-[10px]">
-                      <h3 className="text-[13px] font-bold text-foreground">Ostatnio dodane w ProjectFlow</h3>
+                      <h3 className="text-[13px] font-bold text-foreground">{t.clientPage.recentProjectFlow}</h3>
                       <button
                         onClick={() => { setActiveRooms(null); setActiveProjectId(projectId); if (project.rooms.length === 1) { setSelectedRoom(project.rooms[0]); setSelectedFolder(null); setView("room"); navigate({ view: "room", roomId: project.rooms[0].id }); } else { setView("rooms"); navigate({ view: "rooms" }); } }}
                         className="text-[12px] text-muted-foreground flex items-center gap-0.5 font-medium hover:text-foreground transition-colors"
                       >
-                        Wszystkie <ChevronRight size={14} />
+                        {t.clientPage.showAll} <ChevronRight size={14} />
                       </button>
                     </div>
                     {homeData?.recentRenders && homeData.recentRenders.length > 0 ? (
@@ -912,10 +939,19 @@ export default function ClientProjectPage() {
                                 if (!room || !render) return;
                                 setActiveRooms(null); setActiveProjectId(projectId);
                                 setSelectedRoom(room);
-                                setSelectedFolder(r.folderId ? room.folders.find((f) => f.id === r.folderId) ?? null : null);
+                                let recentParentFolder = r.folderId ? room.folders.find((f) => f.id === r.folderId) ?? null : null;
+                                let recentSubfolder = null;
+                                if (!recentParentFolder && r.folderId) {
+                                  for (const f of room.folders) {
+                                    const sub = f.subfolders.find((s) => s.id === r.folderId);
+                                    if (sub) { recentParentFolder = f; recentSubfolder = sub; break; }
+                                  }
+                                }
+                                setSelectedFolder(recentParentFolder);
+                                setSelectedSubfolder(recentSubfolder);
                                 setSelectedRender(render);
                                 setView("render");
-                                navigate({ view: "render", roomId: room.id, folderId: r.folderId, renderId: r.id });
+                                navigate({ view: "render", roomId: room.id, folderId: recentParentFolder?.id ?? null, subfolderId: recentSubfolder?.id ?? null, renderId: r.id });
                                 fetch(`/api/client/${projectId}/renders/${r.id}/view`, { method: "POST" });
                               }}
                               className="border border-border rounded-xl overflow-hidden text-left hover:border-primary/30 hover:shadow-[0_4px_16px_rgba(25,33,61,0.12)] transition-all bg-card"
@@ -936,17 +972,17 @@ export default function ClientProjectPage() {
                                     r.status === "REJECTED" ? "bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400" :
                                     "bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400"
                                   }`}>
-                                    {r.status === "ACCEPTED" ? "Zaakceptowany" : r.status === "REJECTED" ? "Odrzucony" : "Do weryfikacji"}
+                                    {r.status === "ACCEPTED" ? t.clientPage.statusAccepted : r.status === "REJECTED" ? t.clientPage.statusRejected : t.clientPage.statusReview}
                                   </span>
                                 </p>
-                                <p className="text-[11px] text-muted-foreground mt-0.5">{r.roomName} · {relTime(r.createdAt)}</p>
+                                <p className="text-[11px] text-muted-foreground mt-0.5">{r.roomName} · {relTime(r.createdAt, t.clientPage, lang)}</p>
                               </div>
                             </button>
                           );
                         })}
                       </div>
                     ) : (
-                      <div className="text-sm text-muted-foreground text-center py-8 border border-border rounded-xl bg-card">Brak plików w ProjectFlow</div>
+                      <div className="text-sm text-muted-foreground text-center py-8 border border-border rounded-xl bg-card">{t.clientPage.noFilesInProjectFlow}</div>
                     )}
                   </>
                 )}
@@ -955,12 +991,12 @@ export default function ClientProjectPage() {
                 {!project.hiddenModules.includes("listy") && project.shoppingLists.length > 0 && (
                   <div className={!project.hiddenModules.includes("renderflow") ? "mt-[22px]" : ""}>
                     <div className="flex items-center justify-between mb-[10px]">
-                      <h3 className="text-[13px] font-bold text-foreground">Ostatnio dodane produkty</h3>
+                      <h3 className="text-[13px] font-bold text-foreground">{t.clientPage.recentProducts}</h3>
                       <button
                         onClick={() => { if (project.shoppingLists.length === 1) { openList(project.shoppingLists[0].id); } else { setView("lists"); navigate({ view: "lists" }); } }}
                         className="text-[12px] text-muted-foreground flex items-center gap-0.5 font-medium hover:text-foreground transition-colors"
                       >
-                        Wszystkie <ChevronRight size={14} />
+                        {t.clientPage.showAll} <ChevronRight size={14} />
                       </button>
                     </div>
                     <div className="bg-card border border-border rounded-xl overflow-hidden">
@@ -987,13 +1023,13 @@ export default function ClientProjectPage() {
                               p.approval === "rejected" ? "bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400" :
                               "bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400"
                             }`}>
-                              {p.approval === "accepted" ? "Zaakceptowany" : p.approval === "rejected" ? "Odrzucony" : "Do akceptacji"}
+                              {p.approval === "accepted" ? t.clientPage.statusAccepted : p.approval === "rejected" ? t.clientPage.statusRejected : t.clientPage.statusApproval}
                             </span>
-                            <span className="text-[11.5px] text-muted-foreground flex-shrink-0">{relTime(p.createdAt)}</span>
+                            <span className="text-[11.5px] text-muted-foreground flex-shrink-0">{relTime(p.createdAt, t.clientPage, lang)}</span>
                           </button>
                         ))
                       ) : (
-                        <p className="text-sm text-muted-foreground text-center py-8">Brak produktów na listach</p>
+                        <p className="text-sm text-muted-foreground text-center py-8">{t.clientPage.noProductsInLists}</p>
                       )}
                     </div>
                   </div>
@@ -1008,10 +1044,10 @@ export default function ClientProjectPage() {
                     <div className="flex items-center justify-between mb-[10px]">
                       <h3 className="text-[13px] font-bold text-foreground flex items-center gap-1.5">
                         <Timeline size={13.5} className="text-muted-foreground/60" />
-                        Harmonogram
+                        {t.share.schedule}
                       </h3>
                       <button onClick={() => { setView("schedule"); navigate({ view: "schedule" }); }} className="text-[12px] text-muted-foreground flex items-center gap-0.5 font-medium hover:text-foreground transition-colors">
-                        Otwórz <ChevronRight size={14} />
+                        {t.common.open} <ChevronRight size={14} />
                       </button>
                     </div>
                     <div className="bg-card border border-border rounded-xl p-3.5">
@@ -1026,7 +1062,7 @@ export default function ClientProjectPage() {
                             <p className={`text-[12.5px] font-semibold leading-snug ${(!phase.done && !phase.isCurrent) ? "text-muted-foreground font-medium" : "text-foreground"}`}>{phase.name}</p>
                             {phase.isCurrent && phase.nextItem && (
                               <p className="text-[11px] text-muted-foreground mt-0.5">
-                                Najbliższe: {phase.nextItem.name}{phase.nextItem.endDate ? ` — ${new Date(phase.nextItem.endDate).toLocaleDateString("pl-PL")}` : ""}
+                                {t.clientPage.scheduleNearest} {phase.nextItem.name}{phase.nextItem.endDate ? ` — ${new Date(phase.nextItem.endDate).toLocaleDateString(lang === "en" ? "en-GB" : "pl-PL")}` : ""}
                               </p>
                             )}
                           </div>
@@ -1042,19 +1078,19 @@ export default function ClientProjectPage() {
                     <div className="flex items-center justify-between mb-[10px]">
                       <h3 className="text-[13px] font-bold text-foreground flex items-center gap-1.5">
                         <Payments size={13.5} className="text-muted-foreground/60" />
-                        Płatności
+                        {t.share.payments}
                       </h3>
                       <button onClick={() => { setView("payments"); navigate({ view: "payments" }); }} className="text-[12px] text-muted-foreground flex items-center gap-0.5 font-medium hover:text-foreground transition-colors">
-                        Wszystkie <ChevronRight size={14} />
+                        {t.clientPage.showAll} <ChevronRight size={14} />
                       </button>
                     </div>
                     <div className="bg-card border border-border rounded-xl p-3.5">
                       <div className="flex items-baseline justify-between mb-2">
                         <b className="text-[19px] font-bold">
-                          {homeData.paymentsSummary.paidTotal.toLocaleString("pl-PL", { minimumFractionDigits: 0, maximumFractionDigits: 0 })} zł
+                          {homeData.paymentsSummary.paidTotal.toLocaleString(lang === "en" ? "en-GB" : "pl-PL", { minimumFractionDigits: 0, maximumFractionDigits: 0 })} zł
                         </b>
                         <span className="text-[12px] text-muted-foreground">
-                          z {homeData.paymentsSummary.grandTotal.toLocaleString("pl-PL", { minimumFractionDigits: 0, maximumFractionDigits: 0 })} zł
+                          z {homeData.paymentsSummary.grandTotal.toLocaleString(lang === "en" ? "en-GB" : "pl-PL", { minimumFractionDigits: 0, maximumFractionDigits: 0 })} zł
                         </span>
                       </div>
                       <div className="h-[7px] rounded-full bg-[#EDEEF4] dark:bg-muted overflow-hidden">
@@ -1065,7 +1101,7 @@ export default function ClientProjectPage() {
                       </div>
                       {homeData.paymentsSummary.nextPayment && (
                         <p className="text-[12px] text-muted-foreground mt-2.5">
-                          Następna: <b className="text-foreground">{homeData.paymentsSummary.nextPayment.amount.toLocaleString("pl-PL", { minimumFractionDigits: 0, maximumFractionDigits: 0 })} zł</b> — {homeData.paymentsSummary.nextPayment.name}
+                          {t.clientPage.nextPaymentLabel} <b className="text-foreground">{homeData.paymentsSummary.nextPayment.amount.toLocaleString(lang === "en" ? "en-GB" : "pl-PL", { minimumFractionDigits: 0, maximumFractionDigits: 0 })} zł</b> — {homeData.paymentsSummary.nextPayment.name}
                         </p>
                       )}
                     </div>
@@ -1078,7 +1114,7 @@ export default function ClientProjectPage() {
                     <div className="flex items-center justify-between mb-[10px]">
                       <h3 className="text-[13px] font-bold text-foreground flex items-center gap-1.5">
                         <ClipboardList size={13.5} className="text-muted-foreground/60" />
-                        Ankiety do wypełnienia
+                        {t.clientPage.pendingSurveys}
                       </h3>
                     </div>
                     <div className="bg-card border border-border rounded-xl px-3.5 pb-3.5 pt-1.5">
@@ -1090,7 +1126,7 @@ export default function ClientProjectPage() {
                               onClick={() => { setSelectedSurvey({ shareToken: survey.shareToken, name: survey.name }); setView("survey"); navigate({ view: "ankiety" }); fetchSurveys(); }}
                               className="text-[11.5px] font-semibold px-2.5 py-[5px] rounded-[7px] bg-primary text-primary-foreground flex-shrink-0 hover:opacity-90 transition-opacity"
                             >
-                              {survey.answeredCount > 0 ? "Kontynuuj" : "Wypełnij"}
+                              {survey.answeredCount > 0 ? t.clientPage.surveysContinue : t.clientPage.surveysFill}
                             </button>
                           </div>
                           <div className="h-[7px] rounded-full bg-[#EDEEF4] dark:bg-muted overflow-hidden">
@@ -1128,7 +1164,7 @@ export default function ClientProjectPage() {
                   setView("rooms");
                   navigate({ view: "rooms" });
                 } catch {
-                  toast.error("Nie udało się załadować projektu");
+                  toast.error(t.clientPage.projectLoadError);
                 }
               }}>
                 <Card className={`hover:shadow-[0_4px_16px_rgba(25,33,61,0.2)] transition-all cursor-pointer h-full relative ${p.id === activeProjectId ? "border-primary/50 ring-1 ring-primary/20 hover:border-primary/50" : "hover:border-primary/30"}`}>
@@ -1137,13 +1173,13 @@ export default function ClientProjectPage() {
                       <CardTitle className="text-lg leading-tight line-clamp-2">
                         {p.title}
                       </CardTitle>
-                      <Badge variant="secondary" className="shrink-0">{p.renderCount} renderów</Badge>
+                      <Badge variant="secondary" className="shrink-0">{t.clientPage.renderCount.replace("{n}", String(p.renderCount))}</Badge>
                     </div>
                     <CardDescription className="line-clamp-1 mt-1 min-h-[1.25rem]">
                       {p.description ?? "\u00A0"}
                     </CardDescription>
                     <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                      {new Date(p.createdAt).toLocaleDateString("pl-PL")}
+                      {new Date(p.createdAt).toLocaleDateString(lang === "en" ? "en-GB" : "pl-PL")}
                     </p>
                   </CardHeader>
                 </Card>
@@ -1162,12 +1198,12 @@ export default function ClientProjectPage() {
                 ProjectFlow
               </button>
               <ChevronRight size={13} className="opacity-40" />
-              <span className="text-foreground font-medium truncate">{clientProjects.find((p) => p.id === activeProjectId)?.title ?? "Projekt"}</span>
+              <span className="text-foreground font-medium truncate">{clientProjects.find((p) => p.id === activeProjectId)?.title ?? t.nav.projects}</span>
             </div>
           )}
-          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-6">Foldery</h2>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-6">{t.clientPage.foldersSection}</h2>
           {(activeRooms ?? project.rooms).length === 0 ? (
-            <p className="text-gray-400 text-center py-16">Brak pomieszczeń w tym projekcie.</p>
+            <p className="text-gray-400 text-center py-16">{t.share.noRooms}</p>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4">
               {(activeRooms ?? project.rooms).map((room) => {
@@ -1182,7 +1218,7 @@ export default function ClientProjectPage() {
                       <Icon size={28} className="text-primary" />
                     </div>
                     <p className="font-semibold text-gray-800 dark:text-gray-100 truncate">{room.name}</p>
-                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{room.renders.length} plików</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{t.clientPage.fileCount.replace("{n}", String(room.renders.length))}</p>
                   </button>
                 );
               })}
@@ -1194,13 +1230,22 @@ export default function ClientProjectPage() {
       {(view === "room" || view === "render") && selectedRoom && (() => {
         const sortedFolders = [...selectedRoom.folders].sort((a, b) => (a.pinned === b.pinned ? 0 : a.pinned ? -1 : 1));
         const ungrouped = selectedRoom.renders.filter((r) => !r.folder);
-        const folderRenders = selectedFolder ? selectedRoom.renders.filter((r) => r.folder?.id === selectedFolder.id) : [];
+        const folderDirectRenders = selectedFolder ? selectedRoom.renders.filter((r) => r.folder?.id === selectedFolder.id) : [];
+        const subfolderRenders = selectedSubfolder ? selectedRoom.renders.filter((r) => r.folder?.id === selectedSubfolder.id) : [];
+        const activeRenders = selectedSubfolder ? subfolderRenders : selectedFolder ? folderDirectRenders : ungrouped;
+        const heading = selectedSubfolder ? selectedSubfolder.name : selectedFolder ? selectedFolder.name : selectedRoom.name;
+        const downloadLabel = selectedSubfolder?.name ?? selectedFolder?.name ?? selectedRoom?.name ?? "pliki";
+
         const goToRooms = () => { setView("rooms"); setSelectedRoom(null); setSelectedFolder(null); navigate({ view: "rooms" }); };
         const goToRoom = () => { setSelectedFolder(null); navigate({ view: "room", roomId: selectedRoom.id }); };
+        const goToFolder = () => { setSelectedSubfolder(null); navigate({ view: "room", roomId: selectedRoom.id, folderId: selectedFolder!.id }); };
+
+        const backAction = selectedSubfolder ? goToFolder : selectedFolder ? goToRoom : goToRooms;
+
         return (
           <>
             <nav className="flex items-center gap-2 mb-6">
-              <button onClick={selectedFolder ? goToRoom : goToRooms} className="flex-shrink-0 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
+              <button onClick={backAction} className="flex-shrink-0 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
                 <ChevronLeft size={20} />
               </button>
               <div className="w-px h-4 bg-gray-200 dark:bg-gray-700 flex-shrink-0" />
@@ -1217,75 +1262,80 @@ export default function ClientProjectPage() {
                 {selectedFolder && (
                   <li className="flex items-center gap-1 min-w-0">
                     <ChevronRight size={13} className="flex-shrink-0 text-gray-300 dark:text-gray-600" />
-                    <span className="text-gray-900 dark:text-gray-100 truncate">{selectedFolder.name}</span>
+                    {selectedSubfolder ? (
+                      <button onClick={goToFolder} className="text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 truncate max-w-[160px]">{selectedFolder.name}</button>
+                    ) : (
+                      <span className="text-gray-900 dark:text-gray-100 truncate">{selectedFolder.name}</span>
+                    )}
+                  </li>
+                )}
+                {selectedSubfolder && (
+                  <li className="flex items-center gap-1 min-w-0">
+                    <ChevronRight size={13} className="flex-shrink-0 text-gray-300 dark:text-gray-600" />
+                    <span className="text-gray-900 dark:text-gray-100 truncate">{selectedSubfolder.name}</span>
                   </li>
                 )}
               </ol>
             </nav>
-            {(() => {
-              const activeRenders = selectedFolder ? folderRenders : ungrouped;
-              return (
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
-                  <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">{selectedFolder ? selectedFolder.name : selectedRoom.name}</h2>
-                  {activeRenders.length > 0 && (
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => { setSelectionMode((v) => !v); setSelectedRenderIds(new Set()); }}
-                        className={`relative p-1.5 rounded-md transition-colors ${selectionMode ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
-                        title="Zaznacz pliki"
-                      >
-                        <CopyCheck size={15} />
-                        {selectionMode && selectedRenderIds.size > 0 && (
-                          <span className="absolute -top-1 -right-1 min-w-[14px] h-3.5 px-0.5 bg-primary text-primary-foreground text-[9px] font-bold rounded-full flex items-center justify-center leading-none">
-                            {selectedRenderIds.size}
-                          </span>
-                        )}
-                      </button>
-                      {selectionMode && selectedRenderIds.size > 0 ? (
-                        <button
-                          onClick={() => handleDownloadSelected(activeRenders.filter((r) => selectedRenderIds.has(r.id)))}
-                          disabled={downloadingAll}
-                          className="flex items-center gap-1.5 px-3 h-8 rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-60 transition-colors whitespace-nowrap"
-                        >
-                          <Download size={14} />
-                          {downloadingAll ? "Pobieranie…" : `Pobierz (${selectedRenderIds.size})`}
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => handleDownloadAll(activeRenders, selectedFolder?.name ?? selectedRoom?.name ?? "pliki")}
-                          disabled={downloadingAll}
-                          className="flex items-center gap-1.5 px-3 h-8 rounded-md text-sm font-medium border border-border text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-40 transition-colors whitespace-nowrap"
-                        >
-                          <Download size={14} />
-                          {downloadingAll ? "Pobieranie…" : "Pobierz wszystko"}
-                        </button>
-                      )}
-                      {(project.allowDirectStatusChange || project.allowClientAcceptance) && activeRenders.some((r) => r.status !== "ACCEPTED") && (session?.user as any)?.isMainContact !== false && (
-                        <button
-                          onClick={() => handleBatchApprove(activeRenders)}
-                          disabled={batchApproving}
-                          className="flex items-center gap-1.5 px-3 h-8 rounded-md text-sm font-medium bg-green-600 hover:bg-green-700 text-white disabled:opacity-60 transition-colors whitespace-nowrap"
-                        >
-                          <Check size={14} />
-                          {batchApproving ? "Zatwierdzanie…" : "Zatwierdź wszystkie"}
-                        </button>
-                      )}
-                    </div>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">{heading}</h2>
+              {activeRenders.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => { setSelectionMode((v) => !v); setSelectedRenderIds(new Set()); }}
+                    className={`relative p-1.5 rounded-md transition-colors ${selectionMode ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
+                    title={t.clientPage.selectFiles}
+                  >
+                    <CopyCheck size={15} />
+                    {selectionMode && selectedRenderIds.size > 0 && (
+                      <span className="absolute -top-1 -right-1 min-w-[14px] h-3.5 px-0.5 bg-primary text-primary-foreground text-[9px] font-bold rounded-full flex items-center justify-center leading-none">
+                        {selectedRenderIds.size}
+                      </span>
+                    )}
+                  </button>
+                  {selectionMode && selectedRenderIds.size > 0 ? (
+                    <button
+                      onClick={() => handleDownloadSelected(activeRenders.filter((r) => selectedRenderIds.has(r.id)))}
+                      disabled={downloadingAll}
+                      className="flex items-center gap-1.5 px-3 h-8 rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-60 transition-colors whitespace-nowrap"
+                    >
+                      <Download size={14} />
+                      {downloadingAll ? t.clientPage.downloadingLabel : t.clientPage.downloadSelected.replace("{n}", String(selectedRenderIds.size))}
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => handleDownloadAll(activeRenders, downloadLabel)}
+                      disabled={downloadingAll}
+                      className="flex items-center gap-1.5 px-3 h-8 rounded-md text-sm font-medium border border-border text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-40 transition-colors whitespace-nowrap"
+                    >
+                      <Download size={14} />
+                      {downloadingAll ? t.clientPage.downloadingLabel : t.clientPage.downloadAll}
+                    </button>
+                  )}
+                  {(project.allowDirectStatusChange || project.allowClientAcceptance) && activeRenders.some((r) => r.status !== "ACCEPTED") && (session?.user as any)?.isMainContact !== false && (
+                    <button
+                      onClick={() => handleBatchApprove(activeRenders)}
+                      disabled={batchApproving}
+                      className="flex items-center gap-1.5 px-3 h-8 rounded-md text-sm font-medium bg-green-600 hover:bg-green-700 text-white disabled:opacity-60 transition-colors whitespace-nowrap"
+                    >
+                      <Check size={14} />
+                      {batchApproving ? t.share.approving : t.share.approveAll}
+                    </button>
                   )}
                 </div>
-              );
-            })()}
-            {selectedFolder ? (
-              folderRenders.length === 0 ? (
-                <p className="text-gray-400 text-center py-16">Brak plików w tym folderze.</p>
+              )}
+            </div>
+            {selectedSubfolder ? (
+              subfolderRenders.length === 0 ? (
+                <p className="text-gray-400 text-center py-16">{t.share.noFilesInFolder}</p>
               ) : (
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3">
-                  {folderRenders.map((render) => (
+                  {subfolderRenders.map((render) => (
                     <RenderCard
                       key={render.id}
                       render={render}
                       hideCommentCount={project.hideCommentCount}
-                      onClick={() => { setSelectedRender(render); setView("render"); navigate({ view: "render", roomId: selectedRoom.id, folderId: selectedFolder?.id ?? null, renderId: render.id }); fetch(`/api/client/${activeProjectId}/renders/${render.id}/view`, { method: "POST" }); }}
+                      onClick={() => { setSelectedRender(render); setView("render"); navigate({ view: "render", roomId: selectedRoom.id, folderId: selectedFolder!.id, subfolderId: selectedSubfolder.id, renderId: render.id }); fetch(`/api/client/${activeProjectId}/renders/${render.id}/view`, { method: "POST" }); }}
                       onDownload={() => downloadFile(render.fileUrl, render.name)}
                       isSelected={selectedRenderIds.has(render.id)}
                       selectionMode={selectionMode}
@@ -1294,19 +1344,60 @@ export default function ClientProjectPage() {
                   ))}
                 </div>
               )
+            ) : selectedFolder ? (
+              <>
+                {selectedFolder.subfolders.length > 0 && (
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4 mb-8">
+                    {[...selectedFolder.subfolders].sort((a, b) => (a.pinned === b.pinned ? 0 : a.pinned ? -1 : 1)).map((sub) => {
+                      const count = selectedRoom.renders.filter((r) => r.folder?.id === sub.id).length;
+                      return (
+                        <button key={sub.id} onClick={() => { setSelectedSubfolder(sub); navigate({ view: "room", roomId: selectedRoom.id, folderId: selectedFolder.id, subfolderId: sub.id }); }} className="group text-left bg-card border border-border rounded-2xl p-5 shadow-sm hover:shadow-[0_4px_16px_rgba(25,33,61,0.2)] hover:border-primary/30 transition-all">
+                          <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center mb-4 group-hover:bg-primary/20">
+                            <Folder size={28} className="text-primary" />
+                          </div>
+                          <p className="font-semibold text-foreground truncate">{sub.name}</p>
+                          <p className="text-xs text-muted-foreground mt-1">{t.clientPage.fileCount.replace("{n}", String(count))}</p>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+                {folderDirectRenders.length === 0 && selectedFolder.subfolders.length === 0 ? (
+                  <p className="text-gray-400 text-center py-16">{t.share.noFilesInFolder}</p>
+                ) : folderDirectRenders.length > 0 ? (
+                  <>
+                    {selectedFolder.subfolders.length > 0 && <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">{t.share.otherFiles}</p>}
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3">
+                      {folderDirectRenders.map((render) => (
+                        <RenderCard
+                          key={render.id}
+                          render={render}
+                          hideCommentCount={project.hideCommentCount}
+                          onClick={() => { setSelectedRender(render); setView("render"); navigate({ view: "render", roomId: selectedRoom.id, folderId: selectedFolder.id, renderId: render.id }); fetch(`/api/client/${activeProjectId}/renders/${render.id}/view`, { method: "POST" }); }}
+                          onDownload={() => downloadFile(render.fileUrl, render.name)}
+                          isSelected={selectedRenderIds.has(render.id)}
+                          selectionMode={selectionMode}
+                          onToggleSelect={() => setSelectedRenderIds((prev) => { const next = new Set(prev); if (next.has(render.id)) next.delete(render.id); else next.add(render.id); return next; })}
+                        />
+                      ))}
+                    </div>
+                  </>
+                ) : null}
+              </>
             ) : (
               <div className="space-y-8">
                 {sortedFolders.length > 0 && (
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4">
                     {sortedFolders.map((folder) => {
-                      const count = selectedRoom.renders.filter((r) => r.folder?.id === folder.id).length;
+                      const subIds = new Set(folder.subfolders.map((s) => s.id));
+                      const count = selectedRoom.renders.filter((r) => r.folder?.id === folder.id || (r.folder && subIds.has(r.folder.id))).length;
                       return (
                         <button key={folder.id} onClick={() => { setSelectedFolder(folder); navigate({ view: "room", roomId: selectedRoom.id, folderId: folder.id }); }} className="group text-left bg-card border border-border rounded-2xl p-5 shadow-sm hover:shadow-[0_4px_16px_rgba(25,33,61,0.2)] hover:border-primary/30 transition-all">
                           <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center mb-4 group-hover:bg-primary/20">
                             <Folder size={28} className="text-primary" />
                           </div>
                           <p className="font-semibold text-foreground truncate">{folder.name}</p>
-                          <p className="text-xs text-muted-foreground mt-1">{count} plików</p>
+                          <p className="text-xs text-muted-foreground mt-1">{t.clientPage.fileCount.replace("{n}", String(count))}</p>
                         </button>
                       );
                     })}
@@ -1314,7 +1405,7 @@ export default function ClientProjectPage() {
                 )}
                 {ungrouped.length > 0 && (
                   <div>
-                    {sortedFolders.length > 0 && <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Pozostałe pliki</p>}
+                    {sortedFolders.length > 0 && <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">{t.share.otherFiles}</p>}
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3">
                       {ungrouped.map((render) => (
                         <RenderCard
@@ -1339,9 +1430,9 @@ export default function ClientProjectPage() {
 
       {view === "lists" && (
         <>
-          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-6">Listy zakupowe</h2>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-6">{t.clientPage.shoppingListsSection}</h2>
           {project.shoppingLists.length === 0 ? (
-            <p className="text-gray-400 text-center py-16">Brak list zakupowych w tym projekcie.</p>
+            <p className="text-gray-400 text-center py-16">{t.clientPage.noShoppingLists}</p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-4">
               {project.shoppingLists.map((list) => (
@@ -1365,7 +1456,7 @@ export default function ClientProjectPage() {
         <div className="flex-1 min-h-0">
           {listLoading || !selectedListData ? (
             <div className="flex items-center justify-center py-24 text-muted-foreground text-sm animate-pulse">
-              Ładowanie listy...
+              {t.clientPage.loadingList}
             </div>
           ) : (() => {
             const parsePrice = (price: string | null) => {
@@ -1387,7 +1478,7 @@ export default function ClientProjectPage() {
             const hasTotal = countedProducts.some((p) => parsePrice(p.price) !== null);
             const unsortedProducts = selectedListData.sections.filter((s) => s.unsorted).flatMap((s) => s.products);
             const regularSections = selectedListData.sections.filter((s) => !s.unsorted).map((s) => ({ id: s.id, name: s.name, order: s.order, products: s.products }));
-            const sections = [...regularSections, ...(unsortedProducts.length > 0 ? [{ id: "__unsorted__", name: "Pozostałe", order: 9999, products: unsortedProducts }] : [])];
+            const sections = [...regularSections, ...(unsortedProducts.length > 0 ? [{ id: "__unsorted__", name: t.clientPage.remainingProducts, order: 9999, products: unsortedProducts }] : [])];
             return (
               <div>
                 <div className="flex items-center gap-3 mb-6 w-full md:max-w-[75%] md:mx-auto">
@@ -1418,13 +1509,13 @@ export default function ClientProjectPage() {
 
       {view === "ankiety" && (
         <div className="max-w-2xl">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-6">Ankiety</h2>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-6">{t.clientPage.surveysSection}</h2>
           {surveysLoading ? (
-            <div className="flex items-center justify-center py-20 text-sm text-muted-foreground animate-pulse">Ładowanie...</div>
+            <div className="flex items-center justify-center py-20 text-sm text-muted-foreground animate-pulse">{t.common.loading}</div>
           ) : surveys.length === 0 ? (
             <div className="bg-card border border-border rounded-2xl p-10 text-center space-y-2">
               <ClipboardList size={32} className="mx-auto text-muted-foreground/40" />
-              <p className="text-sm text-muted-foreground">Brak dostępnych ankiet.</p>
+              <p className="text-sm text-muted-foreground">{t.clientPage.noSurveys}</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -1433,12 +1524,12 @@ export default function ClientProjectPage() {
                   <div className="min-w-0 flex-1">
                     <p className="font-medium text-sm truncate">{survey.name}</p>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      {new Date(survey.createdAt).toLocaleDateString("pl-PL")}
+                      {new Date(survey.createdAt).toLocaleDateString(lang === "en" ? "en-GB" : "pl-PL")}
                     </p>
                     {!survey.completed && survey.answeredCount > 0 && survey.totalQuestions > 0 && (
                       <div className="mt-2 space-y-1">
                         <div className="flex items-center justify-between text-xs text-muted-foreground">
-                          <span>{survey.answeredCount} / {survey.totalQuestions} odpowiedzi</span>
+                          <span>{t.clientPage.surveyAnswers.replace("{answered}", String(survey.answeredCount)).replace("{total}", String(survey.totalQuestions))}</span>
                           <span>{Math.round((survey.answeredCount / survey.totalQuestions) * 100)}%</span>
                         </div>
                         <div className="w-full bg-muted rounded-full h-1.5">
@@ -1455,13 +1546,13 @@ export default function ClientProjectPage() {
                       <div className="flex items-center gap-2 flex-shrink-0">
                         <div className="flex items-center gap-1.5 text-xs text-green-600 font-medium">
                           <CheckCircle size={14} />
-                          Wypełniona
+                          {t.clientPage.surveyCompleted}
                         </div>
                         <button
                           onClick={() => { setSelectedSurvey({ shareToken: survey.shareToken, name: survey.name, readOnly: true }); setView("survey"); navigate({ view: "ankiety" }); }}
                           className="px-4 py-1.5 text-xs font-medium border border-border text-muted-foreground rounded-lg hover:bg-muted transition-colors"
                         >
-                          Podgląd
+                          {t.clientPage.surveyPreview}
                         </button>
                       </div>
                     ) : (
@@ -1469,7 +1560,7 @@ export default function ClientProjectPage() {
                         onClick={() => { setSelectedSurvey({ shareToken: survey.shareToken, name: survey.name }); setView("survey"); navigate({ view: "ankiety" }); }}
                         className="px-4 py-1.5 text-xs font-medium bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity"
                       >
-                        Wypełnij
+                        {t.clientPage.surveyFill}
                       </button>
                     )}
                   </div>
@@ -1501,20 +1592,20 @@ export default function ClientProjectPage() {
       {view === "settings" && (
         <div className="max-w-3xl space-y-10">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Ustawienia</h1>
-            <p className="text-sm text-gray-500 mt-1">Zarządzaj swoim kontem i wyglądem aplikacji.</p>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t.clientPage.settingsTitle}</h1>
+            <p className="text-sm text-gray-500 mt-1">{t.clientPage.settingsDesc}</p>
           </div>
 
           <section className="space-y-4">
-            <SectionHeader title="Konto" />
+            <SectionHeader title={t.clientPage.accountSection} />
 
             {/* Avatar */}
             <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
               <div className="flex items-center gap-2">
                 <UserCircle size={16} className="text-gray-400" />
-                <h3 className="font-semibold text-gray-800 dark:text-gray-200">Avatar</h3>
+                <h3 className="font-semibold text-gray-800 dark:text-gray-200">{t.clientPage.avatarLabel}</h3>
               </div>
-              <p className="text-xs text-gray-400">Wyświetlany w nawigacji i przy wiadomościach w czacie.</p>
+              <p className="text-xs text-gray-400">{t.clientPage.avatarNote}</p>
               <input ref={avatarFileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarFileChange} />
               <div className="flex items-center gap-4">
                 {clientAvatarUrl ? (
@@ -1527,10 +1618,10 @@ export default function ClientProjectPage() {
                 )}
                 <div className="flex flex-col gap-2">
                   <Button size="sm" onClick={() => avatarFileInputRef.current?.click()} disabled={avatarCropUploading}>
-                    <Pencil size={14} className="mr-1.5" />{clientAvatarUrl ? "Zmień avatar" : "Dodaj avatar"}
+                    <Pencil size={14} className="mr-1.5" />{clientAvatarUrl ? t.settings.changeAvatar : t.settings.addAvatar}
                   </Button>
                   {clientAvatarUrl && (
-                    <Button size="sm" variant="outline" onClick={handleRemoveAvatar}>Usuń avatar</Button>
+                    <Button size="sm" variant="outline" onClick={handleRemoveAvatar}>{t.settings.deleteAvatar}</Button>
                   )}
                 </div>
               </div>
@@ -1541,14 +1632,14 @@ export default function ClientProjectPage() {
               <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
                 <div className="flex items-center gap-2">
                   <User size={16} className="text-gray-400" />
-                  <h3 className="font-semibold text-gray-800 dark:text-gray-200">Imię i nazwisko</h3>
+                  <h3 className="font-semibold text-gray-800 dark:text-gray-200">{t.settings.fullName}</h3>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm text-gray-600 dark:text-gray-400">Imię i nazwisko</label>
-                  <Input value={settingsFullName} onChange={(e) => setSettingsFullName(e.target.value)} placeholder="np. Jan Kowalski" onKeyDown={(e) => e.key === "Enter" && handleFullNameSave()} />
+                  <label className="text-sm text-gray-600 dark:text-gray-400">{t.settings.fullName}</label>
+                  <Input value={settingsFullName} onChange={(e) => setSettingsFullName(e.target.value)} placeholder={t.settings.fullNamePlaceholder} onKeyDown={(e) => e.key === "Enter" && handleFullNameSave()} />
                 </div>
                 <Button onClick={handleFullNameSave} disabled={fullNameLoading || !settingsFullName.trim()} size="sm">
-                  {fullNameLoading ? "Zapisywanie…" : "Zapisz"}
+                  {fullNameLoading ? t.common.saving : t.common.save}
                 </Button>
               </div>
 
@@ -1556,18 +1647,18 @@ export default function ClientProjectPage() {
               <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
                 <div className="flex items-center gap-2">
                   <Mail size={16} className="text-gray-400" />
-                  <h3 className="font-semibold text-gray-800 dark:text-gray-200">Email</h3>
+                  <h3 className="font-semibold text-gray-800 dark:text-gray-200">{t.clientPage.emailAddressLabel}</h3>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm text-gray-600 dark:text-gray-400">Adres email</label>
-                  <Input type="email" value={settingsEmail} onChange={(e) => setSettingsEmail(e.target.value)} placeholder="email@example.com" onKeyDown={(e) => e.key === "Enter" && handleEmailSave()} />
+                  <label className="text-sm text-gray-600 dark:text-gray-400">{t.clientPage.emailAddressLabel}</label>
+                  <Input type="email" value={settingsEmail} onChange={(e) => setSettingsEmail(e.target.value)} placeholder={t.settings.emailPlaceholder} onKeyDown={(e) => e.key === "Enter" && handleEmailSave()} />
                 </div>
                 <div className="flex items-start gap-2 text-xs text-gray-400 bg-muted rounded-lg px-3 py-2">
                   <Info size={13} className="mt-0.5 flex-shrink-0" />
-                  <span>Ten adres email służy do powiadomień. Nie wpływa na dane logowania.</span>
+                  <span>{t.clientPage.emailNote}</span>
                 </div>
                 <Button onClick={handleEmailSave} disabled={emailLoading || !settingsEmail.trim()} size="sm">
-                  {emailLoading ? "Zapisywanie…" : "Zapisz"}
+                  {emailLoading ? t.common.saving : t.common.save}
                 </Button>
               </div>
             </div>
@@ -1577,9 +1668,9 @@ export default function ClientProjectPage() {
               <div className="flex items-start gap-2">
                 <Info size={15} className="text-blue-500 flex-shrink-0 mt-0.5" />
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-blue-800 dark:text-blue-300">Logowanie przez link dostępowy</p>
+                  <p className="text-sm font-medium text-blue-800 dark:text-blue-300">{t.clientPage.magicLinkTitle}</p>
                   <p className="text-xs text-blue-600 dark:text-blue-400 mt-0.5">
-                    Twoje konto korzysta z bezpiecznych linków dostępowych. Możesz też ustawić hasło, żeby logować się bezpośrednio.
+                    {t.clientPage.magicLinkDesc}
                   </p>
                 </div>
               </div>
@@ -1588,32 +1679,32 @@ export default function ClientProjectPage() {
                   onClick={() => setShowSetInitialPwd(true)}
                   className="text-xs text-blue-700 dark:text-blue-300 underline hover:no-underline"
                 >
-                  Ustaw hasło do logowania bezpośredniego →
+                  {t.clientPage.setDirectLogin}
                 </button>
               ) : (
                 <div className="space-y-3 pt-1">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="space-y-1.5">
-                      <label className="text-xs text-blue-700 dark:text-blue-300 font-medium">Nowe hasło</label>
+                      <label className="text-xs text-blue-700 dark:text-blue-300 font-medium">{t.clientPage.newPasswordLabel}</label>
                       <div className="relative">
-                        <Input type={showInitialPwd ? "text" : "password"} value={initialPwd} onChange={(e) => setInitialPwd(e.target.value)} placeholder="min. 8 znaków" className="pr-9 text-sm" />
+                        <Input type={showInitialPwd ? "text" : "password"} value={initialPwd} onChange={(e) => setInitialPwd(e.target.value)} placeholder={t.settings.newPasswordPlaceholder} className="pr-9 text-sm" />
                         <button type="button" onClick={() => setShowInitialPwd(!showInitialPwd)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                           {showInitialPwd ? <EyeOff size={14} /> : <Eye size={14} />}
                         </button>
                       </div>
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-xs text-blue-700 dark:text-blue-300 font-medium">Powtórz hasło</label>
+                      <label className="text-xs text-blue-700 dark:text-blue-300 font-medium">{t.clientPage.repeatPasswordLabel}</label>
                       <Input type="password" value={initialPwdConfirm} onChange={(e) => setInitialPwdConfirm(e.target.value)} placeholder="••••••••" className="text-sm" onKeyDown={(e) => e.key === "Enter" && handleSetInitialPassword()} />
                     </div>
                   </div>
-                  <p className="text-xs text-blue-500 dark:text-blue-400">Min. 8 znaków, mała i duża litera oraz cyfra.</p>
+                  <p className="text-xs text-blue-500 dark:text-blue-400">{t.clientPage.passwordHint}</p>
                   <div className="flex gap-2">
                     <Button size="sm" onClick={handleSetInitialPassword} disabled={initialPwdLoading || !initialPwd || !initialPwdConfirm}>
-                      {initialPwdLoading ? "Ustawianie…" : "Ustaw hasło"}
+                      {initialPwdLoading ? t.clientPage.settingPassword : t.clientPage.setPasswordBtn}
                     </Button>
                     <Button size="sm" variant="outline" onClick={() => { setShowSetInitialPwd(false); setInitialPwd(""); setInitialPwdConfirm(""); }}>
-                      Anuluj
+                      {t.common.cancel}
                     </Button>
                   </div>
                 </div>
@@ -1623,11 +1714,11 @@ export default function ClientProjectPage() {
             <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
               <div className="flex items-center gap-2">
                 <Lock size={16} className="text-gray-400" />
-                <h3 className="font-semibold text-gray-800 dark:text-gray-200">Zmiana hasła</h3>
+                <h3 className="font-semibold text-gray-800 dark:text-gray-200">{t.settings.changePassword}</h3>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm text-gray-600 dark:text-gray-400">Aktualne hasło</label>
+                  <label className="text-sm text-gray-600 dark:text-gray-400">{t.settings.currentPassword}</label>
                   <div className="relative">
                     <Input type={showCurrentPwd ? "text" : "password"} value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} placeholder="••••••••" className="pr-9" />
                     <button type="button" onClick={() => setShowCurrentPwd(!showCurrentPwd)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
@@ -1636,16 +1727,16 @@ export default function ClientProjectPage() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm text-gray-600 dark:text-gray-400">Nowe hasło</label>
+                  <label className="text-sm text-gray-600 dark:text-gray-400">{t.settings.newPassword}</label>
                   <div className="relative">
-                    <Input type={showNewPwd ? "text" : "password"} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="min. 8 znaków" className="pr-9" />
+                    <Input type={showNewPwd ? "text" : "password"} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder={t.settings.newPasswordPlaceholder} className="pr-9" />
                     <button type="button" onClick={() => setShowNewPwd(!showNewPwd)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                       {showNewPwd ? <EyeOff size={15} /> : <Eye size={15} />}
                     </button>
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm text-gray-600 dark:text-gray-400">Powtórz nowe hasło</label>
+                  <label className="text-sm text-gray-600 dark:text-gray-400">{t.settings.repeatPassword}</label>
                   <div className="relative">
                     <Input type={showConfirmPwd ? "text" : "password"} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="••••••••" className="pr-9" onKeyDown={(e) => e.key === "Enter" && handlePasswordSave()} />
                     <button type="button" onClick={() => setShowConfirmPwd(!showConfirmPwd)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
@@ -1654,20 +1745,20 @@ export default function ClientProjectPage() {
                   </div>
                 </div>
               </div>
-              <p className="text-xs text-gray-400">Hasło musi zawierać: min. 8 znaków, małą literę, wielką literę i cyfrę</p>
+              <p className="text-xs text-gray-400">{t.settings.passwordRequirements}</p>
               <Button onClick={handlePasswordSave} disabled={passwordLoading || !currentPassword || !newPassword || !confirmPassword} size="sm">
-                {passwordLoading ? "Zmienianie…" : "Zmień hasło"}
+                {passwordLoading ? t.settings.changingPassword : t.settings.changePassword}
               </Button>
             </div>
           </section>
 
           <section className="space-y-4">
-            <SectionHeader title="Powiadomienia email" />
+            <SectionHeader title={t.clientPage.notificationsSection} />
             <div className="bg-card border border-border rounded-2xl p-6 space-y-5">
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">Powiadomienia email</p>
-                  <p className="text-xs text-gray-400 mt-0.5">Otrzymuj email gdy projektant odpowie na Twój komentarz lub zmieni status</p>
+                  <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{t.clientPage.notifEmailTitle}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{t.clientPage.notifEmailDesc}</p>
                 </div>
                 <button
                   type="button"
@@ -1690,10 +1781,10 @@ export default function ClientProjectPage() {
 
               {emailNotifEnabled && (
                 <div className="space-y-3 pt-1 border-t border-border">
-                  <p className="text-xs text-gray-400 pt-1">Wybierz moduły:</p>
+                  <p className="text-xs text-gray-400 pt-1">{t.clientPage.selectModules}</p>
                   {[
-                    { slug: "renderflow", label: "ProjectFlow", desc: "Odpowiedzi projektanta na piny i komentarze" },
-                    { slug: "listy", label: "Listy zakupowe", desc: "Odpowiedzi projektanta na komentarze do produktów" },
+                    { slug: "renderflow", label: "ProjectFlow", desc: t.clientPage.notifRenderflowDesc },
+                    { slug: "listy", label: t.listy.title, desc: t.clientPage.notifListsDesc },
                   ].map(({ slug, label, desc }) => {
                     const checked = emailNotifModules.includes(slug);
                     return (
@@ -1727,12 +1818,12 @@ export default function ClientProjectPage() {
           </section>
 
           <section className="space-y-4">
-            <SectionHeader title="Wygląd" />
+            <SectionHeader title={t.clientPage.appearanceSection} />
             <div className="bg-card border border-border rounded-2xl p-6 space-y-5">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-semibold text-gray-800 dark:text-gray-200">Motyw</p>
-                  <p className="text-sm text-muted-foreground mt-0.5">{theme === "dark" ? "Ciemny" : "Jasny"}</p>
+                  <p className="font-semibold text-gray-800 dark:text-gray-200">{t.clientPage.themeLabel}</p>
+                  <p className="text-sm text-muted-foreground mt-0.5">{theme === "dark" ? t.clientPage.themeDark : t.clientPage.themeLight}</p>
                 </div>
                 <button
                   onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
@@ -1742,7 +1833,7 @@ export default function ClientProjectPage() {
                 </button>
               </div>
               <div className="border-t border-border pt-4 space-y-3">
-                <p className="font-semibold text-gray-800 dark:text-gray-200">Język / Language</p>
+                <p className="font-semibold text-gray-800 dark:text-gray-200">{t.lang.label}</p>
                 <div className="flex gap-2">
                   {(["pl", "en"] as const).map((value) => (
                     <button
@@ -1763,7 +1854,7 @@ export default function ClientProjectPage() {
           {avatarCropSrc && (
             <div className="fixed inset-0 z-50 flex flex-col bg-black/90">
               <div className="flex items-center justify-between px-6 py-4 bg-card border-b border-border flex-shrink-0">
-                <h3 className="font-semibold text-sm">Kadrowanie avatara</h3>
+                <h3 className="font-semibold text-sm">{t.settings.cropAvatar}</h3>
                 <button onClick={() => setAvatarCropSrc(null)} className="text-muted-foreground hover:text-foreground transition-colors">
                   <X size={18} />
                 </button>
@@ -1787,9 +1878,9 @@ export default function ClientProjectPage() {
                   <input type="range" min={1} max={3} step={0.01} value={avatarZoom} onChange={(e) => setAvatarZoom(Number(e.target.value))} className="flex-1 accent-primary" />
                 </div>
                 <div className="flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => setAvatarCropSrc(null)}>Anuluj</Button>
+                  <Button variant="outline" onClick={() => setAvatarCropSrc(null)}>{t.common.cancel}</Button>
                   <Button onClick={handleAvatarCropApply} disabled={avatarCropUploading}>
-                    {avatarCropUploading ? "Przesyłanie..." : "Zastosuj"}
+                    {avatarCropUploading ? t.settings.uploading : t.settings.apply}
                   </Button>
                 </div>
               </div>
@@ -1829,6 +1920,7 @@ export default function ClientProjectPage() {
           currentUserId={currentUserId}
           mobileOpen={mobileSidebarOpen}
           onMobileOpenChange={setMobileSidebarOpen}
+          autoCollapse={isRenderView}
         />
         <div className="flex-1 min-h-0 relative bg-background rounded-tl-2xl overflow-x-hidden">
           {/* Folder/room grid — always mounted to keep PDF thumbnails in DOM */}
@@ -1867,12 +1959,12 @@ export default function ClientProjectPage() {
               versions={selectedRender.versions.map((v) => ({ ...v, archivedAt: typeof v.archivedAt === "string" ? v.archivedAt : new Date(v.archivedAt).toISOString() }))}
               allowClientVersionRestore={project.allowClientVersionRestore}
               onRenderStatusChange={(status) => handleRenderStatusChange(selectedRender.id, status)}
-              onBack={() => { if (effectiveFolder && !selectedFolder) setSelectedFolder(effectiveFolder); setView("room"); navigate({ view: "room", roomId: selectedRoom.id, folderId: effectiveFolder?.id ?? null }); }}
+              onBack={() => { if (effectiveFolder && !selectedFolder) setSelectedFolder(effectiveFolder); if (effectiveSubfolder && !selectedSubfolder) setSelectedSubfolder(effectiveSubfolder); setView("room"); navigate({ view: "room", roomId: selectedRoom.id, folderId: effectiveFolder?.id ?? null, subfolderId: effectiveSubfolder?.id ?? null }); }}
               onBackToRooms={() => { setView("rooms"); setSelectedRoom(null); setSelectedFolder(null); navigate({ view: "rooms" }); }}
               onBackToRoom={effectiveFolder ? () => { setSelectedFolder(null); setView("room"); navigate({ view: "room", roomId: selectedRoom.id }); } : undefined}
               onRenderSelect={(r) => {
                 const full = selectedRoom.renders.find((render) => render.id === r.id);
-                if (full) { setSelectedRender(full); navigate({ view: "render", roomId: selectedRoom.id, folderId: selectedFolder?.id ?? null, renderId: r.id }); }
+                if (full) { setSelectedRender(full); navigate({ view: "render", roomId: selectedRoom.id, folderId: selectedFolder?.id ?? effectiveFolder?.id ?? null, subfolderId: selectedSubfolder?.id ?? effectiveSubfolder?.id ?? null, renderId: r.id }); }
                 fetch(`/api/client/${activeProjectId}/renders/${r.id}/view`, { method: "POST" });
               }}
               onViewCounted={(renderId) => fetch(`/api/client/${activeProjectId}/renders/${renderId}/view`, { method: "POST" })}

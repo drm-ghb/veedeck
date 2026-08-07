@@ -15,8 +15,8 @@ export async function POST(req: NextRequest) {
   const { email, locale } = await req.json();
   if (!email || typeof email !== "string") return NEUTRAL;
 
-  const user = await prisma.user.findUnique({
-    where: { email: email.toLowerCase().trim() },
+  const user = await prisma.user.findFirst({
+    where: { email: email.toLowerCase().trim(), primaryAccountId: null },
     select: { id: true, activationToken: true, email: true },
   });
 

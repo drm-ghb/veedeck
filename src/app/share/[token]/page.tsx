@@ -19,6 +19,7 @@ import { pusherClient } from "@/lib/pusher";
 import { toast } from "sonner";
 import { UploadButton } from "@uploadthing/react";
 import type { OurFileRouter } from "@/lib/uploadthing";
+import { useT } from "@/lib/i18n";
 
 type RenderStatus = "REVIEW" | "ACCEPTED" | "REJECTED";
 
@@ -111,6 +112,7 @@ const SHARE_GRID_COLS_CLASS: Record<number, string> = {
 };
 
 export default function SharePage() {
+  const t = useT();
   const { token } = useParams<{ token: string }>();
   const router = useRouter();
   const { data: session, status: sessionStatus } = useSession();
@@ -245,7 +247,7 @@ export default function SharePage() {
 
     channel.bind("render-status-changed", (data: { renderId: string; status: RenderStatus }) => {
       updateRenderInState(data.renderId, data.status);
-      toast(data.status === "ACCEPTED" ? "Render został zaakceptowany" : "Status renderu zmieniony na: Do weryfikacji", { duration: 5000 });
+      toast(data.status === "ACCEPTED" ? t.share.renderAccepted : t.share.renderPendingReview, { duration: 5000 });
     });
 
     channel.bind("new-reply", (data: { commentId: string; renderId: string; reply: Reply }) => {
@@ -270,7 +272,7 @@ export default function SharePage() {
         };
       });
       if (data.reply.author !== authorName) {
-        toast(`Nowa odpowiedź od ${data.reply.author}`, { duration: 5000 });
+        toast(t.share.newReplyFrom.replace("{author}", data.reply.author), { duration: 5000 });
       }
     });
 
@@ -343,9 +345,9 @@ export default function SharePage() {
     });
     if (res.ok) {
       setPendingRequests((prev) => new Set([...prev, renderId]));
-      toast.success("Prośba o zmianę statusu wysłana do projektanta.");
+      toast.success(t.share.statusRequestSent);
     } else {
-      toast.error("Błąd podczas wysyłania prośby.");
+      toast.error(t.share.statusRequestError);
     }
   }
 
@@ -355,7 +357,7 @@ export default function SharePage() {
       headers: { "Content-Type": "application/json", ...buildHeaders() },
       body: JSON.stringify({ versionId }),
     });
-    if (!res.ok) throw new Error("Błąd przywracania wersji");
+    if (!res.ok) throw new Error(t.share.versionRestoreError);
 
     const updated = await fetchProject(unlockedPassword ?? undefined);
     if (updated) {
@@ -375,7 +377,7 @@ export default function SharePage() {
     if (res.ok) {
       setPendingRestoreRequests((prev) => new Set([...prev, `${renderId}-${versionId}`]));
     } else {
-      throw new Error("Błąd wysyłania prośby");
+      throw new Error(t.share.versionRestoreRequestError);
     }
   }
 
@@ -407,9 +409,11 @@ export default function SharePage() {
         setProject(updated);
         setSelectedRoom((prev) => prev ? (updated.rooms.find((r) => r.id === prev.id) ?? prev) : prev);
       }
-      toast.success(`Zatwierdzono ${toApprove.length} plik${toApprove.length === 1 ? "" : toApprove.length < 5 ? "i" : "ów"}`);
+      const n = toApprove.length;
+      const approveKey = n === 1 ? t.share.approvedSg : n < 5 ? t.share.approvedFew : t.share.approvedMany;
+      toast.success(approveKey.replace("{n}", String(n)));
     } catch {
-      toast.error("Błąd podczas zatwierdzania");
+      toast.error(t.share.approveError);
     } finally {
       setBatchApproving(false);
     }
@@ -442,9 +446,9 @@ export default function SharePage() {
       );
       setNewFolderName("");
       setShowNewFolder(false);
-      toast.success("Folder dodany");
+      toast.success(t.share.folderAdded);
     } catch {
-      toast.error("Błąd dodawania folderu");
+      toast.error(t.share.addFolderError);
     } finally {
       setAddingFolder(false);
     }
@@ -481,7 +485,7 @@ export default function SharePage() {
 
   if (loading || sessionStatus === "loading") return (
     <div className="flex items-center justify-center min-h-screen bg-background">
-      <p className="text-gray-400 animate-pulse">Ładowanie...</p>
+      <p className="text-gray-400 animate-pulse">{t.common.loading}</p>
     </div>
   );
 
@@ -489,8 +493,8 @@ export default function SharePage() {
     <div className="flex items-center justify-center min-h-screen text-center bg-background">
       <div>
         <p className="text-4xl mb-4">⏰</p>
-        <p className="text-gray-700 dark:text-gray-200 font-semibold">Link wygasł</p>
-        <p className="text-gray-400 text-sm mt-1">Ten link do podglądu projektu nie jest już aktywny.</p>
+        <p className="text-gray-700 dark:text-gray-200 font-semibold">{t.share.expired}</p>
+        <p className="text-gray-400 text-sm mt-1">{t.share.expiredDesc}</p>
       </div>
     </div>
   );
@@ -499,7 +503,7 @@ export default function SharePage() {
     <div className="flex items-center justify-center min-h-screen text-center bg-background">
       <div>
         <p className="text-4xl mb-4">🔍</p>
-        <p className="text-gray-500">Projekt nie został znaleziony</p>
+        <p className="text-gray-500">{t.share.notFound}</p>
       </div>
     </div>
   );
@@ -508,8 +512,8 @@ export default function SharePage() {
     <div className="flex items-center justify-center min-h-screen text-center bg-background px-4">
       <div>
         <p className="text-4xl mb-4">🔒</p>
-        <p className="text-gray-700 dark:text-gray-200 font-semibold">Brak dostępu</p>
-        <p className="text-gray-400 text-sm mt-1">Skonsultuj się z administratorem projektu.</p>
+        <p className="text-gray-700 dark:text-gray-200 font-semibold">{t.share.noAccess}</p>
+        <p className="text-gray-400 text-sm mt-1">{t.share.noAccessDesc}</p>
       </div>
     </div>
   );
@@ -525,22 +529,22 @@ export default function SharePage() {
         <div className="flex justify-center mb-4">
           <Lock size={20} className="text-gray-400" />
         </div>
-        <p className="text-gray-500 dark:text-gray-400 mb-6">Ten projekt jest chroniony hasłem</p>
+        <p className="text-gray-500 dark:text-gray-400 mb-6">{t.share.passwordRequired}</p>
         <div className="flex gap-2">
           <Input
             type="password"
             value={passwordInput}
             onChange={(e) => setPasswordInput(e.target.value)}
-            placeholder="Hasło dostępu"
+            placeholder={t.share.passwordPlaceholder}
             onKeyDown={(e) => e.key === "Enter" && handlePasswordSubmit()}
             autoFocus
             className={passwordError ? "border-red-400" : ""}
           />
           <Button onClick={handlePasswordSubmit} disabled={passwordLoading || !passwordInput.trim()}>
-            {passwordLoading ? "..." : "Dalej"}
+            {passwordLoading ? "..." : t.auth.next}
           </Button>
         </div>
-        {passwordError && <p className="text-sm text-red-500 mt-2">Nieprawidłowe hasło</p>}
+        {passwordError && <p className="text-sm text-red-500 mt-2">{t.share.wrongPassword}</p>}
       </div>
     </div>
   );
@@ -550,7 +554,7 @@ export default function SharePage() {
       <div className="w-full max-w-sm">
         <div className="bg-card border border-border rounded-2xl p-8 shadow-sm">
           <p className="text-sm text-muted-foreground text-center mb-5">
-            Witaj w panelu klienta projektanta:
+            {t.share.clientGateWelcome}
           </p>
 
           {/* Designer info */}
@@ -565,14 +569,14 @@ export default function SharePage() {
           </div>
 
           <p className="text-sm text-muted-foreground text-center mb-5">
-            Podaj swoje imię, aby móc przeglądać swój projekt
+            {t.share.clientGateEnterName}
           </p>
 
           <div className="space-y-2">
             <Input
               value={nameInput}
               onChange={(e) => setNameInput(e.target.value)}
-              placeholder="Twoje imię"
+              placeholder={t.share.clientGateNamePlaceholder}
               onKeyDown={(e) => e.key === "Enter" && !project?.requireClientEmail && handleSetName()}
               autoFocus
             />
@@ -582,7 +586,7 @@ export default function SharePage() {
                   type="email"
                   value={emailInput}
                   onChange={(e) => { setEmailInput(e.target.value); if (emailError) setEmailError(""); }}
-                  placeholder="Twój email"
+                  placeholder={t.share.clientGateEmailPlaceholder}
                   onKeyDown={(e) => e.key === "Enter" && handleSetName()}
                 />
                 {emailError && <p className="text-xs text-destructive mt-1">{emailError}</p>}
@@ -593,7 +597,7 @@ export default function SharePage() {
               disabled={!nameInput.trim() || (!!project?.requireClientEmail && !emailInput.trim())}
               className="w-full mt-1"
             >
-              Przejdź do panelu
+              {t.share.clientGateEnter}
             </Button>
           </div>
         </div>
@@ -639,9 +643,9 @@ export default function SharePage() {
       {/* Rooms view */}
       {view === "rooms" && (
         <>
-          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-6">Foldery</h2>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-6">{t.share.foldersHeading}</h2>
           {project.rooms.length === 0 ? (
-            <p className="text-gray-400 text-center py-16">Brak pomieszczeń w tym projekcie.</p>
+            <p className="text-gray-400 text-center py-16">{t.share.noRooms}</p>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4">
               {project.rooms.map((room) => {
@@ -653,7 +657,7 @@ export default function SharePage() {
                       <Icon size={28} className="text-primary" />
                     </div>
                     <p className="font-semibold text-gray-800 dark:text-gray-100 truncate">{room.name}</p>
-                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{renderCount} render{renderCount === 1 ? "" : renderCount < 5 ? "y" : "ów"}</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{renderCount} {renderCount === 1 ? t.share.renderSg : renderCount < 5 ? t.share.renderFew : t.share.renderMany}</p>
                   </button>
                 );
               })}
@@ -708,7 +712,7 @@ export default function SharePage() {
                     className="flex items-center gap-1.5 px-3 h-8 rounded-md text-sm font-medium bg-green-600 hover:bg-green-700 text-white disabled:opacity-60 transition-colors"
                   >
                     <Check size={14} />
-                    {batchApproving ? "Zatwierdzanie…" : "Zatwierdź wszystkie"}
+                    {batchApproving ? t.share.approving : t.share.approveAll}
                   </button>
                 )}
               {/* Grid cols dropdown */}
@@ -716,7 +720,7 @@ export default function SharePage() {
                   <button
                     onClick={() => setGridOpen((v) => !v)}
                     className="p-1.5 rounded-md bg-muted text-muted-foreground hover:text-foreground transition-colors"
-                    title="Układ siatki"
+                    title={t.share.gridLayout}
                   >
                     <span className="inline-flex items-baseline gap-0.5">
                       <LayoutGrid size={15} />
@@ -747,7 +751,7 @@ export default function SharePage() {
                           <Input
                             value={newFolderName}
                             onChange={(e) => setNewFolderName(e.target.value)}
-                            placeholder="Nazwa folderu"
+                            placeholder={t.share.folderNamePlaceholder}
                             className="h-8 text-sm w-40"
                             autoFocus
                             onKeyDown={(e) => {
@@ -756,16 +760,16 @@ export default function SharePage() {
                             }}
                           />
                           <Button size="sm" variant="outline" className="h-8" onClick={() => { setShowNewFolder(false); setNewFolderName(""); }}>
-                            Anuluj
+                            {t.common.cancel}
                           </Button>
                           <Button size="sm" className="h-8" disabled={!newFolderName.trim() || addingFolder} onClick={handleAddFolder}>
-                            Dodaj
+                            {t.common.add}
                           </Button>
                         </>
                       ) : (
                         <Button size="sm" variant="outline" className="h-8 gap-1.5" onClick={() => setShowNewFolder(true)}>
                           <FolderPlus size={14} />
-                          Nowy folder
+                          {t.share.newFolder}
                         </Button>
                       )}
                     </div>
@@ -773,7 +777,7 @@ export default function SharePage() {
                   <UploadButton<OurFileRouter, "clientRenderUploader">
                     endpoint="clientRenderUploader"
                     headers={{ "x-share-token": token }}
-                    content={{ button: "+ Dodaj pliki", allowedContent: "" }}
+                    content={{ button: t.share.addFiles, allowedContent: "" }}
                     onClientUploadComplete={async (res) => {
                       for (const file of res) {
                         const name = file.name.replace(/\.[^.]+$/, "");
@@ -793,9 +797,11 @@ export default function SharePage() {
                           addRenderToState({ ...render, roomId: selectedRoom.id });
                         }
                       }
-                      toast.success(`Dodano ${res.length} plik${res.length === 1 ? "" : res.length < 5 ? "i" : "ów"}`);
+                      const ul = res.length;
+                      const ulKey = ul === 1 ? t.share.uploadedSg : ul < 5 ? t.share.uploadedFew : t.share.uploadedMany;
+                      toast.success(ulKey.replace("{n}", String(ul)));
                     }}
-                    onUploadError={(err) => { toast.error(`Błąd uploadu: ${err.message}`); }}
+                    onUploadError={(err) => { toast.error(t.share.uploadError.replace("{message}", err.message)); }}
                     appearance={{
                       button: "bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-700 dark:hover:bg-gray-200 rounded-md text-sm font-medium px-3 h-8 ut-uploading:opacity-70",
                       allowedContent: "hidden",
@@ -807,10 +813,10 @@ export default function SharePage() {
               </div>{/* end flex gap-2 */}
             </div>
             {!hasContent ? (
-              <p className="text-gray-400 text-center py-16">Brak plików w tym pomieszczeniu.</p>
+              <p className="text-gray-400 text-center py-16">{t.share.noFilesInRoom}</p>
             ) : selectedFolder ? (
               folderRenders.length === 0 ? (
-                <p className="text-gray-400 text-center py-16">Brak plików w tym folderze.</p>
+                <p className="text-gray-400 text-center py-16">{t.share.noFilesInFolder}</p>
               ) : (
                 <div className={`grid ${SHARE_GRID_COLS_CLASS[gridCols]} gap-2 sm:gap-3`}>
                   {folderRenders.map((render) => (
@@ -829,9 +835,9 @@ export default function SharePage() {
                       <div className="p-3">
                         <div className="flex items-start justify-between gap-2">
                           <p className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">{render.name}</p>
-                          <span className={`flex-shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${render.status === "ACCEPTED" ? "bg-green-100 text-green-700" : render.status === "REJECTED" ? "bg-red-100 text-red-700" : "bg-blue-100 text-blue-700"}`}>{render.status === "ACCEPTED" ? "Zaakceptowany" : render.status === "REJECTED" ? "Odrzucony" : "Do weryfikacji"}</span>
+                          <span className={`flex-shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${render.status === "ACCEPTED" ? "bg-green-100 text-green-700" : render.status === "REJECTED" ? "bg-red-100 text-red-700" : "bg-blue-100 text-blue-700"}`}>{render.status === "ACCEPTED" ? t.share.statusAccepted : render.status === "REJECTED" ? t.share.statusRejected : t.share.statusPending}</span>
                         </div>
-                        {!project.hideCommentCount && <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 flex items-center gap-1"><ChatBubble size={11} />{render.comments.length > 0 ? `${render.comments.length} uwag` : "Brak uwag"}</p>}
+                        {!project.hideCommentCount && <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 flex items-center gap-1"><ChatBubble size={11} />{render.comments.length > 0 ? t.share.remarks.replace("{n}", String(render.comments.length)) : t.share.noRemarks}</p>}
                       </div>
                     </button>
                   ))}
@@ -849,7 +855,7 @@ export default function SharePage() {
                             <Folder size={28} className="text-primary" />
                           </div>
                           <p className="font-semibold text-foreground truncate">{folder.name}</p>
-                          <p className="text-xs text-muted-foreground mt-1">{count} plik{count === 1 ? "" : count < 5 ? "i" : "ów"}</p>
+                          <p className="text-xs text-muted-foreground mt-1">{count} {count === 1 ? t.share.fileSg : count < 5 ? t.share.fileFew : t.share.fileMany}</p>
                         </button>
                       );
                     })}
@@ -857,7 +863,7 @@ export default function SharePage() {
                 )}
                 {ungrouped.length > 0 && (
                   <div>
-                    {sortedFolders.length > 0 && <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Pozostałe pliki</p>}
+                    {sortedFolders.length > 0 && <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">{t.share.otherFiles}</p>}
                     <div className={`grid ${SHARE_GRID_COLS_CLASS[gridCols]} gap-2 sm:gap-3`}>
                       {ungrouped.map((render) => (
                         <button key={render.id} onClick={() => { setSelectedRender(render); setView("render"); fetch(`/api/share/${token}/renders/${render.id}/view`, { method: "POST" }); }} className="text-left bg-card border border-border rounded-xl overflow-hidden shadow-sm hover:shadow-[0_4px_16px_rgba(25,33,61,0.2)] hover:border-primary/30 transition-all group">
@@ -875,9 +881,9 @@ export default function SharePage() {
                           <div className="p-3">
                             <div className="flex items-start justify-between gap-2">
                               <p className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">{render.name}</p>
-                              <span className={`flex-shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${render.status === "ACCEPTED" ? "bg-green-100 text-green-700" : render.status === "REJECTED" ? "bg-red-100 text-red-700" : "bg-blue-100 text-blue-700"}`}>{render.status === "ACCEPTED" ? "Zaakceptowany" : render.status === "REJECTED" ? "Odrzucony" : "Do weryfikacji"}</span>
+                              <span className={`flex-shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${render.status === "ACCEPTED" ? "bg-green-100 text-green-700" : render.status === "REJECTED" ? "bg-red-100 text-red-700" : "bg-blue-100 text-blue-700"}`}>{render.status === "ACCEPTED" ? t.share.statusAccepted : render.status === "REJECTED" ? t.share.statusRejected : t.share.statusPending}</span>
                             </div>
-                            {!project.hideCommentCount && <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 flex items-center gap-1"><ChatBubble size={11} />{render.comments.length > 0 ? `${render.comments.length} uwag` : "Brak uwag"}</p>}
+                            {!project.hideCommentCount && <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 flex items-center gap-1"><ChatBubble size={11} />{render.comments.length > 0 ? t.share.remarks.replace("{n}", String(render.comments.length)) : t.share.noRemarks}</p>}
                           </div>
                         </button>
                       ))}
@@ -974,10 +980,10 @@ export default function SharePage() {
   );
 }
 
-const THEME_OPTIONS: { value: Theme; label: string; Icon: React.ElementType }[] = [
-  { value: "light",  label: "Jasny",     Icon: Sun },
-  { value: "dark",   label: "Ciemny",    Icon: Moon },
-  { value: "system", label: "Systemowy", Icon: Monitor },
+const THEME_ICONS: { value: Theme; Icon: React.ElementType }[] = [
+  { value: "light",  Icon: Sun },
+  { value: "dark",   Icon: Moon },
+  { value: "system", Icon: Monitor },
 ];
 
 function ClientSettingsView({
@@ -989,6 +995,7 @@ function ClientSettingsView({
   onSave: (name: string) => void;
   onBack: () => void;
 }) {
+  const t = useT();
   const [nameInput, setNameInput] = useState(authorName);
   const { theme, setTheme } = useTheme();
 
@@ -996,30 +1003,30 @@ function ClientSettingsView({
     <div className="max-w-md space-y-6">
       <div>
         <button onClick={onBack} className="flex items-center gap-0.5 text-sm text-gray-400 hover:text-gray-700 transition-colors mb-4">
-          <ChevronLeft size={15} /> Wróć
+          <ChevronLeft size={15} /> {t.common.back}
         </button>
-        <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Ustawienia</h2>
+        <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">{t.nav.settings}</h2>
       </div>
 
       <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
         <div className="flex items-center gap-2">
           <UserRound size={18} className="text-gray-400" />
-          <h3 className="font-semibold text-gray-800 dark:text-gray-200">Twoja tożsamość</h3>
+          <h3 className="font-semibold text-gray-800 dark:text-gray-200">{t.share.identity}</h3>
         </div>
-        <p className="text-xs text-gray-400">Imię widoczne przy Twoich komentarzach i prośbach do projektanta.</p>
+        <p className="text-xs text-gray-400">{t.share.identityDescFull}</p>
         <div className="space-y-2">
-          <label className="text-sm text-gray-600 dark:text-gray-400">Nazwa</label>
-          <Input value={nameInput} onChange={(e) => setNameInput(e.target.value)} placeholder="Twoje imię" onKeyDown={(e) => e.key === "Enter" && onSave(nameInput.trim())} autoFocus />
+          <label className="text-sm text-gray-600 dark:text-gray-400">{t.share.nameLabel}</label>
+          <Input value={nameInput} onChange={(e) => setNameInput(e.target.value)} placeholder={t.share.yourName} onKeyDown={(e) => e.key === "Enter" && onSave(nameInput.trim())} autoFocus />
         </div>
         <Button onClick={() => { if (nameInput.trim()) onSave(nameInput.trim()); }} disabled={!nameInput.trim() || nameInput.trim() === authorName} size="sm">
-          Zapisz
+          {t.common.save}
         </Button>
       </div>
 
       <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
-        <h3 className="font-semibold text-gray-800 dark:text-gray-200">Motyw interfejsu</h3>
+        <h3 className="font-semibold text-gray-800 dark:text-gray-200">{t.theme.label}</h3>
         <div className="flex gap-2">
-          {THEME_OPTIONS.map(({ value, label, Icon }) => (
+          {THEME_ICONS.map(({ value, Icon }) => (
             <button
               key={value}
               onClick={() => setTheme(value)}
@@ -1028,7 +1035,7 @@ function ClientSettingsView({
               }`}
             >
               <Icon size={15} />
-              {label}
+              {t.theme[value as "light" | "dark" | "system"]}
             </button>
           ))}
         </div>

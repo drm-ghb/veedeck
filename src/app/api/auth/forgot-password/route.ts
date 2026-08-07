@@ -30,8 +30,8 @@ export async function POST(req: NextRequest) {
   if (!rateLimit(`forgot-email:${email}`, 2)) return NEUTRAL;
 
   try {
-    const user = await prisma.user.findUnique({
-      where: { email },
+    const user = await prisma.user.findFirst({
+      where: { email, primaryAccountId: null },
       select: { id: true, email: true },
     });
 

@@ -66,7 +66,7 @@ export async function POST(
   }
 
   // Check if email is already taken
-  const existing = await prisma.user.findUnique({ where: { email: finalEmail } });
+  const existing = await prisma.user.findFirst({ where: { email: finalEmail, primaryAccountId: null } });
   if (existing) {
     return NextResponse.json({ error: "Ten adres e-mail jest już zarejestrowany" }, { status: 409 });
   }

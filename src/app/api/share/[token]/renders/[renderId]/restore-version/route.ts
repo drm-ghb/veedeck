@@ -33,24 +33,33 @@ export async function POST(
   }
 
   const versionNumber = render._count.versions + 1;
+  const currentActiveVersionId = (render as any).activeVersionId as string | null;
 
   await prisma.$transaction(async (tx) => {
-    const newVersion = await tx.renderVersion.create({
-      data: {
-        renderId,
-        fileUrl: render.fileUrl,
-        fileKey: render.fileKey,
-        versionNumber,
-        archivedAt: new Date(),
-      },
-    });
+    let archiveVersionId: string;
+
+    if (currentActiveVersionId) {
+      archiveVersionId = currentActiveVersionId;
+    } else {
+      const snapshot = await tx.renderVersion.create({
+        data: {
+          renderId,
+          fileUrl: render.fileUrl,
+          fileKey: render.fileKey,
+          versionNumber,
+          archivedAt: new Date(),
+        },
+      });
+      archiveVersionId = snapshot.id;
+    }
+
     await tx.comment.updateMany({
-      where: { renderId, archivedVersionId: null },
-      data: { archivedVersionId: newVersion.id },
+      where: { renderId, archivedVersionId: null, posX: { not: null } },
+      data: { archivedVersionId: archiveVersionId },
     });
     await tx.renderProductPin.updateMany({
       where: { renderId, archivedVersionId: null },
-      data: { archivedVersionId: newVersion.id },
+      data: { archivedVersionId: archiveVersionId },
     });
     await tx.comment.updateMany({
       where: { renderId, archivedVersionId: versionId },
@@ -62,7 +71,7 @@ export async function POST(
     });
     await tx.render.update({
       where: { id: renderId },
-      data: { fileUrl: version.fileUrl, fileKey: version.fileKey ?? render.fileKey },
+      data: { fileUrl: version.fileUrl, fileKey: version.fileKey ?? render.fileKey, activeVersionId: versionId } as any,
     });
   });
 

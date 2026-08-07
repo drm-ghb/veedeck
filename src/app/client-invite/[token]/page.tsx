@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useT } from "@/lib/i18n";
 
 const CSS = `
   .vd-body {
@@ -169,6 +170,7 @@ function EyeOffIcon() {
 }
 
 export default function ClientInvitePage() {
+  const t = useT();
   const { token } = useParams<{ token: string }>();
   const router = useRouter();
 
@@ -199,10 +201,10 @@ export default function ClientInvitePage() {
 
   async function handleSubmit() {
     setError("");
-    if (!fullName.trim()) { setError("Podaj imię i nazwisko"); return; }
-    if (!email.trim()) { setError("Podaj adres e-mail"); return; }
+    if (!fullName.trim()) { setError(t.invite.fullNameRequired); return; }
+    if (!email.trim()) { setError(t.invite.enterEmail); return; }
     if (!validatePassword(password)) {
-      setError("Hasło musi mieć min. 8 znaków, zawierać małą i dużą literę oraz cyfrę");
+      setError(t.invite.passwordTooWeak);
       return;
     }
 
@@ -215,7 +217,7 @@ export default function ClientInvitePage() {
     const data = await res.json();
     setSaving(false);
 
-    if (!res.ok) { setError(data.error || "Wystąpił błąd"); return; }
+    if (!res.ok) { setError(data.error || t.invite.genericError); return; }
     setStatus("success");
     setTimeout(() => router.push("/login"), 3000);
   }
@@ -253,9 +255,9 @@ export default function ClientInvitePage() {
               {status === "invalid" && (
                 <>
                   <div className="vd-panel-head">
-                    <div className="vd-eyebrow">Zaproszenie</div>
-                    <h1>Link nieważny</h1>
-                    <p className="sub">Ten link wygasł lub jest nieprawidłowy. Skontaktuj się z projektantem, aby wysłał nowe zaproszenie.</p>
+                    <div className="vd-eyebrow">{t.invite.invitationEyebrow}</div>
+                    <h1>{t.invite.invalidTitleClient}</h1>
+                    <p className="sub">{t.invite.invalidDescClient}</p>
                   </div>
                   <div className="vd-card vd-card-center">
                     <div className="vd-icon-wrap" style={{ background: "#fef2f2", color: "#dc2626" }}>
@@ -263,8 +265,8 @@ export default function ClientInvitePage() {
                         <circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" />
                       </svg>
                     </div>
-                    <h2>Zaproszenie nieważne</h2>
-                    <p className="vd-body-text">Ten link wygasł lub jest nieprawidłowy.</p>
+                    <h2>{t.invite.invalidTitle}</h2>
+                    <p className="vd-body-text">{t.invite.invalidShort}</p>
                   </div>
                 </>
               )}
@@ -273,8 +275,8 @@ export default function ClientInvitePage() {
               {status === "success" && (
                 <>
                   <div className="vd-panel-head">
-                    <div className="vd-eyebrow"><span className="dot" />Konto założone</div>
-                    <h1>Gotowe!<br /><em className="accent">Możesz się logować.</em></h1>
+                    <div className="vd-eyebrow"><span className="dot" />{t.invite.accountSetupEyebrow}</div>
+                    <h1>{t.invite.accountReadyH1}<br /><em className="accent">{t.invite.accountReadyH1Em}</em></h1>
                   </div>
                   <div className="vd-card vd-card-center">
                     <div className="vd-icon-wrap" style={{ background: "#f0fdf4", color: "#16a34a" }}>
@@ -282,8 +284,8 @@ export default function ClientInvitePage() {
                         <path d="M20 6L9 17l-5-5" />
                       </svg>
                     </div>
-                    <h2>Konto utworzone!</h2>
-                    <p className="vd-body-text">Za chwilę zostaniesz przekierowany do strony logowania.</p>
+                    <h2>{t.invite.accountCreated}</h2>
+                    <p className="vd-body-text">{t.invite.redirectingToLogin}</p>
                   </div>
                 </>
               )}
@@ -292,13 +294,13 @@ export default function ClientInvitePage() {
               {status === "valid" && (
                 <>
                   <div className="vd-panel-head">
-                    <div className="vd-eyebrow"><span className="dot" />Zaproszenie od projektanta</div>
+                    <div className="vd-eyebrow"><span className="dot" />{t.invite.fromDesignerEyebrow}</div>
                     <h1>
-                      Witaj!<br />
-                      <em className="accent">Załóż konto.</em>
+                      {t.invite.greetingH1}<br />
+                      <em className="accent">{t.invite.createAccountH1Em}</em>
                     </h1>
                     <p className="sub">
-                      <b>{designerName}</b> zaprasza Cię do panelu klienta w veedeck.
+                      <b>{designerName}</b> {t.invite.invitesClientPanel}
                       {inviteEmail && <><br /><span style={{ fontSize: 13 }}>{inviteEmail}</span></>}
                     </p>
                   </div>
@@ -307,21 +309,21 @@ export default function ClientInvitePage() {
                     <div className="vd-form-stack">
                       <div className="vd-field">
                         <label className="vd-label" htmlFor="fullName">
-                          Imię i nazwisko <span className="req">*</span>
+                          {t.invite.fullNameLabel} <span className="req">*</span>
                         </label>
                         <input
                           className="vd-input"
                           id="fullName"
                           value={fullName}
                           onChange={(e) => setFullName(e.target.value)}
-                          placeholder="np. Anna Kowalska"
+                          placeholder={t.auth.fullNamePlaceholder}
                           autoFocus
                         />
                       </div>
 
                       <div className="vd-field">
                         <label className="vd-label" htmlFor="phone">
-                          Numer telefonu <span className="opt">(opcjonalne)</span>
+                          {t.invite.phoneLabel} <span className="opt">{t.invite.optional}</span>
                         </label>
                         <input
                           className="vd-input"
@@ -335,7 +337,7 @@ export default function ClientInvitePage() {
 
                       <div className="vd-field">
                         <label className="vd-label" htmlFor="email">
-                          E-mail <span className="req">*</span>
+                          {t.auth.emailLabel} <span className="req">*</span>
                         </label>
                         <input
                           className="vd-input"
@@ -348,7 +350,7 @@ export default function ClientInvitePage() {
 
                       <div className="vd-field">
                         <label className="vd-label" htmlFor="password">
-                          Hasło <span className="req">*</span>
+                          {t.auth.password} <span className="req">*</span>
                         </label>
                         <div className="vd-password-wrap">
                           <input
@@ -363,14 +365,14 @@ export default function ClientInvitePage() {
                             type="button"
                             className="vd-password-toggle"
                             onClick={() => setShowPassword(!showPassword)}
-                            aria-label="Pokaż / ukryj hasło"
+                            aria-label={t.auth.togglePassword}
                           >
                             {showPassword ? <EyeOffIcon /> : <EyeIcon />}
                           </button>
                         </div>
-                        <p className="vd-helper-text">Min. 8 znaków, mała litera, wielka litera i cyfra.</p>
+                        <p className="vd-helper-text">{t.invite.passwordRequirements}</p>
                         {password && !validatePassword(password) && (
-                          <p className="vd-error-text">Hasło nie spełnia wymagań bezpieczeństwa.</p>
+                          <p className="vd-error-text">{t.invite.passwordTooWeak}</p>
                         )}
                       </div>
 
@@ -384,14 +386,14 @@ export default function ClientInvitePage() {
                         disabled={saving}
                         style={{ marginTop: 4 }}
                       >
-                        {saving ? "Tworzenie konta..." : "Utwórz konto"}
+                        {saving ? t.invite.creatingAccount : t.invite.createAccount}
                       </button>
                     </div>
                   </div>
 
                   <p className="vd-switch-row">
-                    Masz już konto?{" "}
-                    <a href="/login" className="vd-meta-link">Zaloguj się →</a>
+                    {t.invite.haveAccount}{" "}
+                    <a href="/login" className="vd-meta-link">{t.invite.loginLink}</a>
                   </p>
                 </>
               )}
@@ -401,7 +403,7 @@ export default function ClientInvitePage() {
 
           <footer className="vd-footer">
             © 2026 veedeck ·{" "}
-            <a href="https://veedeck.com/polityka-prywatnosci.html">Polityka prywatności</a>
+            <a href="https://veedeck.com/polityka-prywatnosci.html">{t.auth.privacyPolicy}</a>
           </footer>
         </div>
       </div>

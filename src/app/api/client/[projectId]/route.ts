@@ -21,16 +21,23 @@ export async function GET(
     orderBy: { order: "asc" },
     include: {
       folders: {
-        where: { archived: false },
+        where: { archived: false, parentId: null },
         orderBy: { order: "asc" },
-        select: { id: true, name: true, pinned: true },
+        select: {
+          id: true, name: true, pinned: true,
+          subfolders: {
+            where: { archived: false },
+            orderBy: { order: "asc" },
+            select: { id: true, name: true, pinned: true },
+          },
+        },
       },
       renders: {
         where: { archived: false },
         orderBy: { order: "asc" },
         include: {
           comments: {
-            where: { isInternal: false },
+            where: { isInternal: false, archivedVersionId: null },
             orderBy: { createdAt: "asc" },
             include: { replies: { orderBy: { createdAt: "asc" } } },
           },

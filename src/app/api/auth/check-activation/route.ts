@@ -5,8 +5,8 @@ export async function GET(req: NextRequest) {
   const email = req.nextUrl.searchParams.get("email");
   if (!email) return NextResponse.json({ status: "unknown" });
 
-  const user = await prisma.user.findUnique({
-    where: { email },
+  const user = await prisma.user.findFirst({
+    where: { email, primaryAccountId: null },
     select: { activationToken: true },
   });
 

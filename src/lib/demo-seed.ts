@@ -19,10 +19,12 @@ const DEMO_HELPER_EMAILS = [
   "hydraulik@demo.veedeck.com",
   "elektryk@demo.veedeck.com",
   "malarz@demo.veedeck.com",
+  "jan.kowalski@demo.veedeck.com",
+  "budotes@contractor.internal",
 ];
 
 export async function resetDemoAccount() {
-  const demoUser = await prisma.user.findUnique({ where: { email: DEMO_EMAIL } });
+  const demoUser = await prisma.user.findFirst({ where: { email: DEMO_EMAIL, primaryAccountId: null } });
   if (!demoUser) throw new Error(`Demo user not found: ${DEMO_EMAIL}`);
   await clearDemoData(demoUser.id);
   await seedDemoData(demoUser.id);
@@ -157,8 +159,34 @@ async function seedDemoData(userId: string) {
     }),
   ]);
 
+  const hashBudotes = await bcrypt.hash("budotes", 10);
+
+  const [janKowalski2, budotesUser] = await Promise.all([
+    prisma.user.create({
+      data: {
+        email: "jan.kowalski@demo.veedeck.com",
+        login: "jan.kowalski@demo.veedeck.com",
+        name: "Jan Kowalski",
+        fullName: "Jan Kowalski",
+        password: hash,
+        role: "client",
+        emailVerified: new Date(),
+      },
+    }),
+    prisma.user.create({
+      data: {
+        email: "budotes@contractor.internal",
+        login: "budotes",
+        name: "Wojciech Kucharz",
+        fullName: "Wojciech Kucharz",
+        password: hashBudotes,
+        role: "contractor",
+      },
+    }),
+  ]);
+
   // ─── CLIENTS ──────────────────────────────────────────────────────────────
-  const [client1, client2, client3, client4, client5] = await Promise.all([
+  const [client1, client2, client3, client4, client5, client6] = await Promise.all([
     prisma.client.create({
       data: {
         designerId: userId,
@@ -219,6 +247,12 @@ async function seedDemoData(userId: string) {
         addressCountry: "Polska",
         description: "Projekt reprezentacyjnej siedziby firmy – Gdańsk Stare Miasto.",
         startDate: new Date("2025-09-01"),
+      },
+    }),
+    prisma.client.create({
+      data: {
+        designerId: userId,
+        name: "Kowalscy",
       },
     }),
   ]);
@@ -327,6 +361,18 @@ async function seedDemoData(userId: string) {
   ]);
 
   // Client 5 – Malinowski – NO contacts (intentional)
+
+  // Client 6 – Kowalscy – 1 contact WITH account
+  const pc6a = await prisma.projectClient.create({
+    data: {
+      name: "Jan Kowalski",
+      email: "jan.kowalski@demo.veedeck.com",
+      isMainContact: true,
+      order: 0,
+      clientId: client6.id,
+      userId: janKowalski2.id,
+    },
+  });
 
   // ─── PROJECTS ─────────────────────────────────────────────────────────────
   const [project1, project2, project3, project4, project5] = await Promise.all([
@@ -602,10 +648,11 @@ async function seedDemoData(userId: string) {
     }),
   ]);
 
-  const [contractor1, contractor2, contractor3] = await Promise.all([
+  const [contractor1, contractor2, contractor3, contractor4] = await Promise.all([
     prisma.contractor.create({ data: { designerId: userId, userId: hydraulikUser.id, name: "Jan Kowalczyk", company: "Hydraulik Kowalczyk", trade: "Hydraulika i wod-kan", email: "hydraulik@demo.veedeck.com", phone: "+48 500 100 200" } }),
     prisma.contractor.create({ data: { designerId: userId, userId: elektrykUser.id, name: "Volt Instalacje Elektryczne", company: "Volt sp. z o.o.", trade: "Instalacje elektryczne", email: "elektryk@demo.veedeck.com", phone: "+48 500 200 300" } }),
     prisma.contractor.create({ data: { designerId: userId, userId: malarzUser.id, name: "Biel Ekipa Malarska", company: "Biel Prace Malarskie", trade: "Malowanie i tynkowanie", email: "malarz@demo.veedeck.com", phone: "+48 500 300 400" } }),
+    prisma.contractor.create({ data: { designerId: userId, userId: budotesUser.id, name: "Wojciech Kucharz", company: "FIRMA BUDOTES CRP.", trade: "Budownictwo og\u00f3lne", email: "w.kucharz@demo.veedec.com" } }),
   ]);
 
   const [assignment1, assignment2, assignment3] = await Promise.all([

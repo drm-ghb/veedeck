@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
-    user: { findUnique: vi.fn() },
+    user: { findFirst: vi.fn() },
     accessToken: { updateMany: vi.fn(), create: vi.fn() },
   },
 }));
@@ -52,7 +52,7 @@ describe("POST /api/access/request", () => {
   });
 
   it("returns 200 when user does not exist (no-op, no enumeration)", async () => {
-    vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
+    vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
     const res = await POST(makeRequest("POST", { email: "ghost@test.com" }));
     expect(res.status).toBe(200);
     expect(createAccessToken).not.toHaveBeenCalled();
@@ -60,7 +60,7 @@ describe("POST /api/access/request", () => {
   });
 
   it("returns 200 for designer role (no-op — designers use /login)", async () => {
-    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+    vi.mocked(prisma.user.findFirst).mockResolvedValue({
       id: "d-1", name: "Designer", role: "designer", email: "designer@test.com",
     } as any);
     const res = await POST(makeRequest("POST", { email: "designer@test.com" }));
@@ -69,7 +69,7 @@ describe("POST /api/access/request", () => {
   });
 
   it("sends magic link for a client with valid email", async () => {
-    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+    vi.mocked(prisma.user.findFirst).mockResolvedValue({
       id: "c-1", name: "Jan Kowalski", role: "client", email: "jan@test.com",
     } as any);
     const res = await POST(makeRequest("POST", { email: "jan@test.com" }));
@@ -81,7 +81,7 @@ describe("POST /api/access/request", () => {
   });
 
   it("sends magic link for a contractor with valid email", async () => {
-    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+    vi.mocked(prisma.user.findFirst).mockResolvedValue({
       id: "w-1", name: "Firma Bud", role: "contractor", email: "firma@test.com",
     } as any);
     const res = await POST(makeRequest("POST", { email: "firma@test.com" }));
@@ -91,7 +91,7 @@ describe("POST /api/access/request", () => {
   });
 
   it("returns 200 even when internal error occurs (no enumeration)", async () => {
-    vi.mocked(prisma.user.findUnique).mockRejectedValue(new Error("DB error"));
+    vi.mocked(prisma.user.findFirst).mockRejectedValue(new Error("DB error"));
     const res = await POST(makeRequest("POST", { email: "test@test.com" }));
     expect(res.status).toBe(200);
     const data = await res.json();

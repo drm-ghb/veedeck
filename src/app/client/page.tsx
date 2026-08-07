@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
@@ -66,9 +67,14 @@ export default async function ClientIndexPage({
   }
 
   // No projects — show empty state
+  const cookieStore = await cookies();
+  const lang = cookieStore.get("veedeck-lang")?.value === "en" ? "en" : "pl";
+  const emptyMsg = lang === "en"
+    ? "Your designer hasn't shared any content with you yet. Contact them directly!"
+    : "Na ten moment Twój projektant nie udostępnił Ci żadnej zawartości. Skontaktuj się z nim bezpośrednio!";
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-background gap-4 px-4 text-center">
-      <p className="text-muted-foreground text-sm max-w-sm">Na ten moment Twój projektant nie udostępnił Ci żadnej zawartości. Skontaktuj się z nim bezpośrednio!</p>
+      <p className="text-muted-foreground text-sm max-w-sm">{emptyMsg}</p>
     </div>
   );
 }

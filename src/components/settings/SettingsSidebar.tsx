@@ -14,23 +14,20 @@ export default function SettingsSidebar({ isOwner = true }: { isOwner?: boolean 
   const router = useRouter();
   const t = useT();
 
-  const personalItems = [
-    { href: "/ustawienia/profil",        label: "Profil",                   icon: <UserCircle size={16} /> },
-    { href: "/ustawienia/wyglad",        label: "Wygląd",                   icon: <Palette size={16} /> },
-    { href: "/ustawienia/powiadomienia", label: "Powiadomienia",            icon: <Bell size={16} /> },
-    { href: "/ustawienia/instrukcja",    label: t.settings.guideNav,        icon: <BookOpen size={16} /> },
-    { href: "/ustawienia/konto",         label: "Konto",                    icon: <UserMinus size={16} /> },
+  const allItems = [
+    { href: "/ustawienia/profil",             label: "Profil",                icon: <UserCircle size={16} />, ownerOnly: false },
+    { href: "/ustawienia/branding",           label: "Branding",              icon: <Image size={16} />,      ownerOnly: true  },
+    { href: "/ustawienia/wyglad",             label: "Wygląd",                icon: <Palette size={16} />,    ownerOnly: false },
+    { href: "/ustawienia/uzytkownicy",        label: t.settings.usersNav,     icon: <Users size={16} />,      ownerOnly: true  },
+    { href: "/ustawienia/powiadomienia",      label: "Powiadomienia",         icon: <Bell size={16} />,       ownerOnly: false },
+    { href: "/ustawienia/wtyczka",            label: t.settings.pluginNav,    icon: <Puzzle size={16} />,     ownerOnly: true  },
+    { href: "/ustawienia/integracje",         label: "Integracje",            icon: <Link2 size={16} />,      ownerOnly: true  },
+    { href: "/ustawienia/instrukcja",         label: t.settings.guideNav,     icon: <BookOpen size={16} />,   ownerOnly: false },
+    { href: "/ustawienia/plan-i-rozliczenia", label: "Plan i rozliczenia",    icon: <Payments size={16} />,   ownerOnly: true  },
+    { href: "/ustawienia/konto",              label: "Konto",                 icon: <UserMinus size={16} />,  ownerOnly: false },
   ];
 
-  const workspaceItems = [
-    { href: "/ustawienia/branding",           label: "Branding",           icon: <Image size={16} /> },
-    { href: "/ustawienia/uzytkownicy",        label: t.settings.usersNav,  icon: <Users size={16} /> },
-    { href: "/ustawienia/wtyczka",            label: t.settings.pluginNav, icon: <Puzzle size={16} /> },
-    { href: "/ustawienia/integracje",         label: "Integracje",         icon: <Link2 size={16} /> },
-    { href: "/ustawienia/plan-i-rozliczenia", label: "Plan i rozliczenia", icon: <Payments size={16} /> },
-  ];
-
-  const items = isOwner ? [...personalItems, ...workspaceItems] : personalItems;
+  const items = isOwner ? allItems : allItems.filter((i) => !i.ownerOnly);
 
   const moduleItems = [
     { href: "/ustawienia/projectflow",   label: "ProjectFlow",              icon: <Eye size={16} /> },

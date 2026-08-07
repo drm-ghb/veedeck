@@ -10,7 +10,8 @@ datasource db {
 model User {
   id                         String                  @id @default(cuid())
   name                       String?
-  email                      String                  @unique
+  email                      String
+  primaryAccountId           String?
   emailVerified              DateTime?
   image                      String?
   password                   String?
@@ -103,6 +104,8 @@ model User {
   taskStatuses               TaskStatusConfig[]
   owner                      User?                   @relation("TeamMembers", fields: [ownerId], references: [id])
   teamMembers                User[]                  @relation("TeamMembers")
+  primaryAccount             User?                   @relation("WorkspaceAccounts", fields: [primaryAccountId], references: [id])
+  workspaceAccounts          User[]                  @relation("WorkspaceAccounts")
   memberPermission           TeamMemberPermission?   @relation("MemberPermissions")
   ownedMemberPermissions     TeamMemberPermission[]  @relation("OwnedPermissions")
   helpRequests               HelpRequest[]
@@ -621,15 +624,18 @@ model Room {
 }
 
 model Folder {
-  id        String   @id @default(cuid())
-  name      String
-  roomId    String
-  order     Int      @default(0)
-  createdAt DateTime @default(now())
-  pinned    Boolean  @default(false)
-  archived  Boolean  @default(false)
-  room      Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
-  renders   Render[]
+  id         String   @id @default(cuid())
+  name       String
+  roomId     String
+  order      Int      @default(0)
+  createdAt  DateTime @default(now())
+  pinned     Boolean  @default(false)
+  archived   Boolean  @default(false)
+  parentId   String?
+  room       Room       @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  parent     Folder?    @relation("FolderSubs", fields: [parentId], references: [id], onDelete: Cascade)
+  subfolders Folder[]   @relation("FolderSubs")
+  renders    Render[]
 }
 
 model Render {
@@ -647,6 +653,7 @@ model Render {
   folderId               String?
   pinned                 Boolean                 @default(false)
   fileType               String                  @default("image")
+  activeVersionId        String?
   comments               Comment[]
   contractorFiles        ContractorFile[]
   folder                 Folder?                 @relation(fields: [folderId], references: [id])

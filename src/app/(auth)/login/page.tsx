@@ -4,6 +4,7 @@ import { useState, useEffect, useLayoutEffect } from "react";
 import { signIn, getSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
+import { useT } from "@/lib/i18n";
 
 type View = "login" | "register" | "forgot" | "forgotSent" | "registered";
 
@@ -240,6 +241,7 @@ function PasswordInput({ id, value, onChange, placeholder, autoComplete }: {
   id: string; value: string; onChange: (v: string) => void;
   placeholder?: string; autoComplete?: string;
 }) {
+  const t = useT();
   const [show, setShow] = useState(false);
   return (
     <div className="vd-password-wrap">
@@ -253,7 +255,7 @@ function PasswordInput({ id, value, onChange, placeholder, autoComplete }: {
         autoComplete={autoComplete}
         required
       />
-      <button type="button" className="vd-password-toggle" onClick={() => setShow(!show)} aria-label="Pokaż / ukryj hasło">
+      <button type="button" className="vd-password-toggle" onClick={() => setShow(!show)} aria-label={t.auth.togglePassword}>
         {show ? <EyeOffIcon /> : <EyeIcon />}
       </button>
     </div>
@@ -261,12 +263,13 @@ function PasswordInput({ id, value, onChange, placeholder, autoComplete }: {
 }
 
 function RoleSwitcher({ current }: { current: "projektant" | "klient" | "wykonawca" }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
-  const labels = { projektant: "Projektant", klient: "Klient", wykonawca: "Wykonawca" };
+  const labels = { projektant: t.auth.roleDesigner, klient: t.auth.roleClient, wykonawca: t.auth.roleContractor };
   const links = { projektant: "/login", klient: "/login/klient", wykonawca: "/login/wykonawca" };
   return (
     <div style={{ position: "relative", display: "flex", justifyContent: "center", alignItems: "center", gap: 10 }}>
-      <span style={{ fontSize: 13.5, color: "var(--muted-foreground)", fontWeight: 500, whiteSpace: "nowrap" }}>Zaloguj się jako:</span>
+      <span style={{ fontSize: 13.5, color: "var(--muted-foreground)", fontWeight: 500, whiteSpace: "nowrap" }}>{t.auth.loginAs}</span>
       <button type="button" className="vd-role-btn" onClick={() => setOpen((o) => !o)}>
         {labels[current]}
         <svg className={`vd-role-btn-chevron${open ? " open" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -296,6 +299,7 @@ function RoleSwitcher({ current }: { current: "projektant" | "klient" | "wykonaw
 }
 
 export default function LoginPage() {
+  const t = useT();
   const [view, setView] = useState<View>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -355,18 +359,18 @@ export default function LoginPage() {
         const check = await fetch(`/api/auth/check-activation?email=${encodeURIComponent(email)}`);
         const data = await check.json();
         if (data.status === "pending") {
-          toast.error("Konto nie zostało aktywowane — sprawdź skrzynkę pocztową i kliknij link aktywacyjny.");
+          toast.error(t.auth.notActivated);
           setLoading(false);
           return;
         }
       } catch {}
-      toast.error("Nieprawidłowy e-mail lub hasło.");
+      toast.error(t.auth.invalidCredentials);
       setLoading(false);
       return;
     }
     const session = await getSession();
     if ((session?.user as any)?.isAdmin) {
-      toast.error("Konta administracyjne logują się przez /admin");
+      toast.error(t.auth.adminLoginRequired);
       setLoading(false);
       return;
     }
@@ -381,11 +385,11 @@ export default function LoginPage() {
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault();
     if (!validatePassword(password)) {
-      toast.error("Hasło nie spełnia wymagań bezpieczeństwa.");
+      toast.error(t.auth.passwordTooWeak);
       return;
     }
     if (!privacyAccepted) {
-      toast.error("Akceptacja polityki prywatności jest wymagana.");
+      toast.error(t.auth.privacyRequired);
       return;
     }
     setLoading(true);
@@ -398,7 +402,7 @@ export default function LoginPage() {
     if (!res.ok) {
       let data: { error?: string } = {};
       try { data = await res.json(); } catch {}
-      toast.error(data.error || "Błąd rejestracji.");
+      toast.error(data.error || t.auth.registerError);
       setLoading(false);
       return;
     }
@@ -459,7 +463,7 @@ export default function LoginPage() {
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M19 12H5M12 19l-7-7 7-7" />
               </svg>
-              <span>Wróć na stronę</span>
+              <span>{t.auth.backToSite}</span>
             </a>
           </header>
 
@@ -476,8 +480,8 @@ export default function LoginPage() {
                         <path d="M20 6L9 17l-5-5" />
                       </svg>
                       <div>
-                        <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: "#15803d" }}>Hasło zmienione</p>
-                        <p style={{ margin: "2px 0 0", fontSize: 13, color: "#166534" }}>Zaloguj się nowym hasłem.</p>
+                        <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: "#15803d" }}>{t.auth.passwordChanged}</p>
+                        <p style={{ margin: "2px 0 0", fontSize: 13, color: "#166534" }}>{t.auth.loginWithNewPassword}</p>
                       </div>
                     </div>
                   )}
@@ -487,8 +491,8 @@ export default function LoginPage() {
                         <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" />
                       </svg>
                       <div>
-                        <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: "#15803d" }}>Konto aktywowane pomyślnie</p>
-                        <p style={{ margin: "2px 0 0", fontSize: 13, color: "#166534" }}>Możesz się teraz zalogować.</p>
+                        <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: "#15803d" }}>{t.auth.accountActivated}</p>
+                        <p style={{ margin: "2px 0 0", fontSize: 13, color: "#166534" }}>{t.auth.canNowLogin}</p>
                       </div>
                     </div>
                   )}
@@ -498,8 +502,8 @@ export default function LoginPage() {
                         <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
                       </svg>
                       <div>
-                        <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: "#92400e" }}>Link aktywacyjny wygasł</p>
-                        <p style={{ margin: "2px 0 0", fontSize: 13, color: "#78350f" }}>Zarejestruj się ponownie, aby otrzymać nowy link.</p>
+                        <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: "#92400e" }}>{t.auth.activationExpired}</p>
+                        <p style={{ margin: "2px 0 0", fontSize: 13, color: "#78350f" }}>{t.auth.registerAgainForLink}</p>
                       </div>
                     </div>
                   )}
@@ -509,15 +513,15 @@ export default function LoginPage() {
                         <circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" />
                       </svg>
                       <div>
-                        <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: "#991b1b" }}>Nieprawidłowy link aktywacyjny</p>
-                        <p style={{ margin: "2px 0 0", fontSize: 13, color: "#7f1d1d" }}>Link jest nieprawidłowy lub konto zostało już aktywowane.</p>
+                        <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: "#991b1b" }}>{t.auth.invalidActivationLink}</p>
+                        <p style={{ margin: "2px 0 0", fontSize: 13, color: "#7f1d1d" }}>{t.auth.linkInvalidOrActivated}</p>
                       </div>
                     </div>
                   )}
                   <div className="vd-panel-head">
-                    <div className="vd-eyebrow"><span className="dot" />Konto veedeck</div>
-                    <h1>Witaj ponownie.<br /><em className="accent">Zaloguj się.</em></h1>
-                    <p className="sub">Wszystko, co zostawiłaś wczoraj wieczorem — czeka tam, gdzie było.</p>
+                    <div className="vd-eyebrow"><span className="dot" />{t.auth.loginEyebrow}</div>
+                    <h1>{t.auth.loginH1}<br /><em className="accent">{t.auth.loginH1Em}</em></h1>
+                    <p className="sub">{t.auth.loginSubtitle}</p>
                   </div>
 
                   <RoleSwitcher current="projektant" />
@@ -525,33 +529,33 @@ export default function LoginPage() {
                   <div className="vd-card">
                     <button type="button" className="vd-btn w-full" data-variant="outline" onClick={() => signIn("google", { callbackUrl: "/panel-glowny" })}>
                       <GoogleIcon />
-                      Kontynuuj z Google
+                      {t.auth.continueGoogle}
                     </button>
 
-                    <div className="vd-divider-or"><span>lub e-mailem</span></div>
+                    <div className="vd-divider-or"><span>{t.auth.orEmail}</span></div>
 
                     <form className="vd-form-stack" onSubmit={handleLogin} autoComplete="on">
                       <div className="vd-field">
-                        <label className="vd-label" htmlFor="login-email">E-mail lub login</label>
+                        <label className="vd-label" htmlFor="login-email">{t.auth.emailOrLogin}</label>
                         <input className="vd-input" id="login-email" type="text" required autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} />
                       </div>
                       <div className="vd-field">
                         <div className="vd-label">
-                          <label htmlFor="login-password">Hasło</label>
-                          <button type="button" className="vd-meta-link" onClick={() => switchView("forgot")}>Zapomniałem hasła</button>
+                          <label htmlFor="login-password">{t.auth.password}</label>
+                          <button type="button" className="vd-meta-link" onClick={() => switchView("forgot")}>{t.auth.forgotPasswordLink}</button>
                         </div>
                         <PasswordInput id="login-password" value={password} onChange={setPassword} autoComplete="current-password" />
                       </div>
                       <button type="submit" className="vd-btn w-full" data-variant="primary" disabled={loading} style={{ marginTop: 6 }}>
-                        <span>{loading ? "Logowanie..." : "Zaloguj się"}</span>
+                        <span>{loading ? t.auth.loggingIn : t.auth.loginBtn}</span>
                         {!loading && <ArrowRight />}
                       </button>
                     </form>
                   </div>
 
                   <p className="vd-switch-row">
-                    Nie masz jeszcze konta?{" "}
-                    <button className="vd-meta-link strong" onClick={() => switchView("register")}>Załóż za darmo →</button>
+                    {t.auth.noAccount}{" "}
+                    <button className="vd-meta-link strong" onClick={() => switchView("register")}>{t.auth.createAccountFree}</button>
                   </p>
                 </>
               )}
@@ -560,51 +564,51 @@ export default function LoginPage() {
               {view === "register" && (
                 <>
                   <div className="vd-panel-head">
-                    <div className="vd-eyebrow"><span className="dot" />Załóż konto</div>
-                    <h1>Zacznij za darmo.<br /><em className="accent">30 dni bez karty.</em></h1>
-                    <p className="sub">Bez limitu klientów i projektów. Anuluj w każdej chwili.</p>
+                    <div className="vd-eyebrow"><span className="dot" />{t.auth.registerEyebrow}</div>
+                    <h1>{t.auth.startFreeH1}<br /><em className="accent">{t.auth.trialH1Em}</em></h1>
+                    <p className="sub">{t.auth.registerSubtitle}</p>
                   </div>
 
                   <div className="vd-reg-lock">
                     <div className="vd-card">
                       <button type="button" className="vd-btn w-full" data-variant="outline" disabled>
                         <GoogleIcon />
-                        Załóż konto przez Google
+                        {t.auth.googleCreate}
                       </button>
 
-                      <div className="vd-divider-or"><span>lub e-mailem</span></div>
+                      <div className="vd-divider-or"><span>{t.auth.orEmail}</span></div>
 
                       <form className="vd-form-stack" onSubmit={handleRegister} autoComplete="on">
                         <div className="vd-field">
-                          <label className="vd-label" htmlFor="reg-fullname">Imię i nazwisko</label>
+                          <label className="vd-label" htmlFor="reg-fullname">{t.auth.fullName}</label>
                           <input className="vd-input" id="reg-fullname" type="text" required value={fullName} onChange={(e) => setFullName(e.target.value)} />
                         </div>
                         <div className="vd-field">
-                          <label className="vd-label" htmlFor="reg-company">Nazwa firmy <span className="opt">(opcjonalne)</span></label>
+                          <label className="vd-label" htmlFor="reg-company">{t.auth.companyOptional} <span className="opt">({t.common.optional})</span></label>
                           <input className="vd-input" id="reg-company" type="text"  value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
                         </div>
                         <div className="vd-field">
-                          <label className="vd-label" htmlFor="reg-email">E-mail</label>
+                          <label className="vd-label" htmlFor="reg-email">{t.auth.emailLabel}</label>
                           <input className="vd-input" id="reg-email" type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
                         </div>
                         <div className="vd-field">
-                          <label className="vd-label" htmlFor="reg-password">Hasło</label>
+                          <label className="vd-label" htmlFor="reg-password">{t.auth.password}</label>
                           <PasswordInput id="reg-password" value={password} onChange={setPassword} autoComplete="new-password" />
-                          <p className="vd-helper-text">Min. 8 znaków, mała litera, wielka litera i cyfra.</p>
+                          <p className="vd-helper-text">{t.auth.passwordHelper}</p>
                           {password && !validatePassword(password) && (
-                            <p className="vd-error-text">Hasło nie spełnia wymagań bezpieczeństwa.</p>
+                            <p className="vd-error-text">{t.auth.passwordTooWeak}</p>
                           )}
                         </div>
                         <div className="vd-privacy">
                           <input type="checkbox" id="privacy" checked={privacyAccepted} onChange={(e) => setPrivacyAccepted(e.target.checked)} />
                           <label htmlFor="privacy">
-                            Potwierdzam, że zapoznałam się z{" "}
-                            <a href="https://veedeck.com/polityka-prywatnosci.html">Polityką prywatności</a> i{" "}
-                            <a href="#">Regulaminem</a>.
+                            {t.auth.privacyText}{" "}
+                            <a href="https://veedeck.com/polityka-prywatnosci.html">{t.auth.privacyLink}</a> {t.auth.andConjunction}{" "}
+                            <a href="#">{t.auth.termsLink}</a>.
                           </label>
                         </div>
                         <button type="submit" className="vd-btn w-full" data-variant="primary" disabled={loading || !privacyAccepted} style={{ marginTop: 4 }}>
-                          <span>{loading ? "Wysyłamy link..." : "Załóż konto"}</span>
+                          <span>{loading ? t.auth.sendingLink : t.auth.createAccount}</span>
                           {!loading && <ArrowRight />}
                         </button>
                       </form>
@@ -612,8 +616,8 @@ export default function LoginPage() {
                   </div>
 
                   <p className="vd-switch-row">
-                    Masz już konto?{" "}
-                    <button className="vd-meta-link strong" onClick={() => switchView("login")}>Zaloguj się →</button>
+                    {t.auth.haveAccountQ}{" "}
+                    <button className="vd-meta-link strong" onClick={() => switchView("login")}>{t.auth.loginArrow}</button>
                   </p>
                 </>
               )}
@@ -622,8 +626,8 @@ export default function LoginPage() {
               {view === "registered" && (
                 <>
                   <div className="vd-panel-head">
-                    <div className="vd-eyebrow"><span className="dot" />Prawie gotowe</div>
-                    <h1>Sprawdź skrzynkę.<br /><em className="accent">Wysłaliśmy link.</em></h1>
+                    <div className="vd-eyebrow"><span className="dot" />{t.auth.almostDone}</div>
+                    <h1>{t.auth.checkInboxH1}<br /><em className="accent">{t.auth.sentLinkH1Em}</em></h1>
                   </div>
 
                   <div className="vd-card vd-card-success">
@@ -633,11 +637,11 @@ export default function LoginPage() {
                         <polyline points="22,6 12,13 2,6" />
                       </svg>
                     </div>
-                    <h2>Wysłaliśmy link aktywacyjny</h2>
+                    <h2>{t.auth.sentActivationTitle}</h2>
                     <p className="vd-body-text">
-                      Na adres <b>{registeredEmail || "Twój e-mail"}</b> poszedł link, który aktywuje Twoje konto.
+                      {t.auth.activationEmailSent.replace("{email}", registeredEmail || t.auth.yourEmail)}
                     </p>
-                    <div className="vd-meta-note">Nie widzisz wiadomości? Sprawdź folder <b>Spam</b> lub <b>Oferty</b>.</div>
+                    <div className="vd-meta-note">{t.auth.checkSpam}</div>
                     <div className="vd-actions">
                       <button
                         className="vd-btn w-full"
@@ -645,15 +649,15 @@ export default function LoginPage() {
                         onClick={handleResend}
                         disabled={resendLoading || resendDone}
                       >
-                        {resendDone ? "Link wysłany ponownie ✓" : resendLoading ? "Wysyłamy..." : "Wyślij link ponownie"}
+                        {resendDone ? t.auth.linkResentDone : resendLoading ? t.auth.sending : t.auth.resendLink}
                       </button>
-                      <button className="vd-btn w-full" data-variant="ghost" onClick={() => switchView("login")}>Wróć do logowania</button>
+                      <button className="vd-btn w-full" data-variant="ghost" onClick={() => switchView("login")}>{t.auth.backToLogin}</button>
                     </div>
                   </div>
 
                   <p className="vd-switch-row">
-                    Wpisałeś zły e-mail?{" "}
-                    <button className="vd-meta-link strong" onClick={() => switchView("register")}>Załóż konto ponownie →</button>
+                    {t.auth.wrongEmail}{" "}
+                    <button className="vd-meta-link strong" onClick={() => switchView("register")}>{t.auth.createAgain}</button>
                   </p>
                 </>
               )}
@@ -662,27 +666,27 @@ export default function LoginPage() {
               {view === "forgot" && (
                 <>
                   <div className="vd-panel-head">
-                    <div className="vd-eyebrow"><span className="dot" />Reset hasła</div>
-                    <h1>Zapomniałaś hasła?<br /><em className="accent">Pomożemy.</em></h1>
-                    <p className="sub">Podaj e-mail przypisany do konta — wyślemy link do ustawienia nowego hasła.</p>
+                    <div className="vd-eyebrow"><span className="dot" />{t.auth.resetEyebrow}</div>
+                    <h1>{t.auth.forgotH1}<br /><em className="accent">{t.auth.forgotH1Em}</em></h1>
+                    <p className="sub">{t.auth.forgotSubtitle}</p>
                   </div>
 
                   <div className="vd-card">
                     <form className="vd-form-stack" onSubmit={handleForgot} autoComplete="on">
                       <div className="vd-field">
-                        <label className="vd-label" htmlFor="forgot-email">E-mail</label>
+                        <label className="vd-label" htmlFor="forgot-email">{t.auth.emailLabel}</label>
                         <input className="vd-input" id="forgot-email" type="email" required autoComplete="email" value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)} />
                       </div>
                       <button type="submit" className="vd-btn w-full" data-variant="primary" disabled={loading} style={{ marginTop: 4 }}>
-                        <span>{loading ? "Wysyłamy link..." : "Wyślij link do resetu"}</span>
+                        <span>{loading ? t.auth.sendingLink : t.auth.resetSend}</span>
                         {!loading && <ArrowRight />}
                       </button>
                     </form>
                   </div>
 
                   <p className="vd-switch-row">
-                    Pamiętasz hasło?{" "}
-                    <button className="vd-meta-link strong" onClick={() => switchView("login")}>Wróć do logowania →</button>
+                    {t.auth.rememberPassword}{" "}
+                    <button className="vd-meta-link strong" onClick={() => switchView("login")}>{t.auth.backToLoginArrow}</button>
                   </p>
                 </>
               )}
@@ -691,8 +695,8 @@ export default function LoginPage() {
               {view === "forgotSent" && (
                 <>
                   <div className="vd-panel-head">
-                    <div className="vd-eyebrow"><span className="dot" />Link w drodze</div>
-                    <h1>Sprawdź skrzynkę.<br /><em className="accent">Reset hasła czeka.</em></h1>
+                    <div className="vd-eyebrow"><span className="dot" />{t.auth.linkOnItsWay}</div>
+                    <h1>{t.auth.checkInboxH1}<br /><em className="accent">{t.auth.resetWaitingH1Em}</em></h1>
                   </div>
 
                   <div className="vd-card vd-card-success">
@@ -702,18 +706,18 @@ export default function LoginPage() {
                         <polyline points="22,6 12,13 2,6" />
                       </svg>
                     </div>
-                    <h2>Wysłaliśmy link do resetu</h2>
+                    <h2>{t.auth.sentResetTitle}</h2>
                     <p className="vd-body-text">
-                      Jeśli konto z e-mailem <b>{forgotEmailSent || "Twój e-mail"}</b> istnieje, wysłaliśmy link do ustawienia nowego hasła. Sprawdź też folder Spam.
+                      {t.auth.resetEmailSent.replace("{email}", forgotEmailSent || t.auth.yourEmail)}
                     </p>
-                    <div className="vd-meta-note">Link jest ważny przez <b>60 minut</b>.</div>
+                    <div className="vd-meta-note">{t.auth.linkValid60}</div>
                     <div className="vd-actions">
                       <button className="vd-btn w-full" data-variant="primary" onClick={() => switchView("login")}>
-                        <span>Wróć do logowania</span>
+                        <span>{t.auth.backToLogin}</span>
                         <ArrowRight />
                       </button>
                       <button type="button" className="vd-btn w-full" data-variant="ghost" onClick={() => { setForgotEmail(""); switchView("forgot"); }}>
-                        Spróbuj z innym e-mailem
+                        {t.auth.tryAnotherEmail}
                       </button>
                     </div>
                   </div>
@@ -726,8 +730,8 @@ export default function LoginPage() {
           {/* Footer */}
           <footer className="vd-footer">
             © 2026 veedeck ·{" "}
-            <a href="https://veedeck.com/polityka-prywatnosci.html">Polityka prywatności</a> ·{" "}
-            <a href="https://veedeck.com/kontakt.html">Pomoc</a>
+            <a href="https://veedeck.com/polityka-prywatnosci.html">{t.auth.privacyPolicy}</a> ·{" "}
+            <a href="https://veedeck.com/kontakt.html">{t.auth.footerHelp}</a>
           </footer>
         </div>
       </div>

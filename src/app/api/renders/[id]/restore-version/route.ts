@@ -31,26 +31,40 @@ export async function POST(
 
   const versionNumber = render._count.versions + 1;
 
+  const restoredVersionNumber = version.versionNumber;
+  const restoredVersionLabel = version.label;
+  const currentActiveVersionId = (render as any).activeVersionId as string | null;
+
   await prisma.$transaction(async (tx) => {
-    const newVersion = await tx.renderVersion.create({
-      data: {
-        renderId: id,
-        fileUrl: render.fileUrl,
-        fileKey: render.fileKey,
-        versionNumber,
-        archivedAt: new Date(),
-      },
-    });
-    // Archive active pins with the new version snapshot
+    let archiveVersionId: string;
+
+    if (currentActiveVersionId) {
+      // New system: archive current pins back into the currently-active version — no new version created
+      archiveVersionId = currentActiveVersionId;
+    } else {
+      // Old render (no activeVersionId tracking) — one-time snapshot transition
+      const snapshot = await tx.renderVersion.create({
+        data: {
+          renderId: id,
+          fileUrl: render.fileUrl,
+          fileKey: render.fileKey,
+          versionNumber,
+          archivedAt: new Date(),
+        },
+      });
+      archiveVersionId = snapshot.id;
+    }
+
+    // Archive current pin comments (posX not null) — chat messages preserved
     await tx.comment.updateMany({
-      where: { renderId: id, archivedVersionId: null },
-      data: { archivedVersionId: newVersion.id },
+      where: { renderId: id, archivedVersionId: null, posX: { not: null } },
+      data: { archivedVersionId: archiveVersionId },
     });
     await tx.renderProductPin.updateMany({
       where: { renderId: id, archivedVersionId: null },
-      data: { archivedVersionId: newVersion.id },
+      data: { archivedVersionId: archiveVersionId },
     });
-    // Restore pins belonging to the version being restored
+    // Restore pins belonging to the target version
     await tx.comment.updateMany({
       where: { renderId: id, archivedVersionId: versionId },
       data: { archivedVersionId: null },
@@ -61,8 +75,17 @@ export async function POST(
     });
     await tx.render.update({
       where: { id },
-      data: { fileUrl: version.fileUrl, fileKey: version.fileKey ?? render.fileKey },
+      data: { fileUrl: version.fileUrl, fileKey: version.fileKey ?? render.fileKey, activeVersionId: versionId } as any,
     });
+  });
+
+  // Log version restore as system chat message
+  await prisma.comment.create({
+    data: {
+      renderId: id,
+      author: "__system__",
+      content: JSON.stringify({ event: "version_restore", versionNumber: restoredVersionNumber, label: restoredVersionLabel || null }),
+    },
   });
 
   return NextResponse.json({ success: true });

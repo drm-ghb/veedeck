@@ -55,16 +55,12 @@ interface Product {
   orderStatus: string | null;
 }
 
-const ORDER_STATUS_OPTIONS: { value: string | null; label: string; cls: string }[] = [
-  { value: "do_wyceny", label: "Do wyceny", cls: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400" },
-  { value: "w_wycenie", label: "W wycenie", cls: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" },
-  { value: "zamowione", label: "Zamówione", cls: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" },
-  { value: "do_reklamacji", label: "Do reklamacji", cls: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" },
-];
-
-function getOrderStatusOption(value: string | null) {
-  return ORDER_STATUS_OPTIONS.find((o) => o.value === value) ?? null;
-}
+const ORDER_STATUS_CLS: Record<string, string> = {
+  do_wyceny: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
+  w_wycenie: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+  zamowione: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+  do_reklamacji: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+};
 
 interface Section {
   id: string;
@@ -138,6 +134,15 @@ export default function ShareListClient({
     return init;
   });
   const t = useT();
+  const orderStatusOptions: { value: string; label: string; cls: string }[] = [
+    { value: "do_wyceny", label: t.listy.orderStatusDoWyceny, cls: ORDER_STATUS_CLS.do_wyceny },
+    { value: "w_wycenie", label: t.listy.orderStatusWWycenie, cls: ORDER_STATUS_CLS.w_wycenie },
+    { value: "zamowione", label: t.listy.orderStatusZamowione, cls: ORDER_STATUS_CLS.zamowione },
+    { value: "do_reklamacji", label: t.listy.orderStatusDoReklamacji, cls: ORDER_STATUS_CLS.do_reklamacji },
+  ];
+  function getOrderStatusOption(value: string | null) {
+    return orderStatusOptions.find((o) => o.value === value) ?? null;
+  }
   const [authorName, setAuthorName] = useState(t.listy.clientLabel);
   const [lightbox, setLightbox] = useState<string | null>(null);
   const commentsPanelProductIdRef = useRef<string | null>(null);
@@ -314,10 +319,10 @@ export default function ShareListClient({
                 );
                 const orderStatusOpt = getOrderStatusOption(product.orderStatus);
                 const approvalBadge = approval === "accepted"
-                  ? <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"><Check size={9} />Zaakceptowany</span>
+                  ? <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"><Check size={9} />{t.listy.productAccepted}</span>
                   : approval === "rejected"
-                  ? <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"><X size={9} />Odrzucony</span>
-                  : <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted text-muted-foreground">Oczekuje</span>;
+                  ? <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"><X size={9} />{t.listy.productRejected}</span>
+                  : <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted text-muted-foreground">{t.listy.productPending}</span>;
                 return (
                   <div key={product.id}>
                     {/* ── DESKTOP (lg+) ── */}

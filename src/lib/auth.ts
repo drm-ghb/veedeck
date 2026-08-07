@@ -135,8 +135,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const identifier = credentials.email as string;
 
         // Support both email (designers) and login (clients)
+        // For email logins, find the primary account (not a workspace member copy)
         const user = identifier.includes("@")
-          ? await prisma.user.findUnique({ where: { email: identifier } })
+          ? await prisma.user.findFirst({ where: { email: identifier, primaryAccountId: null } })
           : await prisma.user.findUnique({ where: { login: identifier } });
 
         if (!user || !user.password) {

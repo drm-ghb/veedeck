@@ -1,12 +1,17 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { Engineering } from "@/components/ui/icons";
 import ContractorProjectCards from "@/components/wykonawca/ContractorProjectCards";
+import { pl } from "@/lib/translations/pl";
+import { en } from "@/lib/translations/en";
 
 export default async function ContractorHomePage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
+  const cookieStore = await cookies();
+  const t = cookieStore.get("veedeck-lang")?.value === "en" ? en : pl;
 
   const contractor = await prisma.contractor.findFirst({
     where: { userId: session.user.id },
@@ -16,8 +21,8 @@ export default async function ContractorHomePage() {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center gap-3">
         <Engineering size={48} className="text-muted-foreground/40" />
-        <p className="text-lg font-medium text-muted-foreground">Nie masz przypisanych projektów</p>
-        <p className="text-sm text-muted-foreground/60">Skontaktuj się z projektantem, aby uzyskać dostęp do projektów.</p>
+        <p className="text-lg font-medium text-muted-foreground">{t.wykonawcy.noAssignedProjects}</p>
+        <p className="text-sm text-muted-foreground/60">{t.wykonawcy.contactDesigner}</p>
       </div>
     );
   }
@@ -81,8 +86,8 @@ export default async function ContractorHomePage() {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center gap-3">
         <Engineering size={48} className="text-muted-foreground/40" />
-        <p className="text-lg font-medium text-muted-foreground">Nie masz przypisanych projektów</p>
-        <p className="text-sm text-muted-foreground/60">Skontaktuj się z projektantem, aby uzyskać dostęp do projektów.</p>
+        <p className="text-lg font-medium text-muted-foreground">{t.wykonawcy.noAssignedProjects}</p>
+        <p className="text-sm text-muted-foreground/60">{t.wykonawcy.contactDesigner}</p>
       </div>
     );
   }
@@ -125,7 +130,7 @@ export default async function ContractorHomePage() {
     return {
       assignmentId: a.id,
       projectTitle: a.project.title,
-      designerName: a.contractor.designer.name ?? a.contractor.designer.fullName ?? "Projektant",
+      designerName: a.contractor.designer.name ?? a.contractor.designer.fullName ?? t.wykonawcy.defaultDesigner,
       createdAt: a.createdAt.toISOString(),
       unreadCount,
       unreadPinCount,
@@ -145,7 +150,7 @@ export default async function ContractorHomePage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">Moje projekty</h1>
+      <h1 className="text-2xl font-semibold">{t.wykonawcy.myProjects}</h1>
       <ContractorProjectCards cards={cards} />
     </div>
   );

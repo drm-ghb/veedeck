@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const userId = getWorkspaceUserId(session);
 
-  const { name, roomId } = await req.json();
+  const { name, roomId, parentId } = await req.json();
   if (!name?.trim() || !roomId) return NextResponse.json({ error: "Brak danych" }, { status: 400 });
 
   const room = await prisma.room.findUnique({
@@ -21,14 +21,14 @@ export async function POST(req: NextRequest) {
   }
 
   const duplicate = await prisma.folder.findFirst({
-    where: { roomId, name: { equals: name.trim(), mode: "insensitive" }, archived: false },
+    where: { roomId, parentId: parentId ?? null, name: { equals: name.trim(), mode: "insensitive" }, archived: false },
   });
   if (duplicate) {
     return NextResponse.json({ error: "Folder o tej nazwie już istnieje" }, { status: 409 });
   }
 
   const folder = await prisma.folder.create({
-    data: { name: name.trim(), roomId },
+    data: { name: name.trim(), roomId, ...(parentId ? { parentId } : {}) },
   });
 
   return NextResponse.json(folder, { status: 201 });

@@ -37,6 +37,7 @@ export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userI
   const pathname = usePathname();
   const t = useT();
   const [collapsed, setCollapsed] = useState(initialCollapsed);
+  const [routeExpanded, setRouteExpanded] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [helpTab, setHelpTab] = useState<"knowledge" | "ai" | "contact">("knowledge");
@@ -223,20 +224,27 @@ export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userI
     { label: t.nav.veezard, href: "/veezard", icon: <VeezardIcon size={18} />, slug: "veezard", badge: 0, matchPrefixes: [] as string[], soon: true },
   ];
 
+  const forceCollapsed = HIDDEN_ON.some((pattern) => pattern.test(pathname));
+  const isCollapsed = forceCollapsed ? !routeExpanded : collapsed;
+
   function toggle() {
-    const next = !collapsed;
-    setCollapsed(next);
-    localStorage.setItem("nav-sidebar-collapsed", String(next));
-    document.cookie = `nav-sidebar-collapsed=${next}; path=/; max-age=31536000; SameSite=Lax`;
-    window.dispatchEvent(new CustomEvent("sidebar-state-change", { detail: { collapsed: next } }));
+    if (forceCollapsed) {
+      const next = !routeExpanded;
+      setRouteExpanded(next);
+      window.dispatchEvent(new CustomEvent("sidebar-state-change", { detail: { collapsed: !next } }));
+    } else {
+      const next = !collapsed;
+      setCollapsed(next);
+      localStorage.setItem("nav-sidebar-collapsed", String(next));
+      document.cookie = `nav-sidebar-collapsed=${next}; path=/; max-age=31536000; SameSite=Lax`;
+      window.dispatchEvent(new CustomEvent("sidebar-state-change", { detail: { collapsed: next } }));
+    }
   }
 
-  const forceCollapsed = HIDDEN_ON.some((pattern) => pattern.test(pathname));
-  const isCollapsed = forceCollapsed || collapsed;
-
-  // Sync LogoBrand when route-based force-collapse changes (e.g. entering a list detail or moodboard)
+  // Auto-collapse when entering a force-collapse route; sync LogoBrand on route change
   useEffect(() => {
-    window.dispatchEvent(new CustomEvent("sidebar-state-change", { detail: { collapsed: isCollapsed } }));
+    if (forceCollapsed) setRouteExpanded(false);
+    window.dispatchEvent(new CustomEvent("sidebar-state-change", { detail: { collapsed: forceCollapsed ? true : collapsed } }));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [forceCollapsed]);
 

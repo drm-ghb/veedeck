@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getWorkspaceUserId } from "@/lib/workspace";
+import { getRecursiveRenderCounts } from "@/lib/folder-utils";
 import { notFound } from "next/navigation";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import RoomView from "@/components/render/RoomView";
@@ -34,15 +35,18 @@ export default async function RoomPage({ params }: Props) {
       orderBy: { order: "asc" },
     }),
     prisma.folder.findMany({
-      where: { roomId, archived: false },
+      where: { roomId, archived: false, parentId: null },
       orderBy: { order: "asc" },
-      include: { _count: { select: { renders: { where: { archived: false } } } } },
     }),
     prisma.folder.findMany({
-      where: { roomId, archived: true },
+      where: { roomId, archived: true, parentId: null },
       orderBy: { order: "asc" },
-      include: { _count: { select: { renders: { where: { archived: false } } } } },
     }),
+  ]);
+
+  const folderCounts = await getRecursiveRenderCounts([
+    ...folders.map((f) => f.id),
+    ...archivedFolders.map((f) => f.id),
   ]);
 
   return (
@@ -93,14 +97,14 @@ export default async function RoomPage({ params }: Props) {
         folders={folders.map((f) => ({
           id: f.id,
           name: f.name,
-          renderCount: f._count.renders,
+          renderCount: folderCounts.get(f.id) ?? 0,
           pinned: f.pinned,
           createdAt: f.createdAt.toISOString(),
         }))}
         archivedFolders={archivedFolders.map((f) => ({
           id: f.id,
           name: f.name,
-          renderCount: f._count.renders,
+          renderCount: folderCounts.get(f.id) ?? 0,
           createdAt: f.createdAt.toISOString(),
         }))}
       />

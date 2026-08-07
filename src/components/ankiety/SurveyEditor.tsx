@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
@@ -1003,6 +1003,9 @@ function PreviewCard({
   const t = useT();
   const [label, setLabel] = useState(question.label);
   const typeLabel = getTypeLabel(question.type, t);
+
+  // Sync local label when parent updates the question (e.g. via QuestionConfigPanel)
+  useEffect(() => { setLabel(question.label); }, [question.label]);
 
   if (isCollapsed) {
     return (

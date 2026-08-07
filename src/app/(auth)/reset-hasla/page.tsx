@@ -3,6 +3,7 @@
 import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { useT } from "@/lib/i18n";
 
 const CSS = `
   :root {
@@ -204,8 +205,8 @@ function ArrowRight() {
   );
 }
 
-function PasswordField({ id, label, value, onChange, isInvalid }: {
-  id: string; label: string; value: string; onChange: (v: string) => void; isInvalid?: boolean;
+function PasswordField({ id, label, value, onChange, isInvalid, toggleLabel }: {
+  id: string; label: string; value: string; onChange: (v: string) => void; isInvalid?: boolean; toggleLabel: string;
 }) {
   const [show, setShow] = useState(false);
   return (
@@ -222,7 +223,7 @@ function PasswordField({ id, label, value, onChange, isInvalid }: {
           required
           autoComplete="new-password"
         />
-        <button type="button" className="rh-password-toggle" onClick={() => setShow(!show)} aria-label="Pokaż / ukryj hasło">
+        <button type="button" className="rh-password-toggle" onClick={() => setShow(!show)} aria-label={toggleLabel}>
           {show ? <EyeOffIcon /> : <EyeIcon />}
         </button>
       </div>
@@ -231,6 +232,7 @@ function PasswordField({ id, label, value, onChange, isInvalid }: {
 }
 
 export default function ResetHaslaPage() {
+  const t = useT();
   const searchParams = useSearchParams();
   const router = useRouter();
   const token = searchParams.get("token");
@@ -322,7 +324,7 @@ export default function ResetHaslaPage() {
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M19 12H5M12 19l-7-7 7-7" />
               </svg>
-              <span>Wróć do logowania</span>
+              <span>{t.auth.backToLogin}</span>
             </Link>
           </header>
 
@@ -333,19 +335,19 @@ export default function ResetHaslaPage() {
               {view === "reset" && (
                 <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
                   <div className="rh-panel-head">
-                    <div className="rh-eyebrow"><span className="dot" />Reset hasła</div>
-                    <h1>Ustaw nowe hasło.<br /><em className="accent">Ostatni krok.</em></h1>
+                    <div className="rh-eyebrow"><span className="dot" />{t.auth.resetEyebrow}</div>
+                    <h1>{t.auth.resetPasswordH1}<br /><em className="accent">{t.auth.resetPasswordH1Em}</em></h1>
                     <p className="sub">
-                      Wpisz nowe hasło do konta{" "}
+                      {t.auth.resetPasswordSubtitle}{" "}
                       {emailParam && <b>{emailParam}</b>}.
-                      Po zapisaniu zalogujesz się od nowa.
+                      {" "}{t.auth.resetPasswordNote}
                     </p>
                   </div>
 
                   <div className="rh-card">
                     <form className="rh-form-stack" onSubmit={handleSubmit} autoComplete="off">
                       <div className="rh-field">
-                        <label className="rh-label" htmlFor="new-password">Nowe hasło</label>
+                        <label className="rh-label" htmlFor="new-password">{t.auth.newPasswordLabel}</label>
                         <div className="rh-password-wrap">
                           <input
                             className="rh-input has-trailing"
@@ -364,10 +366,10 @@ export default function ResetHaslaPage() {
                               <span className="tick">
                                 <CheckIcon />
                               </span>
-                              {key === "len" && "Min. 8 znaków"}
-                              {key === "lower" && "Mała litera"}
-                              {key === "upper" && "Wielka litera"}
-                              {key === "digit" && "Cyfra"}
+                              {key === "len" && t.auth.reqLen}
+                              {key === "lower" && t.auth.reqLower}
+                              {key === "upper" && t.auth.reqUpper}
+                              {key === "digit" && t.auth.reqNum}
                             </div>
                           ))}
                         </div>
@@ -375,12 +377,13 @@ export default function ResetHaslaPage() {
 
                       <PasswordField
                         id="confirm-password"
-                        label="Powtórz hasło"
+                        label={t.auth.repeatPasswordLabel}
                         value={confirm}
                         onChange={setConfirm}
                         isInvalid={showMismatch}
+                        toggleLabel={t.auth.togglePassword}
                       />
-                      {showMismatch && <p className="rh-error-text">Hasła nie są identyczne.</p>}
+                      {showMismatch && <p className="rh-error-text">{t.auth.passwordsMismatch}</p>}
 
                       <button
                         type="submit"
@@ -389,15 +392,15 @@ export default function ResetHaslaPage() {
                         disabled={!canSubmit}
                         style={{ marginTop: 4 }}
                       >
-                        <span>{loading ? "Zapisujemy..." : "Zapisz nowe hasło"}</span>
+                        <span>{loading ? t.auth.saving : t.auth.saveNewPassword}</span>
                         {!loading && <ArrowRight />}
                       </button>
                     </form>
                   </div>
 
                   <p className="rh-switch-row">
-                    Przypomniałeś sobie hasło?{" "}
-                    <Link className="rh-meta-link strong" href="/login">Wróć do logowania →</Link>
+                    {t.auth.rememberPassword2}{" "}
+                    <Link className="rh-meta-link strong" href="/login">{t.auth.backToLoginArrow}</Link>
                   </p>
                 </div>
               )}
@@ -406,8 +409,8 @@ export default function ResetHaslaPage() {
               {view === "done" && (
                 <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
                   <div className="rh-panel-head">
-                    <div className="rh-eyebrow"><span className="dot" />Gotowe</div>
-                    <h1>Hasło zmienione.<br /><em className="accent">Możesz się zalogować.</em></h1>
+                    <div className="rh-eyebrow"><span className="dot" />{t.auth.doneEyebrow}</div>
+                    <h1>{t.auth.passwordChangedH1}<br /><em className="accent">{t.auth.passwordChangedH1Em}</em></h1>
                   </div>
 
                   <div className="rh-card rh-card-success">
@@ -416,13 +419,13 @@ export default function ResetHaslaPage() {
                         <path d="M20 6L9 17l-5-5" />
                       </svg>
                     </div>
-                    <h2>Twoje nowe hasło jest aktywne</h2>
+                    <h2>{t.auth.newPasswordActive}</h2>
                     <p className="rh-body-text">
-                      Zaktualizowaliśmy hasło do Twojego konta. Ze względów bezpieczeństwa wylogowaliśmy Cię na wszystkich urządzeniach — zaloguj się nowym hasłem.
+                      {t.auth.passwordUpdatedNote}
                     </p>
                     <div className="rh-actions">
                       <Link className="rh-btn w-full" data-variant="primary" href="/login">
-                        <span>Przejdź do logowania</span>
+                        <span>{t.auth.goToLogin}</span>
                         <ArrowRight />
                       </Link>
                     </div>
@@ -434,8 +437,8 @@ export default function ResetHaslaPage() {
               {view === "invalid" && (
                 <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
                   <div className="rh-panel-head">
-                    <div className="rh-eyebrow"><span className="dot" />Link nieaktywny</div>
-                    <h1>Link wygasł.<br /><em className="accent">Wyślij nowy.</em></h1>
+                    <div className="rh-eyebrow"><span className="dot" />{t.auth.linkInactiveEyebrow}</div>
+                    <h1>{t.auth.linkExpiredH1}<br /><em className="accent">{t.auth.linkExpiredH1Em}</em></h1>
                   </div>
 
                   <div className="rh-card rh-card-success">
@@ -444,17 +447,17 @@ export default function ResetHaslaPage() {
                         <circle cx="12" cy="12" r="9" /><path d="M12 8v5" /><path d="M12 16h.01" />
                       </svg>
                     </div>
-                    <h2>Ten link do resetu jest nieważny</h2>
+                    <h2>{t.auth.resetLinkInvalid}</h2>
                     <p className="rh-body-text">
-                      Link mógł wygasnąć (ważny 60&nbsp;minut) lub został już użyty. Poproś o nowy — zajmie to chwilę.
+                      {t.auth.resetLinkExpiredNote}
                     </p>
                     <div className="rh-actions">
                       <Link className="rh-btn w-full" data-variant="primary" href="/login#forgot">
-                        <span>Wyślij nowy link</span>
+                        <span>{t.auth.sendNewLink}</span>
                         <ArrowRight />
                       </Link>
                       <Link className="rh-btn w-full" data-variant="ghost" href="/login">
-                        Wróć do logowania
+                        {t.auth.backToLogin}
                       </Link>
                     </div>
                   </div>
@@ -466,8 +469,8 @@ export default function ResetHaslaPage() {
 
           <footer className="rh-footer">
             © 2026 veedeck ·{" "}
-            <a href="https://veedeck.com/polityka-prywatnosci.html">Polityka prywatności</a> ·{" "}
-            <a href="https://veedeck.com/kontakt.html">Pomoc</a>
+            <a href="https://veedeck.com/polityka-prywatnosci.html">{t.auth.privacyPolicy}</a> ·{" "}
+            <a href="https://veedeck.com/kontakt.html">{t.auth.footerHelp}</a>
           </footer>
 
         </div>

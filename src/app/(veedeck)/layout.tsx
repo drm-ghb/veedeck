@@ -26,14 +26,19 @@ export default async function VeedeckLayout({
 
   const dbUser = await prisma.user.findUnique({
     where: { id: session.user.id! },
-    select: { name: true, fullName: true, email: true, globalHiddenModules: true, clientLogoUrl: true, avatarUrl: true, ownerId: true, colorTheme: true, customTheme: true, trialEndsAt: true, isFree: true, viewPreferences: true, subscription: { select: { status: true, cancelAt: true } } },
+    select: { name: true, fullName: true, email: true, globalHiddenModules: true, clientLogoUrl: true, avatarUrl: true, ownerId: true, primaryAccountId: true, colorTheme: true, customTheme: true, trialEndsAt: true, isFree: true, viewPreferences: true, subscription: { select: { status: true, cancelAt: true } } },
   });
 
   const ownerId = dbUser?.ownerId;
+  const primaryAccountId = dbUser?.primaryAccountId ?? null;
   const systemRole = (dbUser as any)?.systemRole ?? "member";
-  const [ownerSettings, memberGroupHidden] = await Promise.all([
-    ownerId ? prisma.user.findUnique({ where: { id: ownerId }, select: { globalHiddenModules: true, clientLogoUrl: true, colorTheme: true, customTheme: true } }) : null,
+  const [ownerSettings, memberGroupHidden, workspaceAccountCount] = await Promise.all([
+    ownerId ? prisma.user.findUnique({ where: { id: ownerId }, select: { name: true, fullName: true, globalHiddenModules: true, clientLogoUrl: true, colorTheme: true, customTheme: true } }) : null,
     ownerId ? getMemberHiddenModules(session.user.id!, ownerId, systemRole) : Promise.resolve([] as string[]),
+    // Workspace switcher: primary account → count linked workspace accounts; workspace member → always 1 (can switch to primary)
+    primaryAccountId !== null
+      ? Promise.resolve(1)
+      : prisma.user.count({ where: { primaryAccountId: session.user.id! } }),
   ]);
 
   const fullName = dbUser?.fullName ?? null;
@@ -41,6 +46,7 @@ export default async function VeedeckLayout({
   const avatarUrl = dbUser?.avatarUrl ?? null;
   const hiddenModules = [...new Set([...((ownerSettings ?? dbUser)?.globalHiddenModules ?? []), ...memberGroupHidden])];
   const colorTheme = ((ownerSettings?.colorTheme ?? dbUser?.colorTheme) ?? "champagne") as ColorTheme;
+
   const viewPrefs = (dbUser?.viewPreferences ?? {}) as Record<string, unknown>;
   const sidebarOrder = (viewPrefs.sidebarOrder as string[]) ?? [];
   const subStatus = dbUser?.subscription?.status ?? null;
@@ -65,6 +71,8 @@ export default async function VeedeckLayout({
         notificationUserId={dbUser?.ownerId ?? session.user.id!}
         sidebarCollapsed={sidebarCollapsed}
         extraRight={isCancelled ? <CancelledBadge /> : isScheduledCancel ? <CancelledBadge cancelAt={cancelAt!.toISOString()} /> : isTrial ? <OnboardingTrigger /> : undefined}
+        hasWorkspaces={workspaceAccountCount > 0}
+        workspaceName={ownerId ? (ownerSettings?.name || ownerSettings?.fullName || null) : null}
       />
       <div className="flex flex-1 min-h-0" style={{ backgroundColor: 'var(--sidebar)' }}>
         <NavSidebar hiddenModules={hiddenModules} sidebarOrder={sidebarOrder} userId={session.user.id!} isTrial={isTrial} initialCollapsed={sidebarCollapsed} />

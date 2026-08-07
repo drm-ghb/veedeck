@@ -200,7 +200,7 @@ export default function SettingsListyPage() {
         <div>
           <h2 className="text-base font-semibold">{t.listSettings.categoryOrder}</h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Przeciągaj aby zmienić kolejność. Dodaj własne kategorie — pojawią się automatycznie na liście.
+            {t.listSettings.categoryOrderDescFull}
           </p>
         </div>
 
@@ -253,7 +253,7 @@ export default function SettingsListyPage() {
             value={newCatName}
             onChange={(e) => setNewCatName(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleAddCustomCategory()}
-            placeholder="Dodaj własną kategorię, np. Łóżka"
+            placeholder={t.listSettings.addCustomCategoryPlaceholder}
             className="flex-1"
           />
           <Button type="button" variant="outline" onClick={handleAddCustomCategory} disabled={!newCatName.trim()}>

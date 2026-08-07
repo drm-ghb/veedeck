@@ -10,12 +10,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
+import { useT } from "@/lib/i18n";
 
 function validatePassword(pwd: string) {
   return pwd.length >= 8 && /[a-z]/.test(pwd) && /[A-Z]/.test(pwd) && /[0-9]/.test(pwd);
 }
 
 export default function RegisterPage() {
+  const t = useT();
   const [fullName, setFullName] = useState("");
   const [companyName, setCompanyName] = useState("");
   const [email, setEmail] = useState("");
@@ -28,11 +30,11 @@ export default function RegisterPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!validatePassword(password)) {
-      toast.error("Hasło nie spełnia wymagań bezpieczeństwa");
+      toast.error(t.auth.passwordTooWeak);
       return;
     }
     if (!privacyAccepted) {
-      toast.error("Musisz zaakceptować Politykę prywatności i Regulamin");
+      toast.error(t.auth.privacyRequired);
       return;
     }
     setLoading(true);
@@ -45,7 +47,7 @@ export default function RegisterPage() {
 
     if (!res.ok) {
       const data = await res.json();
-      toast.error(data.error || "Błąd rejestracji");
+      toast.error(data.error || t.auth.registerError);
       setLoading(false);
       return;
     }
@@ -62,49 +64,49 @@ export default function RegisterPage() {
           <CardTitle className="text-2xl text-center">
             Render<span className="text-primary dark:text-white">Flow</span>
           </CardTitle>
-          <p className="text-center text-gray-500">Utwórz konto projektanta</p>
+          <p className="text-center text-gray-500">{t.auth.registerTitle}</p>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-1.5">
-              <Label htmlFor="fullName">Imię i nazwisko</Label>
-              <Input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="np. Jan Kowalski" required autoFocus />
+              <Label htmlFor="fullName">{t.auth.fullName}</Label>
+              <Input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder={t.auth.fullNamePlaceholder} required autoFocus />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="companyName">Nazwa firmy (opcjonalne)</Label>
-              <Input id="companyName" value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="np. Studio Wnętrz Kowalski" />
+              <Label htmlFor="companyName">{t.auth.companyNameOptional}</Label>
+              <Input id="companyName" value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder={t.auth.companyNamePlaceholder} />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t.auth.email}</Label>
               <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="password">Hasło</Label>
+              <Label htmlFor="password">{t.auth.password}</Label>
               <div className="relative">
                 <Input id="password" type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} required className="pr-9" />
                 <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                   {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
                 </button>
               </div>
-              <p className="text-xs text-gray-400 mt-1">Hasło musi zawierać: min. 8 znaków, małą literę, wielką literę i cyfrę</p>
+              <p className="text-xs text-gray-400 mt-1">{t.auth.passwordRequirements}</p>
               {password && !validatePassword(password) && (
-                <p className="text-xs text-destructive">Hasło nie spełnia wymagań bezpieczeństwa</p>
+                <p className="text-xs text-destructive">{t.auth.passwordTooWeak}</p>
               )}
             </div>
             <div className="flex items-start gap-2">
               <input type="checkbox" id="privacy" checked={privacyAccepted} onChange={(e) => setPrivacyAccepted(e.target.checked)} className="mt-0.5 h-4 w-4 rounded border-input accent-primary flex-shrink-0" />
               <label htmlFor="privacy" className="text-xs text-muted-foreground leading-relaxed cursor-pointer">
-                Potwierdzam, że zapoznałem się z Polityką prywatności i Regulaminem
+                {t.auth.privacyCheckbox}
               </label>
             </div>
             <Button type="submit" className="w-full" disabled={loading || !privacyAccepted}>
-              {loading ? "Rejestracja..." : "Zarejestruj się"}
+              {loading ? t.auth.registering : t.auth.registerBtn}
             </Button>
           </form>
           <p className="text-center text-sm text-gray-500 mt-4">
-            Masz już konto?{" "}
+            {t.auth.haveAccountQ}{" "}
             <Link href="/login" className="text-primary hover:underline">
-              Zaloguj się
+              {t.auth.loginBtn}
             </Link>
           </p>
         </CardContent>

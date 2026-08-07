@@ -10,41 +10,7 @@ import {
 } from "@/components/ui/icons";
 import type { ModuleSlug } from "@/lib/permissions";
 import { showConfirm } from "@/lib/confirm";
-
-// ── Constants ────────────────────────────────────────────────────────────────
-
-const MODULE_LIST: { slug: ModuleSlug; label: string; icon: React.ReactNode }[] = [
-  { slug: "klienci",    label: "Klienci",              icon: <Users size={16} /> },
-  { slug: "projectflow",label: "ProjectFlow",           icon: <PushPin size={16} /> },
-  { slug: "listy",      label: "Listy zakupowe",        icon: <LocalMall size={16} /> },
-  { slug: "moodboardy", label: "Moodboardy",            icon: <Interests size={16} /> },
-  { slug: "zadania",    label: "Zadania",               icon: <CheckSquare size={16} /> },
-  { slug: "ankiety",    label: "Ankiety",               icon: <ClipboardList size={16} /> },
-  { slug: "produkty",   label: "Produkty",              icon: <Package size={16} /> },
-  { slug: "wykonawcy",  label: "Wykonawcy",             icon: <Engineering size={16} /> },
-  { slug: "kalendarz",  label: "Kalendarz",             icon: <CalendarDays size={16} /> },
-  { slug: "notatnik",   label: "Notatnik",              icon: <NotebookText size={16} /> },
-  { slug: "dyskusje",   label: "Dyskusje",              icon: <ChatBubble size={16} /> },
-  { slug: "ustawienia", label: "Ustawienia workspace",  icon: <Settings size={16} /> },
-];
-
-const LEVEL_LABELS = ["Brak", "Podgląd", "Edycja", "Zarządzanie"] as const;
-
-// Tooltips per module × level (index = level 0–3)
-const LEVEL_TOOLTIPS: Record<ModuleSlug, [string, string, string, string]> = {
-  klienci:     ["Brak dostępu do listy klientów", "Może przeglądać listę klientów", "Może dodawać i edytować klientów", "Może zapraszać klientów i publikować im materiały"],
-  projectflow: ["Brak dostępu do renderów i pokoi", "Może przeglądać rendery i pokoje", "Może przesyłać pliki i dodawać komentarze", "Może zarządzać pokojami i usuwać rendery"],
-  listy:       ["Brak dostępu do list zakupowych", "Może przeglądać listy i produkty", "Może tworzyć i edytować listy zakupowe", "Może usuwać listy i w pełni nimi zarządzać"],
-  moodboardy:  ["Brak dostępu do moodboardów", "Może przeglądać moodboardy", "Może tworzyć i edytować moodboardy", "Może usuwać moodboardy i zarządzać nimi"],
-  zadania:     ["Brak dostępu do zadań", "Może przeglądać zadania", "Może tworzyć i edytować zadania", "Może usuwać zadania i zarządzać nimi"],
-  ankiety:     ["Brak dostępu do ankiet", "Może przeglądać ankiety i odpowiedzi", "Może tworzyć i edytować ankiety", "Może usuwać ankiety i zarządzać szablonami"],
-  produkty:    ["Brak dostępu do bazy produktów", "Może przeglądać produkty", "Może dodawać i edytować produkty", "Może usuwać produkty i zarządzać bazą"],
-  wykonawcy:   ["Brak dostępu do wykonawców", "Może przeglądać wykonawców i ich foldery", "Może dodawać wykonawców i pliki", "Może usuwać wykonawców i zarządzać przypisaniami"],
-  kalendarz:   ["Brak dostępu do kalendarza", "Może przeglądać wydarzenia", "Może dodawać i edytować wydarzenia", "Może zarządzać kalendarzem i usuwać wydarzenia"],
-  notatnik:    ["Brak dostępu do notatnika", "Może przeglądać notatki", "Może tworzyć i edytować notatki", "Może usuwać notatki i zarządzać nimi"],
-  dyskusje:    ["Brak dostępu do dyskusji", "Może przeglądać dyskusje", "Może uczestniczyć i wysyłać wiadomości", "Może zarządzać dyskusjami i je usuwać"],
-  ustawienia:  ["Brak dostępu do ustawień workspace", "Może przeglądać ustawienia", "Może edytować ustawienia workspace", "Pełen dostęp do ustawień, integracji i eksportu"],
-};
+import { useT } from "@/lib/i18n";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -72,8 +38,8 @@ interface GroupMemberUser {
 // ── Sub-components ────────────────────────────────────────────────────────────
 
 function LevelSegment({
-  level, active, onClick, readOnly, tooltip,
-}: { level: number; active: boolean; onClick: () => void; readOnly?: boolean; tooltip?: string }) {
+  label, active, onClick, readOnly, tooltip,
+}: { label: string; active: boolean; onClick: () => void; readOnly?: boolean; tooltip?: string }) {
   return (
     <button
       type="button"
@@ -87,7 +53,7 @@ function LevelSegment({
       } ${readOnly ? "cursor-default" : "cursor-pointer"}`}
       style={active ? { background: "#4F46E5" } : {}}
     >
-      {LEVEL_LABELS[level]}
+      {label}
     </button>
   );
 }
@@ -113,7 +79,40 @@ export default function PermissionGroupsTab({
   plan: string | null;
   onGroupsChanged?: () => void;
 }) {
+  const t = useT();
   const canManageScope = true; // scope toggle + project assignments always available
+
+  const MODULE_LIST: { slug: ModuleSlug; label: string; icon: React.ReactNode }[] = [
+    { slug: "klienci",    label: t.nav.projects,              icon: <Users size={16} /> },
+    { slug: "projectflow",label: t.nav.renderflow,            icon: <PushPin size={16} /> },
+    { slug: "listy",      label: t.nav.lists,                 icon: <LocalMall size={16} /> },
+    { slug: "moodboardy", label: t.nav.moodboard,             icon: <Interests size={16} /> },
+    { slug: "zadania",    label: t.nav.tasks,                 icon: <CheckSquare size={16} /> },
+    { slug: "ankiety",    label: t.nav.surveys,               icon: <ClipboardList size={16} /> },
+    { slug: "produkty",   label: t.nav.products,              icon: <Package size={16} /> },
+    { slug: "wykonawcy",  label: t.nav.contractors,           icon: <Engineering size={16} /> },
+    { slug: "kalendarz",  label: t.nav.calendar,              icon: <CalendarDays size={16} /> },
+    { slug: "notatnik",   label: t.nav.notes,                 icon: <NotebookText size={16} /> },
+    { slug: "dyskusje",   label: t.nav.discussions,           icon: <ChatBubble size={16} /> },
+    { slug: "ustawienia", label: t.permGroups.workspaceSettings, icon: <Settings size={16} /> },
+  ];
+
+  const LEVEL_LABELS = [t.permGroups.levelNone, t.permGroups.levelView, t.permGroups.levelEdit, t.permGroups.levelManage];
+
+  const LEVEL_TOOLTIPS: Record<ModuleSlug, [string, string, string, string]> = {
+    klienci:     [t.permGroups.tooltipKlienci0,    t.permGroups.tooltipKlienci1,    t.permGroups.tooltipKlienci2,    t.permGroups.tooltipKlienci3],
+    projectflow: [t.permGroups.tooltipProjectflow0, t.permGroups.tooltipProjectflow1, t.permGroups.tooltipProjectflow2, t.permGroups.tooltipProjectflow3],
+    listy:       [t.permGroups.tooltipListy0,      t.permGroups.tooltipListy1,      t.permGroups.tooltipListy2,      t.permGroups.tooltipListy3],
+    moodboardy:  [t.permGroups.tooltipMoodboardy0, t.permGroups.tooltipMoodboardy1, t.permGroups.tooltipMoodboardy2, t.permGroups.tooltipMoodboardy3],
+    zadania:     [t.permGroups.tooltipZadania0,    t.permGroups.tooltipZadania1,    t.permGroups.tooltipZadania2,    t.permGroups.tooltipZadania3],
+    ankiety:     [t.permGroups.tooltipAnkiety0,    t.permGroups.tooltipAnkiety1,    t.permGroups.tooltipAnkiety2,    t.permGroups.tooltipAnkiety3],
+    produkty:    [t.permGroups.tooltipProdukty0,   t.permGroups.tooltipProdukty1,   t.permGroups.tooltipProdukty2,   t.permGroups.tooltipProdukty3],
+    wykonawcy:   [t.permGroups.tooltipWykonawcy0,  t.permGroups.tooltipWykonawcy1,  t.permGroups.tooltipWykonawcy2,  t.permGroups.tooltipWykonawcy3],
+    kalendarz:   [t.permGroups.tooltipKalendarz0,  t.permGroups.tooltipKalendarz1,  t.permGroups.tooltipKalendarz2,  t.permGroups.tooltipKalendarz3],
+    notatnik:    [t.permGroups.tooltipNotatnik0,   t.permGroups.tooltipNotatnik1,   t.permGroups.tooltipNotatnik2,   t.permGroups.tooltipNotatnik3],
+    dyskusje:    [t.permGroups.tooltipDyskusje0,   t.permGroups.tooltipDyskusje1,   t.permGroups.tooltipDyskusje2,   t.permGroups.tooltipDyskusje3],
+    ustawienia:  [t.permGroups.tooltipUstawienia0, t.permGroups.tooltipUstawienia1, t.permGroups.tooltipUstawienia2, t.permGroups.tooltipUstawienia3],
+  };
 
   const [groups, setGroups] = useState<PermissionGroup[]>([]);
   const [loading, setLoading] = useState(true);
@@ -156,7 +155,7 @@ export default function PermissionGroupsTab({
 
   async function selectGroup(group: PermissionGroup) {
     if (dirty) {
-      if (!await showConfirm("Masz niezapisane zmiany. Odrzucić?")) return;
+      if (!await showConfirm(t.permGroups.unsavedConfirm)) return;
     }
     setSelectedId(group.id);
     setDraft({ ...group, permissions: { ...(group.permissions as Record<ModuleSlug, number>) } });
@@ -208,8 +207,8 @@ export default function PermissionGroupsTab({
       body: JSON.stringify({ permissions: draft.permissions, projectScope: draft.projectScope, name: draft.name }),
     });
     setSaving(false);
-    if (!res.ok) { toast.error("Nie udało się zapisać"); return; }
-    toast.success("Zapisano zmiany grupy");
+    if (!res.ok) { toast.error(t.permGroups.saveError); return; }
+    toast.success(t.permGroups.saveSuccess);
     setDirty(false);
     setEditMode(false);
     setEditSnapshot(null);
@@ -224,8 +223,8 @@ export default function PermissionGroupsTab({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ restoreDefaults: true }),
     });
-    if (!res.ok) { toast.error("Nie udało się przywrócić"); return; }
-    toast.success("Przywrócono wartości domyślne");
+    if (!res.ok) { toast.error(t.permGroups.restoreError); return; }
+    toast.success(t.permGroups.restoreSuccess);
     setDirty(false);
     await loadGroups();
     const updated: PermissionGroup = await res.json();
@@ -240,7 +239,7 @@ export default function PermissionGroupsTab({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name }),
     });
-    if (!res.ok) { toast.error("Nie udało się utworzyć grupy"); return; }
+    if (!res.ok) { toast.error(t.permGroups.createError); return; }
     const created: PermissionGroup = await res.json();
     setNewGroupName("");
     setCreatingGroup(false);
@@ -248,7 +247,7 @@ export default function PermissionGroupsTab({
     setSelectedId(created.id);
     setDraft({ ...created, permissions: { ...(created.permissions as Record<ModuleSlug, number>) } });
     setDirty(false);
-    toast.success("Utworzono grupę");
+    toast.success(t.permGroups.createSuccess);
     onGroupsChanged?.();
   }
 
@@ -301,7 +300,7 @@ export default function PermissionGroupsTab({
       body: JSON.stringify({ clientId }),
     });
     setTogglingClientId(null);
-    if (!res.ok) { toast.error("Nie udało się zmienić przypisania"); return; }
+    if (!res.ok) { toast.error(t.permGroups.assignError); return; }
     setMemberClientsMap((prev) => ({
       ...prev,
       [memberId]: isAssigned
@@ -324,8 +323,8 @@ export default function PermissionGroupsTab({
       body: JSON.stringify({ userId }),
     });
     setAddingUserId(null);
-    if (!res.ok) { toast.error("Nie udało się dodać"); return; }
-    toast.success("Dodano do grupy");
+    if (!res.ok) { toast.error(t.permGroups.addError); return; }
+    toast.success(t.permGroups.addSuccess);
     await openMembersView();
     onGroupsChanged?.();
   }
@@ -333,12 +332,12 @@ export default function PermissionGroupsTab({
   async function removeFromGroup(userId: string, userGroups: number) {
     if (!draft) return;
     if (userGroups <= 1) {
-      if (!await showConfirm("To ostatnia grupa tej osoby. Po usunięciu straci dostęp do wszystkich modułów. Usunąć?")) return;
+      if (!await showConfirm(t.permGroups.lastGroupConfirm)) return;
     }
     setRemovingUserId(userId);
     await fetch(`/api/team/groups/${draft.id}/members/${userId}`, { method: "DELETE" });
     setRemovingUserId(null);
-    toast.success("Usunięto z grupy");
+    toast.success(t.permGroups.removeSuccess);
     await openMembersView();
     onGroupsChanged?.();
   }
@@ -353,18 +352,18 @@ export default function PermissionGroupsTab({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name }),
     });
-    if (!res.ok) { toast.error("Nie udało się zmienić nazwy"); return; }
-    toast.success("Nazwa zmieniona");
+    if (!res.ok) { toast.error(t.permGroups.renameError); return; }
+    toast.success(t.permGroups.renameSuccess);
     setGroups((prev) => prev.map((g) => g.id === id ? { ...g, name } : g));
     if (draft?.id === id) setDraft((d) => d ? { ...d, name } : d);
     onGroupsChanged?.();
   }
 
   async function handleDeleteGroup(group: PermissionGroup) {
-    if (!await showConfirm(`Usunąć grupę „${group.name}"? Członkowie stracą dostęp do modułów przypisanych przez tę grupę.`)) return;
+    if (!await showConfirm(t.permGroups.deleteGroupConfirm.replace("{name}", group.name))) return;
     const res = await fetch(`/api/team/groups/${group.id}`, { method: "DELETE" });
-    if (!res.ok) { toast.error("Nie udało się usunąć grupy"); return; }
-    toast.success("Usunięto grupę");
+    if (!res.ok) { toast.error(t.permGroups.deleteError); return; }
+    toast.success(t.permGroups.deleteSuccess);
     const newGroups = groups.filter((g) => g.id !== group.id);
     setGroups(newGroups);
     if (selectedId === group.id) {
@@ -389,11 +388,11 @@ export default function PermissionGroupsTab({
       {/* Left column — group list */}
       <div className="lg:w-48 lg:shrink-0 flex flex-col gap-1 lg:border-r lg:border-border lg:pr-6">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-[11px] font-semibold tracking-widest text-muted-foreground uppercase">Grupy</span>
+          <span className="text-[11px] font-semibold tracking-widest text-muted-foreground uppercase">{t.permGroups.groups}</span>
           <button
             onClick={() => { setCreatingGroup(true); setNewGroupName(""); }}
             className="text-primary hover:opacity-70 transition-opacity"
-            title="Nowa grupa"
+            title={t.permGroups.newGroup}
           >
             <Plus size={15} />
           </button>
@@ -430,7 +429,7 @@ export default function PermissionGroupsTab({
                 <GroupAvatar name={g.name} active={selectedId === g.id} />
                 <div className="flex-1 min-w-0">
                   <p className="truncate text-[13px] font-medium">{g.name}</p>
-                  <p className="text-[11px] text-muted-foreground">{g._count?.members ?? 0} os.</p>
+                  <p className="text-[11px] text-muted-foreground">{t.permGroups.osCount.replace("{n}", String(g._count?.members ?? 0))}</p>
                 </div>
                 <button
                   type="button"
@@ -448,14 +447,14 @@ export default function PermissionGroupsTab({
                   onClick={() => { setRenamingGroupId(g.id); setRenameValue(g.name); setOpenMenuGroupId(null); }}
                   className="w-full px-3 py-1.5 text-[13px] text-left hover:bg-muted/50 transition-colors"
                 >
-                  Zmień nazwę
+                  {t.permGroups.rename}
                 </button>
                 <button
                   type="button"
                   onClick={() => { setOpenMenuGroupId(null); handleDeleteGroup(g); }}
                   className="w-full px-3 py-1.5 text-[13px] text-left text-destructive hover:bg-muted/50 transition-colors"
                 >
-                  Usuń grupę
+                  {t.permGroups.deleteGroup}
                 </button>
               </div>
             )}
@@ -473,7 +472,7 @@ export default function PermissionGroupsTab({
                 if (e.key === "Enter") handleCreate();
                 if (e.key === "Escape") { setCreatingGroup(false); setNewGroupName(""); }
               }}
-              placeholder="Nazwa grupy…"
+              placeholder={t.permGroups.groupNamePlaceholder}
               className="w-full px-2 py-1.5 text-[13px] border border-primary/40 rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
             <div className="flex gap-1">
@@ -483,13 +482,13 @@ export default function PermissionGroupsTab({
                 className="flex-1 py-1 text-[11px] font-medium rounded-md hover:opacity-90 transition-opacity disabled:opacity-40"
                 style={{ background: "#4F46E5", color: "#fff" }}
               >
-                Utwórz
+                {t.permGroups.create}
               </button>
               <button
                 onClick={() => { setCreatingGroup(false); setNewGroupName(""); }}
                 className="px-2 py-1 text-[11px] rounded-md border border-border text-muted-foreground hover:bg-muted/40 transition-colors"
               >
-                Anuluj
+                {t.common.cancel}
               </button>
             </div>
           </div>
@@ -505,12 +504,12 @@ export default function PermissionGroupsTab({
             <div>
               <p className="font-semibold text-base">{selected.name}</p>
               <p className="text-xs text-muted-foreground">
-                {selected.isTemplate ? "Grupa szablonowa" : "Grupa własna"}
+                {selected.isTemplate ? t.permGroups.templateGroup : t.permGroups.customGroup}
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               {/* Project scope */}
-              <div className="flex items-center gap-1 bg-muted/40 rounded-full p-0.5">
+              <div className={`flex items-center gap-1 bg-muted/40 rounded-full p-0.5 transition-opacity ${!editMode ? "opacity-50 pointer-events-none" : ""}`}>
                 {(["assigned", "all"] as const).map((s) => (
                   <button
                     key={s}
@@ -521,7 +520,7 @@ export default function PermissionGroupsTab({
                     }`}
                     style={selected.projectScope === s ? { background: "#4F46E5" } : {}}
                   >
-                    {s === "assigned" ? "Przypisani klienci" : "Wszyscy klienci"}
+                    {s === "assigned" ? t.permGroups.assignedClients : t.permGroups.allClients}
                   </button>
                 ))}
               </div>
@@ -530,7 +529,7 @@ export default function PermissionGroupsTab({
                   onClick={() => { setEditSnapshot({ ...draft! }); setEditMode(true); }}
                   className="px-3 py-1.5 text-xs font-medium border border-border rounded-lg hover:bg-muted/40 transition-colors"
                 >
-                  Edytuj
+                  {t.permGroups.edit}
                 </button>
               )}
             </div>
@@ -539,7 +538,7 @@ export default function PermissionGroupsTab({
           {/* Permissions matrix */}
           <div>
             <p className="text-[11px] font-semibold tracking-widest text-muted-foreground uppercase mb-2">
-              Uprawnienia w modułach
+              {t.permGroups.modulesTitle}
             </p>
             <div className={`border border-border rounded-xl overflow-hidden transition-opacity ${!editMode ? "opacity-50 pointer-events-none" : ""}`}>
               {MODULE_LIST.map(({ slug, label, icon }, i) => {
@@ -550,7 +549,7 @@ export default function PermissionGroupsTab({
                     <span className="flex-1 text-sm">{label}</span>
                     <div className="flex items-center gap-0.5 bg-muted/40 rounded-full p-0.5">
                       {([0, 1, 2, 3] as const).map((l) => (
-                        <LevelSegment key={l} level={l} active={level === l} onClick={() => setLevel(slug, l)} readOnly={false} tooltip={LEVEL_TOOLTIPS[slug][l]} />
+                        <LevelSegment key={l} label={LEVEL_LABELS[l]} active={level === l} onClick={() => setLevel(slug, l)} readOnly={false} tooltip={LEVEL_TOOLTIPS[slug][l]} />
                       ))}
                     </div>
                   </div>
@@ -562,20 +561,20 @@ export default function PermissionGroupsTab({
           {clientsLevel < 3 && (
             <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl text-xs" style={{ background: "#EEEDFE", color: "#3C3489" }}>
               <Lock size={13} className="shrink-0 mt-0.5" />
-              <p><strong>„Zarządzanie"</strong> w module Klienci obejmuje zapraszanie klientów i publikowanie im materiałów.</p>
+              <p>{t.permGroups.clientsManageNote}</p>
             </div>
           )}
 
           <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl text-xs bg-muted/40 text-muted-foreground">
             <Shield size={13} className="shrink-0 mt-0.5" />
-            <p>Zapraszanie nowych osób do workspace i zarządzanie rolami systemowymi znajdziesz w zakładce Członkowie.</p>
+            <p>{t.permGroups.membersNote}</p>
           </div>
 
           {editMode && (
             <div className="flex items-center gap-2 pt-1">
               {selected.isTemplate && (
                 <button onClick={handleRestore} className="px-4 py-2 text-sm border border-border rounded-lg hover:bg-muted/40 transition-colors">
-                  Przywróć domyślne
+                  {t.permGroups.restoreDefaults}
                 </button>
               )}
               <button
@@ -587,7 +586,7 @@ export default function PermissionGroupsTab({
                 }}
                 className="px-4 py-2 text-sm border border-border rounded-lg hover:bg-muted/40 transition-colors"
               >
-                Anuluj
+                {t.common.cancel}
               </button>
               <button
                 onClick={handleSave}
@@ -596,7 +595,7 @@ export default function PermissionGroupsTab({
                 style={{ background: "#4F46E5", color: "#fff" }}
               >
                 {saving && <Loader2 size={13} className="animate-spin" />}
-                Zapisz zmiany
+                {t.permGroups.saveChanges}
               </button>
             </div>
           )}
@@ -608,7 +607,7 @@ export default function PermissionGroupsTab({
       {selected && (
         <div className="lg:w-96 lg:shrink-0 flex flex-col gap-3 lg:border-l lg:border-border lg:pl-6 border-t border-border pt-4 lg:pt-0 lg:border-t-0">
           <div className="flex items-center justify-between">
-            <p className="text-[11px] font-semibold tracking-widest text-muted-foreground uppercase">Członkowie</p>
+            <p className="text-[11px] font-semibold tracking-widest text-muted-foreground uppercase">{t.permGroups.members}</p>
             <span className="text-[11px] text-muted-foreground">{groupMembers.length} os.</span>
           </div>
 
@@ -619,10 +618,14 @@ export default function PermissionGroupsTab({
                 .filter((m) => !groupMembers.find((gm) => gm.id === m.id))
                 .map((m) => (
                   <div key={m.id} className="flex items-center gap-2 px-2 py-1.5 rounded-lg border border-dashed border-border hover:bg-muted/30 transition-colors">
-                    <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-semibold shrink-0"
-                      style={{ background: "#F3F4F6", color: "#6B7280" }}>
-                      {((m.fullName || m.name || m.email)[0] ?? "?").toUpperCase()}
-                    </div>
+                    {m.avatarUrl ? (
+                      <img src={m.avatarUrl} alt="" className="w-6 h-6 rounded-full shrink-0 object-cover" />
+                    ) : (
+                      <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-semibold shrink-0"
+                        style={{ background: "#F3F4F6", color: "#6B7280" }}>
+                        {((m.fullName || m.name || m.email)[0] ?? "?").toUpperCase()}
+                      </div>
+                    )}
                     <div className="flex-1 min-w-0">
                       <p className="text-xs truncate text-muted-foreground">{m.fullName || m.name || m.email}</p>
                     </div>
@@ -630,7 +633,7 @@ export default function PermissionGroupsTab({
                       onClick={() => addToGroup(m.id)}
                       disabled={addingUserId === m.id}
                       className="p-1 rounded text-primary hover:bg-primary/10 transition-colors"
-                      title="Dodaj do grupy"
+                      title={t.permGroups.addToGroup}
                     >
                       {addingUserId === m.id ? <Loader2 size={11} className="animate-spin" /> : <UserPlus size={11} />}
                     </button>
@@ -644,7 +647,7 @@ export default function PermissionGroupsTab({
           {loadingMembers ? (
             <div className="flex justify-center py-6"><Loader2 size={18} className="animate-spin text-muted-foreground" /></div>
           ) : groupMembers.length === 0 ? (
-            <p className="text-xs text-muted-foreground py-4 text-center">Brak członków w tej grupie</p>
+            <p className="text-xs text-muted-foreground py-4 text-center">{t.permGroups.noGroupMembers}</p>
           ) : (
             <div className="flex flex-col gap-0 border border-border rounded-xl overflow-hidden">
               {groupMembers.map((m, i) => {
@@ -653,29 +656,33 @@ export default function PermissionGroupsTab({
                 return (
                   <div key={m.id} className={i > 0 ? "border-t border-border" : ""}>
                     <div className="flex items-center gap-2 px-3 py-2.5">
-                      <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-semibold shrink-0"
-                        style={{ background: "#EEEDFE", color: "#3C3489" }}>
-                        {((m.fullName || m.name || m.email)[0] ?? "?").toUpperCase()}
-                      </div>
+                      {m.avatarUrl ? (
+                        <img src={m.avatarUrl} alt="" className="w-6 h-6 rounded-full shrink-0 object-cover" />
+                      ) : (
+                        <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-semibold shrink-0"
+                          style={{ background: "#EEEDFE", color: "#3C3489" }}>
+                          {((m.fullName || m.name || m.email)[0] ?? "?").toUpperCase()}
+                        </div>
+                      )}
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-medium truncate">{m.fullName || m.name || m.email}</p>
-                        <p className="text-[10px] text-muted-foreground truncate">{(() => { const n = m._count.clientAssignments; return n === 1 ? "1 klient" : n >= 2 && n <= 4 ? `${n} klientów` : `${n} klientów`; })()}</p>
+                        <p className="text-[10px] text-muted-foreground truncate">{(() => { const n = m._count.clientAssignments; return n === 1 ? t.permGroups.clientCount1 : t.permGroups.clientCountMany.replace("{n}", String(n)); })()}</p>
                       </div>
                       <button
                         onClick={() => toggleMemberExpanded(m.id)}
                         className={`flex items-center gap-1 px-2 py-1 text-[11px] font-medium rounded-md border transition-colors shrink-0 ${
                           isExpanded ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:border-primary/40 hover:text-foreground"
                         }`}
-                        title="Przypisz klientów"
+                        title={t.permGroups.assignClients}
                       >
                         <ChevronRight size={10} className={`transition-transform ${isExpanded ? "rotate-90" : ""}`} />
-                        Klienci
+                        {t.permGroups.clientsBtn}
                       </button>
                       <button
                         onClick={() => removeFromGroup(m.id, m.permissionGroups.length)}
                         disabled={removingUserId === m.id}
                         className="p-1 rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-                        title="Usuń z grupy"
+                        title={t.permGroups.removeFromGroup}
                       >
                         {removingUserId === m.id ? <Loader2 size={11} className="animate-spin" /> : <X size={11} />}
                       </button>
@@ -686,10 +693,10 @@ export default function PermissionGroupsTab({
                         {assignedIds === null ? (
                           <div className="flex items-center gap-1.5 py-1">
                             <Loader2 size={11} className="animate-spin text-muted-foreground" />
-                            <span className="text-[11px] text-muted-foreground">Ładowanie...</span>
+                            <span className="text-[11px] text-muted-foreground">{t.permGroups.loading}</span>
                           </div>
                         ) : allClients.length === 0 ? (
-                          <p className="text-[11px] text-muted-foreground">Brak klientów.</p>
+                          <p className="text-[11px] text-muted-foreground">{t.permGroups.noClients}</p>
                         ) : (
                           <div className="flex flex-col gap-0.5">
                             {allClients.map((client) => {
@@ -721,7 +728,7 @@ export default function PermissionGroupsTab({
           )}
 
           <p className="text-[11px] text-muted-foreground">
-            Uprawnienia się sumują — obowiązuje najszerszy poziom ze wszystkich grup.
+            {t.permGroups.permSumNote}
           </p>
         </div>
       )}

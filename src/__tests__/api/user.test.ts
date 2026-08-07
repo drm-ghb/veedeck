@@ -13,6 +13,7 @@ vi.mock("bcryptjs", () => ({
 vi.mock("@/lib/prisma", () => ({
   prisma: {
     user: {
+      findFirst: vi.fn(),
       findUnique: vi.fn(),
       update: vi.fn(),
     },
@@ -58,7 +59,7 @@ describe("PATCH /api/user", () => {
       ...SESSION,
       user: { ...SESSION.user, email: "stary@test.com" },
     } as any);
-    vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: "inny-user" } as any);
+    vi.mocked(prisma.user.findFirst).mockResolvedValue({ id: "inny-user" } as any);
 
     const res = await PATCH(makeRequest("PATCH", { email: "zajety@test.com" }));
     expect(res.status).toBe(409);

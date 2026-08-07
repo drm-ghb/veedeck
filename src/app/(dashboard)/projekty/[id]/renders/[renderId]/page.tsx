@@ -23,7 +23,12 @@ export default async function RenderPage({ params }: Props) {
       project: true,
       room: { select: { name: true } },
       folder: { select: { name: true } },
-      versions: { orderBy: { archivedAt: "desc" } },
+      versions: {
+        orderBy: { archivedAt: "desc" },
+        include: {
+          _count: { select: { archivedComments: { where: { posX: { not: null } } } } },
+        },
+      },
     },
   });
 
@@ -85,8 +90,10 @@ export default async function RenderPage({ params }: Props) {
           versionNumber: v.versionNumber,
           label: v.label ?? null,
           archivedAt: v.archivedAt.toISOString(),
+          pinCount: v._count.archivedComments,
         }))}
         initialProductPins={productPins}
+        activeVersionId={(render as any).activeVersionId ?? null}
       />
     </div>
   );

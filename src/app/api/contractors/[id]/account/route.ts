@@ -55,7 +55,7 @@ export async function POST(
     const internalEmail = `${baseLogin}@contractor.internal`;
     const [existingLogin, existingEmail] = await Promise.all([
       prisma.user.findUnique({ where: { login: baseLogin } }),
-      prisma.user.findUnique({ where: { email: internalEmail } }),
+      prisma.user.findFirst({ where: { email: internalEmail } }),
     ]);
     if (existingLogin || existingEmail) {
       return NextResponse.json({ error: `Login "${baseLogin}" jest już zajęty` }, { status: 409 });

@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { GripVertical, Plus, X, Pencil, Check, Bell } from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useT } from "@/lib/i18n";
 
 interface TaskStatusConfig {
   id: string;
@@ -17,6 +18,7 @@ interface TaskStatusConfig {
 interface ReminderHours { LOW: number; MEDIUM: number; HIGH: number; }
 
 export default function SettingsZadaniaPage() {
+  const t = useT();
   const [statuses, setStatuses] = useState<TaskStatusConfig[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -50,9 +52,9 @@ export default function SettingsZadaniaPage() {
         body: JSON.stringify(reminderHours),
       });
       if (!res.ok) throw new Error();
-      toast.success("Interwały przypomnień zapisane");
+      toast.success(t.tasks.remindersSaved);
     } catch {
-      toast.error("Błąd zapisu");
+      toast.error(t.tasks.saveError);
     } finally {
       setSavingReminders(false);
     }
@@ -86,9 +88,9 @@ export default function SettingsZadaniaPage() {
         body: JSON.stringify({ order: statuses.map((s) => s.id) }),
       });
       if (!res.ok) throw new Error();
-      toast.success("Kolejność zapisana");
+      toast.success(t.tasks.orderSaved);
     } catch {
-      toast.error("Błąd zapisu");
+      toast.error(t.tasks.saveError);
     } finally {
       setSaving(false);
     }
@@ -107,9 +109,9 @@ export default function SettingsZadaniaPage() {
       setStatuses((prev) => [...prev, created]);
       setNewLabel("");
       setNewColor("#6b7280");
-      toast.success("Status dodany");
+      toast.success(t.tasks.statusAdded);
     } catch {
-      toast.error("Błąd dodawania statusu");
+      toast.error(t.tasks.statusAddError);
     }
   }
 
@@ -123,9 +125,9 @@ export default function SettingsZadaniaPage() {
       }
       if (!res.ok) throw new Error();
       setStatuses((prev) => prev.filter((s) => s.id !== status.id));
-      toast.success("Status usunięty");
+      toast.success(t.tasks.statusDeleted);
     } catch {
-      toast.error("Błąd usuwania statusu");
+      toast.error(t.tasks.statusDeleteError);
     }
   }
 
@@ -148,9 +150,9 @@ export default function SettingsZadaniaPage() {
       if (!res.ok) throw new Error();
       setStatuses((prev) => prev.map((s) => s.id === status.id ? { ...s, label: editLabel.trim() } : s));
       setEditingId(null);
-      toast.success("Status zaktualizowany");
+      toast.success(t.tasks.statusUpdated);
     } catch {
-      toast.error("Błąd zapisu");
+      toast.error(t.tasks.saveError);
     }
   }
 
@@ -163,23 +165,22 @@ export default function SettingsZadaniaPage() {
         body: JSON.stringify({ color }),
       });
     } catch {
-      toast.error("Błąd zapisu koloru");
+      toast.error(t.tasks.colorSaveError);
     }
   }
 
   return (
     <div className="max-w-3xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Zadania</h1>
-        <p className="text-sm text-gray-500 mt-1">Ustawienia modułu zadań</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t.tasks.tasksTitle}</h1>
+        <p className="text-sm text-gray-500 mt-1">{t.tasks.settingsDesc}</p>
       </div>
 
       <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
         <div>
-          <h2 className="text-base font-semibold">Statusy zadań</h2>
+          <h2 className="text-base font-semibold">{t.tasks.statusesTitle}</h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Przeciągaj aby zmienić kolejność — kolejność statusów = kolejność kolumn na Kanbanie.
-            Kliknij nazwę aby edytować. Kliknij kolor aby zmienić.
+            {t.tasks.statusesDesc}
           </p>
         </div>
 
@@ -211,7 +212,7 @@ export default function SettingsZadaniaPage() {
                   {index + 1}.
                 </span>
                 <GripVertical size={16} className="text-muted-foreground/50 shrink-0 cursor-grab" />
-                <label className="shrink-0 cursor-pointer" title="Zmień kolor">
+                <label className="shrink-0 cursor-pointer" title={t.tasks.changeColor}>
                   <span
                     className="block w-4 h-4 rounded-full border-2 border-white/50 shadow-sm"
                     style={{ backgroundColor: status.color }}
@@ -239,7 +240,7 @@ export default function SettingsZadaniaPage() {
                   <span
                     className="flex-1 text-sm font-medium cursor-pointer hover:underline"
                     onClick={() => startEdit(status)}
-                    title="Kliknij aby edytować"
+                    title={t.tasks.clickToEdit}
                   >
                     {status.label}
                   </span>
@@ -265,7 +266,7 @@ export default function SettingsZadaniaPage() {
                   type="button"
                   onClick={() => handleDelete(status)}
                   className="text-muted-foreground hover:text-red-500 transition-colors p-0.5 shrink-0"
-                  title="Usuń status"
+                  title={t.tasks.deleteStatus}
                 >
                   <X size={14} />
                 </button>
@@ -276,7 +277,7 @@ export default function SettingsZadaniaPage() {
 
         {/* Dodaj nowy status */}
         <div className="flex gap-2 pt-1">
-          <label className="shrink-0 cursor-pointer flex items-center" title="Kolor nowego statusu">
+          <label className="shrink-0 cursor-pointer flex items-center" title={t.tasks.newStatusColor}>
             <span
               className="block w-8 h-9 rounded-lg border border-input flex items-center justify-center"
               style={{ backgroundColor: newColor + "30" }}
@@ -294,7 +295,7 @@ export default function SettingsZadaniaPage() {
             value={newLabel}
             onChange={(e) => setNewLabel(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleAdd()}
-            placeholder="Nazwa nowego statusu, np. W recenzji"
+            placeholder={t.tasks.newStatusPlaceholder}
             className="flex-1"
           />
           <Button type="button" variant="outline" onClick={handleAdd} disabled={!newLabel.trim()}>
@@ -304,7 +305,7 @@ export default function SettingsZadaniaPage() {
 
         <div className="flex justify-end pt-1 border-t border-border">
           <Button onClick={handleSaveOrder} disabled={saving || loading}>
-            {saving ? "Zapisywanie..." : "Zapisz kolejność"}
+            {saving ? t.tasks.saving : t.tasks.saveOrder}
           </Button>
         </div>
       </div>
@@ -314,16 +315,16 @@ export default function SettingsZadaniaPage() {
         <div>
           <h2 className="text-base font-semibold flex items-center gap-2">
             <Bell size={15} className="text-muted-foreground" />
-            Interwały przypomnień
+            {t.tasks.remindersTitle}
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Ile godzin przed deadlinem wysłać przypomnienie — per priorytet zadania.
+            {t.tasks.remindersDesc}
           </p>
         </div>
 
         <div className="space-y-3">
           {(["LOW", "MEDIUM", "HIGH"] as const).map((p) => {
-            const label = p === "LOW" ? "Niski" : p === "MEDIUM" ? "Średni" : "Wysoki";
+            const label = p === "LOW" ? t.tasks.priorityLow : p === "MEDIUM" ? t.tasks.priorityMedium : t.tasks.priorityHigh;
             const dotClass = p === "HIGH" ? "bg-red-500" : p === "MEDIUM" ? "bg-yellow-400" : "bg-gray-400";
             return (
               <div key={p} className="flex items-center gap-4">
@@ -340,7 +341,7 @@ export default function SettingsZadaniaPage() {
                     onChange={(e) => setReminderHours((prev) => ({ ...prev, [p]: Number(e.target.value) }))}
                     className="w-24"
                   />
-                  <span className="text-sm text-muted-foreground">godz. przed deadlinem</span>
+                  <span className="text-sm text-muted-foreground">{t.tasks.hoursBeforeDeadline}</span>
                 </div>
               </div>
             );
@@ -349,7 +350,7 @@ export default function SettingsZadaniaPage() {
 
         <div className="flex justify-end pt-1 border-t border-border">
           <Button onClick={handleSaveReminders} disabled={savingReminders}>
-            {savingReminders ? "Zapisywanie..." : "Zapisz przypomnienia"}
+            {savingReminders ? t.tasks.saving : t.tasks.saveReminders}
           </Button>
         </div>
       </div>

@@ -239,7 +239,7 @@ function DroppableKanbanColumn({
   );
 }
 
-export default function TasksView() {
+export default function TasksView({ canEdit = true, canDelete = true }: { canEdit?: boolean; canDelete?: boolean }) {
   const t = useT();
   const expired = useIsTrialExpired();
   const router = useRouter();
@@ -481,6 +481,7 @@ export default function TasksView() {
 
   function handleKanbanDragEnd(event: DragEndEvent) {
     setDragActiveId(null);
+    if (!canEdit) return;
     const { active, over } = event;
     if (!over) return;
     const taskId = active.id as string;
@@ -548,6 +549,7 @@ export default function TasksView() {
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
+                  if (!canEdit) return;
                   if (task.status !== "DONE") {
                     setSubTaskPrevStatus((prev) => ({ ...prev, [task.id]: task.status }));
                     patchTask(task.id, { status: "DONE" });
@@ -557,7 +559,7 @@ export default function TasksView() {
                     setSubTaskPrevStatus((p) => { const next = { ...p }; delete next[task.id]; return next; });
                   }
                 }}
-                className="shrink-0 w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors"
+                className={`shrink-0 w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors ${!canEdit ? "cursor-default opacity-60" : ""}`}
                 style={{
                   borderColor: task.status === "DONE" ? "var(--color-primary)" : "var(--color-border)",
                   backgroundColor: task.status === "DONE" ? "var(--color-primary)" : "transparent",
@@ -597,9 +599,9 @@ export default function TasksView() {
         <td className="px-4 py-2.5" onClick={(e) => e.stopPropagation()}>
           <div className="relative">
             <div
-              onClick={() => setEditingCell({ taskId: task.id, field: "project" })}
+              onClick={() => canEdit && setEditingCell({ taskId: task.id, field: "project" })}
               style={{ visibility: isEditingProject ? "hidden" : "visible" }}
-              className="cursor-pointer"
+              className={canEdit ? "cursor-pointer" : "cursor-default"}
             >
               {task.project
                 ? <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-muted text-foreground whitespace-nowrap border border-border hover:bg-muted/70 transition-colors">{task.project.title}</span>
@@ -627,9 +629,9 @@ export default function TasksView() {
         <td className="px-4 py-2.5" onClick={(e) => e.stopPropagation()}>
           <div className="relative">
             <div
-              onClick={() => setEditingCell({ taskId: task.id, field: "priority" })}
+              onClick={() => canEdit && setEditingCell({ taskId: task.id, field: "priority" })}
               style={{ visibility: isEditingPriority ? "hidden" : "visible" }}
-              className="cursor-pointer"
+              className={canEdit ? "cursor-pointer" : "cursor-default"}
             >
               <PriorityBadge priority={task.priority} />
             </div>
@@ -650,9 +652,9 @@ export default function TasksView() {
         <td className="px-4 py-2.5" onClick={(e) => e.stopPropagation()}>
           <div className="relative">
             <div
-              onClick={() => setEditingCell({ taskId: task.id, field: "status" })}
+              onClick={() => canEdit && setEditingCell({ taskId: task.id, field: "status" })}
               style={{ visibility: isEditingStatus ? "hidden" : "visible" }}
-              className="cursor-pointer"
+              className={canEdit ? "cursor-pointer" : "cursor-default"}
             >
               <StatusPill
                 label={statusLabels[task.status] ?? task.status}
@@ -676,8 +678,8 @@ export default function TasksView() {
         <td className="px-4 py-2.5" onClick={(e) => e.stopPropagation()}>
           <div className="relative">
             <div
-              onClick={() => setEditingCell({ taskId: task.id, field: "assignee" })}
-              className="cursor-pointer hover:opacity-75 transition-opacity"
+              onClick={() => canEdit && setEditingCell({ taskId: task.id, field: "assignee" })}
+              className={canEdit ? "cursor-pointer hover:opacity-75 transition-opacity" : "cursor-default"}
             >
               <UserAvatar user={task.assignee} />
             </div>
@@ -701,9 +703,9 @@ export default function TasksView() {
         <td className="px-4 py-2.5" onClick={(e) => e.stopPropagation()}>
           <div className="relative">
             <div
-              onClick={() => setEditingCell({ taskId: task.id, field: "dueDate" })}
+              onClick={() => canEdit && setEditingCell({ taskId: task.id, field: "dueDate" })}
               style={{ visibility: isEditingDueDate ? "hidden" : "visible" }}
-              className={`text-sm whitespace-nowrap cursor-pointer hover:underline ${overdue ? "text-red-500 font-medium" : "text-muted-foreground"}`}
+              className={`text-sm whitespace-nowrap ${canEdit ? "cursor-pointer hover:underline" : "cursor-default"} ${overdue ? "text-red-500 font-medium" : "text-muted-foreground"}`}
             >
               {formatDate(task.dueDate)}
             </div>
@@ -740,13 +742,15 @@ export default function TasksView() {
         </td>
         {/* Akcje */}
         <td className="px-4 py-2.5 text-right">
-          <button
-            onClick={(e) => { e.stopPropagation(); deleteTask(task.id); }}
-            disabled={deletingId === task.id}
-            className="opacity-0 group-hover:opacity-100 p-1 rounded text-muted-foreground hover:text-red-500 transition-all disabled:opacity-50"
-          >
-            <Trash2 size={14} />
-          </button>
+          {canDelete && (
+            <button
+              onClick={(e) => { e.stopPropagation(); deleteTask(task.id); }}
+              disabled={deletingId === task.id}
+              className="opacity-0 group-hover:opacity-100 p-1 rounded text-muted-foreground hover:text-red-500 transition-all disabled:opacity-50"
+            >
+              <Trash2 size={14} />
+            </button>
+          )}
         </td>
       </tr>,
       ...(hasSubTasks && isExpanded
@@ -764,6 +768,7 @@ export default function TasksView() {
   }
 
   function handleContextMenu(e: React.MouseEvent) {
+    if (!canEdit) return;
     e.preventDefault();
     const target = e.target as HTMLElement;
     if (target.closest('a, button, [role="button"], input, textarea')) return;
@@ -780,10 +785,10 @@ export default function TasksView() {
           <h1 className="text-xl font-semibold">{t.tasks.tasksTitle}</h1>
           <p className="text-sm text-muted-foreground">{tasks.length} {t.tasks.tasksTitle.toLowerCase()}</p>
         </div>
-        {expired ? (
+        {expired || !canEdit ? (
           <button
             disabled
-            title="Dostępne w płatnym planie"
+            title={!canEdit ? "Brak uprawnień do tworzenia zadań" : "Dostępne w płatnym planie"}
             className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-lg opacity-40 cursor-not-allowed"
           >
             <Plus size={16} />
@@ -1024,11 +1029,13 @@ export default function TasksView() {
           statusOptions={statusOptions}
           onClose={() => { setSelectedTask(null); setSelectedTaskParent(null); setSelectedTaskIsSubTask(false); }}
           onUpdated={() => { fetchTasks(); router.refresh(); }}
+          canEdit={canEdit}
+          canDelete={canDelete}
         />
       )}
 
       {/* Hidden trigger for context menu */}
-      {!expired && (
+      {!expired && canEdit && (
         <AddTaskDialog
           trigger={<button ref={addTaskTriggerRef} className="hidden" />}
           statusOptions={statusOptions}

@@ -17,15 +17,17 @@ export default async function MoodboardCanvasLayout({ children }: { children: Re
     select: {
       name: true, fullName: true, email: true, isAdmin: true,
       globalHiddenModules: true, clientLogoUrl: true, avatarUrl: true,
-      ownerId: true, trialEndsAt: true, isFree: true, viewPreferences: true,
+      ownerId: true, primaryAccountId: true, trialEndsAt: true, isFree: true, viewPreferences: true,
       subscription: { select: { status: true, cancelAt: true } },
     },
   });
 
   const ownerId = dbUser?.ownerId;
-  const [ownerSettings, memberPerms] = await Promise.all([
-    ownerId ? prisma.user.findUnique({ where: { id: ownerId }, select: { globalHiddenModules: true, clientLogoUrl: true } }) : null,
+  const primaryAccountId = dbUser?.primaryAccountId ?? null;
+  const [ownerSettings, memberPerms, workspaceAccountCount] = await Promise.all([
+    ownerId ? prisma.user.findUnique({ where: { id: ownerId }, select: { name: true, fullName: true, globalHiddenModules: true, clientLogoUrl: true } }) : null,
     ownerId ? prisma.teamMemberPermission.findUnique({ where: { memberId: session.user.id! }, select: { hiddenModules: true } }) : null,
+    primaryAccountId !== null ? Promise.resolve(1) : prisma.user.count({ where: { primaryAccountId: session.user.id! } }),
   ]);
 
   const fullName = dbUser?.fullName ?? null;
@@ -51,6 +53,8 @@ export default async function MoodboardCanvasLayout({ children }: { children: Re
         isTrialExpired={isTrialExpired}
         notificationUserId={dbUser?.ownerId ?? session.user.id!}
         sidebarCollapsed={sidebarCollapsed}
+        hasWorkspaces={workspaceAccountCount > 0}
+        workspaceName={ownerId ? (ownerSettings?.name || ownerSettings?.fullName || null) : null}
       />
       <div className="flex flex-1 min-h-0" style={{ backgroundColor: "var(--sidebar)" }}>
         <NavSidebar

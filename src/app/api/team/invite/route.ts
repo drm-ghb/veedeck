@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { sendInvitationEmail } from "@/lib/email";
+import { sendInvitationEmail, sendWorkspaceJoinEmail } from "@/lib/email";
 import { getWorkspaceUserId } from "@/lib/workspace";
 
 // GET — lista zaproszeń (PENDING) + członkowie zespołu
@@ -82,12 +82,6 @@ export async function POST(req: NextRequest) {
 
   const normalized = email.toLowerCase().trim();
 
-  // Sprawdź czy użytkownik już istnieje w systemie
-  const existing = await prisma.user.findUnique({ where: { email: normalized } });
-  if (existing) {
-    return NextResponse.json({ error: "Użytkownik z tym adresem już istnieje w systemie" }, { status: 409 });
-  }
-
   // Sprawdź czy zaproszenie już istnieje
   const existingInvite = await prisma.invitation.findFirst({
     where: { email: normalized, designerId: ownerId, status: "PENDING" },
@@ -96,10 +90,25 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Zaproszenie dla tego adresu zostało już wysłane" }, { status: 409 });
   }
 
-  const designer = await prisma.user.findUnique({
-    where: { id: ownerId },
-    select: { name: true, email: true },
+  // Sprawdź czy użytkownik już jest członkiem tego workspace
+  const alreadyMember = await prisma.user.findFirst({
+    where: { email: normalized, ownerId },
   });
+  if (alreadyMember) {
+    return NextResponse.json({ error: "Ten użytkownik jest już członkiem Twojego workspace" }, { status: 409 });
+  }
+
+  // Sprawdź czy istnieje konto główne (primary account) z tym emailem
+  const primaryAccount = await prisma.user.findFirst({
+    where: { email: normalized, primaryAccountId: null },
+  });
+
+  const [designer] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: ownerId },
+      select: { name: true, fullName: true, email: true },
+    }),
+  ]);
 
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 dni
 
@@ -110,15 +119,30 @@ export async function POST(req: NextRequest) {
     if (group) resolvedGroupId = group.id;
   }
 
+  // Determine invitation type based on whether the invitee has an existing account
+  const inviteType = primaryAccount ? "team_join" : "team";
+
   const invitation = await prisma.invitation.create({
-    data: { email: normalized, designerId: ownerId, expiresAt, groupId: resolvedGroupId },
+    data: { email: normalized, designerId: ownerId, expiresAt, groupId: resolvedGroupId, type: inviteType },
   });
 
-  await sendInvitationEmail({
-    to: normalized,
-    designerName: designer?.name || designer?.email || "Projektant",
-    token: invitation.token,
-  });
+  const designerName = designer?.fullName || designer?.name || designer?.email || "Projektant";
+  const workspaceName = designer?.name || designer?.fullName || designer?.email || "Workspace";
+
+  if (inviteType === "team_join") {
+    await sendWorkspaceJoinEmail({
+      to: normalized,
+      workspaceName,
+      designerName,
+      token: invitation.token,
+    });
+  } else {
+    await sendInvitationEmail({
+      to: normalized,
+      designerName,
+      token: invitation.token,
+    });
+  }
 
   return NextResponse.json({ invitation }, { status: 201 });
 }

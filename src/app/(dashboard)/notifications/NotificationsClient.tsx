@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Bell, ExternalLink, Circle, X } from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
 import { pusherClient } from "@/lib/pusher";
+import { useT } from "@/lib/i18n";
 
 interface Notification {
   id: string;
@@ -27,14 +28,14 @@ function dispatchUpdate() {
   } catch {}
 }
 
-function getProjectTitle(n: Notification): string {
+function getProjectTitle(n: Notification, misc: string): string {
   if (n.projectTitle) return n.projectTitle;
   const match = n.message.match(/w projekcie "(.+)"$/);
-  return match ? match[1] : "Inne";
+  return match ? match[1] : misc;
 }
 
 function getProjectKey(n: Notification): string {
-  return getProjectTitle(n);
+  return n.projectTitle ?? n.message.match(/w projekcie "(.+)"$/)?.[1] ?? "__misc__";
 }
 
 function NotificationRow({
@@ -54,6 +55,7 @@ function NotificationRow({
   onReject?: () => Promise<void>;
   requestResolved?: boolean;
 }) {
+  const t = useT();
   const [acting, setActing] = useState<"confirm" | "reject" | null>(null);
 
   async function handleAction(type: "confirm" | "reject") {
@@ -96,7 +98,7 @@ function NotificationRow({
                 disabled={acting !== null}
                 onClick={() => handleAction("confirm")}
               >
-                {acting === "confirm" ? "..." : "Potwierdź"}
+                {acting === "confirm" ? "..." : t.common.confirm}
               </Button>
               <Button
                 size="sm"
@@ -105,12 +107,12 @@ function NotificationRow({
                 disabled={acting !== null}
                 onClick={() => handleAction("reject")}
               >
-                {acting === "reject" ? "..." : "Odrzuć"}
+                {acting === "reject" ? "..." : t.notifications.reject}
               </Button>
             </div>
           )}
           {(isStatusRequest || isVersionRestoreRequest) && requestResolved && (
-            <p className="text-xs text-gray-400 mt-1 italic">Prośba rozpatrzona</p>
+            <p className="text-xs text-gray-400 mt-1 italic">{t.notifications.resolved}</p>
           )}
         </div>
       </div>
@@ -120,7 +122,7 @@ function NotificationRow({
           onClick={onSee}
           className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 flex-shrink-0 mt-0.5 whitespace-nowrap"
         >
-          Zobacz
+          {t.notifications.see}
           <ExternalLink size={12} />
         </Link>
       )}
@@ -129,6 +131,7 @@ function NotificationRow({
 }
 
 export default function NotificationsClient({ userId }: { userId: string }) {
+  const t = useT();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [activeFilters, setActiveFilters] = useState<Set<string>>(new Set());
@@ -159,7 +162,7 @@ export default function NotificationsClient({ userId }: { userId: string }) {
     const map: Record<string, string> = {};
     notifications.forEach((n) => {
       const key = getProjectKey(n);
-      map[key] = getProjectTitle(n);
+      map[key] = getProjectTitle(n, t.notifications.misc);
     });
     return Object.entries(map).map(([key, label]) => ({ key, label }));
   }, [notifications]);
@@ -253,7 +256,7 @@ export default function NotificationsClient({ userId }: { userId: string }) {
     <div className="max-w-2xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-bold">Powiadomienia</h1>
+        <h1 className="text-2xl font-bold">{t.notifications.title}</h1>
         {notifications.length > 0 && (
           <label className="flex items-center gap-2 text-sm text-gray-500 cursor-pointer select-none">
             <input
@@ -262,7 +265,7 @@ export default function NotificationsClient({ userId }: { userId: string }) {
               onChange={toggleSelectAll}
               className="w-4 h-4 rounded"
             />
-            Zaznacz wszystkie
+            {t.notifications.selectAll}
           </label>
         )}
       </div>
@@ -278,7 +281,7 @@ export default function NotificationsClient({ userId }: { userId: string }) {
                 : "bg-gray-100 text-gray-600 hover:bg-gray-200"
             }`}
           >
-            Wszystkie
+            {t.notifications.all}
           </button>
           {projects.map(({ key, label }) => {
             const isActive = activeFilters.has(key);
@@ -315,10 +318,10 @@ export default function NotificationsClient({ userId }: { userId: string }) {
       {/* Bulk bar */}
       {selected.size > 0 && (
         <div className="flex items-center gap-3 mb-4 px-4 py-2.5 bg-muted border border-border rounded-lg text-sm">
-          <span className="text-gray-500">Zaznaczono: <strong>{selected.size}</strong></span>
+          <span className="text-gray-500">{t.notifications.selected} <strong>{selected.size}</strong></span>
           <div className="flex gap-2 ml-auto">
-            <Button size="sm" variant="outline" onClick={() => handleBulk(true)}>Przeczytane</Button>
-            <Button size="sm" variant="outline" onClick={() => handleBulk(false)}>Nieprzeczytane</Button>
+            <Button size="sm" variant="outline" onClick={() => handleBulk(true)}>{t.notifications.markRead}</Button>
+            <Button size="sm" variant="outline" onClick={() => handleBulk(false)}>{t.notifications.markUnread}</Button>
           </div>
         </div>
       )}
@@ -327,15 +330,15 @@ export default function NotificationsClient({ userId }: { userId: string }) {
       {notifications.length === 0 && (
         <div className="text-center py-16 text-gray-400">
           <Bell className="mx-auto mb-3 text-gray-300" size={48} />
-          <p className="text-lg font-medium">Brak powiadomień</p>
-          <p className="text-sm mt-1">Gdy klient zostawi komentarz, zobaczysz to tutaj.</p>
+          <p className="text-lg font-medium">{t.notifications.empty}</p>
+          <p className="text-sm mt-1">{t.notifications.emptyHint}</p>
         </div>
       )}
 
       {/* Empty filter state */}
       {notifications.length > 0 && filtered.length === 0 && (
         <div className="text-center py-16 text-gray-400">
-          <p className="text-sm">Brak powiadomień dla wybranych projektów.</p>
+          <p className="text-sm">{t.notifications.emptyFiltered}</p>
         </div>
       )}
 

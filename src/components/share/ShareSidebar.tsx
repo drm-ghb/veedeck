@@ -61,6 +61,8 @@ interface ShareSidebarProps {
   onMobileOpenChange?: (v: boolean) => void;
   /** When true, forces the sidebar to be collapsed (without saving to localStorage) */
   forceCollapsed?: boolean;
+  /** When this changes to true, auto-collapses the sidebar (but allows user to toggle back) */
+  autoCollapse?: boolean;
 }
 
 export default function ShareSidebar({
@@ -88,6 +90,7 @@ export default function ShareSidebar({
   mobileOpen,
   onMobileOpenChange,
   forceCollapsed,
+  autoCollapse,
 }: ShareSidebarProps) {
   const t = useT();
   const pathname = usePathname();
@@ -138,6 +141,11 @@ export default function ShareSidebar({
     if (saved === "true") setCollapsed(true);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Auto-collapse when entering RenderView (or other force contexts), without blocking future toggles
+  useEffect(() => {
+    if (autoCollapse) setCollapsed(true);
+  }, [autoCollapse]);
 
   // Unread discussion count — fetch from server on mount to catch messages sent before client first opened panel
   useEffect(() => {

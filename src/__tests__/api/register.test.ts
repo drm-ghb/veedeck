@@ -5,7 +5,7 @@ import { makeRequest } from "../helpers";
 vi.mock("@/lib/prisma", () => ({
   prisma: {
     user: {
-      findUnique: vi.fn(),
+      findFirst: vi.fn(),
       create: vi.fn(),
     },
   },
@@ -28,7 +28,7 @@ describe("POST /api/auth/register", () => {
   });
 
   it("zwraca 400 gdy email już istnieje", async () => {
-    vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: "u1" } as any);
+    vi.mocked(prisma.user.findFirst).mockResolvedValue({ id: "u1" } as any);
 
     const res = await POST(makeRequest("POST", {
       fullName: "Jan",
@@ -42,7 +42,7 @@ describe("POST /api/auth/register", () => {
   });
 
   it("tworzy użytkownika i zwraca 201", async () => {
-    vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
+    vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
     vi.mocked(prisma.user.create).mockResolvedValue({
       id: "u1",
       email: "jan@test.pl",

@@ -3,10 +3,12 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { X, Lock, Payments } from "@/components/ui/icons";
+import { useT } from "@/lib/i18n";
 
 export default function TrialExpiredModal() {
   const [open, setOpen] = useState(true);
   const router = useRouter();
+  const t = useT();
 
   if (!open) return null;
 
@@ -22,7 +24,7 @@ export default function TrialExpiredModal() {
         <button
           onClick={() => setOpen(false)}
           className="absolute top-4 right-4 p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
-          title="Zamknij"
+          title={t.common.close}
         >
           <X size={18} />
         </button>
@@ -34,17 +36,17 @@ export default function TrialExpiredModal() {
 
           <div>
             <h2 className="text-xl font-bold text-gray-900 mb-1">
-              Twój trial dobiegł końca
+              {t.trial.expiredTitle}
             </h2>
             <p className="text-sm text-gray-500 leading-relaxed">
-              Platforma przeszła w tryb <span className="font-semibold text-gray-700">tylko do odczytu</span>.
-              Możesz przeglądać swoją zawartość i pobierać pliki, ale edytowanie i tworzenie nowych elementów jest zablokowane.
+              {t.trial.expiredBody1} <span className="font-semibold text-gray-700">{t.trial.readOnlyMode}</span>.
+              {" "}{t.trial.expiredBody2}
             </p>
           </div>
 
           <div className="w-full rounded-xl bg-violet-50 border border-violet-100 px-4 py-3 text-sm text-violet-700 text-left">
-            Aby kontynuować pracę, ulepsz swój plan w&nbsp;
-            <span className="font-semibold">Ustawienia → Plan i rozliczenia</span>.
+            {t.trial.upgradeCta}&nbsp;
+            <span className="font-semibold">{t.trial.upgradeCtaPath}</span>.
           </div>
 
           <button
@@ -52,14 +54,14 @@ export default function TrialExpiredModal() {
             className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-semibold transition-colors"
           >
             <Payments size={16} />
-            Ulepsz plan
+            {t.trial.upgradeBtn}
           </button>
 
           <button
             onClick={() => setOpen(false)}
             className="text-sm text-gray-400 hover:text-gray-600 transition-colors"
           >
-            Przeglądaj w trybie tylko do odczytu
+            {t.trial.browseReadOnly}
           </button>
         </div>
       </div>

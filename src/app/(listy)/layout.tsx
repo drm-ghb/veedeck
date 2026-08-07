@@ -19,14 +19,16 @@ export default async function ListyLayout({
 
   const dbUser = await prisma.user.findUnique({
     where: { id: session.user.id! },
-    select: { name: true, fullName: true, email: true, globalHiddenModules: true, clientLogoUrl: true, avatarUrl: true, ownerId: true, viewPreferences: true, trialEndsAt: true, isFree: true, subscription: { select: { status: true, cancelAt: true } } },
+    select: { name: true, fullName: true, email: true, globalHiddenModules: true, clientLogoUrl: true, avatarUrl: true, ownerId: true, primaryAccountId: true, viewPreferences: true, trialEndsAt: true, isFree: true, subscription: { select: { status: true, cancelAt: true } } },
   });
 
   const ownerId = dbUser?.ownerId;
+  const primaryAccountId = dbUser?.primaryAccountId ?? null;
   const systemRole = (dbUser as any)?.systemRole ?? "member";
-  const [ownerSettings, memberGroupHidden] = await Promise.all([
-    ownerId ? prisma.user.findUnique({ where: { id: ownerId }, select: { globalHiddenModules: true, clientLogoUrl: true } }) : null,
+  const [ownerSettings, memberGroupHidden, workspaceAccountCount] = await Promise.all([
+    ownerId ? prisma.user.findUnique({ where: { id: ownerId }, select: { name: true, fullName: true, globalHiddenModules: true, clientLogoUrl: true } }) : null,
     ownerId ? getMemberHiddenModules(session.user.id!, ownerId, systemRole) : Promise.resolve([] as string[]),
+    primaryAccountId !== null ? Promise.resolve(1) : prisma.user.count({ where: { primaryAccountId: session.user.id! } }),
   ]);
 
   const fullName = dbUser?.fullName ?? null;
@@ -51,6 +53,8 @@ export default async function ListyLayout({
         isTrialExpired={isTrialExpired}
         notificationUserId={dbUser?.ownerId ?? session.user.id!}
         sidebarCollapsed={sidebarCollapsed}
+        hasWorkspaces={workspaceAccountCount > 0}
+        workspaceName={ownerId ? (ownerSettings?.name || ownerSettings?.fullName || null) : null}
       />
       <div className="flex flex-1 min-h-0" style={{ backgroundColor: 'var(--sidebar)' }}>
         <NavSidebar hiddenModules={hiddenModules} sidebarOrder={sidebarOrder} userId={session.user.id!} initialCollapsed={sidebarCollapsed} />

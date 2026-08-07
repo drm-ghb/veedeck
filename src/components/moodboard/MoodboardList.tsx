@@ -9,6 +9,7 @@ import { accentColors } from "@/lib/accent-color";
 import NewMoodboardDialog from "./NewMoodboardDialog";
 import EditMoodboardDialog from "./EditMoodboardDialog";
 import { showConfirm } from "@/lib/confirm";
+import { useT } from "@/lib/i18n";
 
 type Client = {
   id: string;
@@ -35,19 +36,20 @@ interface Props {
   clients: Client[];
 }
 
-function timeAgo(dateStr: string) {
+function timeAgo(dateStr: string, t: ReturnType<typeof useT>) {
   const diff = Date.now() - new Date(dateStr).getTime();
   const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "przed chwilą";
-  if (mins < 60) return `${mins} min temu`;
+  if (mins < 1) return t.common.justNow;
+  if (mins < 60) return `${mins} ${t.common.minutesAgo}`;
   const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours} godz. temu`;
+  if (hours < 24) return `${hours} ${t.common.hoursAgo}`;
   const days = Math.floor(hours / 24);
-  if (days < 30) return `${days} d. temu`;
+  if (days < 30) return `${days} ${t.common.daysAgo}`;
   return new Date(dateStr).toLocaleDateString("pl-PL", { day: "numeric", month: "short" });
 }
 
 export default function MoodboardList({ moodboards: initial, clients }: Props) {
+  const t = useT();
   const router = useRouter();
   const [moodboards, setMoodboards] = useState(initial);
   const [view, setView] = useState<"grid" | "list">(() => {
@@ -74,13 +76,13 @@ export default function MoodboardList({ moodboards: initial, clients }: Props) {
   }
 
   async function handleDelete(id: string) {
-    if (!await showConfirm("Usunąć tę tablicę? Tej operacji nie można cofnąć.")) return;
+    if (!await showConfirm(t.moodboard.deleteConfirm)) return;
     const res = await fetch(`/api/moodboards/${id}`, { method: "DELETE" });
     if (res.ok) {
       setMoodboards((prev) => prev.filter((m) => m.id !== id));
-      toast.success("Tablica usunięta");
+      toast.success(t.moodboard.deleted);
     } else {
-      toast.error("Błąd podczas usuwania");
+      toast.error(t.moodboard.deleteError);
     }
   }
 
@@ -92,7 +94,7 @@ export default function MoodboardList({ moodboards: initial, clients }: Props) {
     });
     if (res.ok) {
       setMoodboards((prev) => prev.map((m) => m.id === id ? { ...m, pinned: !current } : m));
-      toast.success(!current ? "Tablica przypięta" : "Tablica odpięta");
+      toast.success(!current ? t.moodboard.pinSuccess : t.moodboard.unpinSuccess);
     }
     setMenuOpen(null);
   }
@@ -105,7 +107,7 @@ export default function MoodboardList({ moodboards: initial, clients }: Props) {
     });
     if (res.ok) {
       setMoodboards((prev) => prev.map((m) => m.id === id ? { ...m, isSharedWithClient: !current } : m));
-      toast.success(!current ? "Tablica udostępniona klientowi" : "Cofnięto udostępnianie");
+      toast.success(!current ? t.moodboard.sharedSuccess : t.moodboard.unsharedSuccess);
     }
     setMenuOpen(null);
   }
@@ -142,8 +144,8 @@ export default function MoodboardList({ moodboards: initial, clients }: Props) {
       {/* Header */}
       <div className="flex items-center justify-between gap-3 mb-6">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Moodboardy</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Tablice inspiracji dla projektów</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t.moodboard.title}</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">{t.moodboard.subtitle}</p>
         </div>
         <NewMoodboardDialog clients={clients} />
       </div>
@@ -155,7 +157,7 @@ export default function MoodboardList({ moodboards: initial, clients }: Props) {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Szukaj tablic..."
+            placeholder={t.moodboard.searchPlaceholder}
             className="w-full pl-9 pr-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
           />
         </div>
@@ -167,12 +169,12 @@ export default function MoodboardList({ moodboards: initial, clients }: Props) {
               value={sort}
               onChange={(e) => { const v = e.target.value as SortOption; setSort(v); localStorage.setItem("moodboard-sort", v); }}
               className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-              aria-label="Sortuj"
+              aria-label={t.moodboard.sortLabel}
             >
-              <option value="newest">Najnowsze</option>
-              <option value="oldest">Najstarsze</option>
-              <option value="az">A–Z</option>
-              <option value="za">Z–A</option>
+              <option value="newest">{t.common.newest}</option>
+              <option value="oldest">{t.common.oldest}</option>
+              <option value="az">{t.common.az}</option>
+              <option value="za">{t.common.za}</option>
             </select>
           </div>
           {/* Sort — desktop select */}
@@ -181,24 +183,24 @@ export default function MoodboardList({ moodboards: initial, clients }: Props) {
             onChange={(e) => { const v = e.target.value as SortOption; setSort(v); localStorage.setItem("moodboard-sort", v); }}
             className="hidden sm:block flex-shrink-0 text-xs border border-gray-200 dark:border-gray-700 rounded-md px-2 py-2 bg-white dark:bg-card text-gray-600 dark:text-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-300"
           >
-            <option value="newest">Najnowsze</option>
-            <option value="oldest">Najstarsze</option>
-            <option value="az">A–Z</option>
-            <option value="za">Z–A</option>
+            <option value="newest">{t.common.newest}</option>
+            <option value="oldest">{t.common.oldest}</option>
+            <option value="az">{t.common.az}</option>
+            <option value="za">{t.common.za}</option>
           </select>
           {/* View toggle */}
           <div className="flex items-center gap-0.5 bg-muted rounded-md p-0.5 flex-shrink-0">
             <button
               onClick={() => setViewMode("grid")}
               className={`p-1.5 rounded transition-colors ${view === "grid" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
-              title="Widok kafelkowy"
+              title={t.moodboard.gridView}
             >
               <LayoutGrid size={15} />
             </button>
             <button
               onClick={() => setViewMode("list")}
               className={`p-1.5 rounded transition-colors ${view === "list" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
-              title="Widok listowy"
+              title={t.moodboard.listViewBtn}
             >
               <List size={15} />
             </button>
@@ -213,10 +215,10 @@ export default function MoodboardList({ moodboards: initial, clients }: Props) {
             <Interests size={24} className="text-primary" />
           </div>
           <p className="text-sm font-medium text-foreground mb-1">
-            {query ? "Brak wyników" : "Brak tablic"}
+            {query ? t.moodboard.noResults : t.moodboard.empty}
           </p>
           <p className="text-sm text-muted-foreground mb-4">
-            {query ? "Spróbuj innej frazy" : "Utwórz pierwszą tablicę moodboard"}
+            {query ? t.moodboard.noResultsHint : t.moodboard.emptyHint}
           </p>
           {!query && <NewMoodboardDialog clients={clients} />}
         </div>
@@ -256,10 +258,10 @@ export default function MoodboardList({ moodboards: initial, clients }: Props) {
                       </p>
                     )}
                     <div className="flex items-center justify-between mt-2">
-                      <span className="text-[11.5px] text-muted-foreground">{timeAgo(m.updatedAt)}</span>
+                      <span className="text-[11.5px] text-muted-foreground">{timeAgo(m.updatedAt, t)}</span>
                       {m.isSharedWithClient && (
                         <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                          Udostępnione
+                          {t.moodboard.shared}
                         </span>
                       )}
                     </div>
@@ -281,14 +283,14 @@ export default function MoodboardList({ moodboards: initial, clients }: Props) {
                           onClick={() => { setEditingMoodboard(m); setMenuOpen(null); }}
                           className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg hover:bg-muted transition-colors text-left"
                         >
-                          <Edit2 size={14} /> Edytuj
+                          <Edit2 size={14} /> {t.common.edit}
                         </button>
                         <button
                           onClick={() => handleTogglePin(m.id, m.pinned)}
                           className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg hover:bg-muted transition-colors text-left"
                         >
                           {m.pinned ? <PinOff size={14} /> : <Pin size={14} />}
-                          {m.pinned ? "Odepnij" : "Przypnij"}
+                          {m.pinned ? t.common.unpin : t.common.pin}
                         </button>
                         {m.client && (
                           <button
@@ -296,14 +298,14 @@ export default function MoodboardList({ moodboards: initial, clients }: Props) {
                             className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg hover:bg-muted transition-colors text-left"
                           >
                             <Share2 size={14} />
-                            {m.isSharedWithClient ? "Cofnij udostępnianie" : "Udostępnij klientowi"}
+                            {m.isSharedWithClient ? t.moodboard.unshare : t.moodboard.share}
                           </button>
                         )}
                         <button
                           onClick={() => { handleDelete(m.id); setMenuOpen(null); }}
                           className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg hover:bg-red-50 dark:hover:bg-red-950/20 text-red-600 transition-colors text-left"
                         >
-                          <Trash2 size={14} /> Usuń
+                          <Trash2 size={14} /> {t.moodboard.delete}
                         </button>
                       </div>
                     </>
@@ -334,10 +336,10 @@ export default function MoodboardList({ moodboards: initial, clients }: Props) {
               </Link>
               {m.isSharedWithClient && (
                 <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 shrink-0">
-                  Udostępnione
+                  {t.moodboard.shared}
                 </span>
               )}
-              <span className="text-xs text-muted-foreground shrink-0">{timeAgo(m.updatedAt)}</span>
+              <span className="text-xs text-muted-foreground shrink-0">{timeAgo(m.updatedAt, t)}</span>
               <div className="relative">
                 <button
                   onClick={() => setMenuOpen(menuOpen === m.id ? null : m.id)}
@@ -353,14 +355,14 @@ export default function MoodboardList({ moodboards: initial, clients }: Props) {
                         onClick={() => { setEditingMoodboard(m); setMenuOpen(null); }}
                         className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg hover:bg-muted transition-colors text-left"
                       >
-                        <Edit2 size={14} /> Edytuj
+                        <Edit2 size={14} /> {t.common.edit}
                       </button>
                       <button
                         onClick={() => handleTogglePin(m.id, m.pinned)}
                         className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg hover:bg-muted transition-colors text-left"
                       >
                         {m.pinned ? <PinOff size={14} /> : <Pin size={14} />}
-                        {m.pinned ? "Odepnij" : "Przypnij"}
+                        {m.pinned ? t.common.unpin : t.common.pin}
                       </button>
                       {m.client && (
                         <button
@@ -368,14 +370,14 @@ export default function MoodboardList({ moodboards: initial, clients }: Props) {
                           className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg hover:bg-muted transition-colors text-left"
                         >
                           <Share2 size={14} />
-                          {m.isSharedWithClient ? "Cofnij udostępnianie" : "Udostępnij klientowi"}
+                          {m.isSharedWithClient ? t.moodboard.unshare : t.moodboard.share}
                         </button>
                       )}
                       <button
                         onClick={() => { handleDelete(m.id); setMenuOpen(null); }}
                         className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg hover:bg-red-50 dark:hover:bg-red-950/20 text-red-600 transition-colors text-left"
                       >
-                        <Trash2 size={14} /> Usuń
+                        <Trash2 size={14} /> {t.moodboard.delete}
                       </button>
                     </div>
                   </>

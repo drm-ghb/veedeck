@@ -39,7 +39,11 @@ interface Props {
   onSelect: (product: Product) => void;
   projectId?: string;
   renderId?: string;
+  containerKey?: string;
 }
+
+// Module-level: persists selected list across renders in the same folder/room
+let _persistedList: { containerKey: string; listId: string | null } | null = null;
 
 interface SavedPickerState {
   tab: Tab;
@@ -82,7 +86,7 @@ function ProductList({ products, onSelect }: { products: Product[]; onSelect: (p
   );
 }
 
-export default function SearchProductDialog({ open, onClose, onSelect, projectId, renderId }: Props) {
+export default function SearchProductDialog({ open, onClose, onSelect, projectId, renderId, containerKey }: Props) {
   const t = useT();
   const search = useProductSearch();
 
@@ -164,13 +168,15 @@ export default function SearchProductDialog({ open, onClose, onSelect, projectId
   const [projectDropdownPos, setProjectDropdownPos] = useState({ top: 0, left: 0 });
   const [projectSearch, setProjectSearch] = useState("");
 
-  // On open: restore state if same render, otherwise full reset
+  // On open: restore state if same render, otherwise full reset (but keep list if same container)
   useEffect(() => {
     if (!open) return;
 
     const sameRender = renderId != null && renderId === activeRenderIdRef.current;
+    const sameContainer = containerKey != null && containerKey === _persistedList?.containerKey;
 
     if (sameRender && savedStateRef.current) {
+      // Same render reopened — restore full state (tab, list, section)
       const saved = savedStateRef.current;
       setActiveTab(saved.tab);
       setSelectedListId(saved.listId);
@@ -178,9 +184,10 @@ export default function SearchProductDialog({ open, onClose, onSelect, projectId
       setProjectDropdownOpen(false);
       setProjectSearch("");
     } else {
+      // Different render — full reset, but restore list selection if same folder/room
       setActiveTab("all");
       setLocalQuery("");
-      setSelectedListId(null);
+      setSelectedListId(sameContainer ? (_persistedList?.listId ?? null) : null);
       setAllLists([]);
       setProjectDropdownOpen(false);
       setProjectSearch("");
@@ -259,6 +266,9 @@ export default function SearchProductDialog({ open, onClose, onSelect, projectId
   function handleClose() {
     if (renderId != null && renderId === activeRenderIdRef.current) {
       savedStateRef.current = { tab: activeTab, listId: selectedListId, sectionId: selectedSectionId };
+    }
+    if (containerKey != null) {
+      _persistedList = { containerKey, listId: selectedListIdRef.current };
     }
     search.resetFilters();
     setFilterSearch({ categories: "", manufacturers: "", colors: "" });

@@ -66,6 +66,8 @@ interface TaskDetailPanelProps {
   onBack?: () => void;
   onOpenTask?: (task: Task) => void;
   statusOptions?: TaskSelectOption[];
+  canEdit?: boolean;
+  canDelete?: boolean;
 }
 
 function userDisplayName(u: User | null) {
@@ -79,7 +81,7 @@ function userInitials(u: User | null) {
   return n.slice(0, 2).toUpperCase();
 }
 
-export default function TaskDetailPanel({ task, onClose, onUpdated, isSubTask = false, parentTaskTitle, onBack, onOpenTask, statusOptions }: TaskDetailPanelProps) {
+export default function TaskDetailPanel({ task, onClose, onUpdated, isSubTask = false, parentTaskTitle, onBack, onOpenTask, statusOptions, canEdit = true, canDelete = true }: TaskDetailPanelProps) {
   const t = useT();
 
   const DEFAULT_STATUS_OPTIONS: TaskSelectOption[] = [
@@ -323,7 +325,7 @@ export default function TaskDetailPanel({ task, onClose, onUpdated, isSubTask = 
             <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors">
               <X size={18} />
             </button>
-            {menuOpen && (
+            {menuOpen && canDelete && (
               <div className="absolute right-0 top-full mt-1 w-44 rounded-lg bg-popover border border-border shadow-md z-50 py-1 overflow-hidden">
                 <button
                   onClick={() => { setMenuOpen(false); deleteTask(); }}
@@ -343,9 +345,10 @@ export default function TaskDetailPanel({ task, onClose, onUpdated, isSubTask = 
             <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{t.tasks.titleLabel}</label>
             <input
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              onBlur={() => title.trim() && title !== task.title && patch({ title })}
-              className="w-full text-sm px-3 py-2 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
+              onChange={(e) => canEdit && setTitle(e.target.value)}
+              onBlur={() => canEdit && title.trim() && title !== task.title && patch({ title })}
+              readOnly={!canEdit}
+              className={`w-full text-sm px-3 py-2 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 ${!canEdit ? "cursor-default" : ""}`}
             />
           </div>
 
@@ -355,8 +358,8 @@ export default function TaskDetailPanel({ task, onClose, onUpdated, isSubTask = 
             <TaskDescriptionEditor
               content={description}
               contentKey={task.id}
-              onChange={setDescription}
-              onBlur={() => description !== (task.description || "") && patch({ description: description || null })}
+              onChange={canEdit ? setDescription : () => {}}
+              onBlur={() => canEdit && description !== (task.description || "") && patch({ description: description || null })}
             />
           </div>
 
@@ -366,7 +369,7 @@ export default function TaskDetailPanel({ task, onClose, onUpdated, isSubTask = 
               <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{t.tasks.statusLabel}</label>
               <TaskSelectField
                 value={status}
-                onChange={(v) => { setStatus(v); patch({ status: v }); }}
+                onChange={(v) => { if (!canEdit) return; setStatus(v); patch({ status: v }); }}
                 options={resolvedStatusOptions}
               />
             </div>
@@ -374,7 +377,7 @@ export default function TaskDetailPanel({ task, onClose, onUpdated, isSubTask = 
               <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{t.tasks.priorityLabel}</label>
               <TaskSelectField
                 value={priority}
-                onChange={(v) => { setPriority(v); patch({ priority: v }); }}
+                onChange={(v) => { if (!canEdit) return; setPriority(v); patch({ priority: v }); }}
                 options={PRIORITY_OPTIONS}
               />
             </div>
@@ -386,7 +389,7 @@ export default function TaskDetailPanel({ task, onClose, onUpdated, isSubTask = 
               <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{t.tasks.dueDateLabel}</label>
               <DatePicker
                 value={dueDate}
-                onChange={(v) => { setDueDate(v); patch({ dueDate: v || null }); }}
+                onChange={(v) => { if (!canEdit) return; setDueDate(v); patch({ dueDate: v || null }); }}
                 error={!!isOverdue}
               />
             </div>
@@ -394,7 +397,7 @@ export default function TaskDetailPanel({ task, onClose, onUpdated, isSubTask = 
               <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Projekt</label>
               <TaskSelectField
                 value={projectId}
-                onChange={(v) => { setProjectId(v); patch({ projectId: v || null }); }}
+                onChange={(v) => { if (!canEdit) return; setProjectId(v); patch({ projectId: v || null }); }}
                 options={projectOptions}
                 placeholder={t.tasks.noProject}
               />
@@ -406,7 +409,7 @@ export default function TaskDetailPanel({ task, onClose, onUpdated, isSubTask = 
             <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{t.tasks.assigneeLabel}</label>
             <TaskSelectField
               value={assigneeId}
-              onChange={(v) => { setAssigneeId(v); patch({ assigneeId: v || null }); }}
+              onChange={(v) => { if (!canEdit) return; setAssigneeId(v); patch({ assigneeId: v || null }); }}
               options={assigneeOptions}
               placeholder={t.tasks.unassigned}
             />
@@ -427,8 +430,8 @@ export default function TaskDetailPanel({ task, onClose, onUpdated, isSubTask = 
                 {subTasks.map((sub) => (
                   <div key={sub.id} className="flex items-center gap-2 py-1 group">
                     <button
-                      onClick={() => toggleSubTaskStatus(sub)}
-                      className="text-muted-foreground hover:text-primary transition-colors shrink-0"
+                      onClick={() => canEdit && toggleSubTaskStatus(sub)}
+                      className={`text-muted-foreground transition-colors shrink-0 ${canEdit ? "hover:text-primary" : "cursor-default opacity-60"}`}
                     >
                       {sub.status === "DONE" ? <CheckSquare size={15} className="text-green-500" /> : <Square size={15} />}
                     </button>
@@ -441,22 +444,24 @@ export default function TaskDetailPanel({ task, onClose, onUpdated, isSubTask = 
                   </div>
                 ))}
 
-                <div className="flex items-center gap-2 pt-1">
-                  <input
-                    value={subTaskInput}
-                    onChange={(e) => setSubTaskInput(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && addSubTask()}
-                    placeholder={t.tasks.addSubtaskPlaceholder}
-                    className="flex-1 text-sm px-2 py-1 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
-                  />
-                  <button
-                    onClick={addSubTask}
-                    disabled={addingSubTask || !subTaskInput.trim()}
-                    className="p-1.5 text-primary hover:opacity-70 disabled:opacity-40 transition-opacity"
-                  >
-                    <Plus size={28} />
-                  </button>
-                </div>
+                {canEdit && (
+                  <div className="flex items-center gap-2 pt-1">
+                    <input
+                      value={subTaskInput}
+                      onChange={(e) => setSubTaskInput(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && addSubTask()}
+                      placeholder={t.tasks.addSubtaskPlaceholder}
+                      className="flex-1 text-sm px-2 py-1 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    />
+                    <button
+                      onClick={addSubTask}
+                      disabled={addingSubTask || !subTaskInput.trim()}
+                      className="p-1.5 text-primary hover:opacity-70 disabled:opacity-40 transition-opacity"
+                    >
+                      <Plus size={28} />
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>}
@@ -465,15 +470,17 @@ export default function TaskDetailPanel({ task, onClose, onUpdated, isSubTask = 
           <div className="space-y-2 border-t border-border pt-4">
             <div className="flex items-center justify-between">
               <p className="text-sm font-medium">{t.tasks.attachmentsLabel} ({comments.flatMap(c => c.attachments ?? []).length})</p>
-              <button
-                type="button"
-                onClick={() => attachmentInputRef.current?.click()}
-                disabled={isUploading}
-                className="w-6 h-6 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-foreground disabled:opacity-40 transition-colors"
-                title="Dodaj załącznik"
-              >
-                <Plus size={13} />
-              </button>
+              {canEdit && (
+                <button
+                  type="button"
+                  onClick={() => attachmentInputRef.current?.click()}
+                  disabled={isUploading}
+                  className="w-6 h-6 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-foreground disabled:opacity-40 transition-colors"
+                  title="Dodaj załącznik"
+                >
+                  <Plus size={13} />
+                </button>
+              )}
             </div>
             {isUploading && (
               <p className="text-xs text-muted-foreground">Przesyłanie...</p>
@@ -528,7 +535,7 @@ export default function TaskDetailPanel({ task, onClose, onUpdated, isSubTask = 
         </div>
 
         {/* Pole komentarza (Messenger style) */}
-        <div className="px-4 py-3 border-t border-border shrink-0">
+        {canEdit && <div className="px-4 py-3 border-t border-border shrink-0">
           <div className="flex items-end gap-2">
             <input
               ref={attachmentInputRef}
@@ -574,7 +581,7 @@ export default function TaskDetailPanel({ task, onClose, onUpdated, isSubTask = 
               <Send size={30} />
             </button>
           </div>
-        </div>
+        </div>}
       </div>
     </div>
 

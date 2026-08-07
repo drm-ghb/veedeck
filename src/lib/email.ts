@@ -8,6 +8,7 @@ import {
   trialDay3EmailPL, trialDay3EmailEN,
   trialEndedEmailPL, trialEndedEmailEN,
   teamInvitationEmailPL, teamInvitationEmailEN,
+  workspaceJoinEmailPL, workspaceJoinEmailEN,
   clientInvitationEmailPL, clientInvitationEmailEN,
   paymentFailedEmailPL, paymentFailedEmailEN,
   accessLinkEmailPL, accessLinkEmailEN,
@@ -198,6 +199,36 @@ export async function sendInvitationEmail({
     html: isPL
       ? teamInvitationEmailPL({ inviteUrl: link, designerName: safeDesignerName })
       : teamInvitationEmailEN({ inviteUrl: link, designerName: safeDesignerName }),
+  });
+}
+
+export async function sendWorkspaceJoinEmail({
+  to,
+  workspaceName,
+  designerName,
+  token,
+  locale = "pl",
+}: {
+  to: string;
+  workspaceName: string;
+  designerName: string;
+  token: string;
+  locale?: "pl" | "en";
+}) {
+  const link = `${APP_URL}/invite/${token}`;
+  const safeDesignerName = escapeHtml(designerName);
+  const safeWorkspaceName = escapeHtml(workspaceName);
+  const isPL = locale !== "en";
+
+  await transporter.sendMail({
+    from: FROM,
+    to,
+    subject: isPL
+      ? `Dołącz do workspace ${safeWorkspaceName} — veedeck`
+      : `Join the ${safeWorkspaceName} workspace — veedeck`,
+    html: isPL
+      ? workspaceJoinEmailPL({ inviteUrl: link, workspaceName: safeWorkspaceName, designerName: safeDesignerName })
+      : workspaceJoinEmailEN({ inviteUrl: link, workspaceName: safeWorkspaceName, designerName: safeDesignerName }),
   });
 }
 

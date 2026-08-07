@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getWorkspaceUserId } from "@/lib/workspace";
+import { hasPermission } from "@/lib/permissions";
 
 export async function GET(
   _req: NextRequest,
@@ -38,6 +39,8 @@ export async function POST(
 
   const ownerId = getWorkspaceUserId(session);
   const { id } = await params;
+
+  if (!await hasPermission(session, "zadania", 2)) return NextResponse.json({ error: "Brak uprawnień do dodawania komentarzy" }, { status: 403 });
 
   const task = await prisma.task.findUnique({ where: { id } });
   if (!task) return NextResponse.json({ error: "Nie znaleziono zadania" }, { status: 404 });

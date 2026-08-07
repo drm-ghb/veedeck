@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { signIn, getSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { useT } from "@/lib/i18n";
 
 const CSS = `
   .vd-body {
@@ -74,12 +75,13 @@ const CSS = `
 `;
 
 function RoleSwitcher({ current }: { current: "projektant" | "klient" | "wykonawca" }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
-  const labels = { projektant: "Projektant", klient: "Klient", wykonawca: "Wykonawca" };
+  const labels = { projektant: t.auth.roleDesigner, klient: t.auth.roleClient, wykonawca: t.auth.roleContractor };
   const links = { projektant: "/login", klient: "/login/klient", wykonawca: "/login/wykonawca" };
   return (
     <div style={{ position: "relative", display: "flex", justifyContent: "center", alignItems: "center", gap: 10 }}>
-      <span style={{ fontSize: 13.5, color: "var(--muted-foreground)", fontWeight: 500, whiteSpace: "nowrap" }}>Zaloguj się jako:</span>
+      <span style={{ fontSize: 13.5, color: "var(--muted-foreground)", fontWeight: 500, whiteSpace: "nowrap" }}>{t.auth.loginAs}</span>
       <button type="button" className="vd-role-btn" onClick={() => setOpen((o) => !o)}>
         {labels[current]}
         <svg className={`vd-role-btn-chevron${open ? " open" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -109,6 +111,7 @@ function RoleSwitcher({ current }: { current: "projektant" | "klient" | "wykonaw
 }
 
 export default function LoginWykonawcaPage() {
+  const t = useT();
   const router = useRouter();
   const [login, setLogin] = useState("");
   const [password, setPassword] = useState("");
@@ -127,7 +130,7 @@ export default function LoginWykonawcaPage() {
       redirect: false,
     });
     if (result?.error) {
-      setError("Nieprawidłowy login lub hasło.");
+      setError(t.auth.invalidLoginOrPassword);
       setLoading(false);
       return;
     }
@@ -161,16 +164,16 @@ export default function LoginWykonawcaPage() {
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M19 12H5M12 19l-7-7 7-7" />
               </svg>
-              <span>Wróć na stronę</span>
+              <span>{t.auth.backToSite}</span>
             </a>
           </header>
 
           <main className="vd-stage">
             <div className="vd-panel">
               <div className="vd-panel-head">
-                <div className="vd-eyebrow"><span className="dot" />Panel wykonawcy</div>
-                <h1>Witaj ponownie.<br />Zaloguj się.</h1>
-                <p className="sub">Zaloguj się do panelu wykonawcy veedeck.</p>
+                <div className="vd-eyebrow"><span className="dot" />{t.auth.contractorPanelEyebrow}</div>
+                <h1>{t.auth.loginH1}<br />{t.auth.loginH1Em}</h1>
+                <p className="sub">{t.auth.contractorLoginSubtitle}</p>
               </div>
 
               <RoleSwitcher current="wykonawca" />
@@ -178,7 +181,7 @@ export default function LoginWykonawcaPage() {
               <div className="vd-card">
                 <form className="vd-form-stack" onSubmit={handleSubmit} autoComplete="on">
                   <div className="vd-field">
-                    <label className="vd-label" htmlFor="login">Login</label>
+                    <label className="vd-label" htmlFor="login">{t.auth.loginLabel}</label>
                     <input
                       className="vd-input"
                       id="login"
@@ -191,7 +194,7 @@ export default function LoginWykonawcaPage() {
                     />
                   </div>
                   <div className="vd-field">
-                    <label className="vd-label" htmlFor="password">Hasło</label>
+                    <label className="vd-label" htmlFor="password">{t.auth.password}</label>
                     <div className="vd-password-wrap">
                       <input
                         className="vd-input has-trailing"
@@ -206,7 +209,7 @@ export default function LoginWykonawcaPage() {
                         type="button"
                         className="vd-password-toggle"
                         onClick={() => setShowPassword(!showPassword)}
-                        aria-label="Pokaż / ukryj hasło"
+                        aria-label={t.auth.togglePassword}
                       >
                         {showPassword ? (
                           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -228,21 +231,21 @@ export default function LoginWykonawcaPage() {
                     disabled={loading}
                     style={{ marginTop: 6 }}
                   >
-                    {loading ? "Logowanie…" : "Zaloguj się"}
+                    {loading ? t.auth.loggingIn : t.auth.loginBtn}
                   </button>
                 </form>
               </div>
 
               <p className="vd-switch-row">
-                Jesteś projektantem?{" "}
-                <a href="/login" className="vd-meta-link">Zaloguj się tutaj →</a>
+                {t.auth.areYouDesigner}{" "}
+                <a href="/login" className="vd-meta-link">{t.auth.loginHere}</a>
               </p>
             </div>
           </main>
 
           <footer className="vd-footer">
             © 2026 veedeck ·{" "}
-            <a href="https://veedeck.com/polityka-prywatnosci.html">Polityka prywatności</a>
+            <a href="https://veedeck.com/polityka-prywatnosci.html">{t.auth.privacyPolicy}</a>
           </footer>
         </div>
       </div>

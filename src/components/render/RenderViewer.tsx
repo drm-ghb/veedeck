@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { ChevronLeft, ChevronRight, ChevronDown, Pin, X, Send, ZoomIn, ZoomOut, History, Upload, Maximize2, RotateCcw, Lock, LockOpen, SplitSquareHorizontal, ChevronsLeftRight, Sparkles, Package, Trash2, Edit2, ExternalLink, Mic, StopCircle, CheckCircle2, Armchair, Loader2, FileText, MoreVertical, CornerDownLeft, Paperclip, Download } from "@/components/ui/icons";
+import { ChevronLeft, ChevronRight, ChevronDown, Pin, X, Send, ZoomIn, ZoomOut, History, Upload, Maximize2, RotateCcw, Lock, LockOpen, SplitSquareHorizontal, ChevronsLeftRight, Sparkles, Package, Trash2, Edit2, ExternalLink, Mic, StopCircle, CheckCircle2, Armchair, Loader2, FileText, MoreVertical, CornerDownLeft, Paperclip, Download, Pencil } from "@/components/ui/icons";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import RenderUploader from "./RenderUploader";
 import RenderComparePanel from "./RenderComparePanel";
@@ -73,6 +73,7 @@ interface RenderVersion {
   versionNumber: number;
   label?: string | null;
   archivedAt: string;
+  pinCount?: number;
 }
 
 type RenderStatus = "REVIEW" | "ACCEPTED" | "REJECTED";
@@ -111,6 +112,7 @@ interface RenderViewerProps {
   allowClientAcceptance?: boolean;
   hideCommentCount?: boolean;
   versions?: RenderVersion[];
+  activeVersionId?: string | null;
   viewCount?: number;
   allowClientVersionRestore?: boolean;
   onVersionRestore?: (versionId: string) => Promise<void>;
@@ -185,6 +187,7 @@ function getPopupStyle(
   popupWidth = 288,
   vvHeight?: number,
   vvOffsetTop = 0,
+  popupH = 400,
 ): React.CSSProperties {
   if (!imgEl || typeof window === "undefined") {
     return {
@@ -194,7 +197,6 @@ function getPopupStyle(
   }
   const viewportHeight = vvHeight ?? window.innerHeight;
   const rect = imgEl.getBoundingClientRect();
-  const popupH = 400;
   const pad = 8;
   const pinX = rect.left + (x / 100) * rect.width;
   const pinY = rect.top + (y / 100) * rect.height;
@@ -203,10 +205,24 @@ function getPopupStyle(
   if (left + popupWidth > window.innerWidth - pad) left = pinX - popupWidth - 8;
   left = Math.max(pad, Math.min(left, window.innerWidth - popupWidth - pad));
 
-  let top = pinY - 20;
-  if (top + popupH > vvOffsetTop + viewportHeight - pad) top = vvOffsetTop + viewportHeight - popupH - pad;
+  let top = pinY - 16;
+  if (top + popupH > vvOffsetTop + viewportHeight - pad) top = pinY - popupH + 16;
   top = Math.max(vvOffsetTop + pad, top);
 
+  return { position: "fixed", left, top };
+}
+
+function getAnchorTooltipStyle(
+  anchor: { left: number; top: number; right: number; bottom: number },
+  popupWidth: number,
+  popupH: number,
+): React.CSSProperties {
+  const pad = 8;
+  let left = anchor.right + 8;
+  if (left + popupWidth > window.innerWidth - pad) left = anchor.left - popupWidth - 8;
+  left = Math.max(pad, Math.min(left, window.innerWidth - popupWidth - pad));
+  let top = anchor.top;
+  if (top + popupH > window.innerHeight - pad) top = Math.max(pad, anchor.bottom - popupH);
   return { position: "fixed", left, top };
 }
 
@@ -232,6 +248,7 @@ export default function RenderViewer({
   hideCommentCount = false,
   viewCount = 0,
   versions = [],
+  activeVersionId,
   allowClientVersionRestore = true,
   onVersionRestore,
   onVersionRestoreRequest,
@@ -277,7 +294,23 @@ export default function RenderViewer({
   const [pdfZoom, setPdfZoom] = useState(1);
   const [pdfMaxHeight, setPdfMaxHeight] = useState(600);
   const [pdfMaxWidth, setPdfMaxWidth] = useState(800);
+  const [pdfIsPanning, setPdfIsPanning] = useState(false);
+  const pdfContainerRef = useRef<HTMLDivElement>(null);
+  const pdfPanStartRef = useRef<{ x: number; y: number; sl: number; st: number } | null>(null);
+  const pdfPanWasDragRef = useRef(false);
   const imageAreaRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!isPdf) return;
+    const el = pdfContainerRef.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const step = e.deltaY > 0 ? -0.1 : 0.1;
+      setPdfZoom((z) => +(Math.min(3, Math.max(0.5, z + step)).toFixed(2)));
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, [isPdf]);
   useEffect(() => {
     const el = imageAreaRef.current;
     if (!el) return;
@@ -305,6 +338,10 @@ export default function RenderViewer({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [restoringVersionId, setRestoringVersionId] = useState<string | null>(null);
+  const [versionsList, setVersionsList] = useState<RenderVersion[]>(versions);
+  const [editingVersionLabelId, setEditingVersionLabelId] = useState<string | null>(null);
+  const [editingVersionLabelText, setEditingVersionLabelText] = useState("");
+  const [confirmDeleteVersionId, setConfirmDeleteVersionId] = useState<string | null>(null);
   const [compareVersion, setCompareVersion] = useState<RenderVersion | null>(null);
   const [compareRightLabel, setCompareRightLabel] = useState<string | null>(null);
   const [showComparePanel, setShowComparePanel] = useState(false);
@@ -337,7 +374,7 @@ export default function RenderViewer({
   const [chatUnreadCount, setChatUnreadCount] = useState(() => {
     if (typeof window === "undefined") return 0;
     const lastReadAt = localStorage.getItem(`rf_chat_readAt_${renderId}`);
-    const chatMessages = initialComments.filter(c => c.posX === null && c.posY === null && c.author !== authorName);
+    const chatMessages = initialComments.filter(c => c.posX === null && c.posY === null && c.author !== authorName && c.author !== "__system__");
     if (!lastReadAt) return chatMessages.length;
     const lastRead = new Date(lastReadAt);
     return chatMessages.filter(c => new Date(c.createdAt) > lastRead).length;
@@ -351,6 +388,7 @@ export default function RenderViewer({
   const productPinHoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [hoveredCommentPinId, setHoveredCommentPinId] = useState<string | null>(null);
   const commentPinHoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [commentPinAnchor, setCommentPinAnchor] = useState<{ left: number; top: number; right: number; bottom: number } | null>(null);
 
   const [isRecording, setIsRecording] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
@@ -433,6 +471,8 @@ export default function RenderViewer({
       ? `/api/renders/${renderId}/product-pins`
       : shareToken
       ? `/api/share/${shareToken}/renders/${renderId}/product-pins`
+      : clientProjectId
+      ? `/api/client/${clientProjectId}/renders/${renderId}/product-pins`
       : null;
     if (!url) return;
     fetch(url)
@@ -631,7 +671,7 @@ export default function RenderViewer({
         return [...prev, { ...comment, replies: [] }];
       });
       // Track unread for chat messages from other authors
-      if (comment.posX === null && comment.posY === null && comment.author !== authorName) {
+      if (comment.posX === null && comment.posY === null && comment.author !== authorName && comment.author !== "__system__") {
         if (showCommentsRef.current && sidebarTabRef.current === "chat") {
           localStorage.setItem(`rf_chat_readAt_${renderId}`, new Date().toISOString());
         } else {
@@ -735,15 +775,73 @@ export default function RenderViewer({
     try {
       const res = await fetch(imageUrl);
       const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      const ext = fileType === "pdf" ? "pdf" : (imageUrl.split("?")[0].split(".").pop() ?? "");
-      a.download = renderName ? `${renderName}${ext ? `.${ext}` : ""}` : "render";
-      a.click();
-      URL.revokeObjectURL(url);
+      if (fileType === "pdf") {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = renderName ? `${renderName}.pdf` : "render.pdf";
+        a.click();
+        URL.revokeObjectURL(url);
+      } else {
+        // Convert image to JPEG via canvas
+        const bitmapUrl = URL.createObjectURL(blob);
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        await new Promise<void>((resolve, reject) => {
+          img.onload = () => resolve();
+          img.onerror = reject;
+          img.src = bitmapUrl;
+        });
+        const canvas = document.createElement("canvas");
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext("2d")!;
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0);
+        URL.revokeObjectURL(bitmapUrl);
+        canvas.toBlob((jpegBlob) => {
+          if (!jpegBlob) { toast.error(t.render.fileDownloadError); return; }
+          const url = URL.createObjectURL(jpegBlob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = renderName ? `${renderName}.jpg` : "render.jpg";
+          a.click();
+          URL.revokeObjectURL(url);
+        }, "image/jpeg", 0.95);
+      }
     } catch {
       toast.error(t.render.fileDownloadError);
+    }
+  }
+
+  function handlePdfPointerDown(e: React.PointerEvent<HTMLDivElement>) {
+    if (e.button !== 0 || mode === "pin" || productPinMode) return;
+    const el = pdfContainerRef.current;
+    if (!el) return;
+    el.setPointerCapture(e.pointerId);
+    pdfPanStartRef.current = { x: e.clientX, y: e.clientY, sl: el.scrollLeft, st: el.scrollTop };
+    setPdfIsPanning(true);
+  }
+  function handlePdfPointerMove(e: React.PointerEvent<HTMLDivElement>) {
+    if (!pdfPanStartRef.current) return;
+    const el = pdfContainerRef.current;
+    if (!el) return;
+    const dx = e.clientX - pdfPanStartRef.current.x;
+    const dy = e.clientY - pdfPanStartRef.current.y;
+    el.scrollLeft = pdfPanStartRef.current.sl - dx;
+    el.scrollTop = pdfPanStartRef.current.st - dy;
+    if (Math.sqrt(dx * dx + dy * dy) > 5) pdfPanWasDragRef.current = true;
+  }
+  function handlePdfPointerUp() {
+    pdfPanStartRef.current = null;
+    setPdfIsPanning(false);
+  }
+  function handlePdfClickCapture(e: React.MouseEvent) {
+    if (pdfPanWasDragRef.current) {
+      pdfPanWasDragRef.current = false;
+      e.stopPropagation();
+      e.preventDefault();
     }
   }
 
@@ -1323,6 +1421,25 @@ export default function RenderViewer({
     }
   }
 
+  async function deleteVersion(versionId: string) {
+    const res = await fetch(`/api/renders/${renderId}/versions/${versionId}`, { method: "DELETE" });
+    if (!res.ok) { toast.error("Nie udało się usunąć wersji"); return; }
+    setVersionsList(prev => prev.filter(v => v.id !== versionId));
+    setConfirmDeleteVersionId(null);
+    toast.success("Wersja usunięta");
+  }
+
+  async function saveVersionLabel(versionId: string, label: string) {
+    const res = await fetch(`/api/renders/${renderId}/versions/${versionId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ label }),
+    });
+    if (!res.ok) { toast.error("Nie udało się zapisać etykiety"); return; }
+    setVersionsList(prev => prev.map(v => v.id === versionId ? { ...v, label: label.trim() || null } : v));
+    setEditingVersionLabelId(null);
+  }
+
   async function handleToggleInternal() {
     if (!selectedComment) return;
     const next = !selectedComment.isInternal;
@@ -1359,21 +1476,37 @@ export default function RenderViewer({
     pos: { x: number; y: number },
     targetRenderId: string
   ) {
+    // Optimistic update — show pin immediately before API responds
+    const tempId = `temp-${Date.now()}`;
+    const optimisticPin: ProductPin = { id: tempId, posX: pos.x, posY: pos.y, product };
+    if (targetRenderId === renderId) {
+      setProductPins((prev) => [...prev, optimisticPin]);
+    } else {
+      setLightboxProductPins((prev) => [...prev, optimisticPin]);
+    }
+
     const res = await fetch(`/api/renders/${targetRenderId}/product-pins`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ productId: product.id, posX: pos.x, posY: pos.y }),
     });
     if (!res.ok) {
+      // Rollback optimistic pin
+      if (targetRenderId === renderId) {
+        setProductPins((prev) => prev.filter((p) => p.id !== tempId));
+      } else {
+        setLightboxProductPins((prev) => prev.filter((p) => p.id !== tempId));
+      }
       const data = await res.json().catch(() => ({}));
       toast.error(data.error || t.render.productAddPinError);
       return;
     }
     const pin: ProductPin = await res.json();
+    // Replace optimistic pin with real pin from server
     if (targetRenderId === renderId) {
-      setProductPins((prev) => [...prev, pin]);
+      setProductPins((prev) => prev.map((p) => p.id === tempId ? pin : p));
     } else {
-      setLightboxProductPins((prev) => [...prev, pin]);
+      setLightboxProductPins((prev) => prev.map((p) => p.id === tempId ? pin : p));
     }
   }
 
@@ -1517,6 +1650,8 @@ export default function RenderViewer({
       ? `/api/renders/${id}/product-pins`
       : shareToken
       ? `/api/share/${shareToken}/renders/${id}/product-pins`
+      : clientProjectId
+      ? `/api/client/${clientProjectId}/renders/${id}/product-pins`
       : null;
     if (!url) return;
     setLightboxProductPins([]);
@@ -1698,7 +1833,7 @@ export default function RenderViewer({
               <SplitSquareHorizontal size={15} />
             </button>
             {isDesigner && (
-              <button onClick={() => setShowVersionHistory(true)} title={`Historia wersji${versions.length > 0 ? ` (${versions.length})` : ""}`} className="relative flex items-center justify-center w-8 h-8 rounded-md border border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted transition-colors">
+              <button onClick={() => setShowVersionHistory(true)} title={`Historia wersji${versionsList.length > 0 ? ` (${versionsList.length})` : ""}`} className="relative flex items-center justify-center w-8 h-8 rounded-md border border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted transition-colors">
                 <History size={15} />
                 {versions.length > 0 && (
                   <span className="absolute -top-1 -right-1 min-w-[14px] h-3.5 px-0.5 bg-gray-400 text-white text-[9px] font-bold rounded-full flex items-center justify-center leading-none">{versions.length}</span>
@@ -1804,7 +1939,7 @@ export default function RenderViewer({
         {isDesigner && (
           <button onClick={() => setShowVersionHistory(true)} className="relative flex items-center justify-center w-9 h-9 rounded-md border border-transparent text-gray-500 hover:bg-muted transition-colors flex-shrink-0" title="Historia wersji">
             <History size={16} />
-            {versions.length > 0 && <span className="absolute -top-1 -right-1 min-w-[14px] h-3.5 px-0.5 bg-gray-400 text-white text-[9px] font-bold rounded-full flex items-center justify-center leading-none">{versions.length}</span>}
+            {versionsList.length > 0 && <span className="absolute -top-1 -right-1 min-w-[14px] h-3.5 px-0.5 bg-gray-400 text-white text-[9px] font-bold rounded-full flex items-center justify-center leading-none">{versionsList.length}</span>}
           </button>
         )}
         {/* Download */}
@@ -1975,7 +2110,16 @@ export default function RenderViewer({
               </button>
             </div>
           )}
-          <div className={`absolute inset-0 z-0 flex items-center p-4 sm:p-6 ${isPdf ? "overflow-auto" : "overflow-hidden"}`} style={isPdf ? { overscrollBehavior: "contain" } : undefined}>
+          <div
+            ref={pdfContainerRef}
+            className={`absolute inset-0 z-0 flex items-center p-4 sm:p-6 ${isPdf ? "overflow-auto" : "overflow-hidden"} ${isPdf && mode !== "pin" && !productPinMode ? (pdfIsPanning ? "cursor-grabbing" : "cursor-grab") : ""}`}
+            style={isPdf ? { overscrollBehavior: "contain" } : undefined}
+            onPointerDown={isPdf ? handlePdfPointerDown : undefined}
+            onPointerMove={isPdf ? handlePdfPointerMove : undefined}
+            onPointerUp={isPdf ? handlePdfPointerUp : undefined}
+            onPointerCancel={isPdf ? handlePdfPointerUp : undefined}
+            onClickCapture={isPdf ? handlePdfClickCapture : undefined}
+          >
           <div
             ref={!isPdf ? imgRef : undefined}
             className={`relative select-none max-w-full mx-auto ${(mode === "pin" || productPinMode) && !isPdf ? "cursor-crosshair" : "cursor-default"}`}
@@ -1989,7 +2133,7 @@ export default function RenderViewer({
                 onTotalPages={setPdfTotalPages}
                 onPageChange={(p) => { setPdfPage(p); setPending(null); }}
                 onClick={mode === "pin" ? handleImageClick : openLightbox}
-                className={mode === "pin" ? "cursor-crosshair" : "cursor-pointer"}
+                className={mode === "pin" ? "cursor-crosshair" : pdfIsPanning ? "cursor-grabbing" : "cursor-grab"}
                 maxHeight={pdfMaxHeight}
                 maxWidth={pdfMaxWidth}
                 zoom={pdfZoom}
@@ -2015,11 +2159,11 @@ export default function RenderViewer({
                   key={c.id}
                   className="absolute z-10"
                   style={{ left: `calc(${pinX}% - 14px)`, top: `calc(${pinY}% - 14px)` }}
-                  onMouseEnter={() => !draggingPinRef.current && handleCommentPinMouseEnter(c.id)}
+                  onMouseEnter={(e) => { if (!draggingPinRef.current) { const r = e.currentTarget.getBoundingClientRect(); setCommentPinAnchor({ left: r.left, top: r.top, right: r.right, bottom: r.bottom }); handleCommentPinMouseEnter(c.id); } }}
                   onMouseLeave={handleCommentPinMouseLeave}
                 >
                   <button
-                    className={`w-7 h-7 rounded-full border-2 border-white text-white text-xs font-bold flex items-center justify-center shadow-lg ${dragPos?.id === c.id ? "transition-none cursor-grabbing" : `transition-transform hover:scale-110 ${canDrag ? "cursor-grab" : ""}`} ${c.fromDesigner || c.isInternal ? "bg-slate-400" : STATUS_PIN_COLOR[c.status]} ${selectedId === c.id ? "scale-125 ring-2 ring-white ring-offset-1" : ""}`}
+                    className={`w-7 h-7 rounded-full border-2 border-white text-white text-xs font-bold flex items-center justify-center shadow-lg ${dragPos?.id === c.id ? "transition-none cursor-grabbing" : `transition-transform hover:scale-110 ${canDrag ? "cursor-grab" : ""}`} ${!isDesigner || c.fromDesigner || c.isInternal ? "bg-slate-400" : STATUS_PIN_COLOR[c.status]} ${selectedId === c.id ? "scale-125 ring-2 ring-white ring-offset-1" : ""}`}
                     onMouseDown={canDrag ? (e) => startPinDrag(e, c.id, "comment", imgRef.current) : undefined}
                     onClick={(e) => {
                       e.stopPropagation();
@@ -2035,17 +2179,18 @@ export default function RenderViewer({
                       <Lock size={8} className="absolute -top-1 -right-1 bg-slate-700 rounded-full p-[1px] text-white" />
                     )}
                   </button>
-                  {hoveredCommentPinId === c.id && selectedId !== c.id && (
+                  {hoveredCommentPinId === c.id && selectedId !== c.id && commentPinAnchor && createPortal(
                     <div
-                      className="fixed z-50 bg-card rounded-xl shadow-xl border border-border p-3 w-56"
-                      style={getPopupStyle(c.posX!, c.posY!, imgRef.current, 224, visualVP.height || undefined, visualVP.offsetTop)}
-                      onMouseEnter={() => handleCommentPinMouseEnter(c.id)}
+                      className="fixed z-[9999] bg-card rounded-xl shadow-xl border border-border p-3 w-56"
+                      style={getAnchorTooltipStyle(commentPinAnchor, 224, 140)}
+                      onMouseEnter={() => { handleCommentPinMouseEnter(c.id); }}
                       onMouseLeave={handleCommentPinMouseLeave}
                       onClick={(e) => e.stopPropagation()}
                     >
                       <p className="text-xs font-medium text-muted-foreground mb-1 truncate">{c.author}</p>
+                      {c.title && <p className="text-xs font-semibold text-foreground mb-0.5 truncate">{c.title}</p>}
                       <p className="text-sm text-foreground leading-snug line-clamp-3">
-                        {c.title || c.content}
+                        {c.content}
                       </p>
                       {c.replies.length > 0 && (
                         <p className="text-xs text-muted-foreground mt-1.5">
@@ -2053,7 +2198,7 @@ export default function RenderViewer({
                         </p>
                       )}
                     </div>
-                  )}
+                  , document.body)}
                 </div>
               );
             })}
@@ -2077,10 +2222,10 @@ export default function RenderViewer({
                 >
                   <Armchair size={14} className="text-white" />
                 </div>
-                {hoveredProductPinId === pin.id && (
+                {hoveredProductPinId === pin.id && createPortal(
                   <div
-                    className="fixed z-50 bg-card rounded-xl shadow-xl border border-border p-3 w-56"
-                    style={getPopupStyle(pin.posX, pin.posY, imgRef.current, 224, visualVP.height || undefined, visualVP.offsetTop)}
+                    className="fixed z-[9999] bg-card rounded-xl shadow-xl border border-border p-3 w-56"
+                    style={getPopupStyle(pin.posX, pin.posY, imgRef.current, 224, visualVP.height || undefined, visualVP.offsetTop, 280)}
                     onMouseEnter={() => handleProductPinMouseEnter(pin.id)}
                     onMouseLeave={handleProductPinMouseLeave}
                     onClick={(e) => e.stopPropagation()}
@@ -2112,7 +2257,7 @@ export default function RenderViewer({
                       )}
                     </div>
                   </div>
-                )}
+                , document.body)}
               </div>
               );
             })}
@@ -2245,7 +2390,7 @@ export default function RenderViewer({
                 {/* Thread header */}
                 <div className="flex items-center gap-2 px-4 py-3 border-b flex-shrink-0">
                   <span
-                    className={`w-5 h-5 rounded-full text-white text-[10px] font-bold flex items-center justify-center flex-shrink-0 ${selectedComment.fromDesigner || selectedComment.isInternal ? "bg-slate-400" : STATUS_PIN_COLOR[selectedComment.status]}`}
+                    className={`w-5 h-5 rounded-full text-white text-[10px] font-bold flex items-center justify-center flex-shrink-0 ${!isDesigner || selectedComment.fromDesigner || selectedComment.isInternal ? "bg-slate-400" : STATUS_PIN_COLOR[selectedComment.status]}`}
                   >
                     {selectedIndex + 1}
                   </span>
@@ -2673,7 +2818,7 @@ export default function RenderViewer({
                           }}
                         >
                           <div className="flex items-start gap-2">
-                            <span className={`w-5 h-5 rounded-full text-white text-[10px] font-bold flex items-center justify-center flex-shrink-0 mt-0.5 ${c.fromDesigner || c.isInternal ? "bg-slate-400" : STATUS_PIN_COLOR[c.status]}`}>
+                            <span className={`w-5 h-5 rounded-full text-white text-[10px] font-bold flex items-center justify-center flex-shrink-0 mt-0.5 ${!isDesigner || c.fromDesigner || c.isInternal ? "bg-slate-400" : STATUS_PIN_COLOR[c.status]}`}>
                               {i + 1}
                             </span>
                             <div className="flex-1 min-w-0">
@@ -2820,7 +2965,7 @@ export default function RenderViewer({
                                   setReplyContent("");
                                 }}
                               >
-                                <span className={`w-5 h-5 rounded-full text-white text-[10px] font-bold flex items-center justify-center flex-shrink-0 mt-0.5 ${item.fromDesigner || item.isInternal ? "bg-slate-400" : STATUS_PIN_COLOR[item.status]}`}>
+                                <span className={`w-5 h-5 rounded-full text-white text-[10px] font-bold flex items-center justify-center flex-shrink-0 mt-0.5 ${!isDesigner || item.fromDesigner || item.isInternal ? "bg-slate-400" : STATUS_PIN_COLOR[item.status]}`}>
                                   {pinIdx + 1}
                                 </span>
                                 <div className="flex-1 min-w-0">
@@ -2837,6 +2982,26 @@ export default function RenderViewer({
                                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-2 leading-relaxed">{item.content}</p>
                                   <p className="text-[10px] text-gray-400 mt-0.5">{item.author} · {formatDate(item.createdAt)}</p>
                                 </div>
+                              </div>
+                            );
+                          } else if (item.author === "__system__") {
+                            // System event notification
+                            let eventText = item.content;
+                            try {
+                              const data = JSON.parse(item.content);
+                              if (data.event === "version_upload") {
+                                eventText = `Wgrano wersję ${data.versionNumber}${data.label ? ` — ${data.label}` : ""}`;
+                              } else if (data.event === "version_restore") {
+                                eventText = `Przywrócono wersję ${data.versionNumber}${data.label ? ` — ${data.label}` : ""}`;
+                              }
+                            } catch {}
+                            return (
+                              <div key={item.id} className="flex items-center gap-2 my-2">
+                                <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
+                                <span className="text-[10px] text-gray-400 flex-shrink-0 select-none px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800">
+                                  {eventText} · {formatDate(item.createdAt)}
+                                </span>
+                                <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
                               </div>
                             );
                           } else {
@@ -3346,7 +3511,7 @@ export default function RenderViewer({
                   {hoveredProductPinId === pin.id && createPortal(
                     <div
                       className="fixed z-[200] bg-card rounded-xl shadow-xl border border-border p-3 w-56"
-                      style={getPopupStyle(pin.posX, pin.posY, lightboxImgRef.current, 224)}
+                      style={getPopupStyle(pin.posX, pin.posY, lightboxImgRef.current, 224, undefined, 0, 280)}
                       onMouseEnter={() => handleProductPinMouseEnter(pin.id)}
                       onMouseLeave={handleProductPinMouseLeave}
                       onClick={(e) => e.stopPropagation()}
@@ -3393,11 +3558,11 @@ export default function RenderViewer({
                     key={c.id}
                     className="absolute z-10"
                     style={{ left: `calc(${pinX}% - 14px)`, top: `calc(${pinY}% - 14px)` }}
-                    onMouseEnter={() => !draggingPinRef.current && handleCommentPinMouseEnter(c.id)}
+                    onMouseEnter={(e) => { if (!draggingPinRef.current) { const r = e.currentTarget.getBoundingClientRect(); setCommentPinAnchor({ left: r.left, top: r.top, right: r.right, bottom: r.bottom }); handleCommentPinMouseEnter(c.id); } }}
                     onMouseLeave={handleCommentPinMouseLeave}
                   >
                     <button
-                      className={`w-7 h-7 rounded-full border-2 border-white text-white text-xs font-bold flex items-center justify-center shadow-lg ${dragPos?.id === c.id ? "transition-none cursor-grabbing" : `transition-transform hover:scale-110 ${canDrag ? "cursor-grab" : ""}`} ${c.fromDesigner || c.isInternal ? "bg-slate-400" : STATUS_PIN_COLOR[c.status]} ${selectedId === c.id ? "scale-125 ring-2 ring-white ring-offset-1" : ""}`}
+                      className={`w-7 h-7 rounded-full border-2 border-white text-white text-xs font-bold flex items-center justify-center shadow-lg ${dragPos?.id === c.id ? "transition-none cursor-grabbing" : `transition-transform hover:scale-110 ${canDrag ? "cursor-grab" : ""}`} ${!isDesigner || c.fromDesigner || c.isInternal ? "bg-slate-400" : STATUS_PIN_COLOR[c.status]} ${selectedId === c.id ? "scale-125 ring-2 ring-white ring-offset-1" : ""}`}
                       onMouseDown={canDrag ? (e) => startPinDrag(e, c.id, "comment", lightboxImgRef.current) : undefined}
                       onClick={(e) => {
                         e.stopPropagation();
@@ -3409,10 +3574,10 @@ export default function RenderViewer({
                     >
                       {i + 1}
                     </button>
-                    {hoveredCommentPinId === c.id && selectedId !== c.id && createPortal(
+                    {hoveredCommentPinId === c.id && selectedId !== c.id && commentPinAnchor && createPortal(
                       <div
                         className="fixed z-[200] bg-card rounded-xl shadow-xl border border-border p-3 w-56"
-                        style={getPopupStyle(c.posX!, c.posY!, lightboxImgRef.current, 224)}
+                        style={getAnchorTooltipStyle(commentPinAnchor, 224, 140)}
                         onMouseEnter={() => handleCommentPinMouseEnter(c.id)}
                         onMouseLeave={handleCommentPinMouseLeave}
                         onClick={(e) => e.stopPropagation()}
@@ -3544,7 +3709,7 @@ export default function RenderViewer({
                   onClick={(e) => e.stopPropagation()}
                 >
                   <div className="flex items-center gap-2 px-4 py-3 border-b flex-shrink-0">
-                    <span className={`w-5 h-5 rounded-full text-white text-[10px] font-bold flex items-center justify-center flex-shrink-0 ${selectedComment.fromDesigner || selectedComment.isInternal ? "bg-slate-400" : STATUS_PIN_COLOR[selectedComment.status]}`}>
+                    <span className={`w-5 h-5 rounded-full text-white text-[10px] font-bold flex items-center justify-center flex-shrink-0 ${!isDesigner || selectedComment.fromDesigner || selectedComment.isInternal ? "bg-slate-400" : STATUS_PIN_COLOR[selectedComment.status]}`}>
                       {selectedIndex + 1}
                     </span>
                     {editingTitleMode ? (
@@ -3858,6 +4023,7 @@ export default function RenderViewer({
         }}
         projectId={projectId}
         renderId={pendingProductPos?.renderId}
+        containerKey={folderId ?? roomId}
       />
 
       {/* Version History Modal */}
@@ -4045,7 +4211,7 @@ export default function RenderViewer({
             </div>
 
             <div className="flex-1 overflow-y-auto divide-y divide-border">
-              {versions.length === 0 && (
+              {versionsList.length === 0 && (
                 <div className="flex flex-col items-center justify-center py-12 text-gray-400">
                   <History size={32} className="mb-3 opacity-30" />
                   <p className="text-sm font-medium">{t.render.noVersions}</p>
@@ -4056,13 +4222,14 @@ export default function RenderViewer({
                   </p>
                 </div>
               )}
-              {[...versions].sort((a, b) => b.versionNumber - a.versionNumber).map((v) => {
+              {[...versionsList].sort((a, b) => b.versionNumber - a.versionNumber).map((v) => {
                 const date = new Date(v.archivedAt);
                 const formatted = date.toLocaleDateString(undefined, {
                   day: "2-digit",
                   month: "2-digit",
                   year: "numeric",
                 });
+                const isEditingLabel = editingVersionLabelId === v.id;
                 return (
                   <div key={v.id} className="flex items-center gap-4 px-6 py-4">
                     {isPdf ? (
@@ -4086,12 +4253,47 @@ export default function RenderViewer({
                       </a>
                     )}
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">
-                        {v.label || `Wersja ${v.versionNumber}`}
-                      </p>
+                      {isDesigner && isEditingLabel ? (
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <input
+                            autoFocus
+                            value={editingVersionLabelText}
+                            onChange={e => setEditingVersionLabelText(e.target.value)}
+                            onKeyDown={e => {
+                              if (e.key === "Enter") saveVersionLabel(v.id, editingVersionLabelText);
+                              if (e.key === "Escape") setEditingVersionLabelId(null);
+                            }}
+                            placeholder={`Wersja ${v.versionNumber}`}
+                            className="flex-1 min-w-0 text-sm px-2 py-0.5 rounded border border-primary bg-background focus:outline-none"
+                          />
+                          <button onClick={() => saveVersionLabel(v.id, editingVersionLabelText)} className="text-xs px-2 py-0.5 rounded bg-primary text-primary-foreground">OK</button>
+                          <button onClick={() => setEditingVersionLabelId(null)} className="text-xs px-2 py-0.5 rounded border border-border text-muted-foreground">✕</button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">
+                            {v.label || `Wersja ${v.versionNumber}`}
+                          </p>
+                          {isDesigner && (
+                            <button
+                              onClick={() => { setEditingVersionLabelId(v.id); setEditingVersionLabelText(v.label || ""); }}
+                              className="flex-shrink-0 text-gray-300 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                              title="Edytuj etykietę"
+                            >
+                              <Pencil size={11} />
+                            </button>
+                          )}
+                        </div>
+                      )}
                       <p className="text-xs text-gray-400 mt-0.5">
                         {t.render.replacedOn} {formatted}
                       </p>
+                      {v.pinCount !== undefined && (
+                        <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
+                          <Pin size={10} className="flex-shrink-0" />
+                          {v.pinCount === 0 ? "Brak pinów" : `${v.pinCount} ${v.pinCount === 1 ? "pin" : v.pinCount < 5 ? "piny" : "pinów"}`}
+                        </p>
+                      )}
                     </div>
                     <div className="flex flex-col gap-1.5 flex-shrink-0">
                       {!isPdf && (
@@ -4111,10 +4313,12 @@ export default function RenderViewer({
                       {(isDesigner || onVersionRestore || onVersionRestoreRequest) && (
                         <button
                           onClick={() => handleRestoreVersion(v.id)}
-                          disabled={restoringVersionId === v.id}
+                          disabled={restoringVersionId === v.id || v.id === activeVersionId}
                           className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md border border-border text-gray-600 dark:text-gray-300 hover:bg-muted transition-colors disabled:opacity-50"
                           title={
-                            !isDesigner && !allowClientVersionRestore
+                            v.id === activeVersionId
+                              ? "To jest aktywna wersja"
+                              : !isDesigner && !allowClientVersionRestore
                               ? t.render.requestRestoreDesc
                               : t.render.restoreThisVersion
                           }
@@ -4126,6 +4330,35 @@ export default function RenderViewer({
                             ? t.render.requestRestore
                             : t.render.restore}
                         </button>
+                      )}
+                      {isDesigner && (
+                        confirmDeleteVersionId === v.id ? (
+                          <div className="flex items-center gap-1">
+                            <span className="text-xs text-red-500">Usunąć?</span>
+                            <button
+                              onClick={() => deleteVersion(v.id)}
+                              className="text-xs px-1.5 py-0.5 rounded bg-red-500 text-white hover:bg-red-600 transition-colors"
+                            >
+                              Tak
+                            </button>
+                            <button
+                              onClick={() => setConfirmDeleteVersionId(null)}
+                              className="text-xs px-1.5 py-0.5 rounded border border-border text-muted-foreground hover:bg-muted transition-colors"
+                            >
+                              Nie
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => setConfirmDeleteVersionId(v.id)}
+                            disabled={v.id === activeVersionId}
+                            className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md border border-border text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:border-red-200 dark:hover:border-red-800 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                            title={v.id === activeVersionId ? "Nie można usunąć aktywnej wersji" : "Usuń wersję"}
+                          >
+                            <Trash2 size={12} />
+                            Usuń
+                          </button>
+                        )
                       )}
                     </div>
                   </div>

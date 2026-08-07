@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Hasło nie spełnia wymagań bezpieczeństwa" }, { status: 400 });
   }
 
-  const existing = await prisma.user.findUnique({ where: { email } });
+  const existing = await prisma.user.findFirst({ where: { email, primaryAccountId: null } });
   if (existing) {
     return NextResponse.json(
       { error: "Email już zarejestrowany" },

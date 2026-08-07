@@ -18,8 +18,8 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const user = await prisma.user.findUnique({
-      where: { email },
+    const user = await prisma.user.findFirst({
+      where: { email, primaryAccountId: null },
       select: { id: true, name: true, role: true, email: true },
     });
 

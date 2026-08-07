@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { UserPlus, Trash2, Loader2, Mail, Users, Clock, ChevronRight, Shield, ShieldCheck, X } from "@/components/ui/icons";
 import Link from "next/link";
 import PermissionGroupsTab from "./PermissionGroupsTab";
+import { useT } from "@/lib/i18n";
 
 interface Group {
   id: string;
@@ -44,13 +45,14 @@ function Avatar({ member }: { member: Pick<Member, "name" | "fullName" | "email"
 }
 
 function RoleChip({ systemRole }: { systemRole: string }) {
+  const t = useT();
   if (systemRole === "owner") return (
     <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
-      style={{ background: "#4F46E5", color: "#fff" }}>Właściciel</span>
+      style={{ background: "#4F46E5", color: "#fff" }}>{t.team.ownerRole}</span>
   );
   if (systemRole === "admin") return (
     <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
-      style={{ background: "#4F46E5", color: "#fff" }}>Admin</span>
+      style={{ background: "#4F46E5", color: "#fff" }}>{t.team.adminRole}</span>
   );
   return null;
 }
@@ -63,6 +65,7 @@ function GroupChip({ name }: { name: string }) {
 }
 
 export default function TeamSettings() {
+  const t = useT();
   const [activeTab, setActiveTab] = useState<"members" | "groups">("members");
   const [members, setMembers] = useState<Member[]>([]);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
@@ -105,7 +108,7 @@ export default function TeamSettings() {
 
   async function handleInvite() {
     if (!email.trim()) return;
-    if (!email.includes("@")) { toast.error("Podaj prawidłowy adres e-mail"); return; }
+    if (!email.includes("@")) { toast.error(t.team.invalidEmail); return; }
     setSending(true);
     const res = await fetch("/api/team/invite", {
       method: "POST",
@@ -114,8 +117,8 @@ export default function TeamSettings() {
     });
     const data = await res.json();
     setSending(false);
-    if (!res.ok) { toast.error(data.error || "Nie udało się wysłać zaproszenia"); return; }
-    toast.success("Zaproszenie wysłane");
+    if (!res.ok) { toast.error(data.error || t.team.inviteError); return; }
+    toast.success(t.team.inviteSuccess);
     setEmail("");
     setSelectedGroupId("");
     load();
@@ -125,8 +128,8 @@ export default function TeamSettings() {
     setDeletingId(id);
     const res = await fetch(`/api/team/members/${id}`, { method: "DELETE" });
     setDeletingId(null);
-    if (!res.ok) { toast.error("Nie udało się usunąć"); return; }
-    toast.success("Usunięto z zespołu");
+    if (!res.ok) { toast.error(t.team.deleteError); return; }
+    toast.success(t.team.deletedSuccess);
     load();
   }
 
@@ -137,14 +140,14 @@ export default function TeamSettings() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ systemRole: newRole }),
     });
-    if (!res.ok) { toast.error("Nie udało się zmienić roli"); return; }
-    toast.success(newRole === "admin" ? "Nadano rolę Admin" : "Odebrano rolę Admin");
+    if (!res.ok) { toast.error(t.team.roleChangeError); return; }
+    toast.success(newRole === "admin" ? t.team.makeAdminSuccess : t.team.removeAdminSuccess);
     load();
   }
 
   async function handleChangeGroups(member: Member) {
     // TODO: open group assignment dialog
-    toast.info("Zarządzanie grupami członka — wkrótce");
+    toast.info(t.team.manageGroupsComingSoon);
   }
 
   const totalUsed = members.length + invitations.length;
@@ -165,15 +168,15 @@ export default function TeamSettings() {
       {/* Page header row — title + seats card on the right */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold">Użytkownicy</h1>
+          <h1 className="text-xl font-bold">{t.team.usersTitle}</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Zarządzaj członkami swojego zespołu i ich uprawnieniami. Zaproszeni użytkownicy widzą projekty i moduły zgodnie ze swoimi grupami.
+            {t.team.membersDesc}
           </p>
         </div>
         {!loading && canInvite && memberLimit !== null && (
           <div className="sm:shrink-0 border border-border rounded-xl p-4 sm:w-56 space-y-2">
             <div className="flex items-center justify-between gap-2">
-              <p className="text-sm font-semibold text-foreground">Miejsca w zespole</p>
+              <p className="text-sm font-semibold text-foreground">{t.team.seatsTitle}</p>
               <span className="text-sm font-semibold text-foreground">{totalUsed}/{memberLimit}</span>
             </div>
             <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
@@ -184,10 +187,10 @@ export default function TeamSettings() {
             </div>
             {atLimit && (
               <p className="text-xs text-muted-foreground">
-                Potrzebujesz więcej miejsc?{" "}
+                {t.team.needMoreSeats}{" "}
                 <a href="https://veedeck.com/kontakt" target="_blank" rel="noopener noreferrer"
                   className="text-primary hover:underline font-medium">
-                  Skontaktuj się z nami ↗
+                  {t.team.contactUs} ↗
                 </a>
               </p>
             )}
@@ -201,9 +204,9 @@ export default function TeamSettings() {
           <div className="flex items-start gap-3">
             <Users size={18} className="text-muted-foreground shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm font-semibold text-foreground">Członkowie zespołu dostępni w planie Studio</p>
+              <p className="text-sm font-semibold text-foreground">{t.team.studioMembersFeature}</p>
               <p className="text-sm text-muted-foreground mt-1">
-                Plan Solo przeznaczony jest dla freelancerów pracujących samodzielnie. Aby dodać współpracowników, przejdź na plan Studio.
+                {t.team.soloDesc}
               </p>
             </div>
           </div>
@@ -211,7 +214,7 @@ export default function TeamSettings() {
             href="/ustawienia/plan-i-rozliczenia"
             className="self-start flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity"
           >
-            Przejdź na Studio
+            {t.team.upgradeToStudio}
             <ChevronRight size={14} />
           </Link>
         </div>
@@ -223,10 +226,10 @@ export default function TeamSettings() {
         <>
           <div className="flex border-b border-border -mb-2">
             <button onClick={() => setActiveTab("members")} className={tabClass(activeTab === "members")}>
-              Członkowie
+              {t.team.membersTab}
             </button>
             <button onClick={() => setActiveTab("groups")} className={tabClass(activeTab === "groups")}>
-              Grupy uprawnień
+              {t.team.groupsTab}
             </button>
           </div>
 
@@ -237,15 +240,15 @@ export default function TeamSettings() {
               {/* Invite form */}
               {!atLimit && (
                 <div>
-                  <h2 className="text-sm font-semibold mb-1">Zaproś do zespołu</h2>
-                  <p className="text-xs text-muted-foreground mb-4">Zaproszony użytkownik otrzyma e-mail z linkiem do dołączenia.</p>
+                  <h2 className="text-sm font-semibold mb-1">{t.team.inviteToTeam}</h2>
+                  <p className="text-xs text-muted-foreground mb-4">{t.team.inviteToTeamDesc}</p>
                   <div className="flex gap-2 flex-wrap">
                     <input
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && handleInvite()}
-                      placeholder="adres@email.com"
+                      placeholder={t.team.inviteEmailPlaceholder}
                       className="flex-1 min-w-[200px] px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40"
                     />
                     {groups.length > 0 && (
@@ -254,7 +257,7 @@ export default function TeamSettings() {
                         onChange={(e) => setSelectedGroupId(e.target.value)}
                         className="h-9 px-3 text-sm border border-input rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40"
                       >
-                        <option value="">Bez grupy</option>
+                        <option value="">{t.team.noGroupOption}</option>
                         {groups.map((g) => (
                           <option key={g.id} value={g.id}>{g.name}</option>
                         ))}
@@ -267,7 +270,7 @@ export default function TeamSettings() {
                       style={{ background: "#4F46E5", color: "#fff" }}
                     >
                       {sending ? <Loader2 size={14} className="animate-spin" /> : <UserPlus size={14} />}
-                      Zaproś
+                      {t.team.inviteBtn}
                     </button>
                   </div>
                 </div>
@@ -278,7 +281,7 @@ export default function TeamSettings() {
                 <div>
                   <h2 className="text-sm font-semibold mb-3 flex items-center gap-2">
                     <Clock size={14} className="text-muted-foreground" />
-                    Oczekujące zaproszenia
+                    {t.team.pendingInvites}
                   </h2>
                   <div className="border border-border rounded-xl overflow-hidden">
                     {invitations.map((inv, i) => (
@@ -292,7 +295,7 @@ export default function TeamSettings() {
                             <p className="text-sm truncate">{inv.email}</p>
                             <div className="flex items-center gap-2 flex-wrap">
                               <p className="text-xs text-muted-foreground">
-                                Wygasa: {new Date(inv.expiresAt).toLocaleDateString("pl-PL")}
+                                {t.team.expiresPrefix}: {new Date(inv.expiresAt).toLocaleDateString("pl-PL")}
                               </p>
                               {inv.group && <GroupChip name={inv.group.name} />}
                             </div>
@@ -302,7 +305,7 @@ export default function TeamSettings() {
                           onClick={() => handleDelete(inv.id)}
                           disabled={deletingId === inv.id}
                           className="p-1.5 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-                          title="Cofnij zaproszenie"
+                          title={t.team.revokeInvite}
                         >
                           {deletingId === inv.id ? <Loader2 size={14} className="animate-spin" /> : <X size={14} />}
                         </button>
@@ -316,15 +319,15 @@ export default function TeamSettings() {
               <div>
                 <h2 className="text-sm font-semibold mb-3 flex items-center gap-2">
                   <Users size={14} className="text-muted-foreground" />
-                  Aktywni członkowie
+                  {t.team.activeMembers}
                 </h2>
                 {loading ? (
                   <div className="flex justify-center py-8"><Loader2 size={20} className="animate-spin text-muted-foreground" /></div>
                 ) : members.length === 0 ? (
                   <div className="border-2 border-dashed border-border rounded-xl p-8 text-center">
                     <Users size={24} className="mx-auto mb-2 text-muted-foreground" />
-                    <p className="text-sm text-muted-foreground">Brak członków zespołu</p>
-                    <p className="text-xs text-muted-foreground mt-1">Wyślij zaproszenie, aby dodać pierwszego współpracownika.</p>
+                    <p className="text-sm text-muted-foreground">{t.team.noMembers}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{t.team.noMembersHint}</p>
                   </div>
                 ) : (
                   <div className="border border-border rounded-xl overflow-hidden">
@@ -345,7 +348,7 @@ export default function TeamSettings() {
                               ))}
                               {!member.systemRole || (member.systemRole === "member" && member.permissionGroups.length === 0) ? (
                                 <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
-                                  bez grupy
+                                  {t.team.noGroup}
                                 </span>
                               ) : null}
                             </div>
@@ -359,7 +362,7 @@ export default function TeamSettings() {
                               <button
                                 onClick={() => handleToggleAdmin(member)}
                                 className="p-1.5 rounded-md text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
-                                title={member.systemRole === "admin" ? "Odbierz rolę Admin" : "Nadaj rolę Admin"}
+                                title={member.systemRole === "admin" ? t.team.revokeAdminTitle : t.team.grantAdminTitle}
                               >
                                 <ShieldCheck size={14} />
                               </button>
@@ -367,7 +370,7 @@ export default function TeamSettings() {
                                 onClick={() => handleDelete(member.id)}
                                 disabled={deletingId === member.id}
                                 className="p-1.5 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-                                title="Usuń z zespołu"
+                                title={t.team.removeFromTeam}
                               >
                                 {deletingId === member.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
                               </button>
@@ -382,7 +385,7 @@ export default function TeamSettings() {
 
               {/* Info note */}
               <p className="text-xs text-muted-foreground bg-muted/40 rounded-lg px-3 py-2">
-                Osoba może należeć do wielu grup — uprawnienia się sumują, obowiązuje najszerszy poziom. Grupy edytujesz w zakładce Grupy uprawnień.
+                {t.team.membersGroupInfo}
               </p>
             </div>
           )}
