@@ -48,6 +48,9 @@ export const pl = {
     trialExpiresToday: "Trial wygasa dzi\u015b",
     daySg: "dzie\u0144",
     dayPl: "dni",
+    justNow: "przed chwilą",
+    minutesAgo: "min. temu",
+    hoursAgo: "godz. temu",
   },
   lang: {
     label: "Język interfejsu",

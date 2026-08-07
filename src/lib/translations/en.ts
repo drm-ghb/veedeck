@@ -50,6 +50,9 @@ export const en: TranslationKeys = {
     trialExpiresToday: "Trial expires today",
     daySg: "day",
     dayPl: "days",
+    justNow: "just now",
+    minutesAgo: "min ago",
+    hoursAgo: "hrs ago",
   },
   lang: {
     label: "Interface language",
