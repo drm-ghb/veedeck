@@ -1553,7 +1553,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
       node.setAttr("stroke", natStroke);
       node.setAttr("strokeWidth", natSW);
     }
-    layer?.batchDraw();
+    layer?.draw();
     const konvaUrl = stageRef.current.toDataURL({ x: sx, y: sy, width: sw, height: sh, pixelRatio } as Parameters<typeof stageRef.current.toDataURL>[0]);
     uiCircles.forEach((n: Konva.Node) => n.show());
     transformerRef.current?.visible(transformerVisible);
@@ -1562,18 +1562,23 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
     hiddenByFilter.forEach(n => n.show());
     selStrokeBackup.forEach(({ node, stroke, sw }) => { node.setAttr("stroke", stroke); node.setAttr("strokeWidth", sw); });
     layer?.batchDraw();
+    const transparent = !!onlyIds;
     const canvas = document.createElement("canvas");
     canvas.width = Math.round(sw * pixelRatio);
     canvas.height = Math.round(sh * pixelRatio);
     const ctx = canvas.getContext("2d")!;
-    ctx.fillStyle = canvasBg ?? "#ffffff";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    if (!transparent) {
+      ctx.fillStyle = canvasBg ?? "#ffffff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
     await new Promise<void>(resolve => {
       const img = new window.Image();
       img.onload = () => { ctx.drawImage(img, 0, 0); resolve(); };
       img.src = konvaUrl;
     });
-    const url = canvas.toDataURL("image/jpeg", 0.92);
+    const url = transparent
+      ? canvas.toDataURL("image/png")
+      : canvas.toDataURL("image/jpeg", 0.92);
     const link = document.createElement("a");
     link.download = fileName;
     link.href = url;
@@ -1597,7 +1602,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
     const sw = (maxX - minX + pad * 2) * stageScale;
     const sh = (maxY - minY + pad * 2) * stageScale;
     const baseName = (title || "zaznaczenie").replace(/[^a-z0-9_\-]/gi, "_");
-    await doExportRegion(sx, sy, sw, sh, `${baseName}.jpg`, selectedIds);
+    await doExportRegion(sx, sy, sw, sh, `${baseName}.png`, selectedIds);
   }
 
   async function exportFullCanvas() {
