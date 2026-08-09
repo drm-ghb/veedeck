@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,7 +15,6 @@ export default function CompleteProfilePage() {
   const [fullName, setFullName] = useState("");
   const [companyName, setCompanyName] = useState(session?.user?.name ?? "");
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -39,10 +37,10 @@ export default function CompleteProfilePage() {
       return;
     }
 
-    // Refresh JWT so needsNameSetup is cleared
+    // Refresh JWT so needsNameSetup is cleared, then hard-navigate
+    // (soft router.push may arrive before the updated cookie is set)
     await update();
-    router.push("/panel-glowny");
-    router.refresh();
+    window.location.href = "/panel-glowny";
   }
 
   return (
