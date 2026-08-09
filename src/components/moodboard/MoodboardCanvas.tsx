@@ -1510,7 +1510,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
     return { minX: el.x, minY: el.y, maxX: el.x + (el.width ?? 0), maxY: el.y + (el.height ?? 0) };
   }
 
-  async function doExportRegion(sx: number, sy: number, sw: number, sh: number, fileName: string) {
+  async function doExportRegion(sx: number, sy: number, sw: number, sh: number, fileName: string, onlyIds?: string[]) {
     if (!stageRef.current || sw <= 0 || sh <= 0) return;
     const pixelRatio = 2;
     const layer = stageRef.current.getLayers()[0];
@@ -1525,6 +1525,19 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
     // Hide "+" template slot icons (Konva Text nodes with text="+")
     const plusTexts = ((layer?.find("Text") ?? []) as Konva.Node[]).filter(n => (n as unknown as { text: () => string }).text?.() === "+");
     plusTexts.forEach(n => n.hide());
+    // If onlyIds provided, hide all elements not in the list
+    const hiddenByFilter: Konva.Node[] = [];
+    if (onlyIds) {
+      for (const el of elements) {
+        if (!onlyIds.includes(el.id)) {
+          const node = stageRef.current.findOne("#" + el.id);
+          if (node && node.isVisible()) {
+            node.hide();
+            hiddenByFilter.push(node);
+          }
+        }
+      }
+    }
     // Clear selection strokes from selected nodes (save originals for restore)
     const selStrokeBackup: { node: Konva.Node; stroke: string; sw: number }[] = [];
     for (const sid of selectedIds) {
@@ -1546,6 +1559,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
     transformerRef.current?.visible(transformerVisible);
     frameBorderNodes.forEach(n => n.show());
     plusTexts.forEach(n => n.show());
+    hiddenByFilter.forEach(n => n.show());
     selStrokeBackup.forEach(({ node, stroke, sw }) => { node.setAttr("stroke", stroke); node.setAttr("strokeWidth", sw); });
     layer?.batchDraw();
     const canvas = document.createElement("canvas");
@@ -1583,7 +1597,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
     const sw = (maxX - minX + pad * 2) * stageScale;
     const sh = (maxY - minY + pad * 2) * stageScale;
     const baseName = (title || "zaznaczenie").replace(/[^a-z0-9_\-]/gi, "_");
-    await doExportRegion(sx, sy, sw, sh, `${baseName}.jpg`);
+    await doExportRegion(sx, sy, sw, sh, `${baseName}.jpg`, selectedIds);
   }
 
   async function exportFullCanvas() {
