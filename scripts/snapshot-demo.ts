@@ -234,6 +234,7 @@ async function main() {
           id: rn.id,
           name: rn.name,
           fileUrl: rn.fileUrl,
+          fileKey: rn.fileKey,
           fileType: rn.fileType,
           status: rn.status,
           pinned: rn.pinned,

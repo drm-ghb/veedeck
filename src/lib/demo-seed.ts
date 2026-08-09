@@ -517,12 +517,13 @@ async function seedDemoData(userId: string) {
       return snapshotRoom.renders.map((r, idx) => ({
         name: r.name,
         fileUrl: r.fileUrl,
+        fileKey: (r as any).fileKey ?? "",
         fileType: r.fileType as any,
         status: r.status as any,
         pinned: r.pinned,
         order: r.order ?? idx,
         roomId,
-        userId,
+        projectId: project1.id,
       }));
     });
     if (renderInserts.length > 0) {
