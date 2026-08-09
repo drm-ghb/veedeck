@@ -1596,7 +1596,20 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
       // and the result is transparent (no background).
       const node = stageRef.current.findOne("#" + selectedIds[0]);
       if (!node) return;
+      const el = elements.find(e => e.id === selectedIds[0]);
+      // Temporarily remove selection stroke (violet #6366f1 applied when isSelected)
+      const origStroke: string = node.getAttr("stroke") || "";
+      const origSW: number = node.getAttr("strokeWidth") || 0;
+      const natStroke = el?.type === "image" ? "" : (el?.stroke && el.stroke !== "transparent" ? el.stroke : "");
+      const natSW = el?.type === "image" ? 0 : (el?.strokeWidth ?? 0);
+      node.setAttr("stroke", natStroke);
+      node.setAttr("strokeWidth", natSW);
+      node.getLayer()?.draw();
       const url = node.toDataURL({ pixelRatio });
+      // Restore
+      node.setAttr("stroke", origStroke);
+      node.setAttr("strokeWidth", origSW);
+      node.getLayer()?.batchDraw();
       const link = document.createElement("a");
       link.download = `${baseName}.png`;
       link.href = url;
