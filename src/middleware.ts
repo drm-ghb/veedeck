@@ -13,110 +13,104 @@ export default auth((req) => {
   const isClient = isLoggedIn && role === "client";
   const isContractor = isLoggedIn && role === "contractor";
 
+  let redirectTo: URL | null = null;
+
   // --- Admin routes ---
 
-  // Redirect already-logged-in admin away from /admin/login
   if (pathname === "/admin/login" && isLoggedIn && isAdmin) {
-    return NextResponse.redirect(new URL("/admin/users", req.url));
-  }
-
-  // Protect all /admin/* except /admin/login — require admin session
-  if (pathname.startsWith("/admin") && pathname !== "/admin/login") {
+    redirectTo = new URL("/admin/users", req.url);
+  } else if (pathname.startsWith("/admin") && pathname !== "/admin/login") {
     if (!isLoggedIn || !isAdmin) {
-      return NextResponse.redirect(new URL("/admin/login", req.url));
+      redirectTo = new URL("/admin/login", req.url);
     }
-  }
-
-  // Block admin users from accessing regular app routes
-  if (
+  } else if (
     isLoggedIn &&
     isAdmin &&
     !pathname.startsWith("/admin") &&
     !pathname.startsWith("/api/")
   ) {
-    return NextResponse.redirect(new URL("/admin/users", req.url));
+    redirectTo = new URL("/admin/users", req.url);
   }
 
   // --- Contractor routes ---
 
-  // Block contractors from non-contractor areas
-  if (
-    isContractor &&
-    !pathname.startsWith("/wykonawca") &&
-    !pathname.startsWith("/api/") &&
-    !pathname.startsWith("/login") &&
-    !pathname.startsWith("/p/") &&
-    !pathname.startsWith("/_next")
-  ) {
-    return NextResponse.redirect(new URL("/wykonawca", req.url));
-  }
-
-  // Protect /wykonawca/* — require authenticated contractor only
-  if (pathname.startsWith("/wykonawca") && !pathname.startsWith("/api/")) {
-    if (!isLoggedIn) {
-      return NextResponse.redirect(new URL("/login/wykonawca", req.url));
-    }
-    if (!isContractor) {
-      return NextResponse.redirect(new URL("/panel-glowny", req.url));
+  if (!redirectTo) {
+    if (
+      isContractor &&
+      !pathname.startsWith("/wykonawca") &&
+      !pathname.startsWith("/api/") &&
+      !pathname.startsWith("/login") &&
+      !pathname.startsWith("/p/") &&
+      !pathname.startsWith("/_next")
+    ) {
+      redirectTo = new URL("/wykonawca", req.url);
+    } else if (pathname.startsWith("/wykonawca") && !pathname.startsWith("/api/")) {
+      if (!isLoggedIn) {
+        redirectTo = new URL("/login/wykonawca", req.url);
+      } else if (!isContractor) {
+        redirectTo = new URL("/panel-glowny", req.url);
+      }
     }
   }
 
   // --- Client routes ---
 
-  // Block clients from designer-only areas
-  if (
-    isClient &&
-    !pathname.startsWith("/client") &&
-    !pathname.startsWith("/share/") &&
-    !pathname.startsWith("/api/") &&
-    !pathname.startsWith("/login") &&
-    !pathname.startsWith("/p/") &&
-    !pathname.startsWith("/_next")
-  ) {
-    return NextResponse.redirect(new URL("/client", req.url));
-  }
-
-  // Protect /client/* — require authenticated client or designer
-  if (pathname.startsWith("/client") && !pathname.startsWith("/api/")) {
-    if (!isLoggedIn) {
-      const loginUrl = new URL("/login/klient", req.url);
-      loginUrl.searchParams.set("callbackUrl", req.nextUrl.pathname + req.nextUrl.search);
-      return NextResponse.redirect(loginUrl);
+  if (!redirectTo) {
+    if (
+      isClient &&
+      !pathname.startsWith("/client") &&
+      !pathname.startsWith("/share/") &&
+      !pathname.startsWith("/api/") &&
+      !pathname.startsWith("/login") &&
+      !pathname.startsWith("/p/") &&
+      !pathname.startsWith("/_next")
+    ) {
+      redirectTo = new URL("/client", req.url);
+    } else if (pathname.startsWith("/client") && !pathname.startsWith("/api/")) {
+      if (!isLoggedIn) {
+        const loginUrl = new URL("/login/klient", req.url);
+        loginUrl.searchParams.set("callbackUrl", req.nextUrl.pathname + req.nextUrl.search);
+        redirectTo = loginUrl;
+      }
     }
   }
 
   // --- Team member module access ---
-  const memberHiddenModules: string[] = (session?.user as any)?.memberHiddenModules ?? [];
-  if (memberHiddenModules.length > 0 && !pathname.startsWith("/api/")) {
-    const MODULE_ROUTES: Record<string, string> = {
-      renderflow: "/projectflow",
-      klienci: "/klienci",
-      listy: "/listy-zakupowe",
-      wykonawcy: "/wykonawcy",
-      zadania: "/zadania",
-      produkty: "/produkty",
-      kalendarz: "/kalendarz",
-      notatnik: "/notatnik",
-      dyskusje: "/dyskusje",
-      ankiety: "/ankiety",
-      veezard: "/veezard",
-    };
-    for (const [slug, route] of Object.entries(MODULE_ROUTES)) {
-      if (memberHiddenModules.includes(slug) && pathname.startsWith(route)) {
-        return NextResponse.redirect(new URL("/panel-glowny", req.url));
+
+  if (!redirectTo) {
+    const memberHiddenModules: string[] = (session?.user as any)?.memberHiddenModules ?? [];
+    if (memberHiddenModules.length > 0 && !pathname.startsWith("/api/")) {
+      const MODULE_ROUTES: Record<string, string> = {
+        renderflow: "/projectflow",
+        klienci: "/klienci",
+        listy: "/listy-zakupowe",
+        wykonawcy: "/wykonawcy",
+        zadania: "/zadania",
+        produkty: "/produkty",
+        kalendarz: "/kalendarz",
+        notatnik: "/notatnik",
+        dyskusje: "/dyskusje",
+        ankiety: "/ankiety",
+        veezard: "/veezard",
+      };
+      for (const [slug, route] of Object.entries(MODULE_ROUTES)) {
+        if (memberHiddenModules.includes(slug) && pathname.startsWith(route)) {
+          redirectTo = new URL("/panel-glowny", req.url);
+          break;
+        }
       }
     }
   }
 
   // Backward compat: redirect /dashboard → /panel-glowny
-  if (pathname === "/dashboard") {
-    return NextResponse.redirect(new URL("/panel-glowny", req.url));
+  if (!redirectTo && pathname === "/dashboard") {
+    redirectTo = new URL("/panel-glowny", req.url);
   }
 
   // --- Regular user routes ---
 
-  // Redirect to complete-profile if needsNameSetup
   if (
+    !redirectTo &&
     session?.user &&
     !isAdmin &&
     !isClient &&
@@ -125,8 +119,29 @@ export default auth((req) => {
     !pathname.startsWith("/complete-profile") &&
     !pathname.startsWith("/api/")
   ) {
-    return NextResponse.redirect(new URL("/complete-profile", req.url));
+    redirectTo = new URL("/complete-profile", req.url);
   }
+
+  // Build response
+  const response = redirectTo
+    ? NextResponse.redirect(redirectTo)
+    : NextResponse.next();
+
+  // Signal cookie readable by veedeck.com static site JS
+  const cookieOpts = {
+    domain: ".veedeck.com",
+    path: "/",
+    sameSite: "lax" as const,
+    secure: true,
+    httpOnly: false,
+  };
+  if (isLoggedIn) {
+    response.cookies.set("vd_logged_in", "1", { ...cookieOpts, maxAge: 60 * 60 * 24 * 30 });
+  } else {
+    response.cookies.set("vd_logged_in", "", { ...cookieOpts, maxAge: 0 });
+  }
+
+  return response;
 });
 
 export const config = {
