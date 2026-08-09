@@ -1586,8 +1586,25 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
   }
 
   async function exportSelection() {
-    if (selectedIds.length === 0) return;
+    if (selectedIds.length === 0 || !stageRef.current) return;
     setExportDropdownOpen(false);
+    const pixelRatio = 2;
+    const baseName = (title || "element").replace(/[^a-z0-9_\-]/gi, "_");
+
+    if (selectedIds.length === 1) {
+      // Single element: export just the node — transformer is a sibling so it won't appear,
+      // and the result is transparent (no background).
+      const node = stageRef.current.findOne("#" + selectedIds[0]);
+      if (!node) return;
+      const url = node.toDataURL({ pixelRatio });
+      const link = document.createElement("a");
+      link.download = `${baseName}.png`;
+      link.href = url;
+      link.click();
+      return;
+    }
+
+    // Multiple selected elements: hide everything else, export region as transparent PNG
     const selected = elements.filter(e => selectedIds.includes(e.id));
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
     for (const el of selected) {
@@ -1601,7 +1618,6 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
     const sy = (minY - pad) * stageScale + stagePos.y;
     const sw = (maxX - minX + pad * 2) * stageScale;
     const sh = (maxY - minY + pad * 2) * stageScale;
-    const baseName = (title || "zaznaczenie").replace(/[^a-z0-9_\-]/gi, "_");
     await doExportRegion(sx, sy, sw, sh, `${baseName}.png`, selectedIds);
   }
 
