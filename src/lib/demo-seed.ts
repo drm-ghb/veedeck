@@ -464,11 +464,9 @@ async function seedDemoData(userId: string) {
   await Promise.all([
     prisma.room.createMany({
       data: [
-        { name: "Salon", type: "SALON", order: 0, projectId: project1.id },
-        { name: "Kuchnia", type: "KUCHNIA", order: 1, projectId: project1.id },
-        { name: "Sypialnia główna", type: "SYPIALNIA", order: 2, projectId: project1.id },
-        { name: "Łazienka", type: "INNE", order: 3, projectId: project1.id },
-        { name: "Przedpokój", type: "INNE", order: 4, projectId: project1.id },
+        { name: "Rendery", type: "INNE", order: 0, projectId: project1.id },
+        { name: "OFERTY + WYCENY", type: "INNE", order: 1, projectId: project1.id },
+        { name: "Rysunki techniczne", type: "INNE", order: 2, projectId: project1.id },
       ],
     }),
     prisma.room.createMany({
@@ -507,6 +505,30 @@ async function seedDemoData(userId: string) {
       ],
     }),
   ]);
+
+  // ─── RENDERS (from snapshot) ──────────────────────────────────────────────
+  const project1Rooms = await prisma.room.findMany({ where: { projectId: project1.id } });
+  const roomByName: Record<string, string> = Object.fromEntries(project1Rooms.map((r) => [r.name, r.id]));
+  const snapshotProject1 = snapshot.projects.find((p) => p.title === "Apartament Nowak – Kraków");
+  if (snapshotProject1) {
+    const renderInserts = snapshotProject1.rooms.flatMap((snapshotRoom) => {
+      const roomId = roomByName[snapshotRoom.name];
+      if (!roomId) return [];
+      return snapshotRoom.renders.map((r, idx) => ({
+        name: r.name,
+        fileUrl: r.fileUrl,
+        fileType: r.fileType as any,
+        status: r.status as any,
+        pinned: r.pinned,
+        order: r.order ?? idx,
+        roomId,
+        userId,
+      }));
+    });
+    if (renderInserts.length > 0) {
+      await prisma.render.createMany({ data: renderInserts as any });
+    }
+  }
 
   // ─── LOOKUP MAPS ──────────────────────────────────────────────────────────
   const projectByTitle: Record<string, string> = Object.fromEntries(
