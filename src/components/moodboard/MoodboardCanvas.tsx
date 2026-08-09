@@ -3752,7 +3752,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
 
         {/* Right sidebar */}
         {rightSidebarOpen && (
-          <div className="w-96 border-l border-border bg-background flex flex-col shrink-0">
+          <div className="w-[440px] border-l border-border bg-background flex flex-col shrink-0">
             {/* Tabs */}
             <div className="flex border-b border-border">
               <div className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-colors cursor-pointer ${rightTab === "projectflow" ? "border-b-2 border-primary text-primary" : "text-muted-foreground hover:text-foreground"}`}
