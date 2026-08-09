@@ -2315,7 +2315,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
 
           {/* Canvas background pattern */}
           {gridMode !== "none" && (
-            <svg className="absolute inset-0 w-full h-full pointer-events-none" xmlns="http://www.w3.org/2000/svg">
+            <svg suppressHydrationWarning className="absolute inset-0 w-full h-full pointer-events-none" xmlns="http://www.w3.org/2000/svg">
               <defs>
                 {gridMode === "dots" && (
                   <pattern id="bg-pattern" x={stagePos.x % (20 * stageScale)} y={stagePos.y % (20 * stageScale)} width={20 * stageScale} height={20 * stageScale} patternUnits="userSpaceOnUse">
