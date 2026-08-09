@@ -171,6 +171,20 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   events: {
+    async createUser({ user }) {
+      // Notify admin whenever a new user account is created (including via Google OAuth)
+      try {
+        const { notifyAdminNewUser } = await import("./email");
+        const createdAt = (user as any).createdAt ?? new Date();
+        await notifyAdminNewUser({
+          fullName: (user as any).fullName ?? user.name ?? user.email ?? "Nieznany",
+          email: user.email ?? "",
+          createdAt,
+        });
+      } catch (e) {
+        console.error("[auth] createUser notifyAdminNewUser error:", e);
+      }
+    },
     async linkAccount({ user, account }) {
       // When a Google account is linked for the first time, require the user to set their name
       if (account.provider === "google") {
