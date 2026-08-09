@@ -73,7 +73,12 @@ async function notifyDesignerFirstLogin(userId: string, role: string): Promise<v
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
-  adapter: PrismaAdapter(prisma),
+  adapter: {
+    ...PrismaAdapter(prisma),
+    // Override getUserByEmail to use findFirst (email is not @unique in schema due to legacy data)
+    getUserByEmail: (email: string) =>
+      prisma.user.findFirst({ where: { email } }),
+  },
   providers: [
     ...(process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET
       ? [GoogleProvider({
