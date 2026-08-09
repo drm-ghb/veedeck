@@ -11,7 +11,7 @@ import { useT } from "@/lib/i18n";
 
 export default function CompleteProfilePage() {
   const t = useT();
-  const { data: session, update } = useSession();
+  const { data: session } = useSession();
   const [fullName, setFullName] = useState("");
   const [companyName, setCompanyName] = useState(session?.user?.name ?? "");
   const [loading, setLoading] = useState(false);
@@ -37,9 +37,8 @@ export default function CompleteProfilePage() {
       return;
     }
 
-    // Refresh JWT so needsNameSetup is cleared, then hard-navigate
-    // (soft router.push may arrive before the updated cookie is set)
-    await update();
+    // API sets profile-complete cookie, middleware will skip needsNameSetup redirect.
+    // Sign out so next login issues a fresh JWT without needsNameSetup.
     window.location.href = "/panel-glowny";
   }
 

@@ -23,5 +23,9 @@ export async function POST(req: NextRequest) {
     },
   });
 
-  return NextResponse.json({ ok: true });
+  const res = NextResponse.json({ ok: true });
+  // Short-lived bypass cookie so middleware skips needsNameSetup redirect
+  // for the next navigation (JWT cookie may not refresh in time client-side)
+  res.cookies.set("profile-complete", "1", { path: "/", maxAge: 60, httpOnly: true, sameSite: "lax" });
+  return res;
 }

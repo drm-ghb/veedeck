@@ -109,6 +109,7 @@ export default auth((req) => {
 
   // --- Regular user routes ---
 
+  const profileComplete = req.cookies.get("profile-complete")?.value === "1";
   if (
     !redirectTo &&
     session?.user &&
@@ -116,6 +117,7 @@ export default auth((req) => {
     !isClient &&
     !isContractor &&
     (session.user as any).needsNameSetup &&
+    !profileComplete &&
     !pathname.startsWith("/complete-profile") &&
     !pathname.startsWith("/api/")
   ) {
