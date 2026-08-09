@@ -531,6 +531,47 @@ async function seedDemoData(userId: string) {
     }
   }
 
+  // ─── RENDER COMMENTS (from snapshot) ─────────────────────────────────────
+  const createdRenders = await prisma.render.findMany({ where: { projectId: project1.id } });
+  const renderIdByName: Record<string, string> = Object.fromEntries(createdRenders.map((r) => [r.name, r.id]));
+  if (snapshotProject1) {
+    for (const snapshotRoom of snapshotProject1.rooms) {
+      for (const snapshotRender of snapshotRoom.renders) {
+        const renderId = renderIdByName[snapshotRender.name];
+        const comments = (snapshotRender as any).comments ?? [];
+        if (!renderId || !comments.length) continue;
+        for (const c of comments) {
+          const comment = await prisma.comment.create({
+            data: {
+              renderId,
+              content: c.content,
+              author: c.author,
+              posX: c.posX ?? null,
+              posY: c.posY ?? null,
+              status: c.status as any,
+              title: c.title ?? null,
+              isInternal: c.isInternal ?? false,
+              isAiSummary: c.isAiSummary ?? false,
+              fromDesigner: c.fromDesigner ?? false,
+              posPage: c.posPage ?? null,
+            },
+          });
+          if (c.replies?.length) {
+            await prisma.reply.createMany({
+              data: c.replies.map((rep: any) => ({
+                commentId: comment.id,
+                content: rep.content,
+                author: rep.author,
+                replyToAuthor: rep.replyToAuthor ?? null,
+                replyToContent: rep.replyToContent ?? null,
+              })),
+            });
+          }
+        }
+      }
+    }
+  }
+
   // ─── LOOKUP MAPS ──────────────────────────────────────────────────────────
   const projectByTitle: Record<string, string> = Object.fromEntries(
     [project1, project2, project3, project4, project5].map((p) => [p.title, p.id])
@@ -926,6 +967,29 @@ async function seedDemoData(userId: string) {
           })),
         });
       }
+    }
+  }
+
+  // ─── MOODBOARDS ──────────────────────────────────────────────────────────
+  if ((snapshot as any).moodboards?.length) {
+    const allClients = await prisma.client.findMany({ where: { designerId: userId }, select: { id: true, name: true } });
+    const allProjects = await prisma.project.findMany({ where: { userId }, select: { id: true, title: true } });
+
+    for (const m of (snapshot as any).moodboards) {
+      const clientId = m.clientName ? (allClients.find((c: any) => c.name === m.clientName)?.id ?? null) : null;
+      const projectId = m.projectTitle ? (allProjects.find((p: any) => p.title === m.projectTitle)?.id ?? null) : null;
+      await prisma.moodboard.create({
+        data: {
+          title: m.title,
+          canvasData: m.canvasData ?? {},
+          isSharedWithClient: m.isSharedWithClient ?? false,
+          archived: m.archived ?? false,
+          pinned: m.pinned ?? false,
+          userId,
+          clientId: clientId ?? null,
+          projectId: projectId ?? null,
+        },
+      });
     }
   }
 }

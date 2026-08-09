@@ -96,6 +96,22 @@ async function main() {
   });
   console.log(`  projects: ${projects.length}`);
 
+  // ─── RENDER COMMENTS ───────────────────────────────────────────────────────
+  const allRenderIds = projects.flatMap((p) =>
+    p.rooms.flatMap((r) => r.renders.map((rn) => rn.id))
+  );
+  const renderComments = await prisma.comment.findMany({
+    where: { renderId: { in: allRenderIds } },
+    include: { replies: true },
+    orderBy: { createdAt: "asc" },
+  });
+  const commentsByRenderId: Record<string, typeof renderComments> = {};
+  for (const c of renderComments) {
+    if (!commentsByRenderId[c.renderId]) commentsByRenderId[c.renderId] = [];
+    commentsByRenderId[c.renderId].push(c);
+  }
+  console.log(`  renderComments: ${renderComments.length}`);
+
   // ─── SHOPPING LISTS ────────────────────────────────────────────────────────
   const shoppingLists = await prisma.shoppingList.findMany({
     where: { userId },
@@ -190,6 +206,14 @@ async function main() {
   });
   console.log(`  surveys: ${surveys.length}`);
 
+  // ─── MOODBOARDS ────────────────────────────────────────────────────────────
+  const moodboards = await prisma.moodboard.findMany({
+    where: { userId },
+    select: { title: true, canvasData: true, isSharedWithClient: true, archived: true, pinned: true, clientId: true, projectId: true },
+    orderBy: { createdAt: "asc" },
+  });
+  console.log(`  moodboards: ${moodboards.length}`);
+
   // ─── TASK STATUSES ─────────────────────────────────────────────────────────
   const taskStatuses = await prisma.taskStatusConfig.findMany({
     where: { ownerId: userId },
@@ -239,6 +263,24 @@ async function main() {
           status: rn.status,
           pinned: rn.pinned,
           order: rn.order,
+          comments: (commentsByRenderId[rn.id] ?? []).map((c) => ({
+            content: c.content,
+            author: c.author,
+            posX: c.posX,
+            posY: c.posY,
+            status: c.status,
+            title: c.title,
+            isInternal: c.isInternal,
+            isAiSummary: c.isAiSummary,
+            fromDesigner: c.fromDesigner,
+            posPage: c.posPage,
+            replies: c.replies.map((rep) => ({
+              content: rep.content,
+              author: rep.author,
+              replyToAuthor: rep.replyToAuthor,
+              replyToContent: rep.replyToContent,
+            })),
+          })),
         })),
       })),
       projectClients: p.clients.map((c) => ({
@@ -366,6 +408,15 @@ async function main() {
           order: q.order,
         })),
       })),
+    })),
+    moodboards: moodboards.map((m) => ({
+      title: m.title,
+      canvasData: m.canvasData,
+      isSharedWithClient: m.isSharedWithClient,
+      archived: m.archived,
+      pinned: m.pinned,
+      clientName: m.clientId ? (clients.find((c) => c.id === m.clientId)?.name ?? null) : null,
+      projectTitle: m.projectId ? (projects.find((p) => p.id === m.projectId)?.title ?? null) : null,
     })),
     taskStatuses,
   };

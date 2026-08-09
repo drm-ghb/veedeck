@@ -110,7 +110,14 @@ export async function GET(
     : false;
 
   const hasMoodboard = await prisma.moodboard.count({
-    where: { projectId, isSharedWithClient: true, archived: false },
+    where: {
+      isSharedWithClient: true,
+      archived: false,
+      OR: [
+        { projectId },
+        ...(project.clientId ? [{ clientId: project.clientId }] : []),
+      ],
+    },
   }).then((n) => n > 0);
 
   // Contact name for the logged-in client user (authoritative name from ProjectClient)

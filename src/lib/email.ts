@@ -16,6 +16,7 @@ import {
   firstLoginNotificationEmailPL,
   passwordSetEmailPL,
   listSharedClientEmailPL,
+  moodboardSharedClientEmailPL,
   accountDeactivationEmailPL,
 } from "@/lib/email-templates";
 
@@ -818,6 +819,27 @@ export async function notifyAdminNewTicket(opts: {
       ${emailBtn("Otwórz zgłoszenie", `${APP_URL}/admin/tickets`)}
     `),
   }).catch((err) => console.error("[EMAIL] notifyAdminNewTicket failed:", err));
+}
+
+export async function notifyClientMoodboardShared(opts: {
+  clientEmail: string;
+  clientName: string;
+  moodboardName: string;
+  designerName: string;
+  projectTitle: string;
+  moodboardUrl: string;
+}) {
+  await transporter.sendMail({
+    from: FROM,
+    to: opts.clientEmail,
+    subject: `Nowy moodboard — ${escapeHtml(opts.moodboardName)}`,
+    html: moodboardSharedClientEmailPL({
+      moodboardUrl: opts.moodboardUrl,
+      moodboardName: escapeHtml(opts.moodboardName),
+      designerName: escapeHtml(opts.designerName),
+      projectTitle: escapeHtml(opts.projectTitle),
+    }),
+  }).catch((err) => console.error("[EMAIL] notifyClientMoodboardShared failed:", err));
 }
 
 export async function notifyClientListShared(opts: {

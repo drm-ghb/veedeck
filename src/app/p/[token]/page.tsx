@@ -104,7 +104,12 @@ export default function AccessTokenPage() {
         router.replace("/wykonawca");
       } else {
         const listId = searchParams.get("listId");
-        router.replace(listId ? `/client?listId=${listId}` : "/client");
+        const moodboardProjectId = searchParams.get("moodboardProjectId");
+        router.replace(
+          listId ? `/client?listId=${listId}`
+          : moodboardProjectId ? `/client/${moodboardProjectId}/moodboard`
+          : "/client"
+        );
       }
     })();
   }, [token, router]);

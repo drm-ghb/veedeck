@@ -1,5 +1,5 @@
 {
-  "exportedAt": "2026-08-07T13:50:47.122Z",
+  "exportedAt": "2026-08-09T15:10:16.142Z",
   "demoEmail": "d.rychlik@veedeck.com",
   "helperEmails": [
     "anna.kowalska@demo.veedeck.com",
@@ -17,16 +17,7 @@
   ],
   "teamMembers": [
     {
-      "id": "cmsi3y0rf000004jmbzajirsb",
-      "email": "anna.kowalska@demo.veedeck.com",
-      "name": "Anna Kowalska",
-      "fullName": "Anna Kowalska",
-      "role": "designer",
-      "phone": null,
-      "avatarUrl": null
-    },
-    {
-      "id": "cmsi3y0rg000104jmuh9n875w",
+      "id": "cmslvltam00548kugnxhben51",
       "email": "piotr.wisniewski@demo.veedeck.com",
       "name": "Piotr Wiśniewski",
       "fullName": "Piotr Wiśniewski",
@@ -35,7 +26,16 @@
       "avatarUrl": null
     },
     {
-      "id": "cmsi3y0rg000204jm9s64vxh2",
+      "id": "cmslvltam00538kugwcdl5w0o",
+      "email": "anna.kowalska@demo.veedeck.com",
+      "name": "Anna Kowalska",
+      "fullName": "Anna Kowalska",
+      "role": "designer",
+      "phone": null,
+      "avatarUrl": null
+    },
+    {
+      "id": "cmslvltam00558kugl8h3cpy7",
       "email": "marta.zielinska@demo.veedeck.com",
       "name": "Marta Zielińska",
       "fullName": "Marta Zielińska",
@@ -47,7 +47,7 @@
   "permissionGroups": [],
   "clients": [
     {
-      "id": "cmsi3y1ey000d04jmmah4jbpk",
+      "id": "cmslvlvam005i8kugghqsd92a",
       "name": "Wiśniewscy",
       "description": "Projekt domu jednorodzinnego – Warszawa Mokotów. Styl skandynawski.",
       "archived": false,
@@ -57,8 +57,8 @@
       "addressCountry": "Polska"
     },
     {
-      "id": "cmsi3y1ey000c04jmf9oy1b38",
-      "name": "Kowalscy",
+      "id": "cmslvlvam005h8kugsf7xx2le",
+      "name": "Nowakowie",
       "description": "Rodzina Nowak – aranżacja apartamentu w centrum Krakowa.",
       "archived": false,
       "addressStreet": "ul. Szewska 12",
@@ -67,18 +67,18 @@
       "addressCountry": "Polska"
     },
     {
-      "id": "cmsi3y1ez000f04jmdgecrcpy",
-      "name": "Grabowska Design",
-      "description": "Aranżacja przestrzeni biurowej studia projektowego. 120m² open space.",
+      "id": "cmslvlvam005l8kug29mw6cvm",
+      "name": "Malinowski & Co.",
+      "description": "Projekt reprezentacyjnej siedziby firmy – Gdańsk Stare Miasto.",
       "archived": false,
-      "addressStreet": "ul. Półwiejska 30",
-      "addressCity": "Poznań",
-      "addressPostalCode": "61-888",
+      "addressStreet": "ul. Długa 50",
+      "addressCity": "Gdańsk",
+      "addressPostalCode": "80-827",
       "addressCountry": "Polska"
     },
     {
-      "id": "cmsi3y1ez000e04jms6cil8op",
-      "name": "Nowakowie",
+      "id": "cmslvlvam005j8kugsxh7zxgk",
+      "name": "Jan Kowalski",
       "description": "Modernizacja mieszkania 55m² w centrum Wrocławia. Styl industrialny.",
       "archived": false,
       "addressStreet": "ul. Świdnicka 8",
@@ -87,324 +87,29 @@
       "addressCountry": "Polska"
     },
     {
-      "id": "cmsi3y1f0000g04jm33f8of0f",
-      "name": "Malinowski & Co.",
-      "description": "Projekt reprezentacyjnej siedziby firmy – Gdańsk Stare Miasto.",
+      "id": "cmslvlvam005m8kugrrh4lhz1",
+      "name": "Kowalscy",
+      "description": null,
       "archived": false,
-      "addressStreet": "ul. Długa 50",
-      "addressCity": "Gdańsk",
-      "addressPostalCode": "80-827",
+      "addressStreet": null,
+      "addressCity": null,
+      "addressPostalCode": null,
+      "addressCountry": null
+    },
+    {
+      "id": "cmslvlvam005k8kug366njzdz",
+      "name": "Grabowska Design",
+      "description": "Aranżacja przestrzeni biurowej studia projektowego. 120m² open space.",
+      "archived": false,
+      "addressStreet": "ul. Półwiejska 30",
+      "addressCity": "Poznań",
+      "addressPostalCode": "61-888",
       "addressCountry": "Polska"
     }
   ],
   "projects": [
     {
-      "id": "cmsi3y23m000p04jmj4bjhono",
-      "title": "Apartament Nowak – Kraków",
-      "slug": null,
-      "clientName": "Katarzyna Nowak",
-      "clientEmail": "katarzyna.nowak@demo.veedeck.com",
-      "description": "Kompleksowa aranżacja apartamentu 80m² w centrum Krakowa. Styl nowoczesny z elementami klasycznymi.",
-      "archived": false,
-      "pinned": true,
-      "clientId": "cmsi3y1ey000c04jmf9oy1b38",
-      "rooms": [
-        {
-          "id": "cmsiuo7mj000i4ougldtvsd17",
-          "name": "Rendery",
-          "type": "INNE",
-          "order": 0,
-          "renders": [
-            {
-              "id": "cmsiuwlqb000x4ougmviro9eq",
-              "name": "Łazienka rzut 1",
-              "fileUrl": "https://utfs.io/f/J8yL1oB2TLkXKmy1RE7hSpXJx6bTZ0Qw13Ydn8kLtiRUN4oe",
-              "fileType": "image",
-              "status": "ACCEPTED",
-              "pinned": false,
-              "order": 6
-            },
-            {
-              "id": "cmsiuwmsi000y4ougpatxuqpl",
-              "name": "Łazienka rzut 2",
-              "fileUrl": "https://utfs.io/f/J8yL1oB2TLkXIwE99Y9gVHTojAy1OePxfZzFauEs2pLiglnv",
-              "fileType": "image",
-              "status": "ACCEPTED",
-              "pinned": false,
-              "order": 7
-            },
-            {
-              "id": "cmsiuwnxw000z4ougtad59099",
-              "name": "Łazienka rzut 3",
-              "fileUrl": "https://utfs.io/f/J8yL1oB2TLkXjXb5zqTE9GpAXhBTyHWOmPvRuMnQbCY76x32",
-              "fileType": "image",
-              "status": "REVIEW",
-              "pinned": false,
-              "order": 8
-            },
-            {
-              "id": "cmsiuwp7f00104oug2a6i3aww",
-              "name": "Łazienka rzut 4",
-              "fileUrl": "https://utfs.io/f/J8yL1oB2TLkXBuTkrcf310pv5Tmu2yXrDRok84FghnfLNisc",
-              "fileType": "image",
-              "status": "REVIEW",
-              "pinned": false,
-              "order": 9
-            },
-            {
-              "id": "cmsiuwqgx00114oug1u2nvdjv",
-              "name": "Łazienka rzut 5",
-              "fileUrl": "https://utfs.io/f/J8yL1oB2TLkXZemMdRXbqY43VI2pRtjnBEcv0HLXFAG8whoQ",
-              "fileType": "image",
-              "status": "REVIEW",
-              "pinned": false,
-              "order": 10
-            },
-            {
-              "id": "cmsiwjgpm0003vgugxlz9hows",
-              "name": "Salon 1",
-              "fileUrl": "https://utfs.io/f/J8yL1oB2TLkXeWhhfcwN5txMS9fRLOWkAJcXUTVur4HYQGZ1",
-              "fileType": "image",
-              "status": "REVIEW",
-              "pinned": false,
-              "order": 11
-            },
-            {
-              "id": "cmsiwjhw80004vgugsv9ea8to",
-              "name": "Salon 2",
-              "fileUrl": "https://utfs.io/f/J8yL1oB2TLkXjDYla9TE9GpAXhBTyHWOmPvRuMnQbCY76x32",
-              "fileType": "image",
-              "status": "REVIEW",
-              "pinned": false,
-              "order": 12
-            },
-            {
-              "id": "cmsiwjj1b0005vgug7popmupc",
-              "name": "Salon 3",
-              "fileUrl": "https://utfs.io/f/J8yL1oB2TLkX7QLwpp1ku0RKsXJZ2iWBlqfzL5h61tVDEO3G",
-              "fileType": "image",
-              "status": "REVIEW",
-              "pinned": false,
-              "order": 13
-            },
-            {
-              "id": "cmsiwjk9l0006vgug23t5n2pq",
-              "name": "Salon 4",
-              "fileUrl": "https://utfs.io/f/J8yL1oB2TLkXHjog2WVPgFIkhwjDqKnHes6ZvtyUiaL2OWX1",
-              "fileType": "image",
-              "status": "REVIEW",
-              "pinned": false,
-              "order": 14
-            },
-            {
-              "id": "cmsiwk6e10009vgug11dgtlxv",
-              "name": "Sypialnia Kadr 1.1",
-              "fileUrl": "https://utfs.io/f/J8yL1oB2TLkXiP3DR7hxZjeuQLImYHp0SronElgsNbAzTUat",
-              "fileType": "image",
-              "status": "REVIEW",
-              "pinned": false,
-              "order": 15
-            },
-            {
-              "id": "cmsiwk7nj000avguger5eremj",
-              "name": "Sypialnia Kadr 1.2",
-              "fileUrl": "https://utfs.io/f/J8yL1oB2TLkXEA5QMrQjCRbQN2HFMLGjXKyVUvzgAs51pcP0",
-              "fileType": "image",
-              "status": "REVIEW",
-              "pinned": false,
-              "order": 16
-            },
-            {
-              "id": "cmsiwk8qh000bvgugypbua46t",
-              "name": "Sypialnia Kadr 1",
-              "fileUrl": "https://utfs.io/f/J8yL1oB2TLkX0R3yItiTgMry8GNWhLOeaS2u7FsqDdjAnBp4",
-              "fileType": "image",
-              "status": "REVIEW",
-              "pinned": false,
-              "order": 17
-            },
-            {
-              "id": "cmsiwknp0000cvgug4pfg3tco",
-              "name": "Sypialnia Kadr 2.1",
-              "fileUrl": "https://utfs.io/f/J8yL1oB2TLkXDA5IHE8bov0OqGYKLaVQJTBmWilgI3sScAeh",
-              "fileType": "image",
-              "status": "REVIEW",
-              "pinned": false,
-              "order": 18
-            },
-            {
-              "id": "cmsiwkost000dvgugmu10oq44",
-              "name": "Sypialnia Kadr 2.2",
-              "fileUrl": "https://utfs.io/f/J8yL1oB2TLkXamRJ3VkqKuHtSXIjvx69sdpAEFNMinGVg1cz",
-              "fileType": "image",
-              "status": "REVIEW",
-              "pinned": false,
-              "order": 19
-            },
-            {
-              "id": "cmsiwkq1k000evgughp0kkwba",
-              "name": "Sypialnia Kadr 2.3",
-              "fileUrl": "https://utfs.io/f/J8yL1oB2TLkX91xBZwcW6C8wnEvFZDigubRq9yUJcBf4d5Yl",
-              "fileType": "image",
-              "status": "REVIEW",
-              "pinned": false,
-              "order": 20
-            },
-            {
-              "id": "cmsiwkr57000fvgug9nbxospj",
-              "name": "Sypialnia Kadr 2.4",
-              "fileUrl": "https://utfs.io/f/J8yL1oB2TLkXesTxDN7wN5txMS9fRLOWkAJcXUTVur4HYQGZ",
-              "fileType": "image",
-              "status": "REVIEW",
-              "pinned": false,
-              "order": 21
-            },
-            {
-              "id": "cmsiwksfo000gvgugc4y6643x",
-              "name": "Sypialnia Kadr 2.5",
-              "fileUrl": "https://utfs.io/f/J8yL1oB2TLkXw0XZhZOf0kmoSQNjOAU7XIPdMgu465RahTLv",
-              "fileType": "image",
-              "status": "REVIEW",
-              "pinned": false,
-              "order": 22
-            },
-            {
-              "id": "cmsiwktp6000hvgug2y7fcldf",
-              "name": "Sypialnia Kadr 2.6",
-              "fileUrl": "https://utfs.io/f/J8yL1oB2TLkXj8Wxx0TE9GpAXhBTyHWOmPvRuMnQbCY76x32",
-              "fileType": "image",
-              "status": "REVIEW",
-              "pinned": false,
-              "order": 23
-            },
-            {
-              "id": "cmsiwkuyq000ivgug01gqxyh1",
-              "name": "Sypialnia Kadr 2.7",
-              "fileUrl": "https://utfs.io/f/J8yL1oB2TLkXB4PHLEf310pv5Tmu2yXrDRok84FghnfLNisc",
-              "fileType": "image",
-              "status": "REVIEW",
-              "pinned": false,
-              "order": 24
-            },
-            {
-              "id": "cmsiwkw5c000jvgugnchp1ocz",
-              "name": "Sypialnia Kadr 2.8",
-              "fileUrl": "https://utfs.io/f/J8yL1oB2TLkXrfSLptdG7W5jw0XFsK3Siv2e9aokmpxOcqhJ",
-              "fileType": "image",
-              "status": "REVIEW",
-              "pinned": false,
-              "order": 25
-            },
-            {
-              "id": "cmsiwkxc2000kvgug7pnahbmt",
-              "name": "Sypialnia Kadr 2.9",
-              "fileUrl": "https://utfs.io/f/J8yL1oB2TLkX9debPTcW6C8wnEvFZDigubRq9yUJcBf4d5Yl",
-              "fileType": "image",
-              "status": "REVIEW",
-              "pinned": false,
-              "order": 26
-            },
-            {
-              "id": "cmsiwkyez000lvgugwjpjeyte",
-              "name": "Sypialnia Kadr 2",
-              "fileUrl": "https://utfs.io/f/J8yL1oB2TLkXRXdOsbCxXbuIYt96NKU4DrnfTGqLWJpgzEZO",
-              "fileType": "image",
-              "status": "REVIEW",
-              "pinned": false,
-              "order": 27
-            }
-          ]
-        },
-        {
-          "id": "cmsiuof5f000j4ougnc2juw74",
-          "name": "OFERTY + WYCENY",
-          "type": "INNE",
-          "order": 1,
-          "renders": [
-            {
-              "id": "cmsiuuybd000t4ougeiybxlnj",
-              "name": "DRZWI - Wycena",
-              "fileUrl": "https://utfs.io/f/J8yL1oB2TLkXTt9xSeVAjRwtF2shl4kO6Bego3DxXmuidcWC",
-              "fileType": "pdf",
-              "status": "REVIEW",
-              "pinned": false,
-              "order": 5
-            }
-          ]
-        },
-        {
-          "id": "cmsiuotg8000k4ougwnx9bhf3",
-          "name": "Rysunki techniczne",
-          "type": "INNE",
-          "order": 2,
-          "renders": [
-            {
-              "id": "cmsiupl4n000o4ougxqfd1t6s",
-              "name": "ELEKTRYKA KUCHNIA I POKÓJ GOSP WIDOKI",
-              "fileUrl": "https://utfs.io/f/J8yL1oB2TLkXMzXNFL0ArFjNzCglTyu9EJwaDfL746cpMYk5",
-              "fileType": "pdf",
-              "status": "REVIEW",
-              "pinned": false,
-              "order": 0
-            },
-            {
-              "id": "cmsiupmao000p4ougwg9a83ln",
-              "name": "ELEKTRYKA POPRAWKI A4",
-              "fileUrl": "https://utfs.io/f/J8yL1oB2TLkXvQUAtzW0cnCQlVL3i8JRwImUGA1WEFOSaYZd",
-              "fileType": "pdf",
-              "status": "REVIEW",
-              "pinned": false,
-              "order": 1
-            },
-            {
-              "id": "cmsiupnks000q4oug6qiqjtft",
-              "name": "WIDOKI- KUCHNIA I POKÓJ GOSP.",
-              "fileUrl": "https://utfs.io/f/J8yL1oB2TLkXazc4rAOkqKuHtSXIjvx69sdpAEFNMinGVg1c",
-              "fileType": "pdf",
-              "status": "REVIEW",
-              "pinned": false,
-              "order": 2
-            },
-            {
-              "id": "cmsiupz97000r4oug0hwdgylb",
-              "name": "Łazienka PRZEKROJE",
-              "fileUrl": "https://utfs.io/f/J8yL1oB2TLkXlPBW8xzKNAf0qcnVY9ypOXtE4BQH7Wgb3DZv",
-              "fileType": "image",
-              "status": "REVIEW",
-              "pinned": false,
-              "order": 3
-            },
-            {
-              "id": "cmsiuqcfz000s4ougc7eo6r05",
-              "name": "RZUT SALONU",
-              "fileUrl": "https://utfs.io/f/J8yL1oB2TLkXW1CxUJGceTD8hrL5N4pFZiB6gCljGkE3sy1f",
-              "fileType": "image",
-              "status": "REVIEW",
-              "pinned": false,
-              "order": 4
-            }
-          ]
-        }
-      ],
-      "projectClients": [
-        {
-          "name": "Jan Kowalski",
-          "email": "jan.kowalski@demo.veedeck.com",
-          "phone": "+48 602 345 678",
-          "isMainContact": true,
-          "userEmail": null
-        },
-        {
-          "name": "Katarzyna Kowalska",
-          "email": "katarzyna.kowalska@demo.veedeck.com",
-          "phone": "+48 601 234 567",
-          "isMainContact": false,
-          "userEmail": null
-        }
-      ]
-    },
-    {
-      "id": "cmsi3y23n000q04jmyexg2yoq",
+      "id": "cmslvlwxs005x8kugelbzjvsi",
       "title": "Dom Wiśniewskich – Warszawa",
       "slug": null,
       "clientName": "Beata Wiśniewska",
@@ -412,45 +117,57 @@
       "description": "Projekt wnętrz domu jednorodzinnego 200m². Styl skandynawski z ciepłymi akcentami drewna.",
       "archived": false,
       "pinned": false,
-      "clientId": "cmsi3y1ey000d04jmmah4jbpk",
+      "clientId": "cmslvlvam005i8kugghqsd92a",
       "rooms": [
         {
-          "id": "cmsi3y2el000z04jmhjwi2vaq",
+          "id": "cmslvly1f006i8kugcu87lgm1",
           "name": "Salon z jadalnią",
           "type": "SALON",
           "order": 0,
-          "renders": []
+          "renders": [
+            {
+              "id": "cmslvv7c200p98kugdwguiwy9",
+              "name": "Parter salon 1",
+              "fileUrl": "https://utfs.io/f/J8yL1oB2TLkXs25ekeYbO0dQI7cv2FzUR6fXMtNJ8WTxD1Lj",
+              "fileKey": "J8yL1oB2TLkXs25ekeYbO0dQI7cv2FzUR6fXMtNJ8WTxD1Lj",
+              "fileType": "image",
+              "status": "REVIEW",
+              "pinned": false,
+              "order": 0,
+              "comments": []
+            }
+          ]
         },
         {
-          "id": "cmsi3y2el001004jm3n3xb597",
+          "id": "cmslvly1f006j8kugm90q4b86",
           "name": "Kuchnia",
           "type": "KUCHNIA",
           "order": 1,
           "renders": []
         },
         {
-          "id": "cmsi3y2el001104jm59r93jsk",
+          "id": "cmslvly1f006k8kug5ykwwmu0",
           "name": "Sypialnia 1",
           "type": "SYPIALNIA",
           "order": 2,
           "renders": []
         },
         {
-          "id": "cmsi3y2el001204jmnpmv1y1m",
+          "id": "cmslvly1f006l8kuggarz66eg",
           "name": "Sypialnia 2",
           "type": "SYPIALNIA",
           "order": 3,
           "renders": []
         },
         {
-          "id": "cmsi3y2el001304jm4porreny",
+          "id": "cmslvly1f006m8kugq7zqgdrq",
           "name": "Łazienka",
           "type": "INNE",
           "order": 4,
           "renders": []
         },
         {
-          "id": "cmsi3y2el001404jmgpk5u1ul",
+          "id": "cmslvly1f006n8kugpeqavpx4",
           "name": "Garderoba",
           "type": "INNE",
           "order": 5,
@@ -475,7 +192,429 @@
       ]
     },
     {
-      "id": "cmsi3y23p000r04jm2xhdofvj",
+      "id": "cmslvlwxs005w8kugr688tcpw",
+      "title": "Apartament Nowak – Kraków",
+      "slug": null,
+      "clientName": "Katarzyna Nowak",
+      "clientEmail": "katarzyna.nowak@demo.veedeck.com",
+      "description": "Kompleksowa aranżacja apartamentu 80m² w centrum Krakowa. Styl nowoczesny z elementami klasycznymi.",
+      "archived": false,
+      "pinned": true,
+      "clientId": "cmslvlvam005h8kugsf7xx2le",
+      "rooms": [
+        {
+          "id": "cmslvly1e006f8kug9hf5unxh",
+          "name": "Rendery",
+          "type": "INNE",
+          "order": 0,
+          "renders": [
+            {
+              "id": "cmslvlyrq006s8kugh7ukivp3",
+              "name": "Łazienka rzut 1",
+              "fileUrl": "https://utfs.io/f/J8yL1oB2TLkXKmy1RE7hSpXJx6bTZ0Qw13Ydn8kLtiRUN4oe",
+              "fileKey": "",
+              "fileType": "image",
+              "status": "ACCEPTED",
+              "pinned": false,
+              "order": 6,
+              "comments": []
+            },
+            {
+              "id": "cmslvlyrq006t8kug6fvcygf4",
+              "name": "Łazienka rzut 2",
+              "fileUrl": "https://utfs.io/f/J8yL1oB2TLkXIwE99Y9gVHTojAy1OePxfZzFauEs2pLiglnv",
+              "fileKey": "",
+              "fileType": "image",
+              "status": "ACCEPTED",
+              "pinned": false,
+              "order": 7,
+              "comments": []
+            },
+            {
+              "id": "cmslvlyrq006u8kuggem6wzbl",
+              "name": "Łazienka rzut 3",
+              "fileUrl": "https://utfs.io/f/J8yL1oB2TLkXjXb5zqTE9GpAXhBTyHWOmPvRuMnQbCY76x32",
+              "fileKey": "",
+              "fileType": "image",
+              "status": "REVIEW",
+              "pinned": false,
+              "order": 8,
+              "comments": []
+            },
+            {
+              "id": "cmslvlyrq006v8kugvthv8yfp",
+              "name": "Łazienka rzut 4",
+              "fileUrl": "https://utfs.io/f/J8yL1oB2TLkXBuTkrcf310pv5Tmu2yXrDRok84FghnfLNisc",
+              "fileKey": "",
+              "fileType": "image",
+              "status": "REVIEW",
+              "pinned": false,
+              "order": 9,
+              "comments": []
+            },
+            {
+              "id": "cmslvlyrq006w8kugai58zf4y",
+              "name": "Łazienka rzut 5",
+              "fileUrl": "https://utfs.io/f/J8yL1oB2TLkXZemMdRXbqY43VI2pRtjnBEcv0HLXFAG8whoQ",
+              "fileKey": "",
+              "fileType": "image",
+              "status": "REVIEW",
+              "pinned": false,
+              "order": 10,
+              "comments": []
+            },
+            {
+              "id": "cmslvlyrq006x8kug2b1yctdg",
+              "name": "Salon 1",
+              "fileUrl": "https://utfs.io/f/J8yL1oB2TLkXeWhhfcwN5txMS9fRLOWkAJcXUTVur4HYQGZ1",
+              "fileKey": "",
+              "fileType": "image",
+              "status": "REVIEW",
+              "pinned": false,
+              "order": 11,
+              "comments": []
+            },
+            {
+              "id": "cmslvlyrq006y8kugxtx4e8m7",
+              "name": "Salon 2",
+              "fileUrl": "https://utfs.io/f/J8yL1oB2TLkXjDYla9TE9GpAXhBTyHWOmPvRuMnQbCY76x32",
+              "fileKey": "",
+              "fileType": "image",
+              "status": "REVIEW",
+              "pinned": false,
+              "order": 12,
+              "comments": []
+            },
+            {
+              "id": "cmslvlyrq006z8kugw51domyw",
+              "name": "Salon 3",
+              "fileUrl": "https://utfs.io/f/J8yL1oB2TLkX7QLwpp1ku0RKsXJZ2iWBlqfzL5h61tVDEO3G",
+              "fileKey": "",
+              "fileType": "image",
+              "status": "REVIEW",
+              "pinned": false,
+              "order": 13,
+              "comments": []
+            },
+            {
+              "id": "cmslvlyrq00708kuglb7pmqgw",
+              "name": "Salon 4",
+              "fileUrl": "https://utfs.io/f/J8yL1oB2TLkXHjog2WVPgFIkhwjDqKnHes6ZvtyUiaL2OWX1",
+              "fileKey": "",
+              "fileType": "image",
+              "status": "REVIEW",
+              "pinned": false,
+              "order": 14,
+              "comments": []
+            },
+            {
+              "id": "cmslvlyrr00718kug7in5kyw9",
+              "name": "Sypialnia Kadr 1.1",
+              "fileUrl": "https://utfs.io/f/J8yL1oB2TLkXiP3DR7hxZjeuQLImYHp0SronElgsNbAzTUat",
+              "fileKey": "",
+              "fileType": "image",
+              "status": "REVIEW",
+              "pinned": false,
+              "order": 15,
+              "comments": []
+            },
+            {
+              "id": "cmslvlyrr00728kug7qr5vgc2",
+              "name": "Sypialnia Kadr 1.2",
+              "fileUrl": "https://utfs.io/f/J8yL1oB2TLkXEA5QMrQjCRbQN2HFMLGjXKyVUvzgAs51pcP0",
+              "fileKey": "",
+              "fileType": "image",
+              "status": "REVIEW",
+              "pinned": false,
+              "order": 16,
+              "comments": []
+            },
+            {
+              "id": "cmslvlyrr00738kugusclv6b8",
+              "name": "Sypialnia Kadr 1",
+              "fileUrl": "https://utfs.io/f/J8yL1oB2TLkX0R3yItiTgMry8GNWhLOeaS2u7FsqDdjAnBp4",
+              "fileKey": "",
+              "fileType": "image",
+              "status": "REVIEW",
+              "pinned": false,
+              "order": 17,
+              "comments": []
+            },
+            {
+              "id": "cmslvlyrr00748kugk82dnn82",
+              "name": "Sypialnia Kadr 2.1",
+              "fileUrl": "https://utfs.io/f/J8yL1oB2TLkXDA5IHE8bov0OqGYKLaVQJTBmWilgI3sScAeh",
+              "fileKey": "",
+              "fileType": "image",
+              "status": "REVIEW",
+              "pinned": false,
+              "order": 18,
+              "comments": []
+            },
+            {
+              "id": "cmslvlyrr00758kuglt9mcdbn",
+              "name": "Sypialnia Kadr 2.2",
+              "fileUrl": "https://utfs.io/f/J8yL1oB2TLkXamRJ3VkqKuHtSXIjvx69sdpAEFNMinGVg1cz",
+              "fileKey": "",
+              "fileType": "image",
+              "status": "REVIEW",
+              "pinned": false,
+              "order": 19,
+              "comments": []
+            },
+            {
+              "id": "cmslvlyrr00768kugiqasjs2u",
+              "name": "Sypialnia Kadr 2.3",
+              "fileUrl": "https://utfs.io/f/J8yL1oB2TLkX91xBZwcW6C8wnEvFZDigubRq9yUJcBf4d5Yl",
+              "fileKey": "",
+              "fileType": "image",
+              "status": "REVIEW",
+              "pinned": false,
+              "order": 20,
+              "comments": []
+            },
+            {
+              "id": "cmslvlyrr00778kugmuquat6i",
+              "name": "Sypialnia Kadr 2.4",
+              "fileUrl": "https://utfs.io/f/J8yL1oB2TLkXesTxDN7wN5txMS9fRLOWkAJcXUTVur4HYQGZ",
+              "fileKey": "",
+              "fileType": "image",
+              "status": "REVIEW",
+              "pinned": false,
+              "order": 21,
+              "comments": []
+            },
+            {
+              "id": "cmslvlyrr00788kug0rm4qbzj",
+              "name": "Sypialnia Kadr 2.5",
+              "fileUrl": "https://utfs.io/f/J8yL1oB2TLkXw0XZhZOf0kmoSQNjOAU7XIPdMgu465RahTLv",
+              "fileKey": "",
+              "fileType": "image",
+              "status": "REVIEW",
+              "pinned": false,
+              "order": 22,
+              "comments": []
+            },
+            {
+              "id": "cmslvlyrr00798kug3y3ven3e",
+              "name": "Sypialnia Kadr 2.6",
+              "fileUrl": "https://utfs.io/f/J8yL1oB2TLkXj8Wxx0TE9GpAXhBTyHWOmPvRuMnQbCY76x32",
+              "fileKey": "",
+              "fileType": "image",
+              "status": "REVIEW",
+              "pinned": false,
+              "order": 23,
+              "comments": []
+            },
+            {
+              "id": "cmslvlyrr007a8kughvrfwqat",
+              "name": "Sypialnia Kadr 2.7",
+              "fileUrl": "https://utfs.io/f/J8yL1oB2TLkXB4PHLEf310pv5Tmu2yXrDRok84FghnfLNisc",
+              "fileKey": "",
+              "fileType": "image",
+              "status": "REVIEW",
+              "pinned": false,
+              "order": 24,
+              "comments": []
+            },
+            {
+              "id": "cmslvlyrr007b8kug5bmiu5fw",
+              "name": "Sypialnia Kadr 2.8",
+              "fileUrl": "https://utfs.io/f/J8yL1oB2TLkXrfSLptdG7W5jw0XFsK3Siv2e9aokmpxOcqhJ",
+              "fileKey": "",
+              "fileType": "image",
+              "status": "REVIEW",
+              "pinned": false,
+              "order": 25,
+              "comments": []
+            },
+            {
+              "id": "cmslvlyrr007c8kugyva6w1go",
+              "name": "Sypialnia Kadr 2.9",
+              "fileUrl": "https://utfs.io/f/J8yL1oB2TLkX9debPTcW6C8wnEvFZDigubRq9yUJcBf4d5Yl",
+              "fileKey": "",
+              "fileType": "image",
+              "status": "REVIEW",
+              "pinned": false,
+              "order": 26,
+              "comments": []
+            },
+            {
+              "id": "cmslvlyrr007d8kugb57dnqjv",
+              "name": "Sypialnia Kadr 2",
+              "fileUrl": "https://utfs.io/f/J8yL1oB2TLkXRXdOsbCxXbuIYt96NKU4DrnfTGqLWJpgzEZO",
+              "fileKey": "",
+              "fileType": "image",
+              "status": "REVIEW",
+              "pinned": false,
+              "order": 27,
+              "comments": []
+            }
+          ]
+        },
+        {
+          "id": "cmslvly1e006g8kug7jpn893n",
+          "name": "OFERTY + WYCENY",
+          "type": "INNE",
+          "order": 1,
+          "renders": [
+            {
+              "id": "cmslvlyrr007e8kuggo2txpat",
+              "name": "DRZWI - Wycena",
+              "fileUrl": "https://utfs.io/f/J8yL1oB2TLkXTt9xSeVAjRwtF2shl4kO6Bego3DxXmuidcWC",
+              "fileKey": "",
+              "fileType": "pdf",
+              "status": "REVIEW",
+              "pinned": false,
+              "order": 5,
+              "comments": []
+            }
+          ]
+        },
+        {
+          "id": "cmslvly1f006h8kugudisrj4l",
+          "name": "Rysunki techniczne",
+          "type": "INNE",
+          "order": 2,
+          "renders": [
+            {
+              "id": "cmslvlyrr007f8kugvo4pg3ud",
+              "name": "ELEKTRYKA KUCHNIA I POKÓJ GOSP WIDOKI",
+              "fileUrl": "https://utfs.io/f/J8yL1oB2TLkXMzXNFL0ArFjNzCglTyu9EJwaDfL746cpMYk5",
+              "fileKey": "",
+              "fileType": "pdf",
+              "status": "REVIEW",
+              "pinned": false,
+              "order": 0,
+              "comments": []
+            },
+            {
+              "id": "cmslvlyrr007g8kughnjyya4z",
+              "name": "ELEKTRYKA POPRAWKI A4",
+              "fileUrl": "https://utfs.io/f/J8yL1oB2TLkXvQUAtzW0cnCQlVL3i8JRwImUGA1WEFOSaYZd",
+              "fileKey": "",
+              "fileType": "pdf",
+              "status": "REVIEW",
+              "pinned": false,
+              "order": 1,
+              "comments": []
+            },
+            {
+              "id": "cmslvlyrr007h8kugyfzwd7hi",
+              "name": "WIDOKI- KUCHNIA I POKÓJ GOSP.",
+              "fileUrl": "https://utfs.io/f/J8yL1oB2TLkXazc4rAOkqKuHtSXIjvx69sdpAEFNMinGVg1c",
+              "fileKey": "",
+              "fileType": "pdf",
+              "status": "REVIEW",
+              "pinned": false,
+              "order": 2,
+              "comments": []
+            },
+            {
+              "id": "cmslvlyrr007i8kugga9ulxd5",
+              "name": "Łazienka PRZEKROJE",
+              "fileUrl": "https://utfs.io/f/J8yL1oB2TLkXlPBW8xzKNAf0qcnVY9ypOXtE4BQH7Wgb3DZv",
+              "fileKey": "",
+              "fileType": "image",
+              "status": "REVIEW",
+              "pinned": false,
+              "order": 3,
+              "comments": []
+            },
+            {
+              "id": "cmslvlyrr007j8kugfwktijk3",
+              "name": "RZUT SALONU",
+              "fileUrl": "https://utfs.io/f/J8yL1oB2TLkXW1CxUJGceTD8hrL5N4pFZiB6gCljGkE3sy1f",
+              "fileKey": "",
+              "fileType": "image",
+              "status": "REVIEW",
+              "pinned": false,
+              "order": 4,
+              "comments": []
+            }
+          ]
+        }
+      ],
+      "projectClients": [
+        {
+          "name": "Katarzyna Nowak",
+          "email": "katarzyna.nowak@demo.veedeck.com",
+          "phone": "+48 601 234 567",
+          "isMainContact": true,
+          "userEmail": null
+        },
+        {
+          "name": "Tomasz Nowak",
+          "email": "tomasz.nowak@demo.veedeck.com",
+          "phone": "+48 602 345 678",
+          "isMainContact": false,
+          "userEmail": null
+        }
+      ]
+    },
+    {
+      "id": "cmslvlwxs00608kugin8zs8kn",
+      "title": "Siedziba Malinowski & Co. – Gdańsk",
+      "slug": null,
+      "clientName": "Malinowski & Co.",
+      "clientEmail": null,
+      "description": "Projekt reprezentacyjnej siedziby firmy w Gdańsku. Styl klasyczno-nowoczesny.",
+      "archived": false,
+      "pinned": false,
+      "clientId": "cmslvlvam005l8kug29mw6cvm",
+      "rooms": [
+        {
+          "id": "cmslvly1900668kugpuffnx5n",
+          "name": "Hol wejściowy",
+          "type": "INNE",
+          "order": 0,
+          "renders": []
+        },
+        {
+          "id": "cmslvly1900678kug26pps75m",
+          "name": "Biuro zarządu",
+          "type": "INNE",
+          "order": 1,
+          "renders": []
+        },
+        {
+          "id": "cmslvly1900688kuguk1onwmf",
+          "name": "Sala spotkań",
+          "type": "INNE",
+          "order": 2,
+          "renders": []
+        },
+        {
+          "id": "cmslvly1900698kug8xmmn4zl",
+          "name": "Kuchnia pracownicza",
+          "type": "KUCHNIA",
+          "order": 3,
+          "renders": []
+        },
+        {
+          "id": "cmslvly19006a8kug68uk94wq",
+          "name": "Toaleta",
+          "type": "TOALETA",
+          "order": 4,
+          "renders": [
+            {
+              "id": "cmslvvs9u00pa8kugm9sjovu5",
+              "name": "WC",
+              "fileUrl": "https://utfs.io/f/J8yL1oB2TLkX6aNGowBnxolKh5sDTN6HQfgP8VXi3Bwrqe2O",
+              "fileKey": "J8yL1oB2TLkX6aNGowBnxolKh5sDTN6HQfgP8VXi3Bwrqe2O",
+              "fileType": "image",
+              "status": "REVIEW",
+              "pinned": false,
+              "order": 0,
+              "comments": []
+            }
+          ]
+        }
+      ],
+      "projectClients": []
+    },
+    {
+      "id": "cmslvlwxs005y8kugzu9wvsgi",
       "title": "Mieszkanie Kowalskiego – Wrocław",
       "slug": null,
       "clientName": "Jan Kowalski",
@@ -483,31 +622,31 @@
       "description": "Modernizacja mieszkania 55m². Otwarta przestrzeń dzienna. Styl industrialny.",
       "archived": false,
       "pinned": false,
-      "clientId": "cmsi3y1ez000e04jms6cil8op",
+      "clientId": "cmslvlvam005j8kugsxh7zxgk",
       "rooms": [
         {
-          "id": "cmsi3y2en001j04jm95ee3uud",
+          "id": "cmslvly1j006o8kug52a5lkcj",
           "name": "Salon",
           "type": "SALON",
           "order": 0,
           "renders": []
         },
         {
-          "id": "cmsi3y2en001k04jmnpu48rgw",
+          "id": "cmslvly1j006p8kug0mzdwhud",
           "name": "Aneks kuchenny",
           "type": "KUCHNIA",
           "order": 1,
           "renders": []
         },
         {
-          "id": "cmsi3y2en001l04jm312b0wdy",
+          "id": "cmslvly1j006q8kug4da870om",
           "name": "Sypialnia",
           "type": "SYPIALNIA",
           "order": 2,
           "renders": []
         },
         {
-          "id": "cmsi3y2en001m04jm8vvn55qb",
+          "id": "cmslvly1j006r8kug9zf4cq9i",
           "name": "Łazienka",
           "type": "INNE",
           "order": 3,
@@ -516,16 +655,23 @@
       ],
       "projectClients": [
         {
+          "name": "Jan Kowalski",
+          "email": "jan.kowalski.klient@demo.veedeck.com",
+          "phone": "+48 605 678 901",
+          "isMainContact": true,
+          "userEmail": null
+        },
+        {
           "name": "Agnieszka Kowalska",
           "email": "agnieszka.kowalska@demo.veedeck.com",
           "phone": "+48 606 789 012",
-          "isMainContact": true,
+          "isMainContact": false,
           "userEmail": null
         }
       ]
     },
     {
-      "id": "cmsi3y23q000s04jmd8bpk5bp",
+      "id": "cmslvlwxs005z8kug1xjlbm7g",
       "title": "Biuro Grabowska Design – Poznań",
       "slug": null,
       "clientName": "Anna Grabowska",
@@ -533,31 +679,31 @@
       "description": "Aranżacja przestrzeni biurowej studia projektowego. 120m² open space z salą spotkań.",
       "archived": false,
       "pinned": false,
-      "clientId": "cmsi3y1ez000f04jmdgecrcpy",
+      "clientId": "cmslvlvam005k8kug366njzdz",
       "rooms": [
         {
-          "id": "cmsi3y2em001504jm6dlfpph4",
+          "id": "cmslvly1a006b8kugpmpho38b",
           "name": "Open space",
           "type": "INNE",
           "order": 0,
           "renders": []
         },
         {
-          "id": "cmsi3y2em001604jmef9wkg1v",
+          "id": "cmslvly1a006c8kug408fv9lp",
           "name": "Sala konferencyjna",
           "type": "INNE",
           "order": 1,
           "renders": []
         },
         {
-          "id": "cmsi3y2em001704jmsm435dk2",
+          "id": "cmslvly1a006d8kugiedis0dm",
           "name": "Recepcja",
           "type": "INNE",
           "order": 2,
           "renders": []
         },
         {
-          "id": "cmsi3y2em001804jmh8coaqch",
+          "id": "cmslvly1a006e8kugs9dcnipa",
           "name": "Aneks kuchenny",
           "type": "KUCHNIA",
           "order": 3,
@@ -580,70 +726,21 @@
           "userEmail": null
         }
       ]
-    },
-    {
-      "id": "cmsi3y23r000t04jm2f2vgui7",
-      "title": "Siedziba Malinowski & Co. – Gdańsk",
-      "slug": null,
-      "clientName": "Malinowski & Co.",
-      "clientEmail": null,
-      "description": "Projekt reprezentacyjnej siedziby firmy w Gdańsku. Styl klasyczno-nowoczesny.",
-      "archived": false,
-      "pinned": false,
-      "clientId": "cmsi3y1f0000g04jm33f8of0f",
-      "rooms": [
-        {
-          "id": "cmsi3y2em001904jmq8ql98hq",
-          "name": "Hol wejściowy",
-          "type": "INNE",
-          "order": 0,
-          "renders": []
-        },
-        {
-          "id": "cmsi3y2em001a04jmmowpnn25",
-          "name": "Biuro zarządu",
-          "type": "INNE",
-          "order": 1,
-          "renders": []
-        },
-        {
-          "id": "cmsi3y2em001b04jmb3c7khmt",
-          "name": "Sala spotkań",
-          "type": "INNE",
-          "order": 2,
-          "renders": []
-        },
-        {
-          "id": "cmsi3y2em001c04jmm059shd3",
-          "name": "Kuchnia pracownicza",
-          "type": "KUCHNIA",
-          "order": 3,
-          "renders": []
-        },
-        {
-          "id": "cmsi3y2em001d04jm8r93ihr3",
-          "name": "Toaleta",
-          "type": "TOALETA",
-          "order": 4,
-          "renders": []
-        }
-      ],
-      "projectClients": []
     }
   ],
   "shoppingLists": [
     {
-      "id": "cmsi3y9w800ds04jmqx0mca90",
+      "id": "cmslvmlx800jq8kug7ha1ypzr",
       "archived": false,
       "projectId": null,
       "sections": [
         {
-          "id": "cmsi3y9y900du04jmhqexuo1y",
+          "id": "cmslvmm5800js8kug6a7nhafw",
           "name": "SALON",
           "order": 0,
           "products": [
             {
-              "id": "cmsi3ya2a00dv04jm5o65glw1",
+              "id": "cmslvmmh400jt8kug0c0x6aw8",
               "name": "Zestaw stolików kawowych KAZA",
               "manufacturer": "SMREKI",
               "supplier": "www.smreki.com",
@@ -655,7 +752,7 @@
               "order": 0
             },
             {
-              "id": "cmsi3ya2a00dw04jmgrz90p8i",
+              "id": "cmslvmmh400ju8kugfv2juwyx",
               "name": "Noko",
               "manufacturer": "IWC Home",
               "supplier": "www.iwchome.com",
@@ -667,7 +764,7 @@
               "order": 1
             },
             {
-              "id": "cmsi3ya2a00dx04jmk4khao3m",
+              "id": "cmslvmmh400jv8kugt5wyyf39",
               "name": "Ręcznie tkany dywan z wiskozy Jane | Westwing",
               "manufacturer": "WESTWING",
               "supplier": "www.westwing.pl",
@@ -679,7 +776,7 @@
               "order": 2
             },
             {
-              "id": "cmsi3ya2a00dy04jmw2hv3qja",
+              "id": "cmslvmmh400jw8kugna8i0scg",
               "name": "Narożnik modułowy VIBE (5 el.)",
               "manufacturer": "COSSY",
               "supplier": "www.cossy.com",
@@ -691,7 +788,7 @@
               "order": 3
             },
             {
-              "id": "cmsi3ya2a00dz04jmeafixcos",
+              "id": "cmslvmmh400jx8kuglwn5ndu1",
               "name": "Dywan Kari | Westwing",
               "manufacturer": "WESTWING",
               "supplier": "www.westwing.pl",
@@ -703,7 +800,7 @@
               "order": 4
             },
             {
-              "id": "cmsi3ya2a00e004jmi8gegwsh",
+              "id": "cmslvmmh400jy8kugpo8t111y",
               "name": "SIMRISHAMN Lampa podłogowa - chrom/opalowa biel szkło",
               "manufacturer": "IKEA",
               "supplier": "www.ikea.com",
@@ -717,12 +814,12 @@
           ]
         },
         {
-          "id": "cmsi3ya6800e104jm0c8h729n",
+          "id": "cmslvmmsh00jz8kug6sq1yiwe",
           "name": "KUCHNIA I JADALNIA",
           "order": 1,
           "products": [
             {
-              "id": "cmsi3yaae00e204jmipq962dc",
+              "id": "cmslvmn6600k08kugco4yqkpl",
               "name": "Tapicerowane krzesło jadalniane z żelaza Jolie",
               "manufacturer": "Sklum PL",
               "supplier": "www.sklum.com",
@@ -734,7 +831,7 @@
               "order": 0
             },
             {
-              "id": "cmsi3yaae00e304jmrnifdheg",
+              "id": "cmslvmn6600k18kugx2rqhii8",
               "name": "Oval",
               "manufacturer": "IWC Home",
               "supplier": "www.iwchome.com",
@@ -746,7 +843,7 @@
               "order": 1
             },
             {
-              "id": "cmsi3yaae00e404jm655bbm8l",
+              "id": "cmslvmn6600k28kughx9658ei",
               "name": "Uchwyt meblowy LOUNGE 160 mm, stal",
               "manufacturer": "Sklep TCO GROUP",
               "supplier": "www.shop.tcogroup.eu",
@@ -758,7 +855,7 @@
               "order": 2
             },
             {
-              "id": "cmsi3yaae00e504jmjqfvw1pp",
+              "id": "cmslvmn6600k38kugtzpbs2py",
               "name": "Uchwyt meblowy CHATEAU, gałka, stal",
               "manufacturer": "Sklep TCO GROUP",
               "supplier": "www.shop.tcogroup.eu",
@@ -770,7 +867,7 @@
               "order": 3
             },
             {
-              "id": "cmsi3yaae00e604jmdk8pe2gb",
+              "id": "cmslvmn6600k48kugxfkhep4y",
               "name": "Luksfer 1909|8 Arctic połówka zmrożony 19x9x8 cm pustak szklany",
               "manufacturer": "LUKSFER.PL",
               "supplier": "www.luksfer.pl",
@@ -782,7 +879,7 @@
               "order": 4
             },
             {
-              "id": "cmsi3yaae00e704jmb4wjr2oj",
+              "id": "cmslvmn6600k58kugvd12i05o",
               "name": "Luksfer 1909|8 Wave połówka chmurka 19x9x8 cm pustak szklany",
               "manufacturer": null,
               "supplier": "www.luksfer.pl",
@@ -794,7 +891,7 @@
               "order": 5
             },
             {
-              "id": "cmsi3yaae00e804jmdfdjdr54",
+              "id": "cmslvmn6600k68kug3zlory8x",
               "name": "Villeroy & Boch Subway 60 SU zlewozmywak kolor: biały alpejski wysoki połysk",
               "manufacturer": "VILLEROY&BOCH",
               "supplier": "www.reuter.com",
@@ -806,7 +903,7 @@
               "order": 6
             },
             {
-              "id": "cmsi3yaae00e904jm3qlukisu",
+              "id": "cmslvmn6700k78kugshnfhk96",
               "name": "Blanco Fontas bateria kuchenna, do systemu filtrowania, wyciągana, obrotowa kolor: stal szlachetna szczotkowana",
               "manufacturer": "BLANCO",
               "supplier": "www.reuter.com",
@@ -818,7 +915,7 @@
               "order": 7
             },
             {
-              "id": "cmsi3yaae00ea04jm9ba7rh70",
+              "id": "cmslvmn6700k88kugwymms67o",
               "name": "Bateria BLANCO Culina-S II Mini 527467 Stalowy",
               "manufacturer": "BLANCO",
               "supplier": "www.mediaexpert.pl",
@@ -830,7 +927,7 @@
               "order": 8
             },
             {
-              "id": "cmsi3yaae00eb04jmibqpfn4l",
+              "id": "cmslvmn6700k98kugkjari3mm",
               "name": "H1369 ST40 Dąb Marone Casella",
               "manufacturer": "EGGER",
               "supplier": "www.egger.com",
@@ -842,7 +939,7 @@
               "order": 9
             },
             {
-              "id": "cmsi3yaae00ec04jmrwo1d545",
+              "id": "cmslvmn6700ka8kugi3naxw12",
               "name": "H3787 ST19 Drewno Bolivar brązowe",
               "manufacturer": "EGGER",
               "supplier": "www.egger.com",
@@ -854,7 +951,7 @@
               "order": 10
             },
             {
-              "id": "cmsi3yaae00ed04jmrrycgkct",
+              "id": "cmslvmn6700kb8kugykcf3rvj",
               "name": "Krzesło Drewniane Tapicerowane VESTA-2",
               "manufacturer": "Fajne Krzesła",
               "supplier": "www.fajnekrzesla.pl",
@@ -866,7 +963,7 @@
               "order": 11
             },
             {
-              "id": "cmsi3yaae00ee04jmbbyi54ph",
+              "id": "cmslvmn6700kc8kuggvy6sgs7",
               "name": "Tidlos – Tresta Studio",
               "manufacturer": "TRESTA STUDIO",
               "supplier": "www.trestastudio.pl",
@@ -878,7 +975,7 @@
               "order": 12
             },
             {
-              "id": "cmsi3yaae00ef04jmkt9gcaji",
+              "id": "cmslvmn6700kd8kug285vmxfq",
               "name": "Lampa sufitowa w stylu retro ze szklanym kloszem FILO CEILING MILKY (⌀28) w sklepie ARTERA",
               "manufacturer": "ARTERA",
               "supplier": "www.artera.pl",
@@ -890,7 +987,7 @@
               "order": 13
             },
             {
-              "id": "cmsi3yaae00eg04jmp1eqycl2",
+              "id": "cmslvmn6700ke8kugscgkjetf",
               "name": "PD3104 Dąb Baltic Storm by Woodeco",
               "manufacturer": "Woodeco sp. z o.o website by The Story",
               "supplier": "www.woodeco.eu",
@@ -902,7 +999,7 @@
               "order": 14
             },
             {
-              "id": "cmsi3yaae00eh04jmje69apkd",
+              "id": "cmslvmn6700kf8kug3ruafayp",
               "name": "H1227 TM12 Jesion Abano brązowy",
               "manufacturer": null,
               "supplier": "www.egger.com",
@@ -914,7 +1011,7 @@
               "order": 15
             },
             {
-              "id": "cmsi3yaae00ei04jmziy6dhq3",
+              "id": "cmslvmn6700kg8kugatxyss48",
               "name": "granit glacial blue",
               "manufacturer": "Omillimetre.com",
               "supplier": "www.omillimetre.com",
@@ -926,7 +1023,7 @@
               "order": 16
             },
             {
-              "id": "cmsi3yaae00ej04jm71i944zo",
+              "id": "cmslvmn6700kh8kugk83vekcv",
               "name": "GRANIT BLANC DU BLANC",
               "manufacturer": null,
               "supplier": null,
@@ -938,7 +1035,7 @@
               "order": 17
             },
             {
-              "id": "cmsi3yaae00ek04jmb22grfft",
+              "id": "cmslvmn6700ki8kugkfy1qdzd",
               "name": "GRANIT ICE BLUE",
               "manufacturer": null,
               "supplier": null,
@@ -950,7 +1047,7 @@
               "order": 18
             },
             {
-              "id": "cmsi3yaae00el04jm9s0aj8u3",
+              "id": "cmslvmn6700kj8kuguxo3dvs7",
               "name": "Aromas :: Lampa ścienna / kinkiet Aora ręcznie malowana ceramika śr. 13.4 cm kolor do wyboru",
               "manufacturer": "Aromas",
               "supplier": "www.9design.pl",
@@ -962,7 +1059,7 @@
               "order": 19
             },
             {
-              "id": "cmsi3yaae00em04jm1r5zo47z",
+              "id": "cmslvmn6700kk8kug24ytscia",
               "name": "granit white babylon",
               "manufacturer": null,
               "supplier": null,
@@ -974,7 +1071,7 @@
               "order": 20
             },
             {
-              "id": "cmsi3yaae00en04jm7semyzcn",
+              "id": "cmslvmn6700kl8kug57b1qsu2",
               "name": "granit alpinus",
               "manufacturer": null,
               "supplier": null,
@@ -986,7 +1083,7 @@
               "order": 21
             },
             {
-              "id": "cmsi3yaae00eo04jmaidr9qce",
+              "id": "cmslvmn6700km8kugzr17l7kt",
               "name": "Emmeline I 465mm",
               "manufacturer": "Castrads",
               "supplier": "www.castrads.com",
@@ -998,7 +1095,7 @@
               "order": 22
             },
             {
-              "id": "cmsi3yaae00ep04jmbfbgcszs",
+              "id": "cmslvmn6700kn8kugqbuuo6nl",
               "name": "Kosz na pranie 50 l 43,1×34×52,9 cm, cappuccino | ażurowy, do łazienki",
               "manufacturer": "Rotho",
               "supplier": "www.lacarte.pl",
@@ -1012,12 +1109,12 @@
           ]
         },
         {
-          "id": "cmsi3yaef00eq04jmedf9zoe8",
+          "id": "cmslvmnky00ko8kugq2s6huro",
           "name": "PRZEDPOKÓJ",
           "order": 2,
           "products": [
             {
-              "id": "cmsi3yaid00er04jmvs4zgzmy",
+              "id": "cmslvmnwa00kp8kugdeacw4e7",
               "name": "Kinkiet z opalowym kloszem BONBON Wall S ALMOND proj. Mikołaj Nicer (Nicer Design) w sklepie ARTERA",
               "manufacturer": "ARTERA",
               "supplier": "www.artera.pl",
@@ -1029,7 +1126,7 @@
               "order": 0
             },
             {
-              "id": "cmsi3yaid00es04jmbruoke4o",
+              "id": "cmslvmnwa00kq8kuga705jxfx",
               "name": "Artemide - Teti",
               "manufacturer": "Artemide home page",
               "supplier": "www.artemide.com",
@@ -1041,7 +1138,7 @@
               "order": 1
             },
             {
-              "id": "cmsi3yaid00et04jmvgwibinj",
+              "id": "cmslvmnwa00kr8kug30i0dkhn",
               "name": "Gałka 04 Nikiel / Chrom",
               "manufacturer": "MARBELO",
               "supplier": "www.marbelo.pl",
@@ -1053,7 +1150,7 @@
               "order": 2
             },
             {
-              "id": "cmsi3yaid00eu04jm3uh2tb0i",
+              "id": "cmslvmnwa00ks8kugmtpdfps2",
               "name": "Kliklap - Retro jednobiegunowy włącznik z ramką nr 1, w białym ceramicznym wykończeniu",
               "manufacturer": "3",
               "supplier": "www.liderlamp.pl",
@@ -1065,7 +1162,7 @@
               "order": 3
             },
             {
-              "id": "cmsi3yaid00ev04jmqqewp0uf",
+              "id": "cmslvmnwa00kt8kugwqxgsmgk",
               "name": "Lennie Lampa Sufitowa White - Lindby",
               "manufacturer": "Lindby",
               "supplier": "www.mistrzlamp.pl",
@@ -1079,12 +1176,12 @@
           ]
         },
         {
-          "id": "cmsi3yamb00ew04jmach4mbbt",
+          "id": "cmslvmo7200ku8kugtd1eqgnn",
           "name": "ŁAZIENKA",
           "order": 3,
           "products": [
             {
-              "id": "cmsi3yaqb00ex04jmwqmjshfj",
+              "id": "cmslvmoif00kv8kugiv0eqs0h",
               "name": "Tece Base stelaż podtynkowy do miski WC wiszącej 9400407",
               "manufacturer": "Tece",
               "supplier": "www.lazienkaplus.pl",
@@ -1096,7 +1193,7 @@
               "order": 0
             },
             {
-              "id": "cmsi3yaqb00ey04jm8a44bv5f",
+              "id": "cmslvmoif00kw8kugg7yc0tnn",
               "name": "Tres Therm-Box bateria wannowo-prysznicowa podtynkowa termostatyczna stal 26225001AC",
               "manufacturer": "Tres",
               "supplier": "www.lazienkaplus.pl",
@@ -1108,7 +1205,7 @@
               "order": 1
             },
             {
-              "id": "cmsi3yaqb00ez04jmzf35es58",
+              "id": "cmslvmoif00kx8kugtt9ybyfd",
               "name": "Tres Therm-Box element podtynkowy 20785001",
               "manufacturer": "Tres",
               "supplier": "www.lazienkaplus.pl",
@@ -1120,7 +1217,7 @@
               "order": 2
             },
             {
-              "id": "cmsi3yaqb00f004jmrf9mvvxs",
+              "id": "cmslvmoif00ky8kug6fn87z4v",
               "name": "MAXLIGHT H0094 3000K OPRAWA WPUSTOWA CYKLOP BIAŁA IP65",
               "manufacturer": "MAXLIGHT",
               "supplier": "www.twojelampy.pl",
@@ -1132,7 +1229,7 @@
               "order": 3
             },
             {
-              "id": "cmsi3yaqb00f104jmvfuaxk69",
+              "id": "cmslvmoif00kz8kug4bjzagrf",
               "name": "Tres Exclusive drążek prysznicowy 76 cm stal 03493199AC",
               "manufacturer": "Tres",
               "supplier": "www.lazienkaplus.pl",
@@ -1144,7 +1241,7 @@
               "order": 4
             },
             {
-              "id": "cmsi3yaqb00f204jmnzoe9ek5",
+              "id": "cmslvmoif00l08kugvvw0ta56",
               "name": "Tres Exclusive słuchawka prysznicowa 29963112AC",
               "manufacturer": "Tres",
               "supplier": "www.lazienkaplus.pl",
@@ -1156,7 +1253,7 @@
               "order": 5
             },
             {
-              "id": "cmsi3yaqb00f304jmdgcjc4ie",
+              "id": "cmslvmoif00l18kug3ag45ska",
               "name": "Tres Selection wąż prysznicowy 150 cm stal 913460915AC",
               "manufacturer": "Tres",
               "supplier": "www.lazienkaplus.pl",
@@ -1168,7 +1265,7 @@
               "order": 6
             },
             {
-              "id": "cmsi3yaqb00f404jmin7fbkym",
+              "id": "cmslvmoif00l28kugr9rp1cnz",
               "name": "TECEloop przycisk spłukujący do WC, chrom matowy",
               "manufacturer": "TECE Sp. z o.o.",
               "supplier": "www.armatura24.pl",
@@ -1180,7 +1277,7 @@
               "order": 7
             },
             {
-              "id": "cmsi3yaqb00f504jm1wriiksw",
+              "id": "cmslvmoif00l38kugqi5lwoy6",
               "name": "Zestaw Tres Study Exclusive bateria umywalkowa podtynkowa stal 26230021AC z elementem podtynkowym (26230021AC, 20830002)",
               "manufacturer": "Tres",
               "supplier": "www.lazienkaplus.pl",
@@ -1192,7 +1289,7 @@
               "order": 8
             },
             {
-              "id": "cmsi3yaqb00f604jmcd8q0665",
+              "id": "cmslvmoif00l48kug8lqehrnf",
               "name": "Ronal Livada brodzik 80x120 cm prostokątny biały W20AS08012004",
               "manufacturer": "Ronal",
               "supplier": "www.lazienkaplus.pl",
@@ -1206,12 +1303,12 @@
           ]
         },
         {
-          "id": "cmsi3yaua00f704jm7vc7qjy6",
+          "id": "cmslvmovd00l58kughb3gm5en",
           "name": "POKÓJ GOSPODARCZY",
           "order": 4,
           "products": [
             {
-              "id": "cmsi3yay700f804jmfl4xwj34",
+              "id": "cmslvmp8n00l68kugrmrs4op9",
               "name": "Tapeta obiektowa imitująca płótno W29.3547 MILO Vinylpex",
               "manufacturer": "Vinylpex",
               "supplier": "www.tapety-sklep.com",
@@ -1223,7 +1320,7 @@
               "order": 0
             },
             {
-              "id": "cmsi3yay700f904jmd5pe8qlf",
+              "id": "cmslvmp8n00l78kug9ocs3c59",
               "name": "Składana Deska do Prasowania Mocowana do Ściany Kompaktowa BIAŁA 108x33cm",
               "manufacturer": "Goodée",
               "supplier": "www.allegro.pl",
@@ -1237,12 +1334,12 @@
           ]
         },
         {
-          "id": "cmsi3yb2400fa04jm4tnac77o",
+          "id": "cmslvmpk100l88kugxjl7jt49",
           "name": "SZTUKATERIA",
           "order": 5,
           "products": [
             {
-              "id": "cmsi3yb6200fb04jmh80ldeqp",
+              "id": "cmslvmpy900l98kugvnvaia8g",
               "name": "SX173 CONTOUR",
               "manufacturer": "ORAC DECOR",
               "supplier": "www.oracdecor.com",
@@ -1254,7 +1351,7 @@
               "order": 0
             },
             {
-              "id": "cmsi3yb6200fc04jmatluem9q",
+              "id": "cmslvmpy900la8kugh9yt2lkm",
               "name": "PX103",
               "manufacturer": "ORAC DECOR",
               "supplier": "www.oracdecor.com",
@@ -1266,7 +1363,7 @@
               "order": 1
             },
             {
-              "id": "cmsi3yb6200fd04jmfceid9eu",
+              "id": "cmslvmpy900lb8kugs0ryal4y",
               "name": "CX199",
               "manufacturer": null,
               "supplier": "www.oracdecor.com",
@@ -1280,25 +1377,25 @@
           ]
         },
         {
-          "id": "cmsi3yb9y00fe04jm1actiwfb",
+          "id": "cmslvmqch00lc8kugah851ovc",
           "name": "BIURO",
           "order": 6,
           "products": []
         },
         {
-          "id": "cmsi3ybby00ff04jm8sgmdfmq",
+          "id": "cmslvmqi500ld8kugyeaqjlkn",
           "name": "LAMPY PODSUMOWANIE",
           "order": 7,
           "products": []
         },
         {
-          "id": "cmsi3ybdx00fg04jmo9hchpnz",
+          "id": "cmslvmqnu00le8kugw80591d7",
           "name": "UCHWYTY PODSUMOWANIE",
           "order": 8,
           "products": []
         },
         {
-          "id": "cmsi3ybfx00fh04jmciwegfwt",
+          "id": "cmslvmqtj00lf8kug2xo0jays",
           "name": "SYPIALNIA",
           "order": 9,
           "products": []
@@ -1306,23 +1403,23 @@
       ]
     },
     {
-      "id": "cmsi3ybhw00fi04jmrkhwubh2",
+      "id": "cmslvmr2300lg8kugvs5lly2c",
       "archived": false,
       "projectId": null,
       "sections": [
         {
-          "id": "cmsi3ybjv00fk04jmmb93ju0b",
+          "id": "cmslvmr7500li8kugrhmo5l0m",
           "name": "__unsorted__",
           "order": 0,
           "products": []
         },
         {
-          "id": "cmsi3yblv00fl04jmyl04xdnq",
+          "id": "cmslvmrdg00lj8kugo2rm9kfv",
           "name": "SALON JADALNIA",
           "order": 1,
           "products": [
             {
-              "id": "cmsi3ybpw00fm04jm6qy9vsct",
+              "id": "cmslvmrrp00lk8kugdy7yjx0z",
               "name": "Narożnik 4-osobowy lewostronny GALA jasnobeżowy",
               "manufacturer": "Kave Home",
               "supplier": "www.eyeondesign.pl",
@@ -1334,7 +1431,7 @@
               "order": 0
             },
             {
-              "id": "cmsi3ybpw00fn04jmjc33u431",
+              "id": "cmslvmrrp00ll8kugx4ta2mnb",
               "name": "Stół LITTO fornir orzechowy",
               "manufacturer": "Kave Home",
               "supplier": "www.eyeondesign.pl",
@@ -1346,7 +1443,7 @@
               "order": 1
             },
             {
-              "id": "cmsi3ybpw00fo04jmlgwd38z1",
+              "id": "cmslvmrrp00lm8kug4rmpfi1k",
               "name": "Zestaw stolików kawowych KAZA",
               "manufacturer": "Smreki",
               "supplier": "www.smreki.com",
@@ -1358,7 +1455,7 @@
               "order": 2
             },
             {
-              "id": "cmsi3ybpw00fp04jmvfnp8uen",
+              "id": "cmslvmrrp00ln8kugmgrb501x",
               "name": "PX103",
               "manufacturer": null,
               "supplier": "www.oracdecor.com",
@@ -1370,7 +1467,7 @@
               "order": 3
             },
             {
-              "id": "cmsi3ybpw00fq04jm6clww4jf",
+              "id": "cmslvmrrp00lo8kug2dun99cj",
               "name": "Fotel Teddy Caterpillar | Westwing",
               "manufacturer": "WESTWING",
               "supplier": "www.westwing.pl",
@@ -1382,7 +1479,7 @@
               "order": 4
             },
             {
-              "id": "cmsi3ybpw00fr04jm281aqhv5",
+              "id": "cmslvmrrp00lp8kugmfnwg4pa",
               "name": "Krzesło OLEANDRO boucle jasnobrązowy z drewnianą podstawą",
               "manufacturer": "Calligaris",
               "supplier": "www.eyeondesign.pl",
@@ -1394,7 +1491,7 @@
               "order": 5
             },
             {
-              "id": "cmsi3ybpw00fs04jmn24gl0af",
+              "id": "cmslvmrrp00lq8kugk07i6hc6",
               "name": "Konsola do przedpokoju 110x40 cm z MDF Tuareg",
               "manufacturer": "Sklum PL",
               "supplier": "www.sklum.com",
@@ -1406,7 +1503,7 @@
               "order": 6
             },
             {
-              "id": "cmsi3ybpw00ft04jmb5hf12ww",
+              "id": "cmslvmrrp00lr8kugllicixfq",
               "name": "Dębowy stół z owalnym blatem Lars - HOOM",
               "manufacturer": null,
               "supplier": "www.hoom.co",
@@ -1418,7 +1515,7 @@
               "order": 7
             },
             {
-              "id": "cmsi3ybpw00fu04jmdpusxz4o",
+              "id": "cmslvmrrp00ls8kugx8ma6dvz",
               "name": "Krzesło OLEANDRO boucle kremowy z drewnianą podstawą",
               "manufacturer": "Calligaris",
               "supplier": "www.eyeondesign.pl",
@@ -1430,7 +1527,7 @@
               "order": 8
             },
             {
-              "id": "cmsi3ybpw00fv04jmnzhhczcx",
+              "id": "cmslvmrrp00lt8kugmqzjlfy9",
               "name": "Lampa wisząca Rificolona 50",
               "manufacturer": "Miniforms",
               "supplier": "www.nap.com.pl",
@@ -1442,7 +1539,7 @@
               "order": 9
             },
             {
-              "id": "cmsi3ybpw00fw04jm417cjkvf",
+              "id": "cmslvmrrp00lu8kugfsdfu8br",
               "name": "Lampa podłogowa Margin | Westwing",
               "manufacturer": "Westwing",
               "supplier": "www.westwing.pl",
@@ -1454,7 +1551,7 @@
               "order": 10
             },
             {
-              "id": "cmsi3ybpx00fx04jmfo1yzbmx",
+              "id": "cmslvmrrp00lv8kugaspg32mi",
               "name": "VIP round up&down LED 230V exterior wall - kinkiety - AQForm",
               "manufacturer": null,
               "supplier": "www.aqform.com",
@@ -1466,7 +1563,7 @@
               "order": 11
             },
             {
-              "id": "cmsi3ybpx00fy04jmycmpqave",
+              "id": "cmslvmrrp00lw8kug7m1xa1dd",
               "name": "PET midi LED spot - oprawy natynkowe - AQForm",
               "manufacturer": "AQ FORM",
               "supplier": "www.aqform.com",
@@ -1478,7 +1575,7 @@
               "order": 12
             },
             {
-              "id": "cmsi3ybpx00fz04jmisud9tcy",
+              "id": "cmslvmrrp00lx8kuggfyssizz",
               "name": "Nua N23-4 Fotel, Producent: Livin Hill",
               "manufacturer": "Livin Hill",
               "supplier": "www.stylowalazienka.pl",
@@ -1490,7 +1587,7 @@
               "order": 13
             },
             {
-              "id": "cmsi3ybpx00g004jmr918ryde",
+              "id": "cmslvmrrp00ly8kug3e1x64m0",
               "name": "PET mini LED spot - oprawy natynkowe - AQForm",
               "manufacturer": "AQ FORM",
               "supplier": "www.aqform.com",
@@ -1502,7 +1599,7 @@
               "order": 14
             },
             {
-              "id": "cmsi3ybpx00g104jml1nhwt9a",
+              "id": "cmslvmrrp00lz8kugt4hfr7rb",
               "name": "Dywan Kari | Westwing",
               "manufacturer": "Westwing",
               "supplier": "www.westwing.pl",
@@ -1514,7 +1611,7 @@
               "order": 15
             },
             {
-              "id": "cmsi3ybpx00g204jmto8sjvyo",
+              "id": "cmslvmrrq00m08kugruh37jn9",
               "name": "Division in Brown Obraz na płótnie",
               "manufacturer": null,
               "supplier": "www.desenio.pl",
@@ -1528,12 +1625,12 @@
           ]
         },
         {
-          "id": "cmsi3ybty00g304jmskehzqda",
+          "id": "cmslvms3200m18kugpeqo33mx",
           "name": "SYPIALNIA",
           "order": 2,
           "products": [
             {
-              "id": "cmsi3ybxz00g404jmp6c4k46x",
+              "id": "cmslvmsjz00m28kugmx9xz1ln",
               "name": "Puf tapicerowany z aksamitu z miejscem do przechowywania Alto | Westwing",
               "manufacturer": "Westwing",
               "supplier": "www.westwing.pl",
@@ -1545,7 +1642,7 @@
               "order": 0
             },
             {
-              "id": "cmsi3ybxz00g504jmr282hmwv",
+              "id": "cmslvmsjz00m38kuggw5elmnt",
               "name": "Ławka tapicerowana XL z aksamitu z miejscem do przechowywania Alto",
               "manufacturer": "Westwing",
               "supplier": "www.westwing.pl",
@@ -1557,7 +1654,7 @@
               "order": 1
             },
             {
-              "id": "cmsi3ybxz00g604jmxc27ehb5",
+              "id": "cmslvmsjz00m48kug6zfhro09",
               "name": "Łóżko Round",
               "manufacturer": "IWC Home",
               "supplier": "www.iwchome.com",
@@ -1569,7 +1666,7 @@
               "order": 2
             },
             {
-              "id": "cmsi3ybxz00g704jm0qvrvij5",
+              "id": "cmslvmsjz00m58kugdrv9an9m",
               "name": "Nocna szafka prostokątna 50x40 cm z drewna Treveris",
               "manufacturer": "Sklum PL",
               "supplier": "www.sklum.com",
@@ -1581,7 +1678,7 @@
               "order": 3
             },
             {
-              "id": "cmsi3ybxz00g804jmw5anuud1",
+              "id": "cmslvmsjz00m68kugg3g99jb7",
               "name": "Dywan Kari | Westwing",
               "manufacturer": "Westwing",
               "supplier": "www.westwing.pl",
@@ -1593,7 +1690,7 @@
               "order": 4
             },
             {
-              "id": "cmsi3ybxz00g904jmmjw7706v",
+              "id": "cmslvmsjz00m78kug6u2pxscz",
               "name": "Stolik boczny z szufladą MASS czarny fornir dębowy",
               "manufacturer": "New Works",
               "supplier": "www.eyeondesign.pl",
@@ -1605,7 +1702,7 @@
               "order": 5
             },
             {
-              "id": "cmsi3ybxz00ga04jmyl4pb1ol",
+              "id": "cmslvmsjz00m88kugwqt4tug8",
               "name": "Lampa sufitowa z lnu Aroa | Westwing",
               "manufacturer": null,
               "supplier": "www.westwing.pl",
@@ -1617,7 +1714,7 @@
               "order": 6
             },
             {
-              "id": "cmsi3ybxz00gb04jmo6fmku49",
+              "id": "cmslvmsjz00m98kugdmkxnp9b",
               "name": "Tapeta obiektowa imitująca płótno W29.3547 MILO Vinylpex",
               "manufacturer": "Vinylpex",
               "supplier": "www.tapety-sklep.com",
@@ -1629,7 +1726,7 @@
               "order": 7
             },
             {
-              "id": "cmsi3ybxz00gc04jmtkftrtz5",
+              "id": "cmslvmsjz00ma8kug8idhgs41",
               "name": "Tapeta Arte Figura 27000 Puro",
               "manufacturer": "Arte",
               "supplier": "www.tapetujemy.pl",
@@ -1641,7 +1738,7 @@
               "order": 8
             },
             {
-              "id": "cmsi3ybxz00gd04jmifjyou5w",
+              "id": "cmslvmsjz00mb8kuglohmgkno",
               "name": "Prostokątne lustro ścienne z aluminium Kaoze",
               "manufacturer": "Sklum PL",
               "supplier": "www.sklum.com",
@@ -1653,7 +1750,7 @@
               "order": 9
             },
             {
-              "id": "cmsi3ybxz00ge04jmr092km74",
+              "id": "cmslvmsjz00mc8kugn1dvshsm",
               "name": "Lampa ścienna Plume CA",
               "manufacturer": "DCW Editions",
               "supplier": "www.nap.com.pl",
@@ -1667,12 +1764,12 @@
           ]
         },
         {
-          "id": "cmsi3yc1x00gf04jmqqocl8bp",
+          "id": "cmslvmsyd00md8kugrgkzqf61",
           "name": "PRZEDPOKÓJ",
           "order": 3,
           "products": [
             {
-              "id": "cmsi3yc5w00gg04jmo76lpyfm",
+              "id": "cmslvmt9p00me8kugrjvi2snl",
               "name": "Pufy | Westwing",
               "manufacturer": "WESTWING",
               "supplier": "www.westwing.pl",
@@ -1684,7 +1781,7 @@
               "order": 0
             },
             {
-              "id": "cmsi3yc5w00gh04jmdzpndim9",
+              "id": "cmslvmt9p00mf8kugl7nsz8ya",
               "name": "Puf tapicerowany z aksamitu Alto | Westwing",
               "manufacturer": "WESTWING",
               "supplier": "www.westwing.pl",
@@ -1696,7 +1793,7 @@
               "order": 1
             },
             {
-              "id": "cmsi3yc5w00gi04jmzxhaw0o6",
+              "id": "cmslvmt9p00mg8kug14lnc8tg",
               "name": "Gałka meblowa 8322 Srebrna Chrom polerowany",
               "manufacturer": "SKANDYNAWSKIE UCHWYTY",
               "supplier": "www.skandynawskieuchwyty.pl",
@@ -1708,7 +1805,7 @@
               "order": 2
             },
             {
-              "id": "cmsi3yc5w00gj04jmmj8swwva",
+              "id": "cmslvmt9p00mh8kugvqdjernk",
               "name": "SX104",
               "manufacturer": null,
               "supplier": "www.oracdecor.com",
@@ -1722,12 +1819,12 @@
           ]
         },
         {
-          "id": "cmsi3yc9t00gk04jm76z8sdpk",
+          "id": "cmslvmtjt00mi8kugjysf12w0",
           "name": "KUCHNIA",
           "order": 4,
           "products": [
             {
-              "id": "cmsi3ycdt00gl04jmy4etazk9",
+              "id": "cmslvmtwg00mj8kugqd1n59dc",
               "name": "AXOR Baterie kuchenne: AXOR Montreux, Jednouchwytowa bateria kuchenna 180 z wyciąganą wylewką, Nr art. 16581000",
               "manufacturer": "AXOR",
               "supplier": "www.axor-design.com",
@@ -1739,7 +1836,7 @@
               "order": 0
             },
             {
-              "id": "cmsi3ycdt00gm04jm7pdn66u0",
+              "id": "cmslvmtwg00mk8kugc8tut15o",
               "name": "Uchwyt meblowy podłużny z podkładką Royal Deluxe 96 Mosiężny Niklowany",
               "manufacturer": "Skandynawskie Uchwyty",
               "supplier": "www.skandynawskieuchwyty.pl",
@@ -1753,12 +1850,12 @@
           ]
         },
         {
-          "id": "cmsi3ychr00gn04jmtt8f3akk",
+          "id": "cmslvmuaq00ml8kugzgeh6isn",
           "name": "DODATKOWY POKÓJ BIURO/GOSPODARCZ.",
           "order": 5,
           "products": [
             {
-              "id": "cmsi3yclu00go04jm33m8gqv1",
+              "id": "cmslvmulg00mm8kugglg9n8ft",
               "name": "REVEGO - systemy kieszeniowe dla nowych koncepcji przestrzeni",
               "manufacturer": null,
               "supplier": "www.blum.com",
@@ -1770,7 +1867,7 @@
               "order": 0
             },
             {
-              "id": "cmsi3yclu00gp04jmp5r6hyzz",
+              "id": "cmslvmulh00mn8kug24zcygdk",
               "name": "Kinkiet LED z funkcją przyciemniania Sasi | Westwing",
               "manufacturer": null,
               "supplier": "www.westwing.pl",
@@ -1782,7 +1879,7 @@
               "order": 1
             },
             {
-              "id": "cmsi3yclu00gq04jmr32zq5yz",
+              "id": "cmslvmulh00mo8kug2y9fr8yz",
               "name": "Kinkiet LED z funkcją przyciemniania Sasi | Westwing",
               "manufacturer": null,
               "supplier": "www.westwing.pl",
@@ -1794,7 +1891,7 @@
               "order": 2
             },
             {
-              "id": "cmsi3yclu00gr04jm2itxtxl2",
+              "id": "cmslvmulh00mp8kugigydsd3x",
               "name": "PD3104 Dąb Baltic Storm by Woodeco",
               "manufacturer": "Woodeco sp. z o.o website by The Story",
               "supplier": "www.woodeco.eu",
@@ -1806,7 +1903,7 @@
               "order": 3
             },
             {
-              "id": "cmsi3yclu00gs04jmduqh6jcu",
+              "id": "cmslvmulh00mq8kugvacmwrvd",
               "name": "Nordic Line :: Fotel tapicerowany Michelle (dawniej Michelin) szer. 96 cm szary",
               "manufacturer": "Nordic Line",
               "supplier": "www.9design.pl",
@@ -1818,7 +1915,7 @@
               "order": 4
             },
             {
-              "id": "cmsi3yclu00gt04jmnek80wz6",
+              "id": "cmslvmulh00mr8kugkyiwtvov",
               "name": "HK LIVING fotel LAZY ROYAL VELVET ESPRESSO",
               "manufacturer": "A - F",
               "supplier": "www.anotherdesign.pl",
@@ -1830,7 +1927,7 @@
               "order": 5
             },
             {
-              "id": "cmsi3yclu00gu04jmo7824hkv",
+              "id": "cmslvmulh00ms8kug1rzwlhaw",
               "name": "Dywan Blade Chocolate",
               "manufacturer": "Arte",
               "supplier": "www.arte.pl",
@@ -1842,7 +1939,7 @@
               "order": 6
             },
             {
-              "id": "cmsi3yclu00gv04jmhk1c45dp",
+              "id": "cmslvmulh00mt8kugzzv5nbsa",
               "name": "Deska ( STX ) do prasowania składana do szafy Szary",
               "manufacturer": "DACTER",
               "supplier": "www.dacter.eu",
@@ -1856,12 +1953,12 @@
           ]
         },
         {
-          "id": "cmsi3ycpt00gw04jmzw2s7awe",
+          "id": "cmslvmuvz00mu8kugmj41jp2o",
           "name": "ŁAZIENKA PRYSZNIC",
           "order": 6,
           "products": [
             {
-              "id": "cmsi3yctt00gx04jmlo2vpzzf",
+              "id": "cmslvmv8v00mv8kug9rodpb0h",
               "name": "SX137",
               "manufacturer": null,
               "supplier": "www.oracdecor.com",
@@ -1873,7 +1970,7 @@
               "order": 0
             },
             {
-              "id": "cmsi3yctt00gy04jm6qvsvnyk",
+              "id": "cmslvmv8v00mw8kuggtquxutf",
               "name": "Listwa elastyczna przypodłogowa cokół MD018F",
               "manufacturer": "Mardom Decor",
               "supplier": "www.mardomdecor.com",
@@ -1885,7 +1982,7 @@
               "order": 1
             },
             {
-              "id": "cmsi3yctt00gz04jmffxqhsyb",
+              "id": "cmslvmv8v00mx8kuga9soprfw",
               "name": "Grey - Santorini - PORCELANOSA Grupo",
               "manufacturer": null,
               "supplier": "www.porcelanosa.com",
@@ -1897,7 +1994,7 @@
               "order": 2
             },
             {
-              "id": "cmsi3yctt00h004jmlp4v1gvd",
+              "id": "cmslvmv8v00my8kugvcobniky",
               "name": "Zestaw prysznicowy termostatyczny natynkowy Structa - chrom",
               "manufacturer": "BOCCO",
               "supplier": "www.bocco.com",
@@ -1909,7 +2006,7 @@
               "order": 3
             },
             {
-              "id": "cmsi3yctt00h104jmbgw1meot",
+              "id": "cmslvmv8v00mz8kugde4pv3k2",
               "name": "Catalano deska sedesowa wolnoopadająca biała 0551200021",
               "manufacturer": "Catalano",
               "supplier": "www.lazienkaplus.pl",
@@ -1921,7 +2018,7 @@
               "order": 4
             },
             {
-              "id": "cmsi3yctt00h204jmcylpbydl",
+              "id": "cmslvmv8v00n08kug36rqkpyo",
               "name": "Catalano Sfera miska WC wisząca bez kołnierza biały mat 0511550021",
               "manufacturer": "Catalano",
               "supplier": "www.lazienkaplus.pl",
@@ -1933,7 +2030,7 @@
               "order": 5
             },
             {
-              "id": "cmsi3yctt00h304jmpe7o82xr",
+              "id": "cmslvmv8v00n18kugfnsnzwls",
               "name": "Umywalka podblatowa 51 x 31 cm owalna (H8189450001091) | LAUFEN Polska",
               "manufacturer": "LAUFEN Polska",
               "supplier": "www.laufen.pl",
@@ -1945,7 +2042,7 @@
               "order": 6
             },
             {
-              "id": "cmsi3yctt00h404jm2j40hpgb",
+              "id": "cmslvmv8v00n28kug1jkqzr25",
               "name": "Tece Base stelaż podtynkowy do miski WC wiszącej 9400407",
               "manufacturer": "Tece",
               "supplier": "www.lazienkaplus.pl",
@@ -1957,7 +2054,7 @@
               "order": 7
             },
             {
-              "id": "cmsi3yctt00h504jm4fzeq80g",
+              "id": "cmslvmv8v00n38kugwubkbysb",
               "name": "TECEloop przycisk spłukujący do WC, chrom połysk",
               "manufacturer": "TECE Sp. z o.o.",
               "supplier": "www.armatura24.pl",
@@ -1971,12 +2068,12 @@
           ]
         },
         {
-          "id": "cmsi3ycxt00h604jm3ben6uft",
+          "id": "cmslvmvk700n48kugtikjecjj",
           "name": "ŁAZIENKA WANNA",
           "order": 7,
           "products": [
             {
-              "id": "cmsi3yd1v00h704jm48cduucu",
+              "id": "cmslvmvvk00n58kugjh8nzi2v",
               "name": "LINEA chrome 45 LP-0510/1W-45 CH Light Prestige",
               "manufacturer": "Light Prestige",
               "supplier": "www.imperiumlamp.pl",
@@ -1988,7 +2085,7 @@
               "order": 0
             },
             {
-              "id": "cmsi3yd1v00h804jmicr4e4zk",
+              "id": "cmslvmvvk00n68kugmfsju7fb",
               "name": "Metalowy stojak - Czarny/Marmurek - HOME | H&M PL",
               "manufacturer": "H&M",
               "supplier": "www.www2.hm.com",
@@ -2000,7 +2097,7 @@
               "order": 1
             },
             {
-              "id": "cmsi3yd1v00h904jm83qkcy9z",
+              "id": "cmslvmvvk00n78kugia42ro6b",
               "name": "Numu - Aromas",
               "manufacturer": "Aromas",
               "supplier": "www.aromasdelcampo.com",
@@ -2012,7 +2109,7 @@
               "order": 2
             },
             {
-              "id": "cmsi3yd1v00ha04jmraf71tkh",
+              "id": "cmslvmvvk00n88kugvcfsk5pu",
               "name": "Bateria wannowa natynkowa Structa – chrom",
               "manufacturer": "BOCCO",
               "supplier": "www.bocco.com",
@@ -2024,7 +2121,7 @@
               "order": 3
             },
             {
-              "id": "cmsi3yd1v00hb04jm42jryhqj",
+              "id": "cmslvmvvk00n98kugu6xpnvgg",
               "name": "Numu - Aromas",
               "manufacturer": "Aromas",
               "supplier": "www.aromasdelcampo.com",
@@ -2036,7 +2133,7 @@
               "order": 4
             },
             {
-              "id": "cmsi3yd1v00hc04jm8bpua1c2",
+              "id": "cmslvmvvk00na8kugdl0o64c6",
               "name": "CX199",
               "manufacturer": null,
               "supplier": "www.oracdecor.com",
@@ -2048,7 +2145,7 @@
               "order": 5
             },
             {
-              "id": "cmsi3yd1v00hd04jmqcbbl4oa",
+              "id": "cmslvmvvk00nb8kugs1cpb4o2",
               "name": "Bateria umywalkowa nablatowa niska Structa – chrom",
               "manufacturer": "BOCCO",
               "supplier": "www.bocco.com",
@@ -2060,7 +2157,7 @@
               "order": 6
             },
             {
-              "id": "cmsi3yd1v00he04jmgbmwn8r6",
+              "id": "cmslvmvvk00nc8kuge2ajng38",
               "name": "Haczyk na ręcznik Structa – chrom",
               "manufacturer": "BOCCO",
               "supplier": "www.bocco.com",
@@ -2072,7 +2169,7 @@
               "order": 7
             },
             {
-              "id": "cmsi3yd1v00hf04jmkxgmqcpb",
+              "id": "cmslvmvvk00nd8kugk0p71we4",
               "name": "Oltens Stang grzejnik łazienkowy dekoracyjny 120x26 cm biały 55033000",
               "manufacturer": "Oltens",
               "supplier": "www.lazienkaplus.pl",
@@ -2084,7 +2181,7 @@
               "order": 8
             },
             {
-              "id": "cmsi3yd1v00hg04jm7xro3zj7",
+              "id": "cmslvmvvl00ne8kugjb3mcl99",
               "name": "Catalano deska sedesowa wolnoopadająca biała 0551200021",
               "manufacturer": "Catalano",
               "supplier": "www.lazienkaplus.pl",
@@ -2096,7 +2193,7 @@
               "order": 9
             },
             {
-              "id": "cmsi3yd1v00hh04jmziauinuw",
+              "id": "cmslvmvvl00nf8kug557trygk",
               "name": "Catalano Sfera miska WC wisząca bez kołnierza biały mat 0511550021",
               "manufacturer": "Catalano",
               "supplier": "www.lazienkaplus.pl",
@@ -2108,7 +2205,7 @@
               "order": 10
             },
             {
-              "id": "cmsi3yd1v00hi04jmiwpi75s4",
+              "id": "cmslvmvvl00ng8kugn4b9a6uw",
               "name": "Umywalka podblatowa 51 x 31 cm owalna (H8189450001091) | LAUFEN Polska",
               "manufacturer": "LAUFEN Polska",
               "supplier": "www.laufen.pl",
@@ -2120,7 +2217,7 @@
               "order": 11
             },
             {
-              "id": "cmsi3yd1v00hj04jmj58catua",
+              "id": "cmslvmvvl00nh8kugjnyhdne8",
               "name": "Tece Base stelaż podtynkowy do miski WC wiszącej 9400407",
               "manufacturer": "Tece",
               "supplier": "www.lazienkaplus.pl",
@@ -2132,7 +2229,7 @@
               "order": 12
             },
             {
-              "id": "cmsi3yd1v00hk04jm6lx62xdo",
+              "id": "cmslvmvvl00ni8kugypeg86vr",
               "name": "TECEloop przycisk spłukujący do WC, chrom połysk",
               "manufacturer": "TECE Sp. z o.o.",
               "supplier": "www.armatura24.pl",
@@ -2148,23 +2245,23 @@
       ]
     },
     {
-      "id": "cmsi3yd5x00hl04jmgfx4anbb",
+      "id": "cmslvmwl800nj8kug0ifu7emw",
       "archived": false,
       "projectId": null,
       "sections": [
         {
-          "id": "cmsi3yd7w00hn04jmno4ur7kb",
+          "id": "cmslvmwyb00nl8kug3x3mugxf",
           "name": "__unsorted__",
           "order": 0,
           "products": []
         },
         {
-          "id": "cmsi3yd9x00ho04jmgiitzqru",
+          "id": "cmslvmx5400nm8kugcilhvkvk",
           "name": "Sypialnia",
           "order": 1,
           "products": [
             {
-              "id": "cmsi3yddy00hp04jmg4jsqa4t",
+              "id": "cmslvmxfw00nn8kug76furuzs",
               "name": "NEIDEN Rama łóżka - sosna/Lillhällan 140x200 cm",
               "manufacturer": "IKEA",
               "supplier": "www.ikea.com",
@@ -2176,7 +2273,7 @@
               "order": 0
             },
             {
-              "id": "cmsi3yddy00hq04jmfi8q22lj",
+              "id": "cmslvmxfw00no8kug5wn0otka",
               "name": "Chessie",
               "manufacturer": "Rugvista",
               "supplier": "DywanyPL",
@@ -2188,7 +2285,7 @@
               "order": 1
             },
             {
-              "id": "cmsi3yddy00hr04jmmfegxqiu",
+              "id": "cmslvmxfw00np8kughs7w057v",
               "name": "Mała lampa wisząca z opalowego szkła BONBON S ALMOND proj. Mikołaj Nicer (Nicer Design) w sklepie ARTERA",
               "manufacturer": "Artera",
               "supplier": "www.artera.pl",
@@ -2200,7 +2297,7 @@
               "order": 2
             },
             {
-              "id": "cmsi3yddy00hs04jmidp2a6wd",
+              "id": "cmslvmxfw00nq8kugwfysnnr3",
               "name": "Poduszka do spania 70x80  ProComfort",
               "manufacturer": "Magiczne Sny",
               "supplier": null,
@@ -2212,7 +2309,7 @@
               "order": 3
             },
             {
-              "id": "cmsi3yddy00ht04jmhsac7kvq",
+              "id": "cmslvmxfw00nr8kuguv4qctu3",
               "name": "Kinkiet z pomarańczowym, szklanym kloszem BONBON WALL S ORANGE proj. Mikołaj Nicer (Nicer Design) w sklepie ARTERA",
               "manufacturer": "Artera",
               "supplier": "www.artera.pl",
@@ -2224,7 +2321,7 @@
               "order": 4
             },
             {
-              "id": "cmsi3yddy00hu04jmk4jlh9yu",
+              "id": "cmslvmxfw00ns8kugrvxsu4r6",
               "name": "Kabina prysznicowa rozsuwana kwadratowa Eternal - gun metal",
               "manufacturer": "BOCCO",
               "supplier": null,
@@ -2236,7 +2333,7 @@
               "order": 5
             },
             {
-              "id": "cmsi3yddy00hv04jmwetzgl1e",
+              "id": "cmslvmxfw00nt8kug4599mxxa",
               "name": "Bastian 2-częściowa sofa modułowa",
               "manufacturer": "Sklum PL",
               "supplier": "www.sklum.com",
@@ -2248,7 +2345,7 @@
               "order": 6
             },
             {
-              "id": "cmsi3yddy00hw04jmutd1nw1c",
+              "id": "cmslvmxfw00nu8kugnipi6f1u",
               "name": "Borea Armchair Outdoor",
               "manufacturer": "B&B Italia Outdoor",
               "supplier": "mesmetric.com",
@@ -2260,7 +2357,7 @@
               "order": 7
             },
             {
-              "id": "cmsi3yddy00hx04jmihwgjz6u",
+              "id": "cmslvmxfw00nv8kugb4xvabfq",
               "name": "Kinkiet z zielonym, szklanym kloszem BONBON Wall LIME S proj. Mikołaj Nicer (Nicer Design) w sklepie ARTERA",
               "manufacturer": "Artera",
               "supplier": "www.artera.pl",
@@ -2272,7 +2369,7 @@
               "order": 8
             },
             {
-              "id": "cmsi3yddy00hy04jmesx987dx",
+              "id": "cmslvmxfw00nw8kugkcp0h2cf",
               "name": "NEIDEN Rama łóżka - sosna/Lillhällan 140x200 cm",
               "manufacturer": "IKEA",
               "supplier": "www.ikea.com",
@@ -2286,12 +2383,12 @@
           ]
         },
         {
-          "id": "cmsi3ydic00hz04jmnxssuv2r",
+          "id": "cmslvmxrc00nx8kugugq5z9br",
           "name": "Salon",
           "order": 2,
           "products": [
             {
-              "id": "cmsi3ydmg00i004jm27fem25m",
+              "id": "cmslvmy3800ny8kugtd38a9k2",
               "name": "Industrialna szafka nocna metalowa, 1 drzwi",
               "manufacturer": "sweeek",
               "supplier": null,
@@ -2303,7 +2400,7 @@
               "order": 0
             },
             {
-              "id": "cmsi3ydmg00i104jmy14rpv4u",
+              "id": "cmslvmy3800nz8kug5wjb6sk5",
               "name": "Szafka RTV TAROON Ciemnobrązowy",
               "manufacturer": "Beliani Team",
               "supplier": null,
@@ -2315,7 +2412,7 @@
               "order": 1
             },
             {
-              "id": "cmsi3ydmg00i204jm88g146jr",
+              "id": "cmslvmy3800o08kugk10jgpsw",
               "name": "Lampa sufitowa szklana Jaxal",
               "manufacturer": "Sklum",
               "supplier": "www.sklum.com",
@@ -2327,7 +2424,7 @@
               "order": 2
             },
             {
-              "id": "cmsi3ydmg00i304jmtpas1lbf",
+              "id": "cmslvmy3800o18kugtmlnoh7q",
               "name": "Claudie :: Krzesło tapicerowane Movano kolor do wyboru szer. 53,5 cm",
               "manufacturer": "Claudie design",
               "supplier": null,
@@ -2339,7 +2436,7 @@
               "order": 3
             },
             {
-              "id": "cmsi3ydmg00i404jm8slbsyce",
+              "id": "cmslvmy3800o28kugcycr6gi7",
               "name": "Szafka RTV TAROON Ciemnobrązowy",
               "manufacturer": "Beliani Team",
               "supplier": null,
@@ -2351,7 +2448,7 @@
               "order": 4
             },
             {
-              "id": "cmsi3ydmg00i504jmbrvr3vv2",
+              "id": "cmslvmy3800o38kugsgfi9wb7",
               "name": "Komoda drewniana vintage do salonu - Lop 150 cm",
               "manufacturer": "Pastform",
               "supplier": "www.deehome.pl",
@@ -2363,7 +2460,7 @@
               "order": 5
             },
             {
-              "id": "cmsi3ydmg00i604jm6vhctr5j",
+              "id": "cmslvmy3800o48kugf6f89op5",
               "name": "Market Set Screen XL lampa wisząca (Model z ekspozycji (Naturalny)) - Pivoni.pl",
               "manufacturer": "Pivoni.pl - Designerskie Lampy | Oświetlenie wnętrz",
               "supplier": "www.pivoni.pl",
@@ -2375,7 +2472,7 @@
               "order": 6
             },
             {
-              "id": "cmsi3ydmg00i704jmsjnk37to",
+              "id": "cmslvmy3800o58kug6cx60q96",
               "name": "Lampa sufitowa szklana Jaxal",
               "manufacturer": null,
               "supplier": "www.sklum.com",
@@ -2387,7 +2484,7 @@
               "order": 7
             },
             {
-              "id": "cmsi3ydmg00i804jm7pkve9ly",
+              "id": "cmslvmy3800o68kugd95hv4q9",
               "name": "Kabina prysznicowa rozsuwana kwadratowa Eternal - gun metal",
               "manufacturer": "BOCCO",
               "supplier": null,
@@ -2399,7 +2496,7 @@
               "order": 8
             },
             {
-              "id": "cmsi3ydmg00i904jmfxd97ldw",
+              "id": "cmslvmy3800o78kugzvyqi6xb",
               "name": "Core",
               "manufacturer": "IWC Home",
               "supplier": "www.iwchome.com",
@@ -2411,7 +2508,7 @@
               "order": 9
             },
             {
-              "id": "cmsi3ydmg00ia04jm7g8z9upx",
+              "id": "cmslvmy3800o88kug4oa4k9pr",
               "name": "Zestaw 2 krzeseł do jadalni ANDOVER Metal Zielony",
               "manufacturer": "Beliani",
               "supplier": "www.beliani.pl",
@@ -2425,12 +2522,12 @@
           ]
         },
         {
-          "id": "cmsi3ydzc00ib04jmaglzs8bp",
+          "id": "cmslvmyen00o98kugaz2ym98p",
           "name": "Toaleta",
           "order": 3,
           "products": [
             {
-              "id": "cmsi3ye3e00ic04jm3x4f7yem",
+              "id": "cmslvmypz00oa8kugtkl54wte",
               "name": "Umywalka nablatowa Pleat owalna – czarny mat",
               "manufacturer": "BOCCO",
               "supplier": null,
@@ -2442,7 +2539,7 @@
               "order": 0
             },
             {
-              "id": "cmsi3ye3e00id04jmx78o4ekp",
+              "id": "cmslvmypz00ob8kug34wu9w2c",
               "name": "Szafka łazienkowa wisząca z umywalką MADIDI Brązowy",
               "manufacturer": "Beliani Team",
               "supplier": null,
@@ -2454,7 +2551,7 @@
               "order": 1
             },
             {
-              "id": "cmsi3ye3e00ie04jmyx88z21e",
+              "id": "cmslvmypz00oc8kugs91nyvuq",
               "name": "Bateria umywalkowa podtynkowa Liora – złoto szczotkowane",
               "manufacturer": "BOCCO",
               "supplier": null,
@@ -2466,7 +2563,7 @@
               "order": 2
             },
             {
-              "id": "cmsi3ye3e00if04jmg79d1sds",
+              "id": "cmslvmypz00od8kug67q1umlb",
               "name": "MISKA WC DREAM Z SYSTEMEM VORTEX",
               "manufacturer": "Cermag - ceramika & łazienka",
               "supplier": null,
@@ -2478,7 +2575,7 @@
               "order": 3
             },
             {
-              "id": "cmsi3ye3e00ig04jmvecyg4h2",
+              "id": "cmslvmypz00oe8kug7sl2qgv4",
               "name": "Gayafores Grace Beige 33,15X33,15 : Ceramika-online.pl",
               "manufacturer": "Ceramika-online",
               "supplier": null,
@@ -2490,7 +2587,7 @@
               "order": 4
             },
             {
-              "id": "cmsi3ye3e00ih04jmw2mcx2fk",
+              "id": "cmslvmypz00of8kughks08zl3",
               "name": "Lampa sufitowa szklana Jaxal",
               "manufacturer": "Sklum",
               "supplier": null,
@@ -2502,7 +2599,7 @@
               "order": 5
             },
             {
-              "id": "cmsi3ye3e00ii04jmfi35duc7",
+              "id": "cmslvmypz00og8kug4fhh1xun",
               "name": "Toaleta myjąca PRO+ 1102 biała",
               "manufacturer": "bernstein",
               "supplier": null,
@@ -2514,7 +2611,7 @@
               "order": 6
             },
             {
-              "id": "cmsi3ye3e00ij04jmm2cvsllk",
+              "id": "cmslvmypz00oh8kug8s35sev1",
               "name": "Kabina prysznicowa rozsuwana kwadratowa Eternal - gun metal",
               "manufacturer": "BOCCO",
               "supplier": null,
@@ -2526,7 +2623,7 @@
               "order": 7
             },
             {
-              "id": "cmsi3ye3e00ik04jmrpvad13d",
+              "id": "cmslvmypz00oi8kugt30hbl2m",
               "name": "Konsola owalna 120x40 cm z naturalnego kamienia i stali nierdzewnej Fertrix",
               "manufacturer": "Sklum PL",
               "supplier": "www.sklum.com",
@@ -2538,7 +2635,7 @@
               "order": 8
             },
             {
-              "id": "cmsi3ye3e00il04jmeslfj7zo",
+              "id": "cmslvmypz00oj8kugsz3vuys1",
               "name": "Bastian 2-częściowa sofa modułowa",
               "manufacturer": "Sklum PL",
               "supplier": "www.sklum.com",
@@ -2550,7 +2647,7 @@
               "order": 9
             },
             {
-              "id": "cmsi3ye3e00im04jmahh05qny",
+              "id": "cmslvmypz00ok8kug5iubdl87",
               "name": "NÄMMARÖ Fotel ogrodowy - bejca jasnobrązowa/Kuddarna jasny szarobeżowy 63 cm",
               "manufacturer": "IKEA",
               "supplier": "www.ikea.com",
@@ -2562,7 +2659,7 @@
               "order": 10
             },
             {
-              "id": "cmsi3ye3e00in04jmwv4gl5sw",
+              "id": "cmslvmypz00ol8kug0pa21uwj",
               "name": "PELARKÖRSBÄR Dywan z krótkim włosiem - jasnobeżowy/wzór w liście 160x230 cm",
               "manufacturer": "IKEA",
               "supplier": "www.ikea.com",
@@ -2576,30 +2673,30 @@
           ]
         },
         {
-          "id": "cmsi3ye7f00io04jmidnk7yms",
+          "id": "cmslvmz0a00om8kugfhk16z0x",
           "name": "Test1",
           "order": 4,
           "products": []
         },
         {
-          "id": "cmsi3ye9e00ip04jm0gw1d1es",
+          "id": "cmslvmz7100on8kugshir115u",
           "name": "Test2",
           "order": 5,
           "products": []
         },
         {
-          "id": "cmsi3yebd00iq04jmxa7lunr7",
+          "id": "cmslvmzcq00oo8kugi2r1feeo",
           "name": "Ogorman sekcja 1",
           "order": 6,
           "products": []
         },
         {
-          "id": "cmsi3yedd00ir04jmkxaab5i7",
+          "id": "cmslvmzif00op8kug3ywxlgpa",
           "name": "Ogorman sekcja 11",
           "order": 7,
           "products": [
             {
-              "id": "cmsi3yehc00is04jmmt1a9pxm",
+              "id": "cmslvmzts00oq8kugjcoflmex",
               "name": "Umywalka nablatowa Pleat owalna – czarny mat",
               "manufacturer": "BOCCO",
               "supplier": null,
@@ -2611,7 +2708,7 @@
               "order": 0
             },
             {
-              "id": "cmsi3yehc00it04jmn955hf2d",
+              "id": "cmslvmzts00or8kug39dhnr2o",
               "name": "Bateria umywalkowa podtynkowa Liora – złoto szczotkowane",
               "manufacturer": "BOCCO",
               "supplier": null,
@@ -2623,7 +2720,7 @@
               "order": 1
             },
             {
-              "id": "cmsi3yehc00iu04jmmx6bltqu",
+              "id": "cmslvmzts00os8kuggcqioxel",
               "name": "Lampa sufitowa szklana Jaxal",
               "manufacturer": "Sklum",
               "supplier": null,
@@ -2635,7 +2732,7 @@
               "order": 2
             },
             {
-              "id": "cmsi3yehc00iv04jmg0zu2wiw",
+              "id": "cmslvmzts00ot8kugnvemwh6z",
               "name": "Konsola owalna 120x40 cm z naturalnego kamienia i stali nierdzewnej Fertrix",
               "manufacturer": "Sklum PL",
               "supplier": "www.sklum.com",
@@ -2647,7 +2744,7 @@
               "order": 3
             },
             {
-              "id": "cmsi3yehc00iw04jmq59dz5p0",
+              "id": "cmslvmzts00ou8kugdw0iyixz",
               "name": "Łóżko tapicerowane Calma 160x200 cm ze stelażem i pojemnikiem, miedziane/wielokolorowe, welurowe, zaokrąglone",
               "manufacturer": "Comforteo",
               "supplier": "www.lectus24.pl",
@@ -2659,7 +2756,7 @@
               "order": 4
             },
             {
-              "id": "cmsi3yehc00ix04jm9rmpp7z9",
+              "id": "cmslvmzts00ov8kug58e0ed5q",
               "name": "NEIDEN Rama łóżka - sosna/Lillhällan 140x200 cm",
               "manufacturer": "IKEA",
               "supplier": "www.ikea.com",
@@ -2671,7 +2768,7 @@
               "order": 5
             },
             {
-              "id": "cmsi3yehc00iy04jmo461whgz",
+              "id": "cmslvmzts00ow8kugp5jtn9ok",
               "name": "NEIDEN Rama łóżka - sosna/Lillhällan 140x200 cm",
               "manufacturer": "IKEA",
               "supplier": "www.ikea.com",
@@ -2687,17 +2784,17 @@
       ]
     },
     {
-      "id": "cmsi3yelb00iz04jmi0qmye4i",
+      "id": "cmslvn03y00ox8kug8rtm70ft",
       "archived": false,
       "projectId": null,
       "sections": [
         {
-          "id": "cmsi3yenb00j104jm6sa2zo5s",
+          "id": "cmslvn09000oz8kug3i4w2cu0",
           "name": "Salon",
           "order": 0,
           "products": [
             {
-              "id": "cmsi3yerb00j204jmuvh9l2pi",
+              "id": "cmslvn0j400p08kug3x7ltakg",
               "name": "NÄMMARÖ Fotel ogrodowy - bejca jasnobrązowa/Kuddarna jasny szarobeżowy 63 cm",
               "manufacturer": "IKEA",
               "supplier": "IKEA",
@@ -2709,7 +2806,7 @@
               "order": 0
             },
             {
-              "id": "cmsi3yerb00j304jmzrbvrl5z",
+              "id": "cmslvn0j400p18kug1cknnw9l",
               "name": "Prostokątny stolik nocny 45x30 cm z rattanu Yivisc",
               "manufacturer": "Sklum PL",
               "supplier": "www.sklum.com",
@@ -2721,7 +2818,7 @@
               "order": 1
             },
             {
-              "id": "cmsi3yerb00j404jmmnot69kn",
+              "id": "cmslvn0j400p28kug98bwifs4",
               "name": "Sofa dwuosobowa tapicerowana Morla",
               "manufacturer": "Sklum PL",
               "supplier": "www.sklum.com",
@@ -2733,7 +2830,7 @@
               "order": 2
             },
             {
-              "id": "cmsi3yerb00j504jmozwl7zka",
+              "id": "cmslvn0j400p38kugx3elel1z",
               "name": "Lampa stojąca z żelaza Nura",
               "manufacturer": "Sklum PL",
               "supplier": "www.sklum.com",
@@ -2745,7 +2842,7 @@
               "order": 3
             },
             {
-              "id": "cmsi3yerb00j604jmmaiaqs1c",
+              "id": "cmslvn0j400p48kug8xyxyvts",
               "name": "Lampa sufitowa szklana Jaxal",
               "manufacturer": "Sklum PL",
               "supplier": "www.sklum.com",
@@ -2757,7 +2854,7 @@
               "order": 4
             },
             {
-              "id": "cmsi3yerb00j704jmvabm0nef",
+              "id": "cmslvn0j400p58kug5j9walng",
               "name": "Wazon dekoracyjny z ceramiki Freda",
               "manufacturer": "Sklum PL",
               "supplier": "www.sklum.com",
@@ -2769,7 +2866,7 @@
               "order": 5
             },
             {
-              "id": "cmsi3yerb00j804jm3hs7h6s7",
+              "id": "cmslvn0j400p68kuglylb3e78",
               "name": "NEIDEN Rama łóżka - sosna/Lillhällan 140x200 cm",
               "manufacturer": "IKEA",
               "supplier": "www.ikea.com",
@@ -2787,75 +2884,17 @@
   ],
   "contractors": [
     {
-      "id": "cmsi3y5ak003a04jma95l1lds",
-      "name": "Jan Kowalczyk",
-      "company": "Hydraulik Kowalczyk",
-      "trade": "Hydraulika i wod-kan",
-      "email": "hydraulik@demo.veedeck.com",
-      "phone": "+48 500 100 200",
+      "id": "cmslvm7s2009a8kugxgv4ptk6",
+      "name": "Wojciech Kucharz",
+      "company": "FIRMA BUDOTES CRP.",
+      "trade": "Budownictwo ogólne",
+      "email": "w.kucharz@demo.veedec.com",
+      "phone": null,
       "userEmail": null,
-      "assignments": [
-        {
-          "id": "cmsi3y5cl003d04jmm9hesv01",
-          "projectId": "cmsi3y23m000p04jmj4bjhono",
-          "archived": false,
-          "folders": [
-            {
-              "id": "cmsi3y5gk003k04jmyn1vueca",
-              "name": "Rysunki techniczne",
-              "type": "rysunki",
-              "parentId": null,
-              "visible": true,
-              "files": []
-            },
-            {
-              "id": "cmsi3y5gk003l04jmtrffayz1",
-              "name": "Wizualizacje łazienki",
-              "type": "wizualizacje",
-              "parentId": null,
-              "visible": true,
-              "files": []
-            }
-          ]
-        }
-      ]
+      "assignments": []
     },
     {
-      "id": "cmsi3y5al003b04jmm4kkchwe",
-      "name": "Volt Instalacje Elektryczne",
-      "company": "Volt sp. z o.o.",
-      "trade": "Instalacje elektryczne",
-      "email": "elektryk@demo.veedeck.com",
-      "phone": "+48 500 200 300",
-      "userEmail": null,
-      "assignments": [
-        {
-          "id": "cmsi3y5cl003e04jmgboqw8bh",
-          "projectId": "cmsi3y23n000q04jmyexg2yoq",
-          "archived": false,
-          "folders": [
-            {
-              "id": "cmsi3y5gj003i04jmz3ej1gcq",
-              "name": "Schematy elektryczne",
-              "type": "rysunki",
-              "parentId": null,
-              "visible": true,
-              "files": []
-            },
-            {
-              "id": "cmsi3y5gj003j04jmex3x8h5b",
-              "name": "Projekt oświetlenia",
-              "type": "inne",
-              "parentId": null,
-              "visible": true,
-              "files": []
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "id": "cmsi3y5al003c04jmy3y84zl5",
+      "id": "cmslvm7s200998kugmptrxpl9",
       "name": "Biel Ekipa Malarska",
       "company": "Biel Prace Malarskie",
       "trade": "Malowanie i tynkowanie",
@@ -2864,12 +2903,12 @@
       "userEmail": null,
       "assignments": [
         {
-          "id": "cmsi3y5cl003f04jmqd3emcat",
-          "projectId": "cmsi3y23p000r04jm2xhdofvj",
+          "id": "cmslvm7xr009d8kugco7x0bcl",
+          "projectId": "cmslvlwxs005y8kugzu9wvsgi",
           "archived": false,
           "folders": [
             {
-              "id": "cmsi3y5gj003g04jm7wxwxom5",
+              "id": "cmslvm893009e8kuggjtwzs7t",
               "name": "Specyfikacja materiałów",
               "type": "inne",
               "parentId": null,
@@ -2877,7 +2916,7 @@
               "files": []
             },
             {
-              "id": "cmsi3y5gj003h04jm0ermxltj",
+              "id": "cmslvm893009f8kugnpy9unze",
               "name": "Wizualizacje kolorów",
               "type": "wizualizacje",
               "parentId": null,
@@ -2889,19 +2928,77 @@
       ]
     },
     {
-      "id": "cmsiumr1m000h4ougzyiikhsr",
-      "name": "Wojciech Kucharz",
-      "company": "FIRMA BUDOTES CRP.",
-      "trade": "firma wykończeniowa",
-      "email": "w.kucharz@demo.veedec.com",
-      "phone": null,
+      "id": "cmslvm7s200988kugvih1707w",
+      "name": "Volt Instalacje Elektryczne",
+      "company": "Volt sp. z o.o.",
+      "trade": "Instalacje elektryczne",
+      "email": "elektryk@demo.veedeck.com",
+      "phone": "+48 500 200 300",
       "userEmail": null,
-      "assignments": []
+      "assignments": [
+        {
+          "id": "cmslvm7xr009c8kugt4m52zty",
+          "projectId": "cmslvlwxs005x8kugelbzjvsi",
+          "archived": false,
+          "folders": [
+            {
+              "id": "cmslvm893009g8kugiviyj7yi",
+              "name": "Schematy elektryczne",
+              "type": "rysunki",
+              "parentId": null,
+              "visible": true,
+              "files": []
+            },
+            {
+              "id": "cmslvm893009h8kugkfy7bkfe",
+              "name": "Projekt oświetlenia",
+              "type": "inne",
+              "parentId": null,
+              "visible": true,
+              "files": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cmslvm7s200978kugkoaja98h",
+      "name": "Jan Kowalczyk",
+      "company": "Hydraulik Kowalczyk",
+      "trade": "Hydraulika i wod-kan",
+      "email": "hydraulik@demo.veedeck.com",
+      "phone": "+48 500 100 200",
+      "userEmail": null,
+      "assignments": [
+        {
+          "id": "cmslvm7xr009b8kugqqz72ahz",
+          "projectId": "cmslvlwxs005w8kugr688tcpw",
+          "archived": false,
+          "folders": [
+            {
+              "id": "cmslvm894009i8kugcd7t3tdc",
+              "name": "Rysunki techniczne",
+              "type": "rysunki",
+              "parentId": null,
+              "visible": true,
+              "files": []
+            },
+            {
+              "id": "cmslvm894009j8kugl53ioe4l",
+              "name": "Wizualizacje łazienki",
+              "type": "wizualizacje",
+              "parentId": null,
+              "visible": true,
+              "files": []
+            }
+          ]
+        }
+      ]
     }
   ],
   "tasks": [
     {
-      "id": "cmsi3y2io001n04jmno6d33ii",
+      "id": "cmslvlz60007k8kugujju9d06",
       "title": "Przygotować moodboard dla salonu Nowak",
       "description": null,
       "status": "DONE",
@@ -2912,7 +3009,7 @@
       "subTasks": []
     },
     {
-      "id": "cmsi3y2ko001o04jm172jbjt6",
+      "id": "cmslvlzba007l8kug41rgmf5m",
       "title": "Zamówić próbki tkanin do sypialni – Nowak",
       "description": null,
       "status": "IN_PROGRESS",
@@ -2923,7 +3020,7 @@
       "subTasks": []
     },
     {
-      "id": "cmsi3y2mo001p04jmh0v8wve4",
+      "id": "cmslvlzgd007m8kug8ktj7a94",
       "title": "Wysłać wizualizacje kuchni do akceptacji",
       "description": null,
       "status": "TODO",
@@ -2934,7 +3031,7 @@
       "subTasks": []
     },
     {
-      "id": "cmsi3y2qv001q04jm9ed5jh76",
+      "id": "cmslvlzn3007n8kug378zw7u4",
       "title": "Skontaktować się z hydraulikiem – łazienka Nowak",
       "description": null,
       "status": "TODO",
@@ -2945,7 +3042,7 @@
       "subTasks": []
     },
     {
-      "id": "cmsi3y2v4001r04jmxpjk4glj",
+      "id": "cmslvlzsq007o8kug0fbqmkpb",
       "title": "Opracować schemat oświetlenia – dom Wiśniewskich",
       "description": null,
       "status": "IN_PROGRESS",
@@ -2956,7 +3053,7 @@
       "subTasks": []
     },
     {
-      "id": "cmsi3y2x6001s04jm14og6o50",
+      "id": "cmslvlzxt007p8kugxjjlloxx",
       "title": "Wizualizacja garderoby – Wiśniewscy",
       "description": null,
       "status": "TODO",
@@ -2967,7 +3064,7 @@
       "subTasks": []
     },
     {
-      "id": "cmsi3y2z7001t04jmeewayty8",
+      "id": "cmslvm04c007q8kugykw4pkxi",
       "title": "Dobór płytek łazienkowych – Wiśniewscy",
       "description": null,
       "status": "DONE",
@@ -2978,7 +3075,7 @@
       "subTasks": []
     },
     {
-      "id": "cmsi3y317001u04jmpajtaxvg",
+      "id": "cmslvm09g007r8kug9tppkepd",
       "title": "Wycena mebli na zamówienie – Kowalski",
       "description": null,
       "status": "IN_PROGRESS",
@@ -2989,7 +3086,7 @@
       "subTasks": []
     },
     {
-      "id": "cmsi3y336001v04jmx3hcks1l",
+      "id": "cmslvm0ej007s8kug9yb89bzc",
       "title": "Zaprojektować układ gniazdek – Kowalski",
       "description": null,
       "status": "TODO",
@@ -3000,7 +3097,7 @@
       "subTasks": []
     },
     {
-      "id": "cmsi3y357001w04jm5vsidis0",
+      "id": "cmslvm0jm007t8kugojwja0oc",
       "title": "Przygotować listę zakupową – Kowalski",
       "description": null,
       "status": "TODO",
@@ -3011,7 +3108,7 @@
       "subTasks": []
     },
     {
-      "id": "cmsi3y377001x04jmwfeqzec8",
+      "id": "cmslvm0vq007u8kugpsubi9pp",
       "title": "Projekt systemu akustycznego – Grabowska",
       "description": null,
       "status": "IN_PROGRESS",
@@ -3022,7 +3119,7 @@
       "subTasks": []
     },
     {
-      "id": "cmsi3y396001y04jmw0o4ado5",
+      "id": "cmslvm10t007v8kug9wyyj75z",
       "title": "Dobór krzeseł biurowych – Grabowska Design",
       "description": null,
       "status": "DONE",
@@ -3033,7 +3130,7 @@
       "subTasks": []
     },
     {
-      "id": "cmsi3y3b5001z04jmjetv11wo",
+      "id": "cmslvm15y007w8kughbnayq2l",
       "title": "Koncepcja recepcji – Grabowska",
       "description": null,
       "status": "TODO",
@@ -3044,7 +3141,7 @@
       "subTasks": []
     },
     {
-      "id": "cmsi3y3d6002004jmnj36brzr",
+      "id": "cmslvm1rv007x8kug1lkl5gst",
       "title": "Dobór kamienia na hol wejściowy – Malinowski",
       "description": null,
       "status": "TODO",
@@ -3055,7 +3152,7 @@
       "subTasks": []
     },
     {
-      "id": "cmsi3y3f6002104jm7tm64qr1",
+      "id": "cmslvm1wz007y8kugdnaa3t9g",
       "title": "Harmonogram prac – Malinowski & Co.",
       "description": null,
       "status": "IN_PROGRESS",
@@ -3192,43 +3289,29 @@
   ],
   "products": [
     {
-      "name": "Kosz na pranie 50 l 43,1×34×52,9 cm, cappuccino | ażurowy, do łazienki",
-      "manufacturer": "Rotho",
-      "category": "AKCESORIA",
-      "url": "https://lacarte.pl/pl/p/Kosz-na-pranie-50-l-43%2C13452%2C9-cm%2C-cappuccino-azurowy%2C-do-lazienki/2214?utm_source=shoper&utm_medium=shoper-cpc&utm_campaign=shoper-kampanie-google&shop_campaign=21182&gad_source=1&gad_campaignid=21515690774&gbraid=0AAAAA-Ct3q6BZNJd7HZtz-13tOwKp1MFt&gclid=CjwKCAjw6rfSBhAqEiwA_yocpryGLMoeKsFY-0HP4TNftmLPyyDhnaOz7QIIOPndDE0h1XdRgXhguBoCFLYQAvD_BwE",
-      "imageUrl": "https://utfs.io/f/J8yL1oB2TLkXoyx2KTJYHPUdvM5Aj8eBl4EmTFLkNWxIfsGp",
-      "price": "65,99 zł",
-      "description": "KOSZ NA PRANIE BIELIZNĘ ROTHO BRISEN CAPUCCINO BEŻ 50 L",
-      "supplier": "www.lacarte.pl",
+      "name": "Pufy | Westwing",
+      "manufacturer": "WESTWING",
+      "category": "MEBLE",
+      "url": "https://www.westwing.pl/pufy-stolki-tapicerowane/",
+      "imageUrl": "https://utfs.io/f/J8yL1oB2TLkXPHVPBFaTf1rDBUicb6vG8ZIeQChltxVmoPJ4",
+      "price": "659,90",
+      "description": "Pufy i siedziska ★ Odkryj stylowe i funkcjonalne siedziska i pufy ✓ Eleganckie piłki do siedzenia ✓ Modny design ▷ Kup online!",
+      "supplier": "www.westwing.pl",
       "dimensions": null,
       "catalogNumber": null,
       "deliveryTime": null,
       "favorite": false
     },
     {
-      "name": "Stolik kawowy LUMBERA czarny w okleinie dębowej 40x40x45 cm",
-      "manufacturer": "Homla",
+      "name": "Puf tapicerowany z aksamitu Alto | Westwing",
+      "manufacturer": "WESTWING",
       "category": "MEBLE",
-      "url": "https://homla.com.pl/stolik-kawowy-lumbera-czarny-w-okleinie-debowej-40x40x45-cm.html?gad_source=1&gad_campaignid=16575902787&gbraid=0AAAAADKmqq-r6TwV7Rvk2xrZlfJw0bmPq&gclid=CjwKCAjw7vzOBhBxEiwAc7WNrwWL6T9F-8-LMHrSE8uVOFMOpuAtNjwwHj322QzDa4CdKR3ZnKp11RoCnrUQAvD_BwE",
-      "imageUrl": "https://utfs.io/f/J8yL1oB2TLkXMjuhas0ArFjNzCglTyu9EJwaDfL746cpMYk5",
-      "price": "249 zł",
-      "description": null,
-      "supplier": "www.homla.com.pl",
-      "dimensions": "40x40x45 cm",
-      "catalogNumber": null,
-      "deliveryTime": null,
-      "favorite": false
-    },
-    {
-      "name": "Lampa wisząca Margin | Westwing",
-      "manufacturer": "Westwing",
-      "category": "OSWIETLENIE",
-      "url": "https://www.westwing.pl/pendant-lamp-margin-various-sizes-en-25neo96482.html?simple=DEQ25NEO96482-290856",
-      "imageUrl": "https://utfs.io/f/J8yL1oB2TLkXm3XXRp9OJqDbxoRNcpZV2QF4T8Au7X1LtzPW",
-      "price": "2029 zł",
-      "description": "Lampa wisząca Margin do Twojego pięknego domu ✓ Najwyższa jakość ✓ Darmowy zwrot ▷ Kup online!",
+      "url": "https://www.westwing.pl/puf-z-aksamitu-alto-118828.html",
+      "imageUrl": "https://utfs.io/f/J8yL1oB2TLkXBNFaJgf310pv5Tmu2yXrDRok84FghnfLNisc",
+      "price": "359,90",
+      "description": "Puf tapicerowany z aksamitu Alto do Twojego pięknego domu ✓ Najwyższa jakość ✓ Darmowy zwrot ▷ Kup online!",
       "supplier": "www.westwing.pl",
-      "dimensions": "280 x 90 cm",
+      "dimensions": null,
       "catalogNumber": null,
       "deliveryTime": null,
       "favorite": false
@@ -3262,6 +3345,20 @@
       "favorite": false
     },
     {
+      "name": "Lampa ścienna Plume CA",
+      "manufacturer": "DCW Editions",
+      "category": "OSWIETLENIE",
+      "url": "https://nap.com.pl/lampy-scienne/16450-32212-lampa-scienna-plume-ca-dcw-editions.html#/2124-klosz-poliweglan",
+      "imageUrl": "https://utfs.io/f/J8yL1oB2TLkXHAWizZVPgFIkhwjDqKnHes6ZvtyUiaL2OWX1",
+      "price": "1000 zł",
+      "description": null,
+      "supplier": null,
+      "dimensions": null,
+      "catalogNumber": null,
+      "deliveryTime": null,
+      "favorite": false
+    },
+    {
       "name": "New Works Bukowski",
       "manufacturer": "Andlight",
       "category": "OSWIETLENIE",
@@ -3285,6 +3382,20 @@
       "description": null,
       "supplier": "www.oracdecor.com",
       "dimensions": "200 x 4 x 1.9cm",
+      "catalogNumber": null,
+      "deliveryTime": null,
+      "favorite": false
+    },
+    {
+      "name": "Łóżko Round",
+      "manufacturer": "IWC Home",
+      "category": "MEBLE",
+      "url": "https://iwchome.com/pl/products/round-6564.html",
+      "imageUrl": "https://utfs.io/f/J8yL1oB2TLkXDVCAczm8bov0OqGYKLaVQJTBmWilgI3sScAe",
+      "price": "6998 zł",
+      "description": null,
+      "supplier": null,
+      "dimensions": null,
       "catalogNumber": null,
       "deliveryTime": null,
       "favorite": false
@@ -3360,6 +3471,20 @@
       "favorite": false
     },
     {
+      "name": "Gałka meblowa Disc 38 Nikiel Szczotkowany",
+      "manufacturer": "SKANDYNAWSKIE UCHWYTY",
+      "category": "AKCESORIA",
+      "url": "https://skandynawskieuchwyty.pl/pl/p/Galka-meblowa-Disc-38-Nikiel-Szczotkowany/7189",
+      "imageUrl": "https://utfs.io/f/J8yL1oB2TLkXQ98qHy60hVrnaJXvCtTlEyIB6kWfs7dGjc9z",
+      "price": "26,52",
+      "description": "OPIS PRODUKTU: Zaprojektowana przez Balutto Associati we Włoszech gałka znana jako Disc jest",
+      "supplier": "www.skandynawskieuchwyty.pl",
+      "dimensions": null,
+      "catalogNumber": null,
+      "deliveryTime": null,
+      "favorite": false
+    },
+    {
       "name": "Zestaw ław Rodos czarny mat - Fabryka Design",
       "manufacturer": "Fabryka Design",
       "category": "MEBLE",
@@ -3388,15 +3513,43 @@
       "favorite": false
     },
     {
-      "name": "Lampa podlogowa nuvira z jasnoszarego szczotkowanego metalu",
-      "manufacturer": "Kave Home",
-      "category": "OSWIETLENIE",
-      "url": "https://kavehome.com/pl/pl/p/lampa-podlogowa-nuvira-z-jasnoszarego-szczotkowanego-metalu",
-      "imageUrl": "https://utfs.io/f/J8yL1oB2TLkXesvlzJhwN5txMS9fRLOWkAJcXUTVur4HYQGZ",
-      "price": "679 zł",
+      "name": "Stolik kawowy LUMBERA czarny w okleinie dębowej 40x40x45 cm",
+      "manufacturer": "Homla",
+      "category": "MEBLE",
+      "url": "https://homla.com.pl/stolik-kawowy-lumbera-czarny-w-okleinie-debowej-40x40x45-cm.html?gad_source=1&gad_campaignid=16575902787&gbraid=0AAAAADKmqq-r6TwV7Rvk2xrZlfJw0bmPq&gclid=CjwKCAjw7vzOBhBxEiwAc7WNrwWL6T9F-8-LMHrSE8uVOFMOpuAtNjwwHj322QzDa4CdKR3ZnKp11RoCnrUQAvD_BwE",
+      "imageUrl": "https://utfs.io/f/J8yL1oB2TLkXMjuhas0ArFjNzCglTyu9EJwaDfL746cpMYk5",
+      "price": "249 zł",
       "description": null,
-      "supplier": "www.kavehome.com",
-      "dimensions": "130 cm",
+      "supplier": "www.homla.com.pl",
+      "dimensions": "40x40x45 cm",
+      "catalogNumber": null,
+      "deliveryTime": null,
+      "favorite": false
+    },
+    {
+      "name": "Konsola do przedpokoju 110x40 cm z MDF Tuareg",
+      "manufacturer": "Sklum PL",
+      "category": "MEBLE",
+      "url": "https://www.sklum.com/pl/kup-meble-do-przedpokoju/187969-prostokatna-konsola-110x40-cm-z-mdf-tuareg.html?id_c=516764",
+      "imageUrl": "https://utfs.io/f/J8yL1oB2TLkXQFB1Gr60hVrnaJXvCtTlEyIB6kWfs7dGjc9z",
+      "price": "1039,95 zł",
+      "description": "Jeśli masz korytarz, wąski przedpokój lub jakiekolwiek miejsce w domu, któremu chcesz dodać odrobinę funkcjonalnej świeżości, konsola do przedpokoju 110x40 cm z MDF Tuareg jest dla Ciebie. Dzięki estetyce prostych i ponadczasowych linii jest to idealny mebel do uzupełnienia każdej przestrzeni, nadaj",
+      "supplier": "www.sklum.com",
+      "dimensions": null,
+      "catalogNumber": null,
+      "deliveryTime": null,
+      "favorite": false
+    },
+    {
+      "name": "NORDVIK",
+      "manufacturer": "HOMLA",
+      "category": "MEBLE",
+      "url": "https://homla.com.pl/fotel-nordvik-obrotowy-czekoladowy-83x87x75-cm.html",
+      "imageUrl": "https://utfs.io/f/J8yL1oB2TLkXMhpDPsh0ArFjNzCglTyu9EJwaDfL746cpMYk",
+      "price": "999 zł",
+      "description": "To miejsce, w którym możesz naprawdę się zatrzymać. Fotel obrotowy NORDVIK zaprasza miękką formą i głębokim siedziskiem, które otula ciało i pozwala wygodnie ułożyć się dokładnie tak, jak lubisz. Czekoladowy odcień tapicerki wprowadza do wnętrza spokój i przytulność, a zaokrąglona konstrukcja dodaje",
+      "supplier": "www.homla.com.pl",
+      "dimensions": null,
       "catalogNumber": null,
       "deliveryTime": null,
       "favorite": false
@@ -3430,6 +3583,20 @@
       "favorite": false
     },
     {
+      "name": "SX104",
+      "manufacturer": null,
+      "category": "OKLADZINY_SCIENNE",
+      "url": "https://www.oracdecor.com/pl_pl/listwy-przypodlogowe/sx104-model?length_axis=5743&variations=5848",
+      "imageUrl": "https://utfs.io/f/J8yL1oB2TLkX6zbooSBnxolKh5sDTN6HQfgP8VXi3Bwrqe2O",
+      "price": "124,40",
+      "description": null,
+      "supplier": "www.oracdecor.com",
+      "dimensions": null,
+      "catalogNumber": null,
+      "deliveryTime": null,
+      "favorite": false
+    },
+    {
       "name": "Krzesło z podłokietnikami GRANITE beżowy szenil z ciemną jesionową podstawą",
       "manufacturer": "Kave Home",
       "category": "MEBLE",
@@ -3452,6 +3619,20 @@
       "price": null,
       "description": null,
       "supplier": "www.giorgettimeda.com",
+      "dimensions": null,
+      "catalogNumber": null,
+      "deliveryTime": null,
+      "favorite": false
+    },
+    {
+      "name": "Dywan Kari | Westwing",
+      "manufacturer": "Westwing",
+      "category": "AKCESORIA",
+      "url": "https://www.westwing.pl/dywan-kari-150758.html?simple=DEQ23WES11118-193223",
+      "imageUrl": "https://utfs.io/f/J8yL1oB2TLkXOLUFAks4cUL5QWk3jPVM2o6bRDJNiTs81zdA",
+      "price": "529,90 zł",
+      "description": null,
+      "supplier": null,
       "dimensions": null,
       "catalogNumber": null,
       "deliveryTime": null,
@@ -3593,6 +3774,34 @@
       "description": "Lampa wisząca z lnu Clouds do Twojego pięknego domu ✓ Najwyższa jakość ✓ Darmowy zwrot ▷ Kup online!",
       "supplier": "www.westwing.pl",
       "dimensions": null,
+      "catalogNumber": null,
+      "deliveryTime": null,
+      "favorite": false
+    },
+    {
+      "name": "Lampa wisząca Margin | Westwing",
+      "manufacturer": "Westwing",
+      "category": "OSWIETLENIE",
+      "url": "https://www.westwing.pl/pendant-lamp-margin-various-sizes-en-25neo96482.html?simple=DEQ25NEO96482-290856",
+      "imageUrl": "https://utfs.io/f/J8yL1oB2TLkXm3XXRp9OJqDbxoRNcpZV2QF4T8Au7X1LtzPW",
+      "price": "2029 zł",
+      "description": "Lampa wisząca Margin do Twojego pięknego domu ✓ Najwyższa jakość ✓ Darmowy zwrot ▷ Kup online!",
+      "supplier": "www.westwing.pl",
+      "dimensions": "280 x 90 cm",
+      "catalogNumber": null,
+      "deliveryTime": null,
+      "favorite": false
+    },
+    {
+      "name": "Lampa podlogowa nuvira z jasnoszarego szczotkowanego metalu",
+      "manufacturer": "Kave Home",
+      "category": "OSWIETLENIE",
+      "url": "https://kavehome.com/pl/pl/p/lampa-podlogowa-nuvira-z-jasnoszarego-szczotkowanego-metalu",
+      "imageUrl": "https://utfs.io/f/J8yL1oB2TLkXesvlzJhwN5txMS9fRLOWkAJcXUTVur4HYQGZ",
+      "price": "679 zł",
+      "description": null,
+      "supplier": "www.kavehome.com",
+      "dimensions": "130 cm",
       "catalogNumber": null,
       "deliveryTime": null,
       "favorite": false
@@ -3906,6 +4115,20 @@
       "favorite": false
     },
     {
+      "name": "Komoda dwudrzwiowa Moku orzech villa, zaokrąglone fronty",
+      "manufacturer": "Lectus24",
+      "category": "MEBLE",
+      "url": "https://lectus24.pl/produkty/komoda-dwudrzwiowa-moku-orzech-villa-zaokraglone-fronty.html?_gl=1*2uryru*_up*MQ..*_gs*MQ..&gclid=CjwKCAjwwJzPBhBREiwAJfHRnSOLHGyiuWTsLASu9NHH-C3TPpmeg_ISLKRh7naiNWeqmlt1qtDsERoC4MIQAvD_BwE&gbraid=0AAAAADMbybmHdu8hGqivOIzhlkYFh-iww",
+      "imageUrl": "https://utfs.io/f/J8yL1oB2TLkXsjPv00BYbO0dQI7cv2FzUR6fXMtNJ8WTxD1L",
+      "price": "859 zł",
+      "description": "Odkryj komodę dwudrzwiową Moku w wybarwieniu orzech villa. Nowoczesny design, zaokrąglone fronty i cichy domyk. Dodaj swojemu salonowi elegancji i stylu!",
+      "supplier": "www.lectus24.pl",
+      "dimensions": null,
+      "catalogNumber": null,
+      "deliveryTime": null,
+      "favorite": false
+    },
+    {
       "name": "Lampa sufitowa wisząca z lnu Patraix",
       "manufacturer": "Sklum PL",
       "category": "OSWIETLENIE",
@@ -3990,6 +4213,20 @@
       "favorite": false
     },
     {
+      "name": "Gałka meblowa Como Srebrna Chrom polerowany",
+      "manufacturer": "SKANDYNAWSKIE UCHWYTY",
+      "category": "AKCESORIA",
+      "url": "https://skandynawskieuchwyty.pl/galka-meblowa-como-srebrna-chrom-polerowany",
+      "imageUrl": "https://utfs.io/f/J8yL1oB2TLkX10RfpHINi8QvdmrogEjkcCxeIJsX5RfUDPKa",
+      "price": "15,39",
+      "description": "OPIS PRODUKTU: Elegancka gałka z serii Como, która sprawdzi się idealnie w meblach kuchennych,",
+      "supplier": "www.skandynawskieuchwyty.pl",
+      "dimensions": null,
+      "catalogNumber": null,
+      "deliveryTime": null,
+      "favorite": false
+    },
+    {
       "name": "Minimalistyczny kinkiet BALL 1 BLACK (14cm) w sklepie ARTERA",
       "manufacturer": "ARTERA",
       "category": "OSWIETLENIE",
@@ -4018,13 +4255,41 @@
       "favorite": false
     },
     {
-      "name": "Łóżko PIUMA tapicerowany",
-      "manufacturer": "Rosanero",
+      "name": "Regał Tulumo wysoki, zaokrąglony, Orzech Villa",
+      "manufacturer": "Lectus",
       "category": "MEBLE",
-      "url": "https://eyeondesign.pl/products/naroznik-prawostronny-mood-tapicerowany",
-      "imageUrl": "https://utfs.io/f/J8yL1oB2TLkXRdl2j0xXbuIYt96NKU4DrnfTGqLWJpgzEZOP",
-      "price": "6999 zł",
-      "description": "Łóżko tapicerowane Piuma to elegancka i funkcjonalna propozycja, która wyróżnia się nowoczesnym designem oraz wysoką jakością wykonania. Istnieje możliwość wyboru dwóch opcji wykonania skrzyni łóżka:\n\nSkrzynia łóżka wykonywana w całości – łóżko wysyłane w dwóch elementach: skrzynia oraz wezgłowie, c",
+      "url": "https://lectus24.pl/produkty/regal-tulumo-wysoki-zaokraglony-orzech--villa.html?_gl=1*w8xplz*_up*MQ..*_gs*NQ..&gclid=CjwKCAjwwJzPBhBREiwAJfHRnSOLHGyiuWTsLASu9NHH-C3TPpmeg_ISLKRh7naiNWeqmlt1qtDsERoC4MIQAvD_BwE&gbraid=0AAAAADMbybmHdu8hGqivOIzhlkYFh-iww",
+      "imageUrl": "https://utfs.io/f/J8yL1oB2TLkXZKQRWiXbqY43VI2pRtjnBEcv0HLXFAG8whoQ",
+      "price": "1499 zł",
+      "description": "Nowoczesny regał wysoki w kolorze orzech villa z zaokrąglonymi krawędziami. Idealny do salonu, biura lub sypialni na książki i dekoracje.",
+      "supplier": "www.lectus24.pl",
+      "dimensions": null,
+      "catalogNumber": null,
+      "deliveryTime": null,
+      "favorite": false
+    },
+    {
+      "name": "Prostokątne lustro ścienne 70x200 cm w aluminium Mirjam",
+      "manufacturer": "Sklum PL",
+      "category": "AKCESORIA",
+      "url": "https://www.sklum.com/pl/kup-lustra-scienne/145659-prostokatne-aluminiowe-lustro-scienne-70x200-cm-mirjam.html?id_c=315683",
+      "imageUrl": "https://utfs.io/f/J8yL1oB2TLkX2grg04DJ48UhmFd9ERnZWwv1ONVg5BYjX7yD",
+      "price": "709,95 zł",
+      "description": "Un lustro może być tym detalem, którego brakuje w Twoim domu, aby całkowicie zmienić dekorację, jasność i styl. Dzięki prostokątnemu lustru ściennemu 70x200 cm z aluminium Mirjam przekształcisz każdą przestrzeń. O minimalistycznym designie i czystych liniach, to lustro posiada aluminiową ramę, która",
+      "supplier": "www.sklum.com",
+      "dimensions": null,
+      "catalogNumber": null,
+      "deliveryTime": null,
+      "favorite": false
+    },
+    {
+      "name": "Zestaw stolików kawowych JAZZ czarny",
+      "manufacturer": "Richmond Interiors",
+      "category": "MEBLE",
+      "url": "https://eyeondesign.pl/products/zestaw-stolikow-kawowych-jazz-czarny",
+      "imageUrl": "https://utfs.io/f/J8yL1oB2TLkXoYsSwRJYHPUdvM5Aj8eBl4EmTFLkNWxIfsGp",
+      "price": "2494 zł",
+      "description": "Zestaw dwóch stolików kawowych Jazz to połączenie stylu i minimalizmu, które bez wątpienia ozdobi Twój dom oraz wniesie nutę nowoczesności do przestrzeni. Charakteryzują się one designerską, stożkową podstawą wykonaną z metalu oraz okrągłym blatem z płyty MDF, który został wykończony w błyszczącej c",
       "supplier": "www.eyeondesign.pl",
       "dimensions": null,
       "catalogNumber": null,
@@ -4070,6 +4335,20 @@
       "supplier": "www.meblemwm.pl",
       "dimensions": "140x200 cm",
       "catalogNumber": "QUARTO_NAOMI-140",
+      "deliveryTime": null,
+      "favorite": false
+    },
+    {
+      "name": "REVEGO - systemy kieszeniowe dla nowych koncepcji przestrzeni",
+      "manufacturer": null,
+      "category": "MEBLE",
+      "url": "https://www.blum.com/pl/pl/products/pocketsystems/revego/overview/",
+      "imageUrl": "https://utfs.io/f/J8yL1oB2TLkX015o30iTgMry8GNWhLOeaS2u7FsqDdjAnBp4",
+      "price": null,
+      "description": "Nowa kategoria produktów - systemy kieszeniowe - otwiera całkowicie nowe perspektywy wielofunkcyjnego wykorzystania przestrzeni",
+      "supplier": "www.blum.com",
+      "dimensions": null,
+      "catalogNumber": null,
       "deliveryTime": null,
       "favorite": false
     },
@@ -4172,14 +4451,14 @@
       "favorite": false
     },
     {
-      "name": "Dali",
-      "manufacturer": "IWC Home",
+      "name": "Łóżko PIUMA tapicerowany",
+      "manufacturer": "Rosanero",
       "category": "MEBLE",
-      "url": "https://iwchome.com/pl/products/dali-880.html",
-      "imageUrl": "https://utfs.io/f/J8yL1oB2TLkXFEx15VQSzlNuD30xR8IHvybZ4eoCEVmLs6UA",
-      "price": "1990 zł",
-      "description": "Krzesło tapicerowane",
-      "supplier": "www.iwchome.com",
+      "url": "https://eyeondesign.pl/products/naroznik-prawostronny-mood-tapicerowany",
+      "imageUrl": "https://utfs.io/f/J8yL1oB2TLkXRdl2j0xXbuIYt96NKU4DrnfTGqLWJpgzEZOP",
+      "price": "6999 zł",
+      "description": "Łóżko tapicerowane Piuma to elegancka i funkcjonalna propozycja, która wyróżnia się nowoczesnym designem oraz wysoką jakością wykonania. Istnieje możliwość wyboru dwóch opcji wykonania skrzyni łóżka:\n\nSkrzynia łóżka wykonywana w całości – łóżko wysyłane w dwóch elementach: skrzynia oraz wezgłowie, c",
+      "supplier": "www.eyeondesign.pl",
       "dimensions": null,
       "catalogNumber": null,
       "deliveryTime": null,
@@ -4326,132 +4605,6 @@
       "favorite": false
     },
     {
-      "name": "Pufy | Westwing",
-      "manufacturer": "WESTWING",
-      "category": "MEBLE",
-      "url": "https://www.westwing.pl/pufy-stolki-tapicerowane/",
-      "imageUrl": "https://utfs.io/f/J8yL1oB2TLkXPHVPBFaTf1rDBUicb6vG8ZIeQChltxVmoPJ4",
-      "price": "659,90",
-      "description": "Pufy i siedziska ★ Odkryj stylowe i funkcjonalne siedziska i pufy ✓ Eleganckie piłki do siedzenia ✓ Modny design ▷ Kup online!",
-      "supplier": "www.westwing.pl",
-      "dimensions": null,
-      "catalogNumber": null,
-      "deliveryTime": null,
-      "favorite": false
-    },
-    {
-      "name": "Puf tapicerowany z aksamitu Alto | Westwing",
-      "manufacturer": "WESTWING",
-      "category": "MEBLE",
-      "url": "https://www.westwing.pl/puf-z-aksamitu-alto-118828.html",
-      "imageUrl": "https://utfs.io/f/J8yL1oB2TLkXBNFaJgf310pv5Tmu2yXrDRok84FghnfLNisc",
-      "price": "359,90",
-      "description": "Puf tapicerowany z aksamitu Alto do Twojego pięknego domu ✓ Najwyższa jakość ✓ Darmowy zwrot ▷ Kup online!",
-      "supplier": "www.westwing.pl",
-      "dimensions": null,
-      "catalogNumber": null,
-      "deliveryTime": null,
-      "favorite": false
-    },
-    {
-      "name": "Konsola do przedpokoju 110x40 cm z MDF Tuareg",
-      "manufacturer": "Sklum PL",
-      "category": "MEBLE",
-      "url": "https://www.sklum.com/pl/kup-meble-do-przedpokoju/187969-prostokatna-konsola-110x40-cm-z-mdf-tuareg.html?id_c=516764",
-      "imageUrl": "https://utfs.io/f/J8yL1oB2TLkXQFB1Gr60hVrnaJXvCtTlEyIB6kWfs7dGjc9z",
-      "price": "1039,95 zł",
-      "description": "Jeśli masz korytarz, wąski przedpokój lub jakiekolwiek miejsce w domu, któremu chcesz dodać odrobinę funkcjonalnej świeżości, konsola do przedpokoju 110x40 cm z MDF Tuareg jest dla Ciebie. Dzięki estetyce prostych i ponadczasowych linii jest to idealny mebel do uzupełnienia każdej przestrzeni, nadaj",
-      "supplier": "www.sklum.com",
-      "dimensions": null,
-      "catalogNumber": null,
-      "deliveryTime": null,
-      "favorite": false
-    },
-    {
-      "name": "Komoda dwudrzwiowa Moku orzech villa, zaokrąglone fronty",
-      "manufacturer": "Lectus24",
-      "category": "MEBLE",
-      "url": "https://lectus24.pl/produkty/komoda-dwudrzwiowa-moku-orzech-villa-zaokraglone-fronty.html?_gl=1*2uryru*_up*MQ..*_gs*MQ..&gclid=CjwKCAjwwJzPBhBREiwAJfHRnSOLHGyiuWTsLASu9NHH-C3TPpmeg_ISLKRh7naiNWeqmlt1qtDsERoC4MIQAvD_BwE&gbraid=0AAAAADMbybmHdu8hGqivOIzhlkYFh-iww",
-      "imageUrl": "https://utfs.io/f/J8yL1oB2TLkXsjPv00BYbO0dQI7cv2FzUR6fXMtNJ8WTxD1L",
-      "price": "859 zł",
-      "description": "Odkryj komodę dwudrzwiową Moku w wybarwieniu orzech villa. Nowoczesny design, zaokrąglone fronty i cichy domyk. Dodaj swojemu salonowi elegancji i stylu!",
-      "supplier": "www.lectus24.pl",
-      "dimensions": null,
-      "catalogNumber": null,
-      "deliveryTime": null,
-      "favorite": false
-    },
-    {
-      "name": "Regał Tulumo wysoki, zaokrąglony, Orzech Villa",
-      "manufacturer": "Lectus",
-      "category": "MEBLE",
-      "url": "https://lectus24.pl/produkty/regal-tulumo-wysoki-zaokraglony-orzech--villa.html?_gl=1*w8xplz*_up*MQ..*_gs*NQ..&gclid=CjwKCAjwwJzPBhBREiwAJfHRnSOLHGyiuWTsLASu9NHH-C3TPpmeg_ISLKRh7naiNWeqmlt1qtDsERoC4MIQAvD_BwE&gbraid=0AAAAADMbybmHdu8hGqivOIzhlkYFh-iww",
-      "imageUrl": "https://utfs.io/f/J8yL1oB2TLkXZKQRWiXbqY43VI2pRtjnBEcv0HLXFAG8whoQ",
-      "price": "1499 zł",
-      "description": "Nowoczesny regał wysoki w kolorze orzech villa z zaokrąglonymi krawędziami. Idealny do salonu, biura lub sypialni na książki i dekoracje.",
-      "supplier": "www.lectus24.pl",
-      "dimensions": null,
-      "catalogNumber": null,
-      "deliveryTime": null,
-      "favorite": false
-    },
-    {
-      "name": "Prostokątne lustro ścienne 70x200 cm w aluminium Mirjam",
-      "manufacturer": "Sklum PL",
-      "category": "AKCESORIA",
-      "url": "https://www.sklum.com/pl/kup-lustra-scienne/145659-prostokatne-aluminiowe-lustro-scienne-70x200-cm-mirjam.html?id_c=315683",
-      "imageUrl": "https://utfs.io/f/J8yL1oB2TLkX2grg04DJ48UhmFd9ERnZWwv1ONVg5BYjX7yD",
-      "price": "709,95 zł",
-      "description": "Un lustro może być tym detalem, którego brakuje w Twoim domu, aby całkowicie zmienić dekorację, jasność i styl. Dzięki prostokątnemu lustru ściennemu 70x200 cm z aluminium Mirjam przekształcisz każdą przestrzeń. O minimalistycznym designie i czystych liniach, to lustro posiada aluminiową ramę, która",
-      "supplier": "www.sklum.com",
-      "dimensions": null,
-      "catalogNumber": null,
-      "deliveryTime": null,
-      "favorite": false
-    },
-    {
-      "name": "Zestaw stolików kawowych JAZZ czarny",
-      "manufacturer": "Richmond Interiors",
-      "category": "MEBLE",
-      "url": "https://eyeondesign.pl/products/zestaw-stolikow-kawowych-jazz-czarny",
-      "imageUrl": "https://utfs.io/f/J8yL1oB2TLkXoYsSwRJYHPUdvM5Aj8eBl4EmTFLkNWxIfsGp",
-      "price": "2494 zł",
-      "description": "Zestaw dwóch stolików kawowych Jazz to połączenie stylu i minimalizmu, które bez wątpienia ozdobi Twój dom oraz wniesie nutę nowoczesności do przestrzeni. Charakteryzują się one designerską, stożkową podstawą wykonaną z metalu oraz okrągłym blatem z płyty MDF, który został wykończony w błyszczącej c",
-      "supplier": "www.eyeondesign.pl",
-      "dimensions": null,
-      "catalogNumber": null,
-      "deliveryTime": null,
-      "favorite": false
-    },
-    {
-      "name": "REVEGO - systemy kieszeniowe dla nowych koncepcji przestrzeni",
-      "manufacturer": null,
-      "category": "MEBLE",
-      "url": "https://www.blum.com/pl/pl/products/pocketsystems/revego/overview/",
-      "imageUrl": "https://utfs.io/f/J8yL1oB2TLkX015o30iTgMry8GNWhLOeaS2u7FsqDdjAnBp4",
-      "price": null,
-      "description": "Nowa kategoria produktów - systemy kieszeniowe - otwiera całkowicie nowe perspektywy wielofunkcyjnego wykorzystania przestrzeni",
-      "supplier": "www.blum.com",
-      "dimensions": null,
-      "catalogNumber": null,
-      "deliveryTime": null,
-      "favorite": false
-    },
-    {
-      "name": "NORDVIK",
-      "manufacturer": "HOMLA",
-      "category": "MEBLE",
-      "url": "https://homla.com.pl/fotel-nordvik-obrotowy-czekoladowy-83x87x75-cm.html",
-      "imageUrl": "https://utfs.io/f/J8yL1oB2TLkXMhpDPsh0ArFjNzCglTyu9EJwaDfL746cpMYk",
-      "price": "999 zł",
-      "description": "To miejsce, w którym możesz naprawdę się zatrzymać. Fotel obrotowy NORDVIK zaprasza miękką formą i głębokim siedziskiem, które otula ciało i pozwala wygodnie ułożyć się dokładnie tak, jak lubisz. Czekoladowy odcień tapicerki wprowadza do wnętrza spokój i przytulność, a zaokrąglona konstrukcja dodaje",
-      "supplier": "www.homla.com.pl",
-      "dimensions": null,
-      "catalogNumber": null,
-      "deliveryTime": null,
-      "favorite": false
-    },
-    {
       "name": "Nowoczesny fotel obrotowy Tranquil z miękkiej tkaniny | Marbily",
       "manufacturer": null,
       "category": "MEBLE",
@@ -4516,20 +4669,6 @@
       "price": "1710 zł",
       "description": "Pan 95 to aluminiowa lampa ścienna zaprojektowana przez Benta Karlby'ego w 1970 roku. Pojedyncze źródło światła w połączeniu z otwartą konstrukcją klosza sprawia, że lampa emituje miękkie światło skierowane w górę oraz delikatniejsze w skierowane w dół. Wszystkie trzy modele z serii Pan oparte są na",
       "supplier": "www.nap.com.pl",
-      "dimensions": null,
-      "catalogNumber": null,
-      "deliveryTime": null,
-      "favorite": false
-    },
-    {
-      "name": "CB512",
-      "manufacturer": "ORAC DECOR",
-      "category": "OKLADZINY_SCIENNE",
-      "url": "https://www.oracdecor.com/pl_pl/listwy-gzymsowe/cb512-model?_gl=1*bxbom1*_up*MQ..&gclid=CjwKCAjwwJzPBhBREiwAJfHRnTxRkqEJVK6VpxS0lnQwr70C00MdswSj2S6W96dS8_HgBemy-ZLK-RoCr0cQAvD_BwE&gbraid=0AAAAAC1sISvSOvL3in051mNydQMX5eRHl&length_axis=5743&variations=5848",
-      "imageUrl": "https://utfs.io/f/J8yL1oB2TLkX7MosU4L1ku0RKsXJZ2iWBlqfzL5h61tVDEO3",
-      "price": "47,50",
-      "description": null,
-      "supplier": "www.oracdecor.com",
       "dimensions": null,
       "catalogNumber": null,
       "deliveryTime": null,
@@ -4648,34 +4787,6 @@
       "favorite": false
     },
     {
-      "name": "Gałka meblowa Como Srebrna Chrom polerowany",
-      "manufacturer": "SKANDYNAWSKIE UCHWYTY",
-      "category": "AKCESORIA",
-      "url": "https://skandynawskieuchwyty.pl/galka-meblowa-como-srebrna-chrom-polerowany",
-      "imageUrl": "https://utfs.io/f/J8yL1oB2TLkX10RfpHINi8QvdmrogEjkcCxeIJsX5RfUDPKa",
-      "price": "15,39",
-      "description": "OPIS PRODUKTU: Elegancka gałka z serii Como, która sprawdzi się idealnie w meblach kuchennych,",
-      "supplier": "www.skandynawskieuchwyty.pl",
-      "dimensions": null,
-      "catalogNumber": null,
-      "deliveryTime": null,
-      "favorite": false
-    },
-    {
-      "name": "Gałka meblowa Disc 38 Nikiel Szczotkowany",
-      "manufacturer": "SKANDYNAWSKIE UCHWYTY",
-      "category": "AKCESORIA",
-      "url": "https://skandynawskieuchwyty.pl/pl/p/Galka-meblowa-Disc-38-Nikiel-Szczotkowany/7189",
-      "imageUrl": "https://utfs.io/f/J8yL1oB2TLkXQ98qHy60hVrnaJXvCtTlEyIB6kWfs7dGjc9z",
-      "price": "26,52",
-      "description": "OPIS PRODUKTU: Zaprojektowana przez Balutto Associati we Włoszech gałka znana jako Disc jest",
-      "supplier": "www.skandynawskieuchwyty.pl",
-      "dimensions": null,
-      "catalogNumber": null,
-      "deliveryTime": null,
-      "favorite": false
-    },
-    {
       "name": "CX199",
       "manufacturer": "ORAC DECOR",
       "category": "OKLADZINY_SCIENNE",
@@ -4740,20 +4851,6 @@
       "price": "18170 zł",
       "description": "Narożnik 372cm x 186cm",
       "supplier": "www.iwchome.com",
-      "dimensions": null,
-      "catalogNumber": null,
-      "deliveryTime": null,
-      "favorite": false
-    },
-    {
-      "name": "SX137",
-      "manufacturer": null,
-      "category": "OKLADZINY_SCIENNE",
-      "url": "https://www.oracdecor.com/pl_pl/listwy-przypodlogowe/sx137-model?_gl=1*49wjf2*_up*MQ..&gbraid=0AAAAAC1sISvSOvL3in051mNydQMX5eRHl&length_axis=5743&variations=5848",
-      "imageUrl": "https://utfs.io/f/J8yL1oB2TLkXNW8AOlMETYlX3a1HJeD56SF4BMbCUiPuhz9Z",
-      "price": "82,90",
-      "description": null,
-      "supplier": "www.oracdecor.com",
       "dimensions": null,
       "catalogNumber": null,
       "deliveryTime": null,
@@ -4928,6 +5025,20 @@
       "favorite": false
     },
     {
+      "name": "Dali",
+      "manufacturer": "IWC Home",
+      "category": "MEBLE",
+      "url": "https://iwchome.com/pl/products/dali-880.html",
+      "imageUrl": "https://utfs.io/f/J8yL1oB2TLkXFEx15VQSzlNuD30xR8IHvybZ4eoCEVmLs6UA",
+      "price": "1990 zł",
+      "description": "Krzesło tapicerowane",
+      "supplier": "www.iwchome.com",
+      "dimensions": null,
+      "catalogNumber": null,
+      "deliveryTime": null,
+      "favorite": false
+    },
+    {
       "name": "Kinkiet z opalowym kloszem BONBON Wall S ALMOND proj. Mikołaj Nicer (Nicer Design) w sklepie ARTERA",
       "manufacturer": "ARTERA",
       "category": "OSWIETLENIE",
@@ -5040,6 +5151,20 @@
       "favorite": false
     },
     {
+      "name": "Uchwyt meblowy podłużny Barga 96 Chrom Polerowany",
+      "manufacturer": "Skandynawskie Uchwyty",
+      "category": "AKCESORIA",
+      "url": "https://skandynawskieuchwyty.pl/pl/p/Uchwyt-meblowy-podluzny-Barga-96-Chrom-Polerowany/12159",
+      "imageUrl": "https://utfs.io/f/J8yL1oB2TLkXPlcWJcZaTf1rDBUicb6vG8ZIeQChltxVmoPJ",
+      "price": "15.35",
+      "description": "OPIS PRODUKTU: Elegancki uchwyt o różnorodnych wykończeniach, idealnie komponujący się zarówno",
+      "supplier": "www.skandynawskieuchwyty.pl",
+      "dimensions": null,
+      "catalogNumber": null,
+      "deliveryTime": null,
+      "favorite": false
+    },
+    {
       "name": "Kliklap - Retro jednobiegunowy włącznik z ramką nr 1, w białym ceramicznym wykończeniu",
       "manufacturer": "3",
       "category": "AKCESORIA",
@@ -5090,20 +5215,6 @@
       "price": "21,99",
       "description": "Pustak szklany 1909/8 Wave bezbarwny to luksfer połówkowy o falistym wzorze, zapewniający jasne",
       "supplier": "www.luksfer.pl",
-      "dimensions": null,
-      "catalogNumber": null,
-      "deliveryTime": null,
-      "favorite": false
-    },
-    {
-      "name": "Listwa elastyczna przypodłogowa cokół MD018F",
-      "manufacturer": "Mardom Decor",
-      "category": "PODLOGA",
-      "url": "https://mardomdecor.com/listwy/listwa-elastyczna-przypodlogowa-md018f/",
-      "imageUrl": "https://utfs.io/f/J8yL1oB2TLkX10M2QkCNi8QvdmrogEjkcCxeIJsX5RfUDPKa",
-      "price": null,
-      "description": "Listwa elastyczna przypodłogowa MD018F to najwyższej jakości sztukateria przypodłogowa, która oferuje najwyższej klasy design oraz zaawansowane technologiczne właściwości.",
-      "supplier": "www.mardomdecor.com",
       "dimensions": null,
       "catalogNumber": null,
       "deliveryTime": null,
@@ -5250,34 +5361,6 @@
       "favorite": false
     },
     {
-      "name": "SX104",
-      "manufacturer": null,
-      "category": "OKLADZINY_SCIENNE",
-      "url": "https://www.oracdecor.com/pl_pl/listwy-przypodlogowe/sx104-model?length_axis=5743&variations=5848",
-      "imageUrl": "https://utfs.io/f/J8yL1oB2TLkX6zbooSBnxolKh5sDTN6HQfgP8VXi3Bwrqe2O",
-      "price": "124,40",
-      "description": null,
-      "supplier": "www.oracdecor.com",
-      "dimensions": null,
-      "catalogNumber": null,
-      "deliveryTime": null,
-      "favorite": false
-    },
-    {
-      "name": "Uchwyt meblowy podłużny Barga 96 Chrom Polerowany",
-      "manufacturer": "Skandynawskie Uchwyty",
-      "category": "AKCESORIA",
-      "url": "https://skandynawskieuchwyty.pl/pl/p/Uchwyt-meblowy-podluzny-Barga-96-Chrom-Polerowany/12159",
-      "imageUrl": "https://utfs.io/f/J8yL1oB2TLkXPlcWJcZaTf1rDBUicb6vG8ZIeQChltxVmoPJ",
-      "price": "15.35",
-      "description": "OPIS PRODUKTU: Elegancki uchwyt o różnorodnych wykończeniach, idealnie komponujący się zarówno",
-      "supplier": "www.skandynawskieuchwyty.pl",
-      "dimensions": null,
-      "catalogNumber": null,
-      "deliveryTime": null,
-      "favorite": false
-    },
-    {
       "name": "Uchwyt meblowy podłużny Perugia Stripe 160 Chrom Polerowany",
       "manufacturer": "Skandynawskie Uchwyty",
       "category": "AKCESORIA",
@@ -5314,6 +5397,48 @@
       "price": null,
       "description": null,
       "supplier": "www.trestastudio.pl",
+      "dimensions": null,
+      "catalogNumber": null,
+      "deliveryTime": null,
+      "favorite": false
+    },
+    {
+      "name": "CB512",
+      "manufacturer": "ORAC DECOR",
+      "category": "OKLADZINY_SCIENNE",
+      "url": "https://www.oracdecor.com/pl_pl/listwy-gzymsowe/cb512-model?_gl=1*bxbom1*_up*MQ..&gclid=CjwKCAjwwJzPBhBREiwAJfHRnTxRkqEJVK6VpxS0lnQwr70C00MdswSj2S6W96dS8_HgBemy-ZLK-RoCr0cQAvD_BwE&gbraid=0AAAAAC1sISvSOvL3in051mNydQMX5eRHl&length_axis=5743&variations=5848",
+      "imageUrl": "https://utfs.io/f/J8yL1oB2TLkX7MosU4L1ku0RKsXJZ2iWBlqfzL5h61tVDEO3",
+      "price": "47,50",
+      "description": null,
+      "supplier": "www.oracdecor.com",
+      "dimensions": null,
+      "catalogNumber": null,
+      "deliveryTime": null,
+      "favorite": false
+    },
+    {
+      "name": "SX137",
+      "manufacturer": null,
+      "category": "OKLADZINY_SCIENNE",
+      "url": "https://www.oracdecor.com/pl_pl/listwy-przypodlogowe/sx137-model?_gl=1*49wjf2*_up*MQ..&gbraid=0AAAAAC1sISvSOvL3in051mNydQMX5eRHl&length_axis=5743&variations=5848",
+      "imageUrl": "https://utfs.io/f/J8yL1oB2TLkXNW8AOlMETYlX3a1HJeD56SF4BMbCUiPuhz9Z",
+      "price": "82,90",
+      "description": null,
+      "supplier": "www.oracdecor.com",
+      "dimensions": null,
+      "catalogNumber": null,
+      "deliveryTime": null,
+      "favorite": false
+    },
+    {
+      "name": "Listwa elastyczna przypodłogowa cokół MD018F",
+      "manufacturer": "Mardom Decor",
+      "category": "PODLOGA",
+      "url": "https://mardomdecor.com/listwy/listwa-elastyczna-przypodlogowa-md018f/",
+      "imageUrl": "https://utfs.io/f/J8yL1oB2TLkX10M2QkCNi8QvdmrogEjkcCxeIJsX5RfUDPKa",
+      "price": null,
+      "description": "Listwa elastyczna przypodłogowa MD018F to najwyższej jakości sztukateria przypodłogowa, która oferuje najwyższej klasy design oraz zaawansowane technologiczne właściwości.",
+      "supplier": "www.mardomdecor.com",
       "dimensions": null,
       "catalogNumber": null,
       "deliveryTime": null,
@@ -5412,6 +5537,20 @@
       "price": "325 zł",
       "description": "ImperiumLamp.pl - największy sklep z oświetleniem w Polsce. Tylko u nas 90 dni na zwrot towaru. Sprawdź najnowsze promocje. Wejdź i kup teraz!",
       "supplier": "www.imperiumlamp.pl",
+      "dimensions": null,
+      "catalogNumber": null,
+      "deliveryTime": null,
+      "favorite": false
+    },
+    {
+      "name": "Krzesło Drewniane Tapicerowane VESTA-2",
+      "manufacturer": "Fajne Krzesła",
+      "category": "MEBLE",
+      "url": "https://fajnekrzesla.pl/produkt/krzeslo-tapicerowane-vesta-2",
+      "imageUrl": "https://utfs.io/f/J8yL1oB2TLkXo1ceigJYHPUdvM5Aj8eBl4EmTFLkNWxIfsGp",
+      "price": "475",
+      "description": "nowoczesne tapicerowane krzesło w stylu retro",
+      "supplier": "www.fajnekrzesla.pl",
       "dimensions": null,
       "catalogNumber": null,
       "deliveryTime": null,
@@ -5566,20 +5705,6 @@
       "price": null,
       "description": "Naturalna esencja i minimalistyczny design łączą się w kolekcji Macaret. Lekka konstrukcja wykonana z litego drewna dębowego ma skandynawski styl, który wprowadza harmonię i funkcjonalność do każdej przestrzeni.",
       "supplier": "www.kavehome.com",
-      "dimensions": null,
-      "catalogNumber": null,
-      "deliveryTime": null,
-      "favorite": false
-    },
-    {
-      "name": "Krzesło Drewniane Tapicerowane VESTA-2",
-      "manufacturer": "Fajne Krzesła",
-      "category": "MEBLE",
-      "url": "https://fajnekrzesla.pl/produkt/krzeslo-tapicerowane-vesta-2",
-      "imageUrl": "https://utfs.io/f/J8yL1oB2TLkXo1ceigJYHPUdvM5Aj8eBl4EmTFLkNWxIfsGp",
-      "price": "475",
-      "description": "nowoczesne tapicerowane krzesło w stylu retro",
-      "supplier": "www.fajnekrzesla.pl",
       "dimensions": null,
       "catalogNumber": null,
       "deliveryTime": null,
@@ -5768,6 +5893,20 @@
       "favorite": false
     },
     {
+      "name": "Tapeta Arte Figura 27000 Puro",
+      "manufacturer": "Arte",
+      "category": "OKLADZINY_SCIENNE",
+      "url": "https://tapetujemy.pl/p/1270/50266/tapeta-arte-figura-27000-puro-figura-arte-tapety-dekoracyjne.html",
+      "imageUrl": "https://utfs.io/f/J8yL1oB2TLkXEAWMiAZjCRbQN2HFMLGjXKyVUvzgAs51pcP0",
+      "price": "744 zł",
+      "description": "Tapeta Arte Figura 2700 Puro czerpie z bogactwa wyjątkowych materiałów, takich jak marmur",
+      "supplier": "www.tapetujemy.pl",
+      "dimensions": null,
+      "catalogNumber": null,
+      "deliveryTime": null,
+      "favorite": false
+    },
+    {
       "name": "Claremont mały kinkiet ścienny z delikatną porcelaną - Polerowany nikiel",
       "manufacturer": "Corston Europe",
       "category": "OSWIETLENIE",
@@ -5888,6 +6027,20 @@
       "price": "366",
       "description": "Luksus i bezpieczeństwo w formacie XXL: Porcelanosa Santorini Bone Ant-L 120x120\n",
       "supplier": "www.terradeco.com.pl",
+      "dimensions": null,
+      "catalogNumber": null,
+      "deliveryTime": null,
+      "favorite": false
+    },
+    {
+      "name": "Tapeta obiektowa imitująca płótno W29.3547 MILO Vinylpex",
+      "manufacturer": "Vinylpex",
+      "category": "OKLADZINY_SCIENNE",
+      "url": "https://www.tapety-sklep.com/pl/p/Tapeta-obiektowa-imitujaca-plotno-W29.3547-MILO-Vinylpex/143639",
+      "imageUrl": "https://utfs.io/f/J8yL1oB2TLkXB77So0tf310pv5Tmu2yXrDRok84FghnfLNis",
+      "price": "126 zł",
+      "description": null,
+      "supplier": null,
       "dimensions": null,
       "catalogNumber": null,
       "deliveryTime": null,
@@ -6070,76 +6223,6 @@
       "price": "126 zł",
       "description": "winylowa winylowa winylowy winylem obiektowa obiektowe obiektowy kontraktowa kontraktowe",
       "supplier": "www.tapety-sklep.com",
-      "dimensions": null,
-      "catalogNumber": null,
-      "deliveryTime": null,
-      "favorite": false
-    },
-    {
-      "name": "Tapeta Arte Figura 27000 Puro",
-      "manufacturer": "Arte",
-      "category": "OKLADZINY_SCIENNE",
-      "url": "https://tapetujemy.pl/p/1270/50266/tapeta-arte-figura-27000-puro-figura-arte-tapety-dekoracyjne.html",
-      "imageUrl": "https://utfs.io/f/J8yL1oB2TLkXEAWMiAZjCRbQN2HFMLGjXKyVUvzgAs51pcP0",
-      "price": "744 zł",
-      "description": "Tapeta Arte Figura 2700 Puro czerpie z bogactwa wyjątkowych materiałów, takich jak marmur",
-      "supplier": "www.tapetujemy.pl",
-      "dimensions": null,
-      "catalogNumber": null,
-      "deliveryTime": null,
-      "favorite": false
-    },
-    {
-      "name": "Tapeta obiektowa imitująca płótno W29.3547 MILO Vinylpex",
-      "manufacturer": "Vinylpex",
-      "category": "OKLADZINY_SCIENNE",
-      "url": "https://www.tapety-sklep.com/pl/p/Tapeta-obiektowa-imitujaca-plotno-W29.3547-MILO-Vinylpex/143639",
-      "imageUrl": "https://utfs.io/f/J8yL1oB2TLkXB77So0tf310pv5Tmu2yXrDRok84FghnfLNis",
-      "price": "126 zł",
-      "description": null,
-      "supplier": null,
-      "dimensions": null,
-      "catalogNumber": null,
-      "deliveryTime": null,
-      "favorite": false
-    },
-    {
-      "name": "Lampa ścienna Plume CA",
-      "manufacturer": "DCW Editions",
-      "category": "OSWIETLENIE",
-      "url": "https://nap.com.pl/lampy-scienne/16450-32212-lampa-scienna-plume-ca-dcw-editions.html#/2124-klosz-poliweglan",
-      "imageUrl": "https://utfs.io/f/J8yL1oB2TLkXHAWizZVPgFIkhwjDqKnHes6ZvtyUiaL2OWX1",
-      "price": "1000 zł",
-      "description": null,
-      "supplier": null,
-      "dimensions": null,
-      "catalogNumber": null,
-      "deliveryTime": null,
-      "favorite": false
-    },
-    {
-      "name": "Łóżko Round",
-      "manufacturer": "IWC Home",
-      "category": "MEBLE",
-      "url": "https://iwchome.com/pl/products/round-6564.html",
-      "imageUrl": "https://utfs.io/f/J8yL1oB2TLkXDVCAczm8bov0OqGYKLaVQJTBmWilgI3sScAe",
-      "price": "6998 zł",
-      "description": null,
-      "supplier": null,
-      "dimensions": null,
-      "catalogNumber": null,
-      "deliveryTime": null,
-      "favorite": false
-    },
-    {
-      "name": "Dywan Kari | Westwing",
-      "manufacturer": "Westwing",
-      "category": "AKCESORIA",
-      "url": "https://www.westwing.pl/dywan-kari-150758.html?simple=DEQ23WES11118-193223",
-      "imageUrl": "https://utfs.io/f/J8yL1oB2TLkXOLUFAks4cUL5QWk3jPVM2o6bRDJNiTs81zdA",
-      "price": "529,90 zł",
-      "description": null,
-      "supplier": null,
       "dimensions": null,
       "catalogNumber": null,
       "deliveryTime": null,
@@ -6364,6 +6447,20 @@
       "price": "224,27",
       "description": null,
       "supplier": null,
+      "dimensions": null,
+      "catalogNumber": null,
+      "deliveryTime": null,
+      "favorite": false
+    },
+    {
+      "name": "Fotel Wypoczynkowy Obrotowy Tkanina Premium Czarna Stalowa Podstawa S-91",
+      "manufacturer": "Marbily",
+      "category": "MEBLE",
+      "url": "https://www.marbily.com/products/fotel-wypoczynkowy-tromso?variant=53543149175111",
+      "imageUrl": "https://utfs.io/f/J8yL1oB2TLkXB8ABucf310pv5Tmu2yXrDRok84FghnfLNisc",
+      "price": "1.399 zł",
+      "description": "Elegancki fotel obrotowy pokryty wysokiej jakości ekologiczną skórą. Ergonomiczne siedzisko z miękkim wypełnieniem, idealne do gabinetu lub salonu.",
+      "supplier": "www.marbily.com",
       "dimensions": null,
       "catalogNumber": null,
       "deliveryTime": null,
@@ -6602,20 +6699,6 @@
       "price": "8325 zł",
       "description": "Wypoczywaj bez poczucia winy. Przestronny fotel wypoczynkowy ma konstrukcję z pianki o dużej",
       "supplier": "www.anotherdesign.pl",
-      "dimensions": null,
-      "catalogNumber": null,
-      "deliveryTime": null,
-      "favorite": false
-    },
-    {
-      "name": "Fotel Wypoczynkowy Obrotowy Tkanina Premium Czarna Stalowa Podstawa S-91",
-      "manufacturer": "Marbily",
-      "category": "MEBLE",
-      "url": "https://www.marbily.com/products/fotel-wypoczynkowy-tromso?variant=53543149175111",
-      "imageUrl": "https://utfs.io/f/J8yL1oB2TLkXB8ABucf310pv5Tmu2yXrDRok84FghnfLNisc",
-      "price": "1.399 zł",
-      "description": "Elegancki fotel obrotowy pokryty wysokiej jakości ekologiczną skórą. Ergonomiczne siedzisko z miękkim wypełnieniem, idealne do gabinetu lub salonu.",
-      "supplier": "www.marbily.com",
       "dimensions": null,
       "catalogNumber": null,
       "deliveryTime": null,
@@ -7084,14 +7167,14 @@
       "favorite": false
     },
     {
-      "name": "Zestaw Tres Study Exclusive bateria umywalkowa podtynkowa stal 26230021AC z elementem podtynkowym (26230021AC, 20830002)",
-      "manufacturer": "Tres",
-      "category": null,
-      "url": "https://www.lazienkaplus.pl/pl/zestaw-tres-study-exclusive-bateria-umywalkowa-podtynkowa-stal-26230021ac-z-elementem-podtynkowym-26230021ac-20830002,783816,118,i/?_gl=1*1rx7cvn*_up*MQ..*_gs*MQ..&gclid=CjwKCAjw3ejRBhAdEiwADkqPn4ncCFjbObI75chlAxGDoZ8qrWFPTagSCUb9oW8PACkmCvxFX469uRoCQRAQAvD_BwE&gbraid=0AAAAAD4Ga6VHk1NAdow02NhMvPiTtn8hz",
-      "imageUrl": "https://utfs.io/f/J8yL1oB2TLkXQ8huR060hVrnaJXvCtTlEyIB6kWfs7dGjc9z",
-      "price": "1434,99 zł",
-      "description": null,
-      "supplier": null,
+      "name": "Kosz na pranie 50 l 43,1×34×52,9 cm, cappuccino | ażurowy, do łazienki",
+      "manufacturer": "Rotho",
+      "category": "AKCESORIA",
+      "url": "https://lacarte.pl/pl/p/Kosz-na-pranie-50-l-43%2C13452%2C9-cm%2C-cappuccino-azurowy%2C-do-lazienki/2214?utm_source=shoper&utm_medium=shoper-cpc&utm_campaign=shoper-kampanie-google&shop_campaign=21182&gad_source=1&gad_campaignid=21515690774&gbraid=0AAAAA-Ct3q6BZNJd7HZtz-13tOwKp1MFt&gclid=CjwKCAjw6rfSBhAqEiwA_yocpryGLMoeKsFY-0HP4TNftmLPyyDhnaOz7QIIOPndDE0h1XdRgXhguBoCFLYQAvD_BwE",
+      "imageUrl": "https://utfs.io/f/J8yL1oB2TLkXoyx2KTJYHPUdvM5Aj8eBl4EmTFLkNWxIfsGp",
+      "price": "65,99 zł",
+      "description": "KOSZ NA PRANIE BIELIZNĘ ROTHO BRISEN CAPUCCINO BEŻ 50 L",
+      "supplier": "www.lacarte.pl",
       "dimensions": null,
       "catalogNumber": null,
       "deliveryTime": null,
@@ -7100,29 +7183,244 @@
   ],
   "surveys": [
     {
-      "id": "cmsi3y3h6002204jm2j0adn9c",
+      "id": "cmslvm238007z8kug6kvrmaq0",
       "archived": false,
       "sections": []
     },
     {
-      "id": "cmsi3y418002i04jm4jhmyug0",
+      "id": "cmslvm3sk008f8kugkrg7tooa",
       "archived": false,
       "sections": []
     },
     {
-      "id": "cmsi3y493002n04jm9t87qji6",
+      "id": "cmslvm4jf008k8kugaki2o4h6",
       "archived": false,
       "sections": []
     },
     {
-      "id": "cmsi3y4so002x04jm7kpp1ilh",
+      "id": "cmslvm68n008u8kugn6vfugwn",
       "archived": false,
       "sections": []
     },
     {
-      "id": "cmsi3y50i003204jmtoiu12h3",
+      "id": "cmslvm6ws008z8kug1ft7w5mz",
       "archived": false,
       "sections": []
+    }
+  ],
+  "moodboards": [
+    {
+      "title": "Mieszkanie Malinowski",
+      "canvasData": {
+        "elements": [
+          {
+            "x": 772.9287810159592,
+            "y": 332.2810033711108,
+            "id": "uqynenki",
+            "type": "image",
+            "width": 154,
+            "height": 223.92,
+            "zIndex": 2,
+            "imageUrl": "https://utfs.io/f/J8yL1oB2TLkX3cfiFdqm6ZNFHrl0CsER2XVDtYIuPAe1zySO",
+            "naturalH": 630,
+            "naturalW": 1200,
+            "rotation": 0,
+            "maskShape": "rect",
+            "innerScale": 0.3554285714285714,
+            "innerOffsetX": -136.25714285714287,
+            "innerOffsetY": 0,
+            "templateCategory": "flatlay"
+          },
+          {
+            "x": 1094.9287810159592,
+            "y": 145.6810033711108,
+            "id": "7otorngw",
+            "type": "image",
+            "width": 154,
+            "height": 317.22,
+            "zIndex": 2,
+            "imageUrl": "https://utfs.io/f/J8yL1oB2TLkX77yeHR1ku0RKsXJZ2iWBlqfzL5h61tVDEO3G",
+            "naturalH": 1500,
+            "naturalW": 1000,
+            "rotation": 0,
+            "maskShape": "rect",
+            "innerScale": 0.21148000000000003,
+            "innerOffsetX": -28.74000000000001,
+            "innerOffsetY": 0,
+            "templateCategory": "flatlay"
+          },
+          {
+            "x": 835.9287810159592,
+            "y": 304.29100337111083,
+            "id": "5ygabwbs",
+            "fill": "#5d4b3d",
+            "type": "ellipse",
+            "width": 77,
+            "height": 77,
+            "stroke": "#C7CAD6",
+            "zIndex": 2,
+            "rotation": 0,
+            "strokeWidth": 1,
+            "templateRole": "image",
+            "templateLabel": "Próbka",
+            "templateCategory": "flatlay"
+          },
+          {
+            "x": 912.9287810159592,
+            "y": 201.66100337111072,
+            "id": "rnf20wkz",
+            "type": "image",
+            "width": 238.00000000000003,
+            "height": 373.20000000000005,
+            "zIndex": 3,
+            "imageUrl": "https://utfs.io/f/J8yL1oB2TLkXTdUjinAjRwtF2shl4kO6Bego3DxXmuidcWC7",
+            "naturalH": 1589,
+            "naturalW": 1589,
+            "rotation": 0,
+            "maskShape": "rect",
+            "innerScale": 0.23486469477658908,
+            "innerOffsetX": -67.60000000000001,
+            "innerOffsetY": 0,
+            "templateCategory": "flatlay"
+          },
+          {
+            "x": 821.9287810159592,
+            "y": 214.63181269895713,
+            "id": "s1j91r2r",
+            "fill": "#cfc0af",
+            "type": "ellipse",
+            "width": 56,
+            "height": 56,
+            "stroke": "#C7CAD6",
+            "zIndex": 3,
+            "rotation": 0,
+            "strokeWidth": 1,
+            "templateRole": "swatch",
+            "templateCategory": "flatlay"
+          },
+          {
+            "x": 856.9287810159592,
+            "y": 462.90100337111073,
+            "id": "vcbyhcqk",
+            "type": "image",
+            "width": 126,
+            "height": 149.28,
+            "zIndex": 4,
+            "imageUrl": "https://utfs.io/f/J8yL1oB2TLkXe22gPcwN5txMS9fRLOWkAJcXUTVur4HYQGZ1",
+            "naturalH": 7937,
+            "naturalW": 3685,
+            "rotation": 0,
+            "maskShape": "rect",
+            "innerScale": 0.03419267299864315,
+            "innerOffsetX": 0,
+            "innerOffsetY": -61.053622795115345,
+            "templateCategory": "flatlay"
+          },
+          {
+            "x": 1140.9287810159592,
+            "y": 462.90100337111085,
+            "id": "4g1pp6a3",
+            "type": "image",
+            "width": 126,
+            "height": 317.22,
+            "zIndex": 5,
+            "imageUrl": "https://utfs.io/f/J8yL1oB2TLkXLEJ0V0IcAMIkWxZb6YK5mC327ENnfUtwQj0o",
+            "naturalH": 2590,
+            "naturalW": 1708,
+            "rotation": 0,
+            "maskShape": "rect",
+            "innerScale": 0.12247876447876449,
+            "innerOffsetX": -41.59686486486487,
+            "innerOffsetY": 0,
+            "templateCategory": "flatlay"
+          },
+          {
+            "x": 804.4287810159592,
+            "y": 129.38100337111078,
+            "id": "v9za8bpq",
+            "type": "image",
+            "width": 182,
+            "height": 261.24,
+            "zIndex": 1,
+            "imageUrl": "blob:http://localhost:3000/d4de5db9-c6bf-483c-9333-388c0c0d9063",
+            "naturalH": 863,
+            "naturalW": 799,
+            "rotation": 0,
+            "maskShape": "rect",
+            "innerScale": 0.3027114716106605,
+            "innerOffsetX": -29.933232908458862,
+            "innerOffsetY": 0,
+            "templateCategory": "flatlay"
+          },
+          {
+            "x": 700.4287810159592,
+            "y": 482.18100337111076,
+            "id": "fkh0z5jl",
+            "type": "image",
+            "width": 195,
+            "height": 260,
+            "opacity": 1,
+            "imageUrl": "https://utfs.io/f/J8yL1oB2TLkXMbAKBV0ArFjNzCglTyu9EJwaDfL746cpMYk5",
+            "rotation": 0,
+            "cornerRadius": 35
+          },
+          {
+            "x": 940.0009850232966,
+            "y": 556.2010033711108,
+            "id": "shjlvdb1",
+            "type": "image",
+            "width": 136.14790839694442,
+            "height": 131.51792366412369,
+            "opacity": 1,
+            "imageUrl": "https://utfs.io/f/J8yL1oB2TLkXj8UKZyTE9GpAXhBTyHWOmPvRuMnQbCY76x32",
+            "rotation": 0
+          },
+          {
+            "x": 1218.8907865500257,
+            "y": 381.29100337111083,
+            "id": "w99mz7gv",
+            "type": "image",
+            "width": 167.40030534349785,
+            "height": 168.55780152672065,
+            "opacity": 1,
+            "imageUrl": "https://utfs.io/f/J8yL1oB2TLkXOqcANfs4cUL5QWk3jPVM2o6bRDJNiTs81zdA",
+            "rotation": 0
+          },
+          {
+            "x": 1288.7412292981103,
+            "y": 470.62454535584203,
+            "id": "5smsc6lr",
+            "type": "image",
+            "width": 132.67541984732142,
+            "height": 133.8329160305372,
+            "opacity": 1,
+            "imageUrl": "https://utfs.io/f/J8yL1oB2TLkXpi02QFR8lCBFDVhbsmxYtQzZqWjvo13yJ4af",
+            "rotation": 0
+          },
+          {
+            "x": 1031.9287810159592,
+            "y": 658.4677729015064,
+            "id": "smhcouy8",
+            "type": "image",
+            "width": 108.80137889384386,
+            "height": 145.06850519179176,
+            "opacity": 1,
+            "imageUrl": "https://utfs.io/f/J8yL1oB2TLkXPHVPBFaTf1rDBUicb6vG8ZIeQChltxVmoPJ4",
+            "rotation": 0
+          }
+        ],
+        "viewport": {
+          "x": -49.14962247282597,
+          "y": -15.069816428749391,
+          "scale": 0.8573388203017831
+        },
+        "background": "#D4CFC4"
+      },
+      "isSharedWithClient": false,
+      "archived": false,
+      "pinned": false,
+      "clientName": "Nowakowie",
+      "projectTitle": null
     }
   ],
   "taskStatuses": [

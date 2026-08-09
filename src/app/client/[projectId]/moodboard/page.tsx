@@ -18,7 +18,14 @@ export default async function ClientMoodboardPage({ params }: { params: Promise<
   if (!project) notFound();
 
   const moodboard = await prisma.moodboard.findFirst({
-    where: { projectId, isSharedWithClient: true, archived: false },
+    where: {
+      isSharedWithClient: true,
+      archived: false,
+      OR: [
+        { projectId },
+        ...(project.clientId ? [{ clientId: project.clientId }] : []),
+      ],
+    },
     select: { id: true, title: true, canvasData: true },
   });
 
@@ -38,6 +45,20 @@ export default async function ClientMoodboardPage({ params }: { params: Promise<
     where: { room: { projectId }, archived: false },
   }).then((n) => n > 0);
 
+  const userLinks = await prisma.projectClient.findMany({
+    where: { userId: session.user.id, clientId: { not: null } },
+    select: { clientId: true },
+  });
+  const surveyClientIds = [...new Set([
+    ...(project.clientId ? [project.clientId] : []),
+    ...userLinks.map((l) => l.clientId as string),
+  ])];
+  const hasSurveys = surveyClientIds.length > 0
+    ? await prisma.survey.count({
+        where: { assignedClientId: { in: surveyClientIds }, status: "ACTIVE", archived: false },
+      }).then((n) => n > 0)
+    : false;
+
   const { user } = project;
 
   return (
@@ -55,6 +76,9 @@ export default async function ClientMoodboardPage({ params }: { params: Promise<
             showProjectFlow={!project.hiddenModules.includes("renderflow") && hasRenders}
             showListy={!project.hiddenModules.includes("listy")}
             showDyskusje={!project.hiddenModules.includes("dyskusje")}
+            showPayments={project.paymentsSharedWithClient}
+            showHarmonogram={project.scheduleSharedWithClient}
+            showAnkiety={hasSurveys}
             showMoodboard={true}
             shoppingLists={shoppingLists}
             clientProjectId={projectId}

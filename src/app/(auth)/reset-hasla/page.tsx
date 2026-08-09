@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useT } from "@/lib/i18n";
 
 const CSS = `
-  :root {
+  .rh-body {
     --background: #FFFFFF;
     --foreground: #24252B;
     --primary: #4F46E5;
