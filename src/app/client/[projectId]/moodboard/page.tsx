@@ -69,7 +69,7 @@ export default async function ClientMoodboardPage({ params }: { params: Promise<
           clientLogoUrl={user.showClientLogo ? user.clientLogoUrl : null}
           designerName={user.showProfileName ? user.name : null}
         />
-        <div className="flex flex-1 min-h-0">
+        <div className="flex flex-1 min-h-0" style={{ backgroundColor: 'var(--sidebar)' }}>
           <ShareSidebar
             token=""
             discussionId={discussion?.id}
