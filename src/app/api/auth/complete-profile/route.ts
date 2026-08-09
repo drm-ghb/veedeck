@@ -8,16 +8,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { name } = await req.json();
+  const { fullName, name } = await req.json();
 
-  if (!name || typeof name !== "string" || name.trim().length < 2) {
-    return NextResponse.json({ error: "Nazwa musi mieć co najmniej 2 znaki" }, { status: 400 });
+  if (!fullName || typeof fullName !== "string" || fullName.trim().length < 2) {
+    return NextResponse.json({ error: "Imię i nazwisko musi mieć co najmniej 2 znaki" }, { status: 400 });
   }
 
   await prisma.user.update({
     where: { id: session.user.id },
     data: {
-      name: name.trim(),
+      fullName: fullName.trim(),
+      ...(name && typeof name === "string" && name.trim() ? { name: name.trim() } : {}),
       needsNameSetup: false,
     },
   });

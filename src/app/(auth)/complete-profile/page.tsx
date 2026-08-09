@@ -13,13 +13,14 @@ import { useT } from "@/lib/i18n";
 export default function CompleteProfilePage() {
   const t = useT();
   const { data: session, update } = useSession();
-  const [name, setName] = useState(session?.user?.name ?? "");
+  const [fullName, setFullName] = useState("");
+  const [companyName, setCompanyName] = useState(session?.user?.name ?? "");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (name.trim().length < 2) {
+    if (fullName.trim().length < 2) {
       toast.error(t.auth.nameMinChars);
       return;
     }
@@ -28,7 +29,7 @@ export default function CompleteProfilePage() {
     const res = await fetch("/api/auth/complete-profile", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name }),
+      body: JSON.stringify({ fullName, name: companyName }),
     });
 
     if (!res.ok) {
@@ -63,19 +64,25 @@ export default function CompleteProfilePage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-1.5">
-              <Label htmlFor="name">{t.auth.yourName}</Label>
+              <Label htmlFor="fullName">{t.auth.fullName}</Label>
               <Input
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder={t.auth.namePlaceholder}
+                id="fullName"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                placeholder={t.auth.fullNamePlaceholder}
                 required
                 autoFocus
                 minLength={2}
               />
-              <p className="text-xs text-muted-foreground">
-                {t.auth.nameHint}
-              </p>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="companyName">{t.auth.companyOptional} <span className="text-muted-foreground font-normal text-xs">({t.common.optional})</span></Label>
+              <Input
+                id="companyName"
+                value={companyName}
+                onChange={(e) => setCompanyName(e.target.value)}
+                placeholder="np. Studio Wnętrz XYZ"
+              />
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? t.auth.saving : t.auth.next}
