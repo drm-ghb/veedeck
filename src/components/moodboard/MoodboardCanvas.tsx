@@ -552,13 +552,11 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
   const [snapLines, setSnapLines] = useState<Array<{ x1: number; y1: number; x2: number; y2: number }>>([]);
   const [rotationGuide, setRotationGuide] = useState<{ cx: number; cy: number; angle: number } | null>(null);
   const [helpOpen, setHelpOpen] = useState(false);
-  const [gridMode, setGridMode] = useState<"dots" | "grid" | "none">(() => {
-    if (typeof window !== "undefined") {
-      const s = localStorage.getItem("moodboard-grid");
-      if (s === "dots" || s === "grid" || s === "none") return s;
-    }
-    return "dots";
-  });
+  const [gridMode, setGridMode] = useState<"dots" | "grid" | "none">("dots");
+  useEffect(() => {
+    const s = localStorage.getItem("moodboard-grid");
+    if (s === "dots" || s === "grid" || s === "none") setGridMode(s);
+  }, []);
   const [gridMenuOpen, setGridMenuOpen] = useState(false);
   const [penPoints, setPenPoints] = useState<number[]>([]);
   const penStartRef = useRef<{ x: number; y: number } | null>(null);
