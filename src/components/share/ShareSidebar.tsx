@@ -500,31 +500,59 @@ export default function ShareSidebar({
         )}
 
         {/* Płatności */}
-        {showPayments && onPaymentsClick && (
-          <button
-            onClick={() => { onPaymentsClick(); setMobileSidebarOpen(false); }}
-            title={isCollapsed ? t.share.payments : undefined}
-            className={`w-full ${linkCls(clientProjectId ? activeView === "payments" : false)}`}
-          >
-            <span className="flex-shrink-0 w-5 flex items-center justify-center">
-              <Payments size={18} />
-            </span>
-            {showLabels && t.share.payments}
-          </button>
+        {showPayments && (onPaymentsClick || clientProjectId) && (
+          onPaymentsClick ? (
+            <button
+              onClick={() => { onPaymentsClick(); setMobileSidebarOpen(false); }}
+              title={isCollapsed ? t.share.payments : undefined}
+              className={`w-full ${linkCls(activeView === "payments")}`}
+            >
+              <span className="flex-shrink-0 w-5 flex items-center justify-center">
+                <Payments size={18} />
+              </span>
+              {showLabels && t.share.payments}
+            </button>
+          ) : (
+            <Link
+              href={`/client/${clientProjectId}?view=payments`}
+              title={isCollapsed ? t.share.payments : undefined}
+              className={linkCls(false)}
+              onClick={() => setMobileSidebarOpen(false)}
+            >
+              <span className="flex-shrink-0 w-5 flex items-center justify-center">
+                <Payments size={18} />
+              </span>
+              {showLabels && t.share.payments}
+            </Link>
+          )
         )}
 
         {/* Harmonogram */}
-        {showHarmonogram && onHarmonogramClick && (
-          <button
-            onClick={() => { onHarmonogramClick(); setMobileSidebarOpen(false); }}
-            title={isCollapsed ? t.share.schedule : undefined}
-            className={`w-full ${linkCls(clientProjectId ? activeView === "schedule" : false)}`}
-          >
-            <span className="flex-shrink-0 w-5 flex items-center justify-center">
-              <CalendarNote size={18} />
-            </span>
-            {showLabels && t.share.schedule}
-          </button>
+        {showHarmonogram && (onHarmonogramClick || clientProjectId) && (
+          onHarmonogramClick ? (
+            <button
+              onClick={() => { onHarmonogramClick(); setMobileSidebarOpen(false); }}
+              title={isCollapsed ? t.share.schedule : undefined}
+              className={`w-full ${linkCls(activeView === "schedule")}`}
+            >
+              <span className="flex-shrink-0 w-5 flex items-center justify-center">
+                <CalendarNote size={18} />
+              </span>
+              {showLabels && t.share.schedule}
+            </button>
+          ) : (
+            <Link
+              href={`/client/${clientProjectId}?view=schedule`}
+              title={isCollapsed ? t.share.schedule : undefined}
+              className={linkCls(false)}
+              onClick={() => setMobileSidebarOpen(false)}
+            >
+              <span className="flex-shrink-0 w-5 flex items-center justify-center">
+                <CalendarNote size={18} />
+              </span>
+              {showLabels && t.share.schedule}
+            </Link>
+          )
         )}
 
         {/* Ankiety */}
