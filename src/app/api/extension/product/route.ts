@@ -95,6 +95,7 @@ export async function POST(req: NextRequest) {
         description: description || null,
         catalogNumber: catalogNumber || null,
         userId: user.workspaceId,
+        source: "veepick",
       },
     });
   } else if (category && !exists.category) {

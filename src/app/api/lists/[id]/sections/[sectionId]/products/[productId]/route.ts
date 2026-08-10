@@ -175,41 +175,47 @@ export async function PUT(
 
   if (!name?.trim()) return NextResponse.json({ error: "Nazwa jest wymagana" }, { status: 400 });
 
-  const product = await findProduct(productId, sectionId, id, getWorkspaceUserId(session));
-  if (!product) return NextResponse.json({ error: "Nie znaleziono produktu" }, { status: 404 });
+  try {
+    const product = await findProduct(productId, sectionId, id, getWorkspaceUserId(session));
+    if (!product) return NextResponse.json({ error: "Nie znaleziono produktu" }, { status: 404 });
 
-  const sharedData = {
-    name: name.trim(),
-    url: url || null,
-    imageUrl: imageUrl || null,
-    price: price || null,
-    manufacturer: manufacturer || null,
-    color: color || null,
-    dimensions: dimensions || null,
-    description: description || null,
-    deliveryTime: deliveryTime || null,
-    category: category || null,
-    supplier: supplier || null,
-    catalogNumber: catalogNumber || null,
-    note: note || null,
-  };
+    const listProductData = {
+      name: name.trim(),
+      url: url || null,
+      imageUrl: imageUrl || null,
+      price: price || null,
+      manufacturer: manufacturer || null,
+      color: color || null,
+      dimensions: dimensions || null,
+      description: description || null,
+      deliveryTime: deliveryTime || null,
+      category: category || null,
+      supplier: supplier || null,
+      catalogNumber: catalogNumber || null,
+      note: note || null,
+    };
 
-  const updated = await prisma.listProduct.update({
-    where: { id: productId },
-    data: sharedData,
-  });
-
-  // Sync to library product if linked
-  if (updated.productId) {
-    await prisma.product.update({
-      where: { id: updated.productId },
-      data: sharedData,
+    const updated = await prisma.listProduct.update({
+      where: { id: productId },
+      data: listProductData,
     });
+
+    // Sync to library product if linked (Product model doesn't have note field)
+    if (updated.productId) {
+      const { note: _note, ...libraryData } = listProductData;
+      await prisma.product.update({
+        where: { id: updated.productId },
+        data: libraryData,
+      });
+    }
+
+    await logListChange({ listId: id, userId: session.user.id, userName: session.user.name ?? session.user.email ?? "Projektant", action: "Edytowano produkt", details: updated.name });
+
+    return NextResponse.json(updated);
+  } catch (err) {
+    console.error("[PUT product] error:", err);
+    return NextResponse.json({ error: "Błąd aktualizacji produktu", detail: String(err) }, { status: 500 });
   }
-
-  await logListChange({ listId: id, userId: session.user.id, userName: session.user.name ?? session.user.email ?? "Projektant", action: "Edytowano produkt", details: updated.name });
-
-  return NextResponse.json(updated);
 }
 
 export async function DELETE(

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { CheckCircle2, X, Check, ChevronRight, Users, PushPin, LocalMall, ChatBubble, CheckSquare, Package, CalendarDays, NotebookText, ClipboardList, Engineering, Interests, VeezardIcon } from "@/components/ui/icons";
+import { CheckCircle2, X, Check, ChevronRight, Users, PushPin, LocalMall, ChatBubble, CheckSquare, Stacks, CalendarDays, NotebookText, ClipboardList, Engineering, Interests, VeezardIcon } from "@/components/ui/icons";
 import { useT } from "@/lib/i18n";
 import { PLAN_LABELS } from "@/lib/stripe/prices";
 
@@ -48,7 +48,7 @@ const PLAN_MODULES = [
   { label: "Moodboardy",      icon: <Interests size={13} /> },
   { label: "Dyskusje",        icon: <ChatBubble size={13} /> },
   { label: "Zadania",         icon: <CheckSquare size={13} /> },
-  { label: "Produkty",        icon: <Package size={13} /> },
+  { label: "Biblioteka",       icon: <Stacks size={13} /> },
   { label: "Kalendarz",       icon: <CalendarDays size={13} /> },
   { label: "Notatnik",        icon: <NotebookText size={13} /> },
   { label: "Ankiety",         icon: <ClipboardList size={13} /> },

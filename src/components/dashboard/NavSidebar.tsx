@@ -4,11 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import Pusher from "pusher-js";
-import { LayoutDashboard, Users, LocalMall, Package, PanelLeftClose, PanelLeftOpen, Settings, HelpCircle, PushPin, ShieldCheck, CalendarDays, NotebookText, ChatBubble, CheckSquare, VeezardIcon, BookOpen, ClipboardList, Engineering, Interests, Bug, Sparkles } from "@/components/ui/icons";
+import { LayoutDashboard, Users, LocalMall, Stacks, PanelLeftClose, PanelLeftOpen, Settings, HelpCircle, PushPin, ShieldCheck, CalendarDays, NotebookText, ChatBubble, CheckSquare, VeezardIcon, BookOpen, ClipboardList, Engineering, Interests, Bug, Sparkles } from "@/components/ui/icons";
 import { useT } from "@/lib/i18n";
 import HelpWidget from "@/components/dashboard/HelpWidget";
 
-const DEFAULT_SIDEBAR_ORDER = ["klienci", "projectflow", "listy-zakupowe", "moodboardy", "zadania", "ankiety", "produkty", "wykonawcy", "kalendarz", "notatnik", "dyskusje", "veezard"];
+const DEFAULT_SIDEBAR_ORDER = ["klienci", "projectflow", "listy-zakupowe", "moodboardy", "zadania", "ankiety", "biblioteka", "wykonawcy", "kalendarz", "notatnik", "dyskusje", "veezard"];
 
 interface NavSidebarProps {
   hiddenModules: string[];
@@ -217,7 +217,7 @@ export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userI
     { label: t.nav.contractors, href: "/wykonawcy", icon: <Engineering size={18} />, slug: "wykonawcy", badge: contractorUnread, matchPrefixes: [] as string[] },
     { label: t.nav.tasks, href: "/zadania", icon: <CheckSquare size={18} />, slug: "zadania", badge: 0, matchPrefixes: [] as string[] },
     { label: t.nav.surveys, href: "/ankiety", icon: <ClipboardList size={18} />, slug: "ankiety", badge: 0, matchPrefixes: [] as string[] },
-    { label: t.nav.products, href: "/produkty", icon: <Package size={18} />, slug: "produkty", badge: 0, matchPrefixes: [] as string[] },
+    { label: t.nav.products, href: "/biblioteka", icon: <Stacks size={18} />, slug: "produkty", badge: 0, matchPrefixes: [] as string[] },
     { label: t.nav.calendar, href: "/kalendarz", icon: <CalendarDays size={18} />, slug: "kalendarz", badge: 0, matchPrefixes: [] as string[] },
     { label: t.nav.notes, href: "/notatnik", icon: <NotebookText size={18} />, slug: "notatnik", badge: 0, matchPrefixes: [] as string[] },
     { label: t.nav.discussions, href: "/dyskusje", icon: <ChatBubble size={18} />, slug: "dyskusje", badge: discussionUnread, matchPrefixes: [] as string[] },
@@ -248,7 +248,7 @@ export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userI
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [forceCollapsed]);
 
-  const normalizedSidebarOrder = sidebarOrder?.map((k) => k === "renderflow" ? "projectflow" : k === "listy" ? "listy-zakupowe" : k);
+  const normalizedSidebarOrder = sidebarOrder?.map((k) => k === "renderflow" ? "projectflow" : k === "listy" ? "listy-zakupowe" : k === "produkty" ? "biblioteka" : k);
   const order = (() => {
     if (!normalizedSidebarOrder || normalizedSidebarOrder.length === 0) return DEFAULT_SIDEBAR_ORDER;
     const result = [...normalizedSidebarOrder];

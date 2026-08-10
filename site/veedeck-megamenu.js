@@ -24,7 +24,7 @@
     { icon: "interests",      pl: "Moodboardy",     en: "Moodboards",     dpl: "Zbieraj inspiracje i wizualne koncepcje", den: "Collect inspiration and visual concepts", href: "#moodboardy" },
     { icon: "check_box",      pl: "Zadania",        en: "Tasks",          dpl: "Lista do zrobienia z terminami",        den: "A to-do list with deadlines",          href: "#zadania" },
     { icon: "assignment",     pl: "Ankiety",        en: "Surveys",        dpl: "Briefy i ankiety dla klienta",          den: "Briefs and surveys for the client",    href: "#ankiety" },
-    { icon: "package_2",      pl: "Produkty",       en: "Products",       dpl: "Twoja kartoteka mebli i materiałów",    den: "Your furniture & materials library",   href: "#produkty" },
+    { icon: "stacks",         pl: "Biblioteka",     en: "Library",        dpl: "Produkty, tekstury i modele 3D studia", den: "Products, textures & 3D models",       href: "#biblioteka" },
     { icon: "engineering",    pl: "Wykonawcy",      en: "Contractors",    dpl: "Rysunki i dokumenty dla wykonawców",    den: "Drawings & docs for contractors",      href: "#wykonawcy" },
     { icon: "calendar_month", pl: "Kalendarz",      en: "Calendar",       dpl: "Spotkania, dostawy, deadline'y",        den: "Meetings, deliveries, deadlines",      href: "#kalendarz" },
     { icon: "note_stack",     pl: "Notatnik",       en: "Notes",          dpl: "Szybkie notatki i szkice",              den: "Quick notes and sketches",             href: "#notatnik" },

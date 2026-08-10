@@ -86,7 +86,7 @@ export default auth((req) => {
         listy: "/listy-zakupowe",
         wykonawcy: "/wykonawcy",
         zadania: "/zadania",
-        produkty: "/produkty",
+        produkty: "/biblioteka",
         kalendarz: "/kalendarz",
         notatnik: "/notatnik",
         dyskusje: "/dyskusje",

@@ -168,7 +168,7 @@ export async function GET(req: NextRequest) {
         id: p.id,
         title: p.name,
         subtitle: p.manufacturer ?? p.category ?? undefined,
-        href: `/produkty`,
+        href: `/biblioteka`,
         imageUrl: p.imageUrl ?? undefined,
       })),
       folders: folders.map((f) => ({

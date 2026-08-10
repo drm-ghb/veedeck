@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import {
   Sun, Moon, Monitor, Palette, Globe, Pencil,
-  GripVertical, LayoutDashboard, Users, PushPin, LocalMall, Package,
+  GripVertical, LayoutDashboard, Users, PushPin, LocalMall, Stacks,
   CheckSquare, CalendarDays, NotebookText, ChatBubble, VeezardIcon,
   Engineering, ClipboardList, ChevronDown, Interests,
 } from "@/components/ui/icons";
@@ -77,7 +77,7 @@ export function SettingsAppearance({
     listy:      { label: t.nav.lists,       icon: LocalMall },
     moodboardy: { label: t.nav.moodboard,  icon: Interests },
     zadania:    { label: t.nav.tasks,       icon: CheckSquare },
-    produkty:   { label: t.nav.products,    icon: Package },
+    produkty:   { label: t.nav.products,    icon: Stacks },
     kalendarz:  { label: t.nav.calendar,    icon: CalendarDays },
     notatnik:   { label: t.nav.notes,       icon: NotebookText },
     dyskusje:   { label: t.nav.discussions, icon: ChatBubble },
@@ -172,17 +172,17 @@ export function SettingsAppearance({
   }
 
   const allModules = [
-    { slug: "renderflow", label: t.nav.renderflow, description: t.settings.renderflowModuleDesc, icon: <PushPin size={18} className="text-muted-foreground shrink-0" /> },
     { slug: "klienci",    label: t.nav.projects,   description: t.settings.klienciModuleDesc,    icon: <Users size={18} className="text-muted-foreground shrink-0" /> },
+    { slug: "renderflow", label: t.nav.renderflow, description: t.settings.renderflowModuleDesc, icon: <PushPin size={18} className="text-muted-foreground shrink-0" /> },
     { slug: "listy",      label: t.nav.lists,      description: t.settings.listsModuleDesc,      icon: <LocalMall size={18} className="text-muted-foreground shrink-0" /> },
     { slug: "moodboardy", label: t.nav.moodboard,  description: t.settings.moodboardyModuleDesc, icon: <Interests size={18} className="text-muted-foreground shrink-0" /> },
-    { slug: "wykonawcy",  label: t.nav.contractors,description: t.settings.wykonawcyModuleDesc,  icon: <Engineering size={18} className="text-muted-foreground shrink-0" /> },
     { slug: "zadania",    label: t.nav.tasks,      description: t.settings.zadaniaModuleDesc,    icon: <CheckSquare size={18} className="text-muted-foreground shrink-0" /> },
-    { slug: "produkty",   label: t.nav.products,   description: t.settings.productsModuleDesc,   icon: <Package size={18} className="text-muted-foreground shrink-0" /> },
+    { slug: "ankiety",    label: t.nav.surveys,    description: t.settings.ankietyModuleDesc,    icon: <ClipboardList size={18} className="text-muted-foreground shrink-0" /> },
+    { slug: "produkty",   label: t.nav.products,   description: t.settings.productsModuleDesc,   icon: <Stacks size={18} className="text-muted-foreground shrink-0" /> },
+    { slug: "wykonawcy",  label: t.nav.contractors,description: t.settings.wykonawcyModuleDesc,  icon: <Engineering size={18} className="text-muted-foreground shrink-0" /> },
     { slug: "kalendarz",  label: t.nav.calendar,   description: t.settings.kalendarzModuleDesc,  icon: <CalendarDays size={18} className="text-muted-foreground shrink-0" /> },
     { slug: "notatnik",   label: t.nav.notes,      description: t.settings.notatnikModuleDesc,   icon: <NotebookText size={18} className="text-muted-foreground shrink-0" /> },
     { slug: "dyskusje",   label: t.nav.discussions,description: t.settings.dyskusjeModuleDesc,   icon: <ChatBubble size={18} className="text-muted-foreground shrink-0" /> },
-    { slug: "ankiety",    label: t.nav.surveys,    description: t.settings.ankietyModuleDesc,    icon: <ClipboardList size={18} className="text-muted-foreground shrink-0" /> },
     { slug: "veezard",    label: t.nav.veezard,    description: t.settings.veezardModuleDesc,    icon: <VeezardIcon size={18} className="text-muted-foreground shrink-0" /> },
   ];
 

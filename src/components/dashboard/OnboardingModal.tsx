@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { useT } from "@/lib/i18n";
 import {
-  Users, PushPin, LocalMall, Interests, Package, ChatBubble,
+  Users, PushPin, LocalMall, Interests, Stacks, ChatBubble,
   Engineering, ClipboardList, CalendarDays, NotebookText, CheckSquare, Sparkles,
   X, ChevronLeft, ChevronRight, BookOpen, Check,
 } from "@/components/ui/icons";
@@ -122,7 +122,7 @@ export default function OnboardingModal({ show, userId }: { show: boolean; userI
     { icon: PushPin,      label: t.onboarding.projectFlowLabel,title: t.onboarding.projectFlowTitle,desc: t.onboarding.projectFlowDesc,steps: [t.onboarding.projectFlowStep1, t.onboarding.projectFlowStep2, t.onboarding.projectFlowStep3], tip: t.onboarding.projectFlowTip },
     { icon: LocalMall,    label: t.onboarding.listyLabel,      title: t.onboarding.listyTitle,      desc: t.onboarding.listyDesc,      steps: [t.onboarding.listyStep1, t.onboarding.listyStep2, t.onboarding.listyStep3, t.onboarding.listyStep4], tip: t.onboarding.listyTip },
     { icon: Interests,    label: t.onboarding.moodboardyLabel, title: t.onboarding.moodboardyTitle, desc: t.onboarding.moodboardyDesc, steps: [t.onboarding.moodboardyStep1, t.onboarding.moodboardyStep2, t.onboarding.moodboardyStep3], tip: t.onboarding.moodboardyTip },
-    { icon: Package,      label: t.onboarding.produktyLabel,   title: t.onboarding.produktyTitle,   desc: t.onboarding.produktyDesc,   steps: [t.onboarding.produktyStep1, t.onboarding.produktyStep2, t.onboarding.produktyStep3] },
+    { icon: Stacks,       label: t.onboarding.produktyLabel,   title: t.onboarding.produktyTitle,   desc: t.onboarding.produktyDesc,   steps: [t.onboarding.produktyStep1, t.onboarding.produktyStep2, t.onboarding.produktyStep3] },
     { icon: ChatBubble,   label: t.onboarding.dyskusjeLabel,   title: t.onboarding.dyskusjeTitle,   desc: t.onboarding.dyskusjeDesc,   steps: [t.onboarding.dyskusjeStep1, t.onboarding.dyskusjeStep2, t.onboarding.dyskusjeStep3], tip: t.onboarding.dyskusjeTip },
     { icon: Engineering,  label: t.onboarding.wykonawcyLabel,  title: t.onboarding.wykonawcyTitle,  desc: t.onboarding.wykonawcyDesc,  steps: [t.onboarding.wykonawcyStep1, t.onboarding.wykonawcyStep2, t.onboarding.wykonawcyStep3], tip: t.onboarding.wykonawcyTip },
     { icon: ClipboardList,label: t.onboarding.ankietyLabel,    title: t.onboarding.ankietyTitle,    desc: t.onboarding.ankietyDesc,    steps: [t.onboarding.ankietyStep1, t.onboarding.ankietyStep2, t.onboarding.ankietyStep3, t.onboarding.ankietyStep4] },

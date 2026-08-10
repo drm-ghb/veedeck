@@ -57,7 +57,7 @@ export default async function ProduktyLayout({
       />
       <div className="flex flex-1 min-h-0" style={{ backgroundColor: 'var(--sidebar)' }}>
         <NavSidebar hiddenModules={hiddenModules} sidebarOrder={sidebarOrder} userId={session.user.id!} initialCollapsed={sidebarCollapsed} />
-        <main className="flex-1 px-6 py-6 overflow-y-auto overflow-x-hidden bg-background rounded-tl-2xl">
+        <main className="flex-1 overflow-hidden bg-background rounded-tl-2xl flex flex-col">
           <TrialContextProvider value={isTrialExpired}>
             {children}
           </TrialContextProvider>

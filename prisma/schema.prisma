@@ -89,6 +89,7 @@ model User {
   notes                      Note[]
   notifications              Notification[]
   products                   Product[]
+  textures                   Texture[]
   projects                   Project[]
   projectClientAccounts      ProjectClient[]         @relation("ProjectClientUser")
   sessions                   Session[]
@@ -819,9 +820,34 @@ model Product {
   dimensions    String?
   category      String?
   favorite      Boolean            @default(false)
+  source        String             @default("manual")
   listProducts  ListProduct[]
+  models3d      Model3D[]
   user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   renderPins    RenderProductPin[]
+}
+
+model Texture {
+  id           String   @id @default(cuid())
+  userId       String
+  name         String
+  category     String?
+  imageUrl     String?
+  manufacturer String?
+  resolution   String?
+  scale        String?
+  finish       String?
+  source       String   @default("own")
+  favorite     Boolean  @default(false)
+  isPbr        Boolean  @default(false)
+  urlAlbedo    String?
+  urlNormal    String?
+  urlRoughness String?
+  urlMetallic  String?
+  urlAo        String?
+  urlHeight    String?
+  createdAt    DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Discussion {
@@ -1070,18 +1096,20 @@ model SurveyAnswer {
 }
 
 model Model3D {
-  id           String   @id @default(cuid())
-  userId       String
-  name         String
-  category     String
-  meshyTaskId  String?
-  thumbnailUrl String?
-  urlGlb       String?
-  urlObj       String?
-  urlStl       String?
-  urlFbx       String?
-  createdAt    DateTime @default(now())
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id              String   @id @default(cuid())
+  userId          String
+  name            String
+  category        String
+  meshyTaskId     String?
+  thumbnailUrl    String?
+  urlGlb          String?
+  urlObj          String?
+  urlStl          String?
+  urlFbx          String?
+  linkedProductId String?
+  createdAt       DateTime @default(now())
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  linkedProduct   Product? @relation(fields: [linkedProductId], references: [id], onDelete: SetNull)
 }
 
 model SchedulePhase {

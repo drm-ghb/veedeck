@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X, LayoutDashboard, Users, LocalMall, Package, Settings, LogOut, HelpCircle, CheckCircle, CalendarDays, NotebookText, PushPin, ChatBubble, VeezardIcon, BookOpen, ClipboardList, CheckSquare, Engineering, Interests, Check, ChevronDown } from "@/components/ui/icons";
+import { Menu, X, LayoutDashboard, Users, LocalMall, Stacks, Settings, LogOut, HelpCircle, CheckCircle, CalendarDays, NotebookText, PushPin, ChatBubble, VeezardIcon, BookOpen, ClipboardList, CheckSquare, Engineering, Interests, Check, ChevronDown } from "@/components/ui/icons";
 import { signIn, signOut } from "next-auth/react";
 import { useT } from "@/lib/i18n";
 
@@ -59,7 +59,7 @@ export default function MobileMenu({ userName, logoUrl, hiddenModules = [], isTr
     { label: t.nav.moodboard, href: "/moodboardy", icon: <Interests size={18} />, slug: "moodboardy" },
     { label: t.nav.contractors, href: "/wykonawcy", icon: <Engineering size={18} />, slug: "wykonawcy" },
     { label: t.nav.tasks, href: "/zadania", icon: <CheckSquare size={18} />, slug: "zadania" },
-    { label: t.nav.products, href: "/produkty", icon: <Package size={18} />, slug: "produkty" },
+    { label: t.nav.products, href: "/biblioteka", icon: <Stacks size={18} />, slug: "produkty" },
     { label: t.nav.calendar, href: "/kalendarz", icon: <CalendarDays size={18} />, slug: "kalendarz" },
     { label: t.nav.notes, href: "/notatnik", icon: <NotebookText size={18} />, slug: "notatnik" },
     { label: t.nav.discussions, href: "/dyskusje", icon: <ChatBubble size={18} />, slug: "dyskusje" },

@@ -199,19 +199,21 @@ const DESIGNER_MODULES: DesignerStep[] = [
     featuresTitle: "Dostępne funkcje",
   },
   {
-    title: "6. Produkty",
-    desc: "Osobista biblioteka mebli, oświetlenia, tkanin, materiałów i akcesoriów, które często pojawiają się w Twoich projektach. Zamiast wklejać te same dane za każdym razem, dodajesz produkt raz i wstawiasz go do dowolnej listy zakupowej jednym kliknięciem. Rozszerzenie veepick umożliwia dodawanie produktów bezpośrednio ze stron sklepów internetowych.",
+    title: "6. Biblioteka",
+    desc: "Centralna biblioteka zasobów workspace'u — podzielona na trzy zakładki: Produkty, Tekstury i Modele 3D. Produkty to meble, oświetlenie, akcesoria i materiały, które często pojawiają się w Twoich projektach — dodajesz raz, używasz w wielu listach zakupowych. Rozszerzenie veepick umożliwia dodawanie produktów bezpośrednio ze stron sklepów internetowych.",
     tips: [
       "Rozszerzenie veepick automatycznie pobiera zdjęcie, nazwę, cenę i link ze strony sklepu — zero ręcznego wklejania.",
       "Produkt z biblioteki wstawiasz na listę ze wszystkimi zapisanymi danymi — nie przepisujesz ich ponownie.",
+      "Filtruj produkty po kategorii, producencie lub typie źródła (veepick / ręcznie dodane).",
     ],
     steps: [
+      "Otwórz zakładkę **Produkty** — tu znajdziesz bazę mebli, oświetlenia i materiałów",
       "Kliknij **Dodaj produkt** i uzupełnij: nazwę, link do sklepu, cenę, kategorię, zdjęcie",
       "Lub użyj rozszerzenia **veepick**: otwórz stronę produktu w sklepie, kliknij ikonę rozszerzenia i dodaj do biblioteki",
-      "Uzupełnij wymiary, czas dostawy i inne szczegóły dla łatwiejszego wyszukiwania",
-      "Aby wstawić produkt na listę zakupową: otwórz listę, kliknij **Dodaj z biblioteki** i wyszukaj produkt",
-      "Produkt trafia do wybranej sekcji z zachowaniem wszystkich danych",
+      "Kliknij kafelek produktu, żeby zobaczyć szczegóły w panelu bocznym",
+      "Kliknij **Dodaj do listy** w panelu szczegółów — wybierz listę i sekcję",
       "Edytuj produkt w bibliotece — zmiany nie wpływają na egzemplarze już wstawione na listy",
+      "Zakładka **Tekstury** i **Modele 3D** — wkrótce dostępne",
     ],
   },
   {
