@@ -18,6 +18,7 @@ export interface CalendarEvent {
   endAt: string | null;
   location: string | null;
   description: string | null;
+  meetLink?: string | null;
   guests: { id: string; name: string | null; email: string | null; userId: string | null }[];
   isGuest?: boolean;
   source?: "veedeck" | "google";

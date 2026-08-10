@@ -98,6 +98,23 @@ export default function EventDetailDialog({
             </div>
           )}
 
+          {/* Google Meet link */}
+          {event.meetLink && (
+            <div className="flex items-start gap-2.5 text-sm">
+              <svg viewBox="0 0 24 24" className="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" aria-hidden="true">
+                <path d="M15 10l4.553-2.277A1 1 0 0 1 21 8.618v6.764a1 1 0 0 1-1.447.894L15 14M3 8a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground"/>
+              </svg>
+              <a
+                href={event.meetLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline font-medium"
+              >
+                Dołącz do Google Meet
+              </a>
+            </div>
+          )}
+
           {/* Description */}
           {event.description && (
             <div className="flex items-start gap-2.5 text-sm">

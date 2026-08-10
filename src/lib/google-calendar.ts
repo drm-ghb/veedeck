@@ -8,6 +8,7 @@ export interface GoogleCalendarEvent {
   summary: string;
   description?: string;
   location?: string;
+  hangoutLink?: string;
   start: { dateTime?: string; date?: string };
   end: { dateTime?: string; date?: string };
   source: "google";

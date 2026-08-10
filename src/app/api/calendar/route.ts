@@ -84,6 +84,7 @@ export async function GET(req: NextRequest) {
         endAt: g.end?.dateTime ?? g.end?.date ?? null,
         location: g.location ?? null,
         description: g.description ?? null,
+        meetLink: g.hangoutLink ?? null,
         guests: [],
         isGuest: false,
         source: "google",
