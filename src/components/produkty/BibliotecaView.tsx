@@ -561,11 +561,9 @@ export default function BibliotecaView({ initialProducts, initialTextures, initi
           {tab === "modele" && (
             <Button
               size="sm"
-              disabled={expired}
-              title={expired ? "Dostępne w płatnym planie" : undefined}
-              onClick={() => { setAddModelForProductId(undefined); setAddModelOpen(true); }}
               disabled
               title="Wkrótce"
+              onClick={() => { setAddModelForProductId(undefined); setAddModelOpen(true); }}
             >
               <Plus size={15} />
               <span className="hidden sm:inline">Dodaj model</span>
