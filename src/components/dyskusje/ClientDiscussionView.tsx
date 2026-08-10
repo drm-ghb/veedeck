@@ -237,6 +237,7 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
   const msgApiBase = apiBasePath ?? `/api/share/${token}/discussions/${discussionId}`;
   const [messages, setMessages] = useState<DiscussionMessage[]>([]);
   const [receipts, setReceipts] = useState<ReadReceipt[]>([]);
+  const [userAvatars, setUserAvatars] = useState<Record<string, string | null>>({});
   const [loading, setLoading] = useState(true);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
@@ -303,6 +304,7 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
         }
         setMessages(msgs);
         setReceipts(dedupeReceipts(recs));
+        setUserAvatars(data.userAvatars ?? {});
         setLoading(false);
         localStorage.setItem(`share-discussion-unread-${token}`, "0");
         window.dispatchEvent(new CustomEvent("share-discussion-read", { detail: { token } }));
@@ -907,7 +909,7 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
                   const isFirstUnread = msg.id === firstUnreadIdRef.current;
                   return (
                     <div key={msg.id} ref={isFirstUnread ? firstUnreadRef : undefined} className={`flex items-end gap-2 ${isOwn ? "justify-end" : "justify-start"} group ${msg.reactions && msg.reactions.length > 0 ? "mb-6" : "mb-1.5"}`} onClick={() => { if (openMenuId) setOpenMenuId(null); }}>
-                      {!isOwn && <Avatar name={msg.authorName} />}
+                      {!isOwn && <Avatar name={msg.authorName} logoUrl={msg.userId ? userAvatars[msg.userId] : undefined} />}
                       <div className="max-w-[75%]">
                       <SwipeableMessage
                         isOwn={isOwn}

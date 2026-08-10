@@ -52,5 +52,5 @@ export async function GET(
     }),
   ]);
 
-  return NextResponse.json({ groups, payments });
+  return NextResponse.json({ groups, payments, currency: project.user.defaultCurrency ?? "PLN" });
 }

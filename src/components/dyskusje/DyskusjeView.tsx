@@ -154,6 +154,7 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [messages, setMessages] = useState<DiscussionMessage[]>([]);
   const [receipts, setReceipts] = useState<ReadReceipt[]>([]);
+  const [userAvatars, setUserAvatars] = useState<Record<string, string | null>>({});
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
@@ -433,6 +434,7 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
           : null;
         setMessages(msgs);
         setReceipts(dedupeReceipts(recs));
+        setUserAvatars(data.userAvatars ?? {});
         setLoadingMessages(false);
         const lastMsgId = msgs.length > 0 ? msgs[msgs.length - 1].id : undefined;
         markAsRead(selectedId, lastMsgId);
@@ -1653,6 +1655,7 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
                             isOwn={isOwn}
                             currentUserId={currentUserId}
                             ownAvatarUrl={isOwn ? currentUserAvatarUrl : undefined}
+                            otherAvatarUrl={!isOwn && msg.userId ? userAvatars[msg.userId] : undefined}
                             onImageClick={setAnnotatingImage}
                             receipts={isOwn
                               ? receipts.filter((r) => r.lastMessageId === msg.id && r.readerId !== currentUserId)
@@ -2239,11 +2242,12 @@ function renderWithLinks(content: string, isOwn: boolean) {
 
 const REACTION_EMOJIS = ["❤️", "😂", "😮", "😢", "😡", "👍"];
 
-function MessageBubble({ msg, isOwn, currentUserId, ownAvatarUrl, onImageClick, receipts, onEdit, onDelete, onReply, onReact }: {
+function MessageBubble({ msg, isOwn, currentUserId, ownAvatarUrl, otherAvatarUrl, onImageClick, receipts, onEdit, onDelete, onReply, onReact }: {
   msg: DiscussionMessage;
   isOwn: boolean;
   currentUserId?: string;
   ownAvatarUrl?: string | null;
+  otherAvatarUrl?: string | null;
   onImageClick: (url: string) => void;
   receipts?: ReadReceipt[];
   onEdit?: (content: string) => void;
@@ -2355,7 +2359,7 @@ function MessageBubble({ msg, isOwn, currentUserId, ownAvatarUrl, onImageClick, 
 
   return (
     <div className={`flex items-end gap-2 ${isOwn ? "justify-end" : "justify-start"} group ${msg.reactions && msg.reactions.length > 0 ? "mb-6" : "mb-1.5"}`}>
-      {!isOwn && <Avatar name={msg.authorName} veedeck={msg.authorName === "Dział Wsparcia"} />}
+      {!isOwn && <Avatar name={msg.authorName} logoUrl={otherAvatarUrl} veedeck={msg.authorName === "Dział Wsparcia"} />}
       <div className="max-w-[75%]">
       <SwipeableMessage
         isOwn={isOwn}

@@ -345,7 +345,7 @@ export function SettingsAppearance({
           <div className="px-6 pt-6 pb-2">
             <p className="text-xs text-gray-400 mb-4">{t.settings.modulesVisibilityDesc}</p>
           </div>
-          <div className="relative overflow-hidden transition-all duration-300" style={{ maxHeight: modulesExpanded ? `${allModules.length * 61}px` : "220px" }}>
+          <div className="relative overflow-hidden transition-all duration-300" style={{ maxHeight: modulesExpanded ? `${allModules.length * 68}px` : "220px" }}>
             <div className="px-6 space-y-0">
               {allModules.map(({ slug, label, description, icon }) => {
                 const visible = !globalHiddenModules.includes(slug);

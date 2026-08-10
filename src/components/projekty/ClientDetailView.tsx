@@ -512,7 +512,7 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error((data as { error?: string }).error || t.projekty.accountCreateError);
-      setContacts((prev) => prev.map((c) => c.id === contactId ? { ...c, userId: data.userId, user: data.user } : c));
+      setContacts((prev) => prev.map((c) => c.id === contactId ? { ...c, userId: data.userId, user: data.user, emailNotifications: true } : c));
       setCreateAccountOpen((prev) => ({ ...prev, [contactId]: false }));
       toast.success(t.projekty.accountCreated);
       if (data.user?.id && accEmail) await sendAccessLink(data.user.id, contactId);
@@ -537,7 +537,7 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error((data as { error?: string }).error || t.projekty.accountCreateError);
-      setContacts((prev) => prev.map((c) => c.id === addAccountContactId ? { ...c, userId: data.userId, user: data.user } : c));
+      setContacts((prev) => prev.map((c) => c.id === addAccountContactId ? { ...c, userId: data.userId, user: data.user, emailNotifications: true } : c));
       setShowAddAccount(false); setAddAccountContactId(""); setAddAccountEmail("");
       toast.success(t.projekty.accountCreated);
       if (data.user?.id && email) await sendAccessLink(data.user.id, addAccountContactId);

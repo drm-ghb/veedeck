@@ -51,6 +51,7 @@ export async function getClientProject(session: Session, projectId: string) {
           navMode: true,
           colorTheme: true,
           customTheme: true,
+          defaultCurrency: true,
         },
       },
     },

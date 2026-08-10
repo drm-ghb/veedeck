@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
   }
 
   const comment = await prisma.listProductComment.create({
-    data: { productId, content: finalContent, author, imageUrl: imageUrl ?? null },
+    data: { productId, content: finalContent, author, imageUrl: imageUrl ?? null, viewedByDesigner: !!(session?.user?.id && !listShareToken) },
     include: { replies: true },
   });
 

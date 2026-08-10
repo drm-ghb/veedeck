@@ -28,15 +28,15 @@ interface Payment {
   order: number;
 }
 
-function formatPLN(amount: number) {
-  return new Intl.NumberFormat("pl-PL", { style: "currency", currency: "PLN" }).format(amount);
+function formatAmount(amount: number, currency: string) {
+  return new Intl.NumberFormat("pl-PL", { style: "currency", currency }).format(amount);
 }
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("pl-PL", { day: "2-digit", month: "2-digit", year: "numeric" });
 }
 
-function PaymentRow({ payment }: { payment: Payment }) {
+function PaymentRow({ payment, currency }: { payment: Payment; currency: string }) {
   const t = useT();
   return (
     <div className="flex items-center gap-3 py-2.5 px-4">
@@ -55,7 +55,7 @@ function PaymentRow({ payment }: { payment: Payment }) {
           <p className="text-[11px] text-muted-foreground mt-0.5">Data płatności: {formatDate(payment.paidAt)}</p>
         )}
       </div>
-      <span className="text-sm font-medium tabular-nums">{formatPLN(payment.amount)}</span>
+      <span className="text-sm font-medium tabular-nums">{formatAmount(payment.amount, currency)}</span>
       <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${
         payment.status === "paid"
           ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
@@ -67,7 +67,7 @@ function PaymentRow({ payment }: { payment: Payment }) {
   );
 }
 
-function GroupBlock({ group, payments, groups, depth }: { group: PaymentGroup; payments: Payment[]; groups: PaymentGroup[]; depth: number }) {
+function GroupBlock({ group, payments, groups, depth, currency }: { group: PaymentGroup; payments: Payment[]; groups: PaymentGroup[]; depth: number; currency: string }) {
   const [collapsed, setCollapsed] = useState(false);
   const groupPayments = payments.filter((p) => p.groupId === group.id).sort((a, b) => a.order - b.order);
   const childGroups = groups.filter((g) => g.parentId === group.id).sort((a, b) => a.order - b.order);
@@ -83,8 +83,8 @@ function GroupBlock({ group, payments, groups, depth }: { group: PaymentGroup; p
       </button>
       {!collapsed && (
         <>
-          {groupPayments.map((p) => <PaymentRow key={p.id} payment={p} />)}
-          {childGroups.map((child) => <GroupBlock key={child.id} group={child} payments={payments} groups={groups} depth={depth + 1} />)}
+          {groupPayments.map((p) => <PaymentRow key={p.id} payment={p} currency={currency} />)}
+          {childGroups.map((child) => <GroupBlock key={child.id} group={child} payments={payments} groups={groups} depth={depth + 1} currency={currency} />)}
         </>
       )}
     </div>
@@ -95,6 +95,7 @@ export default function ClientPaymentsView({ projectId }: { projectId: string })
   const t = useT();
   const [groups, setGroups] = useState<PaymentGroup[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
+  const [currency, setCurrency] = useState("PLN");
   const [loading, setLoading] = useState(true);
   const [sectionCollapsed, setSectionCollapsed] = useState<Record<string, boolean>>({});
 
@@ -102,7 +103,7 @@ export default function ClientPaymentsView({ projectId }: { projectId: string })
     fetch(`/api/client/${projectId}/payments`)
       .then((r) => r.ok ? r.json() : null)
       .then((data) => {
-        if (data) { setGroups(data.groups); setPayments(data.payments); }
+        if (data) { setGroups(data.groups); setPayments(data.payments); setCurrency(data.currency ?? "PLN"); }
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -149,15 +150,15 @@ export default function ClientPaymentsView({ projectId }: { projectId: string })
           <div className="bg-card border border-border rounded-xl p-4 grid grid-cols-3 gap-4 text-center">
             <div>
               <p className="text-xs text-muted-foreground mb-1">{t.share.paymentsTotal}</p>
-              <p className="text-sm font-bold tabular-nums">{formatPLN(total)}</p>
+              <p className="text-sm font-bold tabular-nums">{formatAmount(total, currency)}</p>
             </div>
             <div>
               <p className="text-xs text-muted-foreground mb-1">{t.share.paymentsPaid}</p>
-              <p className="text-sm font-bold tabular-nums text-green-600 dark:text-green-400">{formatPLN(paidTotal)}</p>
+              <p className="text-sm font-bold tabular-nums text-green-600 dark:text-green-400">{formatAmount(paidTotal, currency)}</p>
             </div>
             <div>
               <p className="text-xs text-muted-foreground mb-1">{t.share.paymentsDue}</p>
-              <p className={`text-sm font-bold tabular-nums ${remaining > 0 ? "text-amber-600 dark:text-amber-400" : "text-green-600 dark:text-green-400"}`}>{formatPLN(Math.max(0, remaining))}</p>
+              <p className={`text-sm font-bold tabular-nums ${remaining > 0 ? "text-amber-600 dark:text-amber-400" : "text-green-600 dark:text-green-400"}`}>{formatAmount(Math.max(0, remaining), currency)}</p>
             </div>
           </div>
         )}
@@ -175,7 +176,7 @@ export default function ClientPaymentsView({ projectId }: { projectId: string })
             </button>
             {!sectionCollapsed[section.key] && (
               <div className="divide-y divide-border/30">
-                {section.topGroups.map((g) => <GroupBlock key={g.id} group={g} payments={payments} groups={groups} depth={0} />)}
+                {section.topGroups.map((g) => <GroupBlock key={g.id} group={g} payments={payments} groups={groups} depth={0} currency={currency} />)}
               </div>
             )}
           </div>
@@ -193,8 +194,8 @@ export default function ClientPaymentsView({ projectId }: { projectId: string })
             </button>
             {!sectionCollapsed["unassigned"] && (
               <div className="divide-y divide-border/30">
-                {unassignedGroups.map((g) => <GroupBlock key={g.id} group={g} payments={payments} groups={groups} depth={0} />)}
-                {ungroupedPayments.map((p) => <PaymentRow key={p.id} payment={p} />)}
+                {unassignedGroups.map((g) => <GroupBlock key={g.id} group={g} payments={payments} groups={groups} depth={0} currency={currency} />)}
+                {ungroupedPayments.map((p) => <PaymentRow key={p.id} payment={p} currency={currency} />)}
               </div>
             )}
           </div>

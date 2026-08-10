@@ -2,8 +2,14 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { useTheme } from "@/lib/theme";
+
+const DARK_SIDEBAR_THEMES = ["obsidian", "navy", "plum"];
+
 export function LogoBrand({ initialCollapsed = false }: { initialCollapsed?: boolean }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(initialCollapsed);
+  const { colorTheme } = useTheme();
+  const darkSidebar = DARK_SIDEBAR_THEMES.includes(colorTheme);
 
   useEffect(() => {
     function handler(e: Event) {
@@ -22,20 +28,20 @@ export function LogoBrand({ initialCollapsed = false }: { initialCollapsed?: boo
       <img src={iconSrc} alt="veedeck" className="h-7 w-7 shrink-0 object-contain" />
       {showWordmark && (
         <>
-          {/* Light mode: black wordmark (md+, hidden in dark) */}
+          {/* Black wordmark — light mode only, not on dark-sidebar themes */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/vee_black.png"
             alt="veedeck"
-            className="hidden md:block dark:hidden shrink-0"
+            className={darkSidebar ? "hidden" : "hidden md:block dark:hidden shrink-0"}
             style={{ height: "19px", width: "auto" }}
           />
-          {/* Dark mode: white wordmark (md+ dark only) */}
+          {/* White wordmark — dark mode or dark-sidebar themes */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/veedeckicon.png"
             alt=""
-            className="hidden md:dark:block shrink-0"
+            className={darkSidebar ? "hidden md:block shrink-0" : "hidden md:dark:block shrink-0"}
             style={{ height: "19px", width: "auto" }}
           />
         </>

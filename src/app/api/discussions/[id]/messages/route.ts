@@ -27,7 +27,14 @@ export async function GET(
     where: { discussionId: id },
   }).catch(() => []);
 
-  return NextResponse.json({ messages, receipts });
+  const userIds = [...new Set(messages.map((m) => m.userId).filter(Boolean))] as string[];
+  const avatarUsers = userIds.length > 0
+    ? await prisma.user.findMany({ where: { id: { in: userIds } }, select: { id: true, avatarUrl: true } })
+    : [];
+  const userAvatars: Record<string, string | null> = {};
+  for (const u of avatarUsers) userAvatars[u.id] = u.avatarUrl;
+
+  return NextResponse.json({ messages, receipts, userAvatars });
 }
 
 export async function POST(

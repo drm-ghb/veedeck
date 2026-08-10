@@ -32,7 +32,7 @@ export async function POST(
   }
 
   const reply = await prisma.listProductReply.create({
-    data: { commentId: id, content, author },
+    data: { commentId: id, content, author, viewedByDesigner: !!(session?.user?.id && !listShareToken) },
   });
 
   await pusherServer.trigger(`list-product-${comment.productId}`, "comment-reply", {
