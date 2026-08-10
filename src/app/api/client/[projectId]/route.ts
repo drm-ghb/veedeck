@@ -126,12 +126,26 @@ export async function GET(
     select: { name: true },
   });
 
+  // Client-level hiddenModules (set in Klienci → Moduły) — takes precedence / merged with project-level
+  const clientEntity = project.clientId
+    ? await prisma.client.findUnique({
+        where: { id: project.clientId },
+        select: { hiddenModules: true },
+      })
+    : null;
+
   const { user, sharePassword, shareExpiresAt, ...rest } = project;
   const { name, showProfileName, showClientLogo, clientLogoUrl, ...userSettings } = user;
+
+  // Merge: union of project-level and client-level hiddenModules
+  const hiddenModules = [
+    ...new Set([...(rest.hiddenModules ?? []), ...(clientEntity?.hiddenModules ?? [])]),
+  ];
 
   return NextResponse.json({
     ...rest,
     ...userSettings,
+    hiddenModules,
     rooms,
     shoppingLists,
     designerName: showProfileName ? name : null,

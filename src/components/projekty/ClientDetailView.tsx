@@ -28,6 +28,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { DatePicker } from "@/components/ui/date-picker";
 import { PaymentsTab } from "@/components/projekty/PaymentsTab";
 import { ScheduleTab } from "@/components/projekty/ScheduleTab";
 import DocumentsTab from "@/components/projekty/DocumentsTab";
@@ -228,6 +229,18 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
   const [addAccountContactId, setAddAccountContactId] = useState("");
   const [addAccountEmail, setAddAccountEmail] = useState("");
   const [addingAccount, setAddingAccount] = useState(false);
+  const [contactDropdownOpen, setContactDropdownOpen] = useState(false);
+  const contactDropdownRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!contactDropdownOpen) return;
+    function handle(e: MouseEvent) {
+      if (!contactDropdownRef.current?.contains(e.target as Node)) {
+        setContactDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handle);
+    return () => document.removeEventListener("mousedown", handle);
+  }, [contactDropdownOpen]);
   const [sendingLink, setSendingLink] = useState<Record<string, boolean>>({});
   const [copyingLink, setCopyingLink] = useState<Record<string, boolean>>({});
 
@@ -825,17 +838,11 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <Label className="text-[12.5px] font-medium">{t.projekty.startDateLabel}</Label>
-                    <div className="relative">
-                      <Input type="date" value={clientStartDate} onChange={(e) => setClientStartDate(e.target.value)} className="pr-7 border-border rounded-lg" />
-                      {clientStartDate && <button type="button" onClick={() => setClientStartDate("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"><X size={13} /></button>}
-                    </div>
+                    <DatePicker value={clientStartDate} onChange={setClientStartDate} placeholder="DD.MM.RRRR" />
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-[12.5px] font-medium">{t.projekty.endDateLabel}</Label>
-                    <div className="relative">
-                      <Input type="date" value={clientEndDate} onChange={(e) => setClientEndDate(e.target.value)} className="pr-7 border-border rounded-lg" />
-                      {clientEndDate && <button type="button" onClick={() => setClientEndDate("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"><X size={13} /></button>}
-                    </div>
+                    <DatePicker value={clientEndDate} onChange={setClientEndDate} placeholder="DD.MM.RRRR" />
                   </div>
                 </div>
                 <div className="flex justify-end">
@@ -986,20 +993,45 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
               <p className="text-sm font-medium">Dodaj konto dostępowe</p>
               <div className="space-y-1.5">
                 <Label className="text-xs">Wybierz kontakt</Label>
-                <select
-                  value={addAccountContactId}
-                  onChange={(e) => {
-                    setAddAccountContactId(e.target.value);
-                    const c = contacts.find((c) => c.id === e.target.value);
-                    setAddAccountEmail(c?.email ?? "");
-                  }}
-                  className="w-full h-9 rounded-lg border border-border bg-background px-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-                >
-                  <option value="">— wybierz kontakt —</option>
-                  {contacts.filter((c) => !c.userId).map((c) => (
-                    <option key={c.id} value={c.id}>{c.name}{c.email ? ` (${c.email})` : ""}</option>
-                  ))}
-                </select>
+                <div className="relative" ref={contactDropdownRef}>
+                  <button
+                    type="button"
+                    onClick={() => setContactDropdownOpen((v) => !v)}
+                    className="w-full h-9 rounded-lg border border-border bg-background px-3 text-sm text-left flex items-center justify-between gap-2 focus:outline-none focus:ring-1 focus:ring-primary"
+                  >
+                    <span className={addAccountContactId ? "text-foreground" : "text-muted-foreground"}>
+                      {addAccountContactId
+                        ? (() => { const c = contacts.find((c) => c.id === addAccountContactId); return c ? `${c.name}${c.email ? ` (${c.email})` : ""}` : "— wybierz kontakt —"; })()
+                        : "— wybierz kontakt —"}
+                    </span>
+                    <ChevronDown size={14} className="text-muted-foreground flex-shrink-0" />
+                  </button>
+                  {contactDropdownOpen && (
+                    <div className="absolute z-50 mt-1 w-full rounded-lg border border-border bg-popover shadow-md py-1">
+                      <button
+                        type="button"
+                        onClick={() => { setAddAccountContactId(""); setAddAccountEmail(""); setContactDropdownOpen(false); }}
+                        className="w-full px-3 py-2 text-sm text-left text-muted-foreground hover:bg-muted transition-colors"
+                      >
+                        — wybierz kontakt —
+                      </button>
+                      {contacts.filter((c) => !c.userId).map((c) => (
+                        <button
+                          key={c.id}
+                          type="button"
+                          onClick={() => {
+                            setAddAccountContactId(c.id);
+                            setAddAccountEmail(c.email ?? "");
+                            setContactDropdownOpen(false);
+                          }}
+                          className="w-full px-3 py-2 text-sm text-left text-foreground hover:bg-muted transition-colors"
+                        >
+                          {c.name}{c.email ? ` (${c.email})` : ""}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
               {addAccountContactId && (
                 <div className="space-y-1.5">

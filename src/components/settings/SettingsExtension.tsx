@@ -224,9 +224,9 @@ export function SettingsExtension({ initialKey }: Props) {
             <strong className="text-foreground">{t.extension.step4}</strong>
             <div className="mt-2">
               <img
-                src="/veepick-ss1.png"
+                src="/veepick-guide.png"
                 alt="Panel ustawień wtyczki veepick — pole Klucz API"
-                className="rounded-lg border border-border max-w-xs w-full"
+                className="rounded-lg border border-border max-w-lg w-full"
               />
             </div>
           </li>

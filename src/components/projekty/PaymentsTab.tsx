@@ -463,7 +463,6 @@ function PaymentRow({
             value={editingName}
             onChange={(e) => onEditNameChange(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") onSaveEdit(); if (e.key === "Escape") onCancelEdit(); }}
-            onBlur={(e) => { if (!(e.relatedTarget instanceof HTMLElement) || !e.currentTarget.closest("[data-edit-row]")?.contains(e.relatedTarget)) onSaveEdit(); }}
             className="h-6 text-sm flex-1"
             data-edit-input
           />
@@ -471,7 +470,6 @@ function PaymentRow({
             value={editingAmount}
             onChange={(e) => onEditAmountChange(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") onSaveEdit(); if (e.key === "Escape") onCancelEdit(); }}
-            onBlur={(e) => { if (!(e.relatedTarget instanceof HTMLElement) || !e.currentTarget.closest("[data-edit-row]")?.contains(e.relatedTarget)) onSaveEdit(); }}
             className="h-6 text-sm w-28"
             data-edit-input
           />

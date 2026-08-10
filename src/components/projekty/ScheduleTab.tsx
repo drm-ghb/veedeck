@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { toast } from "sonner";
 import { useT } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
@@ -185,7 +186,20 @@ function SortableItemRow({
   const [editDates, setEditDates] = useState(false);
   const [startDate, setStartDate] = useState(toDateStr(item.startDate));
   const [endDate, setEndDate] = useState(toDateStr(item.endDate));
+  const startDateRef = useRef(startDate);
+  const endDateRef = useRef(endDate);
   const [showMenu, setShowMenu] = useState(false);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const [menuPos, setMenuPos] = useState<{ top: number; right: number } | null>(null);
+  const dateEditRef = useRef<HTMLDivElement>(null);
+
+  function openMenu() {
+    if (menuButtonRef.current) {
+      const rect = menuButtonRef.current.getBoundingClientRect();
+      setMenuPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
+    }
+    setShowMenu(true);
+  }
 
   function saveName() {
     if (!nameVal.trim()) { setNameVal(item.name); setEditingName(false); return; }
@@ -199,9 +213,27 @@ function SortableItemRow({
   }
 
   function saveDates() {
-    onUpdate(item.id, { startDate: startDate || null, endDate: endDate || null });
+    onUpdate(item.id, { startDate: startDateRef.current || null, endDate: endDateRef.current || null });
     setEditDates(false);
   }
+
+  function cancelDates() {
+    setStartDate(toDateStr(item.startDate));
+    setEndDate(toDateStr(item.endDate));
+    startDateRef.current = toDateStr(item.startDate);
+    endDateRef.current = toDateStr(item.endDate);
+    setEditDates(false);
+  }
+
+  useEffect(() => {
+    if (!editDates) return;
+    function handle(e: MouseEvent) {
+      if (!dateEditRef.current?.contains(e.target as Node)) saveDates();
+    }
+    document.addEventListener("mousedown", handle);
+    return () => document.removeEventListener("mousedown", handle);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editDates]);
 
   if (item.isSection) {
     return (
@@ -231,13 +263,13 @@ function SortableItemRow({
           </span>
         )}
         <div className="relative flex-shrink-0">
-          <button onClick={() => setShowMenu((v) => !v)} className="p-1 rounded text-muted-foreground hover:text-foreground">
+          <button ref={menuButtonRef} onClick={openMenu} className="p-1 rounded text-muted-foreground hover:text-foreground">
             <MoreVertical size={14} />
           </button>
-          {showMenu && (
+          {showMenu && menuPos && createPortal(
             <>
-              <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
-              <div className="absolute right-0 top-full mt-1 z-50 bg-popover border border-border rounded-xl shadow-lg py-1 min-w-[160px]">
+              <div className="fixed inset-0 z-[9998]" onClick={() => setShowMenu(false)} />
+              <div className="fixed z-[9999] bg-popover border border-border rounded-xl shadow-lg py-1 min-w-[160px]" style={{ top: menuPos.top, right: menuPos.right }}>
                 <button onClick={() => { setShowMenu(false); onUpdate(item.id, { hidden: !item.hidden }); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted whitespace-nowrap">
                   {item.hidden ? <Eye size={14} className="flex-shrink-0" /> : <EyeOff size={14} className="flex-shrink-0" />}
                   {item.hidden ? t.schedule.showClient : t.schedule.hideClient}
@@ -248,7 +280,8 @@ function SortableItemRow({
                   {t.common.delete}
                 </button>
               </div>
-            </>
+            </>,
+            document.body
           )}
         </div>
       </div>
@@ -316,35 +349,35 @@ function SortableItemRow({
           </p>
         ) : null}
 
-        {/* Date edit inline */}
-        {editDates && (
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            <DatePicker value={startDate} onChange={setStartDate} placeholder={t.schedule.startDatePlaceholder} />
-            <span className="text-xs text-muted-foreground">—</span>
-            <DatePicker value={endDate} onChange={setEndDate} placeholder={t.schedule.endDatePlaceholder} />
-            <button onClick={saveDates} className="text-xs text-green-600 hover:underline">{t.common.save}</button>
-            <button onClick={() => { setStartDate(toDateStr(item.startDate)); setEndDate(toDateStr(item.endDate)); setEditDates(false); }} className="text-xs text-muted-foreground hover:underline">{t.common.cancel}</button>
-          </div>
-        )}
-
       </div>
 
-      {/* Date badge — right-aligned, before actions */}
-      {!editDates && (item.startDate || item.endDate) && (
+      {/* Date badge / inline editor — right-aligned, before actions */}
+      {editDates ? (
+        <div ref={dateEditRef} className="flex flex-wrap items-center gap-1.5 flex-shrink-0">
+          <DatePicker value={startDate} onChange={(v) => { setStartDate(v); startDateRef.current = v; }} placeholder={t.schedule.startDatePlaceholder} compact />
+          <span className="text-xs text-muted-foreground">—</span>
+          <DatePicker value={endDate} onChange={(v) => { setEndDate(v); endDateRef.current = v; }} placeholder={t.schedule.endDatePlaceholder} compact />
+          <button onClick={saveDates} className="p-1 rounded text-green-600 hover:bg-muted transition-colors"><Check size={13} /></button>
+          <button onClick={cancelDates} className="p-1 rounded text-muted-foreground hover:bg-muted transition-colors"><X size={13} /></button>
+        </div>
+      ) : (
         <span className="flex-shrink-0 cursor-pointer" onClick={() => setEditDates(true)}>
-          <DateBadge startDate={item.startDate} endDate={item.endDate} done={item.done} />
+          {(item.startDate || item.endDate)
+            ? <DateBadge startDate={item.startDate} endDate={item.endDate} done={item.done} />
+            : <span className="text-[11px] px-2 py-0.5 rounded-full font-medium whitespace-nowrap bg-muted text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">{t.schedule.setDates}</span>
+          }
         </span>
       )}
 
       {/* Actions */}
       <div className="relative flex-shrink-0">
-        <button onClick={() => setShowMenu((v) => !v)} className="p-1 rounded text-muted-foreground hover:text-foreground">
+        <button ref={menuButtonRef} onClick={openMenu} className="p-1 rounded text-muted-foreground hover:text-foreground">
           <MoreVertical size={14} />
         </button>
-        {showMenu && (
+        {showMenu && menuPos && createPortal(
           <>
-            <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
-            <div className="absolute right-0 top-full mt-1 z-50 bg-popover border border-border rounded-xl shadow-lg py-1 min-w-[170px]">
+            <div className="fixed inset-0 z-[9998]" onClick={() => setShowMenu(false)} />
+            <div className="fixed z-[9999] bg-popover border border-border rounded-xl shadow-lg py-1 min-w-[170px]" style={{ top: menuPos.top, right: menuPos.right }}>
               {(!item.startDate && !item.endDate) && (
                 <button onClick={() => { setShowMenu(false); setEditDates(true); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted whitespace-nowrap">
                   <Pencil size={14} className="flex-shrink-0" />
@@ -367,7 +400,8 @@ function SortableItemRow({
                 {t.common.delete}
               </button>
             </div>
-          </>
+          </>,
+          document.body
         )}
       </div>
     </div>
@@ -490,11 +524,6 @@ function SortablePhaseRow({
           {addingItem ? (
             <div
               className="flex flex-wrap items-center gap-2 py-1.5 pl-[3.25rem] pr-3"
-              onBlur={(e) => {
-                if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-                  submitNewItem(addingItem, newItemName, newItemStartDate, newItemEndDate);
-                }
-              }}
             >
               <Input
                 ref={newItemRef}

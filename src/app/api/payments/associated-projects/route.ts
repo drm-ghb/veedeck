@@ -39,6 +39,7 @@ export async function GET(req: NextRequest) {
     where: {
       userId,
       archived: false,
+      isPortalProject: false,
       OR: orConditions,
     },
     select: { id: true, title: true, slug: true, paymentsSharedWithClient: true, scheduleSharedWithClient: true },

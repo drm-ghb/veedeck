@@ -131,7 +131,7 @@ export async function PATCH(
         data: {
           userId: newUserId,
           ...(email?.trim() ? { email: email.trim().toLowerCase() } : {}),
-          ...(contact.isMainContact ? { emailNotifications: true } : {}),
+          emailNotifications: true,
         },
       });
 

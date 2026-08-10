@@ -57,12 +57,14 @@ export default function DatePicker({
   function calcPosition() {
     if (triggerRef.current) {
       const rect = triggerRef.current.getBoundingClientRect();
-      const spaceBelow = window.innerHeight - rect.bottom;
+      const calendarWidth = 256;
       const calendarHeight = 280;
-      const top = spaceBelow >= calendarHeight
-        ? rect.bottom + 4
-        : rect.top - calendarHeight - 4;
-      setDropdownStyle({ top, left: rect.left });
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const top = spaceBelow >= calendarHeight ? rect.bottom + 4 : rect.top - calendarHeight - 4;
+      const left = rect.left + calendarWidth > window.innerWidth - 8
+        ? Math.max(8, rect.right - calendarWidth)
+        : rect.left;
+      setDropdownStyle({ top, left });
     }
   }
 

@@ -16,7 +16,7 @@
       setupDesc: "Wklej swój klucz API z ustawień konta w veedeck (Ustawienia → Wtyczka).",
       labelAppUrl: "Adres aplikacji",
       labelApiKey: "Klucz API",
-      placeholderUrl: "np. https://veedeck.vercel.app",
+      placeholderUrl: "np. https://app.veedeck.com",
       placeholderKey: "vp_...",
       btnConnect: "Połącz",
       btnBack: "← Wróć",
@@ -87,7 +87,7 @@
       setupDesc: "Paste your API key from your veedeck account settings (Settings → Plugin).",
       labelAppUrl: "App URL",
       labelApiKey: "API Key",
-      placeholderUrl: "e.g. https://veedeck.vercel.app",
+      placeholderUrl: "e.g. https://app.veedeck.com",
       placeholderKey: "vp_...",
       btnConnect: "Connect",
       btnBack: "← Back",
@@ -1331,6 +1331,7 @@
       initMain();
     } else {
       showScreen("vp-screenSetup");
+      if (!baseUrl) vp("vp-inputBaseUrl").value = "https://app.veedeck.com";
     }
   });
 })();

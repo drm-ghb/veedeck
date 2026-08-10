@@ -67,7 +67,7 @@ export async function GET(
           select: {
             id: true, name: true, done: true,
             items: {
-              where: { hidden: false, done: false },
+              where: { hidden: false, done: false, isSection: false },
               orderBy: [{ order: "asc" }, { createdAt: "asc" }],
               select: { id: true, name: true, endDate: true },
               take: 1,
