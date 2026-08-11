@@ -128,6 +128,7 @@ export default async function ContractorProjectPage({ params, searchParams }: Pr
     })),
     subfolders: f.subfolders.map((sub) => ({
       ...sub,
+      sourceFolderId: (sub as any).sourceFolderId ?? null,
       sourceFolderName: (sub as any).sourceFolderId ? (sourceFolderNameMap[(sub as any).sourceFolderId] ?? null) : null,
       files: sub.files.map((file) => ({
         ...file,

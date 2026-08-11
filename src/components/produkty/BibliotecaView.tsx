@@ -175,7 +175,17 @@ export default function BibliotecaView({ initialProducts, initialTextures, initi
     setQuery("");
   }
 
-  const hasActiveFilters = filterCategories.size > 0 || filterManufacturers.size > 0 || filterSource !== "all" || filterHasModel !== "all" || favoritesOnly;
+  function clearTextureFilters() {
+    setFilterTextureCategories(new Set());
+    setFilterTextureManufacturers(new Set());
+    setFilterTextureFinishes(new Set());
+    setTextureFavoritesOnly(false);
+    setQuery("");
+  }
+
+  const hasActiveFilters = filterCategories.size > 0 || filterManufacturers.size > 0 || filterSource !== "all" || filterHasModel !== "all" || favoritesOnly || !!query.trim();
+  const hasActiveTextureFilters = filterTextureCategories.size > 0 || filterTextureManufacturers.size > 0 || filterTextureFinishes.size > 0 || textureFavoritesOnly || !!query.trim();
+  const hasTabActiveFilters = (tab === "produkty" && hasActiveFilters) || (tab === "tekstury" && hasActiveTextureFilters);
 
   async function handleToggleFavorite(p: Product) {
     const next = !p.favorite;
@@ -274,7 +284,7 @@ export default function BibliotecaView({ initialProducts, initialTextures, initi
             onClick={() => setTab(item.id)}
             className={`flex items-center gap-2.5 px-[10px] py-[9px] rounded-lg text-[13px] font-semibold transition-colors w-full text-left ${
               tab === item.id
-                ? "bg-[#EEF2FF] text-primary"
+                ? "bg-primary/10 text-primary"
                 : "text-muted-foreground hover:bg-muted hover:text-foreground"
             }`}
           >
@@ -477,6 +487,19 @@ export default function BibliotecaView({ initialProducts, initialTextures, initi
           <DeployedCode size={32} className="text-muted-foreground/40" />
           <p className="text-sm font-medium text-muted-foreground">Modele 3D</p>
           <p className="text-xs text-muted-foreground/60">Wkrótce</p>
+        </div>
+      )}
+
+      {/* Floating reset button — sticky at bottom of scroll area */}
+      {hasTabActiveFilters && (
+        <div className="sticky bottom-0 left-0 right-0 px-3 py-3 bg-gradient-to-t from-background via-background/95 to-transparent shrink-0">
+          <button
+            onClick={tab === "tekstury" ? clearTextureFilters : clearFilters}
+            className="w-full flex items-center justify-center gap-1.5 text-xs font-medium text-muted-foreground border border-border rounded-lg py-2 hover:bg-muted hover:text-foreground transition-colors bg-background shadow-sm"
+          >
+            <X size={12} />
+            Resetuj filtry
+          </button>
         </div>
       )}
     </div>

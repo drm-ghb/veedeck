@@ -465,7 +465,7 @@ function TextAnswers({ answers }: { answers: unknown[] }) {
   return (
     <div className="space-y-2">
       {visible.map((u, i) => (
-        <div key={i} className="bg-muted/50 rounded-lg px-3 py-2 text-xs text-foreground">
+        <div key={i} className="bg-muted/50 rounded-lg px-3 py-2 text-xs text-foreground break-all">
           {typeof u.answer === "number" ? u.answer.toLocaleString("pl-PL") + " zł" : String(u.answer)}
         </div>
       ))}
@@ -836,7 +836,7 @@ function AnswerDisplay({ value, type }: { value: unknown; type: string }) {
             if (type === "budget_range" && typeof answer === "number") {
               return <p className="text-sm">{answer.toLocaleString("pl-PL")} zł</p>;
             }
-            return <p className="text-sm">{String(answer)}</p>;
+            return <p className="text-sm break-all">{String(answer)}</p>;
           })()}
           {attachments.length > 0 && (
             <AttachmentsGrid attachments={attachments} />

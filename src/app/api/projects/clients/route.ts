@@ -31,7 +31,7 @@ export async function GET() {
           take: 1,
         },
         projects: {
-          where: { archived: false },
+          where: { archived: false, isPortalProject: false },
           select: { id: true, title: true },
           orderBy: { title: "asc" },
         },

@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, FileText, MessageSquare, ZoomIn, ZoomOut, X, Maximize2, Pin, Send, Trash2, Edit2, Loader2 } from "@/components/ui/icons";
+import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp, FileText, MessageSquare, ZoomIn, ZoomOut, X, Maximize2, Pin, Send, Trash2, Edit2, Loader2 } from "@/components/ui/icons";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import ContractorFileCommentPanel from "./ContractorFileCommentPanel";
@@ -151,6 +151,7 @@ export default function ContractorFileViewer({
   const [editingPinText, setEditingPinText] = useState("");
   const [editingReplyId, setEditingReplyId] = useState<string | null>(null);
   const [editingReplyText, setEditingReplyText] = useState("");
+  const [mobileToolbarExpanded, setMobileToolbarExpanded] = useState(true);
 
   const imgRef = useRef<HTMLDivElement>(null);
   const draggingPinRef = useRef<{ pinId: string; imgEl: HTMLDivElement } | null>(null);
@@ -555,7 +556,7 @@ export default function ContractorFileViewer({
     <div className="flex flex-col h-full bg-card rounded-tl-2xl overflow-hidden">
       {/* Header bar */}
       <div className="border-b bg-card flex-shrink-0">
-        <div className="flex items-center gap-3 px-4 py-2.5">
+        <div className="flex items-center gap-3 px-4 pt-3 pb-2.5">
           {/* Back arrow */}
           {onClose ? (
             <button
@@ -597,8 +598,8 @@ export default function ContractorFileViewer({
             </span>
           </nav>
 
-          {/* Toolbar */}
-          <div className="ml-auto flex items-center gap-1 flex-shrink-0">
+          {/* Toolbar — hidden on mobile, shown on sm+ */}
+          <div className="ml-auto hidden sm:flex items-center gap-1 flex-shrink-0">
             {/* Pin mode toggle (images only) */}
             {isImage && (
               <>
@@ -1094,6 +1095,53 @@ export default function ContractorFileViewer({
           />
         )}
       </div>
+    </div>
+
+    {/* Mobile floating toolbar */}
+    <div className="sm:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center gap-2">
+      {mobileToolbarExpanded ? (
+        <div className="flex items-center gap-1 bg-card/95 backdrop-blur border border-border rounded-full px-2 py-1.5 shadow-lg">
+          {isImage && (
+            <button
+              onClick={() => { setPinMode((v) => !v); setPending(null); setSelectedPinId(null); }}
+              className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-full font-medium transition-colors ${
+                pinMode ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-muted"
+              }`}
+            >
+              <Pin size={14} />
+              {t.wykonawcy.addPin}
+            </button>
+          )}
+          <button
+            onClick={commentOpen ? () => setCommentOpen(false) : openComments}
+            className={`relative flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-full font-medium transition-colors ${
+              commentOpen ? "bg-primary text-primary-foreground" : unread > 0 ? "text-violet-600 bg-violet-50" : "text-foreground hover:bg-muted"
+            }`}
+          >
+            <MessageSquare size={14} />
+            {t.wykonawcy.commentsTitle}
+            {unread > 0 && (
+              <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 text-[10px] font-bold rounded-full bg-violet-600 text-white flex items-center justify-center leading-none">
+                {unread > 9 ? "9+" : unread}
+              </span>
+            )}
+          </button>
+          <button
+            onClick={() => setMobileToolbarExpanded(false)}
+            className="flex items-center gap-1 text-xs px-2 py-1.5 rounded-full text-muted-foreground hover:bg-muted transition-colors"
+          >
+            <ChevronDown size={13} />
+            {t.common.collapse}
+          </button>
+        </div>
+      ) : (
+        <button
+          onClick={() => setMobileToolbarExpanded(true)}
+          className="w-10 h-10 rounded-full bg-card border border-border shadow-lg flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <ChevronUp size={18} />
+        </button>
+      )}
     </div>
 
     {/* Lightbox */}

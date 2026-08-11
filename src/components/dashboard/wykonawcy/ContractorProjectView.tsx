@@ -34,6 +34,7 @@ interface ContractorFile {
 interface ContractorSubfolder {
   id: string;
   name: string;
+  sourceFolderId?: string | null;
   sourceFolderName?: string | null;
   _count: { files: number };
   files: ContractorFile[];
@@ -712,10 +713,16 @@ export default function ContractorProjectView({
                     {renamingId !== sub.id && (
                       <>
                         <p className="font-semibold text-foreground truncate pr-8">{sub.name}</p>
-                        {sub.sourceFolderName && (
-                          <p className="flex items-center gap-1 text-xs text-primary mt-0.5">
+                        {(sub.sourceFolderId || sub.sourceFolderName) && (
+                          <p
+                            className="flex items-center gap-1 text-xs text-primary mt-0.5 cursor-help"
+                            title={sub.sourceFolderName
+                              ? `Folder zsynchronizowany z folderem "${sub.sourceFolderName}" w ProjectFlow. Oznacza to, że wszystkie zmiany w tym folderze w ProjectFlow zostaną zsynchronizowane z obecnym folderem wykonawcy.`
+                              : `Folder zsynchronizowany z ProjectFlow. Oznacza to, że wszystkie zmiany w tym folderze w ProjectFlow zostaną zsynchronizowane z obecnym folderem wykonawcy.`
+                            }
+                          >
                             <RefreshCw size={10} />
-                            <span className="truncate">{sub.sourceFolderName}</span>
+                            <span className="truncate">{sub.sourceFolderName ?? "ProjectFlow"}</span>
                           </p>
                         )}
                         <p className="text-xs text-muted-foreground mt-1">
@@ -985,10 +992,16 @@ export default function ContractorProjectView({
                                     className="flex-1 flex items-center gap-2 text-sm font-medium text-left min-w-0"
                                   >
                                     <span className="truncate">{sub.name}</span>
-                                    {sub.sourceFolderName && (
-                                      <span className="flex items-center gap-1 text-xs text-primary shrink-0 font-normal" title={`Zsynchronizowany z: ${sub.sourceFolderName}`}>
+                                    {(sub.sourceFolderId || sub.sourceFolderName) && (
+                                      <span
+                                        className="flex items-center gap-1 text-xs text-primary shrink-0 font-normal cursor-help"
+                                        title={sub.sourceFolderName
+                                          ? `Folder zsynchronizowany z folderem "${sub.sourceFolderName}" w ProjectFlow. Oznacza to, że wszystkie zmiany w tym folderze w ProjectFlow zostaną zsynchronizowane z obecnym folderem wykonawcy.`
+                                          : `Folder zsynchronizowany z ProjectFlow. Oznacza to, że wszystkie zmiany w tym folderze w ProjectFlow zostaną zsynchronizowane z obecnym folderem wykonawcy.`
+                                        }
+                                      >
                                         <RefreshCw size={11} />
-                                        <span className="max-w-[100px] truncate">{sub.sourceFolderName}</span>
+                                        <span className="max-w-[100px] truncate">{sub.sourceFolderName ?? "ProjectFlow"}</span>
                                       </span>
                                     )}
                                     <span className="text-xs text-muted-foreground font-normal shrink-0">{sub._count.files} {t.wykonawcy.filesPlural}</span>
@@ -1210,10 +1223,16 @@ export default function ContractorProjectView({
             {selectedFolder && !selectedSubfolder && !selectedFolder.visible && (
               <Badge variant="secondary" className="text-xs mt-1">{t.wykonawcy.hiddenBadge}</Badge>
             )}
-            {selectedSubfolder?.sourceFolderName && (
-              <p className="flex items-center gap-1 text-xs text-primary mt-0.5">
+            {(selectedSubfolder?.sourceFolderId || selectedSubfolder?.sourceFolderName) && (
+              <p
+                className="flex items-center gap-1 text-xs text-primary mt-0.5 cursor-help"
+                title={selectedSubfolder.sourceFolderName
+                  ? `Folder zsynchronizowany z folderem "${selectedSubfolder.sourceFolderName}" w ProjectFlow. Oznacza to, że wszystkie zmiany w tym folderze w ProjectFlow zostaną zsynchronizowane z obecnym folderem wykonawcy.`
+                  : `Folder zsynchronizowany z ProjectFlow. Oznacza to, że wszystkie zmiany w tym folderze w ProjectFlow zostaną zsynchronizowane z obecnym folderem wykonawcy.`
+                }
+              >
                 <RefreshCw size={10} />
-                <span>{selectedSubfolder.sourceFolderName}</span>
+                <span>{selectedSubfolder.sourceFolderName ?? "ProjectFlow"}</span>
               </p>
             )}
           </div>
