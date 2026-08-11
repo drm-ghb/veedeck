@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import TrialCheck from "@/components/dashboard/TrialCheck";
 import AppNavbar from "@/components/dashboard/AppNavbar";
 import { TrialContextProvider } from "@/lib/trial-context";
+import FloatingChatPanel from "@/components/dyskusje/FloatingChatPanel";
 
 export default async function ProduktyLayout({
   children,
@@ -64,6 +65,7 @@ export default async function ProduktyLayout({
         </main>
       </div>
       <TrialCheck />
+      <FloatingChatPanel userId={session.user.id!} currentUserAvatarUrl={avatarUrl} />
     </div>
   );
 }

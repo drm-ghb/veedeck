@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import AppNavbar from "@/components/dashboard/AppNavbar";
 import { TrialContextProvider } from "@/lib/trial-context";
 import { getMemberHiddenModules } from "@/lib/permissions";
+import FloatingChatPanel from "@/components/dyskusje/FloatingChatPanel";
 
 export default async function ListyLayout({
   children,
@@ -64,6 +65,7 @@ export default async function ListyLayout({
           </TrialContextProvider>
         </main>
       </div>
+      <FloatingChatPanel userId={session.user.id!} currentUserAvatarUrl={avatarUrl} />
     </div>
   );
 }

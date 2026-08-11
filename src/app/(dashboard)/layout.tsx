@@ -7,6 +7,7 @@ import TrialCheck from "@/components/dashboard/TrialCheck";
 import AppNavbar from "@/components/dashboard/AppNavbar";
 import { TrialContextProvider } from "@/lib/trial-context";
 import { getMemberHiddenModules } from "@/lib/permissions";
+import FloatingChatPanel from "@/components/dyskusje/FloatingChatPanel";
 
 export default async function DashboardLayout({
   children,
@@ -67,6 +68,7 @@ export default async function DashboardLayout({
         </main>
       </div>
       <TrialCheck />
+      <FloatingChatPanel userId={session.user.id!} currentUserAvatarUrl={avatarUrl} />
     </div>
   );
 }

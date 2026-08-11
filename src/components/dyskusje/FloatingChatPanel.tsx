@@ -42,13 +42,22 @@ function formatTime(iso: string): string {
   return d.toLocaleDateString("pl-PL", { day: "numeric", month: "short" });
 }
 
-function DiscAvatar({ title, avatarUrl, small }: { title: string; avatarUrl?: string | null; small?: boolean }) {
+function DiscAvatar({ title, avatarUrl, type, small }: { title: string; avatarUrl?: string | null; type?: string; small?: boolean }) {
   const initials = title
     .split(" ")
     .slice(0, 2)
     .map((w) => w[0]?.toUpperCase() ?? "")
     .join("") || "?";
   const sz = small ? "w-7 h-7 text-xs" : "w-10 h-10 text-sm";
+  const iconSz = small ? "w-3.5 h-3.5" : "w-5 h-5";
+  if (type === "support") {
+    return (
+      <div className={`${sz} rounded-full bg-primary flex items-center justify-center shrink-0`}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/veedeck_ikona_vsg.svg" alt="" className={iconSz} />
+      </div>
+    );
+  }
   if (avatarUrl) {
     return <img src={avatarUrl} alt="" className={`${sz} rounded-full object-cover shrink-0`} />;
   }
@@ -86,6 +95,7 @@ export default function FloatingChatPanel({ userId, currentUserAvatarUrl }: { us
   const [editTitle, setEditTitle] = useState("");
   const [members, setMembers] = useState<{ id: string; name: string | null; fullName: string | null; avatarUrl: string | null; isOwner: boolean }[]>([]);
   const [loadingMembers, setLoadingMembers] = useState(false);
+  const [userAvatars, setUserAvatars] = useState<Record<string, string | null>>({});
 
   const prevUnreadRef = useRef(0);
   const selectedDiscUnreadRef = useRef(0);
@@ -104,6 +114,7 @@ export default function FloatingChatPanel({ userId, currentUserAvatarUrl }: { us
   const { startUpload } = useUploadThing("discussionAttachmentUploader");
 
   const onDyskusje = pathname.startsWith("/dyskusje");
+  const onRenderView = /\/projekty\/[^/]+\/(renders|rooms)\//.test(pathname);
 
   // ── Hide button while HelpWidget is open ──────────────────────────────────
   useEffect(() => {
@@ -150,11 +161,11 @@ export default function FloatingChatPanel({ userId, currentUserAvatarUrl }: { us
     setPendingAttachment(null);
   }
 
-  // ── Auto-close on /dyskusje ────────────────────────────────────────────────
+  // ── Auto-close on /dyskusje or RenderView ─────────────────────────────────
   useEffect(() => {
-    if (onDyskusje) closePanel();
+    if (onDyskusje || onRenderView) closePanel();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onDyskusje]);
+  }, [onDyskusje, onRenderView]);
 
   // ── Escape key ─────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -308,6 +319,7 @@ export default function FloatingChatPanel({ userId, currentUserAvatarUrl }: { us
       .then((r) => r.json())
       .then((data) => {
         const msgs: FloatMessage[] = Array.isArray(data) ? data : (data.messages ?? []);
+        setUserAvatars(data.userAvatars ?? {});
         setMessages(msgs);
         const lastId = msgs.length > 0 ? msgs[msgs.length - 1].id : null;
         if (lastId) {
@@ -679,7 +691,7 @@ export default function FloatingChatPanel({ userId, currentUserAvatarUrl }: { us
                         disc.unreadCount > 0 ? "bg-primary/5 hover:bg-primary/10" : "hover:bg-muted/40"
                       }`}
                     >
-                      <DiscAvatar title={disc.title} avatarUrl={disc.avatarUrl} />
+                      <DiscAvatar title={disc.title} avatarUrl={disc.avatarUrl} type={disc.type} />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2 mb-0.5">
                           <p className={`text-sm truncate ${disc.unreadCount > 0 ? "font-semibold text-foreground" : "font-medium text-foreground"}`}>
@@ -689,9 +701,14 @@ export default function FloatingChatPanel({ userId, currentUserAvatarUrl }: { us
                             <span className="text-[11px] text-muted-foreground shrink-0">{formatTime(disc.lastMessage.createdAt)}</span>
                           )}
                         </div>
-                        <p className="text-xs text-muted-foreground truncate">
-                          {disc.lastMessage ? disc.lastMessage.content || t.dyskusje.attachmentLabel : ""}
-                        </p>
+                        <div className="flex items-center gap-1.5">
+                          {disc.type === "contractor" && (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 font-semibold shrink-0">Wykonawca</span>
+                          )}
+                          <p className="text-xs text-muted-foreground truncate">
+                            {disc.lastMessage ? disc.lastMessage.content || t.dyskusje.attachmentLabel : ""}
+                          </p>
+                        </div>
                       </div>
                       {disc.unreadCount > 0 && (
                         <span className="shrink-0 min-w-[20px] h-5 px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center">
@@ -714,7 +731,7 @@ export default function FloatingChatPanel({ userId, currentUserAvatarUrl }: { us
               <button onClick={goBack} className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground shrink-0" aria-label={t.dyskusje.backToList}>
                 <ChevronLeft size={18} />
               </button>
-              {selectedDisc && <DiscAvatar title={selectedDisc.title} avatarUrl={selectedDisc.avatarUrl} small />}
+              {selectedDisc && <DiscAvatar title={selectedDisc.title} avatarUrl={selectedDisc.avatarUrl} type={selectedDisc.type} small />}
               <div className="flex-1 min-w-0 flex items-center gap-1 min-w-0">
                 <p className="font-semibold text-sm truncate leading-snug">{selectedDisc?.title ?? ""}</p>
                 <button onClick={handleOpenFull} className="p-1 rounded-md hover:bg-muted transition-colors text-muted-foreground shrink-0" title={t.dyskusje.floatOpenFull}>
@@ -801,7 +818,7 @@ export default function FloatingChatPanel({ userId, currentUserAvatarUrl }: { us
                   const isOwn = msg.userId === userId;
                   return (
                     <div key={msg.id} className={`flex items-end gap-2 mb-1.5 ${isOwn ? "justify-end" : "justify-start"}`}>
-                      {!isOwn && <FloatAvatar name={msg.authorName} />}
+                      {!isOwn && <FloatAvatar name={msg.authorName} logoUrl={msg.userId ? userAvatars[msg.userId] : null} />}
                       <div
                         className={`max-w-[75%] px-3.5 py-2 text-sm leading-relaxed ${
                           isOwn
@@ -1033,7 +1050,7 @@ export default function FloatingChatPanel({ userId, currentUserAvatarUrl }: { us
       {/* Floating button — z-[46] so it stays above the panel but below modals (z-50) */}
       <div
         className={`fixed bottom-6 right-6 z-[52] sm:z-[46] transition-opacity duration-[180ms] ${panelOpen ? "max-sm:hidden" : ""}`}
-        style={{ opacity: (onDyskusje || helpWidgetOpen) ? 0 : 1, pointerEvents: (onDyskusje || helpWidgetOpen) ? "none" : "auto" }}
+        style={{ opacity: (onDyskusje || onRenderView || helpWidgetOpen) ? 0 : 1, pointerEvents: (onDyskusje || onRenderView || helpWidgetOpen) ? "none" : "auto" }}
       >
         <button
           ref={btnRef}
