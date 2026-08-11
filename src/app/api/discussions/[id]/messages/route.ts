@@ -97,6 +97,29 @@ export async function POST(
     await pusherServer.trigger(`project-${discussion.projectId}`, "new-message", {
       discussionId: id,
     });
+
+    // Create in-app notification for logged-in clients
+    const projectClients = await prisma.projectClient.findMany({
+      where: { projectId: discussion.projectId, userId: { not: null } },
+      select: { userId: true },
+    });
+    if (projectClients.length > 0) {
+      const project = await prisma.project.findUnique({
+        where: { id: discussion.projectId },
+        select: { title: true },
+      });
+      for (const pc of projectClients) {
+        if (!pc.userId) continue;
+        const clientNotif = await prisma.notification.create({
+          data: {
+            userId: pc.userId,
+            message: `Projektant wysłał wiadomość${project?.title ? ` w projekcie "${project.title}"` : ""}`,
+            link: `/client/${discussion.projectId}?view=discussion`,
+          },
+        });
+        await pusherServer.trigger(`user-${pc.userId}`, "new-notification", clientNotif);
+      }
+    }
   }
 
   return NextResponse.json(message, { status: 201 });

@@ -112,5 +112,28 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // Notify logged-in clients when designer adds a pin or comment
+  if (isDesigner) {
+    const projectClients = await prisma.projectClient.findMany({
+      where: { projectId: render.project.id, userId: { not: null } },
+      select: { userId: true },
+    });
+    for (const pc of projectClients) {
+      if (!pc.userId) continue;
+      const clientNotif = await prisma.notification.create({
+        data: {
+          userId: pc.userId,
+          message: isPin
+            ? `Projektant dodał pin w projekcie "${render.project.title}"`
+            : `Projektant dodał komentarz w projekcie "${render.project.title}"`,
+          link: `/client/${render.project.id}?view=rooms`,
+          projectId: render.project.id,
+          projectTitle: render.project.title,
+        },
+      });
+      await pusherServer.trigger(`user-${pc.userId}`, "new-notification", clientNotif);
+    }
+  }
+
   return NextResponse.json(comment, { status: 201 });
 }

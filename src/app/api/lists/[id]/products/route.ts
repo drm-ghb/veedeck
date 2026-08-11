@@ -47,7 +47,8 @@ export async function POST(
   if (bodyProductId) {
     const owned = await prisma.product.findFirst({ where: { id: bodyProductId, userId } });
     if (owned) finalProductId = owned.id;
-  } else {
+  } else if (!["USLUGI", "INNE"].includes(category)) {
+    // Auto-save to library — skip for "Usługi" and "Inne" categories
     const exists = await prisma.product.findFirst({
       where: {
         userId,

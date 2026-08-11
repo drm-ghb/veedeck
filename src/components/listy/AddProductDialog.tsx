@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
@@ -12,18 +12,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Loader2, ExternalLink, ImagePlus, X, Search, Package } from "@/components/ui/icons";
+import { Loader2, ExternalLink, ImagePlus, X, Search, Package, ChevronDown, Check } from "@/components/ui/icons";
 import { useT } from "@/lib/i18n";
-import { UploadButton } from "@uploadthing/react";
-import type { OurFileRouter } from "@/lib/uploadthing";
 import { useUploadThing } from "@/lib/uploadthing-client";
 
-const CATEGORY_VALUES = ["OSWIETLENIE", "AKCESORIA", "MEBLE", "ARMATURA", "OKLADZINY_SCIENNE", "PODLOGA"] as const;
+const CATEGORY_VALUES = ["OSWIETLENIE", "AKCESORIA", "MEBLE", "ARMATURA", "OKLADZINY_SCIENNE", "PODLOGA", "USLUGI", "INNE"] as const;
 
 type TProducts = ReturnType<typeof useT>["products"];
 const CAT_KEY_MAP: Record<string, keyof TProducts> = {
   OSWIETLENIE: "catLampy", AKCESORIA: "catAkcesoria", MEBLE: "catMeble",
   ARMATURA: "catArmatura", OKLADZINY_SCIENNE: "catOkladziny", PODLOGA: "catPodloga",
+  USLUGI: "catUslugi", INNE: "catInne",
 };
 function getCategoryLabel(cat: string, t: ReturnType<typeof useT>) {
   const key = CAT_KEY_MAP[cat];
@@ -101,13 +100,13 @@ export default function AddProductDialog({
   customCategories = [],
 }: AddProductDialogProps) {
   const t = useT();
-  const [tab, setTab] = useState<"ta-lista" | "link" | "manual" | "library">(parentProductId ? "ta-lista" : "link");
+  const [tab, setTab] = useState<"ta-lista" | "link" | "manual" | "library">(parentProductId ? "ta-lista" : "library");
   const [listSearch, setListSearch] = useState("");
   const [linkingSavedId, setLinkingSavedId] = useState<string | null>(null);
 
   // Reset tab when dialog opens with/without parentProductId
   useEffect(() => {
-    if (open) setTab(parentProductId ? "ta-lista" : "link");
+    if (open) setTab(parentProductId ? "ta-lista" : "library");
   }, [open, parentProductId]);
   const [scrapeUrl, setScrapeUrl] = useState("");
   const [scraping, setScraping] = useState(false);
@@ -115,6 +114,17 @@ export default function AddProductDialog({
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [catOpen, setCatOpen] = useState(false);
+  const catRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const handleCatClickOutside = useCallback((e: MouseEvent) => {
+    if (catRef.current && !catRef.current.contains(e.target as Node)) setCatOpen(false);
+  }, []);
+  useEffect(() => {
+    if (catOpen) document.addEventListener("mousedown", handleCatClickOutside);
+    else document.removeEventListener("mousedown", handleCatClickOutside);
+    return () => document.removeEventListener("mousedown", handleCatClickOutside);
+  }, [catOpen, handleCatClickOutside]);
 
   const { startUpload } = useUploadThing("productImageUploader", {
     onUploadBegin: () => setUploading(true),
@@ -295,7 +305,7 @@ export default function AddProductDialog({
     onOpenChange(false);
     setScrapeUrl("");
     setForm(empty());
-    setTab(parentProductId ? "ta-lista" : "link");
+    setTab(parentProductId ? "ta-lista" : "library");
     setLibraryQuery("");
     setLibraryProducts([]);
     setListSearch("");
@@ -310,7 +320,7 @@ export default function AddProductDialog({
 
         {/* Tabs */}
         <div className="flex gap-1 bg-muted rounded-lg p-1 mb-2">
-          {(parentProductId && listProducts ? ["ta-lista", "link", "library", "manual"] as const : ["link", "library", "manual"] as const).map((tabKey) => (
+          {(parentProductId && listProducts ? ["ta-lista", "library", "manual", "link"] as const : ["library", "manual", "link"] as const).map((tabKey) => (
             <button
               key={tabKey}
               type="button"
@@ -501,70 +511,88 @@ export default function AddProductDialog({
                   </button>
                 </div>
               ) : (
-                <div
-                  className={`rounded-lg border-2 border-dashed h-32 flex items-center justify-center transition-colors ${
-                    isDragOver
-                      ? "border-primary bg-primary/5"
-                      : "border-border bg-muted/30"
-                  }`}
+                <button
+                  type="button"
+                  onClick={() => !uploading && fileInputRef.current?.click()}
                   onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
                   onDragEnter={(e) => { e.preventDefault(); setIsDragOver(true); }}
                   onDragLeave={() => setIsDragOver(false)}
                   onDrop={handleDrop}
+                  className={`w-full rounded-lg border-2 border-dashed h-32 flex flex-col items-center justify-center gap-2 transition-colors group ${
+                    isDragOver
+                      ? "border-primary bg-primary/5"
+                      : "border-border bg-muted/30 hover:border-primary/50 hover:bg-muted/60"
+                  }`}
                 >
                   {uploading ? (
-                    <div className="flex flex-col items-center gap-2">
+                    <>
                       <Loader2 size={18} className="animate-spin text-muted-foreground" />
                       <p className="text-xs text-muted-foreground">{t.products.uploading}</p>
-                    </div>
+                    </>
                   ) : isDragOver ? (
-                    <div className="flex flex-col items-center gap-2 pointer-events-none">
+                    <>
                       <ImagePlus size={22} className="text-primary" />
                       <p className="text-xs font-medium text-primary">{t.products.dropPhotoHere}</p>
-                    </div>
+                    </>
                   ) : (
-                    <UploadButton<OurFileRouter, "productImageUploader">
-                      endpoint="productImageUploader"
-                      onUploadBegin={() => setUploading(true)}
-                      onClientUploadComplete={(res) => {
-                        const url = res?.[0]?.url;
-                        if (url) set("imageUrl", url);
-                        setUploading(false);
-                      }}
-                      onUploadError={() => {
-                        toast.error(t.products.imageUploadError);
-                        setUploading(false);
-                      }}
-                      appearance={{
-                        container: "flex flex-col items-center gap-2 !mt-0",
-                        button: "bg-transparent p-0 border-0 shadow-none text-xs text-muted-foreground hover:text-foreground underline cursor-pointer ut-uploading:opacity-50 flex flex-col items-center gap-1.5",
-                        allowedContent: "hidden",
-                      }}
-                      content={{
-                        button: <><ImagePlus size={20} className="text-muted-foreground" /><span>{t.products.chooseImage}</span><span className="text-[10px] text-muted-foreground/60">{t.products.orDragPhoto}</span></>,
-                      }}
-                    />
+                    <>
+                      <ImagePlus size={20} className="text-muted-foreground group-hover:text-foreground transition-colors" />
+                      <span className="text-xs text-muted-foreground group-hover:text-foreground transition-colors">{t.products.chooseImage}</span>
+                      <span className="text-[10px] text-muted-foreground/60">{t.products.orDragPhoto}</span>
+                    </>
                   )}
-                </div>
+                </button>
               )}
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="p-category">{t.products.category}</Label>
-              <select
-                id="p-category"
-                value={form.category}
-                onChange={(e) => set("category", e.target.value)}
-                className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40"
-              >
-                <option value="">{t.products.noCategory}</option>
-                {CATEGORY_VALUES.map((v) => (
-                  <option key={v} value={v}>{getCategoryLabel(v, t)}</option>
-                ))}
-                {customCategories.map((c) => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
+              <Label>{t.products.category}</Label>
+              <div ref={catRef} className="relative">
+                <button
+                  type="button"
+                  onClick={() => setCatOpen((v) => !v)}
+                  className="w-full h-9 flex items-center justify-between gap-2 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 hover:bg-muted/40 transition-colors"
+                >
+                  <span className={form.category ? "text-foreground" : "text-muted-foreground"}>
+                    {form.category ? getCategoryLabel(form.category, t) : t.products.noCategory}
+                  </span>
+                  <ChevronDown size={14} className={`text-muted-foreground transition-transform shrink-0 ${catOpen ? "rotate-180" : ""}`} />
+                </button>
+                {catOpen && (
+                  <div className="absolute z-50 mt-1 w-full bg-popover border border-border rounded-lg shadow-lg py-1 max-h-60 overflow-y-auto">
+                    <button
+                      type="button"
+                      onClick={() => { set("category", ""); setCatOpen(false); }}
+                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted transition-colors ${!form.category ? "text-primary font-medium" : "text-muted-foreground"}`}
+                    >
+                      <span className="w-4 shrink-0">{!form.category && <Check size={14} />}</span>
+                      {t.products.noCategory}
+                    </button>
+                    {CATEGORY_VALUES.map((v) => (
+                      <button
+                        type="button"
+                        key={v}
+                        onClick={() => { set("category", v); setCatOpen(false); }}
+                        className={`w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted transition-colors ${form.category === v ? "text-primary font-medium" : "text-foreground"}`}
+                      >
+                        <span className="w-4 shrink-0">{form.category === v && <Check size={14} />}</span>
+                        {getCategoryLabel(v, t)}
+                      </button>
+                    ))}
+                    {customCategories.map((c) => (
+                      <button
+                        type="button"
+                        key={c}
+                        onClick={() => { set("category", c); setCatOpen(false); }}
+                        className={`w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted transition-colors ${form.category === c ? "text-primary font-medium" : "text-foreground"}`}
+                      >
+                        <span className="w-4 shrink-0">{form.category === c && <Check size={14} />}</span>
+                        {c}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="space-y-1.5">
@@ -634,6 +662,17 @@ export default function AddProductDialog({
             </div>
 
             </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) startUpload([file]);
+                e.target.value = "";
+              }}
+            />
             <div className="flex gap-2 justify-end pt-3 border-t border-border mt-3">
               <Button type="button" variant="outline" onClick={handleClose}>{t.common.cancel}</Button>
               <Button type="submit" disabled={saving || !form.name.trim() || uploading}>

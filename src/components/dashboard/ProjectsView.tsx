@@ -103,7 +103,7 @@ export default function ProjectsView({ projects, archivedProjects }: ProjectsVie
       <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-4 gap-3">
         <div>
           <h1 className="text-2xl font-bold">{t.dashboard.myProjects}</h1>
-          <p className="text-gray-500 mt-1">
+          <p className="text-muted-foreground mt-1">
             {projects.length === 0
               ? t.projekty.noProjectsEmpty
               : `${projects.length} ${projects.length === 1 ? t.projekty.projectSg : projects.length < 5 ? t.projekty.projectFw : t.projekty.projectMany}`}
@@ -149,7 +149,7 @@ export default function ProjectsView({ projects, archivedProjects }: ProjectsVie
       {/* Search + controls */}
       <div className="flex items-center gap-2 mb-6">
         <div className="relative w-full max-w-sm">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
           <input
             type="text"
             placeholder={t.projekty.searchPlaceholder}
@@ -178,7 +178,7 @@ export default function ProjectsView({ projects, archivedProjects }: ProjectsVie
             <select
               value={sort}
               onChange={(e) => setSort(e.target.value as typeof sort)}
-              className="hidden sm:block flex-shrink-0 text-xs border border-gray-200 dark:border-gray-700 rounded-md px-2 py-2 bg-white dark:bg-card text-gray-600 dark:text-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-300"
+              className="hidden sm:block flex-shrink-0 text-xs border border-border rounded-md px-2 py-2 bg-background text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/30"
             >
               <option value="newest">{t.common.newest}</option>
               <option value="oldest">{t.common.oldest}</option>
@@ -208,12 +208,12 @@ export default function ProjectsView({ projects, archivedProjects }: ProjectsVie
 
       {tab === "active" ? (
         projects.length === 0 ? (
-          <div className="text-center py-16 text-gray-400">
+          <div className="text-center py-16 text-muted-foreground">
             <p className="text-4xl mb-4">🏗️</p>
             <p className="text-lg">{t.projekty.noProjectsHint}</p>
           </div>
         ) : filtered.length === 0 ? (
-          <div className="text-center py-16 text-gray-400">
+          <div className="text-center py-16 text-muted-foreground">
             <p className="text-4xl mb-4">🔍</p>
             <p className="text-lg">{t.projekty.noProjectsActive.replace("{search}", search)}</p>
           </div>
@@ -228,12 +228,12 @@ export default function ProjectsView({ projects, archivedProjects }: ProjectsVie
         )
       ) : (
         archivedProjects.length === 0 ? (
-          <div className="text-center py-16 text-gray-400">
+          <div className="text-center py-16 text-muted-foreground">
             <p className="text-4xl mb-4">📦</p>
             <p className="text-lg">{t.projekty.noProjectsArchived}</p>
           </div>
         ) : filtered.length === 0 ? (
-          <div className="text-center py-16 text-gray-400">
+          <div className="text-center py-16 text-muted-foreground">
             <p className="text-4xl mb-4">🔍</p>
             <p className="text-lg">{t.projekty.noProjectsActive} &quot;{search}&quot;</p>
           </div>
@@ -247,9 +247,9 @@ export default function ProjectsView({ projects, archivedProjects }: ProjectsVie
                 }`}
               >
                 <div className="min-w-0">
-                  <p className="font-semibold text-gray-700 truncate">{p.title}</p>
+                  <p className="font-semibold text-foreground truncate">{p.title}</p>
                   {p.clientName && (
-                    <p className="text-xs text-gray-400 truncate">{p.clientName}</p>
+                    <p className="text-xs text-muted-foreground truncate">{p.clientName}</p>
                   )}
                   <Badge variant="secondary" className="text-xs mt-1">{p.renderCount} {t.projekty.renders}</Badge>
                 </div>
@@ -321,7 +321,7 @@ function ProjectListView({ projects }: { projects: Project[] }) {
               {p.title}
             </Link>
             {p.description && (
-              <p className="text-xs text-gray-400 truncate mt-0.5">{p.description}</p>
+              <p className="text-xs text-muted-foreground truncate mt-0.5">{p.description}</p>
             )}
             <Badge variant="secondary" className="text-xs mt-1">{p.renderCount} {t.projekty.renders}</Badge>
           </div>
@@ -337,12 +337,12 @@ function ProjectListView({ projects }: { projects: Project[] }) {
                 {p.clientEmail && <p className="text-xs text-muted-foreground truncate">{p.clientEmail}</p>}
               </>
             ) : (
-              <span className="text-xs text-gray-300">—</span>
+              <span className="text-xs text-muted-foreground/50">—</span>
             )}
           </div>
 
           {/* Date */}
-          <p className="hidden sm:block text-sm text-gray-400">
+          <p className="hidden sm:block text-sm text-muted-foreground">
             {new Date(p.createdAt).toLocaleDateString("pl-PL", {
               day: "2-digit",
               month: "short",

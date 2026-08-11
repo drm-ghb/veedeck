@@ -42,13 +42,13 @@ export default function ProjectCard({
 
   return (
     <Link href={`/projekty/${id}`} className="block group">
-      <div className="relative overflow-hidden rounded-xl border border-[#E5E7EB] bg-[#FAFAFB] p-4 cursor-pointer transition-[box-shadow,transform] duration-[180ms] hover:shadow-[0_8px_24px_-12px_rgba(24,24,50,.18)] hover:-translate-y-0.5">
+      <div className="relative overflow-hidden rounded-xl border border-border bg-card p-4 cursor-pointer transition-[box-shadow,transform] duration-[180ms] hover:shadow-[0_8px_24px_-12px_rgba(24,24,50,.18)] hover:-translate-y-0.5">
         {/* Accent bar */}
         <div className="absolute left-0 top-0 bottom-0 w-[3px]" style={{ background: colors.bar }} />
 
         {/* Header: title + chip + menu */}
         <div className="flex items-start justify-between gap-2 pl-3">
-          <p className="font-semibold text-[14px] leading-snug text-[#24252B] flex items-center gap-1.5 min-w-0">
+          <p className="font-semibold text-[14px] leading-snug text-foreground flex items-center gap-1.5 min-w-0">
             {pinned && <Pin size={13} className="text-red-500 fill-red-500 shrink-0 translate-y-px" />}
             <span className="truncate">{title}</span>
           </p>
@@ -67,13 +67,13 @@ export default function ProjectCard({
         </div>
 
         {/* Client line */}
-        <p className="text-[12.5px] text-[#8A8D98] mt-[5px] truncate pl-3">
+        <p className="text-[12.5px] text-muted-foreground mt-[5px] truncate pl-3">
           {clientName ? `${t.projekty.colClient}: ${clientName}` : "\u00A0"}
         </p>
 
         {/* Footer */}
-        <div className="mt-3 pt-2.5 border-t border-[#E5E7EB] pl-3">
-          <p className="text-[11.5px] text-[#8A8D98]">
+        <div className="mt-3 pt-2.5 border-t border-border pl-3">
+          <p className="text-[11.5px] text-muted-foreground">
             {t.projekty.createdAt} {new Date(createdAt).toLocaleDateString("pl-PL")}
           </p>
         </div>

@@ -13,6 +13,8 @@ import {
 } from "@/components/ui/dialog";
 import { surveyTemplates } from "@/lib/surveyTemplates";
 import { useT } from "@/lib/i18n";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuGroup, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { ChevronDown } from "@/components/ui/icons";
 
 type Client = { id: string; name: string };
 type CustomTemplate = { id: string; name: string };
@@ -118,48 +120,76 @@ export default function NewSurveyDialog({ open, onClose, onCreated, clients, cus
 
           {hasTemplates && (
             <div className="space-y-1.5">
-              <Label htmlFor="survey-template">{t.ankiety.templateLabel}</Label>
-              <select
-                id="survey-template"
-                value={templateValue}
-                onChange={(e) => setTemplateValue(e.target.value)}
-                disabled={loading}
-                className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
-              >
-                <option value="">{t.ankiety.noTemplate}</option>
-                {surveyTemplates.length > 0 && (
-                  <optgroup label={t.ankiety.builtinTemplatesOptgroup}>
-                    {surveyTemplates.map((tpl) => (
-                      <option key={tpl.id} value={`builtin:${tpl.id}`}>{tpl.name}</option>
-                    ))}
-                  </optgroup>
-                )}
-                {customTemplates.length > 0 && (
-                  <optgroup label={t.ankiety.myTemplatesOptgroup}>
-                    {customTemplates.map((tpl) => (
-                      <option key={tpl.id} value={`custom:${tpl.id}`}>{tpl.name}</option>
-                    ))}
-                  </optgroup>
-                )}
-              </select>
+              <Label>{t.ankiety.templateLabel}</Label>
+              <DropdownMenu>
+                <DropdownMenuTrigger disabled={loading} className="w-full flex items-center justify-between px-3 py-2 text-sm border border-border rounded-lg bg-background hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                  <span className={templateValue ? "text-foreground" : "text-muted-foreground"}>
+                    {templateValue
+                      ? (templateValue.startsWith("builtin:")
+                          ? surveyTemplates.find((t) => t.id === templateValue.slice(8))?.name
+                          : customTemplates.find((t) => t.id === templateValue.slice(7))?.name)
+                        ?? t.ankiety.noTemplate
+                      : t.ankiety.noTemplate}
+                  </span>
+                  <ChevronDown size={14} className="text-muted-foreground flex-shrink-0" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem onClick={() => setTemplateValue("")}>
+                    <span className={!templateValue ? "font-medium text-primary" : ""}>{t.ankiety.noTemplate}</span>
+                  </DropdownMenuItem>
+                  {surveyTemplates.length > 0 && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuGroup>
+                        <DropdownMenuLabel>{t.ankiety.builtinTemplatesOptgroup}</DropdownMenuLabel>
+                        {surveyTemplates.map((tpl) => (
+                          <DropdownMenuItem key={tpl.id} onClick={() => setTemplateValue(`builtin:${tpl.id}`)}>
+                            <span className={templateValue === `builtin:${tpl.id}` ? "font-medium text-primary" : ""}>{tpl.name}</span>
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuGroup>
+                    </>
+                  )}
+                  {customTemplates.length > 0 && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuGroup>
+                        <DropdownMenuLabel>{t.ankiety.myTemplatesOptgroup}</DropdownMenuLabel>
+                        {customTemplates.map((tpl) => (
+                          <DropdownMenuItem key={tpl.id} onClick={() => setTemplateValue(`custom:${tpl.id}`)}>
+                            <span className={templateValue === `custom:${tpl.id}` ? "font-medium text-primary" : ""}>{tpl.name}</span>
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuGroup>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           )}
 
           {clients.length > 0 && (
             <div className="space-y-1.5">
-              <Label htmlFor="survey-client">{t.ankiety.clientOptional}</Label>
-              <select
-                id="survey-client"
-                value={assignedClientId}
-                onChange={(e) => setAssignedClientId(e.target.value)}
-                disabled={loading}
-                className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
-              >
-                <option value="">{t.ankiety.noClient}</option>
-                {clients.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
+              <Label>{t.ankiety.clientOptional}</Label>
+              <DropdownMenu>
+                <DropdownMenuTrigger disabled={loading} className="w-full flex items-center justify-between px-3 py-2 text-sm border border-border rounded-lg bg-background hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                  <span className={assignedClientId ? "text-foreground" : "text-muted-foreground"}>
+                    {assignedClientId ? clients.find((c) => c.id === assignedClientId)?.name ?? t.ankiety.noClient : t.ankiety.noClient}
+                  </span>
+                  <ChevronDown size={14} className="text-muted-foreground flex-shrink-0" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem onClick={() => setAssignedClientId("")}>
+                    <span className={!assignedClientId ? "font-medium text-primary" : ""}>{t.ankiety.noClient}</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  {clients.map((c) => (
+                    <DropdownMenuItem key={c.id} onClick={() => setAssignedClientId(c.id)}>
+                      <span className={assignedClientId === c.id ? "font-medium text-primary" : ""}>{c.name}</span>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           )}
 

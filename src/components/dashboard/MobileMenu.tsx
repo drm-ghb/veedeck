@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X, LayoutDashboard, Users, LocalMall, Stacks, Settings, LogOut, HelpCircle, CheckCircle, CalendarDays, NotebookText, PushPin, ChatBubble, VeezardIcon, BookOpen, ClipboardList, CheckSquare, Engineering, Interests, Check, ChevronDown } from "@/components/ui/icons";
+import { Menu, X, LayoutDashboard, Users, LocalMall, Stacks, Settings, LogOut, HelpCircle, CheckCircle, CalendarDays, NotebookText, PushPin, ChatBubble, VeezardIcon, BookOpen, ClipboardList, CheckSquare, Engineering, Interests, Check, ChevronDown, Bug, Sparkles } from "@/components/ui/icons";
 import { signIn, signOut } from "next-auth/react";
 import { useT } from "@/lib/i18n";
 
@@ -215,7 +215,8 @@ export default function MobileMenu({ userName, logoUrl, hiddenModules = [], isTr
         </div>
 
         {/* Nav items */}
-        <nav className="flex-1 overflow-y-auto p-3 space-y-0.5">
+        <div className="relative flex-1 min-h-0">
+        <nav className="h-full overflow-y-auto p-3 space-y-0.5">
           {visible.map((item) => {
             const active = pathname === item.href || pathname.startsWith(item.href + "/");
             return (
@@ -248,9 +249,28 @@ export default function MobileMenu({ userName, logoUrl, hiddenModules = [], isTr
             );
           })}
         </nav>
+        <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-card to-transparent" />
+        </div>
 
         {/* Bottom actions */}
-        <div className="p-3 border-t border-border space-y-0.5">
+        <div className="px-4 py-1.5">
+          <div className="h-[2.5px] rounded-full bg-border" />
+        </div>
+        <div className="p-3 space-y-0.5">
+          <button
+            onClick={() => { window.dispatchEvent(new CustomEvent("open-help-widget", { detail: { tab: "ai" } })); setOpen(false); }}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:bg-muted hover:text-foreground transition-colors"
+          >
+            <span className="w-5 flex items-center justify-center"><Sparkles size={18} /></span>
+            Asystent AI
+          </button>
+          <button
+            onClick={() => { window.dispatchEvent(new CustomEvent("open-help-widget", { detail: { tab: "contact", category: "🐞 Zgłoś błąd" } })); setOpen(false); }}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:bg-muted hover:text-foreground transition-colors"
+          >
+            <span className="w-5 flex items-center justify-center"><Bug size={18} /></span>
+            Zgłoś błąd
+          </button>
           <button
             onClick={openHelp}
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:bg-muted hover:text-foreground transition-colors"

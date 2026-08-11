@@ -152,6 +152,31 @@ export async function PATCH(
     return NextResponse.json({ error: "Błąd serwera", detail: String(err) }, { status: 500 });
   }
 
+  // Special handling: category change to USLUGI or INNE — remove product from library
+  if (body.category !== undefined && ["USLUGI", "INNE"].includes(body.category)) {
+    try {
+      const userId = getWorkspaceUserId(session);
+      // Delete explicitly linked library product
+      if (product.productId) {
+        await prisma.product.delete({ where: { id: product.productId } });
+      } else {
+        // Delete auto-saved library product matched by name
+        const libProduct = await prisma.product.findFirst({
+          where: { userId, name: { equals: product.name, mode: "insensitive" } },
+        });
+        if (libProduct) await prisma.product.delete({ where: { id: libProduct.id } });
+      }
+      const updated = await prisma.listProduct.update({
+        where: { id: productId },
+        data: { category: body.category, productId: null },
+      });
+      await logListChange({ listId: id, userId: session.user.id, userName: session.user.name ?? session.user.email ?? "Projektant", action: "Zmieniono kategorię", details: `${product.name} → ${body.category}` });
+      return NextResponse.json(updated);
+    } catch (err) {
+      return NextResponse.json({ error: "Błąd aktualizacji kategorii", detail: String(err) }, { status: 500 });
+    }
+  }
+
   // Inline field updates (single field patches from product tile)
   const patchableFields = ["category", "color", "dimensions", "manufacturer", "supplier", "deliveryTime", "catalogNumber", "price", "name", "note"] as const;
   const patchField = patchableFields.find((f) => body[f] !== undefined);

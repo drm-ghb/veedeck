@@ -336,11 +336,13 @@ export default function ClientProjectPage() {
     setSettingsFullName((session.user as any)?.fullName ?? "");
     setClientAvatarUrl((session.user as any)?.avatarUrl ?? null);
 
-    // Load contactEmail and email notification prefs
+    // Load user profile (fullName, avatarUrl, contactEmail, email notification prefs)
     fetch("/api/user")
       .then((r) => r.ok ? r.json() : null)
       .then((u) => {
         if (!u) return;
+        if (u.fullName) setSettingsFullName(u.fullName);
+        if (u.avatarUrl) setClientAvatarUrl(u.avatarUrl);
         setSettingsEmail(u.contactEmail ?? "");
         setEmailNotifEnabled(u.emailNotifEnabled ?? false);
         setEmailNotifModules(u.emailNotifModules ?? []);

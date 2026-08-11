@@ -24,6 +24,8 @@ export default function SettingsListyPage() {
     { value: "ARMATURA", label: t.listSettings.armatura },
     { value: "OKLADZINY_SCIENNE", label: t.listSettings.okladziny },
     { value: "PODLOGA", label: t.listSettings.podloga },
+    { value: "USLUGI", label: t.listSettings.uslugi },
+    { value: "INNE", label: t.listSettings.inne },
   ];
 
   function buildList(savedOrder: string[], customCats: string[]): Category[] {

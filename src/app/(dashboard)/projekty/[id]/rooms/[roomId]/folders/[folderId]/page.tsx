@@ -57,7 +57,7 @@ export default async function FolderPage({ params }: Props) {
       <div className="flex items-start justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold">{folder.name}</h1>
-          <p className="text-sm text-gray-400 mt-0.5">
+          <p className="text-sm text-muted-foreground mt-0.5">
             {renders.length} {renders.length === 1 ? "plik" : renders.length < 5 ? "pliki" : "plików"}
           </p>
         </div>

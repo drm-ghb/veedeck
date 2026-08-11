@@ -8,10 +8,22 @@ export async function GET() {
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { id: true, name: true, email: true, fullName: true, avatarUrl: true, contactEmail: true, emailNotifEnabled: true, emailNotifModules: true },
+    select: { id: true, name: true, email: true, fullName: true, avatarUrl: true, contactEmail: true, emailNotifEnabled: true, emailNotifModules: true, role: true },
   });
 
-  return NextResponse.json(user);
+  if (!user) return NextResponse.json(null);
+
+  // For clients: if fullName is not set, fall back to their ProjectClient.name (set by the designer)
+  let fullName = user.fullName;
+  if (!fullName && user.role === "client") {
+    const contact = await prisma.projectClient.findFirst({
+      where: { userId: session.user.id },
+      select: { name: true },
+    });
+    fullName = contact?.name ?? null;
+  }
+
+  return NextResponse.json({ ...user, fullName });
 }
 
 export async function DELETE() {

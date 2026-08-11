@@ -1225,18 +1225,26 @@ function StatusDropdown({
       {open && (
         <>
           <div className="fixed inset-0 z-20" onClick={() => onOpenChange(false)} />
-          <div className="absolute top-full mt-1 right-0 z-30 bg-card border border-border rounded-xl shadow-lg py-1 min-w-32">
-            {Object.entries(STATUS_STYLES).map(([v, style]) => (
-              <button
-                key={v}
-                onClick={() => { onChange(v); onOpenChange(false); }}
-                className={`w-full flex items-center px-3 py-2 text-xs transition-colors hover:bg-muted ${v === value ? "opacity-100" : "opacity-70"}`}
-              >
-                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${style.bg} ${style.text}`}>
-                  {statusLabels[v] ?? v}
-                </span>
-              </button>
-            ))}
+          <div className="absolute top-full mt-1 right-0 z-30 bg-card border border-border rounded-xl shadow-lg py-1 min-w-56">
+            {Object.entries(STATUS_STYLES).map(([v, style]) => {
+              const desc: Record<string, string> = {
+                DRAFT: t.ankiety.statusDraftDesc,
+                ACTIVE: t.ankiety.statusActiveDesc,
+                CLOSED: t.ankiety.statusClosedDesc,
+              };
+              return (
+                <button
+                  key={v}
+                  onClick={() => { onChange(v); onOpenChange(false); }}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 text-xs transition-colors hover:bg-muted ${v === value ? "opacity-100" : "opacity-60"}`}
+                >
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium shrink-0 ${style.bg} ${style.text}`}>
+                    {statusLabels[v] ?? v}
+                  </span>
+                  <span className="text-muted-foreground text-left leading-tight">{desc[v]}</span>
+                </button>
+              );
+            })}
           </div>
         </>
       )}

@@ -268,7 +268,7 @@ export default function ListyView({ lists: initialLists, userId, veepickConnecte
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-4">
         <div>
           <h1 className="text-2xl font-bold">{t.listy.title}</h1>
-          <p className="text-gray-500 mt-1">
+          <p className="text-muted-foreground mt-1">
             {activeLists.length === 0
               ? t.listy.noLists
               : `${activeLists.length} ${t.listy.activeLabel}`}
@@ -339,7 +339,7 @@ export default function ListyView({ lists: initialLists, userId, veepickConnecte
               </select>
             </div>
 
-            <select value={sort} onChange={(e) => setSort(e.target.value as SortOption)} className="hidden sm:block flex-shrink-0 text-xs border border-gray-200 dark:border-gray-700 rounded-md px-2 py-2 bg-white dark:bg-card text-gray-600 dark:text-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-300">
+            <select value={sort} onChange={(e) => setSort(e.target.value as SortOption)} className="hidden sm:block flex-shrink-0 text-xs border border-border rounded-md px-2 py-2 bg-background text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/30">
               <option value="manual">{t.listy.sortManual}</option>
               <option value="newest">{t.common.newest}</option>
               <option value="oldest">{t.common.oldest}</option>
@@ -365,8 +365,8 @@ export default function ListyView({ lists: initialLists, userId, veepickConnecte
           <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
             <LocalMall size={28} className="text-primary" />
           </div>
-          <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-1">{t.listy.noListsEmpty}</h2>
-          <p className="text-sm text-gray-400 max-w-xs">{t.listy.noListsHint}</p>
+          <h2 className="text-lg font-semibold text-foreground mb-1">{t.listy.noListsEmpty}</h2>
+          <p className="text-sm text-muted-foreground max-w-xs">{t.listy.noListsHint}</p>
         </div>
       )}
 
@@ -379,7 +379,7 @@ export default function ListyView({ lists: initialLists, userId, veepickConnecte
 
       {/* No search results */}
       {tabLists.length > 0 && filtered.length === 0 && (
-        <div className="text-center py-16 text-gray-400">
+        <div className="text-center py-16 text-muted-foreground">
           <p className="text-4xl mb-4">🔍</p>
           <p className="text-lg">{t.listy.noListsMatching} &quot;{search}&quot;</p>
         </div>
@@ -549,7 +549,7 @@ function SortableListRowItem({ list, unreadCount, onNavigate, onCopyLink, menu, 
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 }}
       onClick={onNavigate}
-      className="relative overflow-hidden rounded-xl border border-[#E5E7EB] bg-[#FAFAFB] px-4 py-[14px] flex items-center gap-3 cursor-pointer transition-[box-shadow,transform] duration-[180ms] hover:shadow-[0_8px_24px_-12px_rgba(24,24,50,.15)] hover:-translate-y-px"
+      className="relative overflow-hidden rounded-xl border border-border bg-card px-4 py-[14px] flex items-center gap-3 cursor-pointer transition-[box-shadow,transform] duration-[180ms] hover:shadow-[0_8px_24px_-12px_rgba(24,24,50,.15)] hover:-translate-y-px"
     >
       {/* Accent bar */}
       <div className="absolute left-0 top-0 bottom-0 w-[3px]" style={{ background: colors.bar }} />
@@ -574,20 +574,20 @@ function SortableListRowItem({ list, unreadCount, onNavigate, onCopyLink, menu, 
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
           {list.pinned && <Pin size={13} className="text-red-500 fill-red-500 flex-shrink-0" />}
-          <span className="font-semibold text-[14.5px] text-[#24252B] truncate">{list.name}</span>
+          <span className="font-semibold text-[14.5px] text-foreground truncate">{list.name}</span>
         </div>
         <div className="flex items-center gap-[14px] mt-[3px] flex-wrap">
-          <span className="text-[12px] text-[#8A8D98] whitespace-nowrap">
+          <span className="text-[12px] text-muted-foreground whitespace-nowrap">
             {list.project?.clientName
               ? `${t.home.clientPrefix} ${list.project.clientName}`
               : list.directClientName
               ? `${t.home.clientPrefix} ${list.directClientName}`
               : t.listy.noProject}
           </span>
-          <span className="text-[12px] text-[#8A8D98] whitespace-nowrap">
+          <span className="text-[12px] text-muted-foreground whitespace-nowrap">
             {t.listy.createdPrefix} {new Date(list.createdAt).toLocaleDateString("pl-PL", { day: "2-digit", month: "short", year: "numeric" })}
           </span>
-          <span className="flex items-center gap-1 text-[12px] text-[#8A8D98] whitespace-nowrap">
+          <span className="flex items-center gap-1 text-[12px] text-muted-foreground whitespace-nowrap">
             <Eye size={12} />
             {list.viewCount ?? 0}
           </span>

@@ -428,13 +428,13 @@ function QuestionInput({
       {question.type === "single_choice" && (
         <div className="space-y-2">
           {(question.options ?? []).map((opt) => (
-            <label key={opt} className={`flex items-center gap-3 ${readOnly ? "cursor-default" : "cursor-pointer group"}`}>
+            <label key={opt} onClick={() => !readOnly && onChange(opt)} className={`flex items-center gap-3 ${readOnly ? "cursor-default" : "cursor-pointer group"}`}>
               <div className={`w-4 h-4 rounded-full border-2 flex-shrink-0 transition-colors ${
                 value === opt ? "border-primary bg-primary" : "border-border" + (readOnly ? "" : " group-hover:border-primary/50")
               }`}>
                 {value === opt && <div className="w-full h-full rounded-full bg-white scale-50 transform" />}
               </div>
-              <span className="text-sm" onClick={() => !readOnly && onChange(opt)}>{opt}</span>
+              <span className="text-sm">{opt}</span>
             </label>
           ))}
         </div>

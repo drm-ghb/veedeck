@@ -25,7 +25,7 @@ model User {
   autoClosePinsOnAccept      Boolean                 @default(false)
   clientLogoUrl              String?
   clientWelcomeMessage       String?
-  defaultRenderOrder         String                  @default("order")
+  defaultRenderOrder         String                  @default("newest")
   defaultRenderStatus        RenderStatus            @default(REVIEW)
   hideCommentCount           Boolean                 @default(false)
   maxPinsPerRender           Int?

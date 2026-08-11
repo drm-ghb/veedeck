@@ -320,7 +320,7 @@ prevRenderIdsRef.current = currentIds;
               <Card className={`overflow-hidden transition-all cursor-pointer group relative ${isSelected ? "ring-2 ring-primary border-primary" : "hover:shadow-[0_4px_16px_rgba(25,33,61,0.2)] hover:border-primary/30"}`}>
                 {selectionMode && (
                   <div className="absolute top-2 left-2 z-10">
-                    <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${isSelected ? "bg-primary border-primary" : "bg-white/80 border-gray-400"}`}>
+                    <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${isSelected ? "bg-primary border-primary" : "bg-background/80 border-border"}`}>
                       {isSelected && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L4 7L9 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                     </div>
                   </div>
@@ -377,7 +377,7 @@ prevRenderIdsRef.current = currentIds;
               <div className={`relative flex items-center gap-3 px-4 py-3 transition-all duration-500 group ${i !== sorted.length - 1 ? "border-b border-border" : ""} ${isSelected ? "bg-primary/5" : isNew ? "bg-violet-500/5" : "hover:bg-muted/50"} ${selectionMode ? "cursor-pointer" : ""}`}>
                 {isNew && <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-violet-500" />}
                 {selectionMode && (
-                  <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${isSelected ? "bg-primary border-primary" : "border-gray-400"}`}>
+                  <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${isSelected ? "bg-primary border-primary" : "border-border"}`}>
                     {isSelected && <svg width="8" height="6" viewBox="0 0 10 8" fill="none"><path d="M1 4L4 7L9 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                   </div>
                 )}

@@ -627,11 +627,10 @@ export default function DashboardView({
                   const accent = project.clientName ? accentColors(project.accentColor) : { bar: "#94a3b8", tint: "#F1F2F5", deep: "#64748b" };
                   return (
                     <Link key={project.id} href={`/projekty/${project.id}`}
-                      className={`group relative flex flex-col rounded-xl border overflow-hidden transition-all hover:shadow-[0_10px_26px_-14px_rgba(24,24,50,.2)] hover:-translate-y-0.5${i > 0 ? " hidden sm:flex" : ""}`}
-                      style={{ background: "#FAFAFB", borderColor: "#E5E7EB" }}
+                      className={`group relative flex flex-col rounded-xl bg-card border border-border overflow-hidden transition-all hover:shadow-[0_10px_26px_-14px_rgba(24,24,50,.2)] hover:-translate-y-0.5${i > 0 ? " hidden sm:flex" : ""}`}
                     >
                       <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 3, background: accent.bar, zIndex: 2 }} />
-                      <div className="w-full overflow-hidden flex items-center justify-center" style={{ aspectRatio: "16/11", background: project.lastRenderUrl ? undefined : accent.tint }}>
+                      <div className="w-full overflow-hidden flex items-center justify-center bg-muted" style={{ aspectRatio: "16/11" }}>
                         {project.lastRenderUrl ? (
                           project.lastRenderFileType === "pdf" ? (
                             <PdfThumbnail fileUrl={project.lastRenderUrl} className="w-full h-full group-hover:scale-105 transition-transform duration-300" />
@@ -640,17 +639,17 @@ export default function DashboardView({
                             <img src={project.lastRenderUrl} alt={project.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                           )
                         ) : (
-                          <Hub size={22} style={{ color: accent.deep, opacity: 0.5 }} />
+                          <Hub size={22} style={{ color: accent.bar, opacity: 0.6 }} />
                         )}
                       </div>
                       <div className="pl-4 pr-3 pt-2.5 pb-3">
                         <p className="text-[13.5px] font-semibold truncate">{project.title}</p>
                         {project.clientName && <p className="text-[12px] text-muted-foreground truncate mt-0.5">{t.home.clientPrefix} {project.clientName}</p>}
-                        <div className="flex items-center justify-between mt-2">
-                          <span className="text-[11.5px] text-muted-foreground">
+                        <div className="flex items-center justify-between mt-2 gap-2">
+                          <span className="text-[11.5px] text-muted-foreground min-w-0 truncate">
                             {project.renderCount > 0 ? `${project.renderCount} ${project.renderCount === 1 ? t.home.renderSg : t.home.renderPl}` : t.home.noRenders}
                           </span>
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-1.5 shrink-0">
                             {project.unreadPins > 0 && (
                               <span className="flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300">
                                 <MapPin size={9} />{project.unreadPins}
@@ -694,12 +693,11 @@ export default function DashboardView({
                   const accent = list.clientName ? accentColors(list.accentColor) : { bar: "#94a3b8", tint: "#F1F2F5", deep: "#64748b" };
                   return (
                     <Link key={list.id} href={`/listy-zakupowe/${list.slug ?? list.id}`}
-                      className="relative flex items-center gap-3 px-4 py-3 rounded-xl border overflow-hidden transition-all hover:shadow-[0_8px_22px_-14px_rgba(24,24,50,.18)] hover:-translate-y-0.5"
-                      style={{ background: "#FAFAFB", borderColor: "#E5E7EB" }}
+                      className="relative flex items-center gap-3 px-4 py-3 rounded-xl bg-card border border-border overflow-hidden transition-all hover:shadow-[0_8px_22px_-14px_rgba(24,24,50,.18)] hover:-translate-y-0.5"
                     >
                       <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 3, background: accent.bar }} />
-                      <div className="w-[38px] h-[38px] rounded-[10px] flex items-center justify-center shrink-0 ml-1" style={{ background: accent.tint }}>
-                        <LocalMall size={18} style={{ color: accent.deep }} />
+                      <div className="w-[38px] h-[38px] rounded-[10px] flex items-center justify-center shrink-0 ml-1 bg-muted">
+                        <LocalMall size={18} style={{ color: accent.bar }} />
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="text-[13.5px] font-semibold truncate flex items-center gap-1.5">
@@ -1067,10 +1065,9 @@ export default function DashboardView({
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6 lg:mb-5">
         <Link
           href="/klienci"
-          className="min-w-0 flex items-center gap-3 px-4 py-4 rounded-xl border transition-all hover:shadow-[0_8px_22px_-14px_rgba(24,24,50,.18)] hover:-translate-y-0.5"
-          style={{ background: "#FAFAFB", borderColor: "#E5E7EB" }}
+          className="min-w-0 flex items-center gap-3 px-4 py-4 rounded-xl bg-card border border-border transition-all hover:shadow-[0_8px_22px_-14px_rgba(24,24,50,.18)] hover:-translate-y-0.5"
         >
-          <div className="w-[38px] h-[38px] rounded-[10px] flex items-center justify-center shrink-0 bg-indigo-50">
+          <div className="w-[38px] h-[38px] rounded-[10px] flex items-center justify-center shrink-0 bg-primary/10">
             <Users size={19} className="text-primary" />
           </div>
           <div className="min-w-0">
@@ -1082,10 +1079,9 @@ export default function DashboardView({
         {!hiddenModules.includes("renderflow") && (
           <Link
             href="/projectflow"
-            className="min-w-0 flex items-center gap-3 px-4 py-4 rounded-xl border transition-all hover:shadow-[0_8px_22px_-14px_rgba(24,24,50,.18)] hover:-translate-y-0.5"
-            style={{ background: "#FAFAFB", borderColor: "#E5E7EB" }}
+            className="min-w-0 flex items-center gap-3 px-4 py-4 rounded-xl bg-card border border-border transition-all hover:shadow-[0_8px_22px_-14px_rgba(24,24,50,.18)] hover:-translate-y-0.5"
           >
-            <div className="w-[38px] h-[38px] rounded-[10px] flex items-center justify-center shrink-0 bg-indigo-50">
+            <div className="w-[38px] h-[38px] rounded-[10px] flex items-center justify-center shrink-0 bg-primary/10">
               <Hub size={19} className="text-primary" />
             </div>
             <div className="min-w-0">
@@ -1098,10 +1094,9 @@ export default function DashboardView({
         {!hiddenModules.includes("listy") && (
           <Link
             href="/listy-zakupowe"
-            className="min-w-0 flex items-center gap-3 px-4 py-4 rounded-xl border transition-all hover:shadow-[0_8px_22px_-14px_rgba(24,24,50,.18)] hover:-translate-y-0.5"
-            style={{ background: "#FAFAFB", borderColor: "#E5E7EB" }}
+            className="min-w-0 flex items-center gap-3 px-4 py-4 rounded-xl bg-card border border-border transition-all hover:shadow-[0_8px_22px_-14px_rgba(24,24,50,.18)] hover:-translate-y-0.5"
           >
-            <div className="w-[38px] h-[38px] rounded-[10px] flex items-center justify-center shrink-0 bg-indigo-50">
+            <div className="w-[38px] h-[38px] rounded-[10px] flex items-center justify-center shrink-0 bg-primary/10">
               <LocalMall size={19} className="text-primary" />
             </div>
             <div className="min-w-0">
@@ -1113,8 +1108,7 @@ export default function DashboardView({
 
         <Link
           href="/notifications"
-          className="min-w-0 flex items-center gap-3 px-4 py-4 rounded-xl border transition-all hover:shadow-[0_8px_22px_-14px_rgba(24,24,50,.18)] hover:-translate-y-0.5"
-          style={{ background: "#FAFAFB", borderColor: "#E5E7EB" }}
+          className="min-w-0 flex items-center gap-3 px-4 py-4 rounded-xl bg-card border border-border transition-all hover:shadow-[0_8px_22px_-14px_rgba(24,24,50,.18)] hover:-translate-y-0.5"
         >
           <div
             className="w-[38px] h-[38px] rounded-[10px] flex items-center justify-center shrink-0"

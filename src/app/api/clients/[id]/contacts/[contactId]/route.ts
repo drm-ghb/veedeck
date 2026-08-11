@@ -245,5 +245,19 @@ export async function DELETE(
     }
   }
 
+  // If deleted contact was the main one, promote the next contact
+  if (contact.isMainContact) {
+    const next = await prisma.projectClient.findFirst({
+      where: { clientId: id },
+      orderBy: [{ order: "asc" }, { createdAt: "asc" }],
+    });
+    if (next) {
+      await prisma.projectClient.update({
+        where: { id: next.id },
+        data: { isMainContact: true },
+      });
+    }
+  }
+
   return NextResponse.json({ success: true });
 }

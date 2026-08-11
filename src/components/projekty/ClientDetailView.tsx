@@ -418,7 +418,15 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
     try {
       const res = await fetch(`/api/clients/${initialClient.id}/contacts/${contactId}`, { method: "DELETE" });
       if (!res.ok) throw new Error();
-      setContacts((prev) => prev.filter((c) => c.id !== contactId));
+      setContacts((prev) => {
+        const removed = prev.find((c) => c.id === contactId);
+        const remaining = prev.filter((c) => c.id !== contactId);
+        // If we removed the main contact, promote the first remaining one
+        if (removed?.isMainContact && remaining.length > 0) {
+          remaining[0] = { ...remaining[0], isMainContact: true };
+        }
+        return remaining;
+      });
       toast.success(t.projekty.contactDeleted);
     } catch {
       toast.error(t.projekty.contactDeleteError);
@@ -777,15 +785,13 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
                                 <Pencil size={15} />
                                 Edytuj
                               </button>
-                              {!isMain && (
-                                <button
-                                  onClick={() => { setOpenMenuId(null); removeContact(contact.id); }}
-                                  className="w-full flex items-center gap-2 text-[12.5px] font-medium px-[10px] py-2 rounded-md hover:bg-[#FAFAFB] dark:hover:bg-muted transition-colors text-left text-destructive"
-                                >
-                                  <Trash2 size={15} />
-                                  Usuń
-                                </button>
-                              )}
+                              <button
+                                onClick={() => { setOpenMenuId(null); removeContact(contact.id); }}
+                                className="w-full flex items-center gap-2 text-[12.5px] font-medium px-[10px] py-2 rounded-md hover:bg-[#FAFAFB] dark:hover:bg-muted transition-colors text-left text-destructive"
+                              >
+                                <Trash2 size={15} />
+                                Usuń
+                              </button>
                             </div>
                           )}
                         </div>

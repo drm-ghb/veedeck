@@ -44,7 +44,7 @@ export default async function MoodboardPage() {
         id: true,
         name: true,
         projects: {
-          where: { archived: false },
+          where: { archived: false, isPortalProject: false },
           select: { id: true, title: true },
           orderBy: { title: "asc" },
         },

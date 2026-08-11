@@ -300,7 +300,7 @@ export default function ShareListClient({
               {t.listy.noProductsInSection}
             </p>
           ) : (
-            <div className="bg-white border border-border rounded-[18px] p-4 flex flex-col gap-[10px]">
+            <div className="bg-card border border-border rounded-[18px] p-4 flex flex-col gap-[10px]">
               {(() => {
                 const topLevel = section.products.filter((p) => !p.parentProductId);
                 const renderProduct = (product: Product, isVariant: boolean, isParent: boolean) => {
@@ -381,7 +381,7 @@ export default function ShareListClient({
                     <div className={`lg:hidden py-3 pr-3 ${isVariant ? 'pl-6' : 'pl-3'}`}>
                       {/* Row 1: image + name + tags */}
                       <div className="flex items-start gap-2">
-                        <div className="w-20 h-20 shrink-0 rounded-lg overflow-hidden bg-white flex items-center justify-center">
+                        <div className="w-20 h-20 shrink-0 rounded-lg overflow-hidden bg-muted flex items-center justify-center">
                           {product.imageUrl ? (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img src={product.imageUrl} alt={product.name} className="w-full h-full object-contain cursor-pointer" onClick={() => setLightbox(product.imageUrl!)} />
@@ -443,7 +443,7 @@ export default function ShareListClient({
                   const variants = section.products.filter((p) => p.parentProductId === product.id).sort((a, b) => a.order - b.order);
                   const isParent = variants.length > 0;
                   return (
-                    <div key={product.id} className="bg-[#FAFAFB] border border-border rounded-[14px] overflow-hidden">
+                    <div key={product.id} className="bg-card border border-border rounded-[14px] overflow-hidden">
                       {renderProduct(product, false, isParent)}
                       {isParent && (
                         <button

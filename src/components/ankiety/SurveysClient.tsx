@@ -471,18 +471,16 @@ function SurveyTable({ surveys, openMenuId, setOpenMenuId, onArchive, onPin, onD
                 <td className="px-3 sm:px-4 py-3 hidden md:table-cell text-muted-foreground">{survey.assignedClient?.name ?? "—"}</td>
                 <td className="px-3 sm:px-4 py-3 hidden md:table-cell text-muted-foreground">{formatDate(survey.createdAt)}</td>
                 <td className="px-3 sm:px-4 py-3 text-muted-foreground hidden sm:table-cell">
-                  <div className="flex items-center gap-3">
-                    <span>{survey._count?.responses ?? 0}</span>
+                  {survey._count?.responses ?? 0}
+                </td>
+                <td className="px-3 sm:px-4 py-3 whitespace-nowrap">
+                  <div className="relative flex items-center justify-end gap-1">
                     {survey.status === "ACTIVE" && (survey.viewCount ?? 0) > 0 && (
-                      <span className="flex items-center gap-1" title={t.ankiety.viewCountTitle}>
+                      <span className="flex items-center gap-1 text-xs text-muted-foreground" title={t.ankiety.viewCountTitle}>
                         <Eye size={12} />
                         {survey.viewCount}
                       </span>
                     )}
-                  </div>
-                </td>
-                <td className="px-3 sm:px-4 py-3 whitespace-nowrap">
-                  <div className="relative flex items-center justify-end gap-1">
                     {survey.hasCompletedResponse && (
                       <a
                         href={`/ankiety/${survey.id}/odpowiedzi`}

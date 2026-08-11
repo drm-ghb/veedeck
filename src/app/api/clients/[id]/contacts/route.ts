@@ -41,7 +41,10 @@ export async function POST(
   const { name, email, phone, description, isMainContact, password, login: customLogin } = await req.json();
   if (!name?.trim()) return NextResponse.json({ error: "Imię jest wymagane" }, { status: 400 });
 
-  if (isMainContact) {
+  const existingCount = await prisma.projectClient.count({ where: { clientId: id } });
+  const shouldBeMain = existingCount === 0 ? true : !!isMainContact;
+
+  if (shouldBeMain) {
     await prisma.projectClient.updateMany({
       where: { clientId: id },
       data: { isMainContact: false },
@@ -67,6 +70,7 @@ export async function POST(
         const newUser = await prisma.user.create({
           data: {
             name: name.trim(),
+            fullName: name.trim(),
             email: emailLogin,
             login: emailLogin,
             password: hashedPassword,
@@ -94,6 +98,7 @@ export async function POST(
       const newUser = await prisma.user.create({
         data: {
           name: name.trim(),
+          fullName: name.trim(),
           email: internalEmail,
           login: baseLogin,
           password: hashedPassword,
@@ -112,8 +117,8 @@ export async function POST(
       email: email?.trim() || null,
       phone: phone?.trim() || null,
       description: description?.trim() || null,
-      isMainContact: !!isMainContact,
-      emailNotifications: !!isMainContact && clientUserId !== null,
+      isMainContact: shouldBeMain,
+      emailNotifications: shouldBeMain && clientUserId !== null,
       clientId: id,
       userId: clientUserId,
     },

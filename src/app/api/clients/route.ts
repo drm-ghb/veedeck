@@ -23,7 +23,7 @@ export async function GET() {
     include: {
       _count: { select: { projects: true } },
       projects: {
-        where: { archived: false },
+        where: { archived: false, isPortalProject: false },
         select: { id: true, title: true, slug: true, createdAt: true },
         orderBy: { createdAt: "desc" },
       },

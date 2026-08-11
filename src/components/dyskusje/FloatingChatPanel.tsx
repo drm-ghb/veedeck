@@ -114,7 +114,7 @@ export default function FloatingChatPanel({ userId, currentUserAvatarUrl }: { us
   const { startUpload } = useUploadThing("discussionAttachmentUploader");
 
   const onDyskusje = pathname.startsWith("/dyskusje");
-  const onRenderView = /\/projekty\/[^/]+\/(renders|rooms)\//.test(pathname);
+  const onRenderView = /\/projekty\/[^/]+\/renders\//.test(pathname);
 
   // ── Hide button while HelpWidget is open ──────────────────────────────────
   useEffect(() => {

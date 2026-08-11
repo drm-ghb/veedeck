@@ -181,7 +181,7 @@ export default function MoodboardList({ moodboards: initial, clients }: Props) {
           <select
             value={sort}
             onChange={(e) => { const v = e.target.value as SortOption; setSort(v); localStorage.setItem("moodboard-sort", v); }}
-            className="hidden sm:block flex-shrink-0 text-xs border border-gray-200 dark:border-gray-700 rounded-md px-2 py-2 bg-white dark:bg-card text-gray-600 dark:text-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-300"
+            className="hidden sm:block flex-shrink-0 text-xs border border-border rounded-md px-2 py-2 bg-background text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/30"
           >
             <option value="newest">{t.common.newest}</option>
             <option value="oldest">{t.common.oldest}</option>
@@ -230,8 +230,7 @@ export default function MoodboardList({ moodboards: initial, clients }: Props) {
           {filtered.map((m) => {
             const accent = m.client ? accentColors(m.client.accentColor) : { bar: "#94a3b8", tint: "#F1F2F5", deep: "#64748b" };
             return (
-              <div key={m.id} className="group relative rounded-xl border overflow-hidden transition-all hover:shadow-[0_10px_26px_-14px_rgba(24,24,50,.2)] hover:-translate-y-0.5"
-                style={{ background: "#FAFAFB", borderColor: "#E5E7EB" }}
+              <div key={m.id} className="group relative rounded-xl bg-card border border-border overflow-hidden transition-all hover:shadow-[0_10px_26px_-14px_rgba(24,24,50,.2)] hover:-translate-y-0.5"
               >
                 {/* Accent bar */}
                 <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 3, background: accent.bar, zIndex: 2 }} />

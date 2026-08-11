@@ -236,30 +236,30 @@ export default function ClientsView({ clients, archivedClients }: Props) {
       {filtered.length > 0 && (
         <div className="space-y-[10px]">
           {filtered.map((client) => (
-            <div key={client.id} className="relative flex items-center gap-3 px-4 py-[14px] overflow-hidden rounded-xl border border-[#E5E7EB] bg-[#FAFAFB] transition-[box-shadow,transform] duration-[180ms] hover:shadow-[0_8px_24px_-12px_rgba(24,24,50,.15)] hover:-translate-y-px">
+            <div key={client.id} className="relative flex items-center gap-3 px-4 py-[14px] overflow-hidden rounded-xl border border-border bg-card transition-[box-shadow,transform] duration-[180ms] hover:shadow-[0_8px_24px_-12px_rgba(24,24,50,.15)] hover:-translate-y-px">
               <div className="absolute left-0 top-0 bottom-0 w-[3px]" style={{ background: accentColors(client.accentColor).bar }} />
               <Link href={`/klienci/klient/${client.id}`} className="flex-1 min-w-0 pl-2">
                 <div className="flex items-center gap-2">
-                  <p className="font-semibold text-[14.5px] text-[#24252B] truncate">{client.name}</p>
+                  <p className="font-semibold text-[14.5px] text-foreground truncate">{client.name}</p>
                   {client.hasContactsWithoutAccount && (
                     <span title={t.projekty.contactsWithoutAccount} className="flex-shrink-0" style={{ color: "#f59e0b" }}>
                       <AlertTriangle size={15} />
                     </span>
                   )}
                 </div>
-                <p className="text-[12px] text-[#8A8D98] mt-[2px]">
+                <p className="text-[12px] text-muted-foreground mt-[2px]">
                   Utworzono: {new Date(client.createdAt).toLocaleDateString("pl-PL", { day: "2-digit", month: "2-digit", year: "numeric" })}
                 </p>
               </Link>
 
               {/* Stats */}
               <div className="flex items-center gap-2 shrink-0 mr-1">
-                <div className="flex items-center gap-1 text-[11.5px] text-[#8A8D98]" title="Projekty ProjectFlow">
+                <div className="flex items-center gap-1 text-[11.5px] text-muted-foreground" title="Projekty ProjectFlow">
                   <PushPin size={13} />
                   <span className="font-medium text-[#4B5063]">{client._count.projects}</span>
                 </div>
                 <div className="w-px h-3 bg-border" />
-                <div className="flex items-center gap-1 text-[11.5px] text-[#8A8D98]" title="Listy zakupowe">
+                <div className="flex items-center gap-1 text-[11.5px] text-muted-foreground" title="Listy zakupowe">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
                   <span className="font-medium text-[#4B5063]">{client._count.shoppingLists}</span>
                 </div>
@@ -276,7 +276,7 @@ export default function ClientsView({ clients, archivedClients }: Props) {
                   setMenuPos({ top, right: window.innerWidth - rect.right });
                   setMenuOpen(client.id);
                 }}
-                className="p-1.5 rounded-md text-[#8A8D98] hover:text-foreground hover:bg-muted transition-colors shrink-0"
+                className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
               >
                 <MoreVertical size={18} />
               </button>

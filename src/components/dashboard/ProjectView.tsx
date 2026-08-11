@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { useViewPreference } from "@/hooks/useViewPreference";
 import { ArchiveRestore, CopyCheck, DoorOpen, FolderOpen, GripVertical, LayoutGrid, List, Trash2, Pin, Eye, Search, X } from "@/components/ui/icons";
+import PdfThumbnail from "@/components/render/PdfThumbnail";
 import {
   DndContext,
   closestCenter,
@@ -48,6 +49,7 @@ interface AllRender {
   id: string;
   name: string;
   fileUrl: string;
+  fileType?: string | null;
   status: "REVIEW" | "ACCEPTED" | "REJECTED";
   commentCount: number;
   viewCount: number;
@@ -262,7 +264,7 @@ export default function ProjectView({ projectId, rooms, archivedRooms, allRender
               <button
                 onClick={() => { setSelectionMode((v) => !v); setSelectedIds(new Set()); }}
                 title={selectionMode ? t.render.exitSelect : t.render.selectFiles}
-                className={`relative p-1.5 rounded-md transition-colors ${selectionMode ? "bg-primary/10 text-primary" : "text-gray-400 hover:bg-gray-100 hover:text-gray-600"}`}
+                className={`relative p-1.5 rounded-md transition-colors ${selectionMode ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
               >
                 <CopyCheck size={15} />
                 {selectionMode && selectedIds.size > 0 && (
@@ -272,16 +274,16 @@ export default function ProjectView({ projectId, rooms, archivedRooms, allRender
                 )}
               </button>
             )}
-            <div className="flex items-center gap-0.5 bg-gray-100 rounded-md p-0.5">
+            <div className="flex items-center gap-0.5 bg-muted rounded-md p-0.5">
               <button
                 onClick={() => setViewMode("grid")}
-                className={`p-1.5 rounded transition-colors ${viewMode === "grid" ? "bg-white shadow-sm text-gray-900" : "text-gray-400 hover:text-gray-600"}`}
+                className={`p-1.5 rounded transition-colors ${viewMode === "grid" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
               >
                 <LayoutGrid size={15} />
               </button>
               <button
                 onClick={() => setViewMode("list")}
-                className={`p-1.5 rounded transition-colors ${viewMode === "list" ? "bg-white shadow-sm text-gray-900" : "text-gray-400 hover:text-gray-600"}`}
+                className={`p-1.5 rounded transition-colors ${viewMode === "list" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
               >
                 <List size={15} />
               </button>
@@ -347,7 +349,7 @@ export default function ProjectView({ projectId, rooms, archivedRooms, allRender
                   <Card className={`overflow-hidden transition-all cursor-pointer group relative ${isSelected ? "ring-2 ring-primary border-primary" : "hover:shadow-[0_4px_16px_rgba(25,33,61,0.2)] hover:border-primary/30"}`}>
                     {selectionMode && (
                       <div className="absolute top-2 left-2 z-10">
-                        <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${isSelected ? "bg-primary border-primary" : "bg-white/80 border-gray-400"}`}>
+                        <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${isSelected ? "bg-primary border-primary" : "bg-background/80 border-border"}`}>
                           {isSelected && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L4 7L9 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                         </div>
                       </div>
@@ -358,8 +360,12 @@ export default function ProjectView({ projectId, rooms, archivedRooms, allRender
                       </div>
                     )}
                     <div className="aspect-video bg-muted overflow-hidden">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={render.fileUrl} alt={render.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" />
+                      {render.fileType === "pdf" || render.fileUrl?.toLowerCase().endsWith(".pdf") ? (
+                        <PdfThumbnail fileUrl={render.fileUrl} className="w-full h-full object-contain" />
+                      ) : (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={render.fileUrl} alt={render.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" />
+                      )}
                     </div>
                     <div className="p-3">
                       <p className="text-sm font-medium truncate mb-0.5">{render.name}</p>
@@ -392,14 +398,18 @@ export default function ProjectView({ projectId, rooms, archivedRooms, allRender
                 const row = (
                   <div className={`flex items-center gap-3 px-4 py-3 transition-colors group ${i !== filteredRenders.length - 1 ? "border-b border-border" : ""} ${isSelected ? "bg-primary/5" : "hover:bg-muted/50"} ${selectionMode ? "cursor-pointer" : ""}`}>
                     {selectionMode && (
-                      <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${isSelected ? "bg-primary border-primary" : "border-gray-400"}`}>
+                      <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${isSelected ? "bg-primary border-primary" : "border-border"}`}>
                         {isSelected && <svg width="8" height="6" viewBox="0 0 10 8" fill="none"><path d="M1 4L4 7L9 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                       </div>
                     )}
                     <div className="flex items-center gap-3 flex-1 min-w-0">
                       <div className="w-14 h-10 rounded-md overflow-hidden bg-muted flex-shrink-0">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={render.fileUrl} alt={render.name} className="w-full h-full object-cover" />
+                        {render.fileType === "pdf" || render.fileUrl?.toLowerCase().endsWith(".pdf") ? (
+                          <PdfThumbnail fileUrl={render.fileUrl} className="w-full h-full object-contain" />
+                        ) : (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={render.fileUrl} alt={render.name} className="w-full h-full object-cover" />
+                        )}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-foreground truncate flex items-center gap-1.5">
@@ -452,10 +462,10 @@ export default function ProjectView({ projectId, rooms, archivedRooms, allRender
         </div>
       ) : tab === "active" ? (
         rooms.length === 0 ? (
-          <div className="border-2 border-dashed border-gray-200 rounded-xl p-12 text-center">
-            <FolderOpen className="mx-auto mb-3 text-gray-300" size={48} />
-            <p className="text-gray-400 font-medium">{t.projekty.noRooms}</p>
-            <p className="text-gray-300 text-sm mt-1">
+          <div className="border-2 border-dashed border-border rounded-xl p-12 text-center">
+            <FolderOpen className="mx-auto mb-3 text-muted-foreground/40" size={48} />
+            <p className="text-muted-foreground font-medium">{t.projekty.noRooms}</p>
+            <p className="text-muted-foreground/50 text-sm mt-1">
               {t.projekty.noRoomsHint}
             </p>
           </div>
@@ -472,7 +482,7 @@ export default function ProjectView({ projectId, rooms, archivedRooms, allRender
         ) : (
           <DndContext sensors={roomSensors} collisionDetection={closestCenter} onDragEnd={handleRoomDragEnd}>
             <SortableContext items={localRooms.map((r) => r.id)} strategy={verticalListSortingStrategy}>
-              <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+              <div className="bg-card border border-border rounded-xl overflow-hidden">
                 {localRooms.map((room, i) => (
                   <SortableRoomRow key={room.id} room={room} projectId={projectId} isLast={i === localRooms.length - 1} />
                 ))}
@@ -482,24 +492,24 @@ export default function ProjectView({ projectId, rooms, archivedRooms, allRender
         )
       ) : (
         archivedRooms.length === 0 ? (
-          <div className="text-center py-16 text-gray-400">
+          <div className="text-center py-16 text-muted-foreground">
             <p className="text-4xl mb-4">📦</p>
             <p className="text-lg">{t.projekty.noArchivedRooms}</p>
           </div>
         ) : (
-          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+          <div className="bg-card border border-border rounded-xl overflow-hidden">
             {archivedRooms.map((room, i) => {
               const cnt = room._count.renders;
               return (
               <div
                 key={room.id}
                 className={`flex items-center justify-between px-5 py-4 ${
-                  i !== archivedRooms.length - 1 ? "border-b border-gray-100" : ""
+                  i !== archivedRooms.length - 1 ? "border-b border-border" : ""
                 }`}
               >
                 <div>
-                  <p className="font-medium text-gray-700">{room.name}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">
+                  <p className="font-medium text-foreground">{room.name}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
                     {cnt} {cnt === 1 ? t.render.fileSingular : cnt < 5 ? t.render.fileFew : t.render.fileMany}
                   </p>
                 </div>
@@ -594,7 +604,7 @@ function SortableRoomRow({ room, projectId, isLast }: { room: Room; projectId: s
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors group ${!isLast ? "border-b border-gray-100" : ""}`}
+      className={`flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors group ${!isLast ? "border-b border-border" : ""}`}
     >
       <div
         {...attributes}
@@ -605,14 +615,14 @@ function SortableRoomRow({ room, projectId, isLast }: { room: Room; projectId: s
       >
         <GripVertical size={14} />
       </div>
-      <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+      <div className="w-8 h-8 bg-muted rounded-lg flex items-center justify-center flex-shrink-0">
         <Icon size={16} className="text-primary" />
       </div>
       <a href={`/projekty/${projectId}/rooms/${room.id}`} className="flex-1 min-w-0 flex items-center gap-1.5">
         {room.pinned && <Pin size={11} className="text-red-500 fill-red-500 flex-shrink-0" />}
         <div className="min-w-0">
-          <p className="text-sm font-medium text-gray-800 truncate">{room.name}</p>
-          <p className="text-xs text-gray-400">
+          <p className="text-sm font-medium text-foreground truncate">{room.name}</p>
+          <p className="text-xs text-muted-foreground">
             {count} {count === 1 ? t.render.fileSingular : count < 5 ? t.render.fileFew : t.render.fileMany}
           </p>
         </div>

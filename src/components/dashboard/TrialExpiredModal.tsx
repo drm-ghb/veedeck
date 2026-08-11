@@ -18,12 +18,11 @@ export default function TrialExpiredModal() {
       style={{ backgroundColor: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)" }}
     >
       <div
-        className="relative w-full max-w-md rounded-2xl p-8"
-        style={{ backgroundColor: "#fff" }}
+        className="relative w-full max-w-md rounded-2xl p-8 bg-card"
       >
         <button
           onClick={() => setOpen(false)}
-          className="absolute top-4 right-4 p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+          className="absolute top-4 right-4 p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
           title={t.common.close}
         >
           <X size={18} />
@@ -35,11 +34,11 @@ export default function TrialExpiredModal() {
           </div>
 
           <div>
-            <h2 className="text-xl font-bold text-gray-900 mb-1">
+            <h2 className="text-xl font-bold text-foreground mb-1">
               {t.trial.expiredTitle}
             </h2>
-            <p className="text-sm text-gray-500 leading-relaxed">
-              {t.trial.expiredBody1} <span className="font-semibold text-gray-700">{t.trial.readOnlyMode}</span>.
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              {t.trial.expiredBody1} <span className="font-semibold text-foreground">{t.trial.readOnlyMode}</span>.
               {" "}{t.trial.expiredBody2}
             </p>
           </div>
@@ -59,7 +58,7 @@ export default function TrialExpiredModal() {
 
           <button
             onClick={() => setOpen(false)}
-            className="text-sm text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             {t.trial.browseReadOnly}
           </button>

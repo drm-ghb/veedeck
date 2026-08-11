@@ -93,6 +93,24 @@ export async function POST(req: NextRequest) {
           content: finalContent,
         }).catch(() => {});
       }
+    } else if (list.projectId) {
+      // Designer commented — notify logged-in clients
+      const projectClients = await prisma.projectClient.findMany({
+        where: { projectId: list.projectId, userId: { not: null } },
+        select: { userId: true },
+      });
+      for (const pc of projectClients) {
+        if (!pc.userId) continue;
+        const clientNotif = await prisma.notification.create({
+          data: {
+            userId: pc.userId,
+            message: `Projektant dodał komentarz do produktu „${product.name}" w liście „${list.name}"`,
+            link: `/client/${list.projectId}?view=lists&listId=${list.id}`,
+            type: "list_comment",
+          },
+        });
+        await pusherServer.trigger(`user-${pc.userId}`, "new-notification", clientNotif);
+      }
     }
   }
 

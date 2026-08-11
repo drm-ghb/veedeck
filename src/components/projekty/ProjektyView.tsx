@@ -84,7 +84,7 @@ export default function ProjektyView({ projects, archivedProjects }: ProjektyVie
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-4">
         <div>
           <h1 className="text-2xl font-bold">{t.projekty.title}</h1>
-          <p className="text-gray-500 mt-1">
+          <p className="text-muted-foreground mt-1">
             {projects.length === 0
               ? t.projekty.noProjectsEmpty
               : `${projects.length} ${projects.length === 1 ? t.projekty.projectCountUnit : projects.length < 5 ? t.projekty.projectCountUnitFew : t.projekty.projectCountUnitMany}`}
@@ -146,7 +146,7 @@ export default function ProjektyView({ projects, archivedProjects }: ProjektyVie
               <option value="renders">{t.projekty.mostRenders}</option>
             </select>
           </div>
-          <select value={sort} onChange={(e) => setSort(e.target.value as SortOption)} className="hidden sm:block flex-shrink-0 text-xs border border-gray-200 dark:border-gray-700 rounded-md px-2 py-2 bg-white dark:bg-card text-gray-600 dark:text-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-300">
+          <select value={sort} onChange={(e) => setSort(e.target.value as SortOption)} className="hidden sm:block flex-shrink-0 text-xs border border-border rounded-md px-2 py-2 bg-background text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/30">
             <option value="newest">{t.common.newest}</option>
             <option value="oldest">{t.common.oldest}</option>
             <option value="az">{t.common.az}</option>
@@ -164,11 +164,11 @@ export default function ProjektyView({ projects, archivedProjects }: ProjektyVie
               <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
                 <Users size={28} className="text-primary" />
               </div>
-              <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-1">{t.projekty.noProjects}</h2>
-              <p className="text-sm text-gray-400 max-w-xs">{t.projekty.noProjectsHint}</p>
+              <h2 className="text-lg font-semibold text-foreground mb-1">{t.projekty.noProjects}</h2>
+              <p className="text-sm text-muted-foreground max-w-xs">{t.projekty.noProjectsHint}</p>
             </div>
           ) : filtered.length === 0 ? (
-            <div className="text-center py-16 text-gray-400">
+            <div className="text-center py-16 text-muted-foreground">
               <p className="text-4xl mb-4">🔍</p>
               <p className="text-lg">{t.projekty.noProjectsActive.replace("{search}", search)}</p>
             </div>
@@ -183,7 +183,7 @@ export default function ProjektyView({ projects, archivedProjects }: ProjektyVie
               {filtered.map((p, i) => (
                 <div key={p.id} onClick={() => router.push(`/klienci/${p.slug ?? p.id}`)} className={`grid grid-cols-[1fr_auto] sm:grid-cols-[1fr_140px_200px_96px] gap-4 px-5 py-4 items-center hover:bg-muted/30 transition-colors cursor-pointer ${i !== filtered.length - 1 ? "border-b border-border" : ""}`}>
                   <div className="min-w-0">
-                    <p className="font-semibold text-gray-900 dark:text-gray-100 truncate flex items-center gap-1.5">
+                    <p className="font-semibold text-foreground truncate flex items-center gap-1.5">
                       {p.pinned && <Pin size={12} className="text-red-500 fill-red-500 flex-shrink-0" />}
                       {p.title}
                     </p>
@@ -243,7 +243,7 @@ export default function ProjektyView({ projects, archivedProjects }: ProjektyVie
               <p className="text-sm">{t.projekty.noProjectsArchived}</p>
             </div>
           ) : filtered.length === 0 ? (
-            <div className="text-center py-16 text-gray-400">
+            <div className="text-center py-16 text-muted-foreground">
               <p className="text-4xl mb-4">🔍</p>
               <p className="text-lg">{t.projekty.noProjectsActive.replace("{search}", search)}</p>
             </div>
@@ -252,7 +252,7 @@ export default function ProjektyView({ projects, archivedProjects }: ProjektyVie
               {filtered.map((p, i) => (
                 <div key={p.id} className={`flex items-center gap-4 px-5 py-4 hover:bg-muted/30 transition-colors ${i !== filtered.length - 1 ? "border-b border-border" : ""}`}>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-gray-700 dark:text-gray-300 truncate">{p.title}</p>
+                    <p className="font-semibold text-foreground truncate">{p.title}</p>
                     {p.clientName && <p className="text-xs text-muted-foreground mt-0.5">{p.clientName}</p>}
                     <p className="text-xs text-muted-foreground mt-0.5">
                       {new Date(p.createdAt).toLocaleDateString("pl-PL", { day: "2-digit", month: "short", year: "numeric" })}

@@ -169,7 +169,7 @@ export function DrawingCanvas({ onSave, onClose }: DrawingCanvasProps) {
   }, [isEmpty, onSave, onClose]);
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-background" style={{ touchAction: "none" }}>
+    <div className="fixed inset-0 z-50 flex flex-col bg-background" style={{ touchAction: "none", paddingTop: "env(safe-area-inset-top, 0px)", paddingLeft: "env(safe-area-inset-left, 0px)", paddingRight: "env(safe-area-inset-right, 0px)" }}>
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-border shrink-0 bg-card gap-2">
         <span className="text-sm font-medium text-foreground shrink-0">{t.notatnik.drawingTitle}</span>

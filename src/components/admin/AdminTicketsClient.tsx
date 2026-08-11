@@ -314,6 +314,7 @@ export default function AdminTicketsClient({ tickets: initialTickets }: { ticket
                   }
                   const isSupport = msg.authorName === "Dział Wsparcia";
                   if (msg.sourceType === "help_request") {
+                    const ticketAttachments = detail.attachments ?? (detail.attachmentUrl ? [{ url: detail.attachmentUrl, name: detail.attachmentName ?? "plik" }] : []);
                     return (
                       <div key={msg.id} className="flex items-end gap-2">
                         <div className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-xs font-semibold text-white/40 shrink-0">
@@ -323,6 +324,9 @@ export default function AdminTicketsClient({ tickets: initialTickets }: { ticket
                           <div className="rounded-2xl px-3 py-2 text-sm bg-amber-500/10 border border-amber-500/20">
                             <div className="text-[10px] font-semibold text-amber-400 mb-1 uppercase tracking-wide">Treść zgłoszenia</div>
                             <p className="text-white/70 whitespace-pre-wrap">{msg.content}</p>
+                            {ticketAttachments.map((att, i) => (
+                              <AttachmentPreview key={i} url={att.url} name={att.name} type={att.url.match(/\.(jpe?g|png|gif|webp|avif)$/i) ? "image" : null} />
+                            ))}
                             <div className="text-[10px] text-white/25 mt-1 text-right">{formatTime(msg.createdAt)}</div>
                           </div>
                         </div>

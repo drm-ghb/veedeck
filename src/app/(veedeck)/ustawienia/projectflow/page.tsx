@@ -41,7 +41,7 @@ export default async function SettingsRenderFlowPage() {
       initialAutoClosePinsOnAccept={user.autoClosePinsOnAccept}
       initialAutoArchiveOnAccept={user.autoArchiveOnAccept}
       initialDefaultRenderStatus={user.defaultRenderStatus}
-      initialDefaultRenderOrder={user.defaultRenderOrder}
+      initialDefaultRenderOrder={user.defaultRenderOrder ?? "newest"}
       initialNotifyClientOnStatusChange={user.notifyClientOnStatusChange}
       initialNotifyClientOnReply={user.notifyClientOnReply}
       initialAllowClientVersionRestore={user.allowClientVersionRestore}

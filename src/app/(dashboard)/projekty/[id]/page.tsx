@@ -55,7 +55,7 @@ export default async function ProjectPage({ params }: Props) {
         <div>
           <h1 className="text-2xl font-bold">{project.title}</h1>
           {(project.clientName || project.description) && (
-            <p className="text-gray-500 mt-0.5 text-sm">
+            <p className="text-muted-foreground mt-0.5 text-sm">
               {[project.clientName, project.description].filter(Boolean).join(" · ")}
             </p>
           )}

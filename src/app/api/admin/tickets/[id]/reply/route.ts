@@ -50,6 +50,9 @@ export async function POST(
         authorName: "Dział Wsparcia",
         userId: null,
         sourceType: "help_request",
+        attachmentUrl: ticket.attachmentUrl ?? null,
+        attachmentName: ticket.attachmentName ?? null,
+        attachmentType: ticket.attachmentUrl ? (ticket.attachmentUrl.match(/\.(jpe?g|png|gif|webp|avif)$/i) ? "image" : "document") : null,
       },
     });
   }

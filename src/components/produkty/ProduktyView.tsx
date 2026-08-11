@@ -312,10 +312,9 @@ export default function ProduktyView({ initialProducts }: Props) {
                 <button
                   key={key}
                   onClick={() => handleFolderClick(key)}
-                  className="flex flex-col items-start p-[18px] rounded-xl border text-left transition-all hover:shadow-[0_8px_22px_-14px_rgba(24,24,50,.18)] hover:-translate-y-0.5"
-                  style={{ background: "#FAFAFB", borderColor: "#E5E7EB" }}
+                  className="flex flex-col items-start p-[18px] rounded-xl bg-card border border-border text-left transition-all hover:shadow-[0_8px_22px_-14px_rgba(24,24,50,.18)] hover:-translate-y-0.5"
                 >
-                  <div className="w-[38px] h-[38px] rounded-[10px] flex items-center justify-center mb-3 bg-indigo-50">
+                  <div className="w-[38px] h-[38px] rounded-[10px] flex items-center justify-center mb-3 bg-primary/10">
                     <Folder size={19} className="text-primary" />
                   </div>
                   <p className="text-[14px] font-semibold leading-tight">{label}</p>
@@ -414,20 +413,18 @@ function ProductCard({
   const [lightbox, setLightbox] = useState(false);
 
   return (
-    <div className="flex items-center gap-[14px] rounded-xl border transition-all hover:shadow-[0_8px_22px_-14px_rgba(24,24,50,.15)] hover:-translate-y-px"
-      style={{ background: "#FAFAFB", borderColor: "#E5E7EB", padding: "12px 16px" }}
+    <div className="flex items-center gap-[14px] rounded-xl bg-card border border-border transition-all hover:shadow-[0_8px_22px_-14px_rgba(24,24,50,.15)] hover:-translate-y-px px-4 py-3"
     >
       {/* Image */}
       <div
-        className={`w-14 h-14 rounded-[10px] overflow-hidden flex-shrink-0 flex items-center justify-center ${product.imageUrl ? "cursor-zoom-in" : ""}`}
-        style={{ background: "#fff", border: "1px solid #E5E7EB" }}
+        className={`w-14 h-14 rounded-[10px] overflow-hidden flex-shrink-0 flex items-center justify-center bg-muted border border-border ${product.imageUrl ? "cursor-zoom-in" : ""}`}
         onClick={() => product.imageUrl && setLightbox(true)}
       >
         {product.imageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={product.imageUrl} alt={product.name} className="w-full h-full object-contain" />
         ) : (
-          <Package size={22} style={{ color: "#c7cbe0" }} />
+          <Package size={22} className="text-muted-foreground/30" />
         )}
       </div>
 

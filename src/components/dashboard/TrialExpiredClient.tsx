@@ -87,13 +87,13 @@ export default function TrialExpiredClient() {
   }
 
   const inputCls = "w-full px-3.5 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/30 transition-all" +
-    " bg-white border border-gray-200 text-gray-900 placeholder-gray-400";
+    " bg-background border border-border text-foreground placeholder:text-muted-foreground";
 
   return (
     <div className="w-full max-w-4xl">
       <div className="text-center mb-10">
-        <h1 className="text-3xl font-bold mb-2" style={{ color: "#111" }}>{t.subscription.trialExpiredTitle}</h1>
-        <p style={{ color: "#6b7280" }}>{t.subscription.trialExpiredDesc}</p>
+        <h1 className="text-3xl font-bold mb-2 text-foreground">{t.subscription.trialExpiredTitle}</h1>
+        <p className="text-muted-foreground">{t.subscription.trialExpiredDesc}</p>
       </div>
 
       {step === "plans" && (
@@ -103,24 +103,18 @@ export default function TrialExpiredClient() {
               <button
                 key={plan.id}
                 onClick={() => setSelectedPlan(plan.id)}
-                style={{
-                  backgroundColor: selectedPlan === plan.id ? "#f5f3ff" : "#fff",
-                  borderColor: selectedPlan === plan.id ? "#7c3aed" : "#e5e7eb",
-                  borderWidth: 2,
-                  borderStyle: "solid",
-                }}
-                className="relative text-left p-6 rounded-2xl transition-all hover:border-violet-300"
+                className={`relative text-left p-6 rounded-2xl border-2 transition-all hover:border-violet-300 ${selectedPlan === plan.id ? "bg-violet-50 dark:bg-violet-950/30 border-violet-600" : "bg-card border-border"}`}
               >
                 {plan.recommended && (
                   <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[11px] font-semibold px-3 py-0.5 rounded-full bg-violet-600 text-white whitespace-nowrap">
                     {t.subscription.recommended}
                   </span>
                 )}
-                <h3 className="text-lg font-semibold mb-1" style={{ color: "#111" }}>{plan.name}</h3>
+                <h3 className="text-lg font-semibold mb-1 text-foreground">{plan.name}</h3>
                 <p className="text-2xl font-bold mb-4 text-violet-600">{plan.price}</p>
                 <ul className="space-y-2">
                   {plan.features.map((f) => (
-                    <li key={f} className="flex items-start gap-2 text-sm" style={{ color: "#6b7280" }}>
+                    <li key={f} className="flex items-start gap-2 text-sm text-muted-foreground">
                       <CheckCircle2 size={15} className="shrink-0 mt-0.5" style={{ color: "#7c3aed" }} />
                       {f}
                     </li>
@@ -150,25 +144,25 @@ export default function TrialExpiredClient() {
       )}
 
       {step === "payment" && selectedPlan && selectedPlan !== "enterprise" && (
-        <div className="max-w-md mx-auto rounded-2xl p-8" style={{ backgroundColor: "#fff", border: "1px solid #e5e7eb" }}>
+        <div className="max-w-md mx-auto rounded-2xl p-8 bg-card border border-border">
           <div className="flex items-center gap-2 mb-6">
             <button onClick={() => setStep("plans")} className="text-sm text-violet-600 hover:text-violet-800 transition-colors">
               {t.subscription.changePlan}
             </button>
-            <span className="text-sm ml-auto" style={{ color: "#6b7280" }}>
+            <span className="text-sm ml-auto text-muted-foreground">
               Plan: <span className="text-violet-600 capitalize font-medium">{selectedPlan}</span>
             </span>
           </div>
 
-          <h2 className="text-lg font-semibold mb-5" style={{ color: "#111" }}>{t.subscription.cardDataTitle}</h2>
+          <h2 className="text-lg font-semibold mb-5 text-foreground">{t.subscription.cardDataTitle}</h2>
 
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-1" style={{ color: "#374151" }}>{t.subscription.cardNameLabel}</label>
+              <label className="block text-sm font-medium mb-1 text-foreground">{t.subscription.cardNameLabel}</label>
               <input value={cardName} onChange={(e) => setCardName(e.target.value)} placeholder="Jan Kowalski" className={inputCls} />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1" style={{ color: "#374151" }}>{t.subscription.cardNumberLabel}</label>
+              <label className="block text-sm font-medium mb-1 text-foreground">{t.subscription.cardNumberLabel}</label>
               <input
                 value={cardNumber}
                 onChange={(e) => {
@@ -181,7 +175,7 @@ export default function TrialExpiredClient() {
             </div>
             <div className="flex gap-3">
               <div className="flex-1">
-                <label className="block text-sm font-medium mb-1" style={{ color: "#374151" }}>{t.subscription.cardExpiryLabel}</label>
+                <label className="block text-sm font-medium mb-1 text-foreground">{t.subscription.cardExpiryLabel}</label>
                 <input
                   value={cardExpiry}
                   onChange={(e) => {
@@ -193,7 +187,7 @@ export default function TrialExpiredClient() {
                 />
               </div>
               <div className="w-28">
-                <label className="block text-sm font-medium mb-1" style={{ color: "#374151" }}>{t.subscription.cardCvcLabel}</label>
+                <label className="block text-sm font-medium mb-1 text-foreground">{t.subscription.cardCvcLabel}</label>
                 <input
                   value={cardCvc}
                   onChange={(e) => setCardCvc(e.target.value.replace(/\D/g, "").slice(0, 4))}
@@ -204,7 +198,7 @@ export default function TrialExpiredClient() {
             </div>
           </div>
 
-          <p className="text-xs mt-4 mb-6" style={{ color: "#9ca3af" }}>
+          <p className="text-xs mt-4 mb-6 text-muted-foreground">
             {t.subscription.cardSecurity}
           </p>
 

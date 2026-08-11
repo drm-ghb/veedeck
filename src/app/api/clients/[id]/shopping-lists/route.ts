@@ -16,7 +16,10 @@ export async function GET(
   const lists = await prisma.shoppingList.findMany({
     where: {
       userId,
-      clientId,
+      OR: [
+        { clientId },
+        { project: { clientId } },
+      ],
     },
     orderBy: { order: "asc" },
     select: {

@@ -13,7 +13,7 @@ export default function OnboardingTrigger() {
     <button
       onClick={open}
       title={t.common.howToStart}
-      className="hidden sm:flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border border-primary/20 bg-primary/5 text-primary hover:bg-primary/10 transition-colors"
+      className="hidden sm:flex md:hidden lg:flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border border-primary/20 bg-primary/5 text-primary hover:bg-primary/10 transition-colors"
     >
       <BookOpen size={13} />
       {t.common.howToStart}

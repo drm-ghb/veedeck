@@ -23,6 +23,7 @@ type TProducts = ReturnType<typeof useT>["products"];
 const CAT_KEY_MAP: Record<string, keyof TProducts> = {
   OSWIETLENIE: "catLampy", AKCESORIA: "catAkcesoria", MEBLE: "catMeble",
   ARMATURA: "catArmatura", OKLADZINY_SCIENNE: "catOkladziny", PODLOGA: "catPodloga",
+  USLUGI: "catUslugi", INNE: "catInne",
 };
 function getCategoryLabel(cat: string, t: ReturnType<typeof useT>) {
   const key = CAT_KEY_MAP[cat];

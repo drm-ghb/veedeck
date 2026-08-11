@@ -57,6 +57,8 @@ const BUILT_IN_CATEGORIES = [
   { value: "ARMATURA", label: "Armatura" },
   { value: "OKLADZINY_SCIENNE", label: "Okładziny ścienne" },
   { value: "PODLOGA", label: "Podłoga" },
+  { value: "USLUGI", label: "Usługi" },
+  { value: "INNE", label: "Inne" },
 ];
 
 
@@ -507,7 +509,7 @@ function ProductRow({
 
   const image = (
     <div
-      className={`w-full h-full shrink-0 rounded-xl bg-white flex items-center justify-center overflow-hidden ${product.imageUrl ? "cursor-zoom-in" : ""}`}
+      className={`w-full h-full shrink-0 rounded-xl bg-muted flex items-center justify-center overflow-hidden ${product.imageUrl ? "cursor-zoom-in" : ""}`}
       onClick={() => product.imageUrl && setLightbox(true)}
     >
       {product.imageUrl ? (
@@ -955,7 +957,7 @@ function ProductRow({
       <div className={`lg:hidden py-3 pr-3 ${isVariant ? 'pl-6' : 'pl-3'}`}>
         {/* Row 1: image + name + menu */}
         <div className="flex items-start gap-2">
-          <div className="w-20 h-20 shrink-0 rounded-lg overflow-hidden bg-white flex items-center justify-center">
+          <div className="w-20 h-20 shrink-0 rounded-lg overflow-hidden bg-muted flex items-center justify-center">
             {product.imageUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={product.imageUrl} alt={product.name} className="w-full h-full object-contain cursor-pointer" onClick={() => product.imageUrl && setLightbox(true)} />
@@ -1335,6 +1337,8 @@ export default function ListDetail({ list, designerName, designerEmail, designer
     { value: "ARMATURA", label: t.products.catArmatura },
     { value: "OKLADZINY_SCIENNE", label: t.products.catOkladziny },
     { value: "PODLOGA", label: t.products.catPodloga },
+    { value: "USLUGI", label: t.products.catUslugi },
+    { value: "INNE", label: t.products.catInne },
   ];
 
   const [sections, setSections] = useState<Section[]>(list.sections);
@@ -3114,8 +3118,8 @@ export default function ListDetail({ list, designerName, designerEmail, designer
           <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
             <Plus size={28} className="text-primary" />
           </div>
-          <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-1">{t.listy.noSections}</h2>
-          <p className="text-sm text-gray-400 max-w-xs">
+          <h2 className="text-lg font-semibold text-foreground mb-1">{t.listy.noSections}</h2>
+          <p className="text-sm text-muted-foreground max-w-xs">
             {t.listy.noSectionsHint}
           </p>
         </div>
@@ -3143,7 +3147,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
           return (
             <div className="mb-8">
               <h2 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide">{t.listy.productsOutsideSection}</h2>
-              <div className="bg-white border border-border rounded-[18px] p-4 flex flex-col">
+              <div className="bg-card border border-border rounded-[18px] p-4 flex flex-col">
                 {(() => {
                   const topLevel = unsortedSection.products.filter((p) => !p.parentProductId);
                   const numberMap = computeProductNumbers(topLevel, (id) => unsortedSection.products.filter((p) => p.parentProductId === id).sort((a, b) => a.order - b.order));
@@ -3161,7 +3165,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                             )}
                           <SortableProduct id={product.id} sectionId={unsortedSection.id}>
                             {(dragHandle, ref, style) => (
-                            <div ref={ref} style={style} className={`${selectedIds.has(product.id) ? "bg-primary/5 border-primary/30" : "bg-[#FAFAFB] border-border"} border rounded-[14px] overflow-hidden transition-colors`}>
+                            <div ref={ref} style={style} className={`${selectedIds.has(product.id) ? "bg-primary/5 border-primary/30" : "bg-card border-border"} border rounded-[14px] overflow-hidden transition-colors`}>
                               <ProductRow
                                 product={product}
                                 index={i}
@@ -3415,7 +3419,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                         <p className="text-sm text-muted-foreground">{t.listy.addFirstProduct}</p>
                       </div>
                     ) : !isDraggingSection ? (
-                      <div className="bg-white border border-border rounded-[18px] p-4 flex flex-col">
+                      <div className="bg-card border border-border rounded-[18px] p-4 flex flex-col">
                           {(() => {
                             const topLevel = sortProducts(section.products.filter((p) => !p.parentProductId), getSortBy(section.sortBy), categoryOrder);
                             const numberMap = computeProductNumbers(topLevel, (id) => section.products.filter((p) => p.parentProductId === id).sort((a, b) => a.order - b.order));
@@ -3436,7 +3440,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                                       )}
                                     <SortableProduct id={product.id} sectionId={section.id}>
                                       {(dragHandle, ref, style) => (
-                                      <div ref={ref} style={style} className={`${selectedIds.has(product.id) ? "bg-primary/5 border-primary/30" : "bg-[#FAFAFB] border-border"} border rounded-[14px] overflow-hidden transition-colors`}>
+                                      <div ref={ref} style={style} className={`${selectedIds.has(product.id) ? "bg-primary/5 border-primary/30" : "bg-card border-border"} border rounded-[14px] overflow-hidden transition-colors`}>
                                         <ProductRow
                                           product={product}
                                           index={i}
@@ -3566,7 +3570,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
         </SortableContext>
         <DragOverlay>
           {activeDragProduct && (
-            <div className="bg-[#FAFAFB] border border-border rounded-[14px] overflow-hidden shadow-2xl opacity-95 cursor-grabbing min-w-[240px] max-w-[340px]">
+            <div className="bg-card border border-border rounded-[14px] overflow-hidden shadow-2xl opacity-95 cursor-grabbing min-w-[240px] max-w-[340px]">
               <div className="flex items-center gap-2 px-3 py-2.5">
                 <span className="w-4 shrink-0" />
                 <div className="w-9 h-9 shrink-0 rounded-lg bg-muted flex items-center justify-center overflow-hidden">

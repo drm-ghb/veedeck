@@ -135,18 +135,6 @@ export function SettingsRenderFlow({
             onToggle={() => toggleBool("allowClientAcceptance")}
           />
           <SettingRow
-            label={t.renderflow.requireEmail}
-            description={t.renderflow.requireEmailDesc}
-            checked={bools.requireClientEmail}
-            onToggle={() => toggleBool("requireClientEmail")}
-          />
-          <SettingRow
-            label={t.renderflow.hideCommentCount}
-            description={t.renderflow.hideCommentCountDesc}
-            checked={bools.hideCommentCount}
-            onToggle={() => toggleBool("hideCommentCount")}
-          />
-          <SettingRow
             label={t.renderflow.selfRestoreVersion}
             description={t.renderflow.selfRestoreVersionDesc}
             checked={bools.allowClientVersionRestore}

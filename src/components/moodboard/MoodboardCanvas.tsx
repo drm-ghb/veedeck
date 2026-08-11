@@ -593,6 +593,10 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
   const [editProjectId, setEditProjectId] = useState<string>(project?.id ?? "");
   const [editClients, setEditClients] = useState<{ id: string; name: string; projects: { id: string; title: string }[] }[]>([]);
   const [editSaving, setEditSaving] = useState(false);
+  const [editClientOpen, setEditClientOpen] = useState(false);
+  const [editProjectOpen, setEditProjectOpen] = useState(false);
+  const editClientRef = useRef<HTMLDivElement>(null);
+  const editProjectRef = useRef<HTMLDivElement>(null);
   // Transformer visibility (React-controlled to avoid react-konva prop override)
   const [transformerVisible, setTransformerVisible] = useState(false);
   // Export
@@ -1402,6 +1406,16 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
   const selected = safeElements.filter((el) => selectedIds.includes(el.id));
   const firstSelected = selected[0];
 
+  // Close edit dropdowns on outside click
+  useEffect(() => {
+    function handleOutside(e: MouseEvent) {
+      if (editClientRef.current && !editClientRef.current.contains(e.target as Node)) setEditClientOpen(false);
+      if (editProjectRef.current && !editProjectRef.current.contains(e.target as Node)) setEditProjectOpen(false);
+    }
+    document.addEventListener("mousedown", handleOutside);
+    return () => document.removeEventListener("mousedown", handleOutside);
+  }, []);
+
   // Share toggle
   async function openEditModal() {
     setEditMenuOpen(false);
@@ -1940,7 +1954,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
         renders: room.renders.filter(r => r.name.toLowerCase().includes(q)),
       })).filter(room => room.renders.length > 0 || room.folders.length > 0 || room.name.toLowerCase().includes(q))
     : rooms;
-  const filteredProducts = products.filter(p => p.name.toLowerCase().includes(sidebarQuery.toLowerCase()));
+  const filteredProducts = products.filter(p => p.imageUrl && p.name.toLowerCase().includes(sidebarQuery.toLowerCase()));
 
   return (
     <div className="flex flex-col h-full select-none">
@@ -2538,7 +2552,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                   // Center of element in canvas coords (accounting for rotation around top-left)
                   const ecx = el.x + (rw / 2) * Math.cos(rad) - (rh / 2) * Math.sin(rad);
                   const ecy = el.y + (rw / 2) * Math.sin(rad) + (rh / 2) * Math.cos(rad);
-                  const showPlus = rw > 24 && rh > 24 && !exportMode;
+                  const showPlus = rw > 24 && rh > 24 && !exportMode && !readOnly;
                   return (
                     <Fragment key={el.id}>
                       <Rect {...commonProps} x={el.x} y={el.y} width={rw} height={rh}
@@ -2579,7 +2593,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                 if (el.type === "ellipse") {
                   const ew = el.width ?? 120, eh = el.height ?? 80;
                   const isTemplate = !!el.templateRole;
-                  const showPlus = ew > 24 && eh > 24 && !exportMode;
+                  const showPlus = ew > 24 && eh > 24 && !exportMode && !readOnly;
                   return (
                     <Fragment key={el.id}>
                       <Ellipse {...commonProps} x={el.x} y={el.y} radiusX={ew / 2} radiusY={eh / 2}
@@ -3798,10 +3812,10 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
 
         {/* Right sidebar */}
         {rightSidebarOpen && (
-          <div className="w-[440px] border-l border-border bg-background flex flex-col shrink-0">
+          <div className="w-[480px] border-l border-border bg-background flex flex-col shrink-0">
             {/* Tabs */}
             <div className="flex border-b border-border">
-              <div className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-colors cursor-pointer ${rightTab === "projectflow" ? "border-b-2 border-primary text-primary" : "text-muted-foreground hover:text-foreground"}`}
+              <div className={`flex-1 relative flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-colors cursor-pointer ${rightTab === "projectflow" ? "border-b-2 border-primary text-primary" : "text-muted-foreground hover:text-foreground"}`}
                 onClick={() => { setRightTab("projectflow"); setSidebarQuery(""); }}
               >
                 <PushPin size={13} /> ProjectFlow
@@ -3809,7 +3823,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                   <button
                     onClick={(e) => { e.stopPropagation(); loadRooms(); }}
                     title="Odśwież"
-                    className="ml-1 text-muted-foreground hover:text-foreground"
+                    className="absolute right-2 text-muted-foreground hover:text-foreground"
                   >
                     <RefreshCw size={11} />
                   </button>
@@ -4143,32 +4157,72 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
             {/* Client */}
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-medium text-foreground">Klient</label>
-              <select
-                value={editClientId}
-                onChange={(e) => { setEditClientId(e.target.value); setEditProjectId(""); }}
-                className="w-full text-sm px-3 py-2 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
-              >
-                <option value="">— brak klienta —</option>
-                {editClients.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
+              <div className="relative" ref={editClientRef}>
+                <button
+                  type="button"
+                  onClick={() => setEditClientOpen((o) => !o)}
+                  className="w-full flex items-center justify-between text-sm px-3 py-2 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
+                >
+                  <span className={editClientId ? "" : "text-muted-foreground"}>
+                    {editClients.find((c) => c.id === editClientId)?.name ?? "— brak klienta —"}
+                  </span>
+                  <ChevronDown size={14} className="text-muted-foreground shrink-0 ml-2" />
+                </button>
+                {editClientOpen && (
+                  <div className="absolute z-20 mt-1 w-full bg-popover border border-border rounded-xl shadow-lg overflow-hidden">
+                    <div className="max-h-52 overflow-y-auto py-1">
+                      <button type="button" onClick={() => { setEditClientId(""); setEditProjectId(""); setEditClientOpen(false); }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:bg-muted transition-colors">
+                        <Check size={14} className={editClientId === "" ? "opacity-100" : "opacity-0"} />
+                        — brak klienta —
+                      </button>
+                      {editClients.map((c) => (
+                        <button key={c.id} type="button" onClick={() => { setEditClientId(c.id); setEditProjectId(""); setEditClientOpen(false); }}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted transition-colors">
+                          <Check size={14} className={editClientId === c.id ? "opacity-100" : "opacity-0"} />
+                          {c.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Project */}
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-medium text-foreground">Projekt</label>
-              <select
-                value={editProjectId}
-                onChange={(e) => setEditProjectId(e.target.value)}
-                disabled={!editClientId}
-                className="w-full text-sm px-3 py-2 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50"
-              >
-                <option value="">— brak projektu —</option>
-                {(editClients.find((c) => c.id === editClientId)?.projects ?? []).map((p) => (
-                  <option key={p.id} value={p.id}>{p.title}</option>
-                ))}
-              </select>
+              <div className="relative" ref={editProjectRef}>
+                <button
+                  type="button"
+                  disabled={!editClientId}
+                  onClick={() => setEditProjectOpen((o) => !o)}
+                  className="w-full flex items-center justify-between text-sm px-3 py-2 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50"
+                >
+                  <span className={(editProjectId && editClientId) ? "" : "text-muted-foreground"}>
+                    {(editClients.find((c) => c.id === editClientId)?.projects ?? []).find((p) => p.id === editProjectId)?.title ?? "— brak projektu —"}
+                  </span>
+                  <ChevronDown size={14} className="text-muted-foreground shrink-0 ml-2" />
+                </button>
+                {editProjectOpen && editClientId && (
+                  <div className="absolute z-20 mt-1 w-full bg-popover border border-border rounded-xl shadow-lg overflow-hidden">
+                    <div className="max-h-52 overflow-y-auto py-1">
+                      <button type="button" onClick={() => { setEditProjectId(""); setEditProjectOpen(false); }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:bg-muted transition-colors">
+                        <Check size={14} className={editProjectId === "" ? "opacity-100" : "opacity-0"} />
+                        — brak projektu —
+                      </button>
+                      {(editClients.find((c) => c.id === editClientId)?.projects ?? []).map((p) => (
+                        <button key={p.id} type="button" onClick={() => { setEditProjectId(p.id); setEditProjectOpen(false); }}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted transition-colors">
+                          <Check size={14} className={editProjectId === p.id ? "opacity-100" : "opacity-0"} />
+                          {p.title}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="flex justify-end gap-2 pt-1">

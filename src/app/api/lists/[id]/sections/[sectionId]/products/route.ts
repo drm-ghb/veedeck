@@ -79,8 +79,9 @@ export async function POST(
     // Adding from library tab — verify ownership and link
     const owned = await prisma.product.findFirst({ where: { id: bodyProductId, userId } });
     if (owned) finalProductId = owned.id;
-  } else {
+  } else if (!["USLUGI", "INNE"].includes(category)) {
     // Adding via Link or Ręcznie — auto-save to library but do NOT link (no warning icon)
+    // Skip auto-save for "Usługi" and "Inne" categories
     const exists = await prisma.product.findFirst({
       where: {
         userId,

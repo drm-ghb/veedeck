@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
-import { X, ChevronDown } from "@/components/ui/icons";
+import { X, ChevronDown, Check } from "@/components/ui/icons";
 
 type Client = {
   id: string;
@@ -29,9 +29,23 @@ export default function EditMoodboardDialog({ moodboard, clients, onClose, onSav
   const [clientId, setClientId] = useState(moodboard.client?.id ?? "");
   const [projectId, setProjectId] = useState(moodboard.project?.id ?? "");
   const [loading, setLoading] = useState(false);
+  const [clientOpen, setClientOpen] = useState(false);
+  const [projectOpen, setProjectOpen] = useState(false);
+  const clientRef = useRef<HTMLDivElement>(null);
+  const projectRef = useRef<HTMLDivElement>(null);
 
   const selectedClient = clients.find((c) => c.id === clientId);
   const availableProjects = selectedClient?.projects ?? [];
+  const selectedProject = availableProjects.find((p) => p.id === projectId);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (clientRef.current && !clientRef.current.contains(e.target as Node)) setClientOpen(false);
+      if (projectRef.current && !projectRef.current.contains(e.target as Node)) setProjectOpen(false);
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   function handleClientChange(id: string) {
     setClientId(id);
@@ -94,18 +108,42 @@ export default function EditMoodboardDialog({ moodboard, clients, onClose, onSav
 
           <div>
             <label className="block text-sm font-medium mb-1.5">Klient <span className="text-muted-foreground font-normal">(opcjonalne)</span></label>
-            <div className="relative">
-              <select
-                value={clientId}
-                onChange={(e) => handleClientChange(e.target.value)}
-                className="w-full appearance-none px-3 py-2 pr-8 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+            <div className="relative" ref={clientRef}>
+              <button
+                type="button"
+                onClick={() => setClientOpen((o) => !o)}
+                className="w-full flex items-center justify-between px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
               >
-                <option value="">— Bez klienta —</option>
-                {clients.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
-              <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                <span className={clientId ? "" : "text-muted-foreground"}>
+                  {selectedClient?.name ?? "— Bez klienta —"}
+                </span>
+                <ChevronDown size={14} className="text-muted-foreground shrink-0 ml-2" />
+              </button>
+              {clientOpen && (
+                <div className="absolute z-20 mt-1 w-full bg-popover border border-border rounded-lg shadow-lg overflow-hidden">
+                  <div className="max-h-52 overflow-y-auto py-1">
+                    <button
+                      type="button"
+                      onClick={() => { handleClientChange(""); setClientOpen(false); }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:bg-muted transition-colors"
+                    >
+                      <Check size={14} className={clientId === "" ? "opacity-100" : "opacity-0"} />
+                      — Bez klienta —
+                    </button>
+                    {clients.map((c) => (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => { handleClientChange(c.id); setClientOpen(false); }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted transition-colors"
+                      >
+                        <Check size={14} className={clientId === c.id ? "opacity-100" : "opacity-0"} />
+                        {c.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -117,18 +155,42 @@ export default function EditMoodboardDialog({ moodboard, clients, onClose, onSav
                   Klient nie ma żadnych projektów
                 </p>
               ) : (
-                <div className="relative">
-                  <select
-                    value={projectId}
-                    onChange={(e) => setProjectId(e.target.value)}
-                    className="w-full appearance-none px-3 py-2 pr-8 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                <div className="relative" ref={projectRef}>
+                  <button
+                    type="button"
+                    onClick={() => setProjectOpen((o) => !o)}
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
                   >
-                    <option value="">— Bez projektu —</option>
-                    {availableProjects.map((p) => (
-                      <option key={p.id} value={p.id}>{p.title}</option>
-                    ))}
-                  </select>
-                  <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                    <span className={projectId ? "" : "text-muted-foreground"}>
+                      {selectedProject?.title ?? "— Bez projektu —"}
+                    </span>
+                    <ChevronDown size={14} className="text-muted-foreground shrink-0 ml-2" />
+                  </button>
+                  {projectOpen && (
+                    <div className="absolute z-20 mt-1 w-full bg-popover border border-border rounded-lg shadow-lg overflow-hidden">
+                      <div className="max-h-52 overflow-y-auto py-1">
+                        <button
+                          type="button"
+                          onClick={() => { setProjectId(""); setProjectOpen(false); }}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:bg-muted transition-colors"
+                        >
+                          <Check size={14} className={projectId === "" ? "opacity-100" : "opacity-0"} />
+                          — Bez projektu —
+                        </button>
+                        {availableProjects.map((p) => (
+                          <button
+                            key={p.id}
+                            type="button"
+                            onClick={() => { setProjectId(p.id); setProjectOpen(false); }}
+                            className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted transition-colors"
+                          >
+                            <Check size={14} className={projectId === p.id ? "opacity-100" : "opacity-0"} />
+                            {p.title}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

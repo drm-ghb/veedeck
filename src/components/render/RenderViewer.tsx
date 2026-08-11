@@ -205,8 +205,8 @@ function getPopupStyle(
   if (left + popupWidth > window.innerWidth - pad) left = pinX - popupWidth - 8;
   left = Math.max(pad, Math.min(left, window.innerWidth - popupWidth - pad));
 
-  let top = pinY - 16;
-  if (top + popupH > vvOffsetTop + viewportHeight - pad) top = pinY - popupH + 16;
+  let top = pinY + 16;
+  if (top + popupH > vvOffsetTop + viewportHeight - pad) top = pinY - popupH - 4;
   top = Math.max(vvOffsetTop + pad, top);
 
   return { position: "fixed", left, top };
@@ -1805,8 +1805,8 @@ export default function RenderViewer({
             ) : null}
           </nav>
 
-          {/* Desktop toolbar (hidden on mobile) */}
-          <div className="hidden sm:flex ml-auto items-center gap-1 flex-shrink-0">
+          {/* Desktop toolbar (hidden on mobile and tablet portrait) */}
+          <div className="hidden lg:flex ml-auto items-center gap-1 flex-shrink-0">
             {/* Zone 1: Primary actions */}
             {(isDesigner || allowClientComments) && (
               <button disabled={isDesigner && expired} onClick={() => { if (isDesigner && expired) return; setMode(mode === "pin" ? "view" : "pin"); setProductPinMode(false); setPendingProductPos(null); }} className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md border transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${mode === "pin" ? "bg-primary text-primary-foreground border-primary" : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted"}`}>
@@ -1979,7 +1979,7 @@ export default function RenderViewer({
         {/* Thumbnails sidebar */}
         {(isDesigner || (onRenderSelect && roomRenders.length > 0)) && (
           <div
-            className="hidden md:flex w-44 border-r bg-card flex-col flex-shrink-0 overflow-hidden relative"
+            className="hidden lg:flex w-44 border-r bg-card flex-col flex-shrink-0 overflow-hidden relative"
             onDragEnter={isDesigner && !expired && projectId && roomId ? handleSidebarDragEnter : undefined}
             onDragLeave={isDesigner && !expired && projectId && roomId ? handleSidebarDragLeave : undefined}
             onDragOver={isDesigner && !expired && projectId && roomId ? handleSidebarDragOver : undefined}
@@ -2085,7 +2085,7 @@ export default function RenderViewer({
           )}
           {/* Pin mode hint — desktop only (mobile version rendered in portal below) */}
           {(mode === "pin" || productPinMode) && !pending && !pendingProductPos && (
-            <div className="hidden sm:block absolute top-3 left-1/2 -translate-x-1/2 z-10 bg-primary/90 text-primary-foreground text-xs px-3 py-1.5 rounded-full shadow pointer-events-none select-none">
+            <div className="hidden lg:block absolute top-3 left-1/2 -translate-x-1/2 z-10 bg-primary/90 text-primary-foreground text-xs px-3 py-1.5 rounded-full shadow pointer-events-none select-none">
               {t.render.clickToAddPinImage}
             </div>
           )}
@@ -2697,23 +2697,23 @@ export default function RenderViewer({
 
         {/* Sidebar */}
         {showComments && <>
-          {/* Mobile backdrop */}
+          {/* Mobile/tablet backdrop */}
           <div
-            className="fixed inset-x-0 top-[57px] bottom-0 z-20 bg-black/30 md:hidden"
+            className="fixed inset-x-0 top-[57px] bottom-0 z-20 bg-black/30 lg:hidden"
             onClick={() => { setShowComments(false); sessionStorage.setItem("renderflow_showComments", "false"); }}
           />
-          <div className={`fixed md:relative top-[57px] bottom-0 md:top-0 right-0 left-0 md:left-auto z-30 md:z-auto md:flex-shrink-0 transition-[width] duration-200 ${sidebarExpanded ? "md:w-[576px]" : "md:w-72"}`}>
+          <div className={`fixed lg:relative top-[57px] bottom-0 lg:top-0 right-0 left-0 lg:left-auto z-30 lg:z-auto lg:flex-shrink-0 transition-[width] duration-200 ${sidebarExpanded ? "lg:w-[576px]" : "lg:w-72"}`}>
 
             {/* Expand handle — absolutely positioned outside the panel, bottom-left */}
             <button
               onClick={() => setSidebarExpanded(v => !v)}
-              className="hidden md:flex items-center justify-center w-5 h-12 bg-card border border-r-0 border-border rounded-l-md shadow-md text-muted-foreground hover:text-foreground transition-colors absolute left-0 bottom-0 -translate-x-full z-10"
+              className="hidden lg:flex items-center justify-center w-5 h-12 bg-card border border-r-0 border-border rounded-l-md shadow-md text-muted-foreground hover:text-foreground transition-colors absolute left-0 bottom-0 -translate-x-full z-10"
               title={sidebarExpanded ? t.render.collapsePanel : t.render.expandPanel}
             >
               {sidebarExpanded ? <ChevronRight size={13} /> : <ChevronLeft size={13} />}
             </button>
 
-            <div className={`h-full w-full flex flex-col bg-card border-l shadow-xl md:shadow-none transition-[width] duration-200 ${sidebarExpanded ? "md:w-[576px]" : "md:w-72"}`}>
+            <div className={`h-full w-full flex flex-col bg-card border-l shadow-xl lg:shadow-none transition-[width] duration-200 ${sidebarExpanded ? "lg:w-[576px]" : "lg:w-72"}`}>
 
             {/* Tab switcher */}
             <div className="flex border-b flex-shrink-0">
@@ -2741,7 +2741,7 @@ export default function RenderViewer({
               </button>
               <button
                 onClick={() => { setShowComments(false); sessionStorage.setItem("renderflow_showComments", "false"); }}
-                className="md:hidden flex items-center justify-center w-10 border-l text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
+                className="lg:hidden flex items-center justify-center w-10 border-l text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
                 title="Zamknij"
               >
                 <X size={16} />
@@ -3047,7 +3047,7 @@ export default function RenderViewer({
                                   <div className="relative">
                                     <div className={`px-3 py-2 text-sm leading-relaxed break-words ${
                                       isOwn
-                                        ? "bg-violet-600 text-white rounded-2xl rounded-tr-sm"
+                                        ? "bg-primary text-primary-foreground rounded-2xl rounded-tr-sm"
                                         : "bg-gray-100 dark:bg-muted text-gray-800 dark:text-gray-200 rounded-2xl rounded-tl-sm"
                                     }`}>
                                       {item.content !== "[wiadomość głosowa]" && item.content !== "[zdjęcie]" && item.content}
@@ -4385,9 +4385,9 @@ export default function RenderViewer({
         />
       )}
 
-      {/* Mobile floating toolbar — portal to document.body, visible on <640px */}
+      {/* Mobile floating toolbar — portal to document.body, visible on <1024px (mobile + tablet portrait) */}
       {toolbarMounted && !showComments && createPortal(
-        <div className="sm:hidden">
+        <div className="lg:hidden">
           {/* Pin mode hint — centered above toolbar */}
           {(mode === "pin" || productPinMode) && !pending && !pendingProductPos && (
             <div

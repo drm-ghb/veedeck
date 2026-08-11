@@ -346,6 +346,9 @@ export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userI
         </div>
       )}
 
+      <div className="px-3 py-1.5">
+        <div className="h-[2.5px] rounded-full bg-border" />
+      </div>
       <div className="p-2 space-y-0.5">
         {/* Asystent AI */}
         <button
@@ -378,6 +381,20 @@ export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userI
           </span>
           {!isCollapsed && "Zgłoś błąd"}
         </button>
+
+        {/* Jak zacząć? — only visible on tablet (md, where MobileMenu is hidden but button is too wide for navbar) */}
+        {isTrial && (
+          <button
+            onClick={() => window.dispatchEvent(new CustomEvent("open-onboarding"))}
+            title={isCollapsed ? t.common.howToStart : undefined}
+            className="lg:hidden flex items-center gap-3 px-2.5 py-2.5 rounded-lg text-sm font-medium transition-colors w-full text-primary hover:bg-primary/10"
+          >
+            <span className="flex-shrink-0 w-5 flex items-center justify-center">
+              <BookOpen size={18} />
+            </span>
+            {!isCollapsed && t.common.howToStart}
+          </button>
+        )}
 
         {/* Help */}
         <button
