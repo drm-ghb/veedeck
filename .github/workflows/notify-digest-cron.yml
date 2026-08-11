@@ -1,0 +1,15 @@
+name: Notify Digest Cron
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call notify-digest endpoint
+        run: |
+          curl -sf -o /dev/null -w "%{http_code}" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            https://veedeck.com/api/cron/notify-digest
