@@ -75,8 +75,9 @@ interface AddProductDialogProps {
   listId: string;
   sectionId?: string | null;
   parentProductId?: string | null;
+  insertAfterProductId?: string | null;
   listProducts?: ListProductOption[];
-  onAdded: (product: unknown) => void;
+  onAdded: (product: unknown, insertAfterProductId?: string | null) => void;
   onVariantLinked?: (product: unknown) => void;
   customCategories?: string[];
 }
@@ -93,6 +94,7 @@ export default function AddProductDialog({
   listId,
   sectionId,
   parentProductId,
+  insertAfterProductId,
   listProducts,
   onAdded,
   onVariantLinked,
@@ -213,12 +215,12 @@ export default function AddProductDialog({
       const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, ...(parentProductId ? { parentProductId } : {}) }),
+        body: JSON.stringify({ ...form, ...(parentProductId ? { parentProductId } : {}), ...(insertAfterProductId ? { insertAfterProductId } : {}) }),
       });
       if (!res.ok) throw new Error();
       const product = await res.json();
       toast.success(t.products.productAdded);
-      onAdded(product);
+      onAdded(product, insertAfterProductId);
       handleClose();
     } catch {
       toast.error(t.products.productAddError);
@@ -250,12 +252,13 @@ export default function AddProductDialog({
           quantity: 1,
           productId: lp.id,
           ...(parentProductId ? { parentProductId } : {}),
+          ...(insertAfterProductId ? { insertAfterProductId } : {}),
         }),
       });
       if (!res.ok) throw new Error();
       const product = await res.json();
       toast.success(t.products.productAdded);
-      onAdded(product);
+      onAdded(product, insertAfterProductId);
       handleClose();
     } catch {
       toast.error(t.products.productAddError);

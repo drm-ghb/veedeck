@@ -59,6 +59,7 @@ interface Product {
   dimensions?: string | null;
   supplier?: string | null;
   quantity: number;
+  unit?: string | null;
   hidden?: boolean;
   parentProductId?: string | null;
 }
@@ -449,7 +450,7 @@ async function renderViolet(
       if (p.manufacturer) detailRows.push([s.manufacturer, p.manufacturer]);
       if (p.dimensions) detailRows.push([s.dimension, p.dimensions]);
       if (p.color) detailRows.push([s.color, p.color]);
-      detailRows.push([s.qty, `${p.quantity} ${s.unit}`]);
+      detailRows.push([s.qty, `${p.quantity} ${p.unit || s.unit}`]);
       const variantLabelH = isVariant ? 4 : 0;
       const textH = 4 + variantLabelH + nameLines.length * 5.2 + detailRows.length * 4.2 + 4;
       const rowH = Math.max(IIMG, textH);
@@ -533,7 +534,7 @@ async function renderViolet(
         doc.setFont(FONT, "normal");
         doc.setFontSize(8);
         doc.setTextColor(...MUTED);
-        doc.text(`${p.quantity} ${s.unit}`, PRICE_X, rowY + 6, { align: "right" });
+        doc.text(`${p.quantity} ${p.unit || s.unit}`, PRICE_X, rowY + 6, { align: "right" });
       }
 
       // External link icon
@@ -815,7 +816,7 @@ async function renderEditorial(
       if (p.manufacturer) detailRows.push([s.manufacturer, p.manufacturer]);
       if (p.dimensions) detailRows.push([s.dimension, p.dimensions]);
       if (p.color) detailRows.push([s.color, p.color]);
-      detailRows.push([s.qty, `${p.quantity} ${s.unit}`]);
+      detailRows.push([s.qty, `${p.quantity} ${p.unit || s.unit}`]);
       const variantLabelH = isVariant ? 4.5 : 0;
       const textH = 5 + variantLabelH + nameLines.length * 5.5 + detailRows.length * 4.2 + 4;
       const rowH = Math.max(IIMG, textH);
@@ -890,7 +891,7 @@ async function renderEditorial(
         doc.setFont(FONT, "normal");
         doc.setFontSize(8);
         doc.setTextColor(...MUTED);
-        doc.text(`${p.quantity} ${s.unit}`, PRICE_X, rowY + 6, { align: "right" });
+        doc.text(`${p.quantity} ${p.unit || s.unit}`, PRICE_X, rowY + 6, { align: "right" });
       }
 
       y = rowY + rowH + 4;
@@ -1183,7 +1184,7 @@ async function renderAtelier(
       if (p.manufacturer) detailRows.push([s.manufacturer, p.manufacturer]);
       if (p.dimensions) detailRows.push([s.dimension, p.dimensions]);
       if (p.color) detailRows.push([s.color, p.color]);
-      detailRows.push([s.qty, `${p.quantity} ${s.unit}`]);
+      detailRows.push([s.qty, `${p.quantity} ${p.unit || s.unit}`]);
       const variantLabelH = isVariant ? 4.5 : 0;
       const textH = 5 + variantLabelH + nameLines.length * 5.2 + detailRows.length * 4.2 + 4;
       const rowH = Math.max(IIMG, textH);
@@ -1258,7 +1259,7 @@ async function renderAtelier(
         doc.setFont(FONT, "normal");
         doc.setFontSize(8);
         doc.setTextColor(...MUTED);
-        doc.text(`${p.quantity} ${s.unit}`, PRICE_X, rowY + 6, { align: "right" });
+        doc.text(`${p.quantity} ${p.unit || s.unit}`, PRICE_X, rowY + 6, { align: "right" });
       }
 
       y = rowY + rowH + 4;
@@ -1570,7 +1571,7 @@ async function renderArchitect(
       else if (p.manufacturer) metaRows.push(["producer", p.manufacturer]);
       if (p.dimensions) metaRows.push(["dim", p.dimensions]);
       if (p.color) metaRows.push(["finish", p.color]);
-      metaRows.push(["qty", `${p.quantity} ${s.unit}`]);
+      metaRows.push(["qty", `${p.quantity} ${p.unit || s.unit}`]);
       const variantLabelH = isVariant ? 4.5 : 0;
       const textH = 5 + variantLabelH + nameLines.length * 5.2 + metaRows.length * 4 + 4;
       const rowH = Math.max(IIMG, textH);
@@ -1649,7 +1650,7 @@ async function renderArchitect(
         doc.setFont(FONT, "normal");
         doc.setFontSize(8);
         doc.setTextColor(...MUTED);
-        doc.text(`${p.quantity} ${s.unit}`, PRICE_X, rowY + 6, { align: "right" });
+        doc.text(`${p.quantity} ${p.unit || s.unit}`, PRICE_X, rowY + 6, { align: "right" });
       }
 
       y = rowY + rowH + 4;
@@ -2012,7 +2013,7 @@ async function renderLinen(
       if (p.manufacturer) detailRows.push([s.manufacturer, p.manufacturer]);
       if (p.dimensions) detailRows.push([s.dimension, p.dimensions]);
       if (p.color) detailRows.push([s.color, p.color]);
-      detailRows.push([s.qty, `${p.quantity} ${s.unit}`]);
+      detailRows.push([s.qty, `${p.quantity} ${p.unit || s.unit}`]);
 
       doc.setFont(FONT, "normal");
       doc.setFontSize(7.5);
@@ -2043,7 +2044,7 @@ async function renderLinen(
         doc.setFont(FONT, "normal");
         doc.setFontSize(8);
         doc.setTextColor(...STONE);
-        doc.text(`${p.quantity} ${s.unit}`, PRICE_X, rowY + 6, { align: "right" });
+        doc.text(`${p.quantity} ${p.unit || s.unit}`, PRICE_X, rowY + 6, { align: "right" });
       }
 
       y = rowY + rowH + 4;

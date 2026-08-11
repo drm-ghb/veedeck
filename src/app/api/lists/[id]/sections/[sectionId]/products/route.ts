@@ -40,7 +40,7 @@ export async function POST(
 
   const { id, sectionId } = await params;
   const body = await req.json();
-  const { name, url, imageUrl, price, manufacturer, color, dimensions, description, deliveryTime, quantity, category, supplier, catalogNumber, productId: bodyProductId, note, parentProductId } = body;
+  const { name, url, imageUrl, price, manufacturer, color, dimensions, description, deliveryTime, quantity, unit, category, supplier, catalogNumber, productId: bodyProductId, note, parentProductId, insertAfterProductId } = body;
 
   if (!name?.trim()) {
     return NextResponse.json({ error: "Nazwa jest wymagana" }, { status: 400 });
@@ -56,6 +56,21 @@ export async function POST(
 
   const count = await prisma.listProduct.count({ where: { sectionId } });
   const userId = session.user.id;
+
+  let insertOrder = count;
+  if (insertAfterProductId) {
+    const refProduct = await prisma.listProduct.findFirst({
+      where: { id: insertAfterProductId, sectionId },
+      select: { order: true },
+    });
+    if (refProduct) {
+      insertOrder = refProduct.order + 1;
+      await prisma.listProduct.updateMany({
+        where: { sectionId, order: { gte: insertOrder }, parentProductId: parentProductId || null },
+        data: { order: { increment: 1 } },
+      });
+    }
+  }
 
   // Link to library product only when explicitly added from library tab
   let finalProductId: string | null = null;
@@ -112,8 +127,9 @@ export async function POST(
       category: category || null,
       supplier: supplier || null,
       catalogNumber: catalogNumber || null,
+      unit: unit || "szt.",
       sectionId,
-      order: count,
+      order: insertOrder,
       productId: finalProductId,
       note: note || null,
       parentProductId: parentProductId || null,

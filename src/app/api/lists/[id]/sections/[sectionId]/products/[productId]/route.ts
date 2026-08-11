@@ -96,6 +96,18 @@ export async function PATCH(
       return NextResponse.json(updated);
     }
 
+    if (body.unit !== undefined) {
+      const VALID_UNITS = ["szt.", "m²", "mb.", "L", "kg", "lbs", "kpl.", "opk."];
+      if (!VALID_UNITS.includes(body.unit)) {
+        return NextResponse.json({ error: "Nieprawidłowa jednostka" }, { status: 400 });
+      }
+      const updated = await prisma.listProduct.update({
+        where: { id: productId },
+        data: { unit: body.unit },
+      });
+      return NextResponse.json(updated);
+    }
+
     if (body.parentProductId !== undefined) {
       let sectionMove: { sectionId: string; order: number } | undefined;
       if (body.parentProductId && body.newSectionId && body.newSectionId !== sectionId) {

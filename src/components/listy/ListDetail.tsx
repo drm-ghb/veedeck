@@ -4,7 +4,7 @@ import { useState, useRef, useCallback, useEffect, Fragment } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, ChevronDown, ChevronUp, Plus, ExternalLink, Minus, MoreHorizontal, Pencil, Trash2, GripVertical, FileDown, Sheet, ArrowDownUp, Eye, EyeOff, Check, X, RotateCcw, FolderInput, Wallet, AlertCircle, AlertTriangle, DollarSign, Copy, Comment, CheckCircle, RadioButtonUnchecked, Search, FileText, Layers, Asterisk, CheckSquare, Square, ListChecks, Share2, History } from "@/components/ui/icons";
+import { ChevronLeft, ChevronDown, ChevronUp, Plus, ExternalLink, MoreHorizontal, Pencil, Trash2, GripVertical, FileDown, Sheet, ArrowDownUp, Eye, EyeOff, Check, X, RotateCcw, FolderInput, Wallet, AlertCircle, AlertTriangle, DollarSign, Copy, Comment, CheckCircle, RadioButtonUnchecked, Search, FileText, Layers, Asterisk, CheckSquare, Square, ListChecks, Share2, History } from "@/components/ui/icons";
 import ProductCommentPanel from "./ProductCommentPanel";
 import ListSectionNav from "./ListSectionNav";
 import { pusherClient } from "@/lib/pusher";
@@ -47,6 +47,8 @@ import { useLang, useT } from "@/lib/i18n";
 import TrialGate from "@/components/ui/TrialGate";
 import { useIsTrialExpired } from "@/lib/trial-context";
 import { showConfirm } from "@/lib/confirm";
+
+const UNIT_OPTIONS = ["szt.", "m²", "mb.", "L", "kg", "lbs", "kpl.", "opk."];
 
 const BUILT_IN_CATEGORIES = [
   { value: "OSWIETLENIE", label: "Oświetlenie" },
@@ -92,6 +94,7 @@ interface Product {
   note: string | null;
   parentProductId: string | null;
   orderStatus: string | null;
+  unit?: string;
   createdAt?: string;
   commentCount?: number;
 }
@@ -270,6 +273,7 @@ function ProductRow({
   listId,
   sectionId,
   onQuantityChange,
+  onUnitChange,
   onEdit,
   onDelete,
   onOpenComments,
@@ -302,6 +306,7 @@ function ProductRow({
   listId: string;
   sectionId: string;
   onQuantityChange: (productId: string, qty: number) => void;
+  onUnitChange: (productId: string, unit: string) => void;
   onEdit: () => void;
   onDelete: () => void;
   onOpenComments: () => void;
@@ -329,6 +334,11 @@ function ProductRow({
   canEdit?: boolean;
 }) {
   const [qty, setQty] = useState(product.quantity);
+  const [unit, setUnit] = useState(product.unit ?? "szt.");
+  const [unitMenuOpen, setUnitMenuOpen] = useState(false);
+  const [unitMenuPos, setUnitMenuPos] = useState({ top: 0, left: 0 });
+  const [editingQty, setEditingQty] = useState(false);
+  const [qtyInput, setQtyInput] = useState("");
   const [saving, setSaving] = useState(false);
   const [lightbox, setLightbox] = useState(false);
   const [categoryMenuOpen, setCategoryMenuOpen] = useState(false);
@@ -377,6 +387,34 @@ function ProductRow({
     const value = editingValue.trim() || null;
     setEditingField(null);
     onFieldUpdate(product.id, editingField, value);
+  }
+
+  async function updateUnit(next: string) {
+    setUnit(next);
+    setUnitMenuOpen(false);
+    onUnitChange(product.id, next);
+    try {
+      await fetch(`/api/lists/${listId}/sections/${sectionId}/products/${product.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ unit: next }),
+      });
+    } catch {
+      toast.error("Błąd zapisu jednostki");
+    }
+  }
+
+  function startQtyEdit() {
+    setQtyInput(String(qty));
+    setEditingQty(true);
+  }
+
+  async function saveQtyEdit(value: string) {
+    setEditingQty(false);
+    const next = parseInt(value, 10);
+    if (!isNaN(next) && next >= 1 && next !== qty) {
+      await updateQty(next);
+    }
   }
 
   const unitPrice = parsePrice(product.price);
@@ -620,6 +658,24 @@ function ProductRow({
     document.body
   ) : null;
 
+  const unitPortal = unitMenuOpen ? createPortal(
+    <>
+      <div className="fixed inset-0 z-[200]" onClick={() => setUnitMenuOpen(false)} />
+      <div className="fixed z-[201] bg-popover border border-border rounded-lg shadow-lg py-1 min-w-[100px]" style={{ top: unitMenuPos.top, left: unitMenuPos.left }}>
+        {UNIT_OPTIONS.map((opt) => (
+          <button
+            key={opt}
+            onClick={() => updateUnit(opt)}
+            className={`w-full text-left px-3 py-1.5 text-xs hover:bg-muted transition-colors flex items-center gap-2 ${unit === opt ? "font-semibold text-primary" : "text-foreground"}`}
+          >
+            {opt}
+          </button>
+        ))}
+      </div>
+    </>,
+    document.body
+  ) : null;
+
   return (
     <div className={`group transition-colors ${product.hidden ? "opacity-40" : ""}`}>
       {lightboxEl}
@@ -628,6 +684,7 @@ function ProductRow({
       {categoryPortal}
       {approvalPortal}
       {orderStatusPortal}
+      {unitPortal}
 
       {/* ── DESKTOP layout (lg+) — original ── */}
       <div className="hidden lg:flex items-center gap-2 px-4 py-4">
@@ -812,9 +869,33 @@ function ProductRow({
         </div>
         <div className="flex items-center gap-3 shrink-0">
           <div className="flex items-center gap-1">
-            {canEdit && <button onClick={() => updateQty(qty - 1)} disabled={qty <= 1 || saving} className="w-6 h-6 rounded flex items-center justify-center border border-border text-muted-foreground hover:text-foreground hover:border-foreground/30 disabled:opacity-30 transition-colors"><Minus size={11} /></button>}
-            <span className="w-6 text-center text-sm font-medium tabular-nums">{qty}</span>
-            {canEdit && <button onClick={() => updateQty(qty + 1)} disabled={saving} className="w-6 h-6 rounded flex items-center justify-center border border-border text-muted-foreground hover:text-foreground hover:border-foreground/30 disabled:opacity-30 transition-colors"><Plus size={11} /></button>}
+            {canEdit ? (
+              <button
+                onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); const top = r.bottom + 4; const left = r.left; setUnitMenuPos({ top, left }); setUnitMenuOpen((v) => !v); }}
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors px-1 py-0.5 rounded hover:bg-muted"
+              >
+                {unit}
+              </button>
+            ) : (
+              <span className="text-xs text-muted-foreground">{unit}</span>
+            )}
+            {canEdit && editingQty ? (
+              <input
+                autoFocus
+                value={qtyInput}
+                onChange={(e) => setQtyInput(e.target.value)}
+                onBlur={() => saveQtyEdit(qtyInput)}
+                onKeyDown={(e) => { if (e.key === "Enter") saveQtyEdit(qtyInput); if (e.key === "Escape") { setEditingQty(false); } }}
+                className="w-10 text-center text-sm font-medium bg-transparent border-b border-primary/40 focus:outline-none focus:border-primary tabular-nums"
+              />
+            ) : (
+              <span
+                className={`w-6 text-center text-sm font-medium tabular-nums ${canEdit ? "cursor-pointer hover:text-primary transition-colors" : ""}`}
+                onClick={canEdit ? startQtyEdit : undefined}
+              >
+                {qty}
+              </span>
+            )}
           </div>
           <div className="text-right min-w-[72px]">
             {editingField === "price" ? (
@@ -845,7 +926,7 @@ function ProductRow({
                     </div>
                   )}
                 </div>
-                {qty > 1 && unitPrice !== null && <p className="text-xs text-muted-foreground tabular-nums">{formatPriceNum(unitPrice)} zł / szt.</p>}
+                {qty > 1 && unitPrice !== null && <p className="text-xs text-muted-foreground tabular-nums">{formatPriceNum(unitPrice)} {currency} / {unit}</p>}
               </>
             ) : (
               <button
@@ -967,10 +1048,34 @@ function ProductRow({
         {/* Bottom row: qty + link | price + comments */}
         <div className="flex items-center justify-between mt-2">
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-0.5">
-              {canEdit && <button onClick={() => updateQty(qty - 1)} disabled={qty <= 1 || saving} className="w-6 h-6 rounded flex items-center justify-center border border-border text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors"><Minus size={10} /></button>}
-              <span className="w-6 text-center text-xs font-medium tabular-nums">{qty}</span>
-              {canEdit && <button onClick={() => updateQty(qty + 1)} disabled={saving} className="w-6 h-6 rounded flex items-center justify-center border border-border text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors"><Plus size={10} /></button>}
+            <div className="flex items-center gap-1">
+              {canEdit ? (
+                <button
+                  onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); const top = r.bottom + 4; const left = r.left; setUnitMenuPos({ top, left }); setUnitMenuOpen((v) => !v); }}
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors px-1 py-0.5 rounded hover:bg-muted"
+                >
+                  {unit}
+                </button>
+              ) : (
+                <span className="text-xs text-muted-foreground">{unit}</span>
+              )}
+              {canEdit && editingQty ? (
+                <input
+                  autoFocus
+                  value={qtyInput}
+                  onChange={(e) => setQtyInput(e.target.value)}
+                  onBlur={() => saveQtyEdit(qtyInput)}
+                  onKeyDown={(e) => { if (e.key === "Enter") saveQtyEdit(qtyInput); if (e.key === "Escape") { setEditingQty(false); } }}
+                  className="w-10 text-center text-xs font-medium bg-transparent border-b border-primary/40 focus:outline-none focus:border-primary tabular-nums"
+                />
+              ) : (
+                <span
+                  className={`w-6 text-center text-xs font-medium tabular-nums ${canEdit ? "cursor-pointer hover:text-primary transition-colors" : ""}`}
+                  onClick={canEdit ? startQtyEdit : undefined}
+                >
+                  {qty}
+                </span>
+              )}
             </div>
             {product.url && (
               <a href={product.url} target="_blank" rel="noopener noreferrer" className="w-6 h-6 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
@@ -1000,7 +1105,7 @@ function ProductRow({
                   </button>
                   {product.productId && <AlertCircle size={14} className="text-red-500 cursor-default shrink-0" />}
                 </div>
-                {qty > 1 && unitPrice !== null && <p className="text-xs text-muted-foreground tabular-nums text-right">{formatPriceNum(unitPrice)} zł / szt.</p>}
+                {qty > 1 && unitPrice !== null && <p className="text-xs text-muted-foreground tabular-nums text-right">{formatPriceNum(unitPrice)} {currency} / {unit}</p>}
               </div>
             ) : (
               <button
@@ -1043,6 +1148,61 @@ function SortableProduct({ id, sectionId, children }: { id: string; sectionId: s
     <>
       {children(dragHandle, setNodeRef, style)}
     </>
+  );
+}
+
+function InsertZone({ onInsert, canInsert, color = "#9CA3AF", overlap = false }: { onInsert: () => void; canInsert: boolean; color?: string; overlap?: boolean }) {
+  const [hovered, setHovered] = useState(false);
+  if (overlap) {
+    // Zero-height zone — sits on the border between variant tiles without creating a gap
+    return (
+      <div style={{ height: 0, position: 'relative', zIndex: 10 }}>
+        <div
+          className="absolute left-0 right-0 flex items-center"
+          style={{ top: -5, height: 10 }}
+          onMouseEnter={() => canInsert && setHovered(true)}
+          onMouseLeave={() => setHovered(false)}
+        >
+          {canInsert && hovered && (
+            <>
+              <div className="flex-1 h-0.5 rounded-full" style={{ background: color }} />
+              <button
+                type="button"
+                onClick={onInsert}
+                className="w-[18px] h-[18px] rounded flex items-center justify-center transition-colors shrink-0"
+                style={{ background: color }}
+              >
+                <Plus size={9} className="text-white" />
+              </button>
+              <div className="flex-1 h-0.5 rounded-full" style={{ background: color }} />
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div
+      style={{ height: 10 }}
+      className="relative flex items-center"
+      onMouseEnter={() => canInsert && setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      {canInsert && hovered && (
+        <div className="absolute top-1/2 -translate-y-1/2 left-0 right-0 flex items-center gap-1.5 z-10">
+          <div className="flex-1 h-0.5 rounded-full" style={{ background: color }} />
+          <button
+            type="button"
+            onClick={onInsert}
+            className="w-[18px] h-[18px] rounded flex items-center justify-center transition-colors shrink-0"
+            style={{ background: color }}
+          >
+            <Plus size={9} className="text-white" />
+          </button>
+          <div className="flex-1 h-0.5 rounded-full" style={{ background: color }} />
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -1249,9 +1409,11 @@ export default function ListDetail({ list, designerName, designerEmail, designer
   const [addingSection, setAddingSection] = useState(false);
   const [newSectionName, setNewSectionName] = useState("");
   const [savingSection, setSavingSection] = useState(false);
-  const [dialogState, setDialogState] = useState<{ open: boolean; sectionId: string | null }>({
+  const [dialogState, setDialogState] = useState<{ open: boolean; sectionId: string | null; insertAfterProductId?: string | null; parentProductId?: string | null }>({
     open: false,
     sectionId: null,
+    insertAfterProductId: null,
+    parentProductId: null,
   });
   const [fabMenuOpen, setFabMenuOpen] = useState(false);
   const [collapsedVariants, setCollapsedVariants] = useState<Set<string>>(new Set());
@@ -1827,6 +1989,32 @@ export default function ListDetail({ list, designerName, designerEmail, designer
     }
   }
 
+  function handleInsertZoneClick(section: Section, insertAfterProductId: string, currentTopLevel: Product[]) {
+    if (getSortBy(section.sortBy) !== "manual") {
+      // Switch to manual sort, preserving current visual order
+      const allVariants = section.products.filter((p) => p.parentProductId);
+      const reorderedProducts = currentTopLevel.flatMap((p) => [
+        p,
+        ...allVariants.filter((v) => v.parentProductId === p.id).sort((a, b) => a.order - b.order),
+      ]);
+      setSections((prev) =>
+        prev.map((s) => s.id === section.id ? { ...s, sortBy: "manual", products: reorderedProducts } : s)
+      );
+      // Persist in background
+      fetch(`/api/lists/${list.id}/sections/${section.id}/products`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ order: currentTopLevel.map((p) => p.id) }),
+      }).catch(() => {});
+      fetch(`/api/lists/${list.id}/sections/${section.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sortBy: "manual" }),
+      }).catch(() => {});
+    }
+    setDialogState({ open: true, sectionId: section.id, insertAfterProductId });
+  }
+
   function openAddSection() {
     setAddingSection(true);
     setTimeout(() => sectionInputRef.current?.focus(), 50);
@@ -1856,13 +2044,21 @@ export default function ListDetail({ list, designerName, designerEmail, designer
     }
   }
 
-  function handleProductAdded(sectionId: string | null, product: unknown) {
+  function handleProductAdded(sectionId: string | null, product: unknown, insertAfterProductId?: string | null) {
     const p = product as Product & { sectionId: string };
     const actualSectionId = sectionId ?? p.sectionId;
     setSections((prev) => {
       const exists = prev.find((s) => s.id === actualSectionId);
       if (exists) {
-        return prev.map((s) => s.id === actualSectionId ? { ...s, products: [...s.products, p] } : s);
+        return prev.map((s) => {
+          if (s.id !== actualSectionId) return s;
+          if (!insertAfterProductId) return { ...s, products: [...s.products, p] };
+          const insertAfterIdx = s.products.findIndex((prod) => prod.id === insertAfterProductId);
+          if (insertAfterIdx === -1) return { ...s, products: [...s.products, p] };
+          const newProducts = [...s.products];
+          newProducts.splice(insertAfterIdx + 1, 0, p);
+          return { ...s, products: newProducts };
+        });
       }
       // Unsorted section was just created — add it to state
       return [
@@ -1878,6 +2074,16 @@ export default function ListDetail({ list, designerName, designerEmail, designer
       prev.map((s) =>
         s.id === sectionId
           ? { ...s, products: s.products.map((p) => p.id === productId ? { ...p, quantity: qty } : p) }
+          : s
+      )
+    );
+  }
+
+  function handleUnitChange(sectionId: string, productId: string, unit: string) {
+    setSections((prev) =>
+      prev.map((s) =>
+        s.id === sectionId
+          ? { ...s, products: s.products.map((p) => p.id === productId ? { ...p, unit } : p) }
           : s
       )
     );
@@ -2937,7 +3143,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
           return (
             <div className="mb-8">
               <h2 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide">{t.listy.productsOutsideSection}</h2>
-              <div className="bg-white border border-border rounded-[18px] p-4 flex flex-col gap-[10px]">
+              <div className="bg-white border border-border rounded-[18px] p-4 flex flex-col">
                 {(() => {
                   const topLevel = unsortedSection.products.filter((p) => !p.parentProductId);
                   const numberMap = computeProductNumbers(topLevel, (id) => unsortedSection.products.filter((p) => p.parentProductId === id).sort((a, b) => a.order - b.order));
@@ -2946,7 +3152,14 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                       {topLevel.map((product, i) => {
                         const variants = unsortedSection.products.filter((p) => p.parentProductId === product.id).sort((a, b) => a.order - b.order);
                         return (
-                          <SortableProduct key={product.id} id={product.id} sectionId={unsortedSection.id}>
+                          <Fragment key={product.id}>
+                            {i > 0 && (
+                              <InsertZone
+                                canInsert={canEdit && !expired && !activeDragProduct}
+                                onInsert={() => handleInsertZoneClick(unsortedSection, topLevel[i - 1].id, topLevel)}
+                              />
+                            )}
+                          <SortableProduct id={product.id} sectionId={unsortedSection.id}>
                             {(dragHandle, ref, style) => (
                             <div ref={ref} style={style} className={`${selectedIds.has(product.id) ? "bg-primary/5 border-primary/30" : "bg-[#FAFAFB] border-border"} border rounded-[14px] overflow-hidden transition-colors`}>
                               <ProductRow
@@ -2958,6 +3171,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                                 listId={list.id}
                                 sectionId={unsortedSection.id}
                                 onQuantityChange={(pid, qty) => handleQuantityChange(unsortedSection.id, pid, qty)}
+                                onUnitChange={(pid, unit) => handleUnitChange(unsortedSection.id, pid, unit)}
                                 onEdit={() => setEditState({ product, sectionId: unsortedSection.id })}
                                 onDelete={() => handleDeleteProduct(unsortedSection.id, product.id)}
                                 onOpenComments={() => openCommentsPanel(product.id)}
@@ -2996,7 +3210,15 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                                 </button>
                               )}
                               {!collapsedVariants.has(product.id) && variants.map((variant, vi) => (
-                              <div key={variant.id} className={`relative border-t border-dashed transition-colors ${selectedIds.has(variant.id) ? "bg-primary/5 border-primary/20" : "border-border"}`} style={selectedIds.has(variant.id) ? undefined : { background: '#F4F4F7' }}>
+                              <Fragment key={variant.id}>
+                                {vi > 0 && (
+                                  <InsertZone
+                                    canInsert={canEdit && !expired && !activeDragProduct}
+                                    overlap
+                                    onInsert={() => setDialogState({ open: true, sectionId: unsortedSection.id, parentProductId: product.id, insertAfterProductId: variants[vi - 1].id })}
+                                  />
+                                )}
+                              <div className={`relative border-t border-dashed transition-colors ${selectedIds.has(variant.id) ? "bg-primary/5 border-primary/20" : "border-border"}`} style={selectedIds.has(variant.id) ? undefined : { background: '#F4F4F7' }}>
                                 <div className={`hidden lg:block absolute w-px pointer-events-none ${vi === variants.length - 1 ? 'top-0 h-1/2' : 'top-0 bottom-0'}`} style={{ left: '20px', background: 'var(--border)' }} />
                                 <div className="hidden lg:block absolute h-px w-4 pointer-events-none top-1/2 -translate-y-1/2" style={{ left: '20px', background: 'var(--border)' }} />
                                 <div className={`lg:hidden absolute w-px pointer-events-none ${vi === variants.length - 1 ? 'top-0 h-1/2' : 'top-0 bottom-0'}`} style={{ left: '4px', background: 'var(--border)' }} />
@@ -3010,6 +3232,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                                   productNumber={numberMap[variant.id]}
                                   isVariant
                                   onQuantityChange={(pid, qty) => handleQuantityChange(unsortedSection.id, pid, qty)}
+                                  onUnitChange={(pid, unit) => handleUnitChange(unsortedSection.id, pid, unit)}
                                   onEdit={() => setEditState({ product: variant, sectionId: unsortedSection.id })}
                                   onDelete={() => handleDeleteProduct(unsortedSection.id, variant.id)}
                                   onOpenComments={() => openCommentsPanel(variant.id)}
@@ -3038,6 +3261,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                                   canEdit={canEdit}
                                 />
                               </div>
+                              </Fragment>
                             ))}
                             {variants.length > 0 && !expired && !collapsedVariants.has(product.id) && (
                               <div className="border-t border-dashed border-border" style={{ background: '#F4F4F7', padding: '7px 12px 9px 44px' }}>
@@ -3053,6 +3277,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                             </div>
                             )}
                           </SortableProduct>
+                          </Fragment>
                         );
                       })}
                     </SortableContext>
@@ -3190,7 +3415,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                         <p className="text-sm text-muted-foreground">{t.listy.addFirstProduct}</p>
                       </div>
                     ) : !isDraggingSection ? (
-                      <div className="bg-white border border-border rounded-[18px] p-4 flex flex-col gap-[10px]">
+                      <div className="bg-white border border-border rounded-[18px] p-4 flex flex-col">
                           {(() => {
                             const topLevel = sortProducts(section.products.filter((p) => !p.parentProductId), getSortBy(section.sortBy), categoryOrder);
                             const numberMap = computeProductNumbers(topLevel, (id) => section.products.filter((p) => p.parentProductId === id).sort((a, b) => a.order - b.order));
@@ -3202,7 +3427,14 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                                 {topLevel.map((product, i) => {
                                   const variants = section.products.filter((p) => p.parentProductId === product.id).sort((a, b) => a.order - b.order);
                                   return (
-                                    <SortableProduct key={product.id} id={product.id} sectionId={section.id}>
+                                    <Fragment key={product.id}>
+                                      {i > 0 && (
+                                        <InsertZone
+                                          canInsert={canEdit && !expired && !activeDragProduct}
+                                          onInsert={() => handleInsertZoneClick(section, topLevel[i - 1].id, topLevel)}
+                                        />
+                                      )}
+                                    <SortableProduct id={product.id} sectionId={section.id}>
                                       {(dragHandle, ref, style) => (
                                       <div ref={ref} style={style} className={`${selectedIds.has(product.id) ? "bg-primary/5 border-primary/30" : "bg-[#FAFAFB] border-border"} border rounded-[14px] overflow-hidden transition-colors`}>
                                         <ProductRow
@@ -3214,6 +3446,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                                           productNumber={numberMap[product.id]}
                                           isParent={variants.length > 0}
                                           onQuantityChange={(pid, qty) => handleQuantityChange(section.id, pid, qty)}
+                                          onUnitChange={(pid, unit) => handleUnitChange(section.id, pid, unit)}
                                           onEdit={() => setEditState({ product, sectionId: section.id })}
                                           onDelete={() => handleDeleteProduct(section.id, product.id)}
                                           onOpenComments={() => openCommentsPanel(product.id)}
@@ -3252,7 +3485,15 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                                           </button>
                                         )}
                                         {!collapsedVariants.has(product.id) && variants.map((variant, vi) => (
-                                          <div key={variant.id} className={`relative border-t border-dashed transition-colors ${selectedIds.has(variant.id) ? "bg-primary/5 border-primary/20" : "border-border"}`} style={selectedIds.has(variant.id) ? undefined : { background: '#F4F4F7' }}>
+                                          <Fragment key={variant.id}>
+                                            {vi > 0 && (
+                                              <InsertZone
+                                                canInsert={canEdit && !expired && !activeDragProduct}
+                                                overlap
+                                                onInsert={() => setDialogState({ open: true, sectionId: section.id, parentProductId: product.id, insertAfterProductId: variants[vi - 1].id })}
+                                              />
+                                            )}
+                                          <div className={`relative border-t border-dashed transition-colors ${selectedIds.has(variant.id) ? "bg-primary/5 border-primary/20" : "border-border"}`} style={selectedIds.has(variant.id) ? undefined : { background: '#F4F4F7' }}>
                                             <div className={`hidden lg:block absolute w-px pointer-events-none ${vi === variants.length - 1 ? 'top-0 h-1/2' : 'top-0 bottom-0'}`} style={{ left: '20px', background: 'var(--border)' }} />
                                             <div className="hidden lg:block absolute h-px w-4 pointer-events-none top-1/2 -translate-y-1/2" style={{ left: '20px', background: 'var(--border)' }} />
                                             <div className={`lg:hidden absolute w-px pointer-events-none ${vi === variants.length - 1 ? 'top-0 h-1/2' : 'top-0 bottom-0'}`} style={{ left: '4px', background: 'var(--border)' }} />
@@ -3266,6 +3507,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                                               productNumber={numberMap[variant.id]}
                                               isVariant
                                               onQuantityChange={(pid, qty) => handleQuantityChange(section.id, pid, qty)}
+                                              onUnitChange={(pid, unit) => handleUnitChange(section.id, pid, unit)}
                                               onEdit={() => setEditState({ product: variant, sectionId: section.id })}
                                               onDelete={() => handleDeleteProduct(section.id, variant.id)}
                                               onOpenComments={() => openCommentsPanel(variant.id)}
@@ -3294,10 +3536,12 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                                               canEdit={canEdit}
                                             />
                                           </div>
+                                          </Fragment>
                                         ))}
                                       </div>
                                       )}
                                     </SortableProduct>
+                                    </Fragment>
                                   );
                                 })}
                               </SortableContext>
@@ -3306,7 +3550,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                         {!expired && canEdit && (
                           <button
                             onClick={() => setDialogState({ open: true, sectionId: section.id })}
-                            className="w-full flex items-center justify-center gap-1.5 px-4 py-2 text-xs text-muted-foreground hover:text-foreground border border-dashed border-border rounded-[10px] transition-colors"
+                            className="mt-[10px] w-full flex items-center justify-center gap-1.5 px-4 py-2 text-xs text-muted-foreground hover:text-foreground border border-dashed border-border rounded-[10px] transition-colors"
                           >
                             <Plus size={12} />
                             {t.products.addProduct}
@@ -3354,10 +3598,12 @@ export default function ListDetail({ list, designerName, designerEmail, designer
 
       <AddProductDialog
         open={dialogState.open}
-        onOpenChange={(open) => setDialogState({ open, sectionId: open ? dialogState.sectionId : null })}
+        onOpenChange={(open) => setDialogState({ open, sectionId: open ? dialogState.sectionId : null, insertAfterProductId: open ? dialogState.insertAfterProductId : null, parentProductId: open ? dialogState.parentProductId : null })}
         listId={list.id}
         sectionId={dialogState.sectionId}
-        onAdded={(product) => handleProductAdded(dialogState.sectionId, product)}
+        parentProductId={dialogState.parentProductId}
+        insertAfterProductId={dialogState.insertAfterProductId}
+        onAdded={(product, insertAfterProductId) => handleProductAdded(dialogState.sectionId, product, insertAfterProductId)}
         customCategories={customCategories}
       />
 
