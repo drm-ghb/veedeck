@@ -791,7 +791,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
         .then((data: ShoppingListItem[]) => {
           setLists(data);
           setExpandedLists(new Set(data.map(l => l.id)));
-          setExpandedSections(new Set(data.flatMap(l => l.sections.map(s => s.id))));
+
         })
         .catch(() => {});
     }
