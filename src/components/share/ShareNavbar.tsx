@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { Grid2x2, Settings, Sun, Moon, Monitor, UserRound, LogOut, Menu } from "@/components/ui/icons";
 import { signOut } from "next-auth/react";
@@ -29,6 +30,7 @@ interface ShareNavbarProps {
 
 export default function ShareNavbar({ backHref, backLabel, clientLogoUrl, designerName, listToken, projectShareToken, clientName, onLogoClick, onMobileMenuOpen, currentUserId }: ShareNavbarProps) {
   const t = useT();
+  const pathname = usePathname();
   const { theme, setTheme, colorTheme } = useTheme();
 
   const THEME_OPTIONS: { value: Theme; label: string; Icon: React.ElementType }[] = [
@@ -122,7 +124,7 @@ export default function ShareNavbar({ backHref, backLabel, clientLogoUrl, design
               </span>
             )}
             {currentUserId && (
-              <NotificationBell userId={currentUserId} viewAllHref="/client/powiadomienia" />
+              <NotificationBell userId={currentUserId} viewAllHref={(() => { const m = pathname.match(/^/client/([^/]+)/); return m ? `/client/${m[1]}/powiadomienia` : "/client/powiadomienia"; })()}  />
             )}
             {clientName && (
               <button
