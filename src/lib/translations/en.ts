@@ -2776,11 +2776,11 @@ export const en: TranslationKeys = {
     // Veezard (coming soon)
     veezardLabel: "Veezard",
     veezardTitle: "Visualize interiors with AI",
-    veezardDesc: "Quick space visualization from your materials list — without leaving veedeck. The module is on its way.",
-    veezardStep1: "You'll select materials and products from the list.",
-    veezardStep2: "Veezard will generate a layout preview.",
-    veezardStep3: "You'll refine the scene and show it to your client.",
-    veezardTip: "Veezard is coming <b>soon</b> — we'll let you know as soon as it launches.",
+    veezardDesc: "We're building something that doesn't exist yet. Veezard is our biggest project — AI embedded deep into the designer's workflow, not just bolted on top. When it's ready, you'll be the first to know.",
+    veezardStep1: "",
+    veezardStep2: "",
+    veezardStep3: "",
+    veezardTip: "",
   },
   payments: {
     exportTitle: "Export payments",

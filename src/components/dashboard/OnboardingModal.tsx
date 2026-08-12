@@ -129,7 +129,7 @@ export default function OnboardingModal({ show, userId }: { show: boolean; userI
     { icon: CalendarDays, label: t.onboarding.kalendarLabel,   title: t.onboarding.kalendarTitle,   desc: t.onboarding.kalendarDesc,   steps: [t.onboarding.kalendarStep1, t.onboarding.kalendarStep2, t.onboarding.kalendarStep3] },
     { icon: NotebookText, label: t.onboarding.notatnikLabel,   title: t.onboarding.notatnikTitle,   desc: t.onboarding.notatnikDesc,   steps: [t.onboarding.notatnikStep1, t.onboarding.notatnikStep2, t.onboarding.notatnikStep3] },
     { icon: ChatBubble,   label: t.onboarding.dyskusjeLabel,   title: t.onboarding.dyskusjeTitle,   desc: t.onboarding.dyskusjeDesc,   steps: [t.onboarding.dyskusjeStep1, t.onboarding.dyskusjeStep2, t.onboarding.dyskusjeStep3], tip: t.onboarding.dyskusjeTip },
-    { icon: Sparkles,     label: t.onboarding.veezardLabel,    title: t.onboarding.veezardTitle,    desc: t.onboarding.veezardDesc,    steps: [t.onboarding.veezardStep1, t.onboarding.veezardStep2, t.onboarding.veezardStep3], tip: t.onboarding.veezardTip, soon: true },
+    { icon: Sparkles,     label: t.onboarding.veezardLabel,    title: t.onboarding.veezardTitle,    desc: t.onboarding.veezardDesc,    steps: [], soon: true },
   ];
 
   // Auto-show: only on /panel-glowny, only if not dismissed
@@ -461,12 +461,12 @@ export default function OnboardingModal({ show, userId }: { show: boolean; userI
                   </p>
 
                   {/* steps label */}
-                  <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--muted-foreground)", marginBottom: 12 }}>
+                  {currentModule.steps.length > 0 && <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--muted-foreground)", marginBottom: 12 }}>
                     {t.onboarding.howToDo}
-                  </div>
+                  </div>}
 
                   {/* step cards */}
-                  <div style={{ display: "grid", gap: 10 }}>
+                  {currentModule.steps.length > 0 && <div style={{ display: "grid", gap: 10 }}>
                     {currentModule.steps.map((s, i) => (
                       <div
                         key={i}
@@ -505,7 +505,7 @@ export default function OnboardingModal({ show, userId }: { show: boolean; userI
                         <span style={{ fontSize: 14, color: "var(--foreground)", lineHeight: 1.5 }}>{s}</span>
                       </div>
                     ))}
-                  </div>
+                  </div>}
 
                   {/* tip */}
                   {currentModule.tip && (

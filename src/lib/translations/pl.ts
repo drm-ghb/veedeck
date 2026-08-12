@@ -2778,11 +2778,11 @@ export const pl = {
     // Veezard (coming soon)
     veezardLabel: "Veezard",
     veezardTitle: "Wizualizuj wnętrza z AI",
-    veezardDesc: "Szybka wizualizacja przestrzeni z poziomu listy materiałów — bez wychodzenia z veedeck. Moduł jest już w drodze.",
-    veezardStep1: "Wybierzesz materiały i produkty z listy.",
-    veezardStep2: "Veezard wygeneruje podgląd aranżacji.",
-    veezardStep3: "Dopracujesz scenę i pokażesz ją klientowi.",
-    veezardTip: "Veezard pojawi się <b>wkrótce</b> — damy Ci znać, gdy tylko wystartuje.",
+    veezardDesc: "Pracujemy nad czymś, czego jeszcze nie ma na rynku. Veezard to nasz największy projekt — AI wbudowane głęboko w workflow projektanta, nie doklejone na wierzch. Kiedy będzie gotowy, dowiesz się pierwszy.",
+    veezardStep1: "",
+    veezardStep2: "",
+    veezardStep3: "",
+    veezardTip: "",
   },
   payments: {
     exportTitle: "Eksport płatności",
