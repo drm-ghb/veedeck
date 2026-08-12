@@ -3843,6 +3843,12 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                 <PushPin size={13} /> ProjectFlow
               </div>
               <button
+                onClick={() => { setRightTab("lists"); setSidebarQuery(""); }}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-colors ${rightTab === "lists" ? "border-b-2 border-primary text-primary" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                <LocalMall size={13} /> Listy
+              </button>
+              <button
                 onClick={() => { setRightTab("products"); setSidebarQuery(""); }}
                 className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-colors ${rightTab === "products" ? "border-b-2 border-primary text-primary" : "text-muted-foreground hover:text-foreground"}`}
               >
@@ -3853,12 +3859,6 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                 className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-colors ${rightTab === "textures" ? "border-b-2 border-primary text-primary" : "text-muted-foreground hover:text-foreground"}`}
               >
                 <Layers size={13} /> Tekstury
-              </button>
-              <button
-                onClick={() => { setRightTab("lists"); setSidebarQuery(""); }}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-colors ${rightTab === "lists" ? "border-b-2 border-primary text-primary" : "text-muted-foreground hover:text-foreground"}`}
-              >
-                <LocalMall size={13} /> Listy
               </button>
               <button
                 onClick={() => { setRightTab("pinterest"); setSidebarQuery(""); }}
