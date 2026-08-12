@@ -83,6 +83,7 @@ export async function POST(req: NextRequest) {
       personName: targetUser.name ?? "Użytkowniku",
       designerName: designer?.name ?? "Twój projektant",
       locale,
+      role: targetUser.role as "client" | "contractor",
     });
   });
 

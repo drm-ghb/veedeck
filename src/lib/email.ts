@@ -11,7 +11,7 @@ import {
   workspaceJoinEmailPL, workspaceJoinEmailEN,
   clientInvitationEmailPL, clientInvitationEmailEN,
   paymentFailedEmailPL, paymentFailedEmailEN,
-  accessLinkEmailPL, accessLinkEmailEN,
+  accessLinkEmailPL, accessLinkEmailEN, accessLinkContractorEmailPL,
   reminderEmailPL,
   firstLoginNotificationEmailPL,
   passwordSetEmailPL,
@@ -957,16 +957,22 @@ export async function sendAccessLinkEmail({
   personName,
   designerName,
   locale = "pl",
+  role = "client",
 }: {
   to: string;
   link: string;
   personName: string;
   designerName: string;
   locale?: "pl" | "en";
+  role?: "client" | "contractor";
 }) {
-  const subject = locale === "en" ? "Your project panel — veedeck" : "Twój panel projektu — veedeck";
-  const html =
-    locale === "en"
+  const isContractor = role === "contractor";
+  const subject = isContractor
+    ? "Twój panel wykonawcy — veedeck"
+    : locale === "en" ? "Your project panel — veedeck" : "Twój panel projektu — veedeck";
+  const html = isContractor
+    ? accessLinkContractorEmailPL({ link, personName, designerName })
+    : locale === "en"
       ? accessLinkEmailEN({ link, personName, designerName })
       : accessLinkEmailPL({ link, personName, designerName });
   await transporter.sendMail({ from: FROM, to, subject, html })

@@ -122,7 +122,7 @@ export default function ShareNavbar({ backHref, backLabel, clientLogoUrl, design
               </span>
             )}
             {currentUserId && (
-              <NotificationBell userId={currentUserId} />
+              <NotificationBell userId={currentUserId} viewAllHref="/powiadomienia" />
             )}
             {clientName && (
               <button

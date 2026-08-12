@@ -92,7 +92,7 @@ export async function PATCH(
         data: {
           userId: pc.userId,
           message: `Masz nową ankietę do wypełnienia: „${updated.name}"`,
-          link: `/client/${linkProjectId}?view=survey&surveyToken=${updated.shareToken}`,
+          link: `/client/${linkProjectId}/ankiety`,
           type: "info",
         },
       });
