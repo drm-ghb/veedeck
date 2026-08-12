@@ -295,7 +295,7 @@ export async function GET(
         label: `Zaakceptował(a) plik „${meta.renderName}"`,
         detail: null,
         actor,
-        link: meta.renderId ? `/projekty/${ev.projectId}/renders/${meta.renderId}` : null,
+        link: meta.renderId ? `/projekty/${projectId}/renders/${meta.renderId}` : null,
         meta,
       });
     } else if (ev.type === "render_rejected") {
@@ -306,7 +306,7 @@ export async function GET(
         label: `Odrzucił(a) plik „${meta.renderName}"`,
         detail: null,
         actor,
-        link: meta.renderId ? `/projekty/${ev.projectId}/renders/${meta.renderId}` : null,
+        link: meta.renderId ? `/projekty/${projectId}/renders/${meta.renderId}` : null,
         meta,
       });
     }
