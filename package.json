@@ -21,6 +21,7 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@imgly/background-removal": "^1.7.0",
+    "@next/third-parties": "16.2.1",
     "@prisma/adapter-pg": "^7.5.0",
     "@prisma/client": "^7.5.0",
     "@radix-ui/react-slot": "^1.2.4",

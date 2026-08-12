@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, DM_Sans, Story_Script, Lato, Nunito } from "next/font/google";
 import { cookies } from "next/headers";
-import Script from "next/script";
+import { GoogleAnalytics } from "@next/third-parties/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/lib/theme";
@@ -67,13 +67,6 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
 
-      <Script src="https://www.googletagmanager.com/gtag/js?id=G-VLCY7XMYHT" strategy="afterInteractive" />
-      <Script id="google-analytics" strategy="afterInteractive">{`
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-        gtag('config', 'G-VLCY7XMYHT');
-      `}</Script>
       <body className="min-h-full flex flex-col bg-background overflow-x-hidden" suppressHydrationWarning>
         <Providers>
           <LanguageProvider initialLang={initialLang}>
@@ -84,6 +77,9 @@ export default async function RootLayout({
             </ThemeProvider>
           </LanguageProvider>
         </Providers>
+        {process.env.NEXT_PUBLIC_GA_ID && (
+          <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />
+        )}
       </body>
     </html>
   );
