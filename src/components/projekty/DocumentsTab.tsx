@@ -32,6 +32,7 @@ import {
   SearchIcon,
   XIcon,
   ExternalLinkIcon,
+  DownloadIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useUploadThing } from "@/lib/uploadthing-client";
@@ -160,6 +161,26 @@ function DocRow({
         <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer" className="p-1 rounded hover:bg-gray-200">
           <ExternalLinkIcon className="w-3.5 h-3.5 text-gray-500" />
         </a>
+        <button
+          onClick={async () => {
+            try {
+              const res = await fetch(doc.fileUrl);
+              const blob = await res.blob();
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = doc.name;
+              a.click();
+              URL.revokeObjectURL(url);
+            } catch {
+              window.open(doc.fileUrl, "_blank");
+            }
+          }}
+          className="p-1 rounded hover:bg-gray-200"
+          title="Pobierz"
+        >
+          <DownloadIcon className="w-3.5 h-3.5 text-gray-500" />
+        </button>
         <button
           onClick={() => { setEditing(true); setEditName(doc.name); }}
           className="p-1 rounded hover:bg-gray-200"
