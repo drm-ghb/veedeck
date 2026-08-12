@@ -361,7 +361,6 @@ export default function ShareListClient({
                       </div>
                       <div className="flex items-center gap-3 shrink-0">
                         <div className="flex items-center gap-1.5">
-                          <span className="text-xs text-muted-foreground">{t.listy.qtyLabel}</span>
                           <span className="text-sm font-medium tabular-nums">{product.quantity} {product.unit ?? "szt."}</span>
                         </div>
                         {totalPrice !== null && !hidePrices && (
@@ -419,7 +418,7 @@ export default function ShareListClient({
                       {/* Bottom row: qty + link | price */}
                       <div className="flex items-center justify-between mt-2">
                         <div className="flex items-center gap-2">
-                          <span className="text-xs text-muted-foreground">{t.listy.qtyLabel} <span className="font-medium text-foreground">{product.quantity} {product.unit ?? "szt."}</span></span>
+                          <span className="text-xs font-medium text-foreground">{product.quantity} {product.unit ?? "szt."}</span>
                           {product.url && <a href={product.url} target="_blank" rel="noopener noreferrer" className="w-6 h-6 rounded flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"><ExternalLink size={13} /></a>}
                         </div>
                         {totalPrice !== null && !hidePrices && (
