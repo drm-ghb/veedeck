@@ -524,6 +524,13 @@ function SortablePhaseRow({
           {addingItem ? (
             <div
               className="flex flex-wrap items-center gap-2 py-1.5 pl-[3.25rem] pr-3"
+              onBlur={(e) => {
+                const container = e.currentTarget;
+                setTimeout(() => {
+                  if (container.contains(document.activeElement)) return;
+                  if (newItemName.trim()) { submitNewItem(addingItem as "section" | "item", newItemName, newItemStartDate, newItemEndDate); } else { resetAddingItem(); }
+                }, 100);
+              }}
             >
               <Input
                 ref={newItemRef}
@@ -625,7 +632,7 @@ function NewScheduleDialog({
   onClose: () => void;
 }) {
   const t = useT();
-  const [rfProjectId, setRfProjectId] = useState("");
+  const [rfProjectId, setRfProjectId] = useState(rfProjects.length === 1 ? rfProjects[0].id : "");
   const [customName, setCustomName] = useState("");
 
   const selectedProject = rfProjects.find((p) => p.id === rfProjectId);

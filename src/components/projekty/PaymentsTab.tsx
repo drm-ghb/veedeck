@@ -309,7 +309,10 @@ function GroupRow({
         </button>
 
         {isEditing ? (
-          <>
+          <div
+            className="flex flex-1 items-center gap-1"
+            onBlur={(e) => { if (e.currentTarget.contains(e.relatedTarget as Node)) return; onSaveEdit(); }}
+          >
             <Input
               autoFocus
               value={editingName}
@@ -319,7 +322,7 @@ function GroupRow({
             />
             <Button size="icon" variant="ghost" className="h-6 w-6" onClick={onSaveEdit}><Check size={12} /></Button>
             <Button size="icon" variant="ghost" className="h-6 w-6" onClick={onCancelEdit}><X size={12} /></Button>
-          </>
+          </div>
         ) : (
           <>
             <span className="flex-1 text-sm font-semibold" onClick={onToggleCollapse}>{group.name}</span>
@@ -457,7 +460,10 @@ function PaymentRow({
       </button>
 
       {isEditing ? (
-        <>
+        <div
+          className="contents"
+          onBlur={(e) => { if (e.currentTarget.contains(e.relatedTarget as Node)) return; onSaveEdit(); }}
+        >
           <Input
             autoFocus
             value={editingName}
@@ -475,7 +481,7 @@ function PaymentRow({
           />
           <Button size="icon" variant="ghost" className="h-6 w-6" onClick={onSaveEdit} data-edit-input><Check size={12} /></Button>
           <Button size="icon" variant="ghost" className="h-6 w-6" onClick={onCancelEdit} data-edit-input><X size={12} /></Button>
-        </>
+        </div>
       ) : (
         <>
           <div className="flex-1 min-w-0 cursor-pointer" onClick={onStartEdit}>
@@ -998,7 +1004,13 @@ export function PaymentsTab({ clientId, projectId, paymentsSharedWithClient: ini
     const key = parentId ?? sectionKey ?? "root";
     if (addingGroup !== key) return null;
     return (
-      <div className="flex items-center gap-2 mt-2 ml-4">
+      <div
+        className="flex items-center gap-2 mt-2 ml-4"
+        onBlur={(e) => {
+          if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+          if (newGroupName.trim()) { handleAddGroup(parentId, rfProjectId); } else { setAddingGroup(null); setNewGroupName(""); }
+        }}
+      >
         <Input autoFocus placeholder={t.payments.groupNamePlaceholder} value={newGroupName} onChange={(e) => setNewGroupName(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter") handleAddGroup(parentId, rfProjectId); if (e.key === "Escape") { setAddingGroup(null); setNewGroupName(""); } }}
           className="h-7 text-sm" />
@@ -1012,7 +1024,13 @@ export function PaymentsTab({ clientId, projectId, paymentsSharedWithClient: ini
     const key = groupId ?? sectionKey ?? "root";
     if (addingPayment !== key) return null;
     return (
-      <div className="flex flex-wrap items-center gap-2 mt-2 ml-2 sm:ml-4">
+      <div
+        className="flex flex-wrap items-center gap-2 mt-2 ml-2 sm:ml-4"
+        onBlur={(e) => {
+          if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+          if (newPaymentName.trim()) { handleAddPayment(groupId, rfProjectId); } else { setAddingPayment(null); setNewPaymentName(""); setNewPaymentAmount(""); }
+        }}
+      >
         <Input autoFocus placeholder={t.payments.paymentNamePlaceholder} value={newPaymentName} onChange={(e) => setNewPaymentName(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter") handleAddPayment(groupId, rfProjectId); if (e.key === "Escape") { setAddingPayment(null); setNewPaymentName(""); setNewPaymentAmount(""); } }}
           className="h-7 text-sm flex-1 min-w-[120px]" />
