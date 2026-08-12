@@ -517,11 +517,12 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
   const [history, setHistory] = useState<CanvasElement[][]>([initElements]);
   const [historyIndex, setHistoryIndex] = useState(0);
   const [rightSidebarOpen, setRightSidebarOpen] = useState(false);
-  const [rightTab, setRightTab] = useState<"projectflow" | "products" | "lists" | "pinterest">("projectflow");
+  const [rightTab, setRightTab] = useState<"projectflow" | "products" | "textures" | "lists" | "pinterest">("projectflow");
   const [rooms, setRooms] = useState<RoomItem[]>([]);
   const [expandedRooms, setExpandedRooms] = useState<Set<string>>(new Set());
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const [products, setProducts] = useState<{ id: string; name: string; imageUrl: string | null }[]>([]);
+  const [textures, setTextures] = useState<{ id: string; name: string; imageUrl: string | null; category: string | null }[]>([]);
   type ListProduct = { id: string; name: string; imageUrl: string | null; price: string | null };
   type ListSection = { id: string; name: string; products: ListProduct[] };
   type ShoppingListItem = { id: string; name: string; sections: ListSection[] };
@@ -780,6 +781,9 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
     if (rightTab === "projectflow") loadRooms();
     if (rightTab === "products") {
       fetch("/api/products").then(r => r.ok ? r.json() : []).then((data: { id: string; name: string; imageUrl: string | null }[]) => setProducts(data)).catch(() => {});
+    }
+    if (rightTab === "textures") {
+      fetch("/api/textures").then(r => r.ok ? r.json() : []).then((data: { id: string; name: string; imageUrl: string | null; category: string | null }[]) => setTextures(data)).catch(() => {});
     }
     if (rightTab === "lists" && client?.id) {
       fetch(`/api/clients/${client.id}/shopping-lists`)
@@ -3854,6 +3858,12 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                 <Package size={13} /> Produkty
               </button>
               <button
+                onClick={() => { setRightTab("textures"); setSidebarQuery(""); }}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-colors ${rightTab === "textures" ? "border-b-2 border-primary text-primary" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                <Layers size={13} /> Tekstury
+              </button>
+              <button
                 onClick={() => { setRightTab("lists"); setSidebarQuery(""); }}
                 className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-colors ${rightTab === "lists" ? "border-b-2 border-primary text-primary" : "text-muted-foreground hover:text-foreground"}`}
               >
@@ -3970,6 +3980,31 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                         <p className="text-[11px] font-medium truncate px-2 py-1.5">{p.name}</p>
                       </button>
                     ))}
+                  </div>
+                </>
+              )}
+              {rightTab === "textures" && (
+                <>
+                  {textures.length === 0 && (
+                    <p className="text-xs text-muted-foreground text-center py-8">Brak tekstur{sidebarQuery ? " dla tej frazy" : ""}</p>
+                  )}
+                  <div className="grid grid-cols-2 gap-2">
+                    {textures
+                      .filter(t => t.imageUrl && (!sidebarQuery || t.name.toLowerCase().includes(sidebarQuery.toLowerCase())))
+                      .map((t) => (
+                        <button key={t.id}
+                          draggable
+                          onDragStart={(e) => { e.dataTransfer.setData('moodboard-image-url', t.imageUrl!); e.dataTransfer.effectAllowed = 'copy'; }}
+                          onClick={() => { if (!t.imageUrl) return; templatePickModeId ? fillPlaceholderWithUrl(templatePickModeId, t.imageUrl) : addRenderToCanvas(t.imageUrl, t.name); }}
+                          className={`flex flex-col rounded-xl border overflow-hidden hover:shadow-sm transition-all text-left ${templatePickModeId ? "border-primary/60 ring-1 ring-primary/30 hover:border-primary" : "border-border hover:border-primary/40"}`}
+                          title={t.name}>
+                          <div className="aspect-square bg-muted w-full overflow-hidden">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={t.imageUrl!} alt={t.name} className="w-full h-full object-cover pointer-events-none" />
+                          </div>
+                          <p className="text-[11px] font-medium truncate px-2 py-1.5">{t.name}</p>
+                        </button>
+                      ))}
                   </div>
                 </>
               )}
