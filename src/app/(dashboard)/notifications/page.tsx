@@ -1,7 +1,5 @@
-import { auth } from "@/lib/auth";
-import NotificationsClient from "./NotificationsClient";
+import { redirect } from "next/navigation";
 
-export default async function NotificationsPage() {
-  const session = await auth();
-  return <NotificationsClient userId={session!.user!.id!} />;
+export default function NotificationsRedirectPage() {
+  redirect("/powiadomienia");
 }

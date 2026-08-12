@@ -20,7 +20,7 @@ interface NotificationBellProps {
   viewAllHref?: string;
 }
 
-export default function NotificationBell({ userId, viewAllHref = "/notifications" }: NotificationBellProps) {
+export default function NotificationBell({ userId, viewAllHref = "/powiadomienia" }: NotificationBellProps) {
   const t = useT();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [open, setOpen] = useState(false);
