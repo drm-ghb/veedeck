@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { ChatBubble, X, ChevronLeft, ChevronDown, ExternalLink, Send, Paperclip, Mic, Loader2, Search, FolderOpen, MoreVertical, Edit2, Archive, ArchiveRestore, Trash2, Users } from "@/components/ui/icons";
+import { ChatBubble, X, ChevronLeft, ChevronDown, ExternalLink, Send, Paperclip, Mic, Square, Loader2, Search, FolderOpen, MoreVertical, Edit2, Archive, ArchiveRestore, Trash2, Users } from "@/components/ui/icons";
 import { useT } from "@/lib/i18n";
 import { toast } from "sonner";
 import Pusher from "pusher-js";
@@ -97,6 +97,9 @@ export default function FloatingChatPanel({ userId, currentUserAvatarUrl }: { us
   const [loadingMembers, setLoadingMembers] = useState(false);
   const [userAvatars, setUserAvatars] = useState<Record<string, string | null>>({});
 
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingSeconds, setRecordingSeconds] = useState(0);
+
   const prevUnreadRef = useRef(0);
   const selectedDiscUnreadRef = useRef(0);
   const isInitialScrollRef = useRef(false);
@@ -110,6 +113,9 @@ export default function FloatingChatPanel({ userId, currentUserAvatarUrl }: { us
   const headerMenuRef = useRef<HTMLDivElement>(null);
   const allPusherRef = useRef<Pusher | null>(null);
   const badgeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const { startUpload } = useUploadThing("discussionAttachmentUploader");
 
@@ -404,6 +410,54 @@ export default function FloatingChatPanel({ userId, currentUserAvatarUrl }: { us
     e.target.style.height = "auto";
     e.target.style.height = Math.min(e.target.scrollHeight, 160) + "px";
     e.target.style.overflowY = e.target.scrollHeight > 160 ? "auto" : "hidden";
+  }
+
+  // ── Voice recording ────────────────────────────────────────────────────────
+  async function startRecording() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const types = ["audio/webm", "audio/mp4", "audio/ogg", "audio/wav"];
+      const mimeType = types.find((t) => MediaRecorder.isTypeSupported(t)) ?? "";
+      const mediaRecorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data);
+      };
+
+      mediaRecorder.onstop = async () => {
+        stream.getTracks().forEach((t) => t.stop());
+        if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
+        setRecordingSeconds(0);
+        const type = mediaRecorder.mimeType || mimeType || "audio/webm";
+        const ext = type.includes("mp4") ? "mp4" : type.includes("ogg") ? "ogg" : type.includes("wav") ? "wav" : "webm";
+        const audioBlob = new Blob(audioChunksRef.current, { type });
+        const audioFile = new File([audioBlob], `voice-${Date.now()}.${ext}`, { type });
+        setIsRecording(false);
+        setUploading(true);
+        try {
+          const result = await startUpload([audioFile]);
+          if (!result?.[0]) throw new Error();
+          setPendingAttachment({ url: result[0].url, name: audioFile.name, type: "audio" });
+        } catch {
+          toast.error(t.dyskusje.uploadRecordingError);
+        } finally {
+          setUploading(false);
+        }
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+      setRecordingSeconds(0);
+      recordingTimerRef.current = setInterval(() => setRecordingSeconds((s) => s + 1), 1000);
+    } catch {
+      toast.error(t.render.micAccessDenied);
+    }
+  }
+
+  function stopRecording() {
+    mediaRecorderRef.current?.stop();
   }
 
   // ── Send ───────────────────────────────────────────────────────────────────
@@ -874,6 +928,12 @@ export default function FloatingChatPanel({ userId, currentUserAvatarUrl }: { us
                   </button>
                 </div>
               )}
+              {isRecording && (
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-destructive/10 border border-destructive/20 text-sm text-destructive">
+                  <span className="w-2 h-2 rounded-full bg-destructive animate-pulse flex-shrink-0" />
+                  <span className="flex-1 text-xs font-medium">{t.dyskusje.recordingTime.replace("{n}", String(recordingSeconds))}</span>
+                </div>
+              )}
               <div className="flex items-end gap-2">
                 <input
                   ref={fileInputRef}
@@ -906,13 +966,15 @@ export default function FloatingChatPanel({ userId, currentUserAvatarUrl }: { us
                   className="flex-1 min-h-10 max-h-40 px-3 py-2 text-sm resize-none rounded-2xl bg-muted focus:outline-none"
                 />
                 <button
-                  onClick={input.trim() || pendingAttachment ? sendMessage : undefined}
+                  onClick={isRecording ? stopRecording : (input.trim() || pendingAttachment ? sendMessage : startRecording)}
                   disabled={sending || uploading}
                   className="flex-shrink-0 flex items-center justify-center w-8 h-8 text-primary disabled:opacity-40 hover:opacity-90 transition-colors"
-                  aria-label={input.trim() || pendingAttachment ? "Wyślij" : "Mikrofon"}
+                  aria-label={isRecording ? "Zatrzymaj nagrywanie" : input.trim() || pendingAttachment ? "Wyślij" : "Nagraj wiadomość głosową"}
                 >
                   {sending ? (
                     <Loader2 className="w-7 h-7 animate-spin" />
+                  ) : isRecording ? (
+                    <Square className="w-7 h-7 text-destructive" />
                   ) : input.trim() || pendingAttachment ? (
                     <Send className="w-7 h-7" />
                   ) : (

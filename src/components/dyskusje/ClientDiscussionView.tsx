@@ -449,8 +449,9 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
   const startRecording = useCallback(async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mimeType = MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "audio/ogg";
-      const mediaRecorder = new MediaRecorder(stream, { mimeType });
+      const types = ["audio/webm", "audio/mp4", "audio/ogg", "audio/wav"];
+      const mimeType = types.find((t) => MediaRecorder.isTypeSupported(t)) ?? "";
+      const mediaRecorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
 
@@ -462,9 +463,10 @@ export default function ClientDiscussionView({ token, discussionId, discussionTi
         stream.getTracks().forEach((t) => t.stop());
         if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
         setRecordingSeconds(0);
-        const ext = mimeType.includes("ogg") ? "ogg" : "webm";
-        const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
-        const audioFile = new File([audioBlob], `voice-${Date.now()}.${ext}`, { type: mimeType });
+        const type = mediaRecorder.mimeType || mimeType || "audio/webm";
+        const ext = type.includes("mp4") ? "mp4" : type.includes("ogg") ? "ogg" : type.includes("wav") ? "wav" : "webm";
+        const audioBlob = new Blob(audioChunksRef.current, { type });
+        const audioFile = new File([audioBlob], `voice-${Date.now()}.${ext}`, { type });
         setIsRecording(false);
         setUploading(true);
         try {
