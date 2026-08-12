@@ -1107,7 +1107,7 @@ export default function DashboardView({
         )}
 
         <Link
-          href="/notifications"
+          href="/powiadomienia"
           className="min-w-0 flex items-center gap-3 px-4 py-4 rounded-xl bg-card border border-border transition-all hover:shadow-[0_8px_22px_-14px_rgba(24,24,50,.18)] hover:-translate-y-0.5"
         >
           <div
