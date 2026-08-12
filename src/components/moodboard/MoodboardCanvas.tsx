@@ -3841,15 +3841,6 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                 onClick={() => { setRightTab("projectflow"); setSidebarQuery(""); }}
               >
                 <PushPin size={13} /> ProjectFlow
-                {rightTab === "projectflow" && project && (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); loadRooms(); }}
-                    title="Odśwież"
-                    className="absolute right-2 text-muted-foreground hover:text-foreground"
-                  >
-                    <RefreshCw size={11} />
-                  </button>
-                )}
               </div>
               <button
                 onClick={() => { setRightTab("products"); setSidebarQuery(""); }}
