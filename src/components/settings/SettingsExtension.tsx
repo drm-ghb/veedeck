@@ -219,9 +219,10 @@ export function SettingsExtension({ initialKey }: Props) {
         <ol className="text-sm text-muted-foreground space-y-1.5 list-decimal list-inside">
           <li>{t.extension.step1}</li>
           <li>{t.extension.step2}</li>
-          <li><strong className="text-foreground">{t.extension.step3}</strong></li>
+          <li>{t.extension.step3}</li>
+          <li><strong className="text-foreground">{t.extension.step4}</strong></li>
           <li>
-            <strong className="text-foreground">{t.extension.step4}</strong>
+            <strong className="text-foreground">{t.extension.step5}</strong>
             <div className="mt-2">
               <img
                 src="/veepick-guide.png"
@@ -230,7 +231,7 @@ export function SettingsExtension({ initialKey }: Props) {
               />
             </div>
           </li>
-          <li>{t.extension.step5}</li>
+          <li>{t.extension.step6}</li>
         </ol>
       </div>
     </div>

@@ -2444,8 +2444,9 @@ export const en: TranslationKeys = {
     step1: "Download the extension from the extensions store for your browser (buttons above)",
     step2: "Add the extension and pin it to the browser toolbar",
     step3: "Click the veepick icon in the browser toolbar",
-    step4: "Paste the API key from the section above and click \"Connect\"",
-    step5: "Done — you can now add products from online stores directly to your veedeck lists",
+    step4: "In the App Address field, enter: https://app.veedeck.com",
+    step5: "Paste the API key from the section above and click \"Connect\"",
+    step6: "Done — you can now add products from online stores directly to your veedeck lists",
   },
   team: {
     inviteTitle: "Invite user",

@@ -2446,8 +2446,9 @@ export const pl = {
     step1: "Pobierz wtyczkę ze sklepu rozszerzeń odpowiedniego dla Twojej przeglądarki (przyciski powyżej)",
     step2: "Dodaj wtyczkę i przypnij ją do paska narzędzi w przeglądarce",
     step3: "Kliknij ikonę veepick w pasku narzędzi przeglądarki",
-    step4: "Wklej klucz API z sekcji powyżej i kliknij \"Połącz\"",
-    step5: "Gotowe — możesz dodawać produkty ze sklepów bezpośrednio do list w veedeck",
+    step4: "W polu Adres aplikacji wpisz: https://app.veedeck.com",
+    step5: "Wklej klucz API z sekcji powyżej i kliknij \"Połącz\"",
+    step6: "Gotowe — możesz dodawać produkty ze sklepów bezpośrednio do list w veedeck",
   },
   team: {
     inviteTitle: "Zaproś u\u017cytkownika",
