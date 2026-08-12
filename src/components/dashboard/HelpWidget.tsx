@@ -77,6 +77,7 @@ export default function HelpWidget({ open, onClose, initialTab, initialCategory 
   const [streaming, setStreaming] = useState(false);
   const [showBetaDialog, setShowBetaDialog] = useState(false);
   const [limitResetAt, setLimitResetAt] = useState<string | null>(null);
+  const [aiRemaining, setAiRemaining] = useState<number | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -111,9 +112,15 @@ export default function HelpWidget({ open, onClose, initialTab, initialCategory 
   }, [open, initialTab, initialCategory]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (activeTab === "ai" && !localStorage.getItem("veedeck-ai-beta-seen")) {
-      setShowBetaDialog(true);
-    }
+    if (activeTab !== "ai") return;
+    if (!localStorage.getItem("veedeck-ai-beta-seen")) setShowBetaDialog(true);
+    fetch("/api/ai-assistant")
+      .then((r) => r.json())
+      .then((d) => {
+        setAiRemaining(d.remaining ?? null);
+        if (d.resetAt) setLimitResetAt(d.resetAt);
+      })
+      .catch(() => {});
   }, [activeTab]);
 
   useEffect(() => {
@@ -142,6 +149,7 @@ export default function HelpWidget({ open, onClose, initialTab, initialCategory 
       if (res.status === 429) {
         const data = await res.json().catch(() => ({}));
         if (data.resetAt) setLimitResetAt(data.resetAt);
+        setAiRemaining(0);
         setMessages((prev) => prev.slice(0, -1)); // remove empty placeholder
         return;
       }
@@ -178,6 +186,7 @@ export default function HelpWidget({ open, onClose, initialTab, initialCategory 
       });
     } finally {
       setStreaming(false);
+      setAiRemaining((prev) => (prev !== null ? Math.max(0, prev - 1) : null));
       inputRef.current?.focus();
     }
   }
@@ -205,6 +214,11 @@ export default function HelpWidget({ open, onClose, initialTab, initialCategory 
             <HelpCircle size={16} className="text-primary" />
           )}
           <span className="font-semibold text-sm">{activeTab === "ai" ? "Asystent AI" : "Pomoc"}</span>
+          {activeTab === "ai" && aiRemaining !== null && (
+            <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${aiRemaining === 0 ? "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400" : "bg-muted text-muted-foreground"}`}>
+              {aiRemaining}/10
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <button onClick={() => setExpanded((e) => !e)} className="text-muted-foreground hover:text-foreground transition-colors" title={expanded ? "Zmniejsz" : "Rozszerz"}>

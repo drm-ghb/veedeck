@@ -11,6 +11,30 @@ const SYSTEM_PROMPT = readFileSync(join(process.cwd(), "ASYSTENT_INSTRUKCJA_veed
 
 const AI_DAILY_LIMIT = 10;
 
+export async function GET() {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { aiQueryCount: true, aiQueryResetAt: true },
+  });
+
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const now = new Date();
+  const limitExpired = user.aiQueryResetAt && user.aiQueryResetAt <= now;
+  const currentCount = limitExpired ? 0 : user.aiQueryCount;
+  const remaining = Math.max(0, AI_DAILY_LIMIT - currentCount);
+  const resetAt = currentCount >= AI_DAILY_LIMIT && !limitExpired ? user.aiQueryResetAt?.toISOString() : null;
+
+  return NextResponse.json({ remaining, limit: AI_DAILY_LIMIT, resetAt });
+}
+
 export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) {
