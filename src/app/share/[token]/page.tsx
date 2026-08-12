@@ -385,7 +385,7 @@ export default function SharePage() {
     await fetch(`/api/share/${token}/renders/${renderId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json", ...buildHeaders() },
-      body: JSON.stringify({ status }),
+      body: JSON.stringify({ status, clientName: authorName }),
     });
     updateRenderInState(renderId, status);
   }
@@ -400,7 +400,7 @@ export default function SharePage() {
           fetch(`/api/share/${token}/renders/${r.id}`, {
             method: "PATCH",
             headers: { "Content-Type": "application/json", ...buildHeaders() },
-            body: JSON.stringify({ status: "ACCEPTED" }),
+            body: JSON.stringify({ status: "ACCEPTED", clientName: authorName }),
           })
         )
       );
