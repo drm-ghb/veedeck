@@ -62,6 +62,7 @@ export async function GET(
         description: p.description,
         deliveryTime: p.deliveryTime,
         quantity: p.quantity,
+        unit: p.unit,
         order: p.order,
         commentCount: p._count.comments,
         approval: p.approval,

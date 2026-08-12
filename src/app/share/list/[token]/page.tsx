@@ -149,6 +149,7 @@ export default async function PublicListPage({ params }: { params: Promise<{ tok
     description: p.description,
     deliveryTime: p.deliveryTime,
     quantity: p.quantity,
+    unit: p.unit,
     order: p.order,
     createdAt: p.createdAt.toISOString(),
     commentCount: p._count.comments,
