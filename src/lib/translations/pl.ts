@@ -888,7 +888,7 @@ export const pl = {
     noProjectsActive: "Brak projektów pasujących do",
     noProjectsArchived: "Brak zarchiwizowanych projektów",
     noProjectsEmpty: "Brak projektów",
-    noProjectsHint: 'Kliknij „Nowy projekt" aby stworzyć pierwszy projekt i podpiąć do niego zasoby z modułów.',
+    noProjectsHint: 'Kliknij „Nowy projekt" aby stworzyć pierwszy projekt.',
     mostRenders: "Najwięcej renderów",
     colProject: "Projekt",
     colClient: "Klient",

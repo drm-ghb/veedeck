@@ -888,7 +888,7 @@ export const en: TranslationKeys = {
     noProjectsActive: "No projects matching",
     noProjectsArchived: "No archived projects",
     noProjectsEmpty: "No projects",
-    noProjectsHint: "Click \"New project\" to create your first project and attach resources from modules.",
+    noProjectsHint: "Click \"New project\" to create your first project.",
     mostRenders: "Most renders",
     colProject: "Project",
     colClient: "Client",
