@@ -124,7 +124,7 @@ export default function ShareNavbar({ backHref, backLabel, clientLogoUrl, design
               </span>
             )}
             {currentUserId && (
-              <NotificationBell userId={currentUserId} viewAllHref={(() => { const m = pathname.match(/^/client/([^/]+)/); return m ? `/client/${m[1]}/powiadomienia` : "/client/powiadomienia"; })()}  />
+              <NotificationBell userId={currentUserId} viewAllHref={pathname.startsWith("/client/") ? `/client/${pathname.split("/")[2]}/powiadomienia` : "/client/powiadomienia"}  />
             )}
             {clientName && (
               <button
