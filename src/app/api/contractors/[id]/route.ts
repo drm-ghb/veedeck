@@ -63,6 +63,25 @@ export async function PATCH(
     },
   });
 
+  // Sync email to linked user account (contactEmail = real address used for sending)
+  if (contractor.userId && email !== undefined) {
+    const newEmail = email || null;
+    const linkedUser = await prisma.user.findUnique({
+      where: { id: contractor.userId },
+      select: { email: true },
+    });
+    await prisma.user.update({
+      where: { id: contractor.userId },
+      data: {
+        contactEmail: newEmail,
+        // Also replace @contractor.internal placeholder with the real email
+        ...(newEmail && linkedUser?.email?.endsWith("@contractor.internal")
+          ? { email: newEmail }
+          : {}),
+      },
+    });
+  }
+
   return NextResponse.json(updated);
 }
 

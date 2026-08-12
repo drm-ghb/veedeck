@@ -187,7 +187,8 @@ export default function ContractorProfile({ contractor }: Props) {
       if (res.ok) {
         toast.success("Link dostępowy wysłany na adres e-mail wykonawcy.");
       } else {
-        toast.error("Nie udało się wysłać linku. Sprawdź czy wykonawca ma adres e-mail.");
+        const data = await res.json().catch(() => ({}));
+        toast.error(data.error ?? "Nie udało się wysłać linku. Sprawdź czy wykonawca ma adres e-mail.");
       }
     } finally {
       setSendingLink(false);

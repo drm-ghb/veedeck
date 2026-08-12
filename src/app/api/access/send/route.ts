@@ -24,26 +24,29 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Brakuje userId" }, { status: 400 });
   }
 
-  // Verify the target user belongs to this designer
   const targetUser = await prisma.user.findUnique({
     where: { id: userId },
-    select: { id: true, email: true, name: true, role: true },
+    select: { id: true, email: true, contactEmail: true, name: true, role: true },
   });
 
   if (!targetUser || !["client", "contractor"].includes(targetUser.role)) {
     return NextResponse.json({ error: "Użytkownik nie istnieje lub nie ma roli klienta/wykonawcy" }, { status: 404 });
   }
 
-  if (!targetUser.email) {
-    return NextResponse.json({ error: "Użytkownik nie ma adresu e-mail" }, { status: 422 });
+  // Contractors created without a real email get email=.
+  // contactEmail holds the real address (or null if none given).
+  const emailToSend =
+    targetUser.contactEmail ||
+    (targetUser.email && !targetUser.email.endsWith("@contractor.internal") ? targetUser.email : null);
+
+  if (!emailToSend) {
+    return NextResponse.json({ error: "Wykonawca nie ma adresu e-mail — edytuj profil i dodaj adres e-mail" }, { status: 422 });
   }
 
-  // Verify ownership: client must be linked to this designer, or contractor must be
   const designerId = session.user.id;
-
   let hasAccess = false;
+
   if (targetUser.role === "client") {
-    // Check via Client entity (new-style) or via Project (old-style)
     const pc = await prisma.projectClient.findFirst({
       where: {
         userId,
@@ -67,7 +70,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Brak dostępu" }, { status: 403 });
   }
 
-  // Get designer name for the email
   const designer = await prisma.user.findUnique({
     where: { id: designerId },
     select: { name: true },
@@ -78,7 +80,7 @@ export async function POST(req: NextRequest) {
 
   after(async () => {
     await sendAccessLinkEmail({
-      to: targetUser.email!,
+      to: emailToSend,
       link,
       personName: targetUser.name ?? "Użytkowniku",
       designerName: designer?.name ?? "Twój projektant",
