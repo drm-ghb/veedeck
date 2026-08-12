@@ -11,7 +11,7 @@ const securityHeaders = [
   // Limit referrer information sent to third parties
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   // Restrict browser feature access
-  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+  { key: "Permissions-Policy", value: "camera=(), microphone=(self), geolocation=()" },
   // Content Security Policy
   // Note: 'unsafe-inline' and 'unsafe-eval' are required by Next.js / Tailwind / tldraw.
   // Tighten further once a nonce-based CSP approach is feasible.
