@@ -2736,7 +2736,7 @@ export const pl = {
     dyskusjeStep1: "Stwórz chat z klientem, wykonawcą lub członkiem zespołu.",
     dyskusjeStep2: "Oznacz klienta albo wykonawcę w komentarzu.",
     dyskusjeStep3: "Historia rozmowy zawsze zostaje pod ręką.",
-    dyskusjeTip: "Chat powstaje na dwa sposoby: <b>zakładasz go ręcznie</b> albo tworzy się <b>automatycznie</b> przy pierwszym wejściu klienta do projektu w ProjectFlow.",
+    dyskusjeTip: "Chat powstaje na dwa sposoby: <b>automatycznie</b> wraz z utworzeniem projektu w ProjectFlow albo <b>zakładasz go ręcznie</b>.",
     // Contractors
     wykonawcyLabel: "Wykonawcy",
     wykonawcyTitle: "Współpracuj z wykonawcą",

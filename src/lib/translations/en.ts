@@ -2734,7 +2734,7 @@ export const en: TranslationKeys = {
     dyskusjeStep1: "Create a chat with a client, contractor or team member.",
     dyskusjeStep2: "Mention a client or contractor in a comment.",
     dyskusjeStep3: "The conversation history is always at hand.",
-    dyskusjeTip: "A chat can be created in two ways: <b>you create it manually</b>, or it's created <b>automatically</b> when the client first opens the project in ProjectFlow.",
+    dyskusjeTip: "A chat is created in two ways: <b>automatically</b> when a project is created in ProjectFlow, or <b>manually</b> by you.",
     // Contractors
     wykonawcyLabel: "Contractors",
     wykonawcyTitle: "Collaborate with a contractor",
