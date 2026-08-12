@@ -290,6 +290,28 @@ export async function GET(
         link: listPath ? `/listy-zakupowe/${listPath}?product=${meta.productId}` : null,
         meta,
       });
+    } else if (ev.type === "render_accepted") {
+      events.push({
+        id: `ev-${ev.id}`,
+        type: "render_accepted",
+        date: ev.createdAt.toISOString(),
+        label: `Zaakceptował(a) plik „${meta.renderName}"`,
+        detail: null,
+        actor,
+        link: meta.renderId ? `/projekty/${ev.projectId}/renders/${meta.renderId}` : null,
+        meta,
+      });
+    } else if (ev.type === "render_rejected") {
+      events.push({
+        id: `ev-${ev.id}`,
+        type: "render_rejected",
+        date: ev.createdAt.toISOString(),
+        label: `Odrzucił(a) plik „${meta.renderName}"`,
+        detail: null,
+        actor,
+        link: meta.renderId ? `/projekty/${ev.projectId}/renders/${meta.renderId}` : null,
+        meta,
+      });
     }
   }
 

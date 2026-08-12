@@ -47,6 +47,15 @@ export async function PATCH(
       ...notification,
       createdAt: notification.createdAt.toISOString(),
     });
+
+    await prisma.clientEvent.create({
+      data: {
+        projectId,
+        type: status === "ACCEPTED" ? "render_accepted" : "render_rejected",
+        clientName,
+        meta: { renderId, renderName: render.name },
+      },
+    });
   }
 
   return NextResponse.json(updated);
