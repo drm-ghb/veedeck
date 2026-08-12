@@ -3837,7 +3837,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
           <div className="w-[480px] border-l border-border bg-background flex flex-col shrink-0">
             {/* Tabs */}
             <div className="flex border-b border-border">
-              <div className={`flex-1 relative flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-colors cursor-pointer ${rightTab === "projectflow" ? "border-b-2 border-primary text-primary" : "text-muted-foreground hover:text-foreground"}`}
+              <div className={`flex-1 relative flex items-center justify-center gap-1.5 py-2.5 pl-2 text-xs font-medium transition-colors cursor-pointer ${rightTab === "projectflow" ? "border-b-2 border-primary text-primary" : "text-muted-foreground hover:text-foreground"}`}
                 onClick={() => { setRightTab("projectflow"); setSidebarQuery(""); }}
               >
                 <PushPin size={13} /> ProjectFlow
@@ -3871,7 +3871,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
               </button>
               <button
                 onClick={() => { setRightTab("pinterest"); setSidebarQuery(""); }}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-colors ${rightTab === "pinterest" ? "border-b-2 border-primary text-primary" : "text-muted-foreground hover:text-foreground"}`}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 pr-2 text-xs font-medium transition-colors ${rightTab === "pinterest" ? "border-b-2 border-primary text-primary" : "text-muted-foreground hover:text-foreground"}`}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/pinterest-logo.svg" alt="" className="w-3.5 h-3.5" /> Pinterest
