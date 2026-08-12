@@ -55,7 +55,7 @@ export async function POST(
           title: true,
           shareToken: true,
           user: { select: { id: true, name: true, fullName: true, notifyClientOnReply: true } },
-          clients: { select: { user: { select: { id: true, contactEmail: true, emailNotifEnabled: true, emailNotifModules: true } } } },
+          clients: { select: { user: { select: { id: true, email: true, contactEmail: true, emailNotifEnabled: true, emailNotifModules: true } } } },
         },
       },
     },
@@ -76,9 +76,10 @@ export async function POST(
       const designerName = render.project.user.fullName || render.project.user.name || "Projektant";
       for (const pc of render.project.clients) {
         const cu = pc.user;
-        if (cu?.contactEmail && cu.emailNotifEnabled && cu.emailNotifModules.includes("renderflow")) {
+        const clientEmail = cu?.contactEmail ?? cu?.email;
+        if (clientEmail && cu.emailNotifEnabled && cu.emailNotifModules.includes("renderflow")) {
           notifyClientDesignerReply({
-            clientEmail: cu.contactEmail,
+            clientEmail,
             projectTitle: render.project.title,
             projectId: render.project.id,
             renderId: comment.renderId,
