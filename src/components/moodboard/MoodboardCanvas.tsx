@@ -1759,7 +1759,25 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
       if (placeholderId) {
         fillPlaceholderWithUrl(placeholderId, sidebarUrl);
       } else {
-        addRenderToCanvas(sidebarUrl, '');
+        const dropClientX = e.clientX;
+        const dropClientY = e.clientY;
+        const img = new window.Image();
+        img.crossOrigin = "anonymous";
+        img.onload = () => {
+          const maxW = 350, maxH = 260;
+          const ratio = Math.min(maxW / img.naturalWidth, maxH / img.naturalHeight, 1);
+          const w = img.naturalWidth * ratio, h = img.naturalHeight * ratio;
+          const pos = stagePoint(dropClientX, dropClientY);
+          const newEl: CanvasElement = { id: uid(), type: "image", x: pos.x - w / 2, y: pos.y - h / 2, width: w, height: h, imageUrl: sidebarUrl, opacity: 1, rotation: 0 };
+          updateElements([...elementsRef.current, newEl]);
+          setSelectedIds([newEl.id]);
+        };
+        img.onerror = () => {
+          const pos = stagePoint(dropClientX, dropClientY);
+          const newEl: CanvasElement = { id: uid(), type: "image", x: pos.x - 175, y: pos.y - 130, width: 350, height: 260, imageUrl: sidebarUrl, opacity: 1, rotation: 0 };
+          updateElements([...elementsRef.current, newEl]);
+        };
+        img.src = sidebarUrl;
       }
       return;
     }
