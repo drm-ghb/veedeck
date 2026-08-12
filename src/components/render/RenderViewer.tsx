@@ -1902,14 +1902,14 @@ export default function RenderViewer({
             {/* Zone 4: Discussion */}
             <button
               onClick={() => setShowComments((v) => { const next = !v; sessionStorage.setItem("renderflow_showComments", String(next)); if (next && sidebarTabRef.current === "chat") markChatRead(); return next; })}
-              className={`relative flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md border transition-colors ${showComments ? "bg-primary text-primary-foreground border-primary" : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted"}`}
+              className={`relative flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md border transition-colors ${showComments ? "bg-primary text-primary-foreground border-primary" : chatUnreadCount > 0 ? "border-violet-400 text-violet-600 bg-violet-50 dark:bg-violet-950/30 dark:text-violet-400 dark:border-violet-700" : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted"}`}
             >
               <svg viewBox="0 0 24 24" className="w-[14px] h-[14px]" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg> Dyskusja
               {(() => {
                 const total = comments.filter(c => c.posX === null && c.posY === null).length;
                 if (total === 0) return null;
                 return (
-                  <span className={`absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 text-[10px] font-bold rounded-full flex items-center justify-center leading-none ${chatUnreadCount > 0 ? "bg-blue-500 text-white" : "bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300"}`}>
+                  <span className={`absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 text-[10px] font-bold rounded-full flex items-center justify-center leading-none ${chatUnreadCount > 0 ? "bg-violet-600 text-white" : "bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300"}`}>
                     {total > 99 ? "99+" : total}
                   </span>
                 );
@@ -4464,7 +4464,7 @@ export default function RenderViewer({
                     onClick={() => setShowComments((v) => { const next = !v; sessionStorage.setItem("renderflow_showComments", String(next)); if (next && sidebarTabRef.current === "chat") markChatRead(); return next; })}
                     aria-label="Otwórz dyskusję"
                     className={`relative flex items-center justify-center w-16 h-16 rounded-full mx-1 flex-shrink-0 transition-colors ${
-                      showComments ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      showComments ? "bg-primary text-primary-foreground" : chatUnreadCount > 0 ? "text-violet-600 bg-violet-100 dark:bg-violet-950/40 dark:text-violet-400" : "text-muted-foreground hover:bg-muted hover:text-foreground"
                     }`}
                   >
                     <svg viewBox="0 0 24 24" className="w-[26px] h-[26px]" fill="currentColor">
@@ -4474,7 +4474,7 @@ export default function RenderViewer({
                       const total = comments.filter(c => c.posX === null && c.posY === null).length;
                       if (total === 0) return null;
                       return (
-                        <span className={`absolute top-2.5 right-2.5 min-w-[18px] h-[18px] px-1 text-[10px] font-bold rounded-full flex items-center justify-center leading-none ${chatUnreadCount > 0 ? "bg-blue-500 text-white" : "bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300"}`}>
+                        <span className={`absolute top-2.5 right-2.5 min-w-[18px] h-[18px] px-1 text-[10px] font-bold rounded-full flex items-center justify-center leading-none ${chatUnreadCount > 0 ? "bg-violet-600 text-white" : "bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300"}`}>
                           {total > 99 ? "99+" : total}
                         </span>
                       );
@@ -4520,7 +4520,7 @@ export default function RenderViewer({
                     onClick={() => setShowComments((v) => { const next = !v; sessionStorage.setItem("renderflow_showComments", String(next)); if (next && sidebarTabRef.current === "chat") markChatRead(); return next; })}
                     aria-label="Otwórz dyskusję"
                     className={`relative flex items-center justify-center w-16 h-16 rounded-full mx-1 flex-shrink-0 transition-colors ${
-                      showComments ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      showComments ? "bg-primary text-primary-foreground" : chatUnreadCount > 0 ? "text-violet-600 bg-violet-100 dark:bg-violet-950/40 dark:text-violet-400" : "text-muted-foreground hover:bg-muted hover:text-foreground"
                     }`}
                   >
                     <svg viewBox="0 0 24 24" className="w-[26px] h-[26px]" fill="currentColor">
@@ -4530,7 +4530,7 @@ export default function RenderViewer({
                       const total = comments.filter(c => c.posX === null && c.posY === null).length;
                       if (total === 0) return null;
                       return (
-                        <span className={`absolute top-2.5 right-2.5 min-w-[18px] h-[18px] px-1 text-[10px] font-bold rounded-full flex items-center justify-center leading-none ${chatUnreadCount > 0 ? "bg-blue-500 text-white" : "bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300"}`}>
+                        <span className={`absolute top-2.5 right-2.5 min-w-[18px] h-[18px] px-1 text-[10px] font-bold rounded-full flex items-center justify-center leading-none ${chatUnreadCount > 0 ? "bg-violet-600 text-white" : "bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300"}`}>
                           {total > 99 ? "99+" : total}
                         </span>
                       );
