@@ -891,7 +891,10 @@ export default function FloatingChatPanel({ userId, currentUserAvatarUrl }: { us
                             <img src={msg.attachmentUrl} alt={msg.attachmentName ?? ""} className="max-w-[200px] rounded-lg object-cover" />
                           </a>
                         )}
-                        {msg.attachmentType !== "image" && msg.attachmentUrl && (
+                        {msg.attachmentType === "audio" && msg.attachmentUrl && (
+                          <audio src={msg.attachmentUrl} controls className="max-w-[220px] rounded-xl mt-1" />
+                        )}
+                        {msg.attachmentType !== "image" && msg.attachmentType !== "audio" && msg.attachmentUrl && (
                           <a
                             href={msg.attachmentUrl}
                             target="_blank"
@@ -916,10 +919,14 @@ export default function FloatingChatPanel({ userId, currentUserAvatarUrl }: { us
                 <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-muted border border-border text-sm max-w-[220px]">
                   {pendingAttachment.type === "image" ? (
                     <img src={pendingAttachment.url} alt={pendingAttachment.name} className="h-8 w-8 rounded object-cover flex-shrink-0" />
+                  ) : pendingAttachment.type === "audio" ? (
+                    <audio src={pendingAttachment.url} controls className="h-7 w-32 min-w-0" />
                   ) : (
                     <Paperclip size={16} className="text-muted-foreground flex-shrink-0" />
                   )}
-                  <span className="flex-1 truncate text-xs min-w-0">{pendingAttachment.name}</span>
+                  {pendingAttachment.type !== "audio" && (
+                    <span className="flex-1 truncate text-xs min-w-0">{pendingAttachment.name}</span>
+                  )}
                   <button
                     onClick={() => setPendingAttachment(null)}
                     className="text-muted-foreground hover:text-foreground flex-shrink-0 ml-1"
