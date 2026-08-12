@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Check, ChevronDown, ChevronRight, Loader2 } from "@/components/ui/icons";
+import { Check, ChevronDown, ChevronRight, Loader2, Paperclip } from "@/components/ui/icons";
 import { useT } from "@/lib/i18n";
 
 interface RfProject {
@@ -26,6 +26,8 @@ interface Payment {
   status: "pending" | "paid";
   paidAt: string | null;
   order: number;
+  attachmentUrl: string | null;
+  attachmentName: string | null;
 }
 
 function formatAmount(amount: number, currency: string) {
@@ -56,6 +58,28 @@ function PaymentRow({ payment, currency }: { payment: Payment; currency: string 
         )}
       </div>
       <span className="text-sm font-medium tabular-nums">{formatAmount(payment.amount, currency)}</span>
+      {payment.attachmentUrl && (
+        <button
+          title={payment.attachmentName ?? t.payments.attachment}
+          onClick={async () => {
+            try {
+              const res = await fetch(payment.attachmentUrl!);
+              const blob = await res.blob();
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = payment.attachmentName ?? "załącznik";
+              a.click();
+              URL.revokeObjectURL(url);
+            } catch {
+              window.open(payment.attachmentUrl!, "_blank");
+            }
+          }}
+          className="flex-shrink-0 p-1 rounded text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <Paperclip size={13} />
+        </button>
+      )}
       <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${
         payment.status === "paid"
           ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"

@@ -516,6 +516,28 @@ function PaymentRow({
           }`}>
             {payment.status === "paid" ? t.payments.paid : t.payments.pending}
           </span>
+          {payment.attachmentUrl && (
+            <button
+              title={payment.attachmentName ?? t.payments.attachment}
+              onClick={async () => {
+                try {
+                  const res = await fetch(payment.attachmentUrl!);
+                  const blob = await res.blob();
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = payment.attachmentName ?? "załącznik";
+                  a.click();
+                  URL.revokeObjectURL(url);
+                } catch {
+                  window.open(payment.attachmentUrl!, "_blank");
+                }
+              }}
+              className="flex-shrink-0 p-1 rounded text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <Paperclip size={13} />
+            </button>
+          )}
           <div className="relative flex-shrink-0">
             <button
               onClick={() => setShowMenu((v) => !v)}

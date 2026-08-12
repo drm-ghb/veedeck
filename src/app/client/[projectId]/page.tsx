@@ -1041,7 +1041,7 @@ export default function ClientProjectPage() {
               {/* ── Right column ── */}
               <div>
                 {/* Harmonogram */}
-                {project.scheduleSharedWithClient && homeData?.scheduleSummary && homeData.scheduleSummary.phases.length > 0 && (
+                {project.scheduleSharedWithClient && homeData && (
                   <div className="mb-5">
                     <div className="flex items-center justify-between mb-[10px]">
                       <h3 className="text-[13px] font-bold text-foreground flex items-center gap-1.5">
@@ -1053,23 +1053,27 @@ export default function ClientProjectPage() {
                       </button>
                     </div>
                     <div className="bg-card border border-border rounded-xl p-3.5">
-                      {homeData.scheduleSummary.phases.map((phase) => (
-                        <div key={phase.id} className="flex gap-2.5 py-2">
-                          <div className={`w-[9px] h-[9px] rounded-full mt-[5px] flex-shrink-0 ${
-                            phase.done ? "bg-green-600" :
-                            phase.isCurrent ? "bg-primary shadow-[0_0_0_4px_#EEF2FF] dark:shadow-[0_0_0_4px_rgba(79,70,229,0.15)]" :
-                            "bg-[#D7D9E2] dark:bg-muted-foreground/30"
-                          }`} />
-                          <div>
-                            <p className={`text-[12.5px] font-semibold leading-snug ${(!phase.done && !phase.isCurrent) ? "text-muted-foreground font-medium" : "text-foreground"}`}>{phase.name}</p>
-                            {phase.isCurrent && phase.nextItem && (
-                              <p className="text-[11px] text-muted-foreground mt-0.5">
-                                {t.clientPage.scheduleNearest} {phase.nextItem.name}{phase.nextItem.endDate ? ` — ${new Date(phase.nextItem.endDate).toLocaleDateString(lang === "en" ? "en-GB" : "pl-PL")}` : ""}
-                              </p>
-                            )}
+                      {homeData.scheduleSummary && homeData.scheduleSummary.phases.length > 0 ? (
+                        homeData.scheduleSummary.phases.map((phase) => (
+                          <div key={phase.id} className="flex gap-2.5 py-2">
+                            <div className={`w-[9px] h-[9px] rounded-full mt-[5px] flex-shrink-0 ${
+                              phase.done ? "bg-green-600" :
+                              phase.isCurrent ? "bg-primary shadow-[0_0_0_4px_#EEF2FF] dark:shadow-[0_0_0_4px_rgba(79,70,229,0.15)]" :
+                              "bg-[#D7D9E2] dark:bg-muted-foreground/30"
+                            }`} />
+                            <div>
+                              <p className={`text-[12.5px] font-semibold leading-snug ${(!phase.done && !phase.isCurrent) ? "text-muted-foreground font-medium" : "text-foreground"}`}>{phase.name}</p>
+                              {phase.isCurrent && phase.nextItem && (
+                                <p className="text-[11px] text-muted-foreground mt-0.5">
+                                  {t.clientPage.scheduleNearest} {phase.nextItem.name}{phase.nextItem.endDate ? ` — ${new Date(phase.nextItem.endDate).toLocaleDateString(lang === "en" ? "en-GB" : "pl-PL")}` : ""}
+                                </p>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        ))
+                      ) : (
+                        <p className="text-[12px] text-muted-foreground text-center py-2">{t.share.scheduleEmpty}</p>
+                      )}
                     </div>
                   </div>
                 )}

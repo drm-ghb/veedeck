@@ -1182,7 +1182,7 @@ export const pl = {
     scheduleAccessError: "Brak dostępu do harmonogramu.",
     scheduleLoadError: "Błąd ładowania harmonogramu.",
     scheduleLoading: "Ładowanie harmonogramu...",
-    scheduleEmpty: "Harmonogram projektu jest jeszcze pusty.",
+    scheduleEmpty: "Brak zaplanowanych działań.",
     dateFrom: "od",
     dateTo: "do",
     expired: "Link wygasł",

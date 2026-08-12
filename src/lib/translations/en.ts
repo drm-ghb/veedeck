@@ -1181,7 +1181,7 @@ export const en: TranslationKeys = {
     scheduleAccessError: "No access to schedule.",
     scheduleLoadError: "Error loading schedule.",
     scheduleLoading: "Loading schedule...",
-    scheduleEmpty: "The project schedule is still empty.",
+    scheduleEmpty: "No scheduled actions.",
     dateFrom: "from",
     dateTo: "to",
     expired: "Link expired",

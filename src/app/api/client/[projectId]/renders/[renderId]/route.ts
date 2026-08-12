@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { pusherServer } from "@/lib/pusher";
 import { getClientProject } from "@/lib/client-access";
 
 export async function PATCH(
@@ -23,5 +24,30 @@ export async function PATCH(
 
   const { status } = await req.json();
   const updated = await prisma.render.update({ where: { id: renderId }, data: { status } });
+
+  // Notify designer when client accepts or rejects a render
+  if (status === "ACCEPTED" || status === "REJECTED") {
+    const clientName = session.user.name || "Klient";
+    const statusLabel = status === "ACCEPTED" ? "zaakceptował" : "odrzucił";
+    const message = `${clientName} ${statusLabel} plik „${render.name}" w projekcie „${project.title}"`;
+    const link = `/projekty/${projectId}/renders/${renderId}`;
+
+    const notification = await prisma.notification.create({
+      data: {
+        userId: project.userId,
+        message,
+        link,
+        type: "status_change",
+        projectId,
+        projectTitle: project.title,
+      },
+    });
+
+    await pusherServer.trigger(`user-${project.userId}`, "new-notification", {
+      ...notification,
+      createdAt: notification.createdAt.toISOString(),
+    });
+  }
+
   return NextResponse.json(updated);
 }
