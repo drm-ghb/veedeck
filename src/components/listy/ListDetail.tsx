@@ -871,16 +871,6 @@ function ProductRow({
         </div>
         <div className="flex items-center gap-3 shrink-0">
           <div className="flex items-center gap-1">
-            {canEdit ? (
-              <button
-                onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); const top = r.bottom + 4; const left = r.left; setUnitMenuPos({ top, left }); setUnitMenuOpen((v) => !v); }}
-                className="text-xs text-muted-foreground hover:text-foreground transition-colors px-1 py-0.5 rounded hover:bg-muted"
-              >
-                {unit}
-              </button>
-            ) : (
-              <span className="text-xs text-muted-foreground">{unit}</span>
-            )}
             {canEdit && editingQty ? (
               <input
                 autoFocus
@@ -897,6 +887,16 @@ function ProductRow({
               >
                 {qty}
               </span>
+            )}
+            {canEdit ? (
+              <button
+                onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); const top = r.bottom + 4; const left = r.left; setUnitMenuPos({ top, left }); setUnitMenuOpen((v) => !v); }}
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors px-1 py-0.5 rounded hover:bg-muted"
+              >
+                {unit}
+              </button>
+            ) : (
+              <span className="text-xs text-muted-foreground">{unit}</span>
             )}
           </div>
           <div className="text-right min-w-[72px]">
@@ -1051,16 +1051,6 @@ function ProductRow({
         <div className="flex items-center justify-between mt-2">
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1">
-              {canEdit ? (
-                <button
-                  onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); const top = r.bottom + 4; const left = r.left; setUnitMenuPos({ top, left }); setUnitMenuOpen((v) => !v); }}
-                  className="text-xs text-muted-foreground hover:text-foreground transition-colors px-1 py-0.5 rounded hover:bg-muted"
-                >
-                  {unit}
-                </button>
-              ) : (
-                <span className="text-xs text-muted-foreground">{unit}</span>
-              )}
               {canEdit && editingQty ? (
                 <input
                   autoFocus
@@ -1077,6 +1067,16 @@ function ProductRow({
                 >
                   {qty}
                 </span>
+              )}
+              {canEdit ? (
+                <button
+                  onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); const top = r.bottom + 4; const left = r.left; setUnitMenuPos({ top, left }); setUnitMenuOpen((v) => !v); }}
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors px-1 py-0.5 rounded hover:bg-muted"
+                >
+                  {unit}
+                </button>
+              ) : (
+                <span className="text-xs text-muted-foreground">{unit}</span>
               )}
             </div>
             {product.url && (
