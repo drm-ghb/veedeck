@@ -728,7 +728,8 @@ export default function DyskusjeView({ currentUserId, currentUserAvatarUrl, init
       setIsRecording(true);
       setRecordingSeconds(0);
       recordingTimerRef.current = setInterval(() => setRecordingSeconds((s) => s + 1), 1000);
-    } catch {
+    } catch (err) {
+      console.error("[MIC ERROR]", err);
       toast.error(t.render.micAccessDenied);
     }
   }, [startUpload]);

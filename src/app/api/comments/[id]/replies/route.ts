@@ -77,7 +77,7 @@ export async function POST(
       for (const pc of render.project.clients) {
         const cu = pc.user;
         const clientEmail = cu?.contactEmail ?? cu?.email;
-        if (clientEmail && cu.emailNotifEnabled && cu.emailNotifModules.includes("renderflow")) {
+        if (cu && clientEmail && cu.emailNotifEnabled && cu.emailNotifModules.includes("renderflow")) {
           notifyClientDesignerReply({
             clientEmail,
             projectTitle: render.project.title,
