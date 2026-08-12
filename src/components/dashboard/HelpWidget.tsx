@@ -75,6 +75,8 @@ export default function HelpWidget({ open, onClose, initialTab, initialCategory 
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
+  const [showBetaDialog, setShowBetaDialog] = useState(false);
+  const [limitResetAt, setLimitResetAt] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -109,6 +111,12 @@ export default function HelpWidget({ open, onClose, initialTab, initialCategory 
   }, [open, initialTab, initialCategory]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
+    if (activeTab === "ai" && !localStorage.getItem("veedeck-ai-beta-seen")) {
+      setShowBetaDialog(true);
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, streaming]);
 
@@ -130,6 +138,13 @@ export default function HelpWidget({ open, onClose, initialTab, initialCategory 
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: newMessages }),
       });
+
+      if (res.status === 429) {
+        const data = await res.json().catch(() => ({}));
+        if (data.resetAt) setLimitResetAt(data.resetAt);
+        setMessages((prev) => prev.slice(0, -1)); // remove empty placeholder
+        return;
+      }
 
       if (!res.ok || !res.body) {
         setMessages((prev) => {
@@ -253,7 +268,39 @@ export default function HelpWidget({ open, onClose, initialTab, initialCategory 
 
       {/* AI Tab */}
       {activeTab === "ai" && (
-        <div className="flex flex-col flex-1 min-h-0">
+        <div className="flex flex-col flex-1 min-h-0 relative">
+          {/* Beta info dialog — shown on first open */}
+          {showBetaDialog && (
+            <div className="absolute inset-0 z-10 flex items-center justify-center bg-card/95 backdrop-blur-sm p-6">
+              <div className="flex flex-col gap-4 max-w-xs text-center">
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
+                  <Sparkles size={22} className="text-primary" />
+                </div>
+                <div>
+                  <p className="font-semibold text-base">Asystent AI — faza testów</p>
+                  <p className="text-sm text-muted-foreground mt-3 leading-relaxed">
+                    Testujemy Asystenta AI i sprawdzamy, jak najlepiej wspiera projektantów w codziennej pracy. To wczesna wersja — asystent zna platformę, ale może się mylić.
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+                    W tej fazie masz <strong>10 zapytań dziennie</strong>. Limit odnawia się po 24 godzinach.
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+                    Jeśli odpowiedź Cię zaskoczy — napisz do nas. Każdy feedback pomaga nam go poprawić.
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    localStorage.setItem("veedeck-ai-beta-seen", "1");
+                    setShowBetaDialog(false);
+                  }}
+                  className="w-full py-2 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity"
+                >
+                  Rozumiem, zaczynajmy
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Messages */}
           <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 min-h-0">
             {messages.length === 0 && (
@@ -306,32 +353,48 @@ export default function HelpWidget({ open, onClose, initialTab, initialCategory 
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Input */}
+          {/* Input / limit banner */}
           <div className="px-3 py-3 border-t border-border shrink-0">
-            <div className="flex items-end gap-2 bg-muted/40 rounded-xl px-3 py-2 border border-border focus-within:border-primary/40 transition-colors">
-              <textarea
-                ref={inputRef}
-                value={input}
-                onChange={(e) => {
-                  setInput(e.target.value);
-                  e.target.style.height = "auto";
-                  e.target.style.height = Math.min(e.target.scrollHeight, 120) + "px";
-                }}
-                onKeyDown={handleKeyDown}
-                placeholder="Napisz pytanie..."
-                rows={1}
-                disabled={streaming}
-                className="flex-1 bg-transparent text-sm resize-none outline-none min-h-[22px] max-h-[120px] placeholder:text-muted-foreground/60 disabled:opacity-60"
-              />
-              <button
-                onClick={sendMessage}
-                disabled={!input.trim() || streaming}
-                className="text-primary hover:opacity-80 transition-opacity disabled:opacity-30 shrink-0 mb-0.5"
-              >
-                <Send size={16} />
-              </button>
-            </div>
-            <p className="text-[10px] text-muted-foreground/50 text-center mt-1.5">Asystent odpowiada tylko na pytania o veedeck</p>
+            {limitResetAt ? (
+              <div className="flex flex-col items-center gap-1.5 py-2 text-center">
+                <p className="text-sm font-medium text-foreground">Limit zapytań wyczerpany</p>
+                <p className="text-xs text-muted-foreground">
+                  Odblokuje się o{" "}
+                  <strong>
+                    {new Date(limitResetAt).toLocaleTimeString("pl-PL", { hour: "2-digit", minute: "2-digit" })}
+                  </strong>
+                  {" "}
+                  ({new Date(limitResetAt).toLocaleDateString("pl-PL", { day: "numeric", month: "long" })})
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-end gap-2 bg-muted/40 rounded-xl px-3 py-2 border border-border focus-within:border-primary/40 transition-colors">
+                  <textarea
+                    ref={inputRef}
+                    value={input}
+                    onChange={(e) => {
+                      setInput(e.target.value);
+                      e.target.style.height = "auto";
+                      e.target.style.height = Math.min(e.target.scrollHeight, 120) + "px";
+                    }}
+                    onKeyDown={handleKeyDown}
+                    placeholder="Napisz pytanie..."
+                    rows={1}
+                    disabled={streaming}
+                    className="flex-1 bg-transparent text-sm resize-none outline-none min-h-[22px] max-h-[120px] placeholder:text-muted-foreground/60 disabled:opacity-60"
+                  />
+                  <button
+                    onClick={sendMessage}
+                    disabled={!input.trim() || streaming}
+                    className="text-primary hover:opacity-80 transition-opacity disabled:opacity-30 shrink-0 mb-0.5"
+                  >
+                    <Send size={16} />
+                  </button>
+                </div>
+                <p className="text-[10px] text-muted-foreground/50 text-center mt-1.5">Asystent odpowiada tylko na pytania o veedeck</p>
+              </>
+            )}
           </div>
         </div>
       )}

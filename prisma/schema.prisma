@@ -74,6 +74,8 @@ model User {
   googleRefreshToken         String?
   googleTokenExpiry          DateTime?
   googleCalendarId           String?
+  aiQueryCount               Int                     @default(0)
+  aiQueryResetAt             DateTime?
   accounts                   Account[]
   calendarEvents             CalendarEvent[]
   calendarGuestEntries       CalendarGuest[]
