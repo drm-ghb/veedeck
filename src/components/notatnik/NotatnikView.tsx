@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { Plus, Search, Archive, Trash2, X, ArchiveRestore, ChevronDown, FileText, Paperclip, Download, ExternalLink } from "@/components/ui/icons";
+import { Plus, Search, Archive, Trash2, X, ArchiveRestore, ChevronDown, ArrowUpDown, FileText, Paperclip, Download, ExternalLink } from "@/components/ui/icons";
 import { toast } from "sonner";
 import { useT } from "@/lib/i18n";
 import { useIsTrialExpired } from "@/lib/trial-context";
@@ -307,7 +307,8 @@ export default function NotatnikView({ initialNotes, initialArchivedNotes }: Pro
                 )}
               </button>
             </div>
-            <div className="relative">
+            {/* Desktop: full select */}
+            <div className="relative hidden lg:block">
               <select
                 value={sort}
                 onChange={(e) => setSort(e.target.value as SortOrder)}
@@ -318,6 +319,14 @@ export default function NotatnikView({ initialNotes, initialArchivedNotes }: Pro
               </select>
               <ChevronDown size={11} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
             </div>
+            {/* Tablet portrait: icon-only toggle */}
+            <button
+              onClick={() => setSort((s) => s === "newest" ? "oldest" : "newest")}
+              className="lg:hidden flex items-center justify-center w-8 h-8 rounded-md border border-border bg-background text-muted-foreground hover:bg-muted flex-shrink-0"
+              title={sort === "newest" ? t.common.newest : t.common.oldest}
+            >
+              <ArrowUpDown size={14} />
+            </button>
           </div>
         </div>
 
