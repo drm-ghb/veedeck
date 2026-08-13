@@ -36,9 +36,8 @@ export default async function RenderPage({ params }: Props) {
 
   const navUser = await prisma.user.findUnique({
     where: { id: session!.user!.id! },
-    select: { navMode: true, avatarUrl: true },
+    select: { avatarUrl: true },
   });
-  const sidebarVisible = navUser?.navMode === "sidebar";
 
   const roomRenders = render.roomId
     ? await prisma.render.findMany({
@@ -61,7 +60,7 @@ export default async function RenderPage({ params }: Props) {
   });
 
   return (
-    <div className={`fixed inset-0 top-[57px] z-40 bg-background ${sidebarVisible ? "md:left-14 md:rounded-tl-2xl" : ""}`}>
+    <div className="fixed inset-0 top-[57px] z-40 bg-background md:left-14 md:rounded-tl-2xl">
       <RenderViewer
         renderId={render.id}
         renderName={render.name}

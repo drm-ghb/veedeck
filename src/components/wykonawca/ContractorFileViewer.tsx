@@ -1,14 +1,15 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp, FileText, MessageSquare, ZoomIn, ZoomOut, X, Maximize2, Pin, Send, Trash2, Edit2, Loader2, Download } from "@/components/ui/icons";
+import { ChevronLeft, ChevronRight, FileText, MessageSquare, ZoomIn, ZoomOut, X, Maximize2, Pin, Send, Trash2, Edit2, Loader2, Download } from "@/components/ui/icons";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import ContractorFileCommentPanel from "./ContractorFileCommentPanel";
 import PdfViewer from "@/components/render/PdfViewer";
+import PdfThumbnail from "@/components/render/PdfThumbnail";
 import { pusherClient } from "@/lib/pusher";
 import { toast } from "sonner";
 import { useT } from "@/lib/i18n";
@@ -151,7 +152,9 @@ export default function ContractorFileViewer({
   const [editingPinText, setEditingPinText] = useState("");
   const [editingReplyId, setEditingReplyId] = useState<string | null>(null);
   const [editingReplyText, setEditingReplyText] = useState("");
-  const [mobileToolbarExpanded, setMobileToolbarExpanded] = useState(true);
+  const [mobileToolbarCollapsed, setMobileToolbarCollapsed] = useState(false);
+  const [toolbarMounted, setToolbarMounted] = useState(false);
+  useLayoutEffect(() => { setToolbarMounted(true); }, []);
 
   const imgRef = useRef<HTMLDivElement>(null);
   const draggingPinRef = useRef<{ pinId: string; imgEl: HTMLDivElement } | null>(null);
@@ -549,6 +552,24 @@ export default function ContractorFileViewer({
 
   const isDesigner = authorRole === "designer";
 
+  async function handleDownload() {
+    if (!file?.displayUrl) return;
+    try {
+      const res = await fetch(file.displayUrl);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = file.name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch {
+      window.open(file.displayUrl, "_blank");
+    }
+  }
+
   if (!file) return null;
 
   return (
@@ -598,51 +619,74 @@ export default function ContractorFileViewer({
             </span>
           </nav>
 
+          {/* Hide pins + Download — mobile/tablet only (desktop has them in the lg toolbar) */}
+          {isImage && (
+            <button
+              type="button"
+              onClick={() => setHidePins((v) => !v)}
+              className={`lg:hidden flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-md border transition-colors ${
+                hidePins ? "bg-primary text-primary-foreground border-primary" : "border-transparent text-muted-foreground hover:bg-muted"
+              }`}
+              title={hidePins ? t.wykonawcy.showPins : t.wykonawcy.hidePins}
+            >
+              <svg viewBox="0 0 24 24" className="w-[15px] h-[15px]" fill="currentColor"><path d="M16 9V4h1c.55 0 1-.45 1-1s-.45-1-1-1H7c-.55 0-1 .45-1 1s.45 1 1 1h1v5c0 1.66-1.34 3-3 3h10c-1.66 0-3-1.34-3-3zm-3 12v-6h-2v6c0 .55.45 1 1 1s1-.45 1-1z"/><path d="M3.51 3.51c-.39.39-.39 1.02 0 1.41l15.56 15.57c.39.39 1.02.39 1.41 0s.39-1.02 0-1.41L4.93 3.51c-.39-.39-1.02-.39-1.42 0z"/></svg>
+            </button>
+          )}
+          {file.displayUrl && (
+            <button
+              type="button"
+              onClick={handleDownload}
+              className="lg:hidden flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-md border border-transparent text-muted-foreground hover:bg-muted transition-colors"
+              title={t.wykonawcy.downloadBtn}
+            >
+              <Download size={15} />
+            </button>
+          )}
+
           {/* Toolbar — hidden on mobile/tablet, shown on lg+ */}
           <div className="ml-auto hidden lg:flex items-center gap-1 flex-shrink-0">
-            {/* Download */}
+            {/* Pin mode toggle (images only) */}
+            {isImage && (
+              <button
+                onClick={() => { setPinMode((v) => !v); setPending(null); setSelectedPinId(null); }}
+                className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md border transition-colors ${
+                  pinMode
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "border-transparent text-muted-foreground hover:bg-muted"
+                }`}
+                title={t.wykonawcy.addPin}
+              >
+                <Pin size={14} />
+                <span className="hidden sm:inline">{t.wykonawcy.addPin}</span>
+              </button>
+            )}
+            {/* Hide pins (images only) */}
+            {isImage && (
+              <button
+                onClick={() => setHidePins((v) => !v)}
+                title={hidePins ? t.wykonawcy.showPins : t.wykonawcy.hidePins}
+                className={`flex items-center justify-center w-8 h-8 rounded-md border transition-colors ${
+                  hidePins
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "border-transparent text-muted-foreground hover:bg-muted"
+                }`}
+              >
+                <svg viewBox="0 0 24 24" className="w-[15px] h-[15px]" fill="currentColor"><path d="M16 9V4h1c.55 0 1-.45 1-1s-.45-1-1-1H7c-.55 0-1 .45-1 1s.45 1 1 1h1v5c0 1.66-1.34 3-3 3h10c-1.66 0-3-1.34-3-3zm-3 12v-6h-2v6c0 .55.45 1 1 1s1-.45 1-1z"/><path d="M3.51 3.51c-.39.39-.39 1.02 0 1.41l15.56 15.57c.39.39 1.02.39 1.41 0s.39-1.02 0-1.41L4.93 3.51c-.39-.39-1.02-.39-1.42 0z"/></svg>
+              </button>
+            )}
+            {/* Download — right of hide pins */}
             {file.displayUrl && (
-              <a
-                href={file.displayUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                download
+              <button
+                type="button"
+                onClick={handleDownload}
                 className="flex items-center justify-center w-8 h-8 rounded-md border border-transparent text-muted-foreground hover:bg-muted transition-colors"
                 title={t.wykonawcy.downloadBtn}
               >
                 <Download size={15} />
-              </a>
+              </button>
             )}
-            {/* Pin mode toggle (images only) */}
-            {isImage && (
-              <>
-                <button
-                  onClick={() => { setPinMode((v) => !v); setPending(null); setSelectedPinId(null); }}
-                  className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md border transition-colors ${
-                    pinMode
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "border-transparent text-muted-foreground hover:bg-muted"
-                  }`}
-                  title={t.wykonawcy.addPin}
-                >
-                  <Pin size={14} />
-                  <span className="hidden sm:inline">{t.wykonawcy.addPin}</span>
-                </button>
-                <button
-                  onClick={() => setHidePins((v) => !v)}
-                  title={hidePins ? t.wykonawcy.showPins : t.wykonawcy.hidePins}
-                  className={`flex items-center justify-center w-8 h-8 rounded-md border transition-colors ${
-                    hidePins
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "border-transparent text-muted-foreground hover:bg-muted"
-                  }`}
-                >
-                  <svg viewBox="0 0 24 24" className="w-[15px] h-[15px]" fill="currentColor"><path d="M16 9V4h1c.55 0 1-.45 1-1s-.45-1-1-1H7c-.55 0-1 .45-1 1s.45 1 1 1h1v5c0 1.66-1.34 3-3 3h10c-1.66 0-3-1.34-3-3zm-3 12v-6h-2v6c0 .55.45 1 1 1s1-.45 1-1z"/><path d="M3.51 3.51c-.39.39-.39 1.02 0 1.41l15.56 15.57c.39.39 1.02.39 1.41 0s.39-1.02 0-1.41L4.93 3.51c-.39-.39-1.02-.39-1.42 0z"/></svg>
-                </button>
-                {/* Separator */}
-                <div className="w-px h-4 bg-gray-200 dark:bg-gray-700 mx-1" />
-              </>
-            )}
+            {/* Separator */}
+            <div className="w-px h-4 bg-gray-200 dark:bg-gray-700 mx-1" />
             {/* Comments button */}
             <button
               onClick={commentOpen ? () => setCommentOpen(false) : openComments}
@@ -697,6 +741,8 @@ export default function ContractorFileViewer({
                   {f.effectiveType === "image" && f.displayUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={f.displayUrl} alt={f.name} className="w-full h-full object-cover" />
+                  ) : f.effectiveType === "pdf" && f.displayUrl ? (
+                    <PdfThumbnail fileUrl={f.displayUrl} className="w-full h-full" iconSize={20} />
                   ) : (
                     <FileText size={20} className="text-muted-foreground/40" />
                   )}
@@ -1111,51 +1157,77 @@ export default function ContractorFileViewer({
     </div>
 
     {/* Mobile + tablet floating toolbar */}
-    <div className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center gap-2">
-      {mobileToolbarExpanded ? (
-        <div className="flex items-center gap-1 bg-card/95 backdrop-blur border border-border rounded-full px-2 py-1.5 shadow-lg">
-          {isImage && (
-            <button
-              onClick={() => { setPinMode((v) => !v); setPending(null); setSelectedPinId(null); }}
-              className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-full font-medium transition-colors ${
-                pinMode ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-muted"
-              }`}
-            >
-              <Pin size={14} />
-              {t.wykonawcy.addPin}
-            </button>
-          )}
-          <button
-            onClick={commentOpen ? () => setCommentOpen(false) : openComments}
-            className={`relative flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-full font-medium transition-colors ${
-              commentOpen ? "bg-primary text-primary-foreground" : unread > 0 ? "text-violet-600 bg-violet-50" : "text-foreground hover:bg-muted"
-            }`}
-          >
-            <MessageSquare size={14} />
-            {t.wykonawcy.commentsTitle}
-            {unread > 0 && (
-              <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 text-[10px] font-bold rounded-full bg-violet-600 text-white flex items-center justify-center leading-none">
-                {unread > 9 ? "9+" : unread}
-              </span>
-            )}
-          </button>
-          <button
-            onClick={() => setMobileToolbarExpanded(false)}
-            className="flex items-center gap-1 text-xs px-2 py-1.5 rounded-full text-muted-foreground hover:bg-muted transition-colors"
-          >
-            <ChevronDown size={13} />
-            {t.common.collapse}
-          </button>
-        </div>
-      ) : (
-        <button
-          onClick={() => setMobileToolbarExpanded(true)}
-          className="w-10 h-10 rounded-full bg-card border border-border shadow-lg flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+    {toolbarMounted && createPortal(
+      <div className="lg:hidden">
+        <div
+          className="fixed left-0 md:left-44 bottom-0 w-screen md:w-[calc(100vw-11rem)] z-[200] flex justify-center pointer-events-none"
+          style={{ paddingBottom: "calc(20px + env(safe-area-inset-bottom, 0px))" }}
         >
-          <ChevronUp size={18} />
-        </button>
-      )}
-    </div>
+          <div
+            className="pointer-events-auto flex items-center rounded-full bg-card border border-border shadow-lg overflow-hidden"
+            style={{
+              transform: mobileToolbarCollapsed ? "translateX(calc(50vw - 28px))" : "translateX(0)",
+              transition: "transform 320ms cubic-bezier(0.2, 0, 0, 1)",
+            }}
+          >
+            {/* Toggle chevron — always visible on LEFT */}
+            <button
+              onClick={() => setMobileToolbarCollapsed((v) => !v)}
+              aria-label={mobileToolbarCollapsed ? "Rozwiń pasek" : "Zwiń pasek"}
+              className="flex items-center justify-center w-14 h-14 flex-shrink-0 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ChevronRight
+                size={28}
+                style={{
+                  transform: mobileToolbarCollapsed ? "rotate(180deg)" : "rotate(0deg)",
+                  transition: "transform 320ms cubic-bezier(0.2, 0, 0, 1)",
+                }}
+              />
+            </button>
+            <div className="w-px h-10 flex-shrink-0 bg-border" />
+
+            {/* Collapsible content */}
+            <div
+              className="flex items-center overflow-hidden"
+              style={{
+                maxWidth: mobileToolbarCollapsed ? 0 : "240px",
+                opacity: mobileToolbarCollapsed ? 0 : 1,
+                transition: "max-width 320ms cubic-bezier(0.2, 0, 0, 1), opacity 180ms ease",
+              }}
+            >
+              {/* Pin button — images only */}
+              {isImage && (
+                <button
+                  onClick={() => { setPinMode((v) => !v); setPending(null); setSelectedPinId(null); }}
+                  aria-label={t.wykonawcy.addPin}
+                  className={`flex items-center justify-center w-16 h-16 rounded-full mx-1 flex-shrink-0 transition-colors ${
+                    pinMode ? "bg-violet-600 text-white" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  }`}
+                >
+                  <Pin size={26} />
+                </button>
+              )}
+
+              {/* Comments button */}
+              <button
+                onClick={commentOpen ? () => setCommentOpen(false) : openComments}
+                aria-label={t.wykonawcy.commentsTitle}
+                className={`relative flex items-center justify-center w-16 h-16 rounded-full mx-1 flex-shrink-0 transition-colors ${
+                  commentOpen ? "bg-violet-600 text-white" : unread > 0 ? "text-violet-600 bg-violet-100 dark:bg-violet-950/40 dark:text-violet-400" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                }`}
+              >
+                <MessageSquare size={26} />
+                {unread > 0 && (
+                  <span className="absolute top-2.5 right-2.5 min-w-[18px] h-[18px] px-1 text-[10px] font-bold rounded-full bg-violet-600 text-white flex items-center justify-center leading-none">
+                    {unread > 9 ? "9+" : unread}
+                  </span>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    , document.body)}
 
     {/* Lightbox */}
     {lightboxOpen && isImage && file.displayUrl && (

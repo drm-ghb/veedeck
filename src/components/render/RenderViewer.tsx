@@ -4448,7 +4448,7 @@ export default function RenderViewer({
                     onClick={() => { setProductPinMode((v) => !v); setMode("view"); setPending(null); setPendingProductPos(null); }}
                     aria-label="Dodaj produkt"
                     className={`flex items-center justify-center w-16 h-16 rounded-full mx-1 flex-shrink-0 transition-colors ${
-                      productPinMode ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      productPinMode ? "bg-violet-600 text-white" : "text-muted-foreground hover:bg-muted hover:text-foreground"
                     }`}
                   >
                     <Package size={26} />
@@ -4459,7 +4459,7 @@ export default function RenderViewer({
                     onClick={() => { setMode(mode === "pin" ? "view" : "pin"); setProductPinMode(false); setPendingProductPos(null); }}
                     aria-label="Dodaj pin"
                     className={`flex items-center justify-center w-16 h-16 rounded-full mx-1 flex-shrink-0 transition-colors ${
-                      mode === "pin" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      mode === "pin" ? "bg-violet-600 text-white" : "text-muted-foreground hover:bg-muted hover:text-foreground"
                     }`}
                   >
                     <Pin size={26} />
@@ -4472,7 +4472,7 @@ export default function RenderViewer({
                     onClick={() => setShowComments((v) => { const next = !v; sessionStorage.setItem("renderflow_showComments", String(next)); if (next && sidebarTabRef.current === "chat") markChatRead(); return next; })}
                     aria-label="Otwórz dyskusję"
                     className={`relative flex items-center justify-center w-16 h-16 rounded-full mx-1 flex-shrink-0 transition-colors ${
-                      showComments ? "bg-primary text-primary-foreground" : chatUnreadCount > 0 ? "text-violet-600 bg-violet-100 dark:bg-violet-950/40 dark:text-violet-400" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      showComments ? "bg-violet-600 text-white" : chatUnreadCount > 0 ? "text-violet-600 bg-violet-100 dark:bg-violet-950/40 dark:text-violet-400" : "text-muted-foreground hover:bg-muted hover:text-foreground"
                     }`}
                   >
                     <svg viewBox="0 0 24 24" className="w-[26px] h-[26px]" fill="currentColor">
@@ -4528,7 +4528,7 @@ export default function RenderViewer({
                     onClick={() => setShowComments((v) => { const next = !v; sessionStorage.setItem("renderflow_showComments", String(next)); if (next && sidebarTabRef.current === "chat") markChatRead(); return next; })}
                     aria-label="Otwórz dyskusję"
                     className={`relative flex items-center justify-center w-16 h-16 rounded-full mx-1 flex-shrink-0 transition-colors ${
-                      showComments ? "bg-primary text-primary-foreground" : chatUnreadCount > 0 ? "text-violet-600 bg-violet-100 dark:bg-violet-950/40 dark:text-violet-400" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      showComments ? "bg-violet-600 text-white" : chatUnreadCount > 0 ? "text-violet-600 bg-violet-100 dark:bg-violet-950/40 dark:text-violet-400" : "text-muted-foreground hover:bg-muted hover:text-foreground"
                     }`}
                   >
                     <svg viewBox="0 0 24 24" className="w-[26px] h-[26px]" fill="currentColor">
@@ -4551,7 +4551,7 @@ export default function RenderViewer({
                       onClick={() => { setMode(mode === "pin" ? "view" : "pin"); setProductPinMode(false); setPendingProductPos(null); }}
                       aria-label="Dodaj pin"
                       className={`flex items-center justify-center w-16 h-16 rounded-full mx-1 flex-shrink-0 transition-colors ${
-                        mode === "pin" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                        mode === "pin" ? "bg-violet-600 text-white" : "text-muted-foreground hover:bg-muted hover:text-foreground"
                       }`}
                     >
                       <Pin size={26} />

@@ -154,16 +154,14 @@ export default function ContractorFilesGrid({
 
               {/* Download — hover overlay on image */}
               {file.displayUrl && (
-                <a
-                  href={file.displayUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={(e) => e.stopPropagation()}
+                <button
+                  type="button"
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open(file.displayUrl!, "_blank"); }}
                   className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/50 text-white opacity-0 group-hover:opacity-100 hover:bg-black/70 transition-all"
                   title={t.wykonawcy.downloadOpen}
                 >
                   <Download size={14} />
-                </a>
+                </button>
               )}
             </Link>
           );
