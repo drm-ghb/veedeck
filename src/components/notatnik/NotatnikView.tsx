@@ -258,7 +258,7 @@ export default function NotatnikView({ initialNotes, initialArchivedNotes }: Pro
       <div className={`
         ${mobileShowDetail ? "hidden" : "flex"} md:flex
         w-full md:w-72 lg:w-80 flex-shrink-0
-        flex-col border-r border-border
+        flex-col border-r border-border overflow-hidden
       `}>
         <div className="px-4 pt-4 pb-3 space-y-3 border-b border-border">
           <div className="flex items-center justify-between">

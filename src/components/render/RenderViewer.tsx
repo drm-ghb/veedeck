@@ -1928,8 +1928,8 @@ export default function RenderViewer({
 
       </div>
 
-      {/* Row 2: Mobile toolbar (hidden on sm+) — excludes Pin/Discussion (they're in the bottom toolbar) */}
-      <div className="sm:hidden border-b bg-card flex-shrink-0 flex items-center justify-center overflow-x-hidden">
+      {/* Row 2: Toolbar for mobile + tablet portrait (hidden on lg+, desktop has full toolbar above) */}
+      <div className="lg:hidden border-b bg-card flex-shrink-0 flex items-center justify-center overflow-x-hidden">
       <div className="flex items-center gap-0.5 px-2 py-1.5">
         {/* Hide pins */}
         <button onClick={() => setHidePins((v) => !v)} className={`flex items-center justify-center w-9 h-9 rounded-md border transition-colors flex-shrink-0 ${hidePins ? "bg-primary text-primary-foreground border-primary" : "border-transparent text-gray-500 hover:bg-muted"}`} title={hidePins ? t.render.showPins : t.render.hidePins}>
@@ -1983,7 +1983,7 @@ export default function RenderViewer({
       </div>
 
       {/* Content */}
-      <div className="flex flex-1 min-h-0">
+      <div className="flex flex-1 min-h-0 relative">
         {/* Thumbnails sidebar */}
         {(isDesigner || (onRenderSelect && roomRenders.length > 0)) && (
           <div
@@ -2707,10 +2707,10 @@ export default function RenderViewer({
         {showComments && <>
           {/* Mobile/tablet backdrop */}
           <div
-            className="fixed inset-x-0 top-[57px] bottom-0 z-20 bg-black/30 lg:hidden"
+            className="absolute inset-x-0 top-0 bottom-0 z-20 bg-black/30 lg:hidden"
             onClick={() => { setShowComments(false); sessionStorage.setItem("renderflow_showComments", "false"); }}
           />
-          <div className={`fixed lg:relative top-[57px] bottom-0 lg:top-0 right-0 left-0 lg:left-auto z-30 lg:z-auto lg:flex-shrink-0 transition-[width] duration-200 ${sidebarExpanded ? "lg:w-[576px]" : "lg:w-72"}`}>
+          <div className={`absolute lg:relative top-0 bottom-0 lg:top-0 right-0 left-0 lg:left-auto z-30 lg:z-auto lg:flex-shrink-0 transition-[width] duration-200 ${sidebarExpanded ? "lg:w-[576px]" : "lg:w-72"}`}>
 
             {/* Expand handle — absolutely positioned outside the panel, bottom-left */}
             <button
