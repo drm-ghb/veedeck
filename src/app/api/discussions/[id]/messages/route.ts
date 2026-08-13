@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { pusherServer } from "@/lib/pusher";
 import { getWorkspaceUserId } from "@/lib/workspace";
+import { getClientUserIds } from "@/lib/client-notify";
 
 export async function GET(
   req: NextRequest,
@@ -99,25 +100,21 @@ export async function POST(
     });
 
     // Create in-app notification for logged-in clients
-    const projectClients = await prisma.projectClient.findMany({
-      where: { projectId: discussion.projectId, userId: { not: null } },
-      select: { userId: true },
-    });
-    if (projectClients.length > 0) {
+    const clientUserIds = await getClientUserIds(discussion.projectId);
+    if (clientUserIds.length > 0) {
       const project = await prisma.project.findUnique({
         where: { id: discussion.projectId },
         select: { title: true },
       });
-      for (const pc of projectClients) {
-        if (!pc.userId) continue;
+      for (const userId of clientUserIds) {
         const clientNotif = await prisma.notification.create({
           data: {
-            userId: pc.userId,
+            userId,
             message: `Projektant wysłał wiadomość${project?.title ? ` w projekcie "${project.title}"` : ""}`,
             link: `/client/${discussion.projectId}?view=discussion`,
           },
         });
-        await pusherServer.trigger(`user-${pc.userId}`, "new-notification", clientNotif);
+        await pusherServer.trigger(`user-${userId}`, "new-notification", clientNotif);
       }
     }
   }

@@ -3006,7 +3006,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
             <span className="hidden sm:inline">{hidePrices ? t.listy.pricesHiddenBtn : t.listy.hidePricesBtn}</span>
           </button>}
           <div className="w-px h-5 bg-border mx-0.5 hidden sm:block" />
-          <div className="relative">
+          <div className="flex items-center gap-1">
             <button
               onClick={() => { setSearchOpen((v) => { if (v) { setSearchQuery(""); } else { setTimeout(() => searchInputRef.current?.focus(), 50); } return !v; }); }}
               className={`w-8 h-8 flex items-center justify-center rounded-lg border transition-colors ${searchOpen ? "border-primary/60 bg-primary/8 text-primary" : "border-border bg-background hover:bg-muted text-muted-foreground hover:text-foreground"}`}
@@ -3015,8 +3015,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
               <Search size={13} />
             </button>
             {searchOpen && (
-              <div className="absolute left-0 top-0 flex items-center">
-                <Search size={13} className="absolute left-2.5 text-muted-foreground pointer-events-none" />
+              <div className="relative flex items-center">
                 <input
                   ref={searchInputRef}
                   type="text"
@@ -3024,7 +3023,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Escape") { setSearchQuery(""); setSearchOpen(false); } }}
                   placeholder="Szukaj produktu…"
-                  className="h-8 pl-7 pr-6 text-xs rounded-lg border border-border bg-background focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/60 transition-colors w-40 placeholder:text-muted-foreground shadow-sm"
+                  className="h-8 pl-3 pr-6 text-xs rounded-lg border border-border bg-background focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/60 transition-colors w-40 placeholder:text-muted-foreground shadow-sm"
                   autoFocus
                 />
                 {searchQuery && (

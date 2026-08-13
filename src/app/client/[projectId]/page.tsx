@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import RenderViewer from "@/components/render/RenderViewer";
 import ClientThemeApplier from "@/components/share/ClientThemeApplier";
@@ -112,6 +112,7 @@ function HomeCategoryIcon({ category }: { category: string | null }) {
 export default function ClientProjectPage() {
   const { projectId } = useParams<{ projectId: string }>();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { data: session, status } = useSession();
 
   function navigate(params: Record<string, string | null>) {
@@ -180,6 +181,8 @@ export default function ClientProjectPage() {
     } else if (v === "lists") {
       setView("lists"); setSelectedRoom(null); setSelectedFolder(null);
     } else if (v === "list" && listId) {
+      const productId = sp.get("productId");
+      if (productId) setInitialListProductId(productId);
       openList(listId);
     } else {
       setView("home"); setSelectedRoom(null); setSelectedFolder(null);
@@ -197,6 +200,7 @@ export default function ClientProjectPage() {
   const [selectedRender, setSelectedRender] = useState<Render | null>(null);
   const [selectedListId, setSelectedListId] = useState<string | null>(null);
   const [selectedListData, setSelectedListData] = useState<ListData | null>(null);
+  const [initialListProductId, setInitialListProductId] = useState<string | null>(null);
   const [listLoading, setListLoading] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [surveys, setSurveys] = useState<{ id: string; name: string; shareToken: string; createdAt: string; completed: boolean; answeredCount: number; totalQuestions: number }[]>([]);
@@ -401,6 +405,13 @@ export default function ClientProjectPage() {
     return () => window.removeEventListener("popstate", handlePopState);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // React to Next.js Link navigation (e.g. notification bell clicks) — popstate doesn't fire for these
+  useEffect(() => {
+    if (!hasRestoredParams.current) return;
+    restoreFromUrlRef.current();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   useEffect(() => {
     if (!projectId) return;
@@ -1506,6 +1517,7 @@ export default function ClientProjectPage() {
                   grandCurrency={grandCurrency}
                   hasTotal={hasTotal}
                   hidePrices={selectedListData.hidePrices}
+                  initialProductId={initialListProductId}
                 />
               </div>
             );

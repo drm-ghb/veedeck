@@ -84,6 +84,7 @@ interface ShareListClientProps {
   designerName?: string;
   designerLogoUrl?: string;
   trackView?: boolean;
+  initialProductId?: string | null;
 }
 
 export default function ShareListClient({
@@ -100,6 +101,7 @@ export default function ShareListClient({
   designerName,
   designerLogoUrl,
   trackView = true,
+  initialProductId,
 }: ShareListClientProps) {
   const [collapsedVariants, setCollapsedVariants] = useState<Set<string>>(new Set());
   const [commentsPanelProductId, setCommentsPanelProductId] = useState<string | null>(null);
@@ -151,6 +153,10 @@ export default function ShareListClient({
   useEffect(() => {
     commentsPanelProductIdRef.current = commentsPanelProductId;
   }, [commentsPanelProductId]);
+
+  useEffect(() => {
+    if (initialProductId) setCommentsPanelProductId(initialProductId);
+  }, [initialProductId]);
 
   const viewTrackedRef = useRef(false);
   useEffect(() => {

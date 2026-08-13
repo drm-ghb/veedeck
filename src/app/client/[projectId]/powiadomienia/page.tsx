@@ -42,6 +42,11 @@ export default async function ClientNotificationsPage({ params }: { params: Prom
 
   const { user } = project;
 
+  const clientUser = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { name: true },
+  });
+
   return (
     <>
       <ClientThemeApplier colorTheme={user.colorTheme} customTheme={user.customTheme as any} />
@@ -50,6 +55,7 @@ export default async function ClientNotificationsPage({ params }: { params: Prom
           clientLogoUrl={user.showClientLogo ? user.clientLogoUrl : null}
           designerName={user.showProfileName ? user.name : null}
           currentUserId={session.user.id}
+          clientName={clientUser?.name ?? null}
         />
         <div className="flex flex-1 min-h-0" style={{ backgroundColor: "var(--sidebar)" }}>
           <ShareSidebar

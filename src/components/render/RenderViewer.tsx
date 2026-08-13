@@ -205,10 +205,18 @@ function getPopupStyle(
   if (left + popupWidth > window.innerWidth - pad) left = pinX - popupWidth - 8;
   left = Math.max(pad, Math.min(left, window.innerWidth - popupWidth - pad));
 
+  // When pin is in the lower half of the viewport, anchor popup bottom just above the pin.
+  // This avoids estimating popup height, which caused popups to appear far from the pin.
+  const vpMid = vvOffsetTop + viewportHeight / 2;
+  if (pinY > vpMid) {
+    const bottom = Math.max(pad, (vvOffsetTop + viewportHeight) - pinY + 4);
+    return { position: "fixed", left, bottom };
+  }
+
+  // Pin in upper half — anchor top below the pin
   let top = pinY + 16;
   if (top + popupH > vvOffsetTop + viewportHeight - pad) top = pinY - popupH - 4;
   top = Math.max(vvOffsetTop + pad, top);
-
   return { position: "fixed", left, top };
 }
 

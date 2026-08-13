@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useLayoutEffect, useRef } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { LayoutDashboard, LocalMall, PanelLeftClose, PanelLeftOpen, PushPin, Sun, Moon, HelpCircle, Settings, UserRound, X, CheckCircle, ChatBubble, LogOut, Payments, CalendarNote, ClipboardList, Interests } from "@/components/ui/icons";
 import { signOut } from "next-auth/react";
@@ -94,6 +94,7 @@ export default function ShareSidebar({
 }: ShareSidebarProps) {
   const t = useT();
   const pathname = usePathname();
+  const router = useRouter();
   const { theme, setTheme } = useTheme();
   const [collapsed, setCollapsed] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
@@ -685,6 +686,9 @@ export default function ShareSidebar({
           onClick={() => {
             if (clientProjectId && onSettingsClick) {
               onSettingsClick();
+              setMobileSidebarOpen(false);
+            } else if (clientProjectId) {
+              router.push(`/client/${clientProjectId}?view=settings`);
               setMobileSidebarOpen(false);
             } else {
               setNameInput(authorName);

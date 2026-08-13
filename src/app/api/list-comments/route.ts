@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth";
 import { getWorkspaceUserId } from "@/lib/workspace";
 import { queueEmailNotif } from "@/lib/email-queue";
 import { hasPermission } from "@/lib/permissions";
+import { getClientUserIds } from "@/lib/client-notify";
 
 export async function GET(req: NextRequest) {
   const productId = req.nextUrl.searchParams.get("productId");
@@ -95,21 +96,17 @@ export async function POST(req: NextRequest) {
       }
     } else if (list.projectId) {
       // Designer commented — notify logged-in clients
-      const projectClients = await prisma.projectClient.findMany({
-        where: { projectId: list.projectId, userId: { not: null } },
-        select: { userId: true },
-      });
-      for (const pc of projectClients) {
-        if (!pc.userId) continue;
+      const clientUserIds = await getClientUserIds(list.projectId);
+      for (const userId of clientUserIds) {
         const clientNotif = await prisma.notification.create({
           data: {
-            userId: pc.userId,
+            userId,
             message: `Projektant dodał komentarz do produktu „${product.name}" w liście „${list.name}"`,
-            link: `/client/${list.projectId}?view=lists&listId=${list.id}`,
+            link: `/client/${list.projectId}?view=list&listId=${list.id}&productId=${productId}`,
             type: "list_comment",
           },
         });
-        await pusherServer.trigger(`user-${pc.userId}`, "new-notification", clientNotif);
+        await pusherServer.trigger(`user-${userId}`, "new-notification", clientNotif);
       }
     }
   }
