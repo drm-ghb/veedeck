@@ -340,7 +340,7 @@ export default function HelpWidget({ open, onClose, initialTab, initialCategory 
               </div>
             )}
             {messages.map((msg, i) => (
-              <div key={i} className={`flex gap-2 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+              <div key={i} className={`flex gap-2 items-end ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                 {msg.role === "assistant" && (
                   <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
                     <Sparkles size={13} className="text-primary" />
@@ -349,8 +349,8 @@ export default function HelpWidget({ open, onClose, initialTab, initialCategory 
                 <div
                   className={`max-w-[80%] px-3 py-2 rounded-2xl text-sm leading-relaxed ${
                     msg.role === "user"
-                      ? "bg-primary text-primary-foreground rounded-tr-sm whitespace-pre-wrap"
-                      : "bg-muted text-foreground rounded-tl-sm space-y-0.5"
+                      ? "bg-primary text-primary-foreground rounded-br-sm whitespace-pre-wrap"
+                      : "bg-muted text-foreground rounded-bl-sm space-y-0.5"
                   }`}
                 >
                   {msg.role === "user" ? msg.content : renderMarkdown(msg.content)}

@@ -3055,8 +3055,8 @@ export default function RenderViewer({
                                   <div className="relative">
                                     <div className={`px-3 py-2 text-sm leading-relaxed break-words ${
                                       isOwn
-                                        ? "bg-primary text-primary-foreground rounded-2xl rounded-tr-sm"
-                                        : "bg-gray-100 dark:bg-muted text-gray-800 dark:text-gray-200 rounded-2xl rounded-tl-sm"
+                                        ? "bg-primary text-primary-foreground rounded-2xl rounded-br-sm"
+                                        : "bg-gray-100 dark:bg-muted text-gray-800 dark:text-gray-200 rounded-2xl rounded-bl-sm"
                                     }`}>
                                       {item.content !== "[wiadomość głosowa]" && item.content !== "[zdjęcie]" && item.content}
                                       {item.voiceUrl && (

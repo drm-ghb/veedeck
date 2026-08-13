@@ -294,7 +294,7 @@ function loadImage(url: string, cb: (img: HTMLImageElement) => void) {
 
 // ── Sub-components ─────────────────────────────────────────────────────────
 
-function CanvasImageNode({ el, isSelected, onSelect, onDragEnd, onTransformEnd, onMouseEnter, onMouseLeave, onDragStarted, onDragEnded, onContextMenu, onDragMove }: {
+function CanvasImageNode({ el, isSelected, onSelect, onDragEnd, onTransformEnd, onMouseEnter, onMouseLeave, onDragStarted, onDragEnded, onContextMenu, onDragMove, readOnly }: {
   el: CanvasElement;
   isSelected: boolean;
   onSelect: () => void;
@@ -306,6 +306,7 @@ function CanvasImageNode({ el, isSelected, onSelect, onDragEnd, onTransformEnd, 
   onDragEnded: () => void;
   onContextMenu: (e: Konva.KonvaEventObject<MouseEvent>) => void;
   onDragMove?: (e: Konva.KonvaEventObject<DragEvent>) => void;
+  readOnly?: boolean;
 }) {
   const [img, setImg] = useState<HTMLImageElement | null>(null);
   useEffect(() => {
@@ -334,7 +335,7 @@ function CanvasImageNode({ el, isSelected, onSelect, onDragEnd, onTransformEnd, 
       cornerRadius={el.cornerRadius ?? 0}
       rotation={el.rotation ?? 0}
       opacity={el.opacity ?? 1}
-      draggable
+      draggable={!readOnly}
       stroke={isSelected ? "#6366f1" : undefined}
       strokeWidth={isSelected ? 2 : 0}
       onClick={onSelect}
@@ -361,7 +362,7 @@ function CanvasImageNode({ el, isSelected, onSelect, onDragEnd, onTransformEnd, 
 
 // ── Masked image (template slot filled with photo, inner pan/zoom) ─────────
 
-function MaskedInnerImage({ el, isSelected, isInnerEdit, onSelect, onDblClick, onInnerDragEnd, onOuterDragEnd, onTransformEnd, onContextMenu, onMouseEnter, onMouseLeave, onDragStarted, onDragEnded, onDragMove }: {
+function MaskedInnerImage({ el, isSelected, isInnerEdit, onSelect, onDblClick, onInnerDragEnd, onOuterDragEnd, onTransformEnd, onContextMenu, onMouseEnter, onMouseLeave, onDragStarted, onDragEnded, onDragMove, readOnly }: {
   el: CanvasElement;
   isSelected: boolean;
   isInnerEdit: boolean;
@@ -376,6 +377,7 @@ function MaskedInnerImage({ el, isSelected, isInnerEdit, onSelect, onDblClick, o
   onDragStarted: () => void;
   onDragEnded: () => void;
   onDragMove?: (e: Konva.KonvaEventObject<DragEvent>) => void;
+  readOnly?: boolean;
 }) {
   const [img, setImg] = useState<HTMLImageElement | null>(null);
   useEffect(() => {
@@ -415,7 +417,7 @@ function MaskedInnerImage({ el, isSelected, isInnerEdit, onSelect, onDblClick, o
       rotation={el.rotation ?? 0}
       opacity={el.opacity ?? 1}
       clipFunc={clipFn}
-      draggable={!isInnerEdit}
+      draggable={!readOnly && !isInnerEdit}
       onClick={onSelect}
       onTap={onSelect}
       onDblClick={onDblClick}
@@ -441,7 +443,7 @@ function MaskedInnerImage({ el, isSelected, isInnerEdit, onSelect, onDblClick, o
         image={img}
         x={offX} y={offY}
         width={imgW} height={imgH}
-        draggable={isInnerEdit}
+        draggable={!readOnly && isInnerEdit}
         onDragEnd={(e) => {
           e.cancelBubble = true; // prevent bubbling to Group's onDragEnd
           const nx = Math.max(maskW - imgW, Math.min(0, e.target.x()));
@@ -2422,7 +2424,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                       fill="transparent"
                       stroke={isSel ? "#6366f1" : (frameEl.stroke ?? "#94a3b8")}
                       strokeWidth={isSel ? 2 : (frameEl.strokeWidth ?? 1)}
-                      draggable={tool === "select"}
+                      draggable={!readOnly && tool === "select"}
                       onClick={(e) => {
                         if (tool !== "select") return;
                         if (e.evt.shiftKey) setSelectedIds(prev => prev.includes(frameEl.id) ? prev.filter(x => x !== frameEl.id) : [...prev, frameEl.id]);
@@ -2471,7 +2473,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                   id: el.id,
                   opacity: el.opacity ?? 1,
                   rotation: el.rotation ?? 0,
-                  draggable: tool === "select",
+                  draggable: !readOnly && tool === "select",
                   ...(clipFunc ? { clipFunc } : {}),
                   onContextMenu: (e: Konva.KonvaEventObject<MouseEvent>) => {
                     e.evt.preventDefault();
@@ -2718,6 +2720,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                       key={el.id}
                       el={el}
                       isSelected={isSel}
+                      readOnly={readOnly}
                       isInnerEdit={isInnerEdit}
                       onSelect={() => {
                         if (templatePickModeId) { fillPlaceholderWithImage(templatePickModeId, el); return; }
@@ -2762,7 +2765,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
 
                 if (el.type === "image") {
                   const imageNode = (
-                    <CanvasImageNode key={el.id} el={el} isSelected={isSel || (templatePickModeId !== null && !!el.imageUrl)}
+                    <CanvasImageNode key={el.id} el={el} readOnly={readOnly} isSelected={isSel || (templatePickModeId !== null && !!el.imageUrl)}
                       onSelect={() => {
                         if (templatePickModeId) { fillPlaceholderWithImage(templatePickModeId, el); return; }
                         setSelectedIds([el.id]);
@@ -2931,7 +2934,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                   fill: "#fff",
                   stroke: "#6366f1",
                   strokeWidth: 2,
-                  draggable: true,
+                  draggable: !readOnly,
                   hitStrokeWidth: 12,
                   onMouseEnter: () => { if (stageRef.current) stageRef.current.container().style.cursor = "crosshair"; },
                   onMouseLeave: () => { if (stageRef.current) stageRef.current.container().style.cursor = ""; },

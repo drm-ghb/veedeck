@@ -370,7 +370,7 @@ export default function ProductCommentPanel({
           return (
             <div key={`${item.type}-${item.id}`} className={`flex mb-2 items-end gap-1.5 group ${isMine ? "justify-end" : "justify-start"}`}>
               {!isMine && <Avatar name={item.author} logoUrl={item.author === designerName ? designerLogoUrl : undefined} />}
-              <div className={`max-w-[75%] flex flex-col ${isMine ? "items-end" : "items-start"}`}>
+              <div className={`max-w-[75%] flex flex-col ${isMine ? "items-end" : "items-start"} min-w-0`}>
                 {item.type === "reply" && (
                   <div className="px-2 py-1 rounded-lg text-[11px] border-l-2 border-primary/40 bg-muted/60 mb-1 max-w-full">
                     <span className="font-semibold text-foreground/70">{item.parentAuthor}: </span>
@@ -466,6 +466,7 @@ export default function ProductCommentPanel({
                 )}
                 <span className={`text-[9px] text-muted-foreground px-1 mt-0.5 ${isMine ? "text-right" : "text-left"}`}>{formatDate(item.createdAt)}</span>
               </div>
+              {isMine && <Avatar name={item.author} logoUrl={item.author === designerName ? designerLogoUrl : undefined} />}
             </div>
           );
         });
