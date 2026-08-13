@@ -29,7 +29,7 @@ export default async function ContractorFileViewPage({ params }: Props) {
 
   // Fetch all files in the folder (for prev/next navigation)
   const folder = await prisma.contractorFolder.findFirst({
-    where: { id: folderId, assignmentId, visible: true },
+    where: { id: folderId, assignmentId },
     select: {
       name: true,
       files: {

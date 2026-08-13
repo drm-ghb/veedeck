@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp, FileText, MessageSquare, ZoomIn, ZoomOut, X, Maximize2, Pin, Send, Trash2, Edit2, Loader2 } from "@/components/ui/icons";
+import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp, FileText, MessageSquare, ZoomIn, ZoomOut, X, Maximize2, Pin, Send, Trash2, Edit2, Loader2, Download } from "@/components/ui/icons";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import ContractorFileCommentPanel from "./ContractorFileCommentPanel";
@@ -598,8 +598,21 @@ export default function ContractorFileViewer({
             </span>
           </nav>
 
-          {/* Toolbar — hidden on mobile, shown on sm+ */}
-          <div className="ml-auto hidden sm:flex items-center gap-1 flex-shrink-0">
+          {/* Toolbar — hidden on mobile/tablet, shown on lg+ */}
+          <div className="ml-auto hidden lg:flex items-center gap-1 flex-shrink-0">
+            {/* Download */}
+            {file.displayUrl && (
+              <a
+                href={file.displayUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                download
+                className="flex items-center justify-center w-8 h-8 rounded-md border border-transparent text-muted-foreground hover:bg-muted transition-colors"
+                title={t.wykonawcy.downloadBtn}
+              >
+                <Download size={15} />
+              </a>
+            )}
             {/* Pin mode toggle (images only) */}
             {isImage && (
               <>
@@ -1097,8 +1110,8 @@ export default function ContractorFileViewer({
       </div>
     </div>
 
-    {/* Mobile floating toolbar */}
-    <div className="sm:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center gap-2">
+    {/* Mobile + tablet floating toolbar */}
+    <div className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center gap-2">
       {mobileToolbarExpanded ? (
         <div className="flex items-center gap-1 bg-card/95 backdrop-blur border border-border rounded-full px-2 py-1.5 shadow-lg">
           {isImage && (
