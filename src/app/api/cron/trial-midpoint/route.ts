@@ -61,14 +61,20 @@ export async function GET(req: NextRequest) {
 
   for (const stage of stages) {
     const users = await prisma.user.findMany({
-      where: { ...stage.where, role: "designer" } as any,
-      select: { id: true, email: true },
+      where: {
+        ...stage.where,
+        role: "designer",
+        isFree: false,
+        subscription: { is: null },
+      } as any,
+      select: { id: true, email: true, locale: true },
     });
 
     let count = 0;
     for (const user of users) {
+      const locale = (user.locale === "en" ? "en" : "pl") as "pl" | "en";
       try {
-        await stage.send({ to: user.email });
+        await stage.send({ to: user.email, locale });
         await prisma.user.update({
           where: { id: user.id },
           data: stage.mark as any,

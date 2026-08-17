@@ -123,7 +123,7 @@ export default function AdminUsersClient({
     return { text: `${t.admin.trialDaysLabel2} ${days}d`, color: days <= 5 ? "text-amber-400" : "text-white/50" };
   }
 
-  const isDemo = (u: User) => u.email.endsWith("@demo.veedeck.com");
+  const isDemo = (u: User) => u.email.endsWith("@demo.veedeck.com") || u.email.endsWith("@contractor.internal");
 
   const ROLE_FILTERS: { key: typeof roleFilter; label: string }[] = [
     { key: "all", label: "Wszyscy" },

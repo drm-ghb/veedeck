@@ -60,6 +60,8 @@ model User {
   trialDay7SentAt            DateTime?
   trialDay3SentAt            DateTime?
   trialEndedSentAt           DateTime?
+  locale                     String                  @default("pl")
+  lastActiveAt               DateTime?
   contactEmail               String?
   defaultCurrency            String                  @default("PLN")
   taskReminderHours          Json?

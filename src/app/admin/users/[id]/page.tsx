@@ -27,6 +27,7 @@ export default async function AdminUserDetailPage({
       createdAt: true,
       trialEndsAt: true,
       isFree: true,
+      lastActiveAt: true,
       subscription: { select: { plan: true, status: true, billingName: true, billingEmail: true, cardLast4: true, cardBrand: true, createdAt: true } },
       billingRecords: { select: { amount: true } },
       _count: { select: { projects: true, shoppingLists: true, clients: true } },

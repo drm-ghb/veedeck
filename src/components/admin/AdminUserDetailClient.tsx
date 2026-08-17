@@ -19,6 +19,7 @@ interface User {
   createdAt: Date | string;
   trialEndsAt: Date | string | null;
   isFree: boolean;
+  lastActiveAt: Date | string | null;
   subscription: {
     plan: string;
     status: string;
@@ -189,6 +190,14 @@ export default function AdminUserDetailClient({
             <div>
               <p className="text-xs text-white/30 mb-0.5">{t.admin.accessStatus}</p>
               <p className={`text-sm font-medium ${trialColor}`}>{trialText}</p>
+            </div>
+            <div>
+              <p className="text-xs text-white/30 mb-0.5">Ostatnio aktywny</p>
+              <p className="text-sm text-white">
+                {user.lastActiveAt
+                  ? new Date(user.lastActiveAt).toLocaleString("pl-PL", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })
+                  : "—"}
+              </p>
             </div>
           </div>
         </section>

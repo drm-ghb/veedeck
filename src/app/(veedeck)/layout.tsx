@@ -29,6 +29,9 @@ export default async function VeedeckLayout({
     select: { name: true, fullName: true, email: true, globalHiddenModules: true, clientLogoUrl: true, avatarUrl: true, ownerId: true, primaryAccountId: true, colorTheme: true, customTheme: true, trialEndsAt: true, isFree: true, viewPreferences: true, subscription: { select: { status: true, cancelAt: true } } },
   });
 
+  // Fire-and-forget — track last activity
+  prisma.user.update({ where: { id: session.user.id! }, data: { lastActiveAt: new Date() } }).catch(() => {});
+
   const ownerId = dbUser?.ownerId;
   const primaryAccountId = dbUser?.primaryAccountId ?? null;
   const systemRole = (dbUser as any)?.systemRole ?? "member";

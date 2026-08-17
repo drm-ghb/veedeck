@@ -35,6 +35,7 @@ export async function POST(req: NextRequest) {
   const trialEndsAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
   const activationToken = crypto.randomBytes(32).toString("hex");
   const activationTokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  const safeLocale: "pl" | "en" = locale === "en" ? "en" : "pl";
 
   const user = await prisma.user.create({
     data: {
@@ -46,10 +47,9 @@ export async function POST(req: NextRequest) {
       trialEndsAt,
       activationToken,
       activationTokenExpiry,
+      locale: safeLocale,
     },
   });
-
-  const safeLocale: "pl" | "en" = locale === "en" ? "en" : "pl";
   // Fire emails in background — do not block the response
   sendActivationEmail({ to: email, token: activationToken, locale: safeLocale })
     .catch((err) => console.error("[register] sendActivationEmail error:", err));
