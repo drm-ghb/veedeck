@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtag/js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-W6PSBGLB');</script>
+<!-- End Google Tag Manager -->
+<meta charset="utf-8">
+<title>veedeck — Terms of Service</title>
+<meta name="description" content="Terms of Service for veedeck — the SaaS platform for interior designers. Registration, subscription plans, payments, user rights, and acceptable use.">
+<meta name="robots" content="index, follow">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="veedeck_ikona.svg" type="image/svg+xml"><link rel="icon" href="veedeck_ikona.png" type="image/png">
+  <link rel="preload" as="font" type="font/woff2" href="/fonts/dm-sans-latin-ext.woff2" crossorigin>
+  <link rel="preload" as="font" type="font/woff2" href="/fonts/dm-sans-latin.woff2" crossorigin>
+  <link rel="preload" as="font" type="font/woff2" href="/fonts/inter-latin-ext.woff2" crossorigin>
+  <link rel="preload" as="font" type="font/woff2" href="/fonts/inter-latin.woff2" crossorigin>
+  <link rel="stylesheet" href="/fonts.css">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+<style>
+  :root {
+    --background: #FFFFFF;
+    --foreground: #24252B;
+    --card: #FFFFFF;
+    --card-foreground: #24252B;
+    --primary: #4F46E5;
+    --primary-foreground: #FFFFFF;
+    --secondary: #F2F3F7;
+    --muted: #F2F3F7;
+    --muted-foreground: #6B6F80;
+    --accent: #A5B4FC;
+    --accent-foreground: #1E1B4B;
+    --border: #E5E7EB;
+    --ring: #4F46E5;
+    --indigo-50: #EEF2FF;
+    --indigo-100: #E0E7FF;
+    --indigo-950: #1E1B4B;
+    --radius: 0.625rem;
+    --radius-lg: 14px;
+    --radius-xl: 18px;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  html { overflow-y: scroll; }
+  @view-transition { navigation: auto; }
+  nav.top { view-transition-name: site-nav; }
+  body {
+    font-family: "DM Sans", "DM Sans Fallback", ui-sans-serif, system-ui, sans-serif;
+    background: var(--background);
+    color: var(--foreground);
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.5;
+  }
+  h1, h2, h3, h4 {
+    font-family: "Inter", "Inter Fallback", ui-sans-serif, system-ui, sans-serif;
+    font-weight: 600;
+    letter-spacing: -0.022em;
+    margin: 0;
+  }
+  p { margin: 0; }
+  a { color: inherit; text-decoration: none; }
+
+  .container { max-width: 1200px; margin: 0 auto; padding: 0 32px; }
+
+  /* NAV */
+  nav.top {
+    position: sticky; top: 0; z-index: 40;
+    background: rgba(255,255,255,0.82);
+    backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-inner {
+    display: flex; align-items: center; justify-content: space-between;
+    height: 68px;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand img.brand-icon { height: 28px; width: 28px; display: block; }
+  .brand img.wordmark-img { height: 22px; width: auto; display: block; }
+  .nav-links {
+    display: flex; gap: 32px; font-size: 14px;
+    color: var(--muted-foreground); font-weight: 500;
+  }
+  .nav-links a:hover { color: var(--foreground); }
+  .nav-links a.active { color: var(--primary); }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    width: 100%;
+    padding: 10px 18px; border-radius: 10px;
+    font-size: 13.5px; font-weight: 600;
+    border: 1px solid transparent;
+    cursor: pointer; transition: all .15s;
+    font-family: inherit; white-space: nowrap;
+  }
+  .btn-primary {
+    background: var(--primary); color: var(--primary-foreground);
+    box-shadow: 0 6px 20px -8px rgba(79, 70, 229, 0.45);
+  }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 10px 24px -8px rgba(79, 70, 229, 0.55); }
+  .btn-ghost { background: transparent; color: var(--foreground); border: 1px solid var(--border); }
+  .btn-ghost:hover { background: var(--secondary); }
+
+  /* HERO */
+  .page-hero {
+    position: relative;
+    padding: 72px 0 48px;
+    background:
+      radial-gradient(1100px 400px at 80% -10%, rgba(165, 180, 252, 0.28), transparent 60%),
+      radial-gradient(700px 320px at 8% 0%, rgba(79, 70, 229, 0.10), transparent 65%),
+      var(--background);
+    border-bottom: 1px solid var(--border);
+  }
+  .page-hero .eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 12px; font-weight: 600;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--primary);
+    margin-bottom: 16px;
+  }
+  .page-hero .eyebrow .material-symbols-rounded { font-family: 'Material Symbols Rounded'; font-size: 16px; font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 24; }
+  .page-hero h1 {
+    font-size: clamp(36px, 5vw, 56px);
+    line-height: 1.06; letter-spacing: -0.03em;
+    font-weight: 700; margin-bottom: 16px;
+    max-width: 820px;
+  }
+  .page-hero h1 .wordmark-text { font-family: "Nunito", sans-serif; font-weight: 300; letter-spacing: -0.05em; }
+  .page-hero .lead { font-size: 17.5px; color: var(--muted-foreground); max-width: 660px; line-height: 1.6; }
+  .page-hero .updated {
+    display: inline-flex; align-items: center; gap: 8px;
+    margin-top: 22px;
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 12.5px; color: var(--muted-foreground);
+    background: #fff; border: 1px solid var(--border);
+    padding: 7px 13px; border-radius: 999px;
+  }
+  .page-hero .updated b { color: var(--foreground); font-weight: 600; }
+
+  /* LEGAL BODY */
+  .legal-section { padding: 64px 0 96px; }
+  .legal-wrap { display: grid; grid-template-columns: 232px 1fr; gap: 64px; align-items: start; }
+
+  .legal-toc {
+    position: sticky; top: 92px;
+    align-self: start;
+  }
+  .legal-toc .toc-label {
+    font-size: 11.5px; font-weight: 700; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--muted-foreground);
+    margin-bottom: 16px;
+  }
+  .legal-toc ol { list-style: none; margin: 0; padding: 0; counter-reset: toc; display: flex; flex-direction: column; gap: 3px; }
+  .legal-toc li { counter-increment: toc; }
+  .legal-toc a {
+    display: flex; gap: 10px;
+    padding: 7px 10px; border-radius: 9px;
+    font-size: 13.5px; color: var(--muted-foreground); font-weight: 500;
+    line-height: 1.35;
+    transition: background 120ms ease, color 120ms ease;
+  }
+  .legal-toc a::before { content: "§" counter(toc) "."; color: var(--accent); font-weight: 700; font-variant-numeric: tabular-nums; }
+  .legal-toc a:hover { background: var(--secondary); color: var(--foreground); }
+
+  .legal-doc { max-width: 760px; }
+  .legal-note {
+    display: flex; gap: 14px;
+    background: var(--indigo-50);
+    border: 1px solid var(--indigo-100);
+    border-radius: 16px;
+    padding: 18px 20px;
+    margin-bottom: 44px;
+  }
+  .legal-note .ic { flex-shrink: 0; width: 38px; height: 38px; border-radius: 11px; background: #fff; border: 1px solid var(--indigo-100); display: grid; place-items: center; }
+  .legal-note .ic .material-symbols-rounded { font-family: 'Material Symbols Rounded'; font-size: 20px; color: var(--primary); font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 24; }
+  .legal-note p { font-size: 13.5px; line-height: 1.6; color: var(--indigo-950); }
+  .legal-note b { font-weight: 700; }
+
+  .legal-doc section { scroll-margin-top: 90px; padding-top: 14px; }
+  .legal-doc section + section { margin-top: 46px; padding-top: 46px; border-top: 1px solid var(--border); }
+  .legal-doc h2 {
+    font-size: 23px; font-weight: 700; letter-spacing: -0.02em;
+    line-height: 1.2; margin-bottom: 18px;
+    display: flex; gap: 14px; align-items: baseline;
+  }
+  .legal-doc h2 .num { color: var(--accent); font-variant-numeric: tabular-nums; font-weight: 700; }
+  .legal-doc h3 { font-size: 16px; font-weight: 700; letter-spacing: -0.01em; margin: 26px 0 10px; }
+  .legal-doc p { font-size: 15.5px; line-height: 1.72; color: #3C3D47; }
+  .legal-doc p + p { margin-top: 14px; }
+  .legal-doc a.inline { color: var(--primary); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+  .legal-doc ul { margin: 14px 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 11px; }
+  .legal-doc ul li { position: relative; padding-left: 26px; font-size: 15.5px; line-height: 1.66; color: #3C3D47; }
+  .legal-doc ul li::before {
+    content: ""; position: absolute; left: 4px; top: 9px;
+    width: 7px; height: 7px; border-radius: 2px; background: var(--accent);
+    transform: rotate(45deg);
+  }
+  .legal-doc ol.legal-ol { margin: 14px 0 0; padding: 0; list-style: none; counter-reset: legal-item; display: flex; flex-direction: column; gap: 11px; }
+  .legal-doc ol.legal-ol li { counter-increment: legal-item; position: relative; padding-left: 32px; font-size: 15.5px; line-height: 1.66; color: #3C3D47; }
+  .legal-doc ol.legal-ol li::before { content: counter(legal-item) "."; position: absolute; left: 0; top: 0; color: var(--accent); font-weight: 700; font-variant-numeric: tabular-nums; min-width: 26px; }
+  .legal-doc ul li b, .legal-doc p b, .legal-doc ol.legal-ol li b { color: var(--foreground); font-weight: 700; }
+  .legal-doc .ph {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 0.84em; background: var(--secondary);
+    border: 1px dashed #CBD0DE; color: var(--primary);
+    padding: 1px 7px; border-radius: 6px; white-space: nowrap;
+  }
+
+  /* FOOTER */
+  footer.site { padding: 56px 0 32px; background: #fff; border-top: 1px solid var(--border); }
+  .footer-inner {
+    display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+    gap: 32px; align-items: start;
+    padding-bottom: 32px; border-bottom: 1px solid var(--border);
+  }
+  .footer-brand p, .footer-brand div { color: var(--muted-foreground); font-size: 14px; margin-top: 12px; max-width: 280px; line-height: 1.55; }
+  .footer-col h4 { font-size: 12px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted-foreground); margin-bottom: 14px; }
+  .footer-col ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+  .footer-col a { color: var(--foreground); font-size: 14.5px; font-weight: 500; }
+  .footer-col a:hover { color: var(--primary); }
+  .footer-col a.active { color: var(--primary); }
+  .footer-bottom { padding-top: 24px; display: flex; justify-content: space-between; color: var(--muted-foreground); font-size: 13px; }
+
+  @media (max-width: 1000px) {
+    .legal-wrap { grid-template-columns: 1fr; gap: 12px; }
+    .legal-toc { position: static; margin-bottom: 24px; padding: 20px; border: 1px solid var(--border); border-radius: 16px; background: #FAFAFB; }
+    .legal-toc ol { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 18px; }
+    .legal-doc { max-width: none; }
+  }
+  @media (max-width: 900px) {
+    .nav-links { display: flex; gap: 32px; font-size: 14px; color: var(--muted-foreground); font-weight: 500; }
+    .nav-cta { display: none !important; }
+    .footer-inner { grid-template-columns: 1fr 1fr; gap: 32px; }
+  }
+  @media (max-width: 900px) {
+    nav.top .nav-burger { display: inline-flex; }
+  }
+  @media (max-width: 620px) {
+    .legal-toc ol { grid-template-columns: 1fr; }
+    .footer-bottom { flex-direction: column; gap: 8px; }
+  }
+
+  /* HAMBURGER + MOBILE SIDEBAR */
+  .nav-burger {
+    display: none;
+    align-items: center; justify-content: center;
+    width: 42px; height: 42px;
+    background: transparent; border: none; border-radius: 10px;
+    color: var(--foreground); cursor: pointer; padding: 0;
+    transition: background 120ms ease; position: relative; z-index: 80;
+  }
+  .nav-burger:hover { background: var(--secondary); }
+  .nav-burger svg { width: 22px; height: 22px; }
+  .nav-burger .icon-close { display: none; }
+  nav.top.open .nav-burger .icon-open { display: none; }
+  nav.top.open .nav-burger .icon-close { display: block; }
+
+  .mobile-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(15, 15, 20, 0.45);
+    opacity: 0; pointer-events: none;
+    transition: opacity 240ms ease; z-index: 60;
+  }
+  nav.top.open + .mobile-backdrop { opacity: 1; pointer-events: auto; }
+  nav.top.open { z-index: 70; }
+
+  .mobile-menu {
+    position: fixed; top: 0; right: 0;
+    width: 100%; left: 0; height: 100dvh;
+    background: #fff;
+    box-shadow: -16px 0 40px rgba(15,15,20,0.12);
+    transform: translateX(100%);
+    transition: transform 280ms cubic-bezier(0.22, 0.61, 0.36, 1);
+    z-index: 70; display: flex; flex-direction: column; overflow-y: auto;
+  }
+  body.menu-locked .mobile-menu { transform: translateX(0); }
+  .mobile-menu-header { display: flex; align-items: center; justify-content: flex-end; padding: 18px 20px; }
+  .mobile-menu-close {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 40px; height: 40px; background: transparent; border: none; cursor: pointer;
+    color: var(--foreground); border-radius: 10px; padding: 0;
+  }
+  .mobile-menu-close:hover { background: var(--secondary); }
+  .mobile-menu-close svg { width: 20px; height: 20px; }
+  .mobile-menu-inner { display: flex; flex-direction: column; gap: 2px; padding: 8px 28px 32px; flex: 1; }
+  .mobile-menu a.menu-link {
+    display: block; padding: 16px 4px;
+    font-size: 17px; font-weight: 500; color: var(--foreground);
+    border-bottom: 1px solid var(--border); transition: color 120ms ease;
+  }
+  .mobile-menu a.menu-link:last-of-type { border-bottom: none; }
+  .mobile-menu a.menu-link:hover, .mobile-menu a.menu-link.active { color: var(--primary); }
+  .mobile-menu .mobile-cta { display: flex; flex-direction: column; gap: 10px; margin-top: 28px; }
+  .mobile-menu .mobile-cta .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: 100%; padding: 10px 18px; border-radius: 10px; font-size: 13.5px; font-weight: 600; border: 1px solid transparent; cursor: pointer; transition: all .15s; font-family: inherit; white-space: nowrap; }
+  body.menu-locked { overflow: hidden; }
+
+  @media (min-width: 901px) {
+    .mobile-menu { display: none; }
+    .mobile-backdrop { display: none; }
+  }
+</style>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-TLPPBXZX1F"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-TLPPBXZX1F');
+</script>
+<link rel="stylesheet" href="/veedeck-megamenu.css">
+<link rel="stylesheet" href="/nav.css">
+</head>
+<body>
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W6PSBGLB"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+
+<!-- NAV -->
+<nav class="top" id="siteNav">
+  <div class="container nav-inner">
+    <a class="brand" href="index.html">
+      <img class="brand-icon" src="vee-icon.png" alt="">
+      <img class="wordmark-img" src="vee_black.png" alt="veedeck">
+    </a>
+    <div class="nav-links">
+      <button type="button" class="vd-mm-trigger" aria-haspopup="true" aria-expanded="false"><span class="vd-mm-lbl">Features</span><svg class="vd-mm-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+      <a href="/pricing">Pricing</a>
+      <a href="/demo">Demo</a>
+      <a href="/migration">Migration</a>
+      <a href="/about">About</a>
+      <a href="/contact">Contact</a>
+    </div>
+    <div class="nav-cta" style="display:flex; gap:10px; align-items:center;">
+      <a href="https://app.veedeck.com/login" class="btn btn-ghost" style="border: 1px solid #CBD1DC;">Log in</a>
+      <a href="/demo" class="btn btn-primary">Free demo<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"></path></svg></a>
+    </div>
+    <button class="nav-burger" aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu" onclick="toggleMobileMenu(this)">
+      <svg class="icon-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="3" y1="7" x2="21" y2="7"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="17" x2="21" y2="17"></line></svg>
+      <svg class="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="6" y1="6" x2="18" y2="18"></line><line x1="6" y1="18" x2="18" y2="6"></line></svg>
+    </button>
+  </div>
+</nav>
+<div class="mobile-backdrop" id="mobileBackdrop" onclick="closeMobileMenu()" aria-hidden="true"></div>
+<aside class="mobile-menu" id="mobileMenu" aria-label="Mobile menu">
+  <div class="mobile-menu-header">
+    <a class="brand" href="index.html" style="margin-right:auto; display:inline-flex; align-items:center; gap:9px;"><img class="brand-icon" src="vee-icon.png" alt="" style="height:28px;width:auto;"><img class="wordmark-img" src="vee_black.png" alt="veedeck" style="height:18px;width:auto;"></a>
+    <button class="mobile-menu-close" aria-label="Close menu" onclick="closeMobileMenu()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="6" y1="6" x2="18" y2="18"></line><line x1="6" y1="18" x2="18" y2="6"></line></svg>
+    </button>
+  </div>
+  <div class="mobile-menu-inner">
+    <a class="menu-link" href="/pricing">Pricing</a>
+    <a class="menu-link" href="/demo">Demo</a>
+    <a class="menu-link" href="/migration">Migration</a>
+    <a class="menu-link" href="/about">About</a>
+    <a class="menu-link" href="/contact">Contact</a>
+    <div class="mobile-cta">
+      <a href="https://app.veedeck.com/login" class="btn btn-ghost" style="border: 1px solid #CBD1DC;">Log in</a>
+      <a href="/demo" class="btn btn-primary">Free demo<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"></path></svg></a>
+    </div>
+  </div>
+</aside>
+
+<script>
+  function setMobileMenu(open) {
+    var nav = document.getElementById('siteNav');
+    var btn = nav.querySelector('.nav-burger');
+    nav.classList.toggle('open', open);
+    document.body.classList.toggle('menu-locked', open);
+    if (btn) {
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      btn.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+    }
+  }
+  function toggleMobileMenu(btn) {
+    var nav = document.getElementById('siteNav');
+    setMobileMenu(!nav.classList.contains('open'));
+  }
+  function closeMobileMenu() { setMobileMenu(false); }
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeMobileMenu(); });
+  document.addEventListener('click', function (e) {
+    var link = e.target.closest('.mobile-menu a');
+    if (link) closeMobileMenu();
+  });
+</script>
+
+<!-- HERO -->
+<section class="page-hero">
+  <div class="container">
+    <div class="eyebrow"><span class="material-symbols-rounded">gavel</span> Legal document</div>
+    <h1>Terms of Service</h1>
+    <p class="lead">
+      Terms governing the use of the <span class="wordmark-text">veedeck</span> platform —
+      registration, subscription plans, payments, user rights,
+      and acceptable use of the Service.
+    </p>
+    <div class="updated"><span>Version:</span> <b>[PUBLICATION DATE]</b></div>
+  </div>
+</section>
+
+<!-- LEGAL BODY -->
+<section class="legal-section">
+  <div class="container">
+    <div class="legal-wrap">
+
+      <!-- TOC -->
+      <nav class="legal-toc" aria-label="Table of contents">
+        <div class="toc-label">Contents</div>
+        <ol>
+          <li><a href="#s1">General provisions</a></li>
+          <li><a href="#s2">Definitions</a></li>
+          <li><a href="#s3">Description of the Service</a></li>
+          <li><a href="#s4">Technical requirements</a></li>
+          <li><a href="#s5">Registration and Account</a></li>
+          <li><a href="#s6">Plans, trial period, and agreement</a></li>
+          <li><a href="#s7">Fees and billing</a></li>
+          <li><a href="#s8">Price changes</a></li>
+          <li><a href="#s9">Complaints and right of withdrawal</a></li>
+          <li><a href="#s10">Acceptable use</a></li>
+          <li><a href="#s11">Client and Contractor panels</a></li>
+          <li><a href="#s12">User content and intellectual property</a></li>
+          <li><a href="#s13">Personal data</a></li>
+          <li><a href="#s14">Availability and technical errors</a></li>
+          <li><a href="#s15">Limitation of liability</a></li>
+          <li><a href="#s16">Term and termination</a></li>
+          <li><a href="#s17">Changes to these Terms</a></li>
+          <li><a href="#s18">Governing law and disputes</a></li>
+          <li><a href="#s19">Final provisions</a></li>
+        </ol>
+      </nav>
+
+      <!-- DOC -->
+      <div class="legal-doc">
+
+        <div class="legal-note">
+          <div class="ic"><span class="material-symbols-rounded">info</span></div>
+          <p><b>Working draft.</b> This document is prepared for publication, but a review by a lawyer is recommended before full public release. Items marked <span class="ph">[TO BE COMPLETED]</span> require a decision before publication. This is the English version of the veedeck Regulamin (Terms of Service). In case of any discrepancy between this version and the Polish original, <b>the Polish version prevails</b>.</p>
+        </div>
+
+        <section id="s1">
+          <h2><span class="num">§&nbsp;1.</span> General provisions</h2>
+          <ol class="legal-ol">
+            <li>These Terms of Service ("Terms") govern the use of the veedeck service and application, available at veedeck.com and app.veedeck.com (the "Service"), provided electronically.</li>
+            <li>These Terms are made available free of charge before the conclusion of any agreement for the Service, in a form that allows the user to obtain, reproduce, and store it.</li>
+            <li>The processing of personal data is governed by a separate document — the <a class="inline" href="privacy-policy.html">Privacy Policy</a> and the <a class="inline" href="cookie-policy.html">Cookie Policy</a>.</li>
+          </ol>
+        </section>
+
+        <section id="s2">
+          <h2><span class="num">§&nbsp;2.</span> Definitions</h2>
+          <ul>
+            <li><b>Provider</b> — Daniel Rychlik, operating a sole proprietorship under the business name Daniel Rychlik Management, based in Wrocław, Poland, NIP: 8943229341.</li>
+            <li><b>Service / veedeck</b> — the SaaS platform enabling management of interior design and architecture projects, presentation of proposals to clients, creation of moodboards and shopping lists, and communication with contractors, together with the associated veepick browser extension.</li>
+            <li><b>User</b> — any natural person, legal entity, or organizational unit using the Service, including a Designer, a Client, and a Contractor.</li>
+            <li><b>Designer</b> — a User who creates an Account and enters into a paid agreement with the Provider for use of the Service (the primary paying user).</li>
+            <li><b>Client / Contractor</b> — individuals invited by a Designer to participate in a given project within the Designer's Account, using the relevant panels of the Service to the extent granted by the Designer.</li>
+            <li><b>Account</b> — a User's individual profile within the Service.</li>
+            <li><b>Plan</b> — a subscription tier of the Service and its scope of functionality: currently Solo, Studio, or Biuro. The detailed scope and pricing of each Plan is listed at <a class="inline" href="/pricing">veedeck.com/pricing</a>.</li>
+            <li><b>Terms</b> — this document.</li>
+          </ul>
+        </section>
+
+        <section id="s3">
+          <h2><span class="num">§&nbsp;3.</span> Description of the Service</h2>
+          <ol class="legal-ol">
+            <li>veedeck provides Designers with functionality including, among others: project management, creation and presentation of moodboards, shopping lists, communication with Clients and Contractors, and the veepick extension for collecting product data from retailer websites.</li>
+            <li>The scope of functionality available under each Plan is set out at <a class="inline" href="/pricing">veedeck.com/pricing</a> and may vary.</li>
+            <li>The Provider continuously develops the Service. Some features may be labelled as experimental / beta and made available on a limited basis or to selected Users; such features may be unstable and do not give rise to any claims beyond those set out in §§&nbsp;14–15 of these Terms.</li>
+            <li>The Provider reserves the right to modify, develop, restrict, or discontinue individual features of the Service, provided this does not materially reduce the value of an already-paid Plan without appropriate compensation or the option to cancel.</li>
+          </ol>
+        </section>
+
+        <section id="s4">
+          <h2><span class="num">§&nbsp;4.</span> Technical requirements</h2>
+          <ol class="legal-ol">
+            <li>Using the Service requires: a device with internet access, an up-to-date web browser supporting JavaScript and cookies, and an active email account.</li>
+            <li>The veepick extension requires a browser compatible with the Chrome Web Store or Opera Add-ons.</li>
+            <li>The Provider does not guarantee that the Service will function on browsers or configurations not officially supported.</li>
+          </ol>
+        </section>
+
+        <section id="s5">
+          <h2><span class="num">§&nbsp;5.</span> Registration and Account</h2>
+          <ol class="legal-ol">
+            <li>Creating an Account requires providing accurate information and accepting these Terms and the Privacy Policy.</li>
+            <li>The Service may be used by individuals who have reached the age of majority and have full legal capacity, or by entities acting through duly authorized representatives.</li>
+            <li>The User is responsible for keeping their login credentials confidential and for all activity carried out through their Account, including by Clients and Contractors they invite.</li>
+            <li>A Designer is responsible for obtaining any consents necessary to invite a Client/Contractor into a project within the Service, including compliance with data protection law regarding data the Designer processes as controller (e.g. a Client's contact details).</li>
+          </ol>
+        </section>
+
+        <section id="s6">
+          <h2><span class="num">§&nbsp;6.</span> Plans, trial period, and formation of the agreement</h2>
+          <ol class="legal-ol">
+            <li>Current Plans, their scope, and pricing are published at <a class="inline" href="/pricing">veedeck.com/pricing</a>.</li>
+            <li>Registering for the Service starts a trial period, on the terms (including its length and whether payment card details are required) displayed in the Service interface at the time of registration. During the trial, the User has full access to the functionality made available as part of the trial, at no charge.</li>
+            <li>If, once the trial period ends, the User has not selected and paid for a Plan, the Account switches to "read-only" mode — the User retains access to view data and content entered up to that point, but loses the ability to add, edit, or delete it, until a Plan is selected and paid for.</li>
+            <li>An agreement for a paid Service, covering the full functionality of the relevant Plan, is formed when the User selects a Plan and successfully completes payment.</li>
+            <li>The trial period does not convert automatically into a paid subscription and does not result in an automatic charge to the User — selecting and paying for a Plan requires a separate, affirmative action by the User within the Service interface.</li>
+          </ol>
+        </section>
+
+        <section id="s7">
+          <h2><span class="num">§&nbsp;7.</span> Fees and billing</h2>
+          <ol class="legal-ol">
+            <li>Payments are processed by a third-party payment provider (Stripe). By completing a payment, the User also accepts that provider's terms.</li>
+            <li>The fee for the selected Plan is charged on a recurring basis (monthly or annually, as chosen by the User) in advance, for the upcoming billing period, until the subscription is cancelled.</li>
+            <li>Prices are quoted net of tax; applicable VAT is added in accordance with the law in force.</li>
+            <li>If a payment cannot be collected (e.g. due to an expired card), the Provider may restrict access to the Service until payment is settled, after notifying the User.</li>
+            <li>Except as set out in §&nbsp;9 and under mandatory consumer-protection law, fees for the Service are non-refundable, including where the Service was not used during a given billing period.</li>
+          </ol>
+        </section>
+
+        <section id="s8">
+          <h2><span class="num">§&nbsp;8.</span> Price changes</h2>
+          <ol class="legal-ol">
+            <li>The Provider reserves the right to change the prices of the Service and to introduce new subscription Plans, in particular in connection with the development of the Service's functionality, changes in the cost of operating it, or market conditions.</li>
+            <li>Users with an active subscription will be notified of any price change electronically, at the email address associated with their Account, <b>at least 30 days in advance</b> of the change taking effect.</li>
+            <li>The new price applies from the first billing period following expiry of the notice period referred to in paragraph 2.</li>
+            <li>A User who does not accept the new price may cancel their subscription with effect at the end of the current, already-paid billing period, at no additional cost, in accordance with §&nbsp;16.</li>
+            <li>A price change has no effect on billing periods already paid for before it takes effect.</li>
+          </ol>
+        </section>
+
+        <section id="s9">
+          <h2><span class="num">§&nbsp;9.</span> Complaints and right of withdrawal (Consumers)</h2>
+
+          <h3>Complaints</h3>
+          <ol class="legal-ol">
+            <li>A User may submit a complaint regarding the operation of the Service or billing by emailing <a class="inline" href="mailto:support@veedeck.com">support@veedeck.com</a>, describing the issue and providing information sufficient to identify the Account.</li>
+            <li>The Provider will review the complaint and respond within 14 days of receipt, to the email address from which the complaint was sent or another address specified by the User.</li>
+            <li>This procedure does not exclude or limit the rights of a User who is a consumer, or an entrepreneur with consumer-equivalent status ("Consumer"), under mandatory law, including statutory warranty rights and rights regarding conformity of digital services.</li>
+            <li>Consumers may also use the EU Online Dispute Resolution platform (<a class="inline" href="https://ec.europa.eu/consumers/odr" target="_blank" rel="noopener">ec.europa.eu/consumers/odr</a>) for out-of-court dispute resolution.</li>
+          </ol>
+
+          <h3>Right of withdrawal from a distance contract</h3>
+          <ol class="legal-ol" style="counter-reset: legal-item 4;">
+            <li>A Consumer who has entered into an agreement at a distance may withdraw from it without giving a reason within 14 days of its conclusion, by submitting an unambiguous statement of withdrawal to the Provider (e.g. by email to <a class="inline" href="mailto:support@veedeck.com">support@veedeck.com</a>).</li>
+            <li>The right of withdrawal does not apply to the extent that, before the period referred to in paragraph 5 has expired, the Provider has fully performed the Service with the Consumer's express prior consent, having informed the Consumer that they would lose the right of withdrawal once performance was complete — in accordance with Article 38(1) and (13) of the Polish Consumer Rights Act. The Provider collects this consent and information from the Consumer within the Service interface at the point of purchasing a Plan.</li>
+            <li>Where a Consumer validly withdraws before the Service has been fully performed, the Provider will refund the fee paid, less the value of the Service already performed up to the point of withdrawal, calculated proportionally, unless mandatory law requires otherwise.</li>
+            <li>Paragraphs 5–7 do not apply to Users who are not Consumers.</li>
+            <li><span class="ph">[TO BE COMPLETED]</span> — paragraph 6 requires that, at the point of purchasing a Plan, the Consumer actively confirms (typically via a separate, non-pre-ticked checkbox next to the payment button) their consent to immediate performance of the Service and their awareness that they will lose the right of withdrawal once performance is complete. Without that step in the checkout flow, paragraph 6 will not be effective and Consumers will retain a full 14-day right of withdrawal regardless of use.</li>
+          </ol>
+        </section>
+
+        <section id="s10">
+          <h2><span class="num">§&nbsp;10.</span> Acceptable use</h2>
+          <p>The User must not, in particular:</p>
+          <ol class="legal-ol">
+            <li>submit or transmit unlawful content through the Service;</li>
+            <li>attempt unauthorized access to the Provider's systems or to other Users' accounts;</li>
+            <li>decompile, reverse-engineer, or otherwise attempt to obtain the source code of the Service, except where expressly permitted by mandatory law;</li>
+            <li>automatically extract data from the Service (scraping) other than through functionality designed for that purpose (e.g. the veepick extension, within its intended use);</li>
+            <li>engage in conduct that disrupts the proper functioning of the Service or places a disproportionate load on its infrastructure;</li>
+            <li>use the Service for purposes inconsistent with its intended purpose or that infringe the rights of third parties;</li>
+            <li>post or distribute, through the Service, content that discriminates against, insults, or incites hatred or violence toward individuals or groups on the basis of race, ethnic or national origin, sex, sexual orientation, gender identity, religion or belief, disability, age, or other characteristics protected by law, or content that harasses or demeans other Users or third parties.</li>
+          </ol>
+          <p style="margin-top:14px;">A breach of paragraph 7 constitutes a material breach of these Terms within the meaning of §&nbsp;16(3) and may result in immediate suspension or deletion of the Account, in addition to any other remedies available at law.</p>
+        </section>
+
+        <section id="s11">
+          <h2><span class="num">§&nbsp;11.</span> Client and Contractor panels</h2>
+          <ol class="legal-ol">
+            <li>Client and Contractor access to the Service is granted by the Designer within their Account and project, on the terms provided by the Service's functionality at the relevant time.</li>
+            <li>Clients and Contractors use the Service solely within the relationship between the Designer and the Provider — they do not enter into a separate agreement with the Provider and do not separately accept these Terms. The Designer remains the sole party to the agreement.</li>
+            <li>The Designer bears full responsibility for inviting a Client or Contractor into the Service, including the lawfulness of doing so (including under data protection law, where applicable), the scope of information and permissions granted to them, and their compliance with these Terms to the extent they use the Service. A breach of these Terms by a Client or Contractor is treated as a breach by the Designer and may result in the measures provided for in §&nbsp;16 being applied to the Designer's Account.</li>
+            <li>The Provider may present Clients and Contractors with a short summary of the rules for using the relevant panel of the Service, directly within its interface — this does not constitute a separate acceptance of these Terms or a separate agreement with the Provider.</li>
+          </ol>
+        </section>
+
+        <section id="s12">
+          <h2><span class="num">§&nbsp;12.</span> User content and intellectual property</h2>
+          <ol class="legal-ol">
+            <li>Materials uploaded by a User to the Service (e.g. photos, moodboards, project descriptions) remain their property. The User grants the Provider a non-exclusive, royalty-free license to store, process, and display such materials to the extent necessary to provide the Service (including sharing them with a Client/Contractor per the User's settings).</li>
+            <li>The User represents that they hold the rights to any materials they upload, or the necessary permissions to use them within the Service, and is responsible for any third-party rights infringement arising from uploaded content.</li>
+            <li>The Service, its source code, design, trademarks ("veedeck", "veepick"), and other elements are the property of the Provider or of parties from whom the Provider has obtained the relevant rights, and are legally protected. These Terms do not transfer any rights in those elements to the User beyond the right to use the Service as intended.</li>
+          </ol>
+        </section>
+
+        <section id="s13">
+          <h2><span class="num">§&nbsp;13.</span> Personal data</h2>
+          <p>The processing of Users' personal data is governed by the <a class="inline" href="privacy-policy.html">Privacy Policy</a> available at veedeck.com/privacy-policy, which forms an integral supplement to these Terms.</p>
+        </section>
+
+        <section id="s14">
+          <h2><span class="num">§&nbsp;14.</span> Availability and technical errors</h2>
+          <ol class="legal-ol">
+            <li>The Provider exercises due care to ensure the Service functions correctly and is available on a continuous basis, but does not guarantee that the Service will be free of errors, downtime, or technical inconvenience, arising in particular from maintenance work, updates, the rollout of new functionality, failures on the part of third-party providers (hosting, payments, integrations), or force majeure.</li>
+            <li>The User acknowledges that the Service, including features labelled as beta, may contain technical errors ("bugs"). Where an error is reported to <a class="inline" href="mailto:support@veedeck.com">support@veedeck.com</a>, the Provider will take reasonable steps to correct it as promptly as possible.</li>
+            <li>Temporary unavailability of the Service, or errors in its operation, corrected within a reasonable time of being reported, do not on their own constitute grounds for a refund of subscription fees or for withdrawal from the agreement, subject to §&nbsp;9(3) and mandatory consumer-protection law.</li>
+          </ol>
+        </section>
+
+        <section id="s15">
+          <h2><span class="num">§&nbsp;15.</span> Limitation of liability</h2>
+          <ol class="legal-ol">
+            <li>Because the Service is used both by Users who are not consumers ("Business Users") and by consumers and entrepreneurs with consumer-equivalent status ("Consumers"), this section applies differently to each group, as set out in paragraphs 2–3.</li>
+            <li><b>For Business Users:</b> the Provider's liability for non-performance or improper performance of the agreement is limited to the fees paid by that User during the 6 months preceding the event giving rise to the damage, and excludes lost profits and indirect damages. These limitations do not apply to damage caused intentionally (Article 473 § 2 of the Polish Civil Code).</li>
+            <li><b>For Consumers:</b> the limitations in paragraph 2 do not apply. The Provider's liability toward a Consumer is governed by generally applicable law, including the Polish Civil Code's statutory warranty provisions and the Consumer Rights Act's provisions on conformity of a digital service with the agreement — none of which can be excluded or limited by these Terms.</li>
+            <li>The Provider applies technical and organizational security measures appropriate to the nature of the Service, as described in the Privacy Policy. The Provider is not liable for damage resulting from unauthorized access to the Service's systems, hacking attacks, malware, DDoS attacks, or other criminal acts by third parties carried out despite the Provider's application of those security measures — except that this limitation does not apply to damage resulting from the Provider's gross negligence in securing the Service, and is applied to Consumers subject to paragraph 3.</li>
+            <li>The Provider is not liable for damage arising from a User's use of the Service in a manner inconsistent with these Terms, the Service's intended purpose, its documentation, or guidance provided within the Service, including consequences of incorrect data entry, incorrect Account configuration, or the User's own disclosure of login credentials to unauthorized persons.</li>
+          </ol>
+        </section>
+
+        <section id="s16">
+          <h2><span class="num">§&nbsp;16.</span> Term and termination</h2>
+          <ol class="legal-ol">
+            <li>An agreement for a paid Plan is concluded for an indefinite period, with billing periods matching the chosen payment cycle (monthly or annual).</li>
+            <li>A User may cancel their subscription at any time from their Account settings or by contacting <a class="inline" href="mailto:support@veedeck.com">support@veedeck.com</a> — cancellation takes effect at the end of the current, already-paid billing period, without a refund of the unused portion of that period, subject to §&nbsp;8(4) and mandatory law.</li>
+            <li>The Provider may suspend or terminate the agreement with immediate effect in the event of a material breach of these Terms by the User (including §&nbsp;10), non-payment despite a request to pay, or conduct that endangers the security of the Service or of other Users.</li>
+            <li>Following termination, Account data is retained and deleted in accordance with the periods set out in the Privacy Policy.</li>
+          </ol>
+        </section>
+
+        <section id="s17">
+          <h2><span class="num">§&nbsp;17.</span> Changes to these Terms</h2>
+          <ol class="legal-ol">
+            <li>The Provider may amend these Terms for valid reasons, in particular: changes to the Service's functionality, changes in law, or changes to payment terms or prices (per §&nbsp;8).</li>
+            <li>Users with an active subscription will be notified of changes to these Terms electronically, with reasonable advance notice, no shorter than the notice period set out in §&nbsp;8(2) for changes affecting price.</li>
+            <li>Continued use of the Service after the changes take effect constitutes acceptance of them; a User who does not accept the changes may terminate the agreement as described in §&nbsp;16.</li>
+          </ol>
+        </section>
+
+        <section id="s18">
+          <h2><span class="num">§&nbsp;18.</span> Governing law and disputes</h2>
+          <ol class="legal-ol">
+            <li>These Terms and any agreement formed under them are governed by Polish law.</li>
+            <li>For Users who are not consumers, disputes fall within the jurisdiction of the court competent for the Provider's registered seat.</li>
+            <li>For Users who are consumers, or entrepreneurs with consumer-equivalent status, the jurisdictional rules protecting such persons apply notwithstanding paragraphs 1–2, and the choice of Polish law does not deprive a consumer of the protection afforded by the mandatory law of the country of their habitual residence.</li>
+          </ol>
+        </section>
+
+        <section id="s19">
+          <h2><span class="num">§&nbsp;19.</span> Final provisions</h2>
+          <ol class="legal-ol">
+            <li>If any provision of these Terms is found invalid or unenforceable, the remaining provisions remain in force, and the invalid provision is replaced by one that most closely reflects its intent while remaining lawful.</li>
+            <li>Matters not covered by these Terms are governed by Polish law, in particular the Civil Code, the Act on the Provision of Electronic Services, and — with respect to consumers — the Consumer Rights Act.</li>
+            <li>Contact regarding these Terms and the Service: <a class="inline" href="mailto:support@veedeck.com">support@veedeck.com</a>. Contact regarding personal data protection: <a class="inline" href="mailto:contact@veedeck.com">contact@veedeck.com</a>.</li>
+          </ol>
+        </section>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="site">
+  <div class="container">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <a class="brand" href="index.html">
+          <img class="brand-icon" src="vee-icon.png" alt="" style="height:28px;width:28px">
+          <img class="wordmark-img" src="vee_black.png" alt="veedeck" style="height:22px">
+        </a>
+        <p>Visualize, Design, Deliver.</p>
+        <div>Platform for interior designers.</div>
+      </div>
+      <div class="footer-col">
+        <h4>Company</h4>
+        <ul>
+          <li><a href="/about">About</a></li>
+          <li><a href="/demo">Demo</a></li>
+          <li><a href="/contact">Contact</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Product</h4>
+        <ul>
+          <li><a href="/modules">Modules</a></li>
+          <li><a href="/plugin">veepick extension</a></li>
+          <li><a href="/pricing">Pricing</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Resources</h4>
+        <ul>
+          <li><a href="help/">Help</a></li>
+          <li><a href="help/for-designers/">Knowledge base</a></li>
+          <li><a href="/migration">Migration</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Legal</h4>
+        <ul>
+          <li><a href="privacy-policy.html">Privacy Policy</a></li>
+          <li><a href="privacy-policy-veepick.html">Privacy Policy veepick</a></li>
+          <li><a href="cookie-policy.html">Cookie Policy</a></li>
+          <li><a href="terms-of-service.html" class="active">Terms of Service</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div>© 2026 veedeck. All rights reserved.</div>
+      <div>contact@veedeck.com</div>
+    </div>
+  </div>
+</footer>
+
+<script src="/veedeck-megamenu.js"></script>
+<style>
+/* MFIX: off-canvas menu nie rozpycha strony w bok */
+@media (max-width: 900px) { html, body { overflow-x: clip; } }
+</style>
+</body>
+</html>

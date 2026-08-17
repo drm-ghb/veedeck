@@ -74,7 +74,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   .nav-links a.active { color: var(--primary); }
 
   .btn {
-    display: inline-flex; align-items: center; gap: 6px;
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    width: 100%;
     padding: 10px 18px; border-radius: 10px;
     font-size: 13.5px; font-weight: 600;
     border: 1px solid transparent;
@@ -158,7 +159,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     display: flex; gap: 18px; flex-wrap: wrap;
     font-size: 13px; color: var(--muted-foreground);
   }
-  .hero-meta-item { display: inline-flex; align-items: center; gap: 6px; }
+  .hero-meta-item { display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    width: 100%; }
   .hero-meta-item .material-symbols-rounded {
     font-family: 'Material Symbols Rounded';
     font-size: 16px; line-height: 1;
@@ -466,7 +468,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   }
     .nav-cta { display: none !important; }
     nav.top > .container .btn {
-    display: inline-flex; align-items: center; gap: 6px;
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    width: 100%;
     padding: 10px 18px; border-radius: 10px;
     font-size: 13.5px; font-weight: 600;
     border: 1px solid transparent;
@@ -540,7 +543,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   .mobile-menu a.menu-link:hover, .mobile-menu a.menu-link.active { color: var(--primary); }
   .mobile-menu .mobile-cta { display: flex; flex-direction: column; gap: 10px; margin-top: 28px; }
   .mobile-menu .mobile-cta .btn {
-    display: inline-flex; align-items: center; gap: 6px;
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    width: 100%;
     padding: 10px 18px; border-radius: 10px;
     font-size: 13.5px; font-weight: 600;
     border: 1px solid transparent;
@@ -902,8 +906,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <img class="browser-ic" src="/chrome-logo.webp" alt="" aria-hidden="true">
           Chrome Web Store
         </a>
+        <a href="https://addons.mozilla.org/pl/firefox/addon/veepick/" target="_blank" rel="noopener noreferrer" class="btn btn-white btn-lg">
+          <img class="browser-ic" src="firefox-logo.svg" alt="" aria-hidden="true">
+          Firefox Add-ons
+        </a>
         <span class="btn btn-outline btn-lg" style="opacity:0.4;cursor:not-allowed;">Edge Add-ons</span>
-        <span class="btn btn-outline btn-lg" style="opacity:0.4;cursor:not-allowed;">Firefox Add-ons</span>
       </div>
     </div>
   </div>
@@ -952,6 +959,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <li><a href="/en/privacy-policy/">Privacy Policy</a></li>
           <li><a href="/en/privacy-policy-veepick/">veepick Privacy Policy</a></li>
           <li><a href="/en/cookie-policy/">Cookie Policy</a></li>
+          <li><a href="/en/terms-of-service/">Terms of Service</a></li>
         </ul>
       </div>
 </div>

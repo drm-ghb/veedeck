@@ -218,7 +218,7 @@ window.VEEDECK_I18N = {
     "If this privacy policy changes, the updated version will be published at this URL with a new “Last updated” date. Continued use of the extension after changes constitutes acceptance of the updated policy.",
   "W razie pytań dotyczących niniejszej polityki prywatności lub sposobu przetwarzania danych przez Veepick prosimy o kontakt:":
     "If you have any questions about this privacy policy or how Veepick handles your data, contact us at:",
-  "Regulamin": "Terms",
+  "Regulamin": "Terms of Service",
   "© 2026 veedeck. Wszelkie prawa zastrzeżone.": "© 2026 veedeck. All rights reserved.",
   "Porozmawiaj z nami": "Talk to us",
   "Porozmawiajmy": "Let’s talk",

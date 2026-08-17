@@ -122,6 +122,15 @@ const PAGES = [
     enDesc: 'Cookie policy for veedeck.com.',
     type: 'marketing',
   },
+  {
+    src: 'regulamin.html',
+    enSrc: 'terms-of-service.html',
+    plDir: 'pl/regulamin', enDir: 'en/terms-of-service',
+    plUrl: '/pl/regulamin/', enUrl: '/en/terms-of-service/',
+    enTitle: 'Terms of Service | veedeck',
+    enDesc: 'Terms of Service for veedeck — the SaaS platform for interior designers. Covers plans, billing, trial period, user rights and more.',
+    type: 'marketing',
+  },
 
   // ── Pomoc / Help pages ───────────────────────────────────────────────────
   {
@@ -1054,6 +1063,11 @@ function fixLinks(html, lang) {
       isEn ? 'href="/en/privacy-policy/"' : 'href="/pl/polityka-prywatnosci/"')
     .replace(/href="([.\/]*)polityka-cookies\.html"/g,
       isEn ? 'href="/en/cookie-policy/"' : 'href="/pl/polityka-cookies/"')
+    .replace(/href="([.\/]*)cookie-policy\.html"/g, 'href="/en/cookie-policy/"')
+    .replace(/href="([.\/]*)privacy-policy\.html"/g, 'href="/en/privacy-policy/"')
+    .replace(/href="([.\/]*)regulamin\.html"/g,
+      isEn ? 'href="/en/terms-of-service/"' : 'href="/pl/regulamin/"')
+    .replace(/href="([.\/]*)terms-of-service\.html"/g, 'href="/en/terms-of-service/"')
 
     // ── Pomoc index (from root pages, footer "Centrum pomocy") ─────
     .replace(/href="pomoc\/index\.html"/g, isEn ? 'href="/en/help/"'  : 'href="/pl/pomoc/"')
@@ -1235,6 +1249,7 @@ function translateFooterPomoc(html) {
   html = html.replace(/>Polityka prywatności veepick</g, '>Privacy Policy veepick<');
   html = html.replace(/>Polityka prywatności</g, '>Privacy Policy<');
   html = html.replace(/>Polityka cookies</g, '>Cookie Policy<');
+  html = html.replace(/>Regulamin</g, '>Terms of Service<');
   html = html.replace(/Platforma dla projektantów wnętrz\./g, 'A platform for interior designers.');
   html = html.replace(/Wszelkie prawa zastrzeżone\./g, 'All rights reserved.');
   // Nav links text
