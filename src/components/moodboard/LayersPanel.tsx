@@ -28,8 +28,7 @@ function getLabel(el: CanvasElement): string {
     case "triangle":   return "Trójkąt";
     case "arrow":      return "Strzałka";
     case "line":       return "Linia";
-    case "freehand":
-    case "pen":        return "Rysunek";
+    case "freehand":   return "Rysunek";
     case "connection": return "Połączenie";
     default:           return "Element";
   }
@@ -46,8 +45,7 @@ function getIcon(type: string) {
     case "note":      return <StickyNote size={12} className={cls} />;
     case "arrow":     return <ArrowRight size={12} className={cls} />;
     case "line":      return <Minus size={12} className={cls} />;
-    case "freehand":
-    case "pen":       return <Pen size={12} className={cls} />;
+    case "freehand":  return <Pen size={12} className={cls} />;
     case "triangle":  return (
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={cls}>
         <path d="M3 20h18L12 4z" />
