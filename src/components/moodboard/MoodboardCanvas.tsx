@@ -18,6 +18,7 @@ import { useUploadThing } from "@/lib/uploadthing-client";
 import { MOODBOARD_TEMPLATES } from "@/components/moodboard/data/templates";
 import type { MoodboardTemplate } from "@/components/moodboard/data/templates";
 import { ColorPicker } from "@/components/moodboard/ColorPicker";
+import { LayersPanel } from "@/components/moodboard/LayersPanel";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -542,6 +543,8 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
   const isSelBoxing = useRef(false);
   const selBoxStartRef = useRef<{ x: number; y: number } | null>(null);
   const [selBox, setSelBox] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
+  // Tracks an unselected frame that was clicked (to select it on mouseup if user didn't drag)
+  const clickedFrameIdRef = useRef<string | null>(null);
   const [contextMenu, setContextMenu] = useState<{ screenX: number; screenY: number; elementId: string } | null>(null);
   // Crop mode
   const [cropMode, setCropMode] = useState<string | null>(null);
@@ -587,6 +590,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
   const [renameFrameValue, setRenameFrameValue] = useState("");
   const [frameMenuId, setFrameMenuId] = useState<string | null>(null);
   const [exportFrameId, setExportFrameId] = useState<string | null>(null);
+  const [layersPanelOpen, setLayersPanelOpen] = useState(false);
   // Edit modal
   const router = useRouter();
   const [editMenuOpen, setEditMenuOpen] = useState(false);
@@ -1130,18 +1134,29 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
     if (isSelBoxing.current) {
       isSelBoxing.current = false;
       const box = selBox;
-      if (box && box.w > 4 && box.h > 4) {
+      if (box && Math.abs(box.w) > 4 && Math.abs(box.h) > 4) {
+        // Real rubber-band drag → select enclosed elements
+        const bx2 = box.x + box.w;
+        const by2 = box.y + box.h;
         const hit = elements
           .filter(el => el.type !== "connection")
           .filter(el => {
             const b = getElementBounds(el);
-            return b.minX < box.x + box.w && b.maxX > box.x && b.minY < box.y + box.h && b.maxY > box.y;
+            if (el.type === "frame") {
+              // Frames selected only when fully contained in the rubber-band box (Figma behaviour)
+              return b.minX >= box.x && b.maxX <= bx2 && b.minY >= box.y && b.maxY <= by2;
+            }
+            return b.minX < bx2 && b.maxX > box.x && b.minY < by2 && b.maxY > box.y;
           })
           .map(el => el.id);
         setSelectedIds(hit);
+      } else if (clickedFrameIdRef.current) {
+        // Was a click (no drag) on an unselected frame → select the frame
+        setSelectedIds([clickedFrameIdRef.current]);
       }
       setSelBox(null);
       selBoxStartRef.current = null;
+      clickedFrameIdRef.current = null;
       return;
     }
     if (isPenDrawingRef.current && penStartRef.current) {
@@ -1408,9 +1423,60 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
     updateElements([el, ...elements.filter(e => e.id !== elId)]);
   }
 
+  /**
+   * For multi-select drag end: compute new positions + auto-assign frameId.
+   * - If element's own frame is also selected (moving together), keep existing frameId.
+   * - Otherwise check if element's new center falls inside any stationary frame.
+   */
+  function applyMultiDragEnd(dx: number, dy: number) {
+    return elements.map(elem => {
+      if (!selectedIds.includes(elem.id) || elem.type === "connection" || elem.type === "frame") return elem;
+      const nx = elem.x + dx;
+      const ny = elem.y + dy;
+      // If this element's parent frame is also being moved, keep the frameId as-is
+      if (elem.frameId && selectedIds.includes(elem.frameId)) {
+        return { ...elem, x: nx, y: ny };
+      }
+      const ew = elem.width ?? 120;
+      const eh = elem.height ?? 80;
+      const cx = nx + ew / 2;
+      const cy = ny + eh / 2;
+      const containingFrame = elements.find(f =>
+        f.type === "frame" &&
+        !selectedIds.includes(f.id) && // frame is stationary
+        cx >= f.x && cx <= f.x + (f.width ?? 0) &&
+        cy >= f.y && cy <= f.y + (f.height ?? 0)
+      );
+      return { ...elem, x: nx, y: ny, frameId: containingFrame?.id ?? undefined };
+    });
+  }
+
   const safeElements = Array.isArray(elements) ? elements : [];
   const selected = safeElements.filter((el) => selectedIds.includes(el.id));
   const firstSelected = selected[0];
+
+  // Frame-relative alignment
+  const allSelectedFrameId =
+    selectedIds.length > 0 && selected.every(e => e.frameId && e.frameId === selected[0]?.frameId)
+      ? (selected[0]?.frameId ?? null)
+      : null;
+  const allSelectedFrame = allSelectedFrameId ? safeElements.find(e => e.id === allSelectedFrameId) : null;
+
+  function centerInFrame(axis: "h" | "v" | "both") {
+    if (!allSelectedFrame) return;
+    const fw = allSelectedFrame.width ?? 0;
+    const fh = allSelectedFrame.height ?? 0;
+    updateElements(
+      safeElements.map(el => {
+        if (!selectedIds.includes(el.id)) return el;
+        return {
+          ...el,
+          ...(axis === "h" || axis === "both" ? { x: allSelectedFrame.x + (fw - (el.width ?? 0)) / 2 } : {}),
+          ...(axis === "v" || axis === "both" ? { y: allSelectedFrame.y + (fh - (el.height ?? 0)) / 2 } : {}),
+        };
+      })
+    );
+  }
 
   // Close edit dropdowns on outside click
   useEffect(() => {
@@ -1530,7 +1596,8 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
 
   async function doExportRegion(sx: number, sy: number, sw: number, sh: number, fileName: string, onlyIds?: string[]) {
     if (!stageRef.current || sw <= 0 || sh <= 0) return;
-    const pixelRatio = 2;
+    // Always render at ≥ 3× world-space resolution regardless of current zoom level
+    const pixelRatio = Math.min(6, Math.max(3, 3 / stageScale));
     const layer = stageRef.current.getLayers()[0];
     const uiCircles = layer?.find("Circle") ?? [];
     uiCircles.forEach((n: Konva.Node) => n.hide());
@@ -1606,15 +1673,20 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
   async function exportSelection() {
     if (selectedIds.length === 0 || !stageRef.current) return;
     setExportDropdownOpen(false);
-    const pixelRatio = 2;
+    const pixelRatio = 3;
     const baseName = (title || "element").replace(/[^a-z0-9_\-]/gi, "_");
 
     if (selectedIds.length === 1) {
-      // Single element: export just the node — transformer is a sibling so it won't appear,
+      const el = elements.find(e => e.id === selectedIds[0]);
+      // Frame: use exportFrame which captures the full region including background and children
+      if (el?.type === "frame") {
+        await exportFrame(selectedIds[0], "png");
+        return;
+      }
+      // Single non-frame element: export just the node — transformer is a sibling so it won't appear,
       // and the result is transparent (no background).
       const node = stageRef.current.findOne("#" + selectedIds[0]);
       if (!node) return;
-      const el = elements.find(e => e.id === selectedIds[0]);
       // Temporarily remove selection stroke (violet #6366f1 applied when isSelected)
       const origStroke: string = node.getAttr("stroke") || "";
       const origSW: number = node.getAttr("strokeWidth") || 0;
@@ -1674,7 +1746,8 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
   async function exportFrame(frameElId: string, format: "png" | "jpg" | "pdf") {
     const frameEl = elements.find(e => e.id === frameElId);
     if (!frameEl || !stageRef.current) return;
-    const pixelRatio = 2;
+    // Always render at ≥ 3× world-space resolution regardless of current zoom level
+    const pixelRatio = Math.min(6, Math.max(3, 3 / stageScale));
     // Convert frame canvas coords to screen pixel coords
     const sx = frameEl.x * stageScale + stagePos.x;
     const sy = frameEl.y * stageScale + stagePos.y;
@@ -1721,8 +1794,8 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
       const wMm = (canvas.width / pixelRatio / 96) * 25.4;
       const hMm = (canvas.height / pixelRatio / 96) * 25.4;
       const pdf = new jsPDF({ orientation: wMm > hMm ? "landscape" : "portrait", unit: "mm", format: [wMm, hMm] });
-      const imgData = canvas.toDataURL("image/jpeg", 0.92);
-      pdf.addImage(imgData, "JPEG", 0, 0, wMm, hMm);
+      const imgData = canvas.toDataURL("image/png");
+      pdf.addImage(imgData, "PNG", 0, 0, wMm, hMm);
       pdf.save(`${baseName}.pdf`);
     } else if (format === "png") {
       const url = canvas.toDataURL("image/png");
@@ -2417,21 +2490,56 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                   <Group key={frameEl.id}>
                     {/* White background (not draggable, not interactive) */}
                     <Rect x={frameEl.x} y={frameEl.y} width={fw} height={fh} fill={frameEl.fill ?? "#ffffff"} listening={false} />
-                    {/* Frame border — interactive, draggable */}
+                    {/* Frame border — interactive, draggable only when selected */}
                     <Rect
                       id={frameEl.id}
                       x={frameEl.x} y={frameEl.y} width={fw} height={fh}
                       fill="transparent"
                       stroke={isSel ? "#6366f1" : (frameEl.stroke ?? "#94a3b8")}
                       strokeWidth={isSel ? 2 : (frameEl.strokeWidth ?? 1)}
-                      draggable={!readOnly && tool === "select"}
+                      draggable={!readOnly && tool === "select" && isSel}
+                      onMouseDown={(e) => {
+                        if (readOnly || tool !== "select" || e.evt.button !== 0 || e.evt.shiftKey) return;
+                        const pos = stagePoint(e.evt.clientX, e.evt.clientY);
+                        if (!isSel) {
+                          // Unselected frame: always start rubber-band
+                          isSelBoxing.current = true;
+                          selBoxStartRef.current = pos;
+                          setSelBox({ x: pos.x, y: pos.y, w: 0, h: 0 });
+                          setSelectedIds([]);
+                          clickedFrameIdRef.current = frameEl.id;
+                          e.cancelBubble = true;
+                        } else {
+                          // Selected frame: start rubber-band only if click is in the interior (not on border)
+                          const threshold = 10 / stageScale;
+                          const inInterior =
+                            pos.x > frameEl.x + threshold && pos.x < frameEl.x + fw - threshold &&
+                            pos.y > frameEl.y + threshold && pos.y < frameEl.y + fh - threshold;
+                          if (inInterior) {
+                            isSelBoxing.current = true;
+                            selBoxStartRef.current = pos;
+                            setSelBox({ x: pos.x, y: pos.y, w: 0, h: 0 });
+                            setSelectedIds([]);
+                            clickedFrameIdRef.current = frameEl.id;
+                            e.cancelBubble = true;
+                          }
+                          // Border click → fall through, drag will move the frame
+                        }
+                      }}
                       onClick={(e) => {
                         if (tool !== "select") return;
                         if (e.evt.shiftKey) setSelectedIds(prev => prev.includes(frameEl.id) ? prev.filter(x => x !== frameEl.id) : [...prev, frameEl.id]);
-                        else setSelectedIds([frameEl.id]);
+                        else if (isSel) return; // already selected, simple click — don't deselect
                       }}
                       onTap={() => { if (tool === "select") setSelectedIds([frameEl.id]); }}
-                      onDragStart={() => { isDragging.current = true; }}
+                      onDragStart={(e) => {
+                        if (isSelBoxing.current) {
+                          // Rubber-band was started in onMouseDown — cancel this drag
+                          (e.target as Konva.Node).stopDrag();
+                          return;
+                        }
+                        isDragging.current = true;
+                      }}
                       onDragEnd={(e) => {
                         isDragging.current = false;
                         const dx = e.target.x() - frameEl.x;
@@ -2524,12 +2632,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                     if (selectedIds.length > 1) {
                       const dx = e.target.x() - el.x;
                       const dy = e.target.y() - el.y;
-                      const next = elements.map(elem =>
-                        selectedIds.includes(elem.id) && elem.type !== "connection"
-                          ? { ...elem, x: elem.x + dx, y: elem.y + dy }
-                          : elem
-                      );
-                      updateElements(next);
+                      updateElements(applyMultiDragEnd(dx, dy));
                     } else {
                       const nx = e.target.x();
                       const ny = e.target.y();
@@ -2732,7 +2835,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                       onOuterDragEnd={(x, y) => {
                         if (selectedIds.length > 1) {
                           const dx = x - el.x; const dy = y - el.y;
-                          updateElements(elements.map(elem => selectedIds.includes(elem.id) && elem.type !== "connection" ? { ...elem, x: elem.x + dx, y: elem.y + dy } : elem));
+                          updateElements(applyMultiDragEnd(dx, dy));
                         } else {
                           const elW = el.width ?? 120; const elH = el.height ?? 80;
                           const cx = x + elW / 2; const cy = y + elH / 2;
@@ -2773,7 +2876,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                       onDragEnd={(x, y) => {
                         if (selectedIds.length > 1) {
                           const dx = x - el.x; const dy = y - el.y;
-                          updateElements(elements.map(elem => selectedIds.includes(elem.id) && elem.type !== "connection" ? { ...elem, x: elem.x + dx, y: elem.y + dy } : elem));
+                          updateElements(applyMultiDragEnd(dx, dy));
                         } else {
                           const nx = x, ny = y;
                           const elW = el.width ?? 120; const elH = el.height ?? 80;
@@ -3185,11 +3288,32 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
             </div>
           )}
 
+          {/* Layers panel */}
+          {layersPanelOpen && (
+            <LayersPanel
+              elements={safeElements}
+              selectedIds={selectedIds}
+              onSelect={ids => { setSelectedIds(ids); setTool("select"); }}
+              onUpdateElements={updateElements}
+              onClose={() => setLayersPanelOpen(false)}
+              readOnly={readOnly}
+            />
+          )}
+
           {/* Zoom controls */}
           <div className="absolute bottom-4 right-4 flex items-center gap-0.5 bg-card border border-border rounded-2xl shadow-lg px-2.5 py-1.5 z-20">
             <button onClick={() => setStageScale((s) => Math.max(0.1, s / 1.2))} className="w-[38px] h-[38px] flex items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"><ZoomOut size={17} /></button>
             <button onClick={() => setStageScale(1)} className="text-xs font-medium text-muted-foreground hover:text-foreground px-2 h-[38px] rounded-xl hover:bg-muted transition-colors min-w-[48px] text-center">{zoomPct}%</button>
             <button onClick={() => setStageScale((s) => Math.min(5, s * 1.2))} className="w-[38px] h-[38px] flex items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"><ZoomIn size={17} /></button>
+            <div className="w-px h-5 bg-border mx-0.5 shrink-0" />
+            <button
+              onClick={() => setLayersPanelOpen(v => !v)}
+              title="Warstwy"
+              className={`flex items-center gap-1.5 px-2.5 h-[38px] rounded-xl text-xs font-medium transition-colors ${layersPanelOpen ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
+            >
+              <Layers size={15} />
+              Warstwy
+            </button>
           </div>
 
           {/* Properties panel — shown above toolbar when element selected */}
@@ -3503,6 +3627,27 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                 </>
               )}
               </div>}
+
+              {/* Frame alignment — shown when all selected elements are inside the same frame */}
+              {allSelectedFrame && (
+                <div className="flex items-center gap-1 pt-2 mt-1 border-t border-border">
+                  <FrameIcon size={11} className="text-muted-foreground shrink-0" />
+                  <span className="text-xs text-muted-foreground truncate max-w-[80px]">{allSelectedFrame.frameName || "Frame"}:</span>
+                  <div className="w-px h-4 bg-border mx-0.5 shrink-0" />
+                  <button onClick={() => centerInFrame("h")} title="Wycentruj poziomo w Frame"
+                    className="w-7 h-7 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors text-base leading-none">
+                    ↔
+                  </button>
+                  <button onClick={() => centerInFrame("v")} title="Wycentruj pionowo w Frame"
+                    className="w-7 h-7 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors text-base leading-none">
+                    ↕
+                  </button>
+                  <button onClick={() => centerInFrame("both")} title="Wycentruj w centrum Frame"
+                    className="w-7 h-7 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors text-base leading-none">
+                    ⊕
+                  </button>
+                </div>
+              )}
 
             </div>
           )}
