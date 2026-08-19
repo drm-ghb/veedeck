@@ -312,6 +312,8 @@ export default function LoginPage() {
   const [forgotEmailSent, setForgotEmailSent] = useState("");
   const [resendLoading, setResendLoading] = useState(false);
   const [resendDone, setResendDone] = useState(false);
+  const [showGoogleTerms, setShowGoogleTerms] = useState(false);
+  const [googleTermsAccepted, setGoogleTermsAccepted] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const activatedParam = searchParams.get("activated");
@@ -342,6 +344,8 @@ export default function LoginPage() {
     setCompanyName("");
     setPrivacyAccepted(false);
     setLoading(false);
+    setShowGoogleTerms(false);
+    setGoogleTermsAccepted(false);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -527,10 +531,40 @@ export default function LoginPage() {
                   <RoleSwitcher current="projektant" />
 
                   <div className="vd-card">
-                    <button type="button" className="vd-btn w-full" data-variant="outline" onClick={() => signIn("google", { callbackUrl: "/panel-glowny" })}>
-                      <GoogleIcon />
-                      {t.auth.continueGoogle}
-                    </button>
+                    {!showGoogleTerms ? (
+                      <button type="button" className="vd-btn w-full" data-variant="outline" onClick={() => setShowGoogleTerms(true)}>
+                        <GoogleIcon />
+                        {t.auth.continueGoogle}
+                      </button>
+                    ) : (
+                      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                        <p style={{ fontSize: 12.5, color: "var(--muted-foreground)", textAlign: "center" }}>
+                          Zaznacz zgody aby kontynuować
+                        </p>
+                        <button
+                          type="button"
+                          className="vd-btn w-full"
+                          data-variant="outline"
+                          disabled={!googleTermsAccepted}
+                          onClick={() => signIn("google", { callbackUrl: "/panel-glowny" })}
+                        >
+                          <GoogleIcon />
+                          {t.auth.continueGoogle}
+                        </button>
+                        <div className="vd-privacy">
+                          <input type="checkbox" id="google-privacy" checked={googleTermsAccepted} onChange={(e) => setGoogleTermsAccepted(e.target.checked)} />
+                          <label htmlFor="google-privacy">
+                            {t.auth.privacyText}{" "}
+                            <a href="https://veedeck.com/polityka-prywatnosci.html" target="_blank" rel="noopener noreferrer">{t.auth.privacyLink}</a>{" "}
+                            {t.auth.andConjunction}{" "}
+                            <a href="/regulamin" target="_blank" rel="noopener noreferrer">{t.auth.termsLink}</a>.
+                          </label>
+                        </div>
+                        <button type="button" className="vd-btn w-full" data-variant="ghost" onClick={() => { setShowGoogleTerms(false); setGoogleTermsAccepted(false); }}>
+                          {t.auth.backToLogin}
+                        </button>
+                      </div>
+                    )}
 
                     <div className="vd-divider-or"><span>{t.auth.orEmail}</span></div>
 
@@ -603,8 +637,8 @@ export default function LoginPage() {
                           <input type="checkbox" id="privacy" checked={privacyAccepted} onChange={(e) => setPrivacyAccepted(e.target.checked)} />
                           <label htmlFor="privacy">
                             {t.auth.privacyText}{" "}
-                            <a href="https://veedeck.com/polityka-prywatnosci.html">{t.auth.privacyLink}</a> {t.auth.andConjunction}{" "}
-                            <a href="#">{t.auth.termsLink}</a>.
+                            <a href="https://veedeck.com/polityka-prywatnosci.html" target="_blank" rel="noopener noreferrer">{t.auth.privacyLink}</a> {t.auth.andConjunction}{" "}
+                            <a href="/regulamin" target="_blank" rel="noopener noreferrer">{t.auth.termsLink}</a>.
                           </label>
                         </div>
                         <button type="submit" className="vd-btn w-full" data-variant="primary" disabled={loading || !privacyAccepted} style={{ marginTop: 4 }}>

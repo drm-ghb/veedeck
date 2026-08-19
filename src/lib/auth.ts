@@ -173,6 +173,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
   events: {
     async createUser({ user }) {
+      // Set 30-day trial for all new users (including Google OAuth)
+      try {
+        const trialEndsAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { trialEndsAt },
+        });
+      } catch (e) {
+        console.error("[auth] createUser trialEndsAt error:", e);
+      }
       // Notify admin whenever a new user account is created (including via Google OAuth)
       try {
         const { notifyAdminNewUser } = await import("./email");

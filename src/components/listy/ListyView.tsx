@@ -20,12 +20,13 @@ import { CSS } from "@dnd-kit/utilities";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useT } from "@/lib/i18n";
-import { LocalMall, Search, LayoutGrid, List, ArrowDownUp, Link2, MoreHorizontal, Pencil, Archive, ArchiveRestore, Trash2, Pin, PinOff, AlertTriangle, Check, Comment, GripVertical, KeyRound, Eye } from "@/components/ui/icons";
+import { LocalMall, Search, LayoutGrid, List, ArrowDownUp, Link2, MoreHorizontal, Pencil, Archive, ArchiveRestore, Trash2, Pin, PinOff, AlertTriangle, Check, Comment, GripVertical, KeyRound, Eye, Upload } from "@/components/ui/icons";
 import { accentColors } from "@/lib/accent-color";
 import { pusherClient } from "@/lib/pusher";
 import { getUnreadSet, syncListUnread } from "@/lib/list-unread-store";
 import NewListDialog from "./NewListDialog";
 import EditListDialog from "./EditListDialog";
+import ImportListDialog from "./ImportListDialog";
 import VeepickPromoModal from "./VeepickPromoModal";
 import TrialGate from "@/components/ui/TrialGate";
 import { useIsTrialExpired } from "@/lib/trial-context";
@@ -85,6 +86,7 @@ export default function ListyView({ lists: initialLists, userId, veepickConnecte
   const dndIdGrid = useId();
   const dndIdList = useId();
   const [editingList, setEditingList] = useState<ShoppingList | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
   const [warningLink, setWarningLink] = useState<string | null>(null);
   const [unreadListCounts, setUnreadListCounts] = useState<Record<string, number>>({});
 
@@ -274,7 +276,21 @@ export default function ListyView({ lists: initialLists, userId, veepickConnecte
               : `${activeLists.length} ${t.listy.activeLabel}`}
           </p>
         </div>
-        {canManage && <TrialGate><NewListDialog /></TrialGate>}
+        {canManage && (
+          <div className="flex items-center gap-2 sm:self-start">
+            <TrialGate>
+              <Button
+                variant="outline"
+                className="flex items-center gap-2"
+                onClick={() => setImportOpen(true)}
+              >
+                <Upload size={16} />
+                Importuj
+              </Button>
+            </TrialGate>
+            <TrialGate><NewListDialog /></TrialGate>
+          </div>
+        )}
       </div>
 
       {/* Tabs */}
@@ -418,6 +434,8 @@ export default function ListyView({ lists: initialLists, userId, veepickConnecte
         </DndContext>
       )}
     </div>
+
+      <ImportListDialog open={importOpen} onOpenChange={setImportOpen} />
 
       {editingList && (
         <EditListDialog
