@@ -147,8 +147,15 @@ async function getClientActivity(
       : [[], [], []];
 
   // Queries that go directly through Client
-  const [listChangeLogs, listProductComments, surveyResponses, sharedMoodboards] =
-    await Promise.all([
+  const [
+    listChangeLogs,
+    listProductComments,
+    listProductReplies,
+    surveyResponses,
+    sharedMoodboards,
+    statusChangeRequests,
+    versionRestoreRequests,
+  ] = await Promise.all([
       prisma.listChangeLog.findMany({
         where: {
           OR: [
@@ -172,7 +179,16 @@ async function getClientActivity(
       }),
       prisma.listProductComment.findMany({
         where: {
-          product: { section: { list: { clientId } } },
+          product: {
+            section: {
+              list: {
+                OR: [
+                  { clientId },
+                  ...(projectIds.length > 0 ? [{ projectId: { in: projectIds } }] : []),
+                ],
+              },
+            },
+          },
           createdAt: dateFilter,
         },
         select: {
@@ -183,6 +199,41 @@ async function getClientActivity(
             select: {
               name: true,
               section: { select: { list: { select: { name: true } } } },
+            },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+        take: 20,
+      }),
+      // Replies to product comments
+      prisma.listProductReply.findMany({
+        where: {
+          comment: {
+            product: {
+              section: {
+                list: {
+                  OR: [
+                    { clientId },
+                    ...(projectIds.length > 0 ? [{ projectId: { in: projectIds } }] : []),
+                  ],
+                },
+              },
+            },
+          },
+          createdAt: dateFilter,
+        },
+        select: {
+          content: true,
+          author: true,
+          createdAt: true,
+          comment: {
+            select: {
+              product: {
+                select: {
+                  name: true,
+                  section: { select: { list: { select: { name: true } } } },
+                },
+              },
             },
           },
         },
@@ -213,6 +264,34 @@ async function getClientActivity(
         },
         select: { title: true, updatedAt: true },
       }),
+      // Render status change requests (when designer doesn't allow direct status change)
+      projectIds.length > 0
+        ? prisma.statusChangeRequest.findMany({
+            where: { projectId: { in: projectIds }, createdAt: dateFilter },
+            select: {
+              renderName: true,
+              clientName: true,
+              status: true,
+              createdAt: true,
+            },
+            orderBy: { createdAt: "desc" },
+            take: 20,
+          })
+        : Promise.resolve([]),
+      // Version restore requests by client
+      projectIds.length > 0
+        ? prisma.versionRestoreRequest.findMany({
+            where: { projectId: { in: projectIds }, createdAt: dateFilter },
+            select: {
+              renderName: true,
+              clientName: true,
+              status: true,
+              createdAt: true,
+            },
+            orderBy: { createdAt: "desc" },
+            take: 10,
+          })
+        : Promise.resolve([]),
     ]);
 
   const trunc = (s: string | null | undefined, n = 200) =>
@@ -252,6 +331,14 @@ async function getClientActivity(
         listName: (e.meta as any)?.listName ?? null,
         at: e.createdAt,
       })),
+    renderApprovals: (clientEvents as any[])
+      .filter((e) => e.type === "render_accepted" || e.type === "render_rejected")
+      .map((e) => ({
+        decision: e.type === "render_accepted" ? "zaakceptował render" : "odrzucił render",
+        clientName: e.clientName,
+        renderName: (e.meta as any)?.renderName ?? null,
+        at: e.createdAt,
+      })),
     renderComments: (renderComments as any[]).map((c) => ({
       author: c.author,
       content: trunc(c.content),
@@ -275,6 +362,13 @@ async function getClientActivity(
       listName: c.product.section.list.name,
       at: c.createdAt,
     })),
+    listProductReplies: listProductReplies.map((r) => ({
+      author: r.author,
+      content: trunc(r.content),
+      productName: r.comment.product.name,
+      listName: r.comment.product.section.list.name,
+      at: r.createdAt,
+    })),
     discussionMessages: (discussionMessages as any[]).map((m) => ({
       author: m.authorName,
       content: trunc(m.content),
@@ -290,6 +384,18 @@ async function getClientActivity(
     sharedMoodboards: sharedMoodboards.map((m) => ({
       title: m.title,
       sharedSince: m.updatedAt,
+    })),
+    renderStatusRequests: statusChangeRequests.map((r) => ({
+      renderName: r.renderName,
+      clientName: r.clientName,
+      requestStatus: r.status,
+      at: r.createdAt,
+    })),
+    versionRestoreRequests: versionRestoreRequests.map((r) => ({
+      renderName: r.renderName,
+      clientName: r.clientName,
+      requestStatus: r.status,
+      at: r.createdAt,
     })),
   };
 }
