@@ -38,7 +38,7 @@ const PAGES = [
     plDir: 'pl', enDir: 'en',
     plUrl: '/pl/', enUrl: '/en/',
     enTitle: 'veedeck - The all-in-one platform for interior designers',
-    enDesc: 'veedeck is the platform for interior design studios: project management, renders with pins, shopping lists, client portal and more. 14-day free trial.',
+    enDesc: 'veedeck is the platform for interior design studios: project management, renders with pins, shopping lists, client portal and more. 30-day free trial.',
     type: 'marketing',
   },
   {
@@ -46,7 +46,7 @@ const PAGES = [
     plDir: 'pl/cennik', enDir: 'en/pricing',
     plUrl: '/pl/cennik/', enUrl: '/en/pricing/',
     enTitle: 'Pricing | veedeck',
-    enDesc: 'Simple, transparent pricing for veedeck. Choose the plan that fits your studio. 14-day free trial, no credit card required.',
+    enDesc: 'Simple, transparent pricing for veedeck. Choose the plan that fits your studio. 30-day free trial, no credit card required.',
     type: 'marketing',
   },
   {
