@@ -31,18 +31,6 @@ export default async function ClientMoodboardPage({ params }: { params: Promise<
 
   if (!moodboard) notFound();
 
-  // Log moodboard view for client activity tracking
-  const clientUser = session.user as any;
-  await prisma.clientEvent.create({
-    data: {
-      projectId,
-      type: "moodboard_view",
-      clientEmail: clientUser.email ?? null,
-      clientName: clientUser.name ?? null,
-      meta: { moodboardId: moodboard.id, moodboardTitle: moodboard.title },
-    },
-  }).catch(() => {});
-
   const shoppingLists = await prisma.shoppingList.findMany({
     where: { projectId, archived: false },
     select: { id: true, name: true, shareToken: true },
@@ -75,8 +63,19 @@ export default async function ClientMoodboardPage({ params }: { params: Promise<
 
   const clientUser = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { name: true },
+    select: { name: true, email: true },
   });
+
+  // Log moodboard view for client activity tracking
+  await prisma.clientEvent.create({
+    data: {
+      projectId,
+      type: "moodboard_view",
+      clientEmail: clientUser?.email ?? null,
+      clientName: clientUser?.name ?? null,
+      meta: { moodboardId: moodboard.id, moodboardTitle: moodboard.title },
+    },
+  }).catch(() => {});
 
   return (
     <>
