@@ -130,12 +130,13 @@ function applyMapping(
   let globalIndex = 0;
 
   for (const row of rows) {
-    // inferredSection is set when the parser detected a single-cell separator row
-    // before this product row (e.g. "SALON" row between groups in external apps).
-    // It takes priority over the mapped Sekcja column.
+    // Mapped section column takes priority when it has a value.
+    // inferredSection (from single-cell separator rows) is used as fallback
+    // when the mapped column is empty or no column is mapped.
+    const mappedSection = mapping.section ? row.cells[mapping.section] : "";
     const sectionName =
+      mappedSection ||
       row.inferredSection ||
-      (mapping.section ? row.cells[mapping.section] : "") ||
       "Produkty";
     if (!sections[sectionName]) sections[sectionName] = [];
 

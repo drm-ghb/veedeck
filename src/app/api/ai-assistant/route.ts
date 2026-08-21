@@ -7,8 +7,6 @@ import Anthropic from "@anthropic-ai/sdk";
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-const SYSTEM_PROMPT = readFileSync(join(process.cwd(), "ASYSTENT_INSTRUKCJA_veedeck.md"), "utf-8");
-
 const AI_DAILY_LIMIT = 10;
 
 export async function GET() {
@@ -74,6 +72,8 @@ export async function POST(req: NextRequest) {
     where: { id: session.user.id },
     data: { aiQueryCount: newCount, aiQueryResetAt: newResetAt },
   });
+
+  const SYSTEM_PROMPT = readFileSync(join(process.cwd(), "ASYSTENT_INSTRUKCJA_veedeck.md"), "utf-8");
 
   // Keep last 10 messages for context, sanitize content
   const safeMessages = messages.slice(-10).map((m: { role: string; content: string }) => ({

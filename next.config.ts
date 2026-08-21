@@ -46,6 +46,15 @@ const nextConfig: NextConfig = {
     config.experiments = { ...config.experiments, asyncWebAssembly: true, layers: true };
     return config;
   },
+  async redirects() {
+    return [
+      {
+        source: "/regulamin",
+        destination: "https://veedeck.com/regulamin.html",
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [
       {
