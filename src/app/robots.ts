@@ -6,6 +6,5 @@ export default function robots(): MetadataRoute.Robots {
       userAgent: "*",
       disallow: ["/p/", "/client/", "/panel-glowny/"],
     },
-    sitemap: `${process.env.NEXTAUTH_URL ?? "https://app.veedeck.com"}/sitemap.xml`,
   };
 }
