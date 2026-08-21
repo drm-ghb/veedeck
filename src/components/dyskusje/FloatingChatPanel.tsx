@@ -631,7 +631,10 @@ export default function FloatingChatPanel({ userId, currentUserAvatarUrl }: { us
             {/* Header */}
             <div className="shrink-0 px-4 pt-4 pb-0">
               <div className="flex items-center justify-between mb-3">
-                <h2 className="font-semibold text-base">{t.dyskusje.floatTitle}</h2>
+                <div className="flex items-center gap-2">
+                  <ChatBubble size={18} className="text-primary" />
+                  <h2 className="font-semibold text-base">{t.dyskusje.floatTitle}</h2>
+                </div>
                 <button onClick={closePanel} className="p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground" aria-label="Zamknij">
                   <X size={22} />
                 </button>

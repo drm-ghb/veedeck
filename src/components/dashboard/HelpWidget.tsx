@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { X, HelpCircle, Send, Sparkles, Paperclip, Trash2, CheckCircle, ChevronDown, Maximize2, RotateCcw } from "@/components/ui/icons";
+import { X, HelpCircle, Sparkles, Paperclip, Trash2, CheckCircle, ChevronDown, Maximize2, RotateCcw, ArrowUp, Share2, Activity, BarChart2, AddShoppingCart } from "@/components/ui/icons";
 import { useT } from "@/lib/i18n";
 import { useUploadThing } from "@/lib/uploadthing-client";
 
@@ -47,9 +47,9 @@ function renderMarkdown(text: string): React.ReactNode[] {
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     if (line.startsWith("### ")) {
-      result.push(<p key={key++} className="font-semibold mt-2 mb-0.5">{line.slice(4)}</p>);
+      result.push(<p key={key++} className="font-semibold mt-2 mb-0.5">{formatInline(line.slice(4))}</p>);
     } else if (line.startsWith("## ")) {
-      result.push(<p key={key++} className="font-semibold mt-2 mb-0.5">{line.slice(3)}</p>);
+      result.push(<p key={key++} className="font-semibold mt-2 mb-0.5">{formatInline(line.slice(3))}</p>);
     } else if (line.startsWith("- ") || line.startsWith("* ")) {
       result.push(
         <div key={key++} className="flex gap-1.5 items-start">
@@ -135,13 +135,13 @@ export default function HelpWidget({ open, onClose, initialTab, initialCategory 
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, streaming]);
 
-  async function sendMessage() {
-    const text = input.trim();
+  async function sendMessage(overrideText?: string) {
+    const text = (overrideText ?? input).trim();
     if (!text || streaming) return;
 
     const newMessages: Message[] = [...messages, { role: "user", content: text }];
     setMessages(newMessages);
-    setInput("");
+    if (!overrideText) setInput("");
     setStreaming(true);
 
     // Placeholder for assistant response
@@ -210,38 +210,26 @@ export default function HelpWidget({ open, onClose, initialTab, initialCategory 
 
   return (
     <div
-      className="fixed bottom-4 right-4 z-50 flex flex-col rounded-2xl shadow-2xl border border-border bg-card overflow-hidden transition-all duration-200"
-      style={expanded ? { width: "50vw", height: "calc(100dvh - 80px)" } : { width: "380px", height: "600px" }}
+      className="fixed z-50 flex flex-col shadow-2xl bg-card overflow-hidden transition-all duration-200 inset-0 rounded-none border-0 sm:inset-auto sm:border sm:border-border sm:bottom-4 sm:right-4 sm:w-[380px] sm:h-[660px] sm:rounded-2xl"
+      style={expanded ? { width: "50vw", height: "calc(100dvh - 80px)", borderRadius: "1rem" } : undefined}
     >
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-card shrink-0">
-        <div className="flex items-center gap-2">
-          {activeTab === "ai" ? (
-            <Sparkles size={16} className="text-primary" />
-          ) : (
+      {/* Header — hidden when AI tab (AI tab has its own gradient header) */}
+      {activeTab !== "ai" && (
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-card shrink-0">
+          <div className="flex items-center gap-2">
             <HelpCircle size={16} className="text-primary" />
-          )}
-          <span className="font-semibold text-sm">{activeTab === "ai" ? "Asystent AI" : "Pomoc"}</span>
-          {activeTab === "ai" && aiRemaining !== null && (
-            <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${aiRemaining === 0 ? "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400" : "bg-muted text-muted-foreground"}`}>
-              {aiRemaining}/10
-            </span>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          {activeTab === "ai" && messages.length > 0 && (
-            <button onClick={() => setMessages([])} className="text-muted-foreground hover:text-foreground transition-colors" title="Wróć do ekranu startowego">
-              <RotateCcw size={14} />
+            <span className="font-semibold text-sm">Pomoc</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button onClick={() => setExpanded((e) => !e)} className="text-muted-foreground hover:text-foreground transition-colors" title={expanded ? "Zmniejsz" : "Rozszerz"}>
+              <Maximize2 size={14} />
             </button>
-          )}
-          <button onClick={() => setExpanded((e) => !e)} className="text-muted-foreground hover:text-foreground transition-colors" title={expanded ? "Zmniejsz" : "Rozszerz"}>
-            <Maximize2 size={14} />
-          </button>
-          <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors">
-            <X size={16} />
-          </button>
+            <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors">
+              <X size={16} />
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Tabs — only for Pomoc mode (knowledge + contact) */}
       {activeTab !== "ai" && (
@@ -295,13 +283,111 @@ export default function HelpWidget({ open, onClose, initialTab, initialCategory 
 
       {/* AI Tab */}
       {activeTab === "ai" && (
-        <div className="flex flex-col flex-1 min-h-0 relative">
+        <div className="flex flex-col flex-1 min-h-0 relative bg-background">
+          {/* Gradient Header */}
+          <div
+            className="relative overflow-hidden shrink-0"
+            style={{ background: "linear-gradient(160deg, #4F46E5 0%, #6D5FEF 55%, #8B7CF6 100%)" }}
+          >
+            {/* Decorative background orb */}
+            <div
+              className="absolute pointer-events-none"
+              style={{
+                width: 220,
+                height: 220,
+                borderRadius: "50%",
+                top: -90,
+                right: -60,
+                background: "radial-gradient(circle, rgba(255,255,255,.28), transparent 70%)",
+              }}
+            />
+
+            {/* Thin bar — always visible */}
+            <div className="relative flex items-center justify-between h-[52px] px-5 sm:px-6">
+              <div className="flex items-center gap-2">
+                <Sparkles
+                  size={20}
+                  style={{ color: "#fff", opacity: messages.length > 0 ? 1 : 0, transition: "opacity 200ms" }}
+                />
+                <span
+                  className="font-semibold text-white transition-opacity duration-200"
+                  style={{ fontSize: 15, opacity: messages.length > 0 ? 1 : 0 }}
+                >
+                  Asystent AI
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                {messages.length > 0 && (
+                  <button
+                    onClick={() => setMessages([])}
+                    className="transition-opacity hover:opacity-100"
+                    style={{ color: "rgba(255,255,255,.8)", opacity: 0.8 }}
+                    title="Wróć do ekranu startowego"
+                  >
+                    <RotateCcw size={20} />
+                  </button>
+                )}
+                <button
+                  onClick={() => setExpanded((e) => !e)}
+                  className="transition-opacity hover:opacity-100"
+                  style={{ color: "rgba(255,255,255,.8)", opacity: 0.8 }}
+                  title={expanded ? "Zmniejsz" : "Rozszerz"}
+                >
+                  <Maximize2 size={20} />
+                </button>
+                <button
+                  onClick={onClose}
+                  className="transition-opacity hover:opacity-100"
+                  style={{ color: "rgba(255,255,255,.8)", opacity: 0.8 }}
+                >
+                  <X size={20} />
+                </button>
+              </div>
+            </div>
+
+            {/* Collapsing section — orb + title + subtitle */}
+            <div
+              className="overflow-hidden"
+              style={{
+                maxHeight: messages.length > 0 ? 0 : 160,
+                transition: "max-height 250ms ease",
+              }}
+            >
+              <div className="relative px-5 pb-[22px] sm:px-6">
+                {/* Orb icon */}
+                <div
+                  className="flex items-center justify-center mb-3.5"
+                  style={{
+                    width: 52,
+                    height: 52,
+                    borderRadius: 16,
+                    background: "rgba(255,255,255,.16)",
+                    backdropFilter: "blur(4px)",
+                  }}
+                >
+                  <Sparkles size={26} style={{ color: "#fff" }} />
+                </div>
+                {/* Title */}
+                <p className="font-bold text-white" style={{ fontSize: 20, letterSpacing: "-0.02em" }}>
+                  Asystent AI
+                </p>
+                {/* Subtitle */}
+                <p className="mt-1" style={{ fontSize: 13, color: "rgba(255,255,255,.85)", lineHeight: 1.4 }}>
+                  Zadaj pytanie dotyczące obsługi platformy lub aktywności Twojego klienta
+                </p>
+              </div>
+            </div>
+          </div>
+
           {/* Beta info dialog — shown on first open */}
           {showBetaDialog && (
-            <div className="absolute inset-0 z-10 flex items-center justify-center bg-card/95 backdrop-blur-sm p-6">
+            <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/95 backdrop-blur-sm p-6">
               <div className="flex flex-col gap-4 max-w-xs text-center">
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
-                  <Sparkles size={22} className="text-primary" />
+                <div
+                  className="flex items-center justify-center mx-auto"
+                  style={{ width: 52, height: 52, borderRadius: 16, background: "#EEF2FF" }}
+                >
+                  <Sparkles size={26} style={{ color: "#4F46E5" }} />
                 </div>
                 <div>
                   <p className="font-semibold text-base">Asystent AI — faza testów</p>
@@ -320,7 +406,8 @@ export default function HelpWidget({ open, onClose, initialTab, initialCategory 
                     localStorage.setItem("veedeck-ai-beta-seen", "1");
                     setShowBetaDialog(false);
                   }}
-                  className="w-full py-2 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity"
+                  className="w-full py-2 text-sm font-medium text-white rounded-lg hover:opacity-90 transition-opacity"
+                  style={{ background: "#4F46E5" }}
                 >
                   Rozumiem, zaczynajmy
                 </button>
@@ -328,68 +415,115 @@ export default function HelpWidget({ open, onClose, initialTab, initialCategory 
             </div>
           )}
 
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 min-h-0">
-            {messages.length === 0 && (
-              <div className="flex flex-col items-center justify-center h-full text-center py-8 gap-3">
-                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Sparkles size={20} className="text-primary" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium">Asystent veedeck</p>
-                  <p className="text-xs text-muted-foreground mt-1">Zadaj pytanie dotyczące obsługi platformy lub aktywności Twojego klienta</p>
-                </div>
-                <div className="flex flex-wrap gap-2 justify-center mt-2">
-                  {[
-                    "Podsumuj mi ostatnie 24h",
-                    "Jak udostępnić projekt klientowi?",
-                    "Jak dodać produkt do listy?",
-                    "Jak sprawdzić aktywność klienta?",
-                  ].map((q) => (
-                    <button
-                      key={q}
-                      onClick={() => { setInput(q); inputRef.current?.focus(); }}
-                      className="text-xs px-3 py-1.5 rounded-full border border-border hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors"
+          {/* Body: suggested questions or conversation */}
+          <div className="flex-1 overflow-y-auto min-h-0 flex flex-col" style={{ padding: "20px 22px", gap: 12 }}>
+            {messages.length === 0 ? (
+              <>
+                {aiRemaining !== null && (
+                  <span
+                    className={`self-end text-[11px] font-medium px-2 py-0.5 rounded-full ${
+                      aiRemaining === 0
+                        ? "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400"
+                        : "bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    {aiRemaining}/10
+                  </span>
+                )}
+                <p
+                  className="text-muted-foreground font-bold uppercase"
+                  style={{ fontSize: 11, letterSpacing: "0.05em", margin: "6px 0 -2px" }}
+                >
+                  Popularne pytania
+                </p>
+                {(
+                  [
+                    { q: "Podsumuj mi ostatnie 24h", Icon: BarChart2 },
+                    { q: "Jak udostępnić projekt klientowi?", Icon: Share2 },
+                    { q: "Jak dodać produkt do listy?", Icon: AddShoppingCart },
+                    { q: "Jak sprawdzić aktywność klienta?", Icon: Activity },
+                  ] as const
+                ).map(({ q, Icon }) => (
+                  <button
+                    key={q}
+                    onClick={() => sendMessage(q)}
+                    className="flex items-center gap-2.5 text-left rounded-[14px] border border-border bg-background transition-colors"
+                    style={{ padding: "12px 14px" }}
+                    onMouseEnter={(e) => {
+                      (e.currentTarget as HTMLButtonElement).style.borderColor = "#4F46E5";
+                      (e.currentTarget as HTMLButtonElement).style.background = "#EEF2FF";
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as HTMLButtonElement).style.borderColor = "";
+                      (e.currentTarget as HTMLButtonElement).style.background = "";
+                    }}
+                  >
+                    <Icon size={19} style={{ color: "#4F46E5", flexShrink: 0 }} />
+                    <span
+                      className="font-semibold"
+                      style={{ fontSize: 13, color: "#24252B", lineHeight: 1.35 }}
                     >
                       {q}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-            {messages.map((msg, i) => (
-              <div key={i} className={`flex gap-2 items-end ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                {msg.role === "assistant" && (
-                  <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-                    <Sparkles size={13} className="text-primary" />
-                  </div>
-                )}
-                <div
-                  className={`max-w-[80%] px-3 py-2 rounded-2xl text-sm leading-relaxed ${
-                    msg.role === "user"
-                      ? "bg-primary text-primary-foreground rounded-br-sm whitespace-pre-wrap"
-                      : "bg-muted text-foreground rounded-bl-sm space-y-0.5"
-                  }`}
-                >
-                  {msg.role === "user" ? msg.content : renderMarkdown(msg.content)}
-                  {msg.role === "assistant" && msg.content === "" && streaming && (
-                    <span className="inline-flex gap-0.5 items-center">
-                      <span className="w-1 h-1 bg-current rounded-full animate-bounce [animation-delay:0ms]" />
-                      <span className="w-1 h-1 bg-current rounded-full animate-bounce [animation-delay:150ms]" />
-                      <span className="w-1 h-1 bg-current rounded-full animate-bounce [animation-delay:300ms]" />
                     </span>
+                  </button>
+                ))}
+              </>
+            ) : (
+              messages.map((msg, i) => (
+                <div
+                  key={i}
+                  className={`flex gap-2 items-end ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+                >
+                  {msg.role === "assistant" && (
+                    <div
+                      className="flex items-center justify-center shrink-0"
+                      style={{ width: 24, height: 24, borderRadius: "50%", background: "#EEF2FF", marginTop: 2 }}
+                    >
+                      <Sparkles size={13} style={{ color: "#4F46E5" }} />
+                    </div>
                   )}
+                  <div
+                    className={`space-y-0.5 ${msg.role === "user" ? "whitespace-pre-wrap" : ""}`}
+                    style={{
+                      maxWidth: "84%",
+                      padding: "11px 15px",
+                      borderRadius: 16,
+                      fontSize: 13.5,
+                      lineHeight: 1.45,
+                      ...(msg.role === "user"
+                        ? {
+                            background: "linear-gradient(135deg, #4F46E5, #7C6EF0)",
+                            color: "#fff",
+                            borderBottomRightRadius: 4,
+                            alignSelf: "flex-end",
+                          }
+                        : {
+                            background: "#EEF2FF",
+                            color: "#24252B",
+                            borderBottomLeftRadius: 4,
+                          }),
+                    }}
+                  >
+                    {msg.role === "user" ? msg.content : renderMarkdown(msg.content)}
+                    {msg.role === "assistant" && msg.content === "" && streaming && (
+                      <span className="inline-flex gap-0.5 items-center">
+                        <span className="w-1 h-1 rounded-full animate-bounce [animation-delay:0ms]" style={{ background: "#4F46E5" }} />
+                        <span className="w-1 h-1 rounded-full animate-bounce [animation-delay:150ms]" style={{ background: "#4F46E5" }} />
+                        <span className="w-1 h-1 rounded-full animate-bounce [animation-delay:300ms]" style={{ background: "#4F46E5" }} />
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Input / limit banner */}
-          <div className="px-3 py-3 border-t border-border shrink-0">
+          {/* Footer: hint + input */}
+          <div className="shrink-0 bg-background">
             {limitResetAt ? (
-              <div className="flex flex-col items-center gap-1.5 py-2 text-center">
-                <p className="text-sm font-medium text-foreground">Limit zapytań wyczerpany</p>
+              <div className="flex flex-col items-center gap-1.5 py-4 px-6 text-center">
+                <p className="text-sm font-medium">Limit zapytań wyczerpany</p>
                 <p className="text-xs text-muted-foreground">
                   Odblokuje się o{" "}
                   <strong>
@@ -401,7 +535,21 @@ export default function HelpWidget({ open, onClose, initialTab, initialCategory 
               </div>
             ) : (
               <>
-                <div className="flex items-end gap-2 bg-muted/40 rounded-xl px-3 py-2 border border-border focus-within:border-primary/40 transition-colors">
+                <p
+                  className="text-center text-muted-foreground"
+                  style={{ fontSize: 10.5, margin: "-12px 0 14px" }}
+                >
+                  Asystent odpowiada tylko na pytania o veedeck
+                </p>
+                <div
+                  className="flex items-center gap-2.5 focus-within:border-primary transition-colors"
+                  style={{
+                    margin: "0 20px 20px",
+                    border: "1.5px solid #E0E7FF",
+                    borderRadius: 100,
+                    padding: "8px 8px 8px 18px",
+                  }}
+                >
                   <textarea
                     ref={inputRef}
                     value={input}
@@ -411,20 +559,27 @@ export default function HelpWidget({ open, onClose, initialTab, initialCategory 
                       e.target.style.height = Math.min(e.target.scrollHeight, 120) + "px";
                     }}
                     onKeyDown={handleKeyDown}
-                    placeholder="Napisz pytanie..."
+                    placeholder="Napisz pytanie…"
                     rows={1}
                     disabled={streaming}
-                    className="flex-1 bg-transparent text-sm resize-none outline-none min-h-[22px] max-h-[120px] placeholder:text-muted-foreground/60 disabled:opacity-60"
+                    className="flex-1 bg-transparent resize-none outline-none placeholder:text-muted-foreground/60 disabled:opacity-60"
+                    style={{ fontSize: 13.5, minHeight: 22, maxHeight: 120 }}
                   />
                   <button
-                    onClick={sendMessage}
+                    onClick={() => sendMessage()}
                     disabled={!input.trim() || streaming}
-                    className="text-primary hover:opacity-80 transition-opacity disabled:opacity-30 shrink-0 mb-0.5"
+                    className="flex items-center justify-center shrink-0 transition-opacity hover:opacity-90 disabled:cursor-not-allowed"
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: "50%",
+                      background: "#4F46E5",
+                      opacity: !input.trim() || streaming ? 0.45 : 1,
+                    }}
                   >
-                    <Send size={16} />
+                    <ArrowUp size={18} style={{ color: "#fff" }} />
                   </button>
                 </div>
-                <p className="text-[10px] text-muted-foreground/50 text-center mt-1.5">Asystent odpowiada tylko na pytania o veedeck</p>
               </>
             )}
           </div>
