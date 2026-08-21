@@ -304,11 +304,15 @@ export async function GET() {
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { aiQueryCount: true, aiQueryResetAt: true },
+    select: { aiQueryCount: true, aiQueryResetAt: true, isAdmin: true },
   });
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (user.isAdmin) {
+    return NextResponse.json({ remaining: 9999, limit: 9999, resetAt: null });
   }
 
   const now = new Date();
@@ -336,7 +340,7 @@ export async function POST(req: NextRequest) {
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { aiQueryCount: true, aiQueryResetAt: true },
+    select: { aiQueryCount: true, aiQueryResetAt: true, isAdmin: true },
   });
 
   if (!user) {
@@ -347,20 +351,21 @@ export async function POST(req: NextRequest) {
   const limitExpired = user.aiQueryResetAt && user.aiQueryResetAt <= now;
   const currentCount = limitExpired ? 0 : user.aiQueryCount;
 
-  if (currentCount >= AI_DAILY_LIMIT) {
+  if (!user.isAdmin && currentCount >= AI_DAILY_LIMIT) {
     return NextResponse.json(
       { error: "limit", resetAt: user.aiQueryResetAt?.toISOString() },
       { status: 429 }
     );
   }
 
-  const newCount = currentCount + 1;
-  const newResetAt =
-    newCount === AI_DAILY_LIMIT
-      ? new Date(now.getTime() + 24 * 60 * 60 * 1000)
-      : limitExpired
-      ? null
-      : user.aiQueryResetAt;
+  const newCount = user.isAdmin ? currentCount : currentCount + 1;
+  const newResetAt = user.isAdmin
+    ? user.aiQueryResetAt
+    : newCount === AI_DAILY_LIMIT
+    ? new Date(now.getTime() + 24 * 60 * 60 * 1000)
+    : limitExpired
+    ? null
+    : user.aiQueryResetAt;
 
   await prisma.user.update({
     where: { id: session.user.id },
