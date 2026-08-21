@@ -24,12 +24,20 @@ function renderMarkdown(text: string): React.ReactNode[] {
 
   const formatInline = (line: string): React.ReactNode[] => {
     const parts: React.ReactNode[] = [];
-    const regex = /\*\*(.+?)\*\*/g;
+    const regex = /\*\*(.+?)\*\*|\[(.+?)\]\(([^)]+)\)/g;
     let last = 0;
     let match;
     while ((match = regex.exec(line)) !== null) {
       if (match.index > last) parts.push(line.slice(last, match.index));
-      parts.push(<strong key={key++}>{match[1]}</strong>);
+      if (match[1] !== undefined) {
+        parts.push(<strong key={key++}>{match[1]}</strong>);
+      } else {
+        parts.push(
+          <a key={key++} href={match[3]} className="text-primary underline underline-offset-2 hover:opacity-75 transition-opacity">
+            {match[2]}
+          </a>
+        );
+      }
       last = match.index + match[0].length;
     }
     if (last < line.length) parts.push(line.slice(last));

@@ -132,7 +132,7 @@ async function getClientActivity(
               createdAt: true,
               title: true,
               render: {
-                select: { name: true, project: { select: { title: true } } },
+                select: { name: true, project: { select: { title: true, id: true } } },
               },
             },
             orderBy: { createdAt: "desc" },
@@ -187,7 +187,7 @@ async function getClientActivity(
           userName: true,
           source: true,
           createdAt: true,
-          list: { select: { name: true } },
+          list: { select: { name: true, slug: true, id: true } },
         },
         orderBy: { createdAt: "desc" },
         take: 30,
@@ -213,7 +213,7 @@ async function getClientActivity(
           product: {
             select: {
               name: true,
-              section: { select: { list: { select: { name: true } } } },
+              section: { select: { list: { select: { name: true, slug: true, id: true } } } },
             },
           },
         },
@@ -246,7 +246,7 @@ async function getClientActivity(
               product: {
                 select: {
                   name: true,
-                  section: { select: { list: { select: { name: true } } } },
+                  section: { select: { list: { select: { name: true, slug: true, id: true } } } },
                 },
               },
             },
@@ -321,6 +321,7 @@ async function getClientActivity(
       .map((e) => ({
         clientName: e.clientName,
         renderName: (e.meta as any)?.renderName ?? null,
+        link: `/projekty/${e.projectId}`,
         at: e.createdAt,
       })),
     listViews: (clientEvents as any[])
@@ -328,6 +329,7 @@ async function getClientActivity(
       .map((e) => ({
         clientName: e.clientName,
         listName: (e.meta as any)?.listName ?? null,
+        link: (e.meta as any)?.listId ? `/listy-zakupowe/${(e.meta as any).listId}` : null,
         at: e.createdAt,
       })),
     moodboardViews: (clientEvents as any[])
@@ -344,6 +346,11 @@ async function getClientActivity(
         clientName: e.clientName,
         productName: (e.meta as any)?.productName ?? null,
         listName: (e.meta as any)?.listName ?? null,
+        link: (e.meta as any)?.listSlug
+          ? `/listy-zakupowe/${(e.meta as any).listSlug}`
+          : (e.meta as any)?.listId
+          ? `/listy-zakupowe/${(e.meta as any).listId}`
+          : null,
         at: e.createdAt,
       })),
     renderApprovals: (clientEvents as any[])
@@ -352,6 +359,7 @@ async function getClientActivity(
         decision: e.type === "render_accepted" ? "zaakceptował render" : "odrzucił render",
         clientName: e.clientName,
         renderName: (e.meta as any)?.renderName ?? null,
+        link: `/projekty/${e.projectId}`,
         at: e.createdAt,
       })),
     renderComments: (renderComments as any[]).map((c) => ({
@@ -360,6 +368,7 @@ async function getClientActivity(
       title: c.title,
       renderName: c.render.name,
       projectTitle: c.render.project.title,
+      link: `/projekty/${c.render.project.id}`,
       at: c.createdAt,
     })),
     listChangeLogs: listChangeLogs.map((l) => ({
@@ -368,6 +377,7 @@ async function getClientActivity(
       userName: l.userName,
       source: l.source,
       listName: l.list.name,
+      link: `/listy-zakupowe/${l.list.slug ?? l.list.id}`,
       at: l.createdAt,
     })),
     listProductComments: listProductComments.map((c) => ({
@@ -375,6 +385,7 @@ async function getClientActivity(
       content: trunc(c.content),
       productName: c.product.name,
       listName: c.product.section.list.name,
+      link: `/listy-zakupowe/${c.product.section.list.slug ?? c.product.section.list.id}`,
       at: c.createdAt,
     })),
     listProductReplies: listProductReplies.map((r) => ({
@@ -382,6 +393,7 @@ async function getClientActivity(
       content: trunc(r.content),
       productName: r.comment.product.name,
       listName: r.comment.product.section.list.name,
+      link: `/listy-zakupowe/${r.comment.product.section.list.slug ?? r.comment.product.section.list.id}`,
       at: r.createdAt,
     })),
     discussionMessages: (discussionMessages as any[]).map((m) => ({

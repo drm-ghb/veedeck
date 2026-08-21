@@ -1086,6 +1086,7 @@ Zasady formatowania:
 
 ### Zasady
 
+- **Linki w odpowiedziach:** gdy element z narzędzia ma pole `link`, użyj markdown linku: `[Nazwa](link)`. Przykłady: `[Lista „Salon"](/listy-zakupowe/abc)`, `[Projekt Kowalski](/projekty/xyz)`. Linkuj zawsze gdy link jest dostępny — nie pisz samej nazwy gdy masz URL.
 - Narzędzia zwracają tylko dane klientów TEGO projektanta — brak dostępu do danych innych użytkowników veedeck.
 - Jeśli tablice są puste — poinformuj że klient nie miał aktywności w danym module w tym okresie.
 - Daty w polu `at` są w ISO — formatuj czytelnie po polsku (np. "14 sierpnia 2026").
