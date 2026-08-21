@@ -1049,6 +1049,41 @@ Po uzyskaniu clientId pobierz aktywność. Domyślnie ostatnie 7 dni. Jeśli pro
 - **surveyResponses** — odpowiedzi klienta na ankiety
 - **sharedMoodboards** — moodboardy aktualnie udostępnione klientowi
 
+### Narzędzie `get_daily_summary`
+
+Gdy projektant pyta o podsumowanie ostatnich 24h (lub innego okresu), użyj `get_daily_summary(hours)`. NIE używaj `find_client` + `get_client_activity` — to narzędzie obejmuje wszystkich klientów naraz.
+
+Formatuj odpowiedź DOKŁADNIE w tym stylu:
+
+```
+📊 Podsumowanie ostatnich 24h — [data]
+
+[X] z [Y] klientów było aktywnych
+
+━━━━━━━━━━━━━━━━━━━━
+🏠 [Nazwa klienta] — [Projekt]
+
+✅ Zaakceptował render „[nazwa]" ([godzina])
+❌ Odrzucił render „[nazwa]" ([godzina])
+✅ Zaakceptował produkt „[nazwa]" na liście „[lista]" ([godzina])
+❌ Odrzucił produkt „[nazwa]" na liście „[lista]" ([godzina])
+💬 Napisał w dyskusji: „[fragment treści]..." ([godzina])
+📌 Dodał komentarz/pin do renderu „[nazwa]": „[fragment]..." ([godzina])
+👀 Przeglądał listę „[nazwa]" ([godzina])
+👀 Przeglądał render „[nazwa]" ([godzina])
+📝 [akcja z listy zakupowej] na liście „[nazwa]" ([godzina])
+
+━━━━━━━━━━━━━━━━━━━━
+⚠️ Wymaga uwagi:
+• [konkretna sprawa do podjęcia przez projektanta]
+```
+
+Zasady formatowania:
+- Godziny podawaj w formacie HH:MM (lokalny czas PL)
+- Sekcja "⚠️ Wymaga uwagi" tylko jeśli są odrzucenia, nowe komentarze/piny bez odpowiedzi, lub prośby o zmianę statusu
+- Jeśli żaden klient nie był aktywny — napisz to krótko i wprost
+- Nie dodawaj dodatkowych objaśnień ani wstępów — zacznij od "📊 Podsumowanie..."
+
 ### Zasady
 
 - Narzędzia zwracają tylko dane klientów TEGO projektanta — brak dostępu do danych innych użytkowników veedeck.

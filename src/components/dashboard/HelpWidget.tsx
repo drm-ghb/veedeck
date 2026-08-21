@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { X, HelpCircle, Send, Sparkles, Paperclip, Trash2, CheckCircle, ChevronDown, Maximize2 } from "@/components/ui/icons";
+import { X, HelpCircle, Send, Sparkles, Paperclip, Trash2, CheckCircle, ChevronDown, Maximize2, RotateCcw } from "@/components/ui/icons";
 import { useT } from "@/lib/i18n";
 import { useUploadThing } from "@/lib/uploadthing-client";
 
@@ -221,6 +221,11 @@ export default function HelpWidget({ open, onClose, initialTab, initialCategory 
           )}
         </div>
         <div className="flex items-center gap-2">
+          {activeTab === "ai" && messages.length > 0 && (
+            <button onClick={() => setMessages([])} className="text-muted-foreground hover:text-foreground transition-colors" title="Wróć do ekranu startowego">
+              <RotateCcw size={14} />
+            </button>
+          )}
           <button onClick={() => setExpanded((e) => !e)} className="text-muted-foreground hover:text-foreground transition-colors" title={expanded ? "Zmniejsz" : "Rozszerz"}>
             <Maximize2 size={14} />
           </button>
@@ -324,10 +329,15 @@ export default function HelpWidget({ open, onClose, initialTab, initialCategory 
                 </div>
                 <div>
                   <p className="text-sm font-medium">Asystent veedeck</p>
-                  <p className="text-xs text-muted-foreground mt-1">Zadaj pytanie dotyczące obsługi platformy</p>
+                  <p className="text-xs text-muted-foreground mt-1">Zadaj pytanie dotyczące obsługi platformy lub aktywności Twojego klienta</p>
                 </div>
                 <div className="flex flex-wrap gap-2 justify-center mt-2">
-                  {["Jak udostępnić projekt klientowi?", "Jak dodać produkt do listy?", "Jak sprawdzić aktywność klienta?"].map((q) => (
+                  {[
+                    "Podsumuj mi ostatnie 24h",
+                    "Jak udostępnić projekt klientowi?",
+                    "Jak dodać produkt do listy?",
+                    "Jak sprawdzić aktywność klienta?",
+                  ].map((q) => (
                     <button
                       key={q}
                       onClick={() => { setInput(q); inputRef.current?.focus(); }}

@@ -26,6 +26,21 @@ const TOOLS: Anthropic.Tool[] = [
     },
   },
   {
+    name: "get_daily_summary",
+    description:
+      "Returns a summary of ALL client activity across ALL the designer's clients for a given number of hours. Use this when the designer asks for a daily summary, morning briefing, '24h summary', 'co się działo', or any overview of recent activity across multiple clients. Do NOT use find_client + get_client_activity for this — use this tool directly.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        hours: {
+          type: "number",
+          description: "Number of hours to look back. Defaults to 24.",
+        },
+      },
+      required: [],
+    },
+  },
+  {
     name: "get_client_activity",
     description:
       "Returns comprehensive activity data for a client across all modules: RenderFlow (render views, client comments on renders), Shopping Lists (changes, product approvals/rejections, client comments on products), Discussions (messages written by client), Surveys (responses), Moodboard (views). Use clientId from find_client.",
@@ -400,11 +415,163 @@ async function getClientActivity(
   };
 }
 
+async function getDailySummary(designerId: string, hours = 24) {
+  const from = new Date(Date.now() - hours * 60 * 60 * 1000);
+  const to = new Date();
+  const dateFilter = { gte: from, lte: to };
+
+  const clients = await prisma.client.findMany({
+    where: { designerId, archived: false },
+    select: { id: true, name: true },
+  });
+
+  if (clients.length === 0) {
+    return { period: { from: from.toISOString(), to: to.toISOString(), hours }, totalClients: 0, clientActivity: [] };
+  }
+
+  const clientIds = clients.map((c) => c.id);
+
+  const projects = await prisma.project.findMany({
+    where: { userId: designerId, clientId: { in: clientIds } },
+    select: { id: true, title: true, clientId: true },
+  });
+  const projectIds = projects.map((p) => p.id);
+
+  const projectToClientId: Record<string, string | null> = {};
+  projects.forEach((p) => { projectToClientId[p.id] = p.clientId ?? null; });
+
+  const clientContactIds = await prisma.projectClient.findMany({
+    where: { clientId: { in: clientIds }, userId: { not: null } },
+    select: { userId: true, clientId: true },
+  });
+  const contactUserToClientId: Record<string, string> = {};
+  clientContactIds.forEach((c) => { if (c.userId) contactUserToClientId[c.userId] = c.clientId!; });
+
+  const [clientEvents, renderComments, listChangeLogs, listProductComments, discussionMessages] =
+    projectIds.length > 0
+      ? await Promise.all([
+          prisma.clientEvent.findMany({
+            where: { projectId: { in: projectIds }, createdAt: dateFilter },
+            orderBy: { createdAt: "desc" },
+            take: 200,
+          }),
+          prisma.comment.findMany({
+            where: { render: { projectId: { in: projectIds } }, fromDesigner: false, createdAt: dateFilter },
+            select: { content: true, author: true, createdAt: true, render: { select: { name: true, projectId: true } } },
+            orderBy: { createdAt: "desc" },
+            take: 50,
+          }),
+          prisma.listChangeLog.findMany({
+            where: {
+              OR: [
+                { list: { clientId: { in: clientIds } } },
+                { list: { projectId: { in: projectIds } } },
+              ],
+              source: "client",
+              createdAt: dateFilter,
+            },
+            select: { action: true, details: true, userName: true, createdAt: true, list: { select: { name: true, clientId: true, projectId: true } } },
+            orderBy: { createdAt: "desc" },
+            take: 50,
+          }),
+          prisma.listProductComment.findMany({
+            where: {
+              product: { section: { list: { OR: [{ clientId: { in: clientIds } }, { projectId: { in: projectIds } }] } } },
+              createdAt: dateFilter,
+            },
+            select: { content: true, author: true, createdAt: true, product: { select: { name: true, section: { select: { list: { select: { name: true, clientId: true, projectId: true } } } } } } },
+            orderBy: { createdAt: "desc" },
+            take: 30,
+          }),
+          prisma.discussionMessage.findMany({
+            where: {
+              discussion: { projectId: { in: projectIds } },
+              OR: [
+                { clientEmail: { not: null } },
+                ...(Object.keys(contactUserToClientId).length > 0
+                  ? [{ userId: { in: Object.keys(contactUserToClientId) } }]
+                  : []),
+              ],
+              createdAt: dateFilter,
+            },
+            select: { content: true, authorName: true, createdAt: true, discussion: { select: { projectId: true } } },
+            orderBy: { createdAt: "desc" },
+            take: 30,
+          }),
+        ])
+      : [[], [], [], [], []];
+
+  // Group events by clientId
+  type EventEntry = { type: string; [key: string]: unknown };
+  const activity: Record<string, { clientName: string; events: EventEntry[] }> = {};
+  clients.forEach((c) => { activity[c.id] = { clientName: c.name, events: [] }; });
+
+  const projectTitleMap: Record<string, string> = {};
+  projects.forEach((p) => { projectTitleMap[p.id] = p.title; });
+
+  const resolveClientId = (projectId?: string | null, listClientId?: string | null) =>
+    listClientId ?? (projectId ? projectToClientId[projectId] : null);
+
+  (clientEvents as any[]).forEach((e) => {
+    const cid = projectToClientId[e.projectId];
+    if (cid && activity[cid]) {
+      activity[cid].events.push({ type: e.type, meta: e.meta, clientName: e.clientName, projectTitle: projectTitleMap[e.projectId], at: e.createdAt });
+    }
+  });
+
+  (renderComments as any[]).forEach((c) => {
+    const cid = projectToClientId[c.render.projectId];
+    if (cid && activity[cid]) {
+      activity[cid].events.push({ type: "render_comment", renderName: c.render.name, author: c.author, content: c.content.slice(0, 100), projectTitle: projectTitleMap[c.render.projectId], at: c.createdAt });
+    }
+  });
+
+  listChangeLogs.forEach((l) => {
+    const cid = resolveClientId(l.list.projectId, l.list.clientId);
+    if (cid && activity[cid]) {
+      activity[cid].events.push({ type: "list_change", action: l.action, details: l.details?.slice(0, 100), listName: l.list.name, at: l.createdAt });
+    }
+  });
+
+  listProductComments.forEach((c) => {
+    const list = c.product.section.list;
+    const cid = resolveClientId(list.projectId, list.clientId);
+    if (cid && activity[cid]) {
+      activity[cid].events.push({ type: "list_product_comment", productName: c.product.name, listName: list.name, author: c.author, content: c.content.slice(0, 100), at: c.createdAt });
+    }
+  });
+
+  (discussionMessages as any[]).forEach((m) => {
+    const cid = m.discussion.projectId ? projectToClientId[m.discussion.projectId] : null;
+    if (cid && activity[cid]) {
+      activity[cid].events.push({ type: "discussion_message", author: m.authorName, content: m.content.slice(0, 100), at: m.createdAt });
+    }
+  });
+
+  const activeClients = Object.values(activity)
+    .filter((c) => c.events.length > 0)
+    .sort((a, b) => {
+      const latestA = Math.max(...a.events.map((e) => new Date(e.at as string).getTime()));
+      const latestB = Math.max(...b.events.map((e) => new Date(e.at as string).getTime()));
+      return latestB - latestA;
+    });
+
+  return {
+    period: { from: from.toISOString(), to: to.toISOString(), hours },
+    totalClients: clients.length,
+    activeClientsCount: activeClients.length,
+    clientActivity: activeClients,
+  };
+}
+
 async function executeTool(
   name: string,
   input: Record<string, unknown>,
   designerId: string
 ): Promise<unknown> {
+  if (name === "get_daily_summary") {
+    return getDailySummary(designerId, (input.hours as number | undefined) ?? 24);
+  }
   if (name === "find_client") {
     return findClient(input.name as string, designerId);
   }
