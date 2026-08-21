@@ -150,7 +150,15 @@ async function getClientActivity(
   const [listChangeLogs, listProductComments, surveyResponses, sharedMoodboards] =
     await Promise.all([
       prisma.listChangeLog.findMany({
-        where: { list: { clientId }, createdAt: dateFilter },
+        where: {
+          OR: [
+            { list: { clientId } },
+            ...(projectIds.length > 0
+              ? [{ list: { projectId: { in: projectIds } } }]
+              : []),
+          ],
+          createdAt: dateFilter,
+        },
         select: {
           action: true,
           details: true,
@@ -233,6 +241,15 @@ async function getClientActivity(
       .map((e) => ({
         clientName: e.clientName,
         moodboardTitle: (e.meta as any)?.moodboardTitle ?? null,
+        at: e.createdAt,
+      })),
+    productApprovals: (clientEvents as any[])
+      .filter((e) => e.type === "product_approved" || e.type === "product_rejected")
+      .map((e) => ({
+        decision: e.type === "product_approved" ? "zaakceptował" : "odrzucił",
+        clientName: e.clientName,
+        productName: (e.meta as any)?.productName ?? null,
+        listName: (e.meta as any)?.listName ?? null,
         at: e.createdAt,
       })),
     renderComments: (renderComments as any[]).map((c) => ({
