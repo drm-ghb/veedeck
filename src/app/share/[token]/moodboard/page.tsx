@@ -31,6 +31,20 @@ export default async function ShareMoodboardPage({ params }: { params: Promise<{
   if (!moodboard) notFound();
 
   const session = await auth();
+
+  // Log moodboard view — skip if the designer is previewing their own project
+  if ((session?.user as any)?.role !== "designer") {
+    const clientUser = session?.user as any;
+    await prisma.clientEvent.create({
+      data: {
+        projectId: project.id,
+        type: "moodboard_view",
+        clientEmail: clientUser?.email ?? null,
+        clientName: clientUser?.name ?? null,
+        meta: { moodboardId: moodboard.id, moodboardTitle: moodboard.title },
+      },
+    }).catch(() => {})
+  }
   if (!session?.user) {
     const hasClientAccounts = await prisma.projectClient.findFirst({
       where: { projectId: project.id, userId: { not: null } },
