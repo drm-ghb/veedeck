@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Upload, ChevronRight, ChevronDown, Search, AlertCircle, CheckCircle, Image, X, Check } from "@/components/ui/icons";
+import { Upload, ChevronRight, ChevronDown, Search, AlertCircle, CheckCircle, Image, X, Check, Download } from "@/components/ui/icons";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -412,6 +412,47 @@ export default function ImportListDialog({ open, onOpenChange }: ImportListDialo
   // Computed
   // ---------------------------------------------------------------------------
 
+  async function downloadTemplate() {
+    const XLSX = await import("xlsx");
+
+    // Column names match FIELD_SYNONYMS exactly → auto-mapping works when re-imported
+    const headers = [
+      "Nazwa", "Sekcja", "Producent", "Kolor", "Wymiary",
+      "Cena", "Ilość", "Jednostka", "Czas dostawy", "Nr kat.",
+      "Dostawca", "Kategoria", "URL", "Opis", "Notatka",
+    ];
+
+    const examples = [
+      [
+        "Sofa modułowa Alba 3-osobowa", "Salon", "Sits", "Szary jasny, tkanina Poso", "280×90×85 cm",
+        "4290", "1", "szt.", "4–6 tygodni", "ALB-3-POS-SJ",
+        "Sits Warszawa", "Sofy", "https://sits.pl/sofa-alba", "Nogi metalowe, kolor czarny", "",
+      ],
+      [
+        "Lampa podłogowa Arco", "Sypialnia", "Flos", "Biały, stal", "wys. 235 cm",
+        "3800", "2", "szt.", "2–3 tygodnie", "FLS-ARC-WH",
+        "Flos Polska", "Oświetlenie", "https://flos.com/arco", "", "Sprawdzić dostępność koloru",
+      ],
+      [
+        "Dywan wełniany Beni Ourain", "Salon", "Ethnicraft", "Krem / beż", "200×300 cm",
+        "2100", "1", "szt.", "3–5 tygodni", "ETH-DYW-200300",
+        "Ethnicraft Polska", "Dywany", "", "", "",
+      ],
+    ];
+
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...examples]);
+
+    // Column widths
+    ws["!cols"] = headers.map((h, i) => {
+      const maxLen = Math.max(h.length, ...examples.map((r) => String(r[i] ?? "").length));
+      return { wch: Math.min(Math.max(maxLen + 2, 10), 42) };
+    });
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Lista zakupowa");
+    XLSX.writeFile(wb, "szablon-lista-zakupowa.xlsx");
+  }
+
   const mappedCount = parseResult ? countMappedProducts(parseResult.rows, mapping) : 0;
   const canProceedMapping = !!mapping.name && mappedCount > 0 && listName.trim().length > 0;
   const filteredClients = clients.filter((c) =>
@@ -487,6 +528,19 @@ export default function ImportListDialog({ open, onOpenChange }: ImportListDialo
                 {parseError}
               </div>
             )}
+
+            <div className="flex items-center justify-center gap-1.5 text-sm text-muted-foreground">
+              <Download size={14} className="shrink-0" />
+              <span>Nie masz jeszcze pliku?</span>
+              <button
+                type="button"
+                onClick={downloadTemplate}
+                className="text-primary font-medium hover:underline underline-offset-2"
+              >
+                Pobierz szablon .xlsx
+              </button>
+              <span>i uzupełnij według wzorca</span>
+            </div>
           </div>
         )}
 
