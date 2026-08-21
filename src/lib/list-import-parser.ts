@@ -100,12 +100,48 @@ function isVeeDeckFormat(rows: string[][]): boolean {
 }
 
 /**
+ * Sanitize xlsx buffer: replace self-closing <si/> tags in xl/sharedStrings.xml
+ * with explicit empty entries. SheetJS ^0.18.5 skips self-closing <si/> during
+ * parsing (its regex only matches <si>…</si> pairs), causing every subsequent
+ * shared-string index to be off by 1.
+ */
+async function sanitizeXlsxSharedStrings(buffer: ArrayBuffer): Promise<ArrayBuffer> {
+  try {
+    const JSZip = (await import("jszip")).default;
+    const zip = await JSZip.loadAsync(buffer);
+
+    const ssFile = zip.file("xl/sharedStrings.xml");
+    if (!ssFile) return buffer;
+
+    const content = await ssFile.async("string");
+    // Match bare <si/> and namespace-prefixed variants like <x:si/>, with optional space before />
+    if (!/<(?:\w+:)?si\s*\/>/.test(content)) return buffer;
+
+    const fixed = content.replace(
+      /<((?:\w+:)?si)\s*\/>/g,
+      "<$1><t xml:space=\"preserve\"></t></$1>",
+    );
+
+    zip.file("xl/sharedStrings.xml", fixed);
+    return zip.generateAsync({ type: "arraybuffer" });
+  } catch {
+    // Fail-safe: return original buffer so import still proceeds
+    return buffer;
+  }
+}
+
+/**
  * Main entry point. Parse a .xlsx or .csv File into a ParseResult.
  */
 export async function parseImportFile(file: File): Promise<ParseResult> {
   const XLSX = await import("xlsx");
 
-  const buffer = await file.arrayBuffer();
+  let buffer = await file.arrayBuffer();
+
+  if (file.name.toLowerCase().endsWith(".xlsx")) {
+    buffer = await sanitizeXlsxSharedStrings(buffer);
+  }
+
   const wb = XLSX.read(buffer, { type: "array", cellText: true, cellNF: false });
   const sheetName = wb.SheetNames[0];
   const ws = wb.Sheets[sheetName];
