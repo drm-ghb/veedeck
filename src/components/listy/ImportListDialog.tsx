@@ -414,43 +414,167 @@ export default function ImportListDialog({ open, onOpenChange }: ImportListDialo
 
   async function downloadTemplate() {
     const XLSX = await import("xlsx");
+    const JSZip = (await import("jszip")).default;
 
-    // Column names match FIELD_SYNONYMS exactly → auto-mapping works when re-imported
+    // "Zdjęcie" is column A — images are embedded as drawings, not cell text.
+    // Remaining columns match FIELD_SYNONYMS exactly for auto-mapping on re-import.
     const headers = [
-      "Nazwa", "Sekcja", "Producent", "Kolor", "Wymiary",
+      "Zdjęcie", "Nazwa", "Sekcja", "Producent", "Kolor", "Wymiary",
       "Cena", "Ilość", "Jednostka", "Czas dostawy", "Nr kat.",
       "Dostawca", "Kategoria", "URL", "Opis", "Notatka",
     ];
 
-    const examples = [
-      [
-        "Sofa modułowa Alba 3-osobowa", "Salon", "Sits", "Szary jasny, tkanina Poso", "280×90×85 cm",
-        "4290", "1", "szt.", "4–6 tygodni", "ALB-3-POS-SJ",
-        "Sits Warszawa", "Sofy", "https://sits.pl/sofa-alba", "Nogi metalowe, kolor czarny", "",
-      ],
-      [
-        "Lampa podłogowa Arco", "Sypialnia", "Flos", "Biały, stal", "wys. 235 cm",
-        "3800", "2", "szt.", "2–3 tygodnie", "FLS-ARC-WH",
-        "Flos Polska", "Oświetlenie", "https://flos.com/arco", "", "Sprawdzić dostępność koloru",
-      ],
-      [
-        "Dywan wełniany Beni Ourain", "Salon", "Ethnicraft", "Krem / beż", "200×300 cm",
-        "2100", "1", "szt.", "3–5 tygodni", "ETH-DYW-200300",
-        "Ethnicraft Polska", "Dywany", "", "", "",
-      ],
+    const examples: string[][] = [
+      ["", "Sofa modułowa Alba 3-osobowa", "Salon", "Sits", "Szary jasny, tkanina Poso", "280×90×85 cm", "4290", "1", "szt.", "4–6 tygodni", "ALB-3-POS-SJ", "Sits Warszawa", "Sofy", "https://sits.pl/sofa-alba", "Nogi metalowe, kolor czarny", ""],
+      ["", "Lampa podłogowa Arco", "Sypialnia", "Flos", "Biały, stal", "wys. 235 cm", "3800", "2", "szt.", "2–3 tygodnie", "FLS-ARC-WH", "Flos Polska", "Oświetlenie", "https://flos.com/arco", "", "Sprawdzić dostępność koloru"],
+      ["", "Dywan wełniany Beni Ourain", "Salon", "Ethnicraft", "Krem / beż", "200×300 cm", "2100", "1", "szt.", "3–5 tygodni", "ETH-DYW-200300", "Ethnicraft Polska", "Dywany", "", "", ""],
     ];
 
     const ws = XLSX.utils.aoa_to_sheet([headers, ...examples]);
 
-    // Column widths
-    ws["!cols"] = headers.map((h, i) => {
-      const maxLen = Math.max(h.length, ...examples.map((r) => String(r[i] ?? "").length));
-      return { wch: Math.min(Math.max(maxLen + 2, 10), 42) };
-    });
+    // Column A wider (for images), rest sized to content
+    ws["!cols"] = [
+      { wch: 14 },
+      ...headers.slice(1).map((h, i) => ({
+        wch: Math.min(Math.max(h.length, ...examples.map((r) => String(r[i + 1] ?? "").length)) + 2, 42),
+      })),
+    ];
+    // Example rows taller to accommodate image placeholders (~60pt)
+    ws["!rows"] = [{}, { hpt: 60 }, { hpt: 60 }, { hpt: 60 }];
 
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Lista zakupowa");
-    XLSX.writeFile(wb, "szablon-lista-zakupowa.xlsx");
+
+    // Write base xlsx
+    const xlsxBytes = XLSX.write(wb, { type: "array", bookType: "xlsx" }) as Uint8Array;
+    const zip = await JSZip.loadAsync(xlsxBytes);
+
+    // --- Generate placeholder image via canvas ---
+    const canvas = document.createElement("canvas");
+    canvas.width = 80;
+    canvas.height = 80;
+    const ctx = canvas.getContext("2d")!;
+    ctx.fillStyle = "#F3F4F6";
+    ctx.fillRect(0, 0, 80, 80);
+    ctx.strokeStyle = "#D1D5DB";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(1, 1, 78, 78);
+    ctx.strokeStyle = "#9CA3AF";
+    ctx.lineWidth = 1.5;
+    // Simple landscape / photo icon
+    ctx.beginPath();
+    ctx.moveTo(10, 58); ctx.lineTo(28, 34); ctx.lineTo(44, 50);
+    ctx.lineTo(54, 37); ctx.lineTo(70, 58);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(58, 28, 8, 0, Math.PI * 2);
+    ctx.stroke();
+    const pngBlob = await new Promise<Blob>((res, rej) =>
+      canvas.toBlob((b) => (b ? res(b) : rej(new Error("canvas"))), "image/png")
+    );
+    const pngBytes = new Uint8Array(await pngBlob.arrayBuffer());
+
+    // --- Embed image into zip ---
+    zip.file("xl/media/img_placeholder.png", pngBytes);
+
+    // Drawing XML — one anchor per example row (rows 2,3,4 → indices 1,2,3)
+    const PAD = 76200; // EMU ≈ 6px margin inside cell
+    const anchors = [1, 2, 3]
+      .map((rowIdx, i) => `
+  <xdr:twoCellAnchor editAs="oneCell">
+    <xdr:from><xdr:col>0</xdr:col><xdr:colOff>${PAD}</xdr:colOff><xdr:row>${rowIdx}</xdr:row><xdr:rowOff>${PAD}</xdr:rowOff></xdr:from>
+    <xdr:to><xdr:col>1</xdr:col><xdr:colOff>0</xdr:colOff><xdr:row>${rowIdx + 1}</xdr:row><xdr:rowOff>0</xdr:rowOff></xdr:to>
+    <xdr:pic>
+      <xdr:nvPicPr>
+        <xdr:cNvPr id="${i + 2}" name="Placeholder ${i + 1}"/>
+        <xdr:cNvPicPr><a:picLocks noChangeAspect="1"/></xdr:cNvPicPr>
+      </xdr:nvPicPr>
+      <xdr:blipFill><a:blip r:embed="rId1"/><a:stretch><a:fillRect/></a:stretch></xdr:blipFill>
+      <xdr:spPr>
+        <a:xfrm><a:off x="0" y="0"/><a:ext cx="533400" cy="533400"/></a:xfrm>
+        <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
+      </xdr:spPr>
+    </xdr:pic>
+    <xdr:clientData/>
+  </xdr:twoCellAnchor>`)
+      .join("");
+
+    zip.file(
+      "xl/drawings/drawing1.xml",
+      `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">${anchors}
+</xdr:wsDr>`,
+    );
+
+    zip.file(
+      "xl/drawings/_rels/drawing1.xml.rels",
+      `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/img_placeholder.png"/>
+</Relationships>`,
+    );
+
+    // Patch sheet1.xml — add <drawing r:id="rId1"/> before </worksheet>
+    const sheetFile = zip.file("xl/worksheets/sheet1.xml");
+    if (sheetFile) {
+      let sheetXml = await sheetFile.async("string");
+      if (!sheetXml.includes("<drawing")) {
+        if (!sheetXml.includes("xmlns:r=")) {
+          sheetXml = sheetXml.replace(
+            "<worksheet ",
+            '<worksheet xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" ',
+          );
+        }
+        sheetXml = sheetXml.replace("</worksheet>", '<drawing r:id="rId1"/></worksheet>');
+        zip.file("xl/worksheets/sheet1.xml", sheetXml);
+      }
+    }
+
+    // Patch (or create) xl/worksheets/_rels/sheet1.xml.rels
+    const sheetRelsPath = "xl/worksheets/_rels/sheet1.xml.rels";
+    const sheetRelsFile = zip.file(sheetRelsPath);
+    const existingRels = sheetRelsFile ? await sheetRelsFile.async("string") : "";
+    const patchedRels = existingRels.includes("drawing")
+      ? existingRels
+      : existingRels
+      ? existingRels.replace(
+          "</Relationships>",
+          `  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/drawing1.xml"/>
+</Relationships>`,
+        )
+      : `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/drawing1.xml"/>
+</Relationships>`;
+    zip.file(sheetRelsPath, patchedRels);
+
+    // Patch [Content_Types].xml
+    const ctFile = zip.file("[Content_Types].xml");
+    if (ctFile) {
+      let ctXml = await ctFile.async("string");
+      if (!ctXml.includes("spreadsheetDrawing")) {
+        ctXml = ctXml.replace(
+          "</Types>",
+          `  <Override PartName="/xl/drawings/drawing1.xml" ContentType="application/vnd.openxmlformats-officedocument.drawing+xml"/>
+</Types>`,
+        );
+      }
+      if (!ctXml.includes('Extension="png"')) {
+        ctXml = ctXml.replace("</Types>", `  <Default Extension="png" ContentType="image/png"/>\n</Types>`);
+      }
+      zip.file("[Content_Types].xml", ctXml);
+    }
+
+    // Download
+    const finalBuffer = await zip.generateAsync({ type: "arraybuffer" });
+    const url = URL.createObjectURL(
+      new Blob([finalBuffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }),
+    );
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "szablon-lista-zakupowa.xlsx";
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   const mappedCount = parseResult ? countMappedProducts(parseResult.rows, mapping) : 0;
