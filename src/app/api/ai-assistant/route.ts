@@ -482,7 +482,7 @@ async function getDailySummary(designerId: string, hours = 24) {
               source: "client",
               createdAt: dateFilter,
             },
-            select: { action: true, details: true, userName: true, createdAt: true, list: { select: { name: true, clientId: true, projectId: true } } },
+            select: { action: true, details: true, userName: true, createdAt: true, list: { select: { name: true, slug: true, id: true, clientId: true, projectId: true } } },
             orderBy: { createdAt: "desc" },
             take: 50,
           }),
@@ -491,7 +491,7 @@ async function getDailySummary(designerId: string, hours = 24) {
               product: { section: { list: { OR: [{ clientId: { in: clientIds } }, { projectId: { in: projectIds } }] } } },
               createdAt: dateFilter,
             },
-            select: { content: true, author: true, createdAt: true, product: { select: { name: true, section: { select: { list: { select: { name: true, clientId: true, projectId: true } } } } } } },
+            select: { content: true, author: true, createdAt: true, product: { select: { name: true, section: { select: { list: { select: { name: true, slug: true, id: true, clientId: true, projectId: true } } } } } } },
             orderBy: { createdAt: "desc" },
             take: 30,
           }),
@@ -527,21 +527,30 @@ async function getDailySummary(designerId: string, hours = 24) {
   (clientEvents as any[]).forEach((e) => {
     const cid = projectToClientId[e.projectId];
     if (cid && activity[cid]) {
-      activity[cid].events.push({ type: e.type, meta: e.meta, clientName: e.clientName, projectTitle: projectTitleMap[e.projectId], at: e.createdAt });
+      const meta = e.meta as any;
+      let link: string | null = null;
+      if (e.type === "render_view" || e.type === "render_accepted" || e.type === "render_rejected") {
+        link = `/projekty/${e.projectId}`;
+      } else if (e.type === "list_view" && meta?.listId) {
+        link = `/listy-zakupowe/${meta.listId}`;
+      } else if ((e.type === "product_approved" || e.type === "product_rejected") && (meta?.listSlug || meta?.listId)) {
+        link = `/listy-zakupowe/${meta.listSlug ?? meta.listId}`;
+      }
+      activity[cid].events.push({ type: e.type, meta: e.meta, clientName: e.clientName, projectTitle: projectTitleMap[e.projectId], link, at: e.createdAt });
     }
   });
 
   (renderComments as any[]).forEach((c) => {
     const cid = projectToClientId[c.render.projectId];
     if (cid && activity[cid]) {
-      activity[cid].events.push({ type: "render_comment", renderName: c.render.name, author: c.author, content: c.content.slice(0, 100), projectTitle: projectTitleMap[c.render.projectId], at: c.createdAt });
+      activity[cid].events.push({ type: "render_comment", renderName: c.render.name, author: c.author, content: c.content.slice(0, 100), projectTitle: projectTitleMap[c.render.projectId], link: `/projekty/${c.render.projectId}`, at: c.createdAt });
     }
   });
 
   listChangeLogs.forEach((l) => {
     const cid = resolveClientId(l.list.projectId, l.list.clientId);
     if (cid && activity[cid]) {
-      activity[cid].events.push({ type: "list_change", action: l.action, details: l.details?.slice(0, 100), listName: l.list.name, at: l.createdAt });
+      activity[cid].events.push({ type: "list_change", action: l.action, details: l.details?.slice(0, 100), listName: l.list.name, link: `/listy-zakupowe/${l.list.slug ?? l.list.id}`, at: l.createdAt });
     }
   });
 
@@ -549,7 +558,7 @@ async function getDailySummary(designerId: string, hours = 24) {
     const list = c.product.section.list;
     const cid = resolveClientId(list.projectId, list.clientId);
     if (cid && activity[cid]) {
-      activity[cid].events.push({ type: "list_product_comment", productName: c.product.name, listName: list.name, author: c.author, content: c.content.slice(0, 100), at: c.createdAt });
+      activity[cid].events.push({ type: "list_product_comment", productName: c.product.name, listName: list.name, author: c.author, content: c.content.slice(0, 100), link: `/listy-zakupowe/${list.slug ?? list.id}`, at: c.createdAt });
     }
   });
 
