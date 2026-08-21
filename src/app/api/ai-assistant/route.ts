@@ -346,11 +346,12 @@ async function getClientActivity(
         clientName: e.clientName,
         productName: (e.meta as any)?.productName ?? null,
         listName: (e.meta as any)?.listName ?? null,
-        link: (e.meta as any)?.listSlug
-          ? `/listy-zakupowe/${(e.meta as any).listSlug}`
-          : (e.meta as any)?.listId
-          ? `/listy-zakupowe/${(e.meta as any).listId}`
-          : null,
+        link: (() => {
+          const m = e.meta as any;
+          const base = m?.listSlug ?? m?.listId;
+          if (!base) return null;
+          return m?.productId ? `/listy-zakupowe/${base}?product=${m.productId}` : `/listy-zakupowe/${base}`;
+        })(),
         at: e.createdAt,
       })),
     renderApprovals: (clientEvents as any[])
@@ -534,7 +535,8 @@ async function getDailySummary(designerId: string, hours = 24) {
       } else if (e.type === "list_view" && meta?.listId) {
         link = `/listy-zakupowe/${meta.listId}`;
       } else if ((e.type === "product_approved" || e.type === "product_rejected") && (meta?.listSlug || meta?.listId)) {
-        link = `/listy-zakupowe/${meta.listSlug ?? meta.listId}`;
+        const base = meta.listSlug ?? meta.listId;
+        link = meta?.productId ? `/listy-zakupowe/${base}?product=${meta.productId}` : `/listy-zakupowe/${base}`;
       }
       activity[cid].events.push({ type: e.type, meta: e.meta, clientName: e.clientName, projectTitle: projectTitleMap[e.projectId], link, at: e.createdAt });
     }
