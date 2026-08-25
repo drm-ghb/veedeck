@@ -394,7 +394,7 @@ export default function TaskDetailPanel({ task, onClose, onUpdated, isSubTask = 
               />
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Projekt</label>
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{t.tasks.clientLabel}</label>
               <TaskSelectField
                 value={projectId}
                 onChange={(v) => { if (!canEdit) return; setProjectId(v); patch({ projectId: v || null }); }}
@@ -476,7 +476,7 @@ export default function TaskDetailPanel({ task, onClose, onUpdated, isSubTask = 
                   onClick={() => attachmentInputRef.current?.click()}
                   disabled={isUploading}
                   className="w-6 h-6 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-foreground disabled:opacity-40 transition-colors"
-                  title="Dodaj załącznik"
+                  title={t.tasks.addAttachment}
                 >
                   <Plus size={13} />
                 </button>
@@ -553,7 +553,7 @@ export default function TaskDetailPanel({ task, onClose, onUpdated, isSubTask = 
               onClick={() => attachmentInputRef.current?.click()}
               disabled={isUploading}
               className="p-1.5 text-muted-foreground hover:text-foreground disabled:opacity-40 transition-colors shrink-0"
-              title="Dodaj załącznik"
+              title={t.tasks.addAttachment}
             >
               <Paperclip size={18} />
             </button>

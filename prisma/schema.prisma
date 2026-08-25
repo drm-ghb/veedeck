@@ -795,6 +795,15 @@ model ActivityLog {
   createdAt DateTime @default(now())
 }
 
+model AiLog {
+  id        String   @id @default(cuid())
+  userId    String
+  userEmail String
+  query     String
+  response  String
+  createdAt DateTime @default(now())
+}
+
 model StatusChangeRequest {
   id         String   @id @default(cuid())
   renderId   String

@@ -272,6 +272,7 @@ export const ScrollText2      = icon("receipt_long");
 export const XCircle          = icon("cancel");
 export const Armchair         = icon("chair");
 export const ImagePlus2       = icon("add_photo_alternate");
+export const Bot              = icon("smart_toy");
 
 // ── Room icons (roomIcons.tsx) ─────────────────────────────────────────────
 export const Sofa             = icon("weekend");

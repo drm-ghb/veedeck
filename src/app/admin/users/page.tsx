@@ -24,6 +24,24 @@ export default async function AdminUsersPage() {
     orderBy: { createdAt: "desc" },
   });
 
+  // Last successful login per user
+  const lastLogins = await prisma.loginLog.groupBy({
+    by: ["userId"],
+    where: { success: true, userId: { not: null } },
+    _max: { createdAt: true },
+  });
+  const lastLoginMap: Record<string, string> = {};
+  for (const entry of lastLogins) {
+    if (entry.userId && entry._max.createdAt) {
+      lastLoginMap[entry.userId] = entry._max.createdAt.toISOString();
+    }
+  }
+
+  const usersWithActivity = users.map((u) => ({
+    ...u,
+    lastActiveAt: lastLoginMap[u.id] ?? null,
+  }));
+
   return (
     <div>
       <div className="mb-6">
@@ -32,7 +50,7 @@ export default async function AdminUsersPage() {
           Zarządzaj zarejestrowanymi kontami
         </p>
       </div>
-      <AdminUsersClient users={users} currentUserId={session!.user!.id!} />
+      <AdminUsersClient users={usersWithActivity} currentUserId={session!.user!.id!} />
     </div>
   );
 }

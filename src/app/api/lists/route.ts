@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { uniqueSlug } from "@/lib/slug";
 import { getWorkspaceUserId } from "@/lib/workspace";
 import { checkTeamPermission, getAllowedClientIds, getAllowedProjectIds, hasPermission } from "@/lib/permissions";
+import { logActivity } from "@/lib/activity-log";
 
 export async function GET() {
   const session = await auth();
@@ -80,6 +81,9 @@ export async function POST(req: NextRequest) {
         isSharedWithClient: false,
       },
     });
+    // 6. Log: list creation
+    logActivity({ level: "info", action: "list.create", message: `Utworzono listę zakupową: ${name.trim()}`, userId, meta: { listId: list.id, name: name.trim() } });
+
     return NextResponse.json(list, { status: 201 });
   } catch (err) {
     console.error("[POST /api/lists] error:", err);

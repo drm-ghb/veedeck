@@ -19,7 +19,7 @@ import { MOODBOARD_TEMPLATES } from "@/components/moodboard/data/templates";
 import type { MoodboardTemplate } from "@/components/moodboard/data/templates";
 import { ColorPicker } from "@/components/moodboard/ColorPicker";
 import { LayersPanel } from "@/components/moodboard/LayersPanel";
-import { useT } from "@/lib/i18n";
+import { useT, useLang } from "@/lib/i18n";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -125,13 +125,13 @@ const STROKE_COLORS = [
   "#3b82f6", "#8b5cf6", "#ec4899", "#ffffff",
 ];
 
-const NOTE_COLORS = [
-  { bg: "#fef08a", stroke: "#ca8a04", label: "Żółty" },
-  { bg: "#bbf7d0", stroke: "#16a34a", label: "Zielony" },
-  { bg: "#bfdbfe", stroke: "#2563eb", label: "Niebieski" },
-  { bg: "#fca5a5", stroke: "#dc2626", label: "Czerwony" },
-  { bg: "#e9d5ff", stroke: "#7c3aed", label: "Fioletowy" },
-  { bg: "#fed7aa", stroke: "#ea580c", label: "Pomarańczowy" },
+const NOTE_COLOR_DEFS = [
+  { bg: "#fef08a", stroke: "#ca8a04", labelKey: "noteColorYellow" as const },
+  { bg: "#bbf7d0", stroke: "#16a34a", labelKey: "noteColorGreen" as const },
+  { bg: "#bfdbfe", stroke: "#2563eb", labelKey: "noteColorBlue" as const },
+  { bg: "#fca5a5", stroke: "#dc2626", labelKey: "noteColorRed" as const },
+  { bg: "#e9d5ff", stroke: "#7c3aed", labelKey: "noteColorPurple" as const },
+  { bg: "#fed7aa", stroke: "#ea580c", labelKey: "noteColorOrange" as const },
 ];
 
 // ── Frame presets ───────────────────────────────────────────────────────────
@@ -481,6 +481,7 @@ interface Props {
 
 export default function MoodboardCanvas({ id, title: initialTitle, canvasData: initial, isSharedWithClient: initialShared, client, project, readOnly = false }: Props) {
   const t = useT();
+  const { lang } = useLang();
   const stageRef = useRef<Konva.Stage>(null);
   const transformerRef = useRef<Konva.Transformer>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -671,10 +672,10 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
       const url = URL.createObjectURL(resultBlob);
       imageCache.delete(el.imageUrl);
       updateEl(el.id, { imageUrl: url, cropLeft: undefined, cropTop: undefined, cropRight: undefined, cropBottom: undefined });
-      toast.success("Tło usunięte");
+      toast.success(t.moodboard.removeBackground);
     } catch (err) {
       console.error("[removeBg]", err);
-      toast.error("Błąd podczas usuwania tła");
+      toast.error(t.moodboard.removeBackgroundError);
     } finally {
       setRemovingBgId(null);
     }
@@ -1041,7 +1042,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
     if (tool === "text" || tool === "note") {
       if (!isStage) return;
       const pos = stagePoint(e.evt.clientX, e.evt.clientY);
-      const defaultNote = NOTE_COLORS[0];
+      const defaultNote = NOTE_COLOR_DEFS[0];
       const newEl: CanvasElement = tool === "note"
         ? { id: uid(), type: "note", x: pos.x - 75, y: pos.y - 75, width: 150, height: 150, text: "", fontSize: 13, noteColor: defaultNote.bg, stroke: defaultNote.stroke, strokeWidth: 1, fill: defaultNote.bg, opacity: 1 }
         : { id: uid(), type: "text", x: pos.x, y: pos.y, width: 200, height: 30, text: "Text", fontSize: 16, fill: "#1e293b", opacity: 1 };
@@ -1518,9 +1519,9 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
         if (editTitle.trim()) setTitle(editTitle.trim());
         setEditModalOpen(false);
         router.refresh();
-        toast.success("Zapisano zmiany");
+        toast.success(t.moodboard.savedChanges);
       } else {
-        toast.error("Błąd zapisu");
+        toast.error(t.moodboard.saveError);
       }
     } finally {
       setEditSaving(false);
@@ -1824,7 +1825,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
     });
     if (res.ok) {
       setIsSharedWithClient(next);
-      toast.success(next ? "Tablica udostępniona klientowi" : "Cofnięto udostępnianie");
+      toast.success(next ? t.moodboard.sharedSuccess : t.moodboard.unsharedSuccess);
     }
   }
 
@@ -1866,9 +1867,9 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
     if (files.length === 0) return;
     const dropX = e.clientX;
     const dropY = e.clientY;
-    toast.loading("Przesyłanie...", { id: "moodboard-upload" });
+    toast.loading(t.moodboard.uploadLoading, { id: "moodboard-upload" });
     startImageUpload(files).then((results) => {
-      if (!results) { toast.error("Błąd przesyłania zdjęcia", { id: "moodboard-upload" }); return; }
+      if (!results) { toast.error(t.moodboard.uploadError, { id: "moodboard-upload" }); return; }
       results.forEach((res, i) => {
         loadImage(res.url, (img) => {
           const maxW = 400, maxH = 300;
@@ -1881,14 +1882,14 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
           setSelectedIds([newEl.id]);
         });
       });
-      toast.success("Przesłano", { id: "moodboard-upload" });
-    }).catch(() => toast.error("Błąd przesyłania zdjęcia", { id: "moodboard-upload" }));
+      toast.success(t.moodboard.uploadSuccess, { id: "moodboard-upload" });
+    }).catch(() => toast.error(t.moodboard.uploadError, { id: "moodboard-upload" }));
   }
 
   function handleImageUpload(file: File) {
-    toast.loading("Przesyłanie...", { id: "moodboard-upload" });
+    toast.loading(t.moodboard.uploadLoading, { id: "moodboard-upload" });
     startImageUpload([file]).then((results) => {
-      if (!results?.[0]) { toast.error("Błąd przesyłania zdjęcia", { id: "moodboard-upload" }); return; }
+      if (!results?.[0]) { toast.error(t.moodboard.uploadError, { id: "moodboard-upload" }); return; }
       const url = results[0].url;
       loadImage(url, (img) => {
         const maxW = 400, maxH = 300;
@@ -1900,8 +1901,8 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
         updateElements(next);
         setSelectedIds([newEl.id]);
       });
-      toast.success("Przesłano", { id: "moodboard-upload" });
-    }).catch(() => toast.error("Błąd przesyłania zdjęcia", { id: "moodboard-upload" }));
+      toast.success(t.moodboard.uploadSuccess, { id: "moodboard-upload" });
+    }).catch(() => toast.error(t.moodboard.uploadError, { id: "moodboard-upload" }));
   }
 
   function fillPlaceholderWithImage(placeholderId: string, sourceEl: CanvasElement) {
@@ -2064,8 +2065,8 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
             {/* Header */}
             <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-border shrink-0">
               <div>
-                <h2 className="text-base font-semibold tracking-tight">Szablony moodboardu</h2>
-                <p className="text-xs text-muted-foreground mt-0.5">Wybierz szablon jako punkt startowy — każdy element możesz potem dowolnie edytować</p>
+                <h2 className="text-base font-semibold tracking-tight">{t.moodboard.templatesTitle}</h2>
+                <p className="text-xs text-muted-foreground mt-0.5">{t.moodboard.templatesDesc}</p>
               </div>
               <button
                 onClick={() => setTemplateGalleryOpen(false)}
@@ -2079,7 +2080,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
             <div className="overflow-y-auto px-6 py-5 space-y-6">
               {/* Grid section */}
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground mb-3">Siatki klasyczne</p>
+                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground mb-3">{t.moodboard.templatesCatGrid}</p>
                 <div className="grid grid-cols-5 gap-3">
                   {MOODBOARD_TEMPLATES.filter(t => t.category === 'grid').map(t => (
                     <button
@@ -2090,7 +2091,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                       <div className="rounded-lg overflow-hidden border border-border/60 group-hover:border-primary/30 transition-colors">
                         <TemplateThumbnail template={t} />
                       </div>
-                      <span className="text-[11.5px] font-medium text-foreground leading-tight text-center w-full">{t.name.pl}</span>
+                      <span className="text-[11.5px] font-medium text-foreground leading-tight text-center w-full">{t.name[lang]}</span>
                     </button>
                   ))}
                 </div>
@@ -2098,7 +2099,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
 
               {/* Freeform section */}
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground mb-3">Kolaże swobodne</p>
+                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground mb-3">{t.moodboard.templatesCatFreeform}</p>
                 <div className="grid grid-cols-5 gap-3">
                   {MOODBOARD_TEMPLATES.filter(t => t.category === 'freeform').map(t => (
                     <button
@@ -2109,7 +2110,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                       <div className="rounded-lg overflow-hidden border border-border/60 group-hover:border-primary/30 transition-colors">
                         <TemplateThumbnail template={t} />
                       </div>
-                      <span className="text-[11.5px] font-medium text-foreground leading-tight text-center w-full">{t.name.pl}</span>
+                      <span className="text-[11.5px] font-medium text-foreground leading-tight text-center w-full">{t.name[lang]}</span>
                     </button>
                   ))}
                 </div>
@@ -2128,7 +2129,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                       <div className="rounded-lg overflow-hidden border border-border/60 group-hover:border-primary/30 transition-colors">
                         <TemplateThumbnail template={t} />
                       </div>
-                      <span className="text-[11.5px] font-medium text-foreground leading-tight text-center w-full">{t.name.pl}</span>
+                      <span className="text-[11.5px] font-medium text-foreground leading-tight text-center w-full">{t.name[lang]}</span>
                     </button>
                   ))}
                 </div>
@@ -2141,7 +2142,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
       {/* Top bar */}
       <div className="flex items-center gap-2 px-3 py-2 border-b border-border bg-background shrink-0 z-10">
         <Link href="/moodboardy" className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors shrink-0">
-          <ChevronLeft size={16} /> Moodboardy
+          <ChevronLeft size={16} /> {t.moodboard.backToBoards}
         </Link>
         <div className="w-px h-4 bg-border mx-1" />
         {/* Auto-sizing title input */}
@@ -2162,7 +2163,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
           <button
             onClick={() => setEditMenuOpen((v) => !v)}
             className={`w-7 h-7 flex items-center justify-center rounded-lg transition-colors ${editMenuOpen ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
-            title="Opcje tablicy"
+            title={t.moodboard.boardOptions}
           >
             <MoreVertical size={15} />
           </button>
@@ -2174,7 +2175,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                   onClick={openEditModal}
                   className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg hover:bg-muted text-foreground transition-colors text-left"
                 >
-                  Edytuj
+                  {t.moodboard.editBtn}
                 </button>
               </div>
             </>
@@ -2189,10 +2190,10 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
               else { setExportMode(true); setExportRect(null); }
             }}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border ${exportMode || exportDropdownOpen ? "bg-primary/10 text-primary border-primary/30" : "text-muted-foreground hover:text-foreground hover:bg-muted border-border"}`}
-            title="Eksportuj"
+            title={t.moodboard.exportBtn}
           >
             <Download size={14} />
-            Eksportuj
+            {t.moodboard.exportBtn}
           </button>
           {exportDropdownOpen && selectedIds.length > 0 && (
             <>
@@ -2204,9 +2205,9 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                 >
                   <Download size={13} />
                   {selectedIds.length === 1 && elements.find(e => e.id === selectedIds[0])?.type === "frame"
-                    ? "Eksportuj frame"
-                    : selectedIds.length === 1 ? "Eksportuj element"
-                    : `Eksportuj zaznaczone (${selectedIds.length})`}
+                    ? t.moodboard.exportFrame
+                    : selectedIds.length === 1 ? t.moodboard.exportElement
+                    : `${t.moodboard.exportSelected} (${selectedIds.length})`}
                 </button>
                 <div className="h-px bg-border my-1" />
                 <button
@@ -2214,14 +2215,14 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                   className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg hover:bg-muted transition-colors text-left text-muted-foreground"
                 >
                   <MousePointer size={13} />
-                  Eksportuj obszar ręcznie...
+                  {t.moodboard.exportAreaManual}
                 </button>
                 <button
                   onClick={exportFullCanvas}
                   className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg hover:bg-muted transition-colors text-left text-muted-foreground"
                 >
                   <Download size={13} />
-                  Eksportuj całą planszę
+                  {t.moodboard.exportFullCanvas}
                 </button>
               </div>
             </>
@@ -2243,7 +2244,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
           <button
             onClick={() => setHelpOpen((v) => !v)}
             className={`w-8 h-8 flex items-center justify-center rounded-lg transition-colors ${helpOpen ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
-            title="Skróty klawiszowe i instrukcja"
+            title={t.moodboard.shortcutsTitle}
           >
             <HelpCircle size={17} />
           </button>
@@ -2252,57 +2253,57 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
               <div className="fixed inset-0 z-[40]" onClick={() => setHelpOpen(false)} />
               <div className="absolute right-0 top-[calc(100%+6px)] z-[50] w-[520px] bg-card border border-border rounded-2xl shadow-xl overflow-hidden">
                 <div className="px-4 py-3 border-b border-border">
-                  <p className="text-sm font-semibold">Skróty klawiszowe</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">Tablica Moodboard</p>
+                  <p className="text-sm font-semibold">{t.moodboard.shortcutsHeading}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{t.moodboard.shortcutsSubtitle}</p>
                 </div>
                 <div className="grid grid-cols-2 gap-x-4 p-3 max-h-[70vh] overflow-y-auto">
                   {/* Column 1 */}
                   <div className="space-y-0.5">
-                    <p className="text-xs font-bold text-foreground pt-1 pb-1 px-1">Narzędzia</p>
+                    <p className="text-xs font-bold text-foreground pt-1 pb-1 px-1">{t.moodboard.scTools}</p>
                     {([
-                      ["V", "Zaznaczanie"],
-                      ["H", "Przesuwanie widoku"],
+                      ["V", t.moodboard.scSelect],
+                      ["H", t.moodboard.scPan],
                       ["F", "Frame"],
-                      ["R", "Prostokąt"],
-                      ["O", "Elipsa"],
-                      ["T", "Tekst"],
-                      ["A", "Strzałka"],
-                      ["L", "Linia"],
-                      ["N", "Notatka"],
-                      ["P", "Pisanie ręczne"],
+                      ["R", t.moodboard.scRect],
+                      ["O", t.moodboard.scEllipse],
+                      ["T", t.moodboard.scText],
+                      ["A", t.moodboard.scArrow],
+                      ["L", t.moodboard.scLine],
+                      ["N", t.moodboard.scNote],
+                      ["P", t.moodboard.scPen],
                     ] as [string, string][]).map(([key, desc]) => (
                       <div key={key} className="flex items-center justify-between gap-2 px-2 py-1.5 rounded-lg hover:bg-muted/50">
                         <span className="text-xs text-muted-foreground">{desc}</span>
                         <kbd className="text-[10px] font-mono bg-muted border border-border rounded px-1.5 py-0.5 text-foreground whitespace-nowrap">{key}</kbd>
                       </div>
                     ))}
-                    <p className="text-xs font-bold text-foreground pt-3 pb-1 px-1">Rysowanie</p>
+                    <p className="text-xs font-bold text-foreground pt-3 pb-1 px-1">{t.moodboard.scDrawing}</p>
                     <div className="flex items-center justify-between gap-2 px-2 py-1.5 rounded-lg hover:bg-muted/50">
-                      <span className="text-xs text-muted-foreground">Idealny kwadrat / koło</span>
+                      <span className="text-xs text-muted-foreground">{t.moodboard.scPerfectShape}</span>
                       <kbd className="text-[10px] font-mono bg-muted border border-border rounded px-1.5 py-0.5 text-foreground whitespace-nowrap">Shift</kbd>
                     </div>
                   </div>
                   {/* Column 2 */}
                   <div className="space-y-0.5">
-                    <p className="text-xs font-bold text-foreground pt-1 pb-1 px-1">Edycja</p>
+                    <p className="text-xs font-bold text-foreground pt-1 pb-1 px-1">{t.moodboard.scEditing}</p>
                     {([
-                      ["Ctrl + Z", "Cofnij"],
-                      ["Ctrl + Y", "Ponów"],
-                      ["Ctrl + C", "Kopiuj"],
-                      ["Ctrl + V", "Wklej"],
-                      ["Ctrl + D", "Duplikuj"],
-                      ["Del / Backspace", "Usuń"],
-                      ["Escape", "Odznacz / anuluj"],
+                      ["Ctrl + Z", t.moodboard.scUndo],
+                      ["Ctrl + Y", t.moodboard.scRedo],
+                      ["Ctrl + C", t.moodboard.scCopy],
+                      ["Ctrl + V", t.moodboard.scPaste],
+                      ["Ctrl + D", t.moodboard.scDuplicate],
+                      ["Del / Backspace", t.moodboard.scDelete],
+                      ["Escape", t.moodboard.scDeselect],
                     ] as [string, string][]).map(([key, desc]) => (
                       <div key={key} className="flex items-center justify-between gap-2 px-2 py-1.5 rounded-lg hover:bg-muted/50">
                         <span className="text-xs text-muted-foreground">{desc}</span>
                         <kbd className="text-[10px] font-mono bg-muted border border-border rounded px-1.5 py-0.5 text-foreground whitespace-nowrap">{key}</kbd>
                       </div>
                     ))}
-                    <p className="text-xs font-bold text-foreground pt-3 pb-1 px-1">Widok</p>
+                    <p className="text-xs font-bold text-foreground pt-3 pb-1 px-1">{t.moodboard.scView}</p>
                     {([
-                      ["Scroll", "Przybliż / oddal"],
-                      ["Spacja + drag", "Przesuń widok"],
+                      ["Scroll", t.moodboard.scZoom],
+                      [t.moodboard.scPanKey, t.moodboard.scPanView],
                       ["+  /  −", "Zoom in / out"],
                     ] as [string, string][]).map(([key, desc]) => (
                       <div key={key} className="flex items-center justify-between gap-2 px-2 py-1.5 rounded-lg hover:bg-muted/50">
@@ -2321,10 +2322,10 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
         {!readOnly && <button
           onClick={() => setRightSidebarOpen((v) => !v)}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${rightSidebarOpen ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
-          title="Biblioteka"
+          title={t.moodboard.libraryBtn}
         >
           <Package size={15} />
-          Biblioteka
+          {t.moodboard.libraryBtn}
           {rightSidebarOpen ? <ChevronRight size={13} /> : <ChevronLeft size={13} />}
         </button>}
       </div>
@@ -2344,7 +2345,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
           {/* Inner edit mode banner */}
           {innerEditId && (
             <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3 bg-foreground/90 backdrop-blur-sm text-background px-4 py-2.5 rounded-2xl shadow-xl pointer-events-auto">
-              <span className="text-sm font-medium">Przeciągnij zdjęcie lub scrolluj aby zmienić przybliżenie. Esc aby wyjść.</span>
+              <span className="text-sm font-medium">{t.moodboard.innerEditBanner}</span>
               <button
                 onClick={() => setInnerEditId(null)}
                 className="text-background/60 hover:text-background transition-colors"
@@ -2357,7 +2358,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
           {/* Template pick mode banner */}
           {templatePickModeId && (
             <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3 bg-foreground/90 backdrop-blur-sm text-background px-4 py-2.5 rounded-2xl shadow-xl pointer-events-auto">
-              <span className="text-sm font-medium">Kliknij zdjęcie na tablicy lub w Zasobach, lub przeciągnij je na placeholder</span>
+              <span className="text-sm font-medium">{t.moodboard.templatePickBanner}</span>
               <button
                 onClick={() => setTemplatePickModeId(null)}
                 className="text-background/60 hover:text-background transition-colors"
@@ -2432,7 +2433,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
               <div className="absolute inset-2 rounded-2xl border-2 border-dashed border-primary bg-primary/5" />
               <div className="relative flex flex-col items-center gap-2 text-primary">
                 <Image size={32} />
-                <p className="text-sm font-semibold">Upuść zdjęcia na tablicę</p>
+                <p className="text-sm font-semibold">{t.moodboard.dropOverlay}</p>
               </div>
             </div>
           )}
@@ -3146,12 +3147,12 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                           onClick={() => { setRenameFrameId(frameEl.id); setRenameFrameValue(frameEl.frameName ?? "Frame"); setFrameMenuId(null); }}
                           className="w-full flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg hover:bg-muted text-foreground transition-colors text-left"
                         >
-                          Zmień nazwę
+                          {t.moodboard.frameRename}
                         </button>
                         <div className="h-px bg-border my-1" />
-                        <button onClick={() => { exportFrame(frameEl.id, "png"); setFrameMenuId(null); }} className="w-full flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg hover:bg-muted text-foreground transition-colors text-left">Eksportuj PNG</button>
-                        <button onClick={() => { exportFrame(frameEl.id, "jpg"); setFrameMenuId(null); }} className="w-full flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg hover:bg-muted text-foreground transition-colors text-left">Eksportuj JPG</button>
-                        <button onClick={() => { exportFrame(frameEl.id, "pdf"); setFrameMenuId(null); }} className="w-full flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg hover:bg-muted text-foreground transition-colors text-left">Eksportuj PDF</button>
+                        <button onClick={() => { exportFrame(frameEl.id, "png"); setFrameMenuId(null); }} className="w-full flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg hover:bg-muted text-foreground transition-colors text-left">{t.moodboard.frameExportPng}</button>
+                        <button onClick={() => { exportFrame(frameEl.id, "jpg"); setFrameMenuId(null); }} className="w-full flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg hover:bg-muted text-foreground transition-colors text-left">{t.moodboard.frameExportJpg}</button>
+                        <button onClick={() => { exportFrame(frameEl.id, "pdf"); setFrameMenuId(null); }} className="w-full flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg hover:bg-muted text-foreground transition-colors text-left">{t.moodboard.frameExportPdf}</button>
                         <div className="h-px bg-border my-1" />
                         <button
                           onClick={() => {
@@ -3161,7 +3162,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                           }}
                           className="w-full flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg hover:bg-red-50 text-red-600 transition-colors text-left"
                         >
-                          Usuń frame
+                          {t.moodboard.frameDelete}
                         </button>
                       </div>
                     </>
@@ -3219,16 +3220,16 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                 <button
                   onClick={() => setBgPickerOpen((v) => !v)}
                   className={`flex items-center gap-1.5 h-[38px] px-2 rounded-xl transition-colors ${bgPickerOpen ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
-                  title="Kolor tła tablicy"
+                  title={t.moodboard.bgColorTitle}
                 >
-                  <span className="text-xs font-medium">Tło</span>
+                  <span className="text-xs font-medium">{t.moodboard.bgLabel}</span>
                   <span className="w-4 h-4 rounded-sm border border-border/60 shrink-0" style={{ background: canvasBg }} />
                 </button>
                 {bgPickerOpen && (
                   <>
                     <div className="fixed inset-0 z-[40]" onClick={() => setBgPickerOpen(false)} />
                     <div className="absolute left-0 bottom-[calc(100%+6px)] z-[50] bg-card border border-border rounded-xl shadow-xl p-3 w-52">
-                      <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Kolor tła</p>
+                      <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">{t.moodboard.bgColorLabel}</p>
                       <div className="grid grid-cols-7 gap-1.5 mb-3">
                         {["#FFFFFF","#F8F7F4","#F2F0EB","#E8E4DC","#D4CFC4","#1C1C1C","#111111",
                           "#EFF6FF","#DBEAFE","#FEF9C3","#FEF3C7","#FCE7F3","#F0FDF4","#F5F3FF"].map((c) => (
@@ -3254,11 +3255,11 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                 <button
                   onClick={() => setGridMenuOpen((v) => !v)}
                   className={`flex items-center gap-1.5 h-[38px] px-2 rounded-xl transition-colors ${gridMenuOpen ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
-                  title="Wzór tła"
+                  title={t.moodboard.bgPatternTitle}
                 >
                   <LayoutGrid size={14} />
                   <span className="text-xs font-medium">
-                    {gridMode === "dots" ? "Kropki" : gridMode === "grid" ? "Siatka" : "Brak"}
+                    {gridMode === "dots" ? t.moodboard.bgDots : gridMode === "grid" ? t.moodboard.bgGrid : t.moodboard.bgNone}
                   </span>
                 </button>
                 {gridMenuOpen && (
@@ -3266,9 +3267,9 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                     <div className="fixed inset-0 z-[40]" onClick={() => setGridMenuOpen(false)} />
                     <div className="absolute left-0 bottom-[calc(100%+6px)] z-[50] bg-card border border-border rounded-xl shadow-xl overflow-hidden p-1 w-36">
                       {([
-                        { value: "dots", label: "Kropki" },
-                        { value: "grid", label: "Siatka" },
-                        { value: "none", label: "Brak" },
+                        { value: "dots", label: t.moodboard.bgDots },
+                        { value: "grid", label: t.moodboard.bgGrid },
+                        { value: "none", label: t.moodboard.bgNone },
                       ] as { value: "dots" | "grid" | "none"; label: string }[]).map(({ value, label }) => (
                         <button
                           key={value}
@@ -3310,11 +3311,11 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
             <div className="w-px h-5 bg-border mx-0.5 shrink-0" />
             <button
               onClick={() => setLayersPanelOpen(v => !v)}
-              title="Warstwy"
+              title={t.moodboard.layersTitle}
               className={`flex items-center gap-1.5 px-2.5 h-[38px] rounded-xl text-xs font-medium transition-colors ${layersPanelOpen ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
             >
               <Layers size={15} />
-              Warstwy
+              {t.moodboard.layersBtn}
             </button>
           </div>
 
@@ -3396,19 +3397,19 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                   <div className="w-px h-5 bg-border shrink-0" />
                   {/* Bold / Italic / Underline */}
                   {([
-                    { label: "Pogrubienie", icon: <Bold size={14} />, toggle: () => {
+                    { label: t.moodboard.propBold, icon: <Bold size={14} />, toggle: () => {
                       const cur = firstSelected.fontStyle ?? "normal";
                       const isBold = cur.includes("bold");
                       const isItalic = cur.includes("italic");
                       updateSelected({ fontStyle: (isBold ? (isItalic ? "italic" : "normal") : (isItalic ? "bold italic" : "bold")) });
                     }, active: (firstSelected.fontStyle ?? "").includes("bold") },
-                    { label: "Kursywa", icon: <Italic size={14} />, toggle: () => {
+                    { label: t.moodboard.propItalic, icon: <Italic size={14} />, toggle: () => {
                       const cur = firstSelected.fontStyle ?? "normal";
                       const isBold = cur.includes("bold");
                       const isItalic = cur.includes("italic");
                       updateSelected({ fontStyle: (isItalic ? (isBold ? "bold" : "normal") : (isBold ? "bold italic" : "italic")) });
                     }, active: (firstSelected.fontStyle ?? "").includes("italic") },
-                    { label: "Podkreślenie", icon: <Underline size={14} />, toggle: () => {
+                    { label: t.moodboard.propUnderline, icon: <Underline size={14} />, toggle: () => {
                       updateSelected({ textDecoration: firstSelected.textDecoration === "underline" ? "" : "underline" });
                     }, active: firstSelected.textDecoration === "underline" },
                   ] as { label: string; icon: React.ReactNode; toggle: () => void; active: boolean }[]).map(btn => (
@@ -3420,9 +3421,9 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                   <div className="w-px h-5 bg-border shrink-0" />
                   {/* Alignment */}
                   {([
-                    { label: "Wyrównaj do lewej", icon: <AlignLeft size={14} />, align: "left" },
-                    { label: "Wyśrodkuj", icon: <AlignCenter size={14} />, align: "center" },
-                    { label: "Wyrównaj do prawej", icon: <AlignRight size={14} />, align: "right" },
+                    { label: t.moodboard.propAlignLeft, icon: <AlignLeft size={14} />, align: "left" },
+                    { label: t.moodboard.propAlignCenter, icon: <AlignCenter size={14} />, align: "center" },
+                    { label: t.moodboard.propAlignRight, icon: <AlignRight size={14} />, align: "right" },
                   ] as { label: string; icon: React.ReactNode; align: string }[]).map(btn => (
                     <button key={btn.align} onClick={() => updateSelected({ textAlign: btn.align })} title={btn.label}
                       className={`w-8 h-6 rounded-lg border transition-all flex items-center justify-center ${(firstSelected.textAlign ?? "left") === btn.align ? "bg-primary/10 border-primary text-primary" : "border-border text-muted-foreground hover:bg-muted"}`}>
@@ -3440,11 +3441,11 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                   <span className="text-xs text-muted-foreground w-7">{Math.round((firstSelected.opacity ?? 1) * 100)}%</span>
                   <div className="w-px h-5 bg-border shrink-0" />
                   {/* Layer */}
-                  <button onClick={() => bringToFront(firstSelected.id)} title="Przesuń w górę"
+                  <button onClick={() => bringToFront(firstSelected.id)} title={t.moodboard.propMoveUp}
                     className="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
                     <ArrowUp size={16} />
                   </button>
-                  <button onClick={() => sendToBack(firstSelected.id)} title="Przesuń w dół"
+                  <button onClick={() => sendToBack(firstSelected.id)} title={t.moodboard.propMoveDown}
                     className="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
                     <ArrowDown size={16} />
                   </button>
@@ -3462,10 +3463,10 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
               {/* Fill color */}
               {(firstSelected.type === "rect" || firstSelected.type === "ellipse" || firstSelected.type === "triangle" || firstSelected.type === "note" || firstSelected.type === "frame") && (
                 <div className="flex items-center gap-1.5">
-                  <span className="text-xs text-muted-foreground w-10 shrink-0">Kolor</span>
+                  <span className="text-xs text-muted-foreground w-10 shrink-0">{t.moodboard.propColor}</span>
                   <button
                     onClick={() => updateSelected(firstSelected.type === "note" ? { fill: "transparent", noteColor: "transparent" } : { fill: "transparent" })}
-                    title="Brak wypełnienia"
+                    title={t.moodboard.propNoFill}
                     className={`w-8 h-8 rounded-lg border-2 transition-all relative overflow-hidden shrink-0 ${(firstSelected.fill === "transparent" || !firstSelected.fill) ? "border-primary scale-110" : "border-border"}`}
                   >
                     <div className="absolute inset-0" style={{ background: "repeating-linear-gradient(45deg,#ccc 0,#ccc 1px,#fff 0,#fff 50%)" }} />
@@ -3486,10 +3487,10 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                     <div className="w-px h-5 bg-border shrink-0" />
                   )}
                   <div className="flex items-center gap-1.5">
-                    <span className="text-xs text-muted-foreground w-10 shrink-0">Obr.</span>
+                    <span className="text-xs text-muted-foreground w-10 shrink-0">{t.moodboard.propStrokeLabel}</span>
                     <button
                       onClick={() => updateSelected({ stroke: "transparent", strokeWidth: 0 })}
-                      title="Brak obramowania"
+                      title={t.moodboard.propNoStroke}
                       className={`w-8 h-8 rounded-lg border-2 transition-all relative overflow-hidden shrink-0 ${(firstSelected.stroke === "transparent" || firstSelected.strokeWidth === 0) ? "border-primary scale-110" : "border-border"}`}
                     >
                       <div className="absolute inset-0 bg-white dark:bg-zinc-800" />
@@ -3504,7 +3505,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                     {(firstSelected.type === "arrow" || firstSelected.type === "line" || firstSelected.type === "rect" || firstSelected.type === "ellipse" || firstSelected.type === "triangle") && (
                       <>
                         <div className="w-px h-5 bg-border shrink-0" />
-                        <span className="text-xs text-muted-foreground shrink-0">Grubość</span>
+                        <span className="text-xs text-muted-foreground shrink-0">{t.moodboard.propStrokeWidth}</span>
                         <div className="flex items-center h-8 border border-border rounded-lg bg-background overflow-hidden">
                           <input
                             type="number"
@@ -3528,18 +3529,18 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                 <>
                   <div className="w-px h-5 bg-border shrink-0" />
                   <div className="flex items-center gap-1.5">
-                    <span className="text-xs text-muted-foreground shrink-0">Krycie</span>
+                    <span className="text-xs text-muted-foreground shrink-0">{t.moodboard.propOpacity}</span>
                     <input type="range" min={0.1} max={1} step={0.05} value={firstSelected.opacity ?? 1}
                       onChange={(e) => updateSelected({ opacity: parseFloat(e.target.value) })}
                       className="w-20 accent-primary self-center" />
                     <span className="text-xs text-muted-foreground w-7">{Math.round((firstSelected.opacity ?? 1) * 100)}%</span>
                   </div>
                   <div className="w-px h-5 bg-border shrink-0" />
-                  <button onClick={() => bringToFront(firstSelected.id)} title="Przesuń w górę"
+                  <button onClick={() => bringToFront(firstSelected.id)} title={t.moodboard.propMoveUp}
                     className="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
                     <ArrowUp size={16} />
                   </button>
-                  <button onClick={() => sendToBack(firstSelected.id)} title="Przesuń w dół"
+                  <button onClick={() => sendToBack(firstSelected.id)} title={t.moodboard.propMoveDown}
                     className="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
                     <ArrowDown size={16} />
                   </button>
@@ -3557,14 +3558,14 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                     onClick={() => enterCropMode(firstSelected)}
                     className="flex items-center gap-1.5 px-2.5 h-8 text-xs rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
                   >
-                    <Crop size={14} /> Kadruj
+                    <Crop size={14} /> {t.moodboard.propCrop}
                   </button>
                   {firstSelected.cropLeft !== undefined && (
                     <button
                       onClick={resetCrop}
                       className="flex items-center gap-1.5 px-2.5 h-8 text-xs rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
                     >
-                      <X size={14} /> Resetuj kadr
+                      <X size={14} /> {t.moodboard.propResetCrop}
                     </button>
                   )}
                   <div className="flex flex-col gap-0.5">
@@ -3574,7 +3575,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                       className="flex items-center gap-1.5 px-2.5 h-8 text-xs rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground disabled:opacity-50"
                     >
                       <Eraser size={14} />
-                      {removingBgId === firstSelected.id ? `Usuwam... ${removeBgProgress}%` : "Usuń tło"}
+                      {removingBgId === firstSelected.id ? `${t.moodboard.propRemovingBg} ${removeBgProgress}%` : t.moodboard.propRemoveBg}
                     </button>
                     {removingBgId === firstSelected.id && (
                       <div className="mx-2.5 h-1 rounded-full bg-muted overflow-hidden">
@@ -3589,7 +3590,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
               {(firstSelected.type === "rect" || firstSelected.type === "image") && (
                 <>
                   <div className="flex items-center gap-1.5">
-                    <span className="text-xs text-muted-foreground shrink-0">Zaokrąglenie</span>
+                    <span className="text-xs text-muted-foreground shrink-0">{t.moodboard.propCornerRadius}</span>
                     <div className="flex items-center h-8 border border-border rounded-lg bg-background overflow-hidden">
                       <input
                         type="number" min={0} max={500} step={1}
@@ -3613,11 +3614,11 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                     className="w-20 accent-primary self-center" />
                   <span className="text-xs text-muted-foreground w-7">{Math.round((firstSelected.opacity ?? 1) * 100)}%</span>
                   <div className="w-px h-5 bg-border shrink-0" />
-                  <button onClick={() => bringToFront(firstSelected.id)} title="Przesuń w górę"
+                  <button onClick={() => bringToFront(firstSelected.id)} title={t.moodboard.propMoveUp}
                     className="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
                     <ArrowUp size={16} />
                   </button>
-                  <button onClick={() => sendToBack(firstSelected.id)} title="Przesuń w dół"
+                  <button onClick={() => sendToBack(firstSelected.id)} title={t.moodboard.propMoveDown}
                     className="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
                     <ArrowDown size={16} />
                   </button>
@@ -3636,15 +3637,15 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                   <FrameIcon size={11} className="text-muted-foreground shrink-0" />
                   <span className="text-xs text-muted-foreground truncate max-w-[80px]">{allSelectedFrame.frameName || "Frame"}:</span>
                   <div className="w-px h-4 bg-border mx-0.5 shrink-0" />
-                  <button onClick={() => centerInFrame("h")} title="Wycentruj poziomo w Frame"
+                  <button onClick={() => centerInFrame("h")} title={t.moodboard.frameCenterH}
                     className="w-7 h-7 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors text-base leading-none">
                     ↔
                   </button>
-                  <button onClick={() => centerInFrame("v")} title="Wycentruj pionowo w Frame"
+                  <button onClick={() => centerInFrame("v")} title={t.moodboard.frameCenterV}
                     className="w-7 h-7 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors text-base leading-none">
                     ↕
                   </button>
-                  <button onClick={() => centerInFrame("both")} title="Wycentruj w centrum Frame"
+                  <button onClick={() => centerInFrame("both")} title={t.moodboard.frameCenterBoth}
                     className="w-7 h-7 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors text-base leading-none">
                     ⊕
                   </button>
@@ -3743,11 +3744,11 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                 <div className="fixed z-50 flex gap-2" style={{ left: cx + cw / 2, top: cy + ch + 12, transform: "translateX(-50%)" }}>
                   <button onClick={confirmCrop}
                     className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors shadow">
-                    <CheckIcon size={14} /> Zatwierdź
+                    <CheckIcon size={14} /> {t.moodboard.cropConfirm}
                   </button>
                   <button onClick={() => setCropMode(null)}
                     className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-card border border-border rounded-lg hover:bg-muted transition-colors shadow">
-                    <X size={14} /> Anuluj
+                    <X size={14} /> {t.moodboard.cropCancel}
                   </button>
                 </div>
               </div>
@@ -3761,12 +3762,12 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
               <div className="fixed z-50 bg-card border border-border rounded-xl shadow-lg py-1 min-w-[168px] text-sm"
                 style={{ left: contextMenu.screenX, top: contextMenu.screenY }}>
                 {[
-                  { label: "Duplikuj", icon: <Copy size={13} />, action: () => duplicateElements([contextMenu.elementId]) },
+                  { label: t.moodboard.ctxDuplicate, icon: <Copy size={13} />, action: () => duplicateElements([contextMenu.elementId]) },
                   null,
-                  { label: "Na wierzch", icon: <Layers size={13} />, action: () => bringToFront(contextMenu.elementId) },
-                  { label: "Przesuń w górę", icon: <ArrowUp size={13} />, action: () => moveForward(contextMenu.elementId) },
-                  { label: "Przesuń w dół", icon: <ArrowDown size={13} />, action: () => moveBackward(contextMenu.elementId) },
-                  { label: "Na spód", icon: <Layers size={13} className="rotate-180" />, action: () => sendToBack(contextMenu.elementId) },
+                  { label: t.moodboard.ctxBringToFront, icon: <Layers size={13} />, action: () => bringToFront(contextMenu.elementId) },
+                  { label: t.moodboard.ctxMoveUp, icon: <ArrowUp size={13} />, action: () => moveForward(contextMenu.elementId) },
+                  { label: t.moodboard.ctxMoveDown, icon: <ArrowDown size={13} />, action: () => moveBackward(contextMenu.elementId) },
+                  { label: t.moodboard.ctxSendToBack, icon: <Layers size={13} className="rotate-180" />, action: () => sendToBack(contextMenu.elementId) },
                 ].map((item, i) => item === null
                   ? <div key={i} className="my-1 mx-2 h-px bg-border" />
                   : (
@@ -3782,7 +3783,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
           {/* Pen options — shown above toolbar when pen is active */}
           {tool === "pen" && (
             <div className="absolute bottom-[78px] left-1/2 -translate-x-1/2 flex items-center gap-3 bg-card border border-border rounded-2xl shadow-lg px-4 py-2.5 z-20">
-              <span className="text-xs text-muted-foreground shrink-0">Kolor</span>
+              <span className="text-xs text-muted-foreground shrink-0">{t.moodboard.penColor}</span>
               <div className="flex gap-1">
                 {["#334155","#ef4444","#f97316","#eab308","#22c55e","#3b82f6","#8b5cf6","#ec4899","#ffffff"].map((c) => (
                   <button key={c} onClick={() => setPenColor(c)}
@@ -3793,7 +3794,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                 <ColorPicker value={penColor} onChange={setPenColor} />
               </div>
               <div className="w-px h-5 bg-border" />
-              <span className="text-xs text-muted-foreground shrink-0">Grubość</span>
+              <span className="text-xs text-muted-foreground shrink-0">{t.moodboard.penWidth}</span>
               <div className="flex gap-1">
                 {[1, 2, 4, 8].map((w) => (
                   <button key={w} onClick={() => setPenWidth(w)}
@@ -3808,30 +3809,30 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
           {/* Floating toolbar */}
           {!readOnly && <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-0.5 bg-card border border-border rounded-2xl shadow-lg px-2.5 py-1.5 z-20">
             {/* Undo / Redo */}
-            <button onClick={undo} disabled={historyIndex <= 0} title="Cofnij (Ctrl+Z)"
+            <button onClick={undo} disabled={historyIndex <= 0} title={t.moodboard.toolUndo}
               className="w-[38px] h-[38px] rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30 transition-colors">
               <Undo2 size={19} />
             </button>
-            <button onClick={redo} disabled={historyIndex >= history.length - 1} title="Ponów (Ctrl+Y)"
+            <button onClick={redo} disabled={historyIndex >= history.length - 1} title={t.moodboard.toolRedo}
               className="w-[38px] h-[38px] rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30 transition-colors">
               <Redo2 size={19} />
             </button>
             <div className="w-px h-[26px] bg-border mx-1" />
             {(
               [
-                { t: "select", icon: <MousePointer size={19} />, label: "Zaznaczanie (V)" },
-                { t: "hand", icon: <Hand size={19} />, label: "Przesuwanie (H)" },
+                { t: "select", icon: <MousePointer size={19} />, label: t.moodboard.toolSelect },
+                { t: "hand", icon: <Hand size={19} />, label: t.moodboard.toolHand },
                 null,
                 { t: "frame", icon: <FrameIcon size={19} />, label: "Frame (F)", hasDropdown: true },
                 null,
-                { t: "rect" as Tool, icon: selectedShape === "ellipse" ? <Circle size={19} /> : selectedShape === "triangle" ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 19, height: 19 }}><polygon points="12,3 22,21 2,21" /></svg> : selectedShape === "arrow" ? <ArrowRight size={19} /> : selectedShape === "line" ? <Minus size={19} /> : <Square size={19} />, label: "Kształty", hasShapeDropdown: true },
-                { t: "note", icon: <StickyNote size={19} />, label: "Notka (N)" },
+                { t: "rect" as Tool, icon: selectedShape === "ellipse" ? <Circle size={19} /> : selectedShape === "triangle" ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 19, height: 19 }}><polygon points="12,3 22,21 2,21" /></svg> : selectedShape === "arrow" ? <ArrowRight size={19} /> : selectedShape === "line" ? <Minus size={19} /> : <Square size={19} />, label: t.moodboard.toolShapes, hasShapeDropdown: true },
+                { t: "note", icon: <StickyNote size={19} />, label: t.moodboard.toolNote },
                 null,
-                { t: "text", icon: <Type size={19} />, label: "Tekst (T)" },
+                { t: "text", icon: <Type size={19} />, label: t.moodboard.toolText },
                 null,
-                { t: "image", icon: <Image size={19} />, label: "Obraz" },
+                { t: "image", icon: <Image size={19} />, label: t.moodboard.toolImage },
                 null,
-                { t: "pen", icon: <Pen size={19} />, label: "Rysuj (P)" },
+                { t: "pen", icon: <Pen size={19} />, label: t.moodboard.toolDraw },
               ] as (null | { t: Tool; icon: React.ReactNode; label: string; hasDropdown?: boolean; hasShapeDropdown?: boolean })[]
             ).map((item, idx) =>
               item === null ? (
@@ -3842,7 +3843,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                   <div className={`flex items-center rounded-xl overflow-hidden transition-colors ${(tool === "rect" || tool === "ellipse" || tool === "triangle" || tool === "arrow" || tool === "line") ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}>
                     <button
                       onClick={() => setTool(selectedShape)}
-                      title={`Kształty — aktywny: ${selectedShape === "rect" ? "Prostokąt" : selectedShape === "ellipse" ? "Elipsa" : "Trójkąt"}`}
+                      title={selectedShape === "rect" ? t.moodboard.shapesActiveRect : selectedShape === "ellipse" ? t.moodboard.shapesActiveEllipse : t.moodboard.shapesActiveTriangle}
                       className="w-[38px] h-[38px] flex items-center justify-center transition-colors"
                     >
                       {item.icon}
@@ -3850,7 +3851,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                     <button
                       onClick={(e) => { e.stopPropagation(); setShapePickerOpen(v => !v); }}
                       className="h-[38px] px-0.5 flex items-center justify-center transition-colors hover:opacity-70"
-                      title="Wybierz kształt"
+                      title={t.moodboard.pickShape}
                     >
                       <ChevronDown size={12} className={shapePickerOpen ? "" : "rotate-180"} />
                     </button>
@@ -3859,14 +3860,14 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                     <>
                       <div className="fixed inset-0 z-[40]" onClick={() => setShapePickerOpen(false)} />
                       <div className="absolute left-1/2 -translate-x-1/2 bottom-[calc(100%+8px)] z-[50] bg-card border border-border rounded-2xl shadow-xl p-3 w-44">
-                        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-1">Kształt</p>
+                        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-1">{t.moodboard.shapeLabel}</p>
                         <div className="flex flex-col gap-0.5">
                           {([
-                            { shape: "rect" as const, icon: <Square size={15} />, label: "Prostokąt (R)" },
-                            { shape: "ellipse" as const, icon: <Circle size={15} />, label: "Elipsa (O)" },
-                            { shape: "triangle" as const, icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 15, height: 15 }}><polygon points="12,3 22,21 2,21" /></svg>, label: "Trójkąt" },
-                            { shape: "arrow" as const, icon: <ArrowRight size={15} />, label: "Strzałka (A)" },
-                            { shape: "line" as const, icon: <Minus size={15} />, label: "Linia (L)" },
+                            { shape: "rect" as const, icon: <Square size={15} />, label: t.moodboard.shapeRect },
+                            { shape: "ellipse" as const, icon: <Circle size={15} />, label: t.moodboard.shapeEllipse },
+                            { shape: "triangle" as const, icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 15, height: 15 }}><polygon points="12,3 22,21 2,21" /></svg>, label: t.moodboard.shapeTriangle },
+                            { shape: "arrow" as const, icon: <ArrowRight size={15} />, label: t.moodboard.shapeArrow },
+                            { shape: "line" as const, icon: <Minus size={15} />, label: t.moodboard.shapeLine },
                           ]).map(s => (
                             <button
                               key={s.shape}
@@ -3896,7 +3897,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                     <button
                       onClick={(e) => { e.stopPropagation(); setFramePickerOpen(v => !v); }}
                       className="h-[38px] px-0.5 flex items-center justify-center transition-colors hover:opacity-70"
-                      title="Wybierz format"
+                      title={t.moodboard.pickFormat}
                     >
                       {framePickerOpen ? <ChevronDown size={12} /> : <ChevronDown size={12} className="rotate-180" />}
                     </button>
@@ -3906,7 +3907,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                     <>
                       <div className="fixed inset-0 z-[40]" onClick={() => setFramePickerOpen(false)} />
                       <div className="absolute left-1/2 -translate-x-1/2 bottom-[calc(100%+8px)] z-[50] bg-card border border-border rounded-2xl shadow-xl p-3 w-56">
-                        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-1">Format frame</p>
+                        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-1">{t.moodboard.frameFormat}</p>
                         <div className="grid grid-cols-3 gap-2">
                           {FRAME_PRESETS.map(preset => (
                             <button
@@ -3973,7 +3974,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
             <div className="w-px h-[26px] bg-border mx-1" />
             <button
               onClick={() => setTemplateGalleryOpen(v => !v)}
-              title="Szablony"
+              title={t.moodboard.toolTemplates}
               className={`w-[38px] h-[38px] rounded-xl flex items-center justify-center transition-colors ${templateGalleryOpen ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
             >
               <DashboardAdd size={19} />
@@ -3996,19 +3997,19 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                 onClick={() => { setRightTab("lists"); setSidebarQuery(""); }}
                 className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-colors ${rightTab === "lists" ? "border-b-2 border-primary text-primary" : "text-muted-foreground hover:text-foreground"}`}
               >
-                <LocalMall size={13} /> Listy
+                <LocalMall size={13} /> {t.moodboard.sidebarLists}
               </button>
               <button
                 onClick={() => { setRightTab("products"); setSidebarQuery(""); }}
                 className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-colors ${rightTab === "products" ? "border-b-2 border-primary text-primary" : "text-muted-foreground hover:text-foreground"}`}
               >
-                <Package size={13} /> Produkty
+                <Package size={13} /> {t.moodboard.sidebarProducts}
               </button>
               <button
                 onClick={() => { setRightTab("textures"); setSidebarQuery(""); }}
                 className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-colors ${rightTab === "textures" ? "border-b-2 border-primary text-primary" : "text-muted-foreground hover:text-foreground"}`}
               >
-                <Layers size={13} /> Tekstury
+                <Layers size={13} /> {t.moodboard.sidebarTextures}
               </button>
               <button
                 onClick={() => { setRightTab("pinterest"); setSidebarQuery(""); }}
@@ -4026,7 +4027,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                 <input
                   value={sidebarQuery}
                   onChange={(e) => setSidebarQuery(e.target.value)}
-                  placeholder="Szukaj..."
+                  placeholder={t.moodboard.sidebarSearch}
                   className="w-full pl-7 pr-3 py-1.5 rounded-lg border border-border bg-muted/50 text-xs focus:outline-none focus:ring-2 focus:ring-primary/30"
                 />
               </div>
@@ -4036,16 +4037,16 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
             <div className="flex-1 overflow-y-auto p-2">
               {templatePickModeId && (
                 <div className="mb-2 px-2 py-1.5 rounded-lg bg-primary/10 text-primary text-xs font-medium">
-                  Kliknij zdjęcie aby wstawić do slotu, lub przeciągnij je na placeholder
+                  {t.moodboard.sidebarPickHint}
                 </div>
               )}
               {rightTab === "projectflow" && (
                 <>
                   {!project && (
-                    <p className="text-xs text-muted-foreground text-center py-8">Ta tablica nie ma przypisanego projektu</p>
+                    <p className="text-xs text-muted-foreground text-center py-8">{t.moodboard.sidebarNoProject}</p>
                   )}
                   {project && filteredRooms.length === 0 && (
-                    <p className="text-xs text-muted-foreground text-center py-8">Brak renderów{sidebarQuery ? " dla tej frazy" : ""}</p>
+                    <p className="text-xs text-muted-foreground text-center py-8">{sidebarQuery ? t.moodboard.sidebarNoRendersQuery : t.moodboard.sidebarNoRenders}</p>
                   )}
                   {project && filteredRooms.length > 0 && (
                     <div className="space-y-0.5">
@@ -4101,7 +4102,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
               {rightTab === "products" && (
                 <>
                   {filteredProducts.length === 0 && (
-                    <p className="text-xs text-muted-foreground text-center py-8">Brak produktów{sidebarQuery ? " dla tej frazy" : ""}</p>
+                    <p className="text-xs text-muted-foreground text-center py-8">{sidebarQuery ? t.moodboard.sidebarNoProductsQuery : t.moodboard.sidebarNoProducts}</p>
                   )}
                   <div className="grid grid-cols-2 gap-2">
                     {filteredProducts.map((p) => (
@@ -4127,7 +4128,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
               {rightTab === "textures" && (
                 <>
                   {textures.length === 0 && (
-                    <p className="text-xs text-muted-foreground text-center py-8">Brak tekstur{sidebarQuery ? " dla tej frazy" : ""}</p>
+                    <p className="text-xs text-muted-foreground text-center py-8">{sidebarQuery ? t.moodboard.sidebarNoTexturesQuery : t.moodboard.sidebarNoTextures}</p>
                   )}
                   <div className="grid grid-cols-2 gap-2">
                     {textures
@@ -4152,10 +4153,10 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
               {rightTab === "lists" && (
                 <>
                   {!client && (
-                    <p className="text-xs text-muted-foreground text-center py-8">Ta tablica nie ma przypisanego klienta</p>
+                    <p className="text-xs text-muted-foreground text-center py-8">{t.moodboard.sidebarNoClient}</p>
                   )}
                   {client && lists.length === 0 && (
-                    <p className="text-xs text-muted-foreground text-center py-8">Brak list zakupowych dla tego klienta</p>
+                    <p className="text-xs text-muted-foreground text-center py-8">{t.moodboard.sidebarNoLists}</p>
                   )}
                   {client && lists.length > 0 && (
                     <div className="space-y-0.5">
@@ -4226,9 +4227,9 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                         <img src="/pinterest-logo.svg" alt="Pinterest" className="w-full h-full" />
                       </div>
                       <div className="flex flex-col gap-1.5">
-                        <p className="text-sm font-semibold text-foreground">Połącz swoje konto Pinterest</p>
+                        <p className="text-sm font-semibold text-foreground">{t.moodboard.pinterestConnect}</p>
                         <p className="text-xs text-muted-foreground leading-relaxed">
-                          Po połączeniu zobaczysz swoje tablice i piny — możesz przeciągać je bezpośrednio na moodboard.
+                          {t.moodboard.pinterestConnectDesc}
                         </p>
                       </div>
                       <button
@@ -4244,16 +4245,16 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src="/pinterest-logo.svg" alt="" className="w-4 h-4 brightness-0 invert" />
-                        Połącz konto
+                        {t.moodboard.pinterestConnectBtn}
                       </button>
                       <p className="text-[11px] text-muted-foreground">
-                        Integracja wymaga konta Pinterest Business lub konta dewelopera.
+                        {t.moodboard.pinterestBusinessNote}
                       </p>
                       <button
                         onClick={() => setPinterestConnected(true)}
                         className="text-[11px] text-muted-foreground underline underline-offset-2 hover:text-foreground transition-colors"
                       >
-                        Podgląd widoku po połączeniu →
+                        {t.moodboard.pinterestPreview}
                       </button>
                     </div>
                   ) : (
@@ -4264,13 +4265,13 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img src="/pinterest-logo.svg" alt="" className="w-3.5 h-3.5" />
                           </div>
-                          <span className="text-xs font-medium text-foreground">Połączono</span>
+                          <span className="text-xs font-medium text-foreground">{t.moodboard.pinterestConnected}</span>
                         </div>
                         <button
                           onClick={() => setPinterestConnected(false)}
                           className="text-[11px] text-muted-foreground hover:text-red-500 transition-colors"
                         >
-                          Rozłącz
+                          {t.moodboard.pinterestDisconnect}
                         </button>
                       </div>
                       <div className="flex-1 flex flex-col items-center justify-center gap-3 px-6 text-center py-12">
@@ -4278,7 +4279,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                           <Package size={18} className="text-muted-foreground" />
                         </div>
                         <p className="text-xs text-muted-foreground leading-relaxed">
-                          Tu pojawią się Twoje tablice i piny.<br />Funkcja zostanie aktywowana po uruchomieniu integracji API.
+                          <span dangerouslySetInnerHTML={{ __html: t.moodboard.pinterestPlaceholder }} />
                         </p>
                       </div>
                     </div>
@@ -4331,26 +4332,26 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
           <div className="fixed inset-0 z-[80] bg-black/40" onClick={() => setEditModalOpen(false)} />
           <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[90] w-full max-w-md bg-card border border-border rounded-2xl shadow-2xl p-6 flex flex-col gap-5">
             <div>
-              <h2 className="text-base font-semibold">Edytuj tablicę</h2>
-              <p className="text-xs text-muted-foreground mt-0.5">Zmień nazwę, klienta i projekt przypisane do tablicy.</p>
+              <h2 className="text-base font-semibold">{t.moodboard.editModalTitle}</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">{t.moodboard.editModalDesc}</p>
             </div>
 
             {/* Name */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-medium text-foreground">Nazwa</label>
+              <label className="text-xs font-medium text-foreground">{t.moodboard.editModalName}</label>
               <input
                 value={editTitle}
                 onChange={(e) => setEditTitle(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSaveEdit()}
                 className="w-full text-sm px-3 py-2 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
-                placeholder="Nazwa tablicy"
+                placeholder={t.moodboard.editModalNamePlaceholder}
                 autoFocus
               />
             </div>
 
             {/* Client */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-medium text-foreground">Klient</label>
+              <label className="text-xs font-medium text-foreground">{t.moodboard.editModalClient}</label>
               <div className="relative" ref={editClientRef}>
                 <button
                   type="button"
@@ -4358,7 +4359,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                   className="w-full flex items-center justify-between text-sm px-3 py-2 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
                 >
                   <span className={editClientId ? "" : "text-muted-foreground"}>
-                    {editClients.find((c) => c.id === editClientId)?.name ?? "— brak klienta —"}
+                    {editClients.find((c) => c.id === editClientId)?.name ?? t.moodboard.editModalNoClient}
                   </span>
                   <ChevronDown size={14} className="text-muted-foreground shrink-0 ml-2" />
                 </button>
@@ -4368,7 +4369,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                       <button type="button" onClick={() => { setEditClientId(""); setEditProjectId(""); setEditClientOpen(false); }}
                         className="w-full flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:bg-muted transition-colors">
                         <Check size={14} className={editClientId === "" ? "opacity-100" : "opacity-0"} />
-                        — brak klienta —
+                        {t.moodboard.editModalNoClient}
                       </button>
                       {editClients.map((c) => (
                         <button key={c.id} type="button" onClick={() => { setEditClientId(c.id); setEditProjectId(""); setEditClientOpen(false); }}
@@ -4385,7 +4386,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
 
             {/* Project */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-medium text-foreground">Projekt</label>
+              <label className="text-xs font-medium text-foreground">{t.moodboard.editModalProject}</label>
               <div className="relative" ref={editProjectRef}>
                 <button
                   type="button"
@@ -4394,7 +4395,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                   className="w-full flex items-center justify-between text-sm px-3 py-2 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50"
                 >
                   <span className={(editProjectId && editClientId) ? "" : "text-muted-foreground"}>
-                    {(editClients.find((c) => c.id === editClientId)?.projects ?? []).find((p) => p.id === editProjectId)?.title ?? "— brak projektu —"}
+                    {(editClients.find((c) => c.id === editClientId)?.projects ?? []).find((p) => p.id === editProjectId)?.title ?? t.moodboard.editModalNoProject}
                   </span>
                   <ChevronDown size={14} className="text-muted-foreground shrink-0 ml-2" />
                 </button>
@@ -4404,7 +4405,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                       <button type="button" onClick={() => { setEditProjectId(""); setEditProjectOpen(false); }}
                         className="w-full flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:bg-muted transition-colors">
                         <Check size={14} className={editProjectId === "" ? "opacity-100" : "opacity-0"} />
-                        — brak projektu —
+                        {t.moodboard.editModalNoProject}
                       </button>
                       {(editClients.find((c) => c.id === editClientId)?.projects ?? []).map((p) => (
                         <button key={p.id} type="button" onClick={() => { setEditProjectId(p.id); setEditProjectOpen(false); }}
@@ -4424,14 +4425,14 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
                 onClick={() => setEditModalOpen(false)}
                 className="px-4 py-2 text-sm rounded-xl border border-border hover:bg-muted transition-colors"
               >
-                Anuluj
+                {t.moodboard.editModalCancel}
               </button>
               <button
                 onClick={handleSaveEdit}
                 disabled={editSaving}
                 className="px-4 py-2 text-sm font-medium rounded-xl bg-primary text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-60"
               >
-                {editSaving ? "Zapisywanie…" : "Zapisz"}
+                {editSaving ? t.moodboard.editModalSaving : t.moodboard.editModalSave}
               </button>
             </div>
           </div>

@@ -12,15 +12,16 @@ function isAdmin(session: any) {
 }
 
 // GET — list all permission groups for the workspace
-export async function GET() {
+export async function GET(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (!isAdmin(session)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const ownerId = getWorkspaceUserId(session);
 
-  // Seed template groups on first access
-  await ensureWorkspaceSeed(ownerId);
+  // Seed template groups on first access (use lang from cookie for group names)
+  const lang = req.cookies.get("veedeck-lang")?.value;
+  await ensureWorkspaceSeed(ownerId, lang);
 
   const groups = await prisma.permissionGroup.findMany({
     where: { workspaceId: ownerId },

@@ -4,6 +4,7 @@ import { join } from "path";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import Anthropic from "@anthropic-ai/sdk";
+import { logActivity } from "@/lib/activity-log";
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -665,6 +666,8 @@ export async function POST(req: NextRequest) {
   const currentCount = limitExpired ? 0 : user.aiQueryCount;
 
   if (!user.isAdmin && currentCount >= AI_DAILY_LIMIT) {
+    // 8. Log: AI limit reached
+    logActivity({ level: "info", action: "ai.limit_reached", message: `Osiągnięto limit AI: ${session.user.email}`, userId: session.user.id, meta: { email: session.user.email } });
     return NextResponse.json(
       { error: "limit", resetAt: user.aiQueryResetAt?.toISOString() },
       { status: 429 }
@@ -701,10 +704,13 @@ export async function POST(req: NextRequest) {
     }));
 
   const designerId = session.user.id;
+  const userEmail = session.user.email ?? "unknown";
+  const userQuery = safeMessages.filter((m) => m.role === "user").map((m) => String(m.content)).join("\n").slice(0, 2000);
   const encoder = new TextEncoder();
 
   const stream = new ReadableStream({
     async start(controller) {
+      let fullResponse = "";
       try {
         let currentMessages: Anthropic.MessageParam[] = safeMessages;
         const MAX_ROUNDS = 4;
@@ -737,6 +743,7 @@ export async function POST(req: NextRequest) {
               const delta = (event as any).delta;
               if (delta.type === "text_delta" && currentBlock?.type === "text") {
                 currentBlock.text += delta.text;
+                fullResponse += delta.text;
                 controller.enqueue(encoder.encode(delta.text));
               } else if (delta.type === "input_json_delta") {
                 blockBuffer += delta.partial_json;
@@ -784,10 +791,21 @@ export async function POST(req: NextRequest) {
         }
       } catch (err) {
         console.error("[ai-assistant] error:", err);
+        // 7. Log: API error
+        logActivity({ level: "error", action: "api.error", message: `Błąd AI assistant: ${String(err).slice(0, 300)}`, userId: designerId, meta: { route: "/api/ai-assistant", error: String(err).slice(0, 500) } });
         controller.enqueue(
           encoder.encode(locale === "en" ? "Sorry, an error occurred. Please try again." : "Przepraszam, wystąpił błąd. Spróbuj ponownie.")
         );
       } finally {
+        // Log AI query + response for admin analytics (non-blocking)
+        prisma.aiLog.create({
+          data: {
+            userId: designerId,
+            userEmail,
+            query: userQuery,
+            response: fullResponse.slice(0, 5000),
+          },
+        }).catch(() => {});
         controller.close();
       }
     },

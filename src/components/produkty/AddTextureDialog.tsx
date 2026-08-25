@@ -6,12 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { useT } from "@/lib/i18n";
 import { UploadButton } from "@uploadthing/react";
 import type { OurFileRouter } from "@/lib/uploadthing";
 import { X, TextureIcon } from "@/components/ui/icons";
-
-const CATEGORIES = ["Drewno", "Kamień", "Tkaniny", "Płytki", "Metal", "Szkło", "Beton", "Inne"];
-const FINISHES = ["Mat", "Połysk", "Struktura", "Satyna"];
 
 interface InitialData {
   name: string;
@@ -33,6 +31,7 @@ interface Props {
 }
 
 export default function AddTextureDialog({ open, onOpenChange, onAdded, editMode, editId, initialData }: Props) {
+  const t = useT();
   const [name, setName] = useState(initialData?.name ?? "");
   const [category, setCategory] = useState(initialData?.category ?? "");
   const [manufacturer, setManufacturer] = useState(initialData?.manufacturer ?? "");
@@ -42,13 +41,23 @@ export default function AddTextureDialog({ open, onOpenChange, onAdded, editMode
   const [imageUrl, setImageUrl] = useState(initialData?.imageUrl ?? "");
   const [saving, setSaving] = useState(false);
 
+  const CATEGORIES = [
+    t.products.texCatDrewno, t.products.texCatKamien, t.products.texCatTkaniny,
+    t.products.texCatPlytki, t.products.texCatMetal, t.products.texCatSzklo,
+    t.products.texCatBeton, t.products.texCatInne,
+  ];
+  const FINISHES = [
+    t.products.texFinMat, t.products.texFinPolysk,
+    t.products.texFinStruktura, t.products.texFinSatyna,
+  ];
+
   function reset() {
     setName(""); setCategory(""); setManufacturer("");
     setResolution(""); setScale(""); setFinish(""); setImageUrl("");
   }
 
   async function handleSave() {
-    if (!name.trim()) { toast.error("Podaj nazwę tekstury"); return; }
+    if (!name.trim()) { toast.error(t.products.texNameRequired); return; }
     setSaving(true);
     try {
       const url = editMode && editId ? `/api/textures/${editId}` : "/api/textures";
@@ -60,12 +69,12 @@ export default function AddTextureDialog({ open, onOpenChange, onAdded, editMode
       });
       if (!res.ok) throw new Error();
       const texture = await res.json();
-      toast.success(editMode ? "Tekstura zaktualizowana" : "Tekstura dodana");
+      toast.success(editMode ? t.products.texUpdated : t.products.texAdded);
       onAdded(texture);
       onOpenChange(false);
       if (!editMode) reset();
     } catch {
-      toast.error(editMode ? "Nie udało się zaktualizować tekstury" : "Nie udało się dodać tekstury");
+      toast.error(editMode ? t.products.texUpdateError : t.products.texAddError);
     } finally {
       setSaving(false);
     }
@@ -75,17 +84,17 @@ export default function AddTextureDialog({ open, onOpenChange, onAdded, editMode
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{editMode ? "Edytuj teksturę" : "Dodaj teksturę"}</DialogTitle>
+          <DialogTitle>{editMode ? t.products.texDialogEdit : t.products.texDialogAdd}</DialogTitle>
         </DialogHeader>
 
         <div className="flex flex-col gap-3">
           {/* Image upload */}
           <div className="flex flex-col gap-1.5">
-            <Label>Podgląd (JPG / PNG)</Label>
+            <Label>{t.products.texPreviewLabel}</Label>
             {imageUrl ? (
               <div className="relative w-32 aspect-square rounded-lg overflow-hidden border border-border">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={imageUrl} alt="podgląd" className="w-full h-full object-cover" />
+                <img src={imageUrl} alt="preview" className="w-full h-full object-cover" />
                 <button
                   onClick={() => setImageUrl("")}
                   className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70"
@@ -96,11 +105,11 @@ export default function AddTextureDialog({ open, onOpenChange, onAdded, editMode
             ) : (
               <div className="relative w-32 aspect-square rounded-lg border-2 border-dashed border-border bg-muted/30 flex flex-col items-center justify-center gap-1.5 overflow-hidden">
                 <TextureIcon size={24} className="text-muted-foreground/50 pointer-events-none" />
-                <span className="text-[10.5px] text-muted-foreground pointer-events-none">Wgraj zdjęcie</span>
+                <span className="text-[10.5px] text-muted-foreground pointer-events-none">{t.products.texUploadPhoto}</span>
                 <UploadButton<OurFileRouter, "textureImageUploader">
                   endpoint="textureImageUploader"
                   onClientUploadComplete={(res) => res?.[0] && setImageUrl(res[0].url)}
-                  onUploadError={() => { toast.error("Błąd uploadu"); }}
+                  onUploadError={() => { toast.error(t.products.texUploadError); }}
                   appearance={{
                     button: "absolute inset-0 opacity-0 cursor-pointer w-full h-full",
                     container: "absolute inset-0",
@@ -114,47 +123,47 @@ export default function AddTextureDialog({ open, onOpenChange, onAdded, editMode
 
           {/* Name */}
           <div className="flex flex-col gap-1.5">
-            <Label>Nazwa *</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="np. Marmur Carrara" onKeyDown={(e) => e.key === "Enter" && handleSave()} />
+            <Label>{t.products.texNameLabel}</Label>
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={t.products.texNamePlaceholder} onKeyDown={(e) => e.key === "Enter" && handleSave()} />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
-              <Label>Kategoria</Label>
+              <Label>{t.products.texCategoryLabel}</Label>
               <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full bg-muted rounded-lg px-3 py-2 text-sm border border-border focus:outline-none focus:ring-2 focus:ring-primary/30">
-                <option value="">— wybierz —</option>
+                <option value="">{t.products.texSelectOption}</option>
                 {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label>Wykończenie</Label>
+              <Label>{t.products.texFinishLabel}</Label>
               <select value={finish} onChange={(e) => setFinish(e.target.value)} className="w-full bg-muted rounded-lg px-3 py-2 text-sm border border-border focus:outline-none focus:ring-2 focus:ring-primary/30">
-                <option value="">— wybierz —</option>
+                <option value="">{t.products.texSelectOption}</option>
                 {FINISHES.map((f) => <option key={f} value={f}>{f}</option>)}
               </select>
             </div>
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <Label>Producent</Label>
-            <Input value={manufacturer} onChange={(e) => setManufacturer(e.target.value)} placeholder="np. Tubądzin" />
+            <Label>{t.products.texManufacturerLabel}</Label>
+            <Input value={manufacturer} onChange={(e) => setManufacturer(e.target.value)} placeholder={t.products.texManufacturerPlaceholder} />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
-              <Label>Rozdzielczość</Label>
-              <Input value={resolution} onChange={(e) => setResolution(e.target.value)} placeholder="np. 4096 × 4096 px" />
+              <Label>{t.products.texResolutionLabel}</Label>
+              <Input value={resolution} onChange={(e) => setResolution(e.target.value)} placeholder={t.products.texResolutionPlaceholder} />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label>Skala kafla</Label>
-              <Input value={scale} onChange={(e) => setScale(e.target.value)} placeholder="np. 60 × 60 cm" />
+              <Label>{t.products.texScaleLabel}</Label>
+              <Input value={scale} onChange={(e) => setScale(e.target.value)} placeholder={t.products.texScalePlaceholder} />
             </div>
           </div>
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>Anuluj</Button>
-          <Button onClick={handleSave} disabled={saving}>{saving ? "Zapisywanie..." : editMode ? "Zapisz zmiany" : "Dodaj teksturę"}</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>{t.products.texCancelBtn}</Button>
+          <Button onClick={handleSave} disabled={saving}>{saving ? t.products.texSaving : editMode ? t.products.texSaveChanges : t.products.texDialogAdd}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

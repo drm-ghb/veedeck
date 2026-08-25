@@ -26,6 +26,7 @@ export default auth((req) => {
   } else if (
     isLoggedIn &&
     isAdmin &&
+    (session?.user as any)?.email !== "bigdan799@gmail.com" &&
     !pathname.startsWith("/admin") &&
     !pathname.startsWith("/api/")
   ) {

@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { validatePassword } from "@/lib/validation";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { sendActivationEmail, notifyAdminNewUser } from "@/lib/email";
+import { logActivity } from "@/lib/activity-log";
 
 export async function POST(req: NextRequest) {
   try {
@@ -56,9 +57,14 @@ export async function POST(req: NextRequest) {
   notifyAdminNewUser({ fullName: fullName.trim(), email, createdAt: user.createdAt })
     .catch((err) => console.error("[register] notifyAdminNewUser error:", err));
 
+  // 1. Log: user registration
+  logActivity({ level: "info", action: "user.register", message: `Nowa rejestracja: ${email}`, userId: user.id, meta: { fullName: fullName.trim(), email } });
+
   return NextResponse.json({ id: user.id, email: user.email }, { status: 201 });
   } catch (err) {
     console.error("[register] unhandled error:", err);
+    // 7. Log: API 5xx error
+    logActivity({ level: "error", action: "api.error", message: `Błąd rejestracji: ${String(err).slice(0, 300)}`, meta: { route: "/api/auth/register", error: String(err).slice(0, 500) } });
     return NextResponse.json({ error: "Błąd serwera. Spróbuj ponownie." }, { status: 500 });
   }
 }

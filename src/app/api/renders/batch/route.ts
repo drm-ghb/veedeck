@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getWorkspaceUserId } from "@/lib/workspace";
+import { logActivity } from "@/lib/activity-log";
 
 interface FileItem {
   name: string;
@@ -110,6 +111,9 @@ export async function POST(req: NextRequest) {
       results.push(render);
     }
   }
+
+  // 4. Log: file upload
+  logActivity({ level: "info", action: "file.upload", message: `Upload ${results.length} plików do projektu`, userId, meta: { projectId, fileCount: results.length, fileNames: (files as FileItem[]).map((f) => f.name) } });
 
   return NextResponse.json(results, { status: 201 });
 }

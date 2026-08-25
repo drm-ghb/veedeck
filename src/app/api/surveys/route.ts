@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { uniqueSlug } from "@/lib/slug";
 import { getWorkspaceUserId } from "@/lib/workspace";
 import { checkTeamPermission, getAllowedClientIds, hasPermission } from "@/lib/permissions";
+import { logActivity } from "@/lib/activity-log";
 
 export async function GET() {
   const session = await auth();
@@ -65,6 +66,9 @@ export async function POST(req: NextRequest) {
         isTemplate: isTemplate === true,
       },
     });
+    // 6. Log: survey creation
+    logActivity({ level: "info", action: "survey.create", message: `Utworzono ankietę: ${name.trim()}`, userId, meta: { surveyId: survey.id, name: name.trim() } });
+
     return NextResponse.json(survey, { status: 201 });
   } catch (err) {
     console.error("[POST /api/surveys] error:", err);

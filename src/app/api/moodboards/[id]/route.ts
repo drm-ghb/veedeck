@@ -6,6 +6,8 @@ import { prisma } from "@/lib/prisma";
 import { getWorkspaceUserId } from "@/lib/workspace";
 import { createAccessToken } from "@/lib/access-token";
 import { notifyClientMoodboardShared } from "@/lib/email";
+import { pusherServer } from "@/lib/pusher";
+import { logActivity } from "@/lib/activity-log";
 
 const APP_URL = process.env.NEXTAUTH_URL ?? process.env.AUTH_URL ?? "http://localhost:3000";
 
@@ -200,6 +202,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   const updated = await prisma.moodboard.update({ where: { id }, data });
 
+  // 3. Log: share link activation (moodboard)
+  if (body.isSharedWithClient === true && !moodboard.isSharedWithClient) {
+    logActivity({ level: "info", action: "share.create", message: `Udostępniono moodboard klientowi: ${moodboard.title}`, userId, meta: { moodboardId: id, title: moodboard.title, type: "moodboard" } });
+  }
+
   // Send email when sharing with client (false → true transition)
   if (body.isSharedWithClient === true && !moodboard.isSharedWithClient) {
     try {
@@ -221,6 +228,28 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
               select: { id: true, name: true, email: true, userId: true },
             })
           : [];
+
+        // Resolve the projectId for in-app notification links
+        const notifProjectId = moodboard.projectId
+          ?? (await prisma.project.findFirst({ where: { clientId: target.effectiveClientId }, select: { id: true } }))?.id;
+
+        const notifMessage = `${designerName} udostępnił(a) Ci tablicę „${moodboard.title}" w Moodboardy`;
+        const notifLink = notifProjectId ? `/client/${notifProjectId}/moodboard` : `/client`;
+
+        // In-app notifications for all contacts with userId
+        const contactsToNotify = [
+          ...(target.mainContact.userId ? [target.mainContact.userId] : []),
+          ...extraContacts.filter(c => c.userId).map(c => c.userId!),
+        ];
+        for (const contactUserId of contactsToNotify) {
+          const notif = await prisma.notification.create({
+            data: { userId: contactUserId, message: notifMessage, link: notifLink, type: "info" },
+          });
+          await pusherServer.trigger(`user-${contactUserId}`, "new-notification", {
+            ...notif,
+            createdAt: notif.createdAt.toISOString(),
+          }).catch(() => {});
+        }
 
         (async () => {
           await notifyClientMoodboardShared({

@@ -8,6 +8,7 @@ import { getWorkspaceUserId } from "@/lib/workspace";
 import { checkTeamPermission, hasPermission } from "@/lib/permissions";
 import { notifyClientListShared } from "@/lib/email";
 import { createAccessToken } from "@/lib/access-token";
+import { logActivity } from "@/lib/activity-log";
 
 const APP_URL = process.env.NEXTAUTH_URL ?? process.env.AUTH_URL ?? "http://localhost:3000";
 
@@ -235,6 +236,11 @@ export async function PATCH(
   if (body.isSharedWithClient !== undefined) data.isSharedWithClient = Boolean(body.isSharedWithClient);
 
   const updated = await prisma.shoppingList.update({ where: { id }, data });
+
+  // 3. Log: share link activation
+  if (body.isSharedWithClient === true && !list.isSharedWithClient) {
+    logActivity({ level: "info", action: "share.create", message: `Udostępniono listę klientowi: ${list.name}`, userId, meta: { listId: id, listName: list.name, type: "list" } });
+  }
 
   // Send email when sharing with client (false → true transition)
   let accountCreated = false;

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getWorkspaceUserId } from "@/lib/workspace";
+import { logActivity } from "@/lib/activity-log";
 
 function csvEscape(val: unknown): string {
   if (val === null || val === undefined) return "";
@@ -55,6 +56,9 @@ export async function GET(
 
   const csv = [headers.map(csvEscape).join(","), ...rows].join("\n");
   const filename = `ankieta-${survey.id}-odpowiedzi.csv`;
+
+  // 10. Log: survey CSV export
+  logActivity({ level: "info", action: "export.download", message: `Export ankiety CSV: ${survey.name} (${responses.length} odpowiedzi)`, userId, meta: { surveyId: id, surveyName: survey.name, responseCount: responses.length, type: "survey_csv" } });
 
   return new NextResponse(csv, {
     headers: {

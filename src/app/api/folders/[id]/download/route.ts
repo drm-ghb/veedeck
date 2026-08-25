@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getWorkspaceUserId } from "@/lib/workspace";
+import { logActivity } from "@/lib/activity-log";
 import JSZip from "jszip";
 
 export async function GET(
@@ -46,6 +47,9 @@ export async function GET(
 
   const zipBuffer = await zip.generateAsync({ type: "nodebuffer" });
   const zipName = encodeURIComponent(folder.name);
+
+  // 10. Log: folder ZIP download
+  logActivity({ level: "info", action: "export.download", message: `Pobranie folderu ZIP: ${folder.name} (${folder.renders.length} plików)`, userId, meta: { folderId: id, folderName: folder.name, fileCount: folder.renders.length, type: "folder_zip" } });
 
   return new NextResponse(zipBuffer as unknown as BodyInit, {
     headers: {

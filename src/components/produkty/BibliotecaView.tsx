@@ -248,9 +248,9 @@ export default function BibliotecaView({ initialProducts, initialTextures, initi
       if (!res.ok) throw new Error();
       setTextures((prev) => prev.filter((x) => x.id !== tex.id));
       if (selectedTexture?.id === tex.id) setSelectedTexture(null);
-      toast.success("Tekstura usunięta");
+      toast.success(t.products.textureDeleted);
     } catch {
-      toast.error("Nie udało się usunąć tekstury");
+      toast.error(t.products.textureDeleteError);
     } finally {
       setDeletingTextureId(null);
     }
@@ -274,9 +274,9 @@ export default function BibliotecaView({ initialProducts, initialTextures, initi
       <div className="flex flex-col gap-1 p-3 border-b">
         {(
           [
-            { id: "produkty" as Tab, label: "Produkty", icon: <Stacks size={17} />, count: products.length },
-            { id: "tekstury" as Tab, label: "Tekstury", icon: <TextureIcon size={17} />, count: textures.length },
-            { id: "modele" as Tab, label: "Modele 3D", icon: <DeployedCode size={17} />, count: models3d.length },
+            { id: "produkty" as Tab, label: t.products.tabProducts, icon: <Stacks size={17} />, count: products.length },
+            { id: "tekstury" as Tab, label: t.products.tabTextures, icon: <TextureIcon size={17} />, count: textures.length },
+            { id: "modele" as Tab, label: t.products.tabModels3D, icon: <DeployedCode size={17} />, count: models3d.length },
           ] as const
         ).map((item) => (
           <button
@@ -308,18 +308,18 @@ export default function BibliotecaView({ initialProducts, initialTextures, initi
               }`}
             >
               {favoritesOnly ? <StarFilled size={15} className="text-amber-500" /> : <StarOutline size={15} />}
-              Ulubione
+              {t.products.filterFavorites}
             </button>
           </div>
 
-          {/* Źródło */}
+          {/* Source */}
           <div className="px-3 py-3 border-b">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Źródło</p>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">{t.products.filterSource}</p>
             <div className="flex flex-col gap-1">
               {(
                 [
-                  { value: "all" as const, label: "Wszystkie" },
-                  { value: "manual" as const, label: "Ręcznie dodane" },
+                  { value: "all" as const, label: t.products.filterSourceAll },
+                  { value: "manual" as const, label: t.products.filterSourceManual },
                   { value: "veepick" as const, label: "veepick" },
                 ] as const
               ).map((opt) => (
@@ -338,15 +338,15 @@ export default function BibliotecaView({ initialProducts, initialTextures, initi
             </div>
           </div>
 
-          {/* Zasoby */}
+          {/* Assets */}
           <div className="px-3 py-3 border-b">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Zasoby</p>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">{t.products.filterAssets}</p>
             <div className="flex flex-col gap-1">
               {(
                 [
-                  { value: "all" as const, label: "Wszystkie" },
-                  { value: "has" as const, label: "Ma model 3D" },
-                  { value: "none" as const, label: "Bez modelu 3D" },
+                  { value: "all" as const, label: t.products.filterSourceAll },
+                  { value: "has" as const, label: t.products.filterHasModel },
+                  { value: "none" as const, label: t.products.filterNoModel },
                 ] as const
               ).map((opt) => (
                 <button
@@ -364,10 +364,10 @@ export default function BibliotecaView({ initialProducts, initialTextures, initi
             </div>
           </div>
 
-          {/* Kategoria */}
+          {/* Category */}
           {availableCategories.length > 0 && (
             <div className="px-3 py-3 border-b">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Kategoria</p>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">{t.products.filterCategory}</p>
               <div className="flex flex-col gap-1">
                 {availableCategories.map((cat) => (
                   <label key={cat} className="flex items-center gap-2 text-sm px-2 py-1 rounded-lg hover:bg-muted cursor-pointer">
@@ -386,16 +386,16 @@ export default function BibliotecaView({ initialProducts, initialTextures, initi
             </div>
           )}
 
-          {/* Producent */}
+          {/* Manufacturer */}
           {availableManufacturers.length > 0 && (
             <div className="px-3 py-3">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Producent</p>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">{t.products.filterManufacturer}</p>
               {availableManufacturers.length > 5 && (
                 <div className="relative mb-2">
                   <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
                   <input
                     type="text"
-                    placeholder="Szukaj producenta..."
+                    placeholder={t.products.searchManufacturer}
                     value={manufacturerQuery}
                     onChange={(e) => setManufacturerQuery(e.target.value)}
                     className="w-full pl-7 pr-2 py-1.5 text-xs rounded-lg bg-muted border border-border focus:outline-none focus:ring-1 focus:ring-primary/30"
@@ -436,12 +436,12 @@ export default function BibliotecaView({ initialProducts, initialTextures, initi
                 className={`flex items-center gap-2 text-sm w-full px-2 py-1.5 rounded-lg transition-colors ${textureFavoritesOnly ? "bg-amber-50 text-amber-600" : "text-muted-foreground hover:bg-muted"}`}
               >
                 {textureFavoritesOnly ? <StarFilled size={15} className="text-amber-500" /> : <StarOutline size={15} />}
-                Ulubione
+                {t.products.filterFavorites}
               </button>
             </div>
             {cats.length > 0 && (
               <div className="px-3 py-3 border-b">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Kategoria</p>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">{t.products.filterCategory}</p>
                 <div className="flex flex-col gap-1">
                   {cats.map((cat) => (
                     <label key={cat} className="flex items-center gap-2 text-sm px-2 py-1 rounded-lg hover:bg-muted cursor-pointer">
@@ -454,7 +454,7 @@ export default function BibliotecaView({ initialProducts, initialTextures, initi
             )}
             {fins.length > 0 && (
               <div className="px-3 py-3 border-b">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Wykończenie</p>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">{t.products.filterFinish}</p>
                 <div className="flex flex-col gap-1">
                   {fins.map((fin) => (
                     <label key={fin} className="flex items-center gap-2 text-sm px-2 py-1 rounded-lg hover:bg-muted cursor-pointer">
@@ -467,7 +467,7 @@ export default function BibliotecaView({ initialProducts, initialTextures, initi
             )}
             {mans.length > 0 && (
               <div className="px-3 py-3">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Producent</p>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">{t.products.filterManufacturer}</p>
                 <div className="flex flex-col gap-1">
                   {mans.map((man) => (
                     <label key={man} className="flex items-center gap-2 text-sm px-2 py-1 rounded-lg hover:bg-muted cursor-pointer">
@@ -485,8 +485,8 @@ export default function BibliotecaView({ initialProducts, initialTextures, initi
       {tab === "modele" && (
         <div className="flex flex-col items-center justify-center flex-1 gap-2 py-12 px-4 text-center">
           <DeployedCode size={32} className="text-muted-foreground/40" />
-          <p className="text-sm font-medium text-muted-foreground">Modele 3D</p>
-          <p className="text-xs text-muted-foreground/60">Wkrótce</p>
+          <p className="text-sm font-medium text-muted-foreground">{t.products.models3DFilterLabel}</p>
+          <p className="text-xs text-muted-foreground/60">{t.products.models3DComingSoon}</p>
         </div>
       )}
 
@@ -498,7 +498,7 @@ export default function BibliotecaView({ initialProducts, initialTextures, initi
             className="w-full flex items-center justify-center gap-1.5 text-xs font-medium text-muted-foreground border border-border rounded-lg py-2 hover:bg-muted hover:text-foreground transition-colors bg-background shadow-sm"
           >
             <X size={12} />
-            Resetuj filtry
+            {t.products.resetFilters}
           </button>
         </div>
       )}
@@ -518,7 +518,7 @@ export default function BibliotecaView({ initialProducts, initialTextures, initi
           <div className="absolute inset-0 bg-black/40" onClick={() => setMobileFiltersOpen(false)} />
           <aside className="absolute left-0 top-0 bottom-0 w-72 bg-background shadow-xl overflow-hidden flex flex-col">
             <div className="flex items-center justify-between px-4 py-3 border-b shrink-0">
-              <span className="text-sm font-semibold">Filtry</span>
+              <span className="text-sm font-semibold">{t.products.filtersTitle}</span>
               <button onClick={() => setMobileFiltersOpen(false)} className="text-muted-foreground hover:text-foreground">
                 <X size={18} />
               </button>
@@ -544,7 +544,7 @@ export default function BibliotecaView({ initialProducts, initialTextures, initi
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <Input
               className="pl-8 h-9 text-sm"
-              placeholder="Szukaj produktów..."
+              placeholder={t.products.searchProductsPlaceholder}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
@@ -555,7 +555,7 @@ export default function BibliotecaView({ initialProducts, initialTextures, initi
               className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 shrink-0"
             >
               <X size={13} />
-              Wyczyść filtry
+              {t.products.clearFiltersBtn}
             </button>
           )}
           <div className="flex-1" />
@@ -563,33 +563,33 @@ export default function BibliotecaView({ initialProducts, initialTextures, initi
             <Button
               size="sm"
               disabled={expired}
-              title={expired ? "Dostępne w płatnym planie" : undefined}
+              title={expired ? t.products.paidPlanOnly : undefined}
               onClick={() => setAddOpen(true)}
             >
               <Plus size={15} />
-              <span className="hidden sm:inline">Dodaj produkt</span>
+              <span className="hidden sm:inline">{t.products.addProductBtn}</span>
             </Button>
           )}
           {tab === "tekstury" && (
             <Button
               size="sm"
               disabled={expired}
-              title={expired ? "Dostępne w płatnym planie" : undefined}
+              title={expired ? t.products.paidPlanOnly : undefined}
               onClick={() => setAddTextureOpen(true)}
             >
               <Plus size={15} />
-              <span className="hidden sm:inline">Dodaj teksturę</span>
+              <span className="hidden sm:inline">{t.products.addTextureBtn}</span>
             </Button>
           )}
           {tab === "modele" && (
             <Button
               size="sm"
               disabled
-              title="Wkrótce"
+              title={t.products.comingSoon}
               onClick={() => { setAddModelForProductId(undefined); setAddModelOpen(true); }}
             >
               <Plus size={15} />
-              <span className="hidden sm:inline">Dodaj model</span>
+              <span className="hidden sm:inline">{t.products.addModelBtn}</span>
             </Button>
           )}
         </div>
@@ -602,15 +602,15 @@ export default function BibliotecaView({ initialProducts, initialTextures, initi
                 <div className="flex flex-col items-center justify-center gap-3 py-20 text-center">
                   <Stacks size={40} className="text-muted-foreground/30" />
                   <p className="text-sm font-medium text-muted-foreground">
-                    {products.length === 0 ? "Biblioteka jest pusta" : "Brak wyników"}
+                    {products.length === 0 ? t.products.emptyLibrary : t.common.noResults}
                   </p>
                   {products.length === 0 && (
                     <p className="text-xs text-muted-foreground/70 max-w-xs">
-                      Dodaj produkty ręcznie lub zainstaluj rozszerzenie veepick, aby zapisywać je ze sklepów internetowych.
+                      {t.products.emptyLibraryHint}
                     </p>
                   )}
                   {hasActiveFilters && (
-                    <button onClick={clearFilters} className="text-xs text-primary hover:underline">Wyczyść filtry</button>
+                    <button onClick={clearFilters} className="text-xs text-primary hover:underline">{t.products.clearFiltersBtn}</button>
                   )}
                 </div>
               ) : (
@@ -639,15 +639,15 @@ export default function BibliotecaView({ initialProducts, initialTextures, initi
             return textures.length === 0 ? (
               <div className="flex flex-col items-center justify-center gap-3 py-20 text-center">
                 <TextureIcon size={40} className="text-muted-foreground/30" />
-                <p className="text-sm font-medium text-muted-foreground">Brak tekstur</p>
+                <p className="text-sm font-medium text-muted-foreground">{t.products.noTexturesEmpty}</p>
                 <p className="text-xs text-muted-foreground/60 max-w-xs">
-                  Dodaj tekstury do biblioteki materiałów.
+                  {t.products.noTexturesHint}
                 </p>
               </div>
             ) : filteredTextures.length === 0 ? (
               <div className="flex flex-col items-center justify-center gap-3 py-20 text-center">
                 <TextureIcon size={40} className="text-muted-foreground/30" />
-                <p className="text-sm font-medium text-muted-foreground">Brak wyników</p>
+                <p className="text-sm font-medium text-muted-foreground">{t.common.noResults}</p>
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 sm:gap-4">
@@ -689,9 +689,9 @@ export default function BibliotecaView({ initialProducts, initialTextures, initi
             models3d.length === 0 ? (
               <div className="flex flex-col items-center justify-center gap-3 py-20 text-center">
                 <DeployedCode size={40} className="text-muted-foreground/30" />
-                <p className="text-sm font-medium text-muted-foreground">Brak modeli 3D</p>
+                <p className="text-sm font-medium text-muted-foreground">{t.products.noModels3DEmpty}</p>
                 <p className="text-xs text-muted-foreground/60 max-w-xs">
-                  Wgraj modele 3D (.glb, .fbx, .obj) lub dodaj je z poziomu produktu.
+                  {t.products.noModels3DHint}
                 </p>
               </div>
             ) : (
@@ -710,7 +710,7 @@ export default function BibliotecaView({ initialProducts, initialTextures, initi
                       <p className="text-xs font-medium line-clamp-2 leading-tight">{m.name}</p>
                       <p className="text-[11px] text-muted-foreground">{m.category}</p>
                       {m.linkedProductId && (
-                        <span className="text-[10px] text-primary font-medium mt-0.5">Powiązany z produktem</span>
+                        <span className="text-[10px] text-primary font-medium mt-0.5">{t.products.linkedToProduct}</span>
                       )}
                     </div>
                   </div>
@@ -950,6 +950,7 @@ function DetailPanel({
   deleting: boolean;
   expired: boolean;
 }) {
+  const t = useT();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -959,14 +960,14 @@ function DetailPanel({
       {/* Header — 52px, border-bottom */}
       <div className="h-[52px] flex items-center justify-between px-4 border-b shrink-0">
         <span className="text-[11px] font-bold tracking-[.05em] uppercase text-muted-foreground">
-          Szczegóły produktu
+          {t.products.productDetails}
         </span>
         <div className="flex items-center gap-0.5">
           {/* Star */}
           <button
             onClick={onToggleFavorite}
             className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-muted transition-colors"
-            title={product.favorite ? "Usuń z ulubionych" : "Dodaj do ulubionych"}
+            title={product.favorite ? t.products.favoriteRemove : t.products.favoriteAdd}
           >
             {product.favorite
               ? <StarFilled size={16} className="text-amber-500" />
@@ -976,7 +977,7 @@ function DetailPanel({
           <button
             onClick={onEdit}
             className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
-            title="Edytuj produkt"
+            title={t.products.editProductTitle}
           >
             <Pencil size={16} />
           </button>
@@ -997,13 +998,13 @@ function DetailPanel({
                       onClick={() => { setMenuOpen(false); setConfirmDelete(false); onDelete(); }}
                       disabled={deleting}
                     >
-                      {deleting ? "Usuwanie..." : "Potwierdź usunięcie"}
+                      {deleting ? t.products.deletingLabel : t.products.confirmDeleteBtn}
                     </button>
                     <button
                       className="w-full text-left px-3 py-2 text-xs text-muted-foreground hover:bg-muted"
                       onClick={() => setConfirmDelete(false)}
                     >
-                      Anuluj
+                      {t.products.cancelBtn}
                     </button>
                   </>
                 ) : (
@@ -1011,7 +1012,7 @@ function DetailPanel({
                     className="w-full text-left px-3 py-2 text-xs text-destructive hover:bg-muted"
                     onClick={() => setConfirmDelete(true)}
                   >
-                    Usuń produkt
+                    {t.products.deleteProduct}
                   </button>
                 )}
               </div>
@@ -1079,13 +1080,13 @@ function DetailPanel({
 
         {/* Spec list */}
         <div className="mt-4 flex flex-col">
-          {categoryLabel && <SpecRow label="Kategoria" value={categoryLabel} />}
-          {product.dimensions && <SpecRow label="Wymiary" value={product.dimensions} />}
-          {product.color && <SpecRow label="Wykończenie" value={product.color} />}
-          {product.deliveryTime && <SpecRow label="Dostępność" value={product.deliveryTime} />}
+          {categoryLabel && <SpecRow label={t.products.specCategory} value={categoryLabel} />}
+          {product.dimensions && <SpecRow label={t.products.specDimensions} value={product.dimensions} />}
+          {product.color && <SpecRow label={t.products.colorLabel} value={product.color} />}
+          {product.deliveryTime && <SpecRow label={t.products.specAvailability} value={product.deliveryTime} />}
           <SpecRow
-            label="Źródło"
-            value={product.source === "veepick" ? "veepick" : "Dodane ręcznie"}
+            label={t.products.specSource}
+            value={product.source === "veepick" ? "veepick" : t.products.addedManually}
             accent={product.source === "veepick"}
             url={product.source === "veepick" ? (product.url ?? undefined) : undefined}
           />
@@ -1099,13 +1100,13 @@ function DetailPanel({
         {/* Modele 3D */}
         <div className="mt-4 pt-4 border-t border-border">
           <div className="flex items-center justify-between mb-3">
-            <p className="text-[11px] font-bold tracking-[.05em] uppercase text-muted-foreground">Model 3D</p>
+            <p className="text-[11px] font-bold tracking-[.05em] uppercase text-muted-foreground">{t.products.model3DSection}</p>
             {linkedModels.length > 0 && (
               <button
                 onClick={onAddModel}
                 className="text-[11px] text-primary hover:underline font-medium"
               >
-                + Dodaj kolejny
+                {t.products.addAnother}
               </button>
             )}
           </div>
@@ -1113,11 +1114,11 @@ function DetailPanel({
             <button
               onClick={onAddModel}
               disabled={expired}
-              title={expired ? "Dostępne w płatnym planie" : undefined}
+              title={expired ? t.products.paidPlanOnly : undefined}
               className="w-full flex items-center justify-center gap-2 rounded-lg border border-dashed border-border py-3 text-[12.5px] text-muted-foreground hover:border-primary/40 hover:text-primary transition-colors disabled:opacity-40 disabled:pointer-events-none"
             >
               <DeployedCode size={15} />
-              Dodaj model 3D
+              {t.products.addModel3D}
             </button>
           ) : (
             <div className="flex flex-col gap-2">
@@ -1147,11 +1148,11 @@ function DetailPanel({
         <Button
           className="w-full justify-center text-[12.5px] py-[11px]"
           disabled={expired}
-          title={expired ? "Dostępne w płatnym planie" : undefined}
+          title={expired ? t.products.paidPlanOnly : undefined}
           onClick={onAddToList}
         >
           <AddShoppingCart size={15} />
-          Dodaj do listy zakupowej
+          {t.products.addToShoppingList}
         </Button>
         {product.url && (
           <a
@@ -1161,7 +1162,7 @@ function DetailPanel({
             className="w-full flex items-center justify-center gap-2 text-[12.5px] font-medium text-foreground border border-border rounded-lg py-[11px] hover:bg-muted transition-colors"
           >
             <ExternalLink size={14} />
-            Otwórz w sklepie
+            {t.products.openInShop}
           </a>
         )}
       </div>
@@ -1184,16 +1185,17 @@ function TextureDetailPanel({
   onDelete: () => void;
   deleting: boolean;
 }) {
+  const t = useT();
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const rows: { label: string; value: string }[] = [
-    ...(texture.category ? [{ label: "Kategoria", value: texture.category }] : []),
-    ...(texture.manufacturer ? [{ label: "Producent", value: texture.manufacturer }] : []),
-    ...(texture.finish ? [{ label: "Wykończenie", value: texture.finish }] : []),
-    ...(texture.resolution ? [{ label: "Rozdzielczość", value: texture.resolution }] : []),
-    ...(texture.scale ? [{ label: "Skala kafla", value: texture.scale }] : []),
+    ...(texture.category ? [{ label: t.products.specCategory, value: texture.category }] : []),
+    ...(texture.manufacturer ? [{ label: t.products.filterManufacturer, value: texture.manufacturer }] : []),
+    ...(texture.finish ? [{ label: t.products.specFinish, value: texture.finish }] : []),
+    ...(texture.resolution ? [{ label: t.products.specResolution, value: texture.resolution }] : []),
+    ...(texture.scale ? [{ label: t.products.specTileScale, value: texture.scale }] : []),
   ];
 
   return (
@@ -1201,13 +1203,13 @@ function TextureDetailPanel({
       {/* Header */}
       <div className="h-[52px] flex items-center justify-between px-4 border-b shrink-0">
         <span className="text-[11px] font-bold tracking-[.05em] uppercase text-muted-foreground">
-          Szczegóły tekstury
+          {t.products.textureDetails}
         </span>
         <div className="flex items-center gap-0.5">
           <button
             onClick={onToggleFavorite}
             className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-muted transition-colors"
-            title={texture.favorite ? "Usuń z ulubionych" : "Dodaj do ulubionych"}
+            title={texture.favorite ? t.products.favoriteRemove : t.products.favoriteAdd}
           >
             {texture.favorite
               ? <StarFilled size={16} className="text-amber-500" />
@@ -1216,7 +1218,7 @@ function TextureDetailPanel({
           <button
             onClick={onEdit}
             className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
-            title="Edytuj teksturę"
+            title={t.products.editTextureTitle}
           >
             <Pencil size={16} />
           </button>
@@ -1236,13 +1238,13 @@ function TextureDetailPanel({
                       onClick={() => { setMenuOpen(false); setConfirmDelete(false); onDelete(); }}
                       disabled={deleting}
                     >
-                      {deleting ? "Usuwanie..." : "Potwierdź usunięcie"}
+                      {deleting ? t.products.deletingLabel : t.products.confirmDeleteBtn}
                     </button>
                     <button
                       className="w-full text-left px-3 py-2 text-xs text-muted-foreground hover:bg-muted"
                       onClick={() => setConfirmDelete(false)}
                     >
-                      Anuluj
+                      {t.products.cancelBtn}
                     </button>
                   </>
                 ) : (
@@ -1250,7 +1252,7 @@ function TextureDetailPanel({
                     className="w-full text-left px-3 py-2 text-xs text-destructive hover:bg-muted"
                     onClick={() => setConfirmDelete(true)}
                   >
-                    Usuń teksturę
+                    {t.products.deleteTexture}
                   </button>
                 )}
               </div>
@@ -1310,7 +1312,7 @@ function TextureDetailPanel({
             className="w-full flex items-center justify-center gap-2 text-[12.5px] font-medium bg-primary text-primary-foreground rounded-lg py-[11px] hover:bg-primary/90 transition-colors"
           >
             <Download size={15} />
-            Pobierz teksturę
+            {t.products.downloadTexture}
           </a>
         </div>
       )}
@@ -1319,10 +1321,11 @@ function TextureDetailPanel({
 }
 
 function DescriptionBlock({ text }: { text: string }) {
+  const t = useT();
   const [expanded, setExpanded] = useState(false);
   return (
     <div className="mt-4 pt-4 border-t border-border">
-      <p className="text-[11px] font-bold tracking-[.05em] uppercase text-muted-foreground mb-2">Opis</p>
+      <p className="text-[11px] font-bold tracking-[.05em] uppercase text-muted-foreground mb-2">{t.products.descriptionTitle}</p>
       <div className="relative">
         <p className={`text-[12.5px] text-foreground whitespace-pre-wrap leading-relaxed ${expanded ? "" : "line-clamp-2"}`}>
           {text}
@@ -1335,7 +1338,7 @@ function DescriptionBlock({ text }: { text: string }) {
         onClick={() => setExpanded((v) => !v)}
         className="mt-1.5 text-[11.5px] text-primary hover:underline font-medium"
       >
-        {expanded ? "Zwiń" : "Rozwiń"}
+        {expanded ? t.products.descriptionCollapse : t.products.descriptionExpand}
       </button>
     </div>
   );

@@ -21,6 +21,7 @@ interface User {
   isFree: boolean;
   subscription: { plan: string; status: string } | null;
   _count: { projects: number; shoppingLists: number; clients: number };
+  lastActiveAt: string | null;
 }
 
 export default function AdminUsersClient({
@@ -251,9 +252,10 @@ export default function AdminUsersClient({
       </div>
 
       <div className="bg-white/3 border border-white/8 rounded-xl overflow-hidden">
-        <div className="grid grid-cols-[1fr_140px_100px_60px_60px_60px_160px] gap-4 px-5 py-3 bg-white/3 border-b border-white/8 text-xs font-medium text-white/30 uppercase tracking-wide">
+        <div className="grid grid-cols-[1fr_140px_120px_100px_60px_60px_60px_160px] gap-4 px-5 py-3 bg-white/3 border-b border-white/8 text-xs font-medium text-white/30 uppercase tracking-wide">
           <span>{t.admin.usersNav}</span>
           <span>{t.admin.joined}</span>
+          <span>Aktywny</span>
           <span>{t.admin.trialPlan}</span>
           <span>{t.admin.projects}</span>
           <span>Listy</span>
@@ -270,7 +272,7 @@ export default function AdminUsersClient({
           return (
             <div
               key={user.id}
-              className={`grid grid-cols-[1fr_140px_100px_60px_60px_60px_160px] gap-4 px-5 py-4 items-center ${
+              className={`grid grid-cols-[1fr_140px_120px_100px_60px_60px_60px_160px] gap-4 px-5 py-4 items-center ${
                 i !== filtered.length - 1 ? "border-b border-white/5" : ""
               } ${user.id === currentUserId ? "bg-blue-500/5" : ""}`}
             >
@@ -312,6 +314,13 @@ export default function AdminUsersClient({
               {/* Date */}
               <p className="text-sm text-white/30">
                 {new Date(user.createdAt).toLocaleDateString("pl-PL", { day: "2-digit", month: "short", year: "numeric" })}
+              </p>
+
+              {/* Last active */}
+              <p className="text-sm text-white/30">
+                {user.lastActiveAt
+                  ? new Date(user.lastActiveAt).toLocaleDateString("pl-PL", { day: "2-digit", month: "short", year: "numeric" })
+                  : "—"}
               </p>
 
               {/* Trial status */}

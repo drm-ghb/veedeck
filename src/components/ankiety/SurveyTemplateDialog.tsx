@@ -9,9 +9,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { surveyTemplates } from "@/lib/surveyTemplates";
+import { getSurveyTemplates } from "@/lib/surveyTemplates";
 import type { SurveySection, SurveyQuestion } from "./SurveyEditor";
-import { useT } from "@/lib/i18n";
+import { useT, useLang } from "@/lib/i18n";
 
 interface Props {
   open: boolean;
@@ -22,6 +22,8 @@ interface Props {
 
 export default function SurveyTemplateDialog({ open, onClose, onApplied, surveyId }: Props) {
   const t = useT();
+  const { lang } = useLang();
+  const surveyTemplates = getSurveyTemplates(lang);
   const [selected, setSelected] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 

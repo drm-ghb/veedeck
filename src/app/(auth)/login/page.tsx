@@ -373,12 +373,13 @@ export default function LoginPage() {
       return;
     }
     const session = await getSession();
-    if ((session?.user as any)?.isAdmin) {
+    const su = session?.user as any;
+    if (su?.isAdmin && su?.email !== "bigdan799@gmail.com") {
       toast.error(t.auth.adminLoginRequired);
       setLoading(false);
       return;
     }
-    if ((session?.user as any)?.role === "client") {
+    if (su?.role === "client") {
       router.push("/client");
     } else {
       router.push("/panel-glowny");

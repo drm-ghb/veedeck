@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getWorkspaceUserId } from "@/lib/workspace";
-import { surveyTemplates } from "@/lib/surveyTemplates";
+import { getSurveyTemplates } from "@/lib/surveyTemplates";
 
 export async function POST(
   req: NextRequest,
@@ -20,8 +20,10 @@ export async function POST(
     return NextResponse.json({ error: "Brak dostępu" }, { status: 403 });
   }
 
-  const { templateId } = await req.json();
-  const template = surveyTemplates.find((t) => t.id === templateId);
+  const body = await req.json();
+  const { templateId } = body;
+  const lang = req.cookies.get("veedeck-lang")?.value === "en" ? "en" : "pl";
+  const template = getSurveyTemplates(lang).find((t) => t.id === templateId);
   if (!template) {
     return NextResponse.json({ error: "Nieznany szablon" }, { status: 400 });
   }

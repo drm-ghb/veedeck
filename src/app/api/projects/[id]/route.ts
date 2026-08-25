@@ -5,6 +5,7 @@ import { uniqueSlug } from "@/lib/slug";
 import { getWorkspaceUserId } from "@/lib/workspace";
 import bcrypt from "bcryptjs";
 import { checkTeamPermission, getAllowedClientIds } from "@/lib/permissions";
+import { logActivity } from "@/lib/activity-log";
 
 export async function GET(
   _req: NextRequest,
@@ -112,6 +113,11 @@ export async function PATCH(
     },
   });
 
+  // 5. Log: module toggle
+  if (body.hiddenModules !== undefined) {
+    logActivity({ level: "info", action: "module.toggle", message: `Zmiana widoczności modułów w projekcie: ${existing.title}`, userId, meta: { projectId: id, hiddenModules: body.hiddenModules } });
+  }
+
   return NextResponse.json(updated);
 }
 
@@ -139,6 +145,9 @@ export async function DELETE(
   await prisma.project.deleteMany({
     where: { id, userId },
   });
+
+  // 2. Log: project deletion
+  logActivity({ level: "info", action: "project.delete", message: `Usunięto projekt: ${id}`, userId, meta: { projectId: id } });
 
   return NextResponse.json({ success: true });
 }

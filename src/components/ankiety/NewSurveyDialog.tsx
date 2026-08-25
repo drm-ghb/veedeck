@@ -11,8 +11,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { surveyTemplates } from "@/lib/surveyTemplates";
-import { useT } from "@/lib/i18n";
+import { getSurveyTemplates } from "@/lib/surveyTemplates";
+import { useT, useLang } from "@/lib/i18n";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuGroup, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { ChevronDown } from "@/components/ui/icons";
 
@@ -29,6 +29,8 @@ interface Props {
 
 export default function NewSurveyDialog({ open, onClose, onCreated, clients, customTemplates }: Props) {
   const t = useT();
+  const { lang } = useLang();
+  const surveyTemplates = getSurveyTemplates(lang);
   const [name, setName] = useState("");
   const [assignedClientId, setAssignedClientId] = useState("");
   const [templateValue, setTemplateValue] = useState(""); // "builtin:{id}" | "custom:{id}" | ""

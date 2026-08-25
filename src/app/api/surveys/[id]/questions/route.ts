@@ -43,7 +43,13 @@ export async function POST(
     return NextResponse.json({ error: "Nie znaleziono ankiety" }, { status: 403 });
   }
 
-  const { label, type, required, description, options, config, sectionId, order } = await req.json();
+  let body;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+  const { label, type, required, description, options, config, sectionId, order } = body;
 
   if (!label?.trim()) {
     return NextResponse.json({ error: "Etykieta pytania jest wymagana" }, { status: 400 });
@@ -52,30 +58,35 @@ export async function POST(
     return NextResponse.json({ error: "Typ pytania jest wymagany" }, { status: 400 });
   }
 
-  // Compute next order if not provided
-  let questionOrder = order;
-  if (questionOrder === undefined) {
-    const last = await prisma.surveyQuestion.findFirst({
-      where: { surveyId: id },
-      orderBy: { order: "desc" },
-      select: { order: true },
+  try {
+    // Compute next order if not provided
+    let questionOrder = order;
+    if (questionOrder === undefined) {
+      const last = await prisma.surveyQuestion.findFirst({
+        where: { surveyId: id },
+        orderBy: { order: "desc" },
+        select: { order: true },
+      });
+      questionOrder = last ? last.order + 1 : 0;
+    }
+
+    const question = await prisma.surveyQuestion.create({
+      data: {
+        label: label.trim(),
+        type,
+        required: required ?? false,
+        description: description ?? null,
+        options: options ?? null,
+        config: config ?? null,
+        sectionId: sectionId || null,
+        surveyId: id,
+        order: questionOrder,
+      },
     });
-    questionOrder = last ? last.order + 1 : 0;
+
+    return NextResponse.json(question, { status: 201 });
+  } catch (err) {
+    console.error("[POST /api/surveys/questions]", err);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
-
-  const question = await prisma.surveyQuestion.create({
-    data: {
-      label: label.trim(),
-      type,
-      required: required ?? false,
-      description: description ?? null,
-      options: options ?? null,
-      config: config ?? null,
-      sectionId: sectionId ?? null,
-      surveyId: id,
-      order: questionOrder,
-    },
-  });
-
-  return NextResponse.json(question, { status: 201 });
 }

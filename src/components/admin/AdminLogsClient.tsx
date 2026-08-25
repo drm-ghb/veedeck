@@ -7,6 +7,9 @@ import {
   AlertTriangle,
   Info,
   RefreshCw,
+  Bot,
+  ChevronDown,
+  ChevronUp,
 } from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -30,20 +33,33 @@ interface ActivityLog {
   createdAt: string;
 }
 
-type Tab = "login" | "activity";
+interface AiLog {
+  id: string;
+  userId: string;
+  userEmail: string;
+  query: string;
+  response: string;
+  createdAt: string;
+}
+
+type Tab = "login" | "activity" | "ai";
 
 export default function AdminLogsClient({
   loginLogs: initialLoginLogs,
   activityLogs: initialActivityLogs,
+  aiLogs: initialAiLogs,
 }: {
   loginLogs: LoginLog[];
   activityLogs: ActivityLog[];
+  aiLogs: AiLog[];
 }) {
   const t = useT();
   const [tab, setTab] = useState<Tab>("login");
   const [loginLogs, setLoginLogs] = useState(initialLoginLogs);
   const [activityLogs, setActivityLogs] = useState(initialActivityLogs);
+  const [aiLogs, setAiLogs] = useState(initialAiLogs);
   const [loading, setLoading] = useState(false);
+  const [expandedAiLog, setExpandedAiLog] = useState<string | null>(null);
 
   async function refresh() {
     setLoading(true);
@@ -53,6 +69,7 @@ export default function AdminLogsClient({
         const data = await res.json();
         setLoginLogs(data.loginLogs);
         setActivityLogs(data.activityLogs);
+        setAiLogs(data.aiLogs ?? []);
       }
     } catch {
       toast.error(t.admin.refreshError);
@@ -80,31 +97,30 @@ export default function AdminLogsClient({
     return <Info size={14} className="text-blue-400 shrink-0" />;
   };
 
+  const tabs: { key: Tab; label: string }[] = [
+    { key: "login", label: t.admin.loginHistory },
+    { key: "activity", label: t.admin.activityLogs },
+    { key: "ai", label: t.admin.aiAssistantTab },
+  ];
+
   return (
     <div>
       {/* Tabs + refresh */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex gap-1 bg-white/5 border border-white/8 rounded-lg p-1">
-          <button
-            onClick={() => setTab("login")}
-            className={`px-4 py-1.5 text-sm rounded-md transition-colors ${
-              tab === "login"
-                ? "bg-white/10 text-white font-medium"
-                : "text-white/40 hover:text-white/70"
-            }`}
-          >
-            {t.admin.loginHistory}
-          </button>
-          <button
-            onClick={() => setTab("activity")}
-            className={`px-4 py-1.5 text-sm rounded-md transition-colors ${
-              tab === "activity"
-                ? "bg-white/10 text-white font-medium"
-                : "text-white/40 hover:text-white/70"
-            }`}
-          >
-            {t.admin.activityLogs}
-          </button>
+          {tabs.map((tb) => (
+            <button
+              key={tb.key}
+              onClick={() => setTab(tb.key)}
+              className={`px-4 py-1.5 text-sm rounded-md transition-colors ${
+                tab === tb.key
+                  ? "bg-white/10 text-white font-medium"
+                  : "text-white/40 hover:text-white/70"
+              }`}
+            >
+              {tb.label}
+            </button>
+          ))}
         </div>
         <Button
           size="sm"
@@ -184,6 +200,64 @@ export default function AdminLogsClient({
               <span className="text-white/30 text-xs">{formatDate(log.createdAt)}</span>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* AI Assistant logs */}
+      {tab === "ai" && (
+        <div className="bg-white/3 border border-white/8 rounded-xl overflow-hidden">
+          <div className="grid grid-cols-[20px_180px_1fr_160px] gap-4 px-5 py-3 bg-white/3 border-b border-white/8 text-xs font-medium text-white/30 uppercase tracking-wide">
+            <span></span>
+            <span>{t.admin.aiUserCol}</span>
+            <span>{t.admin.aiQueryCol}</span>
+            <span>{t.admin.dateCol}</span>
+          </div>
+          {aiLogs.length === 0 && (
+            <p className="text-center text-white/30 py-12 text-sm">{t.admin.aiNoLogs}</p>
+          )}
+          {aiLogs.map((log, i) => {
+            const isExpanded = expandedAiLog === log.id;
+            return (
+              <div
+                key={log.id}
+                className={i !== aiLogs.length - 1 ? "border-b border-white/5" : ""}
+              >
+                <div className="grid grid-cols-[20px_180px_1fr_160px] gap-4 px-5 py-3 items-start">
+                  <span className="mt-0.5">
+                    <Bot size={14} className="text-purple-400 shrink-0" />
+                  </span>
+                  <span className="text-sm text-white/70 truncate">{log.userEmail}</span>
+                  <div className="min-w-0">
+                    <p className="text-sm text-white/70 line-clamp-2">{log.query}</p>
+                    <button
+                      onClick={() => setExpandedAiLog(isExpanded ? null : log.id)}
+                      className="flex items-center gap-1 text-xs text-purple-400 hover:text-purple-300 mt-1 transition-colors"
+                    >
+                      {isExpanded ? (
+                        <>
+                          <ChevronUp size={12} />
+                          {t.admin.aiHideResponse}
+                        </>
+                      ) : (
+                        <>
+                          <ChevronDown size={12} />
+                          {t.admin.aiShowResponse}
+                        </>
+                      )}
+                    </button>
+                  </div>
+                  <span className="text-white/30 text-xs">{formatDate(log.createdAt)}</span>
+                </div>
+                {isExpanded && (
+                  <div className="px-5 pb-4 ml-9">
+                    <div className="bg-white/5 border border-white/8 rounded-lg p-3 text-sm text-white/60 whitespace-pre-wrap max-h-[300px] overflow-y-auto">
+                      {log.response}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

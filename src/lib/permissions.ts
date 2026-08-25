@@ -31,12 +31,14 @@ export interface EffectivePermissions extends ModulePermissions {
 export const TEMPLATE_GROUPS: Array<{
   templateKey: string;
   name: string;
+  nameEn: string;
   projectScope: "assigned" | "all";
   permissions: ModulePermissions;
 }> = [
   {
     templateKey: "wizualizatorzy",
     name: "Wizualizatorzy",
+    nameEn: "Visualizers",
     // assigned — model agencyjny + ochrona danych klientów
     projectScope: "assigned",
     permissions: {
@@ -50,6 +52,7 @@ export const TEMPLATE_GROUPS: Array<{
   {
     templateKey: "graficy",
     name: "Graficy",
+    nameEn: "Graphic Designers",
     projectScope: "assigned",
     permissions: {
       klienci: 0, projectflow: 2, listy: 1, moodboardy: 2, zadania: 2,
@@ -60,6 +63,7 @@ export const TEMPLATE_GROUPS: Array<{
   {
     templateKey: "kreślarze",
     name: "Kreślarze",
+    nameEn: "Drafters",
     projectScope: "assigned",
     permissions: {
       klienci: 0, projectflow: 2, listy: 1, moodboardy: 1, zadania: 2,
@@ -72,6 +76,7 @@ export const TEMPLATE_GROUPS: Array<{
   {
     templateKey: "marketing",
     name: "Marketing",
+    nameEn: "Marketing",
     // all — marketing widzi wszystkie projekty
     projectScope: "all",
     permissions: {
@@ -88,6 +93,7 @@ export const TEMPLATE_GROUPS: Array<{
   {
     templateKey: "sprzedaż",
     name: "Sprzedaż",
+    nameEn: "Sales",
     // all — Sprzedaż widzi wszystkich klientów (onboarding)
     projectScope: "all",
     permissions: {
@@ -101,6 +107,7 @@ export const TEMPLATE_GROUPS: Array<{
   {
     templateKey: "managerowie",
     name: "Managerowie",
+    nameEn: "Managers",
     projectScope: "all",
     permissions: {
       klienci: 3, projectflow: 3, listy: 3, moodboardy: 3, zadania: 3,
@@ -269,14 +276,14 @@ export async function getMemberHiddenModules(
  * Creates the 6 template groups for a workspace if none exist yet.
  * Safe to call multiple times (idempotent).
  */
-export async function ensureWorkspaceSeed(ownerId: string): Promise<void> {
+export async function ensureWorkspaceSeed(ownerId: string, lang?: string): Promise<void> {
   const existing = await prisma.permissionGroup.count({ where: { workspaceId: ownerId } });
   if (existing > 0) return;
 
   await prisma.permissionGroup.createMany({
     data: TEMPLATE_GROUPS.map((g) => ({
       workspaceId: ownerId,
-      name: g.name,
+      name: lang === "en" ? g.nameEn : g.name,
       isTemplate: true,
       templateKey: g.templateKey,
       projectScope: g.projectScope,

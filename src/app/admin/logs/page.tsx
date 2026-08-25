@@ -7,9 +7,10 @@ export default async function AdminLogsPage() {
   const session = await auth();
   if (!(session?.user as any)?.isAdmin) notFound();
 
-  const [loginLogs, activityLogs] = await Promise.all([
+  const [loginLogs, activityLogs, aiLogs] = await Promise.all([
     prisma.loginLog.findMany({ orderBy: { createdAt: "desc" }, take: 100 }),
     prisma.activityLog.findMany({ orderBy: { createdAt: "desc" }, take: 100 }),
+    prisma.aiLog.findMany({ orderBy: { createdAt: "desc" }, take: 100 }),
   ]);
 
   return (
@@ -26,6 +27,10 @@ export default async function AdminLogsPage() {
           createdAt: l.createdAt.toISOString(),
         }))}
         activityLogs={activityLogs.map((l) => ({
+          ...l,
+          createdAt: l.createdAt.toISOString(),
+        }))}
+        aiLogs={aiLogs.map((l) => ({
           ...l,
           createdAt: l.createdAt.toISOString(),
         }))}

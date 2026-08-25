@@ -6,6 +6,7 @@ import { getWorkspaceUserId } from "@/lib/workspace";
 import bcrypt from "bcryptjs";
 import { generateClientLogin } from "@/lib/client-login";
 import { checkTeamPermission, getAllowedClientIds, hasPermission } from "@/lib/permissions";
+import { logActivity } from "@/lib/activity-log";
 
 export async function GET(req: NextRequest) {
   const session = await auth();
@@ -151,9 +152,14 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // 2. Log: project creation
+    logActivity({ level: "info", action: "project.create", message: `Utworzono projekt: ${title}`, userId, meta: { projectId: project.id, title } });
+
     return NextResponse.json(project, { status: 201 });
   } catch (err) {
     console.error("[POST /api/projects] error:", err);
+    // 7. Log: API 5xx error
+    logActivity({ level: "error", action: "api.error", message: `Błąd tworzenia projektu: ${String(err).slice(0, 300)}`, userId, meta: { route: "/api/projects", error: String(err).slice(0, 500) } });
     return NextResponse.json({ error: "Błąd tworzenia projektu", detail: String(err) }, { status: 500 });
   }
 }

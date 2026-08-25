@@ -4,8 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Plus, Edit2, Trash2, ClipboardList, Eye, X } from "@/components/ui/icons";
-import { surveyTemplates, type SurveyTemplate } from "@/lib/surveyTemplates";
-import { useT } from "@/lib/i18n";
+import { getSurveyTemplates, type SurveyTemplate } from "@/lib/surveyTemplates";
+import { useT, useLang } from "@/lib/i18n";
 import { showConfirm } from "@/lib/confirm";
 
 type Client = { id: string; name: string };
@@ -265,6 +265,8 @@ function TemplatePreview({ tpl, onClose, onUse }: { tpl: SurveyTemplate; onClose
 
 export default function TemplatesTab({ customTemplates: initial, clients }: Props) {
   const t = useT();
+  const { lang } = useLang();
+  const surveyTemplates = getSurveyTemplates(lang);
   const router = useRouter();
   const [customTemplates, setCustomTemplates] = useState<CustomTemplate[]>(initial);
   const [useDialog, setUseDialog] = useState<{ type: "builtin"; templateId: string; name: string } | { type: "custom"; survey: CustomTemplate } | null>(null);
@@ -330,7 +332,7 @@ export default function TemplatesTab({ customTemplates: initial, clients }: Prop
     toast.success(t.ankiety.templateDeleted);
   }
 
-  const totalQuestions = (t: (typeof surveyTemplates)[0]) => {
+  const totalQuestions = (t: SurveyTemplate) => {
     const inSections = t.sections.reduce((acc, s) => acc + s.questions.length, 0);
     return inSections + t.questions.length;
   };

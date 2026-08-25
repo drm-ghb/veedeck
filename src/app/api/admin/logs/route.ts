@@ -8,7 +8,7 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 
-  const [loginLogs, activityLogs] = await Promise.all([
+  const [loginLogs, activityLogs, aiLogs] = await Promise.all([
     prisma.loginLog.findMany({
       orderBy: { createdAt: "desc" },
       take: 100,
@@ -17,7 +17,11 @@ export async function GET() {
       orderBy: { createdAt: "desc" },
       take: 100,
     }),
+    prisma.aiLog.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 100,
+    }),
   ]);
 
-  return NextResponse.json({ loginLogs, activityLogs });
+  return NextResponse.json({ loginLogs, activityLogs, aiLogs });
 }

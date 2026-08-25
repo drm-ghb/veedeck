@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getWorkspaceUserId } from "@/lib/workspace";
+import { logActivity } from "@/lib/activity-log";
 
 const CONTENT_TYPE_EXT: Record<string, string> = {
   "image/jpeg": ".jpg",
@@ -52,6 +53,9 @@ export async function GET(
 
   const contentType = fileRes.headers.get("content-type") || "application/octet-stream";
   const filename = encodeURIComponent(withExtension(render.name, contentType));
+
+  // 10. Log: file download
+  logActivity({ level: "info", action: "export.download", message: `Pobranie pliku: ${render.name}`, userId, meta: { renderId: id, renderName: render.name, type: "render" } });
 
   return new NextResponse(fileRes.body, {
     headers: {
