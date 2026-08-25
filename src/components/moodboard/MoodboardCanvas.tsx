@@ -19,6 +19,7 @@ import { MOODBOARD_TEMPLATES } from "@/components/moodboard/data/templates";
 import type { MoodboardTemplate } from "@/components/moodboard/data/templates";
 import { ColorPicker } from "@/components/moodboard/ColorPicker";
 import { LayersPanel } from "@/components/moodboard/LayersPanel";
+import { useT } from "@/lib/i18n";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -479,6 +480,7 @@ interface Props {
 }
 
 export default function MoodboardCanvas({ id, title: initialTitle, canvasData: initial, isSharedWithClient: initialShared, client, project, readOnly = false }: Props) {
+  const t = useT();
   const stageRef = useRef<Konva.Stage>(null);
   const transformerRef = useRef<Konva.Transformer>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -2232,7 +2234,7 @@ export default function MoodboardCanvas({ id, title: initialTitle, canvasData: i
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${isSharedWithClient ? "bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400" : "bg-muted text-muted-foreground hover:bg-muted/80 border border-border"}`}
           >
             {isSharedWithClient ? <Check size={14} /> : <Share2 size={14} />}
-            {isSharedWithClient ? "Udostępnione" : "Udostępnij klientowi"}
+            {isSharedWithClient ? t.listy.sharedLabel : t.listy.shareWithClient}
           </button>
         )}
 

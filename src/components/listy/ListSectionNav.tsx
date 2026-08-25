@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useT } from "@/lib/i18n";
 
 interface Section {
   id: string;
@@ -14,6 +15,7 @@ interface Props {
 }
 
 export default function ListSectionNav({ sections, scrollOffset = 0 }: Props) {
+  const t = useT();
   const [activeId, setActiveId] = useState<string | null>(sections[0]?.id ?? null);
 
   useEffect(() => {
@@ -61,7 +63,7 @@ export default function ListSectionNav({ sections, scrollOffset = 0 }: Props) {
 
   return (
     <nav className="py-2">
-      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60 mb-2 pl-3">Sekcje</p>
+      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60 mb-2 pl-3">{t.listy.sectionsNavTitle}</p>
       <div className="relative pl-3 pr-2">
 
       {sections.map((s) => {

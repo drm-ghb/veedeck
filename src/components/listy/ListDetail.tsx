@@ -50,19 +50,19 @@ import { showConfirm } from "@/lib/confirm";
 
 const UNIT_OPTIONS = ["szt.", "m²", "mb.", "L", "kg", "lbs", "kpl.", "opk."];
 
-const BUILT_IN_CATEGORIES = [
-  { value: "OSWIETLENIE", label: "Oświetlenie" },
-  { value: "AKCESORIA", label: "Akcesoria" },
-  { value: "MEBLE", label: "Meble" },
-  { value: "ARMATURA", label: "Armatura" },
-  { value: "OKLADZINY_SCIENNE", label: "Okładziny ścienne" },
-  { value: "PODLOGA", label: "Podłoga" },
-  { value: "USLUGI", label: "Usługi" },
-  { value: "INNE", label: "Inne" },
-];
+const BUILT_IN_CATEGORY_KEYS = [
+  { value: "OSWIETLENIE", labelKey: "catLampy" },
+  { value: "AKCESORIA", labelKey: "catAkcesoria" },
+  { value: "MEBLE", labelKey: "catMeble" },
+  { value: "ARMATURA", labelKey: "catArmatura" },
+  { value: "OKLADZINY_SCIENNE", labelKey: "catOkladziny" },
+  { value: "PODLOGA", labelKey: "catPodloga" },
+  { value: "USLUGI", labelKey: "catUslugi" },
+  { value: "INNE", labelKey: "catInne" },
+] as const;
 
 
-function getCategoryLabel(value: string | null | undefined, allCategories: { value: string; label: string }[] = BUILT_IN_CATEGORIES): string {
+function getCategoryLabel(value: string | null | undefined, allCategories: { value: string; label: string }[]): string {
   if (!value) return "";
   return allCategories.find((c) => c.value === value)?.label ?? value;
 }
@@ -250,23 +250,13 @@ function CopySectionDialog({ open, onOpenChange, sections, currentSectionId, pro
   );
 }
 
-const ORDER_STATUS_OPTIONS = [
-  { value: null, label: "Brak statusu", cls: "bg-muted text-muted-foreground" },
-  { value: "do_wyceny", label: "Do wyceny", cls: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400" },
-  { value: "w_wycenie", label: "W wycenie", cls: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" },
-  { value: "zamowione", label: "Zamówione", cls: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" },
-  { value: "do_reklamacji", label: "Do reklamacji", cls: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" },
+const ORDER_STATUS_DEFS = [
+  { value: null, labelKey: "orderStatusNone" as const, cls: "bg-muted text-muted-foreground" },
+  { value: "do_wyceny", labelKey: "orderStatusDoWyceny" as const, cls: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400" },
+  { value: "w_wycenie", labelKey: "orderStatusWWycenie" as const, cls: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" },
+  { value: "zamowione", labelKey: "orderStatusZamowione" as const, cls: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" },
+  { value: "do_reklamacji", labelKey: "orderStatusDoReklamacji" as const, cls: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" },
 ] as const;
-
-function getOrderStatusOption(value: string | null) {
-  return ORDER_STATUS_OPTIONS.find((o) => o.value === value) ?? ORDER_STATUS_OPTIONS[0];
-}
-
-function getApprovalLabel(value: string | null) {
-  if (value === "accepted") return { label: "Zaakceptowane", cls: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" };
-  if (value === "rejected") return { label: "Odrzucone", cls: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" };
-  return { label: "Oczekuje", cls: "bg-muted text-muted-foreground" };
-}
 
 function ProductRow({
   product,
@@ -360,6 +350,16 @@ function ProductRow({
   const [collapsed, setCollapsed] = useState(false);
   const isCollapsed = collapsed && product.hidden;
 
+  const ORDER_STATUS_OPTIONS = ORDER_STATUS_DEFS.map((d) => ({ value: d.value, label: (t.listy as Record<string, string>)[d.labelKey], cls: d.cls }));
+  function getOrderStatusOption(value: string | null) {
+    return ORDER_STATUS_OPTIONS.find((o) => o.value === value) ?? ORDER_STATUS_OPTIONS[0];
+  }
+  function getApprovalLabel(value: string | null) {
+    if (value === "accepted") return { label: t.listy.productAccepted, cls: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" };
+    if (value === "rejected") return { label: t.listy.productRejected, cls: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" };
+    return { label: t.listy.approvalPending, cls: "bg-muted text-muted-foreground" };
+  }
+
   async function updateQty(next: number) {
     if (next < 1 || saving) return;
     setSaving(true);
@@ -402,7 +402,7 @@ function ProductRow({
         body: JSON.stringify({ unit: next }),
       });
     } catch {
-      toast.error("Błąd zapisu jednostki");
+      toast.error(t.listy.unitSaveError);
     }
   }
 
@@ -436,41 +436,41 @@ function ProductRow({
         <MoreHorizontal size={15} />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-52">
-        <DropdownMenuItem disabled={expired} title={expired ? "Dostępne w płatnym planie" : undefined} onClick={onEdit}>
+        <DropdownMenuItem disabled={expired} title={expired ? t.listy.trialDisabledTitle : undefined} onClick={onEdit}>
           <Pencil size={13} className="mr-2" />
           {t.common.edit}
         </DropdownMenuItem>
-        <DropdownMenuItem disabled={expired} title={expired ? "Dostępne w płatnym planie" : undefined} onClick={() => startFieldEdit("note", product.note)}>
+        <DropdownMenuItem disabled={expired} title={expired ? t.listy.trialDisabledTitle : undefined} onClick={() => startFieldEdit("note", product.note)}>
           <FileText size={13} className="mr-2" />
           {product.note ? t.listy.editNote : t.listy.addNote}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuLabel>Akceptacja</DropdownMenuLabel>
-          <DropdownMenuItem disabled={expired} title={expired ? "Dostępne w płatnym planie" : undefined} onClick={() => onApprovalChange("accepted")}>
+          <DropdownMenuLabel>{t.listy.approvalLabel}</DropdownMenuLabel>
+          <DropdownMenuItem disabled={expired} title={expired ? t.listy.trialDisabledTitle : undefined} onClick={() => onApprovalChange("accepted")}>
             <Check size={13} className="mr-2 text-green-600" />
             {t.render.acceptBtn}
             {approval === "accepted" && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-primary shrink-0" />}
           </DropdownMenuItem>
-          <DropdownMenuItem disabled={expired} title={expired ? "Dostępne w płatnym planie" : undefined} onClick={() => onApprovalChange("rejected")}>
+          <DropdownMenuItem disabled={expired} title={expired ? t.listy.trialDisabledTitle : undefined} onClick={() => onApprovalChange("rejected")}>
             <X size={13} className="mr-2 text-red-500" />
             {t.listy.rejectBtn}
             {approval === "rejected" && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-primary shrink-0" />}
           </DropdownMenuItem>
-          <DropdownMenuItem disabled={expired} title={expired ? "Dostępne w płatnym planie" : undefined} onClick={() => onApprovalChange(null)}>
+          <DropdownMenuItem disabled={expired} title={expired ? t.listy.trialDisabledTitle : undefined} onClick={() => onApprovalChange(null)}>
             <RotateCcw size={13} className="mr-2" />
-            Oczekuje
+            {t.listy.approvalPending}
             {approval === null && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-primary shrink-0" />}
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuLabel>Status zamówienia</DropdownMenuLabel>
+          <DropdownMenuLabel>{t.listy.orderStatusLabel}</DropdownMenuLabel>
           {ORDER_STATUS_OPTIONS.map((opt) => (
             <DropdownMenuItem
               key={String(opt.value)}
               disabled={expired}
-              title={expired ? "Dostępne w płatnym planie" : undefined}
+              title={expired ? t.listy.trialDisabledTitle : undefined}
               onClick={() => onOrderStatusChange(opt.value ?? null)}
             >
               <span className="mr-2 w-[13px]" />
@@ -480,26 +480,26 @@ function ProductRow({
           ))}
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem disabled={expired} title={expired ? "Dostępne w płatnym planie" : undefined} onClick={onToggleOptional}>
+        <DropdownMenuItem disabled={expired} title={expired ? t.listy.trialDisabledTitle : undefined} onClick={onToggleOptional}>
           {product.optional
             ? <CheckCircle size={13} className="mr-2 text-muted-foreground" />
             : <RadioButtonUnchecked size={13} className="mr-2" />}
-          {product.optional ? "Oznacz jako podstawowy" : "Oznacz jako opcjonalny"}
+          {product.optional ? t.listy.markAsBasic : t.listy.markAsOptional}
         </DropdownMenuItem>
-        <DropdownMenuItem disabled={expired} title={expired ? "Dostępne w płatnym planie" : undefined} onClick={onToggleHidden}>
+        <DropdownMenuItem disabled={expired} title={expired ? t.listy.trialDisabledTitle : undefined} onClick={onToggleHidden}>
           {product.hidden ? <Eye size={13} className="mr-2" /> : <EyeOff size={13} className="mr-2" />}
           {product.hidden ? t.render.showToClient : t.render.hideFromClient}
         </DropdownMenuItem>
-        <DropdownMenuItem disabled={expired} title={expired ? "Dostępne w płatnym planie" : undefined} onClick={onOpenMoveDialog}>
+        <DropdownMenuItem disabled={expired} title={expired ? t.listy.trialDisabledTitle : undefined} onClick={onOpenMoveDialog}>
           <FolderInput size={13} className="mr-2" />
           {t.listy.moveToSection}
         </DropdownMenuItem>
-        <DropdownMenuItem disabled={expired} title={expired ? "Dostępne w płatnym planie" : undefined} onClick={onOpenCopyDialog}>
+        <DropdownMenuItem disabled={expired} title={expired ? t.listy.trialDisabledTitle : undefined} onClick={onOpenCopyDialog}>
           <Copy size={13} className="mr-2" />
           {t.listy.copyToSection}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem variant="destructive" disabled={expired} title={expired ? "Dostępne w płatnym planie" : undefined} onClick={onDelete} className="text-destructive focus:text-destructive">
+        <DropdownMenuItem variant="destructive" disabled={expired} title={expired ? t.listy.trialDisabledTitle : undefined} onClick={onDelete} className="text-destructive focus:text-destructive">
           <Trash2 size={13} className="mr-2" />
           {t.render.deleteProduct}
         </DropdownMenuItem>
@@ -617,9 +617,9 @@ function ProductRow({
   ) : null;
 
   const APPROVAL_OPTIONS = [
-    { value: null, label: "Oczekuje", cls: "bg-muted text-muted-foreground" },
-    { value: "accepted", label: "Zaakceptowane", cls: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" },
-    { value: "rejected", label: "Odrzucone", cls: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" },
+    { value: null, label: t.listy.approvalPending, cls: "bg-muted text-muted-foreground" },
+    { value: "accepted", label: t.listy.productAccepted, cls: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" },
+    { value: "rejected", label: t.listy.productRejected, cls: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" },
   ] as const;
 
   const approvalPortal = approvalMenuOpen ? createPortal(
@@ -765,13 +765,13 @@ function ProductRow({
             {isVariant && (
               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium text-muted-foreground shrink-0" style={{ background: '#EDEDED' }}>
                 <Asterisk size={9} />
-                Opcjonalny
+                {t.listy.optionalBadge}
               </span>
             )}
             <button
               onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); const estH = 3 * 28 + 8; const top = (window.innerHeight - r.bottom) >= estH + 8 ? r.bottom + 4 : Math.max(4, r.top - estH - 4); setApprovalMenuPos({ top, left: r.left }); setApprovalMenuOpen((v) => !v); }}
               className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors shrink-0 hover:opacity-80 ${getApprovalLabel(approval).cls}`}
-              title="Zmień status akceptacji"
+              title={t.listy.changeApprovalTitle}
             >
               {getApprovalLabel(approval).label}
               <ChevronDown size={9} />
@@ -779,7 +779,7 @@ function ProductRow({
             <button
               onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); const estH = ORDER_STATUS_OPTIONS.length * 28 + 8; const top = (window.innerHeight - r.bottom) >= estH + 8 ? r.bottom + 4 : Math.max(4, r.top - estH - 4); setOrderStatusMenuPos({ top, left: r.left }); setOrderStatusMenuOpen((v) => !v); }}
               className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors shrink-0 hover:opacity-80 ${isVariant ? getOrderStatusOption(orderStatus).cls.replace("bg-muted", "bg-[#EDEDED]") : getOrderStatusOption(orderStatus).cls}`}
-              title="Zmień status zamówienia"
+              title={t.listy.changeOrderStatusTitle}
             >
               {getOrderStatusOption(orderStatus).label}
               <ChevronDown size={9} />
@@ -943,7 +943,7 @@ function ProductRow({
           {product.url ? (
             <a href={product.url} target="_blank" rel="noopener noreferrer" className="w-7 h-7 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors" title={t.listy.openProductTitle}><ExternalLink size={14} /></a>
           ) : <span className="w-7" />}
-          <button onClick={onOpenComments} className="relative flex items-center justify-center w-7 h-7 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors" title="Komentarze">
+          <button onClick={onOpenComments} className="relative flex items-center justify-center w-7 h-7 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors" title={t.listy.commentsTitle}>
             <Comment size={15} className={`transition-colors ${unread ? "text-blue-500" : ""}`} />
             {commentCount > 0 && <span className={`absolute -top-1 -right-1 min-w-[14px] h-[14px] rounded-full text-white text-[9px] font-bold flex items-center justify-center px-0.5 leading-none transition-colors ${unread ? "bg-primary" : "bg-muted-foreground/40"}`}>{(unread ? unreadCount : commentCount) > 99 ? "99+" : (unread ? unreadCount : commentCount)}</span>}
           </button>
@@ -1003,7 +1003,7 @@ function ProductRow({
           {isVariant && (
             <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium text-muted-foreground shrink-0" style={{ background: '#EDEDED' }}>
               <Asterisk size={9} />
-              Opcjonalny
+              {t.listy.optionalBadge}
             </span>
           )}
           <button
@@ -1295,7 +1295,7 @@ function sortProducts(products: Product[], sortBy: string, categoryOrder: string
       return pa !== pb ? pb - pa : byCreatedAt(a, b);
     });
   } else if (sortBy === "category") {
-    const order = categoryOrder.length > 0 ? categoryOrder : BUILT_IN_CATEGORIES.map((c) => c.value);
+    const order = categoryOrder.length > 0 ? categoryOrder : BUILT_IN_CATEGORY_KEYS.map((c) => c.value);
     sorted.sort((a, b) => {
       const ia = a.category ? order.indexOf(a.category) : order.length;
       const ib = b.category ? order.indexOf(b.category) : order.length;
@@ -1311,6 +1311,9 @@ export default function ListDetail({ list, designerName, designerEmail, designer
   const { lang } = useLang();
   const t = useT();
   const expired = useIsTrialExpired();
+
+  const ORDER_STATUS_OPTIONS = ORDER_STATUS_DEFS.map((d) => ({ value: d.value, label: (t.listy as Record<string, string>)[d.labelKey], cls: d.cls }));
+
   const [currentPdfTemplate, setCurrentPdfTemplate] = useState<import("@/lib/pdf-templates").PdfTemplate>(pdfTemplate ?? "violet");
   useEffect(() => {
     fetch("/api/ustawienia/lists")
@@ -1360,15 +1363,15 @@ export default function ListDetail({ list, designerName, designerEmail, designer
         const data = await res.json();
         setShared(!shared);
         if (!shared && data.accountCreated) {
-          toast.success("Utworzono konto klienta i udostępniono listę");
+          toast.success(t.listy.shareAccountCreated);
         } else {
-          toast.success(shared ? "Cofnięto udostępnienie" : "Udostępniono klientowi");
+          toast.success(shared ? t.listy.shareRevoked : t.listy.shareSuccess);
         }
       } else {
-        toast.error("Nie udało się zmienić widoczności listy");
+        toast.error(t.listy.shareError);
       }
     } catch {
-      toast.error("Błąd połączenia");
+      toast.error(t.listy.connectionError);
     } finally {
       setSharing(false);
     }
@@ -1380,9 +1383,9 @@ export default function ListDetail({ list, designerName, designerEmail, designer
       if (!res.ok) throw new Error("no-client");
       const { url } = await res.json();
       await navigator.clipboard.writeText(url);
-      toast.success("Link skopiowany");
+      toast.success(t.listy.linkCopied);
     } catch {
-      toast.error("Nie udało się skopiować linku");
+      toast.error(t.listy.linkCopyError);
     }
   }
 
@@ -2270,7 +2273,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
               : s
           )
         );
-        toast.error("Nie udało się zmienić statusu produktu");
+        toast.error(t.listy.statusChangeError);
       }
     } catch {
       setSections((prev) =>
@@ -2280,7 +2283,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
             : s
         )
       );
-      toast.error("Nie udało się zmienić statusu produktu");
+      toast.error(t.listy.statusChangeError);
     }
   }
 
@@ -2312,7 +2315,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
       if (!res.ok) throw new Error();
     } catch {
       setOrderStatuses((s) => ({ ...s, [productId]: prev }));
-      toast.error("Błąd zmiany statusu zamówienia");
+      toast.error(t.listy.orderStatusChangeError);
     }
   }
 
@@ -2468,7 +2471,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
           selectedProducts.forEach(({ product }) => { next[product.id] = pendingAction.value ?? null; });
           return next;
         });
-        toast.success("Zmieniono status akceptacji");
+        toast.success(t.listy.bulkApprovalChanged);
       } else if (pendingAction.type === "orderStatus") {
         await Promise.all(
           selectedProducts.map(({ product, sectionId }) =>
@@ -2484,7 +2487,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
           selectedProducts.forEach(({ product }) => { next[product.id] = pendingAction.value ?? null; });
           return next;
         });
-        toast.success("Zmieniono status zamówienia");
+        toast.success(t.listy.bulkOrderStatusChanged);
       } else if (pendingAction.type === "delete") {
         await Promise.all(
           selectedProducts.map(({ product, sectionId }) =>
@@ -2493,14 +2496,14 @@ export default function ListDetail({ list, designerName, designerEmail, designer
             })
           )
         );
-        toast.success(`Usunięto ${selectedProducts.length} produktów`);
+        toast.success(t.listy.bulkDeleted.replace("{count}", String(selectedProducts.length)));
       }
 
       setSelectedIds(new Set());
       setPendingAction(null);
       router.refresh();
     } catch {
-      toast.error("Błąd operacji masowej");
+      toast.error(t.listy.bulkError);
     } finally {
       setBulkLoading(false);
       setBulkDeleteConfirmOpen(false);
@@ -2745,10 +2748,10 @@ export default function ListDetail({ list, designerName, designerEmail, designer
             disabled={!hasClient || sharing}
             title={
               !hasClient
-                ? "Przypisz listę do projektu z klientem"
+                ? t.listy.shareAssignListFirst
                 : shared
-                ? "Cofnij udostępnienie klientowi"
-                : "Udostępnij klientowi"
+                ? t.listy.shareRevoke
+                : t.listy.shareWithClient
             }
             className={`flex items-center gap-1.5 h-8 px-2.5 rounded-lg text-xs font-medium transition-colors border shrink-0 ${
               !hasClient
@@ -2759,7 +2762,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
             }`}
           >
             {shared ? <Check size={13} /> : <Share2 size={13} />}
-            <span className="hidden sm:inline">{shared ? "Udostępnione" : "Udostępnij klientowi"}</span>
+            <span className="hidden sm:inline">{shared ? t.listy.sharedLabel : t.listy.shareWithClient}</span>
           </button>}
 
           {/* Copy client link */}
@@ -2768,10 +2771,10 @@ export default function ListDetail({ list, designerName, designerEmail, designer
             disabled={!hasClient || !shared}
             title={
               !hasClient
-                ? "Przypisz listę do projektu z klientem"
+                ? t.listy.shareAssignListFirst
                 : !shared
-                ? "Najpierw udostępnij listę klientowi"
-                : "Kopiuj link do listy"
+                ? t.listy.shareFirstThen
+                : t.listy.copyClientLink
             }
             className={`flex items-center justify-center h-8 w-8 rounded-lg border transition-colors shrink-0 ${
               !hasClient || !shared
@@ -2807,12 +2810,12 @@ export default function ListDetail({ list, designerName, designerEmail, designer
               {/* Counter + select all */}
               <div className="flex items-center gap-2 shrink-0">
                 <ListChecks size={15} className="text-primary shrink-0" />
-                <span className="text-xs font-semibold text-primary tabular-nums">{selectedIds.size} zaznaczonych</span>
+                <span className="text-xs font-semibold text-primary tabular-nums">{selectedIds.size} {t.listy.bulkSelected}</span>
                 <button
                   onClick={toggleSelectAll}
                   className="text-xs text-muted-foreground hover:text-foreground transition-colors underline underline-offset-2 shrink-0"
                 >
-                  {allSelected ? "Odznacz wszystkie" : "Zaznacz wszystkie"}
+                  {allSelected ? t.listy.bulkDeselectAll : t.listy.bulkSelectAll}
                 </button>
               </div>
 
@@ -2823,13 +2826,13 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                 <DropdownMenuTrigger render={
                   <button className={`flex items-center gap-1 h-8 px-2.5 text-xs rounded-lg border transition-colors ${pendingAction?.type === "move" ? "border-primary/50 bg-primary/10 text-primary" : "border-border bg-background hover:bg-muted text-foreground"}`}>
                     <FolderInput size={13} />
-                    <span className="hidden sm:inline">Przenieś do</span>
+                    <span className="hidden sm:inline">{t.listy.bulkMoveTo}</span>
                     <ChevronDown size={11} />
                   </button>
                 } />
                 <DropdownMenuContent align="start" className="w-48">
                   <DropdownMenuGroup>
-                    <DropdownMenuLabel className="text-[10px]">Przenieś zaznaczone do</DropdownMenuLabel>
+                    <DropdownMenuLabel className="text-[10px]">{t.listy.bulkMoveSelectedTo}</DropdownMenuLabel>
                     {sections.filter((s) => !s.unsorted).map((s) => (
                       <DropdownMenuItem key={s.id} onClick={() => setPendingAction({ type: "move", sectionId: s.id, label: s.name })}>
                         {s.name}
@@ -2837,7 +2840,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                       </DropdownMenuItem>
                     ))}
                     {sections.filter((s) => !s.unsorted).length === 0 && (
-                      <p className="px-3 py-1.5 text-xs text-muted-foreground">Brak sekcji</p>
+                      <p className="px-3 py-1.5 text-xs text-muted-foreground">{t.listy.noSectionsLabel}</p>
                     )}
                   </DropdownMenuGroup>
                 </DropdownMenuContent>
@@ -2847,13 +2850,13 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                 <DropdownMenuTrigger render={
                   <button className={`flex items-center gap-1 h-8 px-2.5 text-xs rounded-lg border transition-colors ${pendingAction?.type === "copy" ? "border-primary/50 bg-primary/10 text-primary" : "border-border bg-background hover:bg-muted text-foreground"}`}>
                     <Copy size={13} />
-                    <span className="hidden sm:inline">Kopiuj do</span>
+                    <span className="hidden sm:inline">{t.listy.bulkCopyTo}</span>
                     <ChevronDown size={11} />
                   </button>
                 } />
                 <DropdownMenuContent align="start" className="w-48">
                   <DropdownMenuGroup>
-                    <DropdownMenuLabel className="text-[10px]">Kopiuj zaznaczone do</DropdownMenuLabel>
+                    <DropdownMenuLabel className="text-[10px]">{t.listy.bulkCopySelectedTo}</DropdownMenuLabel>
                     {sections.filter((s) => !s.unsorted).map((s) => (
                       <DropdownMenuItem key={s.id} onClick={() => setPendingAction({ type: "copy", sectionId: s.id, label: s.name })}>
                         {s.name}
@@ -2861,35 +2864,35 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                       </DropdownMenuItem>
                     ))}
                     {sections.filter((s) => !s.unsorted).length === 0 && (
-                      <p className="px-3 py-1.5 text-xs text-muted-foreground">Brak sekcji</p>
+                      <p className="px-3 py-1.5 text-xs text-muted-foreground">{t.listy.noSectionsLabel}</p>
                     )}
                   </DropdownMenuGroup>
                 </DropdownMenuContent>
               </DropdownMenu>
 
               <button
-                onClick={() => setPendingAction({ type: "duplicate", label: "Duplikuj" })}
+                onClick={() => setPendingAction({ type: "duplicate", label: t.listy.bulkDuplicate })}
                 className={`flex items-center gap-1 h-8 px-2.5 text-xs rounded-lg border transition-colors ${pendingAction?.type === "duplicate" ? "border-primary/50 bg-primary/10 text-primary" : "border-border bg-background hover:bg-muted text-foreground"}`}
               >
                 <Layers size={13} />
-                <span className="hidden sm:inline">Duplikuj</span>
+                <span className="hidden sm:inline">{t.listy.bulkDuplicate}</span>
               </button>
 
               <DropdownMenu>
                 <DropdownMenuTrigger render={
                   <button className={`flex items-center gap-1 h-8 px-2.5 text-xs rounded-lg border transition-colors ${pendingAction?.type === "approval" ? "border-primary/50 bg-primary/10 text-primary" : "border-border bg-background hover:bg-muted text-foreground"}`}>
                     <Check size={13} />
-                    <span className="hidden sm:inline">Akceptacja</span>
+                    <span className="hidden sm:inline">{t.listy.approvalLabel}</span>
                     <ChevronDown size={11} />
                   </button>
                 } />
                 <DropdownMenuContent align="start" className="w-44">
                   <DropdownMenuGroup>
-                    <DropdownMenuLabel className="text-[10px]">Status akceptacji</DropdownMenuLabel>
+                    <DropdownMenuLabel className="text-[10px]">{t.listy.bulkApprovalStatusLabel}</DropdownMenuLabel>
                     {([
-                      { value: "accepted", label: "Zaakceptowane" },
-                      { value: "rejected", label: "Odrzucone" },
-                      { value: null, label: "Oczekuje" },
+                      { value: "accepted", label: t.listy.productAccepted },
+                      { value: "rejected", label: t.listy.productRejected },
+                      { value: null, label: t.listy.approvalPending },
                     ] as const).map((opt) => (
                       <DropdownMenuItem key={String(opt.value)} onClick={() => setPendingAction({ type: "approval", value: opt.value ?? null, label: opt.label })}>
                         {opt.label}
@@ -2904,13 +2907,13 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                 <DropdownMenuTrigger render={
                   <button className={`flex items-center gap-1 h-8 px-2.5 text-xs rounded-lg border transition-colors ${pendingAction?.type === "orderStatus" ? "border-primary/50 bg-primary/10 text-primary" : "border-border bg-background hover:bg-muted text-foreground"}`}>
                     <ArrowDownUp size={13} />
-                    <span className="hidden sm:inline">Status zam.</span>
+                    <span className="hidden sm:inline">{t.listy.orderStatusShort}</span>
                     <ChevronDown size={11} />
                   </button>
                 } />
                 <DropdownMenuContent align="start" className="w-44">
                   <DropdownMenuGroup>
-                    <DropdownMenuLabel className="text-[10px]">Status zamówienia</DropdownMenuLabel>
+                    <DropdownMenuLabel className="text-[10px]">{t.listy.orderStatusLabel}</DropdownMenuLabel>
                     {ORDER_STATUS_OPTIONS.map((opt) => (
                       <DropdownMenuItem key={String(opt.value)} onClick={() => setPendingAction({ type: "orderStatus", value: opt.value ?? null, label: opt.label })}>
                         {opt.label}
@@ -2922,11 +2925,11 @@ export default function ListDetail({ list, designerName, designerEmail, designer
               </DropdownMenu>
 
               <button
-                onClick={() => setPendingAction({ type: "delete", label: "Usuń" })}
+                onClick={() => setPendingAction({ type: "delete", label: t.listy.bulkDelete })}
                 className={`flex items-center gap-1 h-8 px-2.5 text-xs rounded-lg border transition-colors ${pendingAction?.type === "delete" ? "border-destructive/50 bg-destructive/10 text-destructive" : "border-border bg-background hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 text-foreground"}`}
               >
                 <Trash2 size={13} />
-                <span className="hidden sm:inline">Usuń</span>
+                <span className="hidden sm:inline">{t.listy.bulkDelete}</span>
               </button>
 
               {/* Confirm + Exit — pushed to right */}
@@ -2937,13 +2940,13 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                     disabled={bulkLoading}
                     className="h-8 px-3 text-xs"
                   >
-                    {bulkLoading ? "…" : `Potwierdź (${selectedIds.size})`}
+                    {bulkLoading ? "…" : t.listy.bulkConfirm.replace("{count}", String(selectedIds.size))}
                   </Button>
                 )}
                 <button
                   onClick={exitBulkMode}
                   className="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                  title="Zakończ zaznaczanie"
+                  title={t.listy.bulkExitTitle}
                 >
                   <X size={15} />
                 </button>
@@ -3010,7 +3013,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
             <button
               onClick={() => { setSearchOpen((v) => { if (v) { setSearchQuery(""); } else { setTimeout(() => searchInputRef.current?.focus(), 50); } return !v; }); }}
               className={`w-8 h-8 flex items-center justify-center rounded-lg border transition-colors ${searchOpen ? "border-primary/60 bg-primary/8 text-primary" : "border-border bg-background hover:bg-muted text-muted-foreground hover:text-foreground"}`}
-              title="Szukaj produktu na liście"
+              title={t.listy.searchTitle}
             >
               <Search size={13} />
             </button>
@@ -3022,7 +3025,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Escape") { setSearchQuery(""); setSearchOpen(false); } }}
-                  placeholder="Szukaj produktu…"
+                  placeholder={t.listy.searchPlaceholderProduct}
                   className="h-8 pl-3 pr-6 text-xs rounded-lg border border-border bg-background focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/60 transition-colors w-40 placeholder:text-muted-foreground shadow-sm"
                   autoFocus
                 />
@@ -3038,14 +3041,14 @@ export default function ListDetail({ list, designerName, designerEmail, designer
           <button
             onClick={openChangelog}
             className={`w-8 h-8 flex items-center justify-center rounded-lg border transition-colors ${changelogOpen ? "border-primary/60 bg-primary/8 text-primary" : "border-border bg-background hover:bg-muted text-muted-foreground hover:text-foreground"}`}
-            title="Dziennik zmian"
+            title={t.listy.changelogTitle}
           >
             <History size={13} />
           </button>
           <button
             onClick={() => { setBulkMode(true); setSelectedIds(new Set()); setPendingAction(null); }}
             className="w-8 h-8 flex items-center justify-center rounded-lg border border-border bg-background hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-            title="Zaznacz produkty (operacje masowe)"
+            title={t.listy.bulkSelectTitle}
           >
             <ListChecks size={13} />
           </button>
@@ -3053,7 +3056,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
         {hasTotal && (
           <div className="flex flex-col items-end gap-1 shrink-0 pr-1 min-w-0">
             <div className="flex items-center gap-1.5 text-sm">
-              <div className="flex items-center gap-1 text-xs text-muted-foreground" title="Liczba wyświetleń listy przez klienta">
+              <div className="flex items-center gap-1 text-xs text-muted-foreground" title={t.listy.viewCountTitle}>
                 <Eye size={13} />
                 <span>{list.viewCount ?? 0}</span>
               </div>
@@ -3296,7 +3299,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
             {searchLower && displaySections.filter((s) => !s.unsorted).length === 0 && (
               <div className="flex flex-col items-center justify-center py-16 text-center">
                 <Search size={28} className="text-muted-foreground/30 mb-3" />
-                <p className="text-sm text-muted-foreground">Brak wyników dla „{searchQuery}"</p>
+                <p className="text-sm text-muted-foreground">{t.listy.noResultsFor.replace("{query}", searchQuery)}</p>
               </div>
             )}
             {displaySections.filter((s) => !s.unsorted).map((section) => (
@@ -3310,7 +3313,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                           <button
                             onClick={() => toggleSectionSelected(section.id)}
                             className="p-1 flex items-center justify-center shrink-0 text-primary"
-                            title="Zaznacz wszystkie w sekcji"
+                            title={t.listy.bulkSelectSectionTitle}
                           >
                             {section.products.length > 0 && section.products.every((p) => selectedIds.has(p.id))
                               ? <CheckSquare size={15} />
@@ -3936,7 +3939,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
               }
             }}
             className="w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center hover:opacity-90 active:scale-95 transition-all"
-            title="Dodaj produkt"
+            title={t.listy.addProductFabTitle}
           >
             <Plus size={24} />
           </button>
@@ -3953,7 +3956,7 @@ export default function ListDetail({ list, designerName, designerEmail, designer
           <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
             <div className="flex items-center gap-2">
               <History size={16} className="text-muted-foreground" />
-              <h2 className="text-sm font-semibold">Dziennik zmian</h2>
+              <h2 className="text-sm font-semibold">{t.listy.changelogTitle}</h2>
             </div>
             <button onClick={() => setChangelogOpen(false)} className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
               <X size={16} />
@@ -3966,12 +3969,12 @@ export default function ListDetail({ list, designerName, designerEmail, designer
                 onClick={() => setChangelogFilter(f)}
                 className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${changelogFilter === f ? "bg-primary text-white" : "text-muted-foreground hover:bg-muted"}`}
               >
-                {f === "all" ? "Wszystkie" : f === "internal" ? "Wewnętrzne" : "Klient"}
+                {f === "all" ? t.listy.changelogAll : f === "internal" ? t.listy.changelogInternal : t.listy.changelogClient}
               </button>
             ))}
             <button
               onClick={() => setChangelogSortAsc((v) => !v)}
-              title={changelogSortAsc ? "Sortuj: od najnowszego" : "Sortuj: od najstarszego"}
+              title={changelogSortAsc ? t.listy.changelogSortNewest : t.listy.changelogSortOldest}
               className={`ml-auto p-1.5 rounded-md transition-colors ${changelogSortAsc ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"}`}
             >
               <ArrowDownUp size={13} />
