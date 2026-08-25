@@ -68,7 +68,7 @@ interface ArchivedFolder {
 }
 
 function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("pl-PL", { day: "numeric", month: "short", year: "numeric" });
+  return new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
 }
 
 function sortItems<T extends { name: string; pinned?: boolean; createdAt: string }>(
@@ -644,7 +644,7 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
                           </div>
                           <div className="p-3">
                             <p className="text-sm font-medium truncate mb-1">{render.name}</p>
-                            <p className="text-[10px] text-muted-foreground truncate mb-1.5">Dodano: {formatDate(render.createdAt)}</p>
+                            <p className="text-[10px] text-muted-foreground truncate mb-1.5">{t.render.filesAddedPrefix}: {formatDate(render.createdAt)}</p>
                             <div className="flex items-center justify-between gap-2">
                               <div className="flex items-center gap-1.5">
                                 <span className={`flex-shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${render.status === "ACCEPTED" ? "bg-green-100 text-green-700" : render.status === "REJECTED" ? "bg-red-100 text-red-700" : "bg-blue-100 text-blue-700"}`}>
@@ -700,7 +700,7 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
                               </p>
                               <div className="flex items-center gap-2">
                                 {render.commentCount > 0 && <span className="text-xs text-muted-foreground flex items-center gap-1"><Pin size={10} />{render.commentCount}</span>}
-                                <span className="text-xs text-muted-foreground">Dodano: {formatDate(render.createdAt)}</span>
+                                <span className="text-xs text-muted-foreground">{t.render.filesAddedPrefix}: {formatDate(render.createdAt)}</span>
                                 <span className="text-xs text-muted-foreground flex items-center gap-1"><Eye size={10} />{render.viewCount}</span>
                               </div>
                             </div>
@@ -791,7 +791,7 @@ export default function RoomView({ projectId, roomId, renders, archivedRenders, 
                     </div>
                     <div className="p-3">
                       <p className="text-sm font-medium truncate mb-1">{render.name}</p>
-                      <p className="text-[10px] text-muted-foreground truncate mb-2">Dodano: {formatDate(render.createdAt)}</p>
+                      <p className="text-[10px] text-muted-foreground truncate mb-2">{t.render.filesAddedPrefix}: {formatDate(render.createdAt)}</p>
                       <div className="flex gap-2">
                         <TrialGate className="flex-1">
                           <Button size="sm" variant="outline" className="flex-1" onClick={() => handleRestore(render.id)}>

@@ -285,7 +285,7 @@ export default function ListyView({ lists: initialLists, userId, veepickConnecte
                 onClick={() => setImportOpen(true)}
               >
                 <Upload size={16} />
-                Importuj
+                {t.listy.importBtn}
               </Button>
             </TrialGate>
             <TrialGate><NewListDialog /></TrialGate>

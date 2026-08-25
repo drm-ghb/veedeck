@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { X, HelpCircle, Sparkles, Paperclip, Trash2, CheckCircle, ChevronDown, Maximize2, RotateCcw, ArrowUp, Share2, Activity, BarChart2, AddShoppingCart } from "@/components/ui/icons";
-import { useT } from "@/lib/i18n";
+import { useT, useLang } from "@/lib/i18n";
 import { useUploadThing } from "@/lib/uploadthing-client";
 
 interface Message {
@@ -76,6 +76,7 @@ function renderMarkdown(text: string): React.ReactNode[] {
 
 export default function HelpWidget({ open, onClose, initialTab, initialCategory }: HelpWidgetProps) {
   const t = useT();
+  const { lang } = useLang();
   const [activeTab, setActiveTab] = useState<"knowledge" | "ai" | "contact">("knowledge");
   const [expanded, setExpanded] = useState(false);
 
@@ -151,7 +152,7 @@ export default function HelpWidget({ open, onClose, initialTab, initialCategory 
       const res = await fetch("/api/ai-assistant", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: newMessages }),
+        body: JSON.stringify({ messages: newMessages, locale: lang }),
       });
 
       if (res.status === 429) {
@@ -165,7 +166,7 @@ export default function HelpWidget({ open, onClose, initialTab, initialCategory 
       if (!res.ok || !res.body) {
         setMessages((prev) => {
           const updated = [...prev];
-          updated[updated.length - 1] = { role: "assistant", content: "Przepraszam, wystąpił błąd. Spróbuj ponownie." };
+          updated[updated.length - 1] = { role: "assistant", content: t.nav.aiError };
           return updated;
         });
         return;
@@ -189,7 +190,7 @@ export default function HelpWidget({ open, onClose, initialTab, initialCategory 
     } catch {
       setMessages((prev) => {
         const updated = [...prev];
-        updated[updated.length - 1] = { role: "assistant", content: "Przepraszam, wystąpił błąd. Spróbuj ponownie." };
+        updated[updated.length - 1] = { role: "assistant", content: t.nav.aiError };
         return updated;
       });
     } finally {
@@ -218,10 +219,10 @@ export default function HelpWidget({ open, onClose, initialTab, initialCategory 
         <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-card shrink-0">
           <div className="flex items-center gap-2">
             <HelpCircle size={16} className="text-primary" />
-            <span className="font-semibold text-sm">Pomoc</span>
+            <span className="font-semibold text-sm">{t.nav.help}</span>
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={() => setExpanded((e) => !e)} className="text-muted-foreground hover:text-foreground transition-colors" title={expanded ? "Zmniejsz" : "Rozszerz"}>
+            <button onClick={() => setExpanded((e) => !e)} className="text-muted-foreground hover:text-foreground transition-colors" title={expanded ? t.nav.aiShrink : t.nav.aiExpand}>
               <Maximize2 size={14} />
             </button>
             <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors">
@@ -242,7 +243,7 @@ export default function HelpWidget({ open, onClose, initialTab, initialCategory 
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            Baza wiedzy
+            {t.nav.aiKnowledgeBase}
           </button>
           <button
             onClick={() => setActiveTab("contact")}
@@ -252,7 +253,7 @@ export default function HelpWidget({ open, onClose, initialTab, initialCategory 
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            Kontakt
+            {t.nav.aiContact}
           </button>
         </div>
       )}
@@ -260,9 +261,9 @@ export default function HelpWidget({ open, onClose, initialTab, initialCategory 
       {/* Knowledge Base Tab */}
       {activeTab === "knowledge" && (
         <div className="flex flex-col flex-1 min-h-0 overflow-y-auto px-4 py-5 gap-4">
-          <p className="text-sm text-muted-foreground">Znajdź odpowiedzi na najczęstsze pytania dotyczące obsługi platformy.</p>
+          <p className="text-sm text-muted-foreground">{lang === "pl" ? "Znajdź odpowiedzi na najczęstsze pytania dotyczące obsługi platformy." : "Find answers to frequently asked questions about the platform."}</p>
           <a
-            href="https://veedeck.com/pomoc/dla-projektantow/"
+            href={lang === "pl" ? "https://veedeck.com/pomoc/dla-projektantow/" : "https://veedeck.com/en/help/for-designers/"}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-3 px-4 py-3 rounded-xl border border-border bg-muted/30 hover:bg-muted/60 transition-colors group"
@@ -271,8 +272,8 @@ export default function HelpWidget({ open, onClose, initialTab, initialCategory 
               <HelpCircle size={16} className="text-primary" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium">Pomoc dla projektantów</p>
-              <p className="text-xs text-muted-foreground truncate">veedeck.com/pomoc/dla-projektantow</p>
+              <p className="text-sm font-medium">{t.nav.aiHelpDesigners}</p>
+              <p className="text-xs text-muted-foreground truncate">{lang === "pl" ? "veedeck.com/pomoc/dla-projektantow" : "veedeck.com/en/help/for-designers"}</p>
             </div>
             <svg className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
@@ -313,7 +314,7 @@ export default function HelpWidget({ open, onClose, initialTab, initialCategory 
                   className="font-semibold text-white transition-opacity duration-200"
                   style={{ fontSize: 15, opacity: messages.length > 0 ? 1 : 0 }}
                 >
-                  Asystent AI
+                  {t.nav.aiTitle}
                 </span>
               </div>
               <div className="flex items-center gap-1.5">
@@ -322,7 +323,7 @@ export default function HelpWidget({ open, onClose, initialTab, initialCategory 
                     onClick={() => setMessages([])}
                     className="transition-opacity hover:opacity-100"
                     style={{ color: "rgba(255,255,255,.8)", opacity: 0.8 }}
-                    title="Wróć do ekranu startowego"
+                    title={t.nav.aiResetTooltip}
                   >
                     <RotateCcw size={20} />
                   </button>
@@ -331,7 +332,7 @@ export default function HelpWidget({ open, onClose, initialTab, initialCategory 
                   onClick={() => setExpanded((e) => !e)}
                   className="transition-opacity hover:opacity-100"
                   style={{ color: "rgba(255,255,255,.8)", opacity: 0.8 }}
-                  title={expanded ? "Zmniejsz" : "Rozszerz"}
+                  title={expanded ? t.nav.aiShrink : t.nav.aiExpand}
                 >
                   <Maximize2 size={20} />
                 </button>
@@ -369,11 +370,11 @@ export default function HelpWidget({ open, onClose, initialTab, initialCategory 
                 </div>
                 {/* Title */}
                 <p className="font-bold text-white" style={{ fontSize: 20, letterSpacing: "-0.02em" }}>
-                  Asystent AI
+                  {t.nav.aiTitle}
                 </p>
                 {/* Subtitle */}
                 <p className="mt-1" style={{ fontSize: 13, color: "rgba(255,255,255,.85)", lineHeight: 1.4 }}>
-                  Zadaj pytanie dotyczące obsługi platformy lub aktywności Twojego klienta
+                  {t.nav.aiSubtitle}
                 </p>
               </div>
             </div>
@@ -390,15 +391,13 @@ export default function HelpWidget({ open, onClose, initialTab, initialCategory 
                   <Sparkles size={26} style={{ color: "#4F46E5" }} />
                 </div>
                 <div>
-                  <p className="font-semibold text-base">Asystent AI — faza testów</p>
+                  <p className="font-semibold text-base">{t.nav.aiBetaTitle}</p>
                   <p className="text-sm text-muted-foreground mt-3 leading-relaxed">
-                    Testujemy Asystenta AI i sprawdzamy, jak najlepiej wspiera projektantów w codziennej pracy. To wczesna wersja — asystent zna platformę, ale może się mylić.
+                    {t.nav.aiBetaDesc1}
                   </p>
+                  <p className="text-sm text-muted-foreground mt-2 leading-relaxed" dangerouslySetInnerHTML={{ __html: t.nav.aiBetaDesc2 }} />
                   <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
-                    W tej fazie masz <strong>10 zapytań dziennie</strong>. Limit odnawia się po 24 godzinach.
-                  </p>
-                  <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
-                    Jeśli odpowiedź Cię zaskoczy — napisz do nas. Każdy feedback pomaga nam go poprawić.
+                    {t.nav.aiBetaDesc3}
                   </p>
                 </div>
                 <button
@@ -409,7 +408,7 @@ export default function HelpWidget({ open, onClose, initialTab, initialCategory 
                   className="w-full py-2 text-sm font-medium text-white rounded-lg hover:opacity-90 transition-opacity"
                   style={{ background: "#4F46E5" }}
                 >
-                  Rozumiem, zaczynajmy
+                  {t.nav.aiBetaCta}
                 </button>
               </div>
             </div>
@@ -434,14 +433,14 @@ export default function HelpWidget({ open, onClose, initialTab, initialCategory 
                   className="text-muted-foreground font-bold uppercase"
                   style={{ fontSize: 11, letterSpacing: "0.05em", margin: "6px 0 -2px" }}
                 >
-                  Popularne pytania
+                  {t.nav.aiPopularQuestions}
                 </p>
                 {(
                   [
-                    { q: "Podsumuj mi ostatnie 24h", Icon: BarChart2 },
-                    { q: "Jak udostępnić projekt klientowi?", Icon: Share2 },
-                    { q: "Jak dodać produkt do listy?", Icon: AddShoppingCart },
-                    { q: "Jak sprawdzić aktywność klienta?", Icon: Activity },
+                    { q: t.nav.aiSuggest1, Icon: BarChart2 },
+                    { q: t.nav.aiSuggest2, Icon: Share2 },
+                    { q: t.nav.aiSuggest3, Icon: AddShoppingCart },
+                    { q: t.nav.aiSuggest4, Icon: Activity },
                   ] as const
                 ).map(({ q, Icon }) => (
                   <button
@@ -523,14 +522,14 @@ export default function HelpWidget({ open, onClose, initialTab, initialCategory 
           <div className="shrink-0 bg-background">
             {limitResetAt ? (
               <div className="flex flex-col items-center gap-1.5 py-4 px-6 text-center">
-                <p className="text-sm font-medium">Limit zapytań wyczerpany</p>
+                <p className="text-sm font-medium">{t.nav.aiLimitReached}</p>
                 <p className="text-xs text-muted-foreground">
-                  Odblokuje się o{" "}
+                  {t.nav.aiLimitResetPrefix}{" "}
                   <strong>
-                    {new Date(limitResetAt).toLocaleTimeString("pl-PL", { hour: "2-digit", minute: "2-digit" })}
+                    {new Date(limitResetAt).toLocaleTimeString(lang === "pl" ? "pl-PL" : "en-US", { hour: "2-digit", minute: "2-digit" })}
                   </strong>
                   {" "}
-                  ({new Date(limitResetAt).toLocaleDateString("pl-PL", { day: "numeric", month: "long" })})
+                  ({new Date(limitResetAt).toLocaleDateString(lang === "pl" ? "pl-PL" : "en-US", { day: "numeric", month: "long" })})
                 </p>
               </div>
             ) : (
@@ -539,7 +538,7 @@ export default function HelpWidget({ open, onClose, initialTab, initialCategory 
                   className="text-center text-muted-foreground"
                   style={{ fontSize: 10.5, margin: "-12px 0 14px" }}
                 >
-                  Asystent odpowiada tylko na pytania o veedeck
+                  {t.nav.aiScopeHint}
                 </p>
                 <div
                   className="flex items-center gap-2.5 focus-within:border-primary transition-colors"
@@ -559,7 +558,7 @@ export default function HelpWidget({ open, onClose, initialTab, initialCategory 
                       e.target.style.height = Math.min(e.target.scrollHeight, 120) + "px";
                     }}
                     onKeyDown={handleKeyDown}
-                    placeholder="Napisz pytanie…"
+                    placeholder={t.nav.aiInputPlaceholder}
                     rows={1}
                     disabled={streaming}
                     className="flex-1 bg-transparent resize-none outline-none placeholder:text-muted-foreground/60 disabled:opacity-60"
@@ -684,7 +683,7 @@ export default function HelpWidget({ open, onClose, initialTab, initialCategory 
                   {helpAttachments.length < 10 && (
                     <label className={`flex items-center gap-2 text-xs text-muted-foreground cursor-pointer hover:text-foreground border border-border rounded-lg px-3 py-2 transition-colors ${helpUploading ? "opacity-50 pointer-events-none" : ""}`}>
                       <Paperclip size={13} className="shrink-0" />
-                      {helpUploading ? "Wgrywanie..." : helpAttachments.length > 0 ? `Dodaj więcej (${helpAttachments.length}/10)` : "Dodaj załączniki (zdjęcia, wideo, dokumenty)"}
+                      {helpUploading ? t.nav.aiUploading : helpAttachments.length > 0 ? `${t.nav.aiAddMore} (${helpAttachments.length}/10)` : t.nav.aiAddAttachments}
                       <input
                         type="file"
                         className="hidden"

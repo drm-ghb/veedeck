@@ -248,18 +248,18 @@ export default function ClientsView({ clients, archivedClients }: Props) {
                   )}
                 </div>
                 <p className="text-[12px] text-muted-foreground mt-[2px]">
-                  Utworzono: {new Date(client.createdAt).toLocaleDateString("pl-PL", { day: "2-digit", month: "2-digit", year: "numeric" })}
+                  {t.projekty.createdLabel} {new Date(client.createdAt).toLocaleDateString(undefined, { day: "2-digit", month: "2-digit", year: "numeric" })}
                 </p>
               </Link>
 
               {/* Stats */}
               <div className="flex items-center gap-2 shrink-0 mr-1">
-                <div className="flex items-center gap-1 text-[11.5px] text-muted-foreground" title="Projekty ProjectFlow">
+                <div className="flex items-center gap-1 text-[11.5px] text-muted-foreground" title={t.projekty.statsProjectsTitle}>
                   <PushPin size={13} />
                   <span className="font-medium text-[#4B5063]">{client._count.projects}</span>
                 </div>
                 <div className="w-px h-3 bg-border" />
-                <div className="flex items-center gap-1 text-[11.5px] text-muted-foreground" title="Listy zakupowe">
+                <div className="flex items-center gap-1 text-[11.5px] text-muted-foreground" title={t.projekty.statsListsTitle}>
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
                   <span className="font-medium text-[#4B5063]">{client._count.shoppingLists}</span>
                 </div>
@@ -300,7 +300,7 @@ export default function ClientsView({ clients, archivedClients }: Props) {
                 disabled={expired}
                 onClick={() => { setEditClient(client); setMenuOpen(null); }}
                 className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-muted transition-colors disabled:opacity-40 disabled:pointer-events-none"
-                title={expired ? "Dostępne w płatnym planie" : undefined}
+                title={expired ? t.projekty.paidFeature : undefined}
               >
                 <Pencil size={14} /> {t.projekty.editClientLabel}
               </button>
@@ -308,7 +308,7 @@ export default function ClientsView({ clients, archivedClients }: Props) {
                 disabled={expired}
                 onClick={() => handleArchive(client)}
                 className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-muted transition-colors disabled:opacity-40 disabled:pointer-events-none"
-                title={expired ? "Dostępne w płatnym planie" : undefined}
+                title={expired ? t.projekty.paidFeature : undefined}
               >
                 {client.archived ? <ArchiveRestore size={14} /> : <Archive size={14} />}
                 {client.archived ? t.projekty.restoreClientLabel : t.projekty.archiveClientLabel}
@@ -317,7 +317,7 @@ export default function ClientsView({ clients, archivedClients }: Props) {
                 disabled={expired}
                 onClick={() => handleDelete(client)}
                 className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-muted text-destructive transition-colors disabled:opacity-40 disabled:pointer-events-none"
-                title={expired ? "Dostępne w płatnym planie" : undefined}
+                title={expired ? t.projekty.paidFeature : undefined}
               >
                 <Trash2 size={14} /> {t.projekty.deleteClientLabel}
               </button>

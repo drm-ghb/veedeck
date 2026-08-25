@@ -357,29 +357,29 @@ export default function NavSidebar({ hiddenModules, isAdmin, sidebarOrder, userI
             setHelpTab("ai"); setHelpCategory(undefined);
             if (helpOpen) { setHelpOpen(false); setTimeout(() => setHelpOpen(true), 50); } else { setHelpOpen(true); }
           }}
-          title={isCollapsed ? "Asystent AI" : undefined}
+          title={isCollapsed ? t.nav.aiTitle : undefined}
           className="flex items-center gap-3 px-2.5 py-2.5 rounded-lg text-sm font-medium transition-colors w-full opacity-60 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5"
         >
           <span className="flex-shrink-0 w-5 flex items-center justify-center">
             <Sparkles size={18} />
           </span>
-          {!isCollapsed && "Asystent AI"}
+          {!isCollapsed && t.nav.aiTitle}
         </button>
 
         {/* Zgłoś błąd */}
         <button
           onClick={() => {
             if (helpOpen && helpTab === "contact") { setHelpOpen(false); return; }
-            setHelpTab("contact"); setHelpCategory("🐞 Zgłoś błąd");
+            setHelpTab("contact"); setHelpCategory(t.nav.helpCategories[0]);
             if (helpOpen) { setHelpOpen(false); setTimeout(() => setHelpOpen(true), 50); } else { setHelpOpen(true); }
           }}
-          title={isCollapsed ? "Zgłoś błąd" : undefined}
+          title={isCollapsed ? t.nav.reportBug : undefined}
           className="flex items-center gap-3 px-2.5 py-2.5 rounded-lg text-sm font-medium transition-colors w-full opacity-60 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5"
         >
           <span className="flex-shrink-0 w-5 flex items-center justify-center">
             <Bug size={18} />
           </span>
-          {!isCollapsed && "Zgłoś błąd"}
+          {!isCollapsed && t.nav.reportBug}
         </button>
 
         {/* Jak zacząć? — only visible on tablet (md, where MobileMenu is hidden but button is too wide for navbar) */}

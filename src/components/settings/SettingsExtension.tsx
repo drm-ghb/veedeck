@@ -74,7 +74,7 @@ export function SettingsExtension({ initialKey }: Props) {
 
       {/* Browser download buttons */}
       <div className="border border-border rounded-xl p-5 space-y-3 bg-card">
-        <p className="text-sm font-medium text-foreground">Pobierz wtyczkę</p>
+        <p className="text-sm font-medium text-foreground">{t.settings.downloadExtension}</p>
         <div className="flex flex-wrap gap-2">
           {/* Chrome — active */}
           <a
@@ -96,7 +96,7 @@ export function SettingsExtension({ initialKey }: Props) {
           <button
             disabled
             className="inline-flex items-center gap-2 h-9 px-4 rounded-lg border border-border bg-background text-sm font-medium text-muted-foreground opacity-40 cursor-not-allowed"
-            title="Wkrótce dostępne"
+            title={t.settings.comingSoon}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
               <circle cx="12" cy="12" r="10.5" fill="#FF1B2D"/>
@@ -112,7 +112,7 @@ export function SettingsExtension({ initialKey }: Props) {
           <button
             disabled
             className="inline-flex items-center gap-2 h-9 px-4 rounded-lg border border-border bg-background text-sm font-medium text-muted-foreground opacity-40 cursor-not-allowed"
-            title="Wkrótce dostępne"
+            title={t.settings.comingSoon}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
               <path d="M21.8 15c-.8 2.2-2.3 4-4.3 5.1-1.4.8-3 1.2-4.7 1.2-5.3 0-9.5-4.1-9.5-9.3 0-2.7 1.2-5.2 3.2-6.9A9.3 9.3 0 0 1 12 3c5.2 0 9.5 4.2 9.5 9.3 0 .9-.1 1.8-.4 2.7H9.2c.4 1.7 1.9 3 3.8 3 1.3 0 2.5-.6 3.3-1.5l5.5-.5Z" fill="#0078D4"/>
@@ -133,7 +133,7 @@ export function SettingsExtension({ initialKey }: Props) {
             Firefox Add-ons
           </a>
         </div>
-        <p className="text-xs text-muted-foreground">Opera i Edge — wkrótce dostępne.</p>
+        <p className="text-xs text-muted-foreground">{t.settings.operaEdgeSoon}</p>
       </div>
 
       {/* API Key section */}
@@ -164,7 +164,7 @@ export function SettingsExtension({ initialKey }: Props) {
                 background: apiKey ? "#16a34a" : "var(--muted-foreground)",
               }}
             />
-            {apiKey ? "Połączono" : "Brak połączenia"}
+            {apiKey ? t.settings.connected : t.settings.disconnected}
           </span>
         </div>
 
@@ -226,7 +226,7 @@ export function SettingsExtension({ initialKey }: Props) {
             <div className="mt-2">
               <img
                 src="/veepick-guide.png"
-                alt="Panel ustawień wtyczki veepick — pole Klucz API"
+                alt={t.settings.veepickGuideAlt}
                 className="rounded-lg border border-border max-w-lg w-full"
               />
             </div>

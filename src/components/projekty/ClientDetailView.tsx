@@ -104,7 +104,7 @@ interface Props {
 
 function formatDate(iso: string | null | undefined) {
   if (!iso) return null;
-  return new Date(iso).toLocaleDateString("pl-PL", { day: "numeric", month: "short", year: "numeric" });
+  return new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
 }
 
 // ── Sortable contact row (accounts tab) ───────────────────────────────────────
@@ -332,7 +332,7 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
 
   async function saveDrawer() {
     if (!drawerContact) return;
-    if (!drawerName.trim()) { toast.error("Imię jest wymagane"); return; }
+    if (!drawerName.trim()) { toast.error(t.projekty.nameRequired); return; }
     setSavingDrawer(true);
     try {
       const res = await fetch(`/api/clients/${initialClient.id}/contacts/${drawerContact.id}`, {
@@ -414,7 +414,7 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
   }
 
   async function removeContact(contactId: string) {
-    if (!await showConfirm("Czy na pewno chcesz usunąć ten kontakt?")) return;
+    if (!await showConfirm(t.projekty.confirmDeleteContact)) return;
     try {
       const res = await fetch(`/api/clients/${initialClient.id}/contacts/${contactId}`, { method: "DELETE" });
       if (!res.ok) throw new Error();
@@ -443,10 +443,10 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
         body: JSON.stringify({ userId }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error((data as { error?: string }).error || "Błąd wysyłania linku");
-      toast.success("Link dostępowy wysłany");
+      if (!res.ok) throw new Error((data as { error?: string }).error || t.projekty.linkSendError);
+      toast.success(t.projekty.linkSent);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Nie udało się wysłać linku");
+      toast.error(err instanceof Error ? err.message : t.projekty.linkSendFailed);
     } finally {
       setSendingLink((prev) => ({ ...prev, [key]: false }));
     }
@@ -461,18 +461,18 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
         body: JSON.stringify({ userId }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error((data as { error?: string }).error || "Błąd");
+      if (!res.ok) throw new Error((data as { error?: string }).error || t.projekty.linkCopyFailed);
       await navigator.clipboard.writeText((data as { link: string }).link);
-      toast.success("Link skopiowany do schowka");
+      toast.success(t.projekty.linkCopied);
     } catch {
-      toast.error("Nie udało się skopiować linku");
+      toast.error(t.projekty.linkCopyFailed);
     } finally {
       setCopyingLink((prev) => ({ ...prev, [userId]: false }));
     }
   }
 
   async function deactivateAccount(contact: Contact) {
-    if (!await showConfirm(`Czy na pewno chcesz dezaktywować konto klienta „${contact.name}"? Klient straci dostęp do panelu.`)) return;
+    if (!await showConfirm(t.projekty.confirmDeactivateAccount.replace("{name}", contact.name))) return;
     setDeactivatingAccount((prev) => ({ ...prev, [contact.id]: true }));
     try {
       const res = await fetch(`/api/clients/${initialClient.id}/contacts/${contact.id}`, {
@@ -481,11 +481,11 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
         body: JSON.stringify({ action: "deactivate" }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error((data as { error?: string }).error || "Błąd dezaktywacji");
+      if (!res.ok) throw new Error((data as { error?: string }).error || t.projekty.deactivationError);
       setContacts((prev) => prev.map((c) => c.id === contact.id ? { ...c, userId: null, user: null } : c));
-      toast.success("Konto zostało dezaktywowane");
+      toast.success(t.projekty.accountDeactivated);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Błąd dezaktywacji");
+      toast.error(err instanceof Error ? err.message : t.projekty.deactivationError);
     } finally {
       setDeactivatingAccount((prev) => ({ ...prev, [contact.id]: false }));
     }
@@ -502,7 +502,7 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
       if (!res.ok) throw new Error();
     } catch {
       setContacts((prev) => prev.map((c) => c.id === contactId ? { ...c, emailNotifications: !value } : c));
-      toast.error("Nie udało się zmienić ustawień powiadomień");
+      toast.error(t.projekty.notificationSettingsError);
     }
   }
 
@@ -532,7 +532,7 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
   }
 
   async function addContactAccount() {
-    if (!addAccountContactId) { toast.error("Wybierz kontakt"); return; }
+    if (!addAccountContactId) { toast.error(t.projekty.selectContact); return; }
     const contact = contacts.find((c) => c.id === addAccountContactId);
     const email = addAccountEmail.trim() || contact?.email || "";
     setAddingAccount(true);
@@ -630,13 +630,13 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
                 : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
-            {tab === "info" && "Informacje o kliencie"}
-            {tab === "accounts" && "Konto klienta"}
+            {tab === "info" && t.projekty.tabClientInfo}
+            {tab === "accounts" && t.projekty.tabClientAccount}
             {tab === "payments" && t.projekty.tabPayments}
             {tab === "schedule" && t.projekty.tabSchedule}
-            {tab === "history" && "Historia klienta"}
+            {tab === "history" && t.projekty.tabClientHistory}
             {tab === "documents" && t.projekty.tabDocuments}
-            {tab === "settings" && "Ustawienia klienta"}
+            {tab === "settings" && t.projekty.tabClientSettings}
           </button>
         ))}
       </div>
@@ -646,19 +646,19 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
         <div className="pt-4">
           {/* Created date */}
           <p className="text-[12px] text-muted-foreground mb-[18px]">
-            Utworzono: {new Date(initialClient.createdAt).toLocaleDateString("pl-PL", { day: "numeric", month: "long", year: "numeric" })}
+            {t.projekty.createdLabel} {new Date(initialClient.createdAt).toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" })}
           </p>
 
           {/* Contacts section */}
           <div className="border-t border-border pt-4 mb-[18px]">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-[13px] font-bold text-foreground">Kontakty</h2>
+              <h2 className="text-[13px] font-bold text-foreground">{t.projekty.contactsHeading}</h2>
               <button
                 onClick={() => setShowAddContact((v) => !v)}
                 className="inline-flex items-center gap-1 text-[12px] font-semibold text-white bg-primary rounded-lg px-3 py-1.5 hover:bg-primary/90 transition-colors"
               >
                 <Plus size={15} />
-                Dodaj
+                {t.common.add}
               </button>
             </div>
 
@@ -672,8 +672,8 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
                     <Input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Jan Kowalski" autoFocus className="border-border rounded-lg" />
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-[12.5px] font-medium">Rola</Label>
-                    <Input value={newDescription} onChange={(e) => setNewDescription(e.target.value)} placeholder="np. Inwestor, Architekt..." className="border-border rounded-lg" />
+                    <Label className="text-[12.5px] font-medium">{t.projekty.roleLabel}</Label>
+                    <Input value={newDescription} onChange={(e) => setNewDescription(e.target.value)} placeholder={t.projekty.rolePlaceholder} className="border-border rounded-lg" />
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <div className="space-y-1">
@@ -727,7 +727,7 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
                           {contact.name}
                           {isMain && (
                             <span className="text-[10px] font-bold bg-primary text-white px-2 py-0.5 rounded-full tracking-wide">
-                              GŁÓWNY
+                              {t.projekty.mainBadge}
                             </span>
                           )}
                         </p>
@@ -783,14 +783,14 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
                                 className="w-full flex items-center gap-2 text-[12.5px] font-medium px-[10px] py-2 rounded-md hover:bg-[#FAFAFB] dark:hover:bg-muted transition-colors text-left"
                               >
                                 <Pencil size={15} />
-                                Edytuj
+                                {t.projekty.editContactShort}
                               </button>
                               <button
                                 onClick={() => { setOpenMenuId(null); removeContact(contact.id); }}
                                 className="w-full flex items-center gap-2 text-[12.5px] font-medium px-[10px] py-2 rounded-md hover:bg-[#FAFAFB] dark:hover:bg-muted transition-colors text-left text-destructive"
                               >
                                 <Trash2 size={15} />
-                                Usuń
+                                {t.projekty.deleteContact}
                               </button>
                             </div>
                           )}
@@ -809,7 +809,7 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
               onClick={() => toggleAccordion("info")}
               className="w-full flex items-center justify-between px-[18px] py-[14px] bg-[#FAFAFB] dark:bg-muted/30 text-left"
             >
-              <span className="text-[11px] font-bold tracking-[0.05em] uppercase text-muted-foreground">Informacje o kliencie</span>
+              <span className="text-[11px] font-bold tracking-[0.05em] uppercase text-muted-foreground">{t.projekty.tabClientInfo}</span>
               <ChevronDown
                 size={18}
                 className={`text-muted-foreground transition-transform duration-150 ${accordionOpen["info"] ? "rotate-180" : ""}`}
@@ -821,13 +821,13 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
                 {clientDescription && <p className="text-[11px] text-muted-foreground">{clientDescription}</p>}
                 {(clientStartDate || clientEndDate) && (
                   <p className="text-[11px] text-muted-foreground">
-                    {clientStartDate && `Od: ${formatDate(clientStartDate + "T00:00:00")}`}
+                    {clientStartDate && `${t.projekty.fromDateShort} ${formatDate(clientStartDate + "T00:00:00")}`}
                     {clientStartDate && clientEndDate && " · "}
-                    {clientEndDate && `Do: ${formatDate(clientEndDate + "T00:00:00")}`}
+                    {clientEndDate && `${t.projekty.toDateShort} ${formatDate(clientEndDate + "T00:00:00")}`}
                   </p>
                 )}
                 {!clientDescription && !clientStartDate && !clientEndDate && (
-                  <p className="text-[11px] text-muted-foreground">Brak szczegółowych danych</p>
+                  <p className="text-[11px] text-muted-foreground">{t.projekty.noDetailedData}</p>
                 )}
               </div>
             )}
@@ -866,7 +866,7 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
               onClick={() => toggleAccordion("address")}
               className="w-full flex items-center justify-between px-[18px] py-[14px] bg-[#FAFAFB] dark:bg-muted/30 text-left"
             >
-              <span className="text-[11px] font-bold tracking-[0.05em] uppercase text-muted-foreground">Adres inwestycji</span>
+              <span className="text-[11px] font-bold tracking-[0.05em] uppercase text-muted-foreground">{t.projekty.accordionInvestmentAddress}</span>
               <ChevronDown
                 size={18}
                 className={`text-muted-foreground transition-transform duration-150 ${accordionOpen["address"] ? "rotate-180" : ""}`}
@@ -884,7 +884,7 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
                     )}
                   </>
                 ) : (
-                  <p className="text-[11px] text-muted-foreground">Brak adresu inwestycji</p>
+                  <p className="text-[11px] text-muted-foreground">{t.projekty.noInvestmentAddress}</p>
                 )}
               </div>
             )}
@@ -919,7 +919,7 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
 
           {/* Modules card */}
           <div className="bg-white dark:bg-card border border-border rounded-[12px] px-5 py-[18px]">
-            <p className="text-[11px] font-bold tracking-[0.04em] uppercase text-muted-foreground mb-[14px]">Moduły</p>
+            <p className="text-[11px] font-bold tracking-[0.04em] uppercase text-muted-foreground mb-[14px]">{t.projekty.modulesHeading}</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-[14px]">
               {/* RenderFlow */}
               <div className="border border-border rounded-[10px] p-[14px]">
@@ -931,7 +931,7 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
                     <h4 className="text-[13.5px] font-semibold flex items-center gap-1.5">
                       {t.projekty.moduleRenderflow}
                       <span className={`text-[10.5px] font-bold px-2 py-0.5 rounded-full ${!hiddenModules.includes("renderflow") ? "bg-[#dcfce7] text-[#16a34a]" : "bg-muted text-muted-foreground"}`}>
-                        {!hiddenModules.includes("renderflow") ? "Aktywny" : t.projekty.moduleHidden}
+                        {!hiddenModules.includes("renderflow") ? t.projekty.moduleStatusActive : t.projekty.moduleHidden}
                       </span>
                     </h4>
                     <p className="text-[11.5px] text-muted-foreground mt-0.5">{t.projekty.moduleDescRenderflow}</p>
@@ -959,7 +959,7 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
                     <h4 className="text-[13.5px] font-semibold flex items-center gap-1.5">
                       {t.projekty.moduleLists}
                       <span className={`text-[10.5px] font-bold px-2 py-0.5 rounded-full ${!hiddenModules.includes("listy") ? "bg-[#dcfce7] text-[#16a34a]" : "bg-muted text-muted-foreground"}`}>
-                        {!hiddenModules.includes("listy") ? "Aktywny" : t.projekty.moduleHidden}
+                        {!hiddenModules.includes("listy") ? t.projekty.moduleStatusActive : t.projekty.moduleHidden}
                       </span>
                     </h4>
                     <p className="text-[11.5px] text-muted-foreground mt-0.5">{t.projekty.moduleDescLists}</p>
@@ -983,22 +983,22 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
           {/* Info note */}
           <div className="flex items-start gap-[10px] bg-[#EEF2FF] dark:bg-indigo-950/40 border border-[#E0E7FF] dark:border-indigo-800 rounded-[10px] px-[14px] py-3 mb-4">
             <Info size={18} className="text-primary flex-shrink-0 mt-[1px]" />
-            <p className="text-[12.5px] text-foreground leading-relaxed">Konto umożliwia klientowi dostęp do panelu projektu przez indywidualny link lub hasło. Link jest stały i nie wygasa.</p>
+            <p className="text-[12.5px] text-foreground leading-relaxed">{t.projekty.accountInfoNote}</p>
           </div>
 
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Konto klienta</h2>
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">{t.projekty.accountsHeading}</h2>
             <Button size="sm" className="gap-1.5" onClick={() => setShowAddAccount((v) => !v)}>
               <Plus size={13} />
-              Dodaj konto
+              {t.projekty.addAccountBtn}
             </Button>
           </div>
 
           {showAddAccount && (
             <div className="mb-4 p-4 border border-border rounded-xl bg-muted/30 space-y-3">
-              <p className="text-sm font-medium">Dodaj konto dostępowe</p>
+              <p className="text-sm font-medium">{t.projekty.addAccessAccount}</p>
               <div className="space-y-1.5">
-                <Label className="text-xs">Wybierz kontakt</Label>
+                <Label className="text-xs">{t.projekty.selectContactLabel}</Label>
                 <div className="relative" ref={contactDropdownRef}>
                   <button
                     type="button"
@@ -1007,8 +1007,8 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
                   >
                     <span className={addAccountContactId ? "text-foreground" : "text-muted-foreground"}>
                       {addAccountContactId
-                        ? (() => { const c = contacts.find((c) => c.id === addAccountContactId); return c ? `${c.name}${c.email ? ` (${c.email})` : ""}` : "— wybierz kontakt —"; })()
-                        : "— wybierz kontakt —"}
+                        ? (() => { const c = contacts.find((c) => c.id === addAccountContactId); return c ? `${c.name}${c.email ? ` (${c.email})` : ""}` : t.projekty.selectContactPlaceholder; })()
+                        : t.projekty.selectContactPlaceholder}
                     </span>
                     <ChevronDown size={14} className="text-muted-foreground flex-shrink-0" />
                   </button>
@@ -1019,7 +1019,7 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
                         onClick={() => { setAddAccountContactId(""); setAddAccountEmail(""); setContactDropdownOpen(false); }}
                         className="w-full px-3 py-2 text-sm text-left text-muted-foreground hover:bg-muted transition-colors"
                       >
-                        — wybierz kontakt —
+                        {t.projekty.selectContactPlaceholder}
                       </button>
                       {contacts.filter((c) => !c.userId).map((c) => (
                         <button
@@ -1041,9 +1041,9 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
               </div>
               {addAccountContactId && (
                 <div className="space-y-1.5">
-                  <Label className="text-xs">E-mail logowania</Label>
-                  <Input type="email" value={addAccountEmail} onChange={(e) => setAddAccountEmail(e.target.value)} placeholder="email@domena.pl (opcjonalnie)" className="h-8 text-sm" />
-                  <p className="text-xs text-muted-foreground">Pozostaw puste, jeśli kontakt ma już przypisany e-mail</p>
+                  <Label className="text-xs">{t.projekty.loginEmailLabel}</Label>
+                  <Input type="email" value={addAccountEmail} onChange={(e) => setAddAccountEmail(e.target.value)} placeholder={t.projekty.emailPlaceholderOptional} className="h-8 text-sm" />
+                  <p className="text-xs text-muted-foreground">{t.projekty.emailOptionalHint}</p>
                 </div>
               )}
               <div className="flex gap-2 justify-end">
@@ -1057,7 +1057,7 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
 
           {contacts.filter((c) => c.userId).length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              <p className="text-sm">Brak kont. Kliknij „Dodaj konto" aby przypisać dostęp do jednego z kontaktów.</p>
+              <p className="text-sm">{t.projekty.noAccountsHint}</p>
             </div>
           ) : (
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleContactDragEnd}>
@@ -1080,11 +1080,11 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
                                 <span className="text-[11px] px-1.5 py-0.5 rounded-md bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 font-medium">{t.projekty.noAccount}</span>
                               )}
                               {contact.userId && contact.user && !contact.user.firstLoginAt && (
-                                <span className="text-[11px] px-1.5 py-0.5 rounded-md bg-muted text-muted-foreground font-medium">Nie aktywowano</span>
+                                <span className="text-[11px] px-1.5 py-0.5 rounded-md bg-muted text-muted-foreground font-medium">{t.projekty.accountNotActivated}</span>
                               )}
                               {contact.userId && contact.user?.firstLoginAt && (
                                 <span className="text-[11px] px-1.5 py-0.5 rounded-md bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 font-medium flex items-center gap-1">
-                                  <CheckCircle size={10} />Aktywne
+                                  <CheckCircle size={10} />{t.projekty.accountStatusActive}
                                 </span>
                               )}
                             </div>
@@ -1097,7 +1097,7 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem variant="destructive" onClick={() => deactivateAccount(contact)}>
-                                <Trash2 size={14} />Dezaktywuj konto
+                                <Trash2 size={14} />{t.projekty.deactivateAccountLabel}
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -1108,10 +1108,10 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
                             <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                               <span className="flex items-center gap-1 text-xs text-muted-foreground"><KeyRound size={11} /><span className="font-mono">{contact.user.login}</span></span>
                               {contact.user.firstLoginAt && (
-                                <span className="flex items-center gap-1 text-xs text-muted-foreground"><CheckCircle size={11} />Aktywny od: {formatDate(contact.user.firstLoginAt)}</span>
+                                <span className="flex items-center gap-1 text-xs text-muted-foreground"><CheckCircle size={11} />{t.projekty.activeSinceLabel} {formatDate(contact.user.firstLoginAt)}</span>
                               )}
                               {contact.lastLoginAt && (
-                                <span className="flex items-center gap-1 text-xs text-muted-foreground"><Clock size={11} />Ostatnio aktywny: {formatDate(contact.lastLoginAt)}</span>
+                                <span className="flex items-center gap-1 text-xs text-muted-foreground"><Clock size={11} />{t.projekty.lastActiveLabel} {formatDate(contact.lastLoginAt)}</span>
                               )}
                             </div>
                             {(contact.email || (contact.user.email && !contact.user.email.endsWith(".internal"))) && (
@@ -1121,14 +1121,14 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
                                   disabled={!!sendingLink[contact.id]}
                                   onClick={() => sendAccessLink(contact.user!.id, contact.id)}
                                 >
-                                  <Send size={11} />{sendingLink[contact.id] ? "Wysyłanie..." : "Wyślij link"}
+                                  <Send size={11} />{sendingLink[contact.id] ? t.projekty.sendingLinkLabel : t.projekty.sendLinkLabel}
                                 </button>
                                 <button
                                   className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg border border-border text-foreground hover:bg-muted transition-colors disabled:opacity-50"
                                   disabled={!!copyingLink[contact.user.id]}
                                   onClick={() => copyAccessLink(contact.user!.id)}
                                 >
-                                  <Copy size={11} />{copyingLink[contact.user.id] ? "Kopiowanie..." : "Kopiuj link"}
+                                  <Copy size={11} />{copyingLink[contact.user.id] ? t.projekty.copyingLinkLabel : t.projekty.copyLinkLabel}
                                 </button>
                               </div>
                             )}
@@ -1138,9 +1138,9 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
                                 checked={contact.emailNotifications ?? false}
                                 onCheckedChange={(val) => toggleEmailNotifications(contact.id, val)}
                               />
-                              <span className="text-xs text-muted-foreground">Powiadomienia e-mail</span>
+                              <span className="text-xs text-muted-foreground">{t.projekty.emailNotificationsLabel}</span>
                               <span
-                                title="Gdy włączone, kontakt otrzyma e-mail z linkiem przy każdym udostępnieniu listy zakupowej przez projektanta."
+                                title={t.projekty.emailNotificationsHint}
                                 className="flex items-center text-muted-foreground/60 hover:text-muted-foreground cursor-help"
                               >
                                 <Info size={12} />
@@ -1154,7 +1154,7 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
                             <div className="flex items-center gap-2 flex-wrap">
                               {!contact.email && (
                                 <p className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1 flex-1 min-w-0">
-                                  <Info size={11} className="flex-shrink-0" /><span>Brak adresu e-mail - dodaj, aby utworzyć konto.</span>
+                                  <Info size={11} className="flex-shrink-0" /><span>{t.projekty.noEmailForAccount}</span>
                                 </p>
                               )}
                               <button
@@ -1171,7 +1171,7 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
                                     <Button size="sm" className="h-7 text-xs" disabled={!!creatingAccount[contact.id]} onClick={() => createContactAccount(contact.id)}>
                                       {creatingAccount[contact.id] ? t.projekty.creatingAccount : t.projekty.createAccount}
                                     </Button>
-                                    <span className="text-xs text-muted-foreground">dla {contact.email}</span>
+                                    <span className="text-xs text-muted-foreground">{t.projekty.forEmailPrefix} {contact.email}</span>
                                   </div>
                                 ) : (
                                   <>
@@ -1184,7 +1184,7 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
                                     </div>
                                   </>
                                 )}
-                                <p className="text-xs text-muted-foreground">Klient zaloguje się przez link wysłany e-mailem.</p>
+                                <p className="text-xs text-muted-foreground">{t.projekty.clientLoginViaEmail}</p>
                               </div>
                             )}
                           </div>
@@ -1205,7 +1205,7 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
           <PaymentsTab clientId={mainContact.id} paymentsSharedWithClient={false} defaultCurrency={defaultCurrency} />
         ) : (
           <div className="bg-card border border-border rounded-xl p-10 text-center text-muted-foreground mt-4">
-            <p className="text-sm">{t.projekty.addContactHint} <button onClick={() => setActiveTab("accounts")} className="underline hover:no-underline">Konto klienta</button>, {t.projekty.paymentsConfigSuffix}</p>
+            <p className="text-sm">{t.projekty.addContactHint} <button onClick={() => setActiveTab("accounts")} className="underline hover:no-underline">{t.projekty.tabClientAccount}</button>, {t.projekty.paymentsConfigSuffix}</p>
           </div>
         )
       )}
@@ -1216,7 +1216,7 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
           <ScheduleTab clientId={mainContact.id} projectId={mainContact.projectId ?? undefined} scheduleSharedWithClient={mainContact.scheduleSharedWithClient} />
         ) : (
           <div className="bg-card border border-border rounded-xl p-10 text-center text-muted-foreground mt-4">
-            <p className="text-sm">{t.projekty.addContactHint} <button onClick={() => setActiveTab("accounts")} className="underline hover:no-underline">Konto klienta</button>, {t.projekty.scheduleConfigSuffix}</p>
+            <p className="text-sm">{t.projekty.addContactHint} <button onClick={() => setActiveTab("accounts")} className="underline hover:no-underline">{t.projekty.tabClientAccount}</button>, {t.projekty.scheduleConfigSuffix}</p>
           </div>
         )
       )}
@@ -1229,7 +1229,7 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
           </section>
         ) : (
           <div className="bg-card border border-border rounded-xl p-10 text-center text-muted-foreground mt-4">
-            <p className="text-sm">{t.projekty.addContactHint} <button onClick={() => setActiveTab("accounts")} className="underline hover:no-underline">Konto klienta</button>, {t.projekty.documentsConfigSuffix}</p>
+            <p className="text-sm">{t.projekty.addContactHint} <button onClick={() => setActiveTab("accounts")} className="underline hover:no-underline">{t.projekty.tabClientAccount}</button>, {t.projekty.documentsConfigSuffix}</p>
           </div>
         )
       )}
@@ -1245,8 +1245,8 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
       {activeTab === "settings" && (
         <section className="bg-card border border-border rounded-xl p-5 space-y-4 mt-4">
           <div>
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground mb-1">Kolor klienta</h2>
-            <p className="text-sm text-muted-foreground">Kolor pojawia się na liście klientów i kafelkach projektów przypisanych do tego klienta.</p>
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground mb-1">{t.projekty.clientColorHeading}</h2>
+            <p className="text-sm text-muted-foreground">{t.projekty.clientColorDescription}</p>
           </div>
           <div className="flex flex-wrap gap-3 items-center">
             {ACCENT_HUES.map((hue) => {
@@ -1267,7 +1267,7 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
             })}
             <div className="w-px h-8 bg-border" />
             <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">Własny:</span>
+              <span className="text-sm text-muted-foreground">{t.projekty.customColorLabel}</span>
               <div style={accentColor?.startsWith("#") ? { outline: `3px solid ${customHex}`, outlineOffset: "2px", borderRadius: "10px" } : {}}>
                 <ColorPicker
                   value={customHex}
@@ -1296,7 +1296,7 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
           <div className="fixed right-0 top-0 h-full w-[380px] bg-white dark:bg-card shadow-[-16px_0_40px_-20px_rgba(24,24,50,0.35)] z-50 flex flex-col">
             {/* Header */}
             <div className="flex items-center justify-between px-5 py-[18px] border-b border-border flex-shrink-0">
-              <h3 className="text-[15px] font-semibold">Edytuj kontakt</h3>
+              <h3 className="text-[15px] font-semibold">{t.projekty.editContactTitle}</h3>
               <button
                 onClick={closeDrawer}
                 className="w-[30px] h-[30px] rounded-lg flex items-center justify-center text-muted-foreground hover:bg-[#FAFAFB] dark:hover:bg-muted transition-colors"
@@ -1319,7 +1319,7 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
 
               {/* Fields */}
               <div className="space-y-1.5">
-                <Label className="text-[12.5px] font-medium">Imię i nazwisko</Label>
+                <Label className="text-[12.5px] font-medium">{t.projekty.fullNameLabel}</Label>
                 <Input
                   value={drawerName}
                   onChange={(e) => setDrawerName(e.target.value)}
@@ -1328,16 +1328,16 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
                 />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-[12.5px] font-medium">Rola</Label>
+                <Label className="text-[12.5px] font-medium">{t.projekty.roleLabel}</Label>
                 <Input
                   value={drawerRole}
                   onChange={(e) => setDrawerRole(e.target.value)}
-                  placeholder="np. Inwestor, Architekt..."
+                  placeholder={t.projekty.rolePlaceholder}
                   className="border-border rounded-lg"
                 />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-[12.5px] font-medium">Adres e-mail</Label>
+                <Label className="text-[12.5px] font-medium">{t.projekty.emailAddressLabel}</Label>
                 <Input
                   type="email"
                   value={drawerEmail}
@@ -1346,7 +1346,7 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
                 />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-[12.5px] font-medium">Numer telefonu</Label>
+                <Label className="text-[12.5px] font-medium">{t.projekty.phoneNumberLabel}</Label>
                 <Input
                   value={drawerPhone}
                   onChange={(e) => setDrawerPhone(e.target.value)}
@@ -1363,23 +1363,23 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
                     onChange={(e) => setDrawerIsMain(e.target.checked)}
                     className="rounded border-border w-4 h-4"
                   />
-                  Ustaw jako kontakt główny
+                  {t.projekty.setAsMainContact}
                 </label>
                 <p className="text-[12.5px] text-muted-foreground ml-6">
-                  Kontakt główny jest wyróżniony na liście i widoczny jako pierwszy punkt kontaktu.
+                  {t.projekty.mainContactExplanation}
                 </p>
               </div>
 
               {/* Danger zone */}
               {!drawerContact.isMainContact && (
                 <div className="mt-[22px] pt-[18px] border-t border-border">
-                  <p className="text-[11px] font-bold tracking-[0.04em] uppercase text-destructive mb-2">Strefa zagrożenia</p>
+                  <p className="text-[11px] font-bold tracking-[0.04em] uppercase text-destructive mb-2">{t.projekty.dangerZone}</p>
                   <button
                     onClick={() => { closeDrawer(); removeContact(drawerContact.id); }}
                     className="inline-flex items-center gap-1.5 text-[12.5px] font-semibold px-[14px] py-[9px] rounded-lg border border-red-200 bg-[#fef2f2] text-destructive hover:bg-red-100 transition-colors"
                   >
                     <Trash2 size={14} />
-                    Usuń kontakt
+                    {t.projekty.deleteContactButton}
                   </button>
                 </div>
               )}
@@ -1391,14 +1391,14 @@ export default function ClientDetailView({ client: initialClient, defaultCurrenc
                 onClick={closeDrawer}
                 className="border border-border rounded-lg px-4 py-[9px] text-[13px] font-semibold text-foreground bg-white dark:bg-card hover:bg-muted transition-colors"
               >
-                Anuluj
+                {t.common.cancel}
               </button>
               <button
                 onClick={saveDrawer}
                 disabled={savingDrawer || !drawerName.trim()}
                 className="bg-primary text-white rounded-lg px-4 py-[9px] text-[13px] font-semibold hover:bg-primary/90 transition-colors disabled:opacity-60"
               >
-                {savingDrawer ? t.common.saving : "Zapisz zmiany"}
+                {savingDrawer ? t.common.saving : t.projekty.saveChanges}
               </button>
             </div>
           </div>

@@ -23,6 +23,7 @@ import {
 import { cn } from "@/lib/utils";
 import { parseImportFile, type FieldMapping, type ParsedRow, type ParseResult } from "@/lib/list-import-parser";
 import { useUploadThing } from "@/lib/uploadthing-client";
+import { useT } from "@/lib/i18n";
 
 // ---------------------------------------------------------------------------
 // MappingSelect — custom select using app's DropdownMenu
@@ -33,11 +34,13 @@ function MappingSelect({
   onChange,
   headers,
   isRequired = false,
+  doNotImportLabel,
 }: {
   value: string | null;
   onChange: (v: string | null) => void;
   headers: string[];
   isRequired?: boolean;
+  doNotImportLabel: string;
 }) {
   const isMapped = !!value;
 
@@ -59,14 +62,14 @@ function MappingSelect({
         }
       >
         <span className={cn("truncate text-left flex-1 min-w-0", isMapped ? "text-foreground" : "text-muted-foreground")}>
-          {value || "(nie importuj)"}
+          {value || doNotImportLabel}
         </span>
         <ChevronDown size={14} className="text-muted-foreground shrink-0" />
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="start" className="max-h-72 overflow-y-auto">
         <DropdownMenuItem onClick={() => onChange(null)}>
-          <span className="text-muted-foreground">(nie importuj)</span>
+          <span className="text-muted-foreground">{doNotImportLabel}</span>
           {!isMapped && <Check size={13} className="ml-auto text-muted-foreground shrink-0" />}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
@@ -99,22 +102,23 @@ interface ClientItem {
   projects: { id: string; title: string; slug: string | null }[];
 }
 
-const VEEDECK_FIELDS: Array<{ key: keyof FieldMapping; label: string; required?: boolean }> = [
-  { key: "name", label: "Nazwa produktu", required: true },
-  { key: "section", label: "Sekcja / Pokój" },
-  { key: "manufacturer", label: "Producent / Marka" },
-  { key: "color", label: "Kolor / Wykończenie" },
-  { key: "dimensions", label: "Wymiary" },
-  { key: "price", label: "Cena jednostkowa" },
-  { key: "quantity", label: "Ilość" },
-  { key: "unit", label: "Jednostka miary" },
-  { key: "deliveryTime", label: "Czas dostawy" },
-  { key: "catalogNumber", label: "Nr katalogowy / Symbol" },
-  { key: "supplier", label: "Dostawca / Sklep" },
-  { key: "category", label: "Kategoria" },
-  { key: "url", label: "URL / Link do produktu" },
-  { key: "description", label: "Opis" },
-  { key: "note", label: "Notatka / Uwagi" },
+type VeedeckFieldDef = { key: keyof FieldMapping; labelKey: string; required?: boolean };
+const VEEDECK_FIELD_KEYS: VeedeckFieldDef[] = [
+  { key: "name", labelKey: "importFieldName", required: true },
+  { key: "section", labelKey: "importFieldSection" },
+  { key: "manufacturer", labelKey: "importFieldManufacturer" },
+  { key: "color", labelKey: "importFieldColor" },
+  { key: "dimensions", labelKey: "importFieldDimensions" },
+  { key: "price", labelKey: "importFieldPrice" },
+  { key: "quantity", labelKey: "importFieldQuantity" },
+  { key: "unit", labelKey: "importFieldUnit" },
+  { key: "deliveryTime", labelKey: "importFieldDelivery" },
+  { key: "catalogNumber", labelKey: "importFieldCatalogNumber" },
+  { key: "supplier", labelKey: "importFieldSupplier" },
+  { key: "category", labelKey: "importFieldCategory" },
+  { key: "url", labelKey: "importFieldUrl" },
+  { key: "description", labelKey: "importFieldDescription" },
+  { key: "note", labelKey: "importFieldNote" },
 ];
 
 // ---------------------------------------------------------------------------
@@ -143,7 +147,7 @@ function applyMapping(
     const productIndex = globalIndex++;
 
     const product: Record<string, string | number | undefined> = {};
-    for (const { key } of VEEDECK_FIELDS) {
+    for (const { key } of VEEDECK_FIELD_KEYS) {
       const col = mapping[key];
       if (col && row.cells[col] !== undefined) {
         if (key === "quantity") {
@@ -181,6 +185,7 @@ interface ImportListDialogProps {
 
 export default function ImportListDialog({ open, onOpenChange }: ImportListDialogProps) {
   const router = useRouter();
+  const t = useT();
   const { startUpload } = useUploadThing("listImportImageUploader");
 
   const [step, setStep] = useState<Step>("upload");
@@ -243,11 +248,11 @@ export default function ImportListDialog({ open, onOpenChange }: ImportListDialo
   const handleFile = useCallback(async (file: File) => {
     const ext = file.name.split(".").pop()?.toLowerCase();
     if (!ext || !["xlsx", "csv"].includes(ext)) {
-      setParseError("Obsługujemy tylko pliki .xlsx i .csv");
+      setParseError(t.listy.importOnlyXlsxCsv);
       return;
     }
     if (file.size > 20 * 1024 * 1024) {
-      setParseError("Plik jest za duży — maksymalnie 20 MB");
+      setParseError(t.listy.importFileTooLarge);
       return;
     }
 
@@ -256,7 +261,7 @@ export default function ImportListDialog({ open, onOpenChange }: ImportListDialo
     try {
       const result = await parseImportFile(file);
       if (result.rows.length === 0) {
-        setParseError("W pliku nie znaleziono żadnych produktów");
+        setParseError(t.listy.importNoProducts);
         return;
       }
       setParseResult(result);
@@ -265,11 +270,11 @@ export default function ImportListDialog({ open, onOpenChange }: ImportListDialo
       setStep("mapping");
     } catch (e) {
       console.error(e);
-      setParseError("Nie udało się odczytać pliku. Upewnij się, że to prawidłowy plik .xlsx lub .csv");
+      setParseError(t.listy.importReadError);
     } finally {
       setIsParsing(false);
     }
-  }, []);
+  }, [t]);
 
   const onDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -317,7 +322,7 @@ export default function ImportListDialog({ open, onOpenChange }: ImportListDialo
     if (!parseResult || !mapping.name) return;
 
     setStep("importing");
-    setImportProgress({ current: 0, total: 0, phase: "Przygotowuję dane..." });
+    setImportProgress({ current: 0, total: 0, phase: t.listy.importPreparingData });
 
     try {
       const { sections, imageBlobs } = applyMapping(parseResult.rows, mapping);
@@ -338,7 +343,7 @@ export default function ImportListDialog({ open, onOpenChange }: ImportListDialo
 
       if (imageBlobs.size > 0) {
         const imageEntries = Array.from(imageBlobs.entries());
-        setImportProgress({ current: 0, total: imageEntries.length, phase: "Przesyłam zdjęcia..." });
+        setImportProgress({ current: 0, total: imageEntries.length, phase: t.listy.importUploadingPhotos });
 
         // Convert blobs to Files
         const imageFiles = imageEntries.map(([, blob], i) => {
@@ -352,7 +357,7 @@ export default function ImportListDialog({ open, onOpenChange }: ImportListDialo
           for (let i = 0; i < uploaded.length; i++) {
             const originalIndex = imageEntries[i][0];
             imageUrlMap.set(originalIndex, uploaded[i].url);
-            setImportProgress({ current: i + 1, total: imageEntries.length, phase: "Przesyłam zdjęcia..." });
+            setImportProgress({ current: i + 1, total: imageEntries.length, phase: t.listy.importUploadingPhotos });
           }
         }
       }
@@ -369,7 +374,7 @@ export default function ImportListDialog({ open, onOpenChange }: ImportListDialo
         }
       }
 
-      setImportProgress({ current: 0, total: 0, phase: "Tworzę listę..." });
+      setImportProgress({ current: 0, total: 0, phase: t.listy.importCreatingList });
 
       // Determine projectId/clientId
       let projectId: string | null = null;
@@ -395,15 +400,15 @@ export default function ImportListDialog({ open, onOpenChange }: ImportListDialo
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.error ?? "Błąd importu");
+        throw new Error(data.error ?? t.listy.importError);
       }
 
       const { slug, listId } = await res.json();
-      toast.success(`Lista zaimportowana — ${parseResult.rows.length} produktów`);
+      toast.success(t.listy.importSuccess.replace("{count}", String(parseResult.rows.length)));
       onOpenChange(false);
       router.push(`/listy-zakupowe/${slug ?? listId}`);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Wystąpił błąd — spróbuj ponownie");
+      toast.error(err instanceof Error ? err.message : t.listy.importGenericError);
       setStep("client");
     }
   }
@@ -572,7 +577,7 @@ export default function ImportListDialog({ open, onOpenChange }: ImportListDialo
     );
     const a = document.createElement("a");
     a.href = url;
-    a.download = "szablon-lista-zakupowa.xlsx";
+    a.download = "shopping-list-template.xlsx";
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -593,7 +598,7 @@ export default function ImportListDialog({ open, onOpenChange }: ImportListDialo
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Upload size={18} />
-            Importuj listę zakupową
+            {t.listy.importTitle}
           </DialogTitle>
         </DialogHeader>
 
@@ -603,8 +608,7 @@ export default function ImportListDialog({ open, onOpenChange }: ImportListDialo
         {step === "upload" && (
           <div className="space-y-5">
             <p className="text-sm text-muted-foreground">
-              Wgraj plik z listą zakupową z innego programu lub z wcześniejszego eksportu Veedeck.
-              Obsługujemy formaty <strong>.xlsx</strong> i <strong>.csv</strong>. Jeśli plik zawiera zdjęcia wklejone w komórki, zostaną one automatycznie zaimportowane.
+              {t.listy.importUploadDesc}
             </p>
 
             <div
@@ -621,7 +625,7 @@ export default function ImportListDialog({ open, onOpenChange }: ImportListDialo
               {isParsing ? (
                 <>
                   <div className="w-12 h-12 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-                  <p className="text-base text-muted-foreground">Analizuję plik...</p>
+                  <p className="text-base text-muted-foreground">{t.listy.importAnalyzing}</p>
                 </>
               ) : (
                 <>
@@ -630,9 +634,9 @@ export default function ImportListDialog({ open, onOpenChange }: ImportListDialo
                   </div>
                   <div className="text-center space-y-1">
                     <p className="text-base font-medium text-foreground">
-                      Przeciągnij plik tutaj lub kliknij, żeby wybrać
+                      {t.listy.importDragDrop}
                     </p>
-                    <p className="text-sm text-muted-foreground">.xlsx lub .csv · maksymalnie 20 MB</p>
+                    <p className="text-sm text-muted-foreground">{t.listy.importFileHint}</p>
                   </div>
                 </>
               )}
@@ -655,15 +659,15 @@ export default function ImportListDialog({ open, onOpenChange }: ImportListDialo
 
             <div className="flex items-center justify-center gap-1.5 text-sm text-muted-foreground">
               <Download size={14} className="shrink-0" />
-              <span>Nie masz jeszcze pliku?</span>
+              <span>{t.listy.importNoFile}</span>
               <button
                 type="button"
                 onClick={downloadTemplate}
                 className="text-primary font-medium hover:underline underline-offset-2"
               >
-                Pobierz szablon .xlsx
+                {t.listy.importDownloadTemplate}
               </button>
-              <span>i uzupełnij według wzorca</span>
+              <span>{t.listy.importFillTemplate}</span>
             </div>
           </div>
         )}
@@ -677,15 +681,15 @@ export default function ImportListDialog({ open, onOpenChange }: ImportListDialo
             <div className="flex items-center gap-3 p-4 rounded-xl bg-muted">
               <CheckCircle size={18} className="text-green-600 shrink-0" />
               <p className="text-sm text-muted-foreground">
-                Znaleziono{" "}
-                <strong className="text-foreground">{parseResult.rows.length} wierszy</strong>,{" "}
-                <strong className="text-foreground">{parseResult.headers.length} kolumn</strong>
-                {parseResult.format === "veedeck" && " · Format Veedeck"}
+                {t.listy.importFoundRows}{" "}
+                <strong className="text-foreground">{parseResult.rows.length} {t.listy.importRows}</strong>,{" "}
+                <strong className="text-foreground">{parseResult.headers.length} {t.listy.importColumns}</strong>
+                {parseResult.format === "veedeck" && ` · ${t.listy.importVeedeckFormat}`}
               </p>
               {parseResult.hasImages && (
                 <div className="ml-auto flex items-center gap-2 text-sm text-green-700 bg-green-50 dark:bg-green-950/30 dark:text-green-400 px-3 py-1.5 rounded-lg font-medium">
                   <Image size={14} />
-                  {parseResult.imageCount} zdjęć znalezionych
+                  {parseResult.imageCount} {t.listy.importPhotosFound}
                 </div>
               )}
             </div>
@@ -693,13 +697,13 @@ export default function ImportListDialog({ open, onOpenChange }: ImportListDialo
             {/* List name */}
             <div className="space-y-2">
               <Label htmlFor="import-list-name" className="text-sm font-semibold">
-                Nazwa listy <span className="text-destructive">*</span>
+                {t.listy.importListNameLabel} <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="import-list-name"
                 value={listName}
                 onChange={(e) => setListName(e.target.value)}
-                placeholder="np. Lista do salonu Kowalski"
+                placeholder={t.listy.importListNamePlaceholder}
                 className="text-base h-10"
               />
             </div>
@@ -707,30 +711,30 @@ export default function ImportListDialog({ open, onOpenChange }: ImportListDialo
             {/* Field mapping */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <Label className="text-sm font-semibold">Dopasowanie kolumn</Label>
+                <Label className="text-sm font-semibold">{t.listy.importColumnMapping}</Label>
                 <p className="text-xs text-muted-foreground">
-                  Prawa kolumna = kolumna z Twojego pliku
+                  {t.listy.importColumnHint}
                 </p>
               </div>
 
               <div className="border border-border rounded-xl overflow-hidden">
                 {/* Header */}
                 <div className="grid grid-cols-2 bg-muted px-5 py-3 text-xs font-semibold text-muted-foreground border-b border-border uppercase tracking-wide">
-                  <span>Pole w Veedeck</span>
-                  <span>Kolumna z pliku</span>
+                  <span>{t.listy.importFieldVeedeck}</span>
+                  <span>{t.listy.importFieldFile}</span>
                 </div>
 
                 <div className="divide-y divide-border">
-                  {VEEDECK_FIELDS.map(({ key, label, required }) => (
+                  {VEEDECK_FIELD_KEYS.map(({ key, labelKey, required }) => (
                     <div
                       key={key}
                       className="grid grid-cols-2 items-center px-5 py-3.5 gap-4 hover:bg-muted/30 transition-colors"
                     >
                       <div className="flex items-center gap-2 min-w-0">
-                        <span className="text-sm font-medium text-foreground">{label}</span>
+                        <span className="text-sm font-medium text-foreground">{(t.listy as Record<string, string>)[labelKey]}</span>
                         {required && (
                           <span className="text-[10px] font-bold text-white bg-destructive px-1.5 py-0.5 rounded uppercase tracking-wider">
-                            wymagane
+                            {t.listy.importRequired}
                           </span>
                         )}
                       </div>
@@ -740,20 +744,21 @@ export default function ImportListDialog({ open, onOpenChange }: ImportListDialo
                         onChange={(v) => setMapping((prev) => ({ ...prev, [key]: v }))}
                         headers={parseResult.headers}
                         isRequired={required}
+                        doNotImportLabel={t.listy.importDoNotImport}
                       />
                     </div>
                   ))}
 
                   {/* Images — read-only row */}
                   <div className="grid grid-cols-2 items-center px-5 py-3.5 gap-4 bg-muted/20">
-                    <span className="text-sm font-medium text-foreground">Zdjęcie produktu</span>
+                    <span className="text-sm font-medium text-foreground">{t.listy.importProductImage}</span>
                     {parseResult.hasImages ? (
                       <div className="flex items-center gap-2 text-sm text-green-700 dark:text-green-400 font-medium">
                         <CheckCircle size={15} />
-                        {parseResult.imageCount} zdjęć — wykryte automatycznie
+                        {parseResult.imageCount} {t.listy.importImagesDetected}
                       </div>
                     ) : (
-                      <span className="text-sm text-muted-foreground">Brak zdjęć w pliku</span>
+                      <span className="text-sm text-muted-foreground">{t.listy.importNoImages}</span>
                     )}
                   </div>
                 </div>
@@ -765,21 +770,21 @@ export default function ImportListDialog({ open, onOpenChange }: ImportListDialo
               <p className="text-sm text-muted-foreground">
                 {mapping.name ? (
                   <>
-                    Gotowych do importu:{" "}
-                    <strong className="text-foreground text-base">{mappedCount} produktów</strong>
+                    {t.listy.importReadyCount}{" "}
+                    <strong className="text-foreground text-base">{mappedCount} {t.listy.importProducts}</strong>
                   </>
                 ) : (
                   <span className="text-destructive text-sm">
-                    ← Wybierz kolumnę &quot;Nazwa produktu&quot;, żeby kontynuować
+                    {t.listy.importSelectNameColumn}
                   </span>
                 )}
               </p>
               <div className="flex gap-3">
                 <Button variant="outline" size="lg" onClick={() => setStep("upload")}>
-                  Wróć
+                  {t.listy.importBack}
                 </Button>
                 <Button size="lg" onClick={handleProceedToSections} disabled={!canProceedMapping}>
-                  Dalej
+                  {t.listy.importNext}
                   <ChevronRight size={16} className="ml-1" />
                 </Button>
               </div>
@@ -793,17 +798,17 @@ export default function ImportListDialog({ open, onOpenChange }: ImportListDialo
         {step === "sections" && (
           <div className="space-y-6">
             <div>
-              <p className="text-base font-semibold text-foreground mb-1">Nazwy sekcji / pokoi</p>
+              <p className="text-base font-semibold text-foreground mb-1">{t.listy.importSectionsTitle}</p>
               <p className="text-sm text-muted-foreground">
-                Wykryto {detectedSections.length} sekcji. Zmień nazwy jeśli plik zapisał je niepoprawnie (np. jako nazwę produktu zamiast pokoju).
+                {t.listy.importSectionsDesc.replace("{count}", String(detectedSections.length))}
               </p>
             </div>
 
             <div className="border border-border rounded-xl overflow-hidden">
               <div className="grid grid-cols-[1fr_1fr_auto] bg-muted px-5 py-3 text-xs font-semibold text-muted-foreground border-b border-border uppercase tracking-wide gap-4">
-                <span>Wykryta nazwa</span>
-                <span>Nazwa po imporcie</span>
-                <span>Prod.</span>
+                <span>{t.listy.importDetectedName}</span>
+                <span>{t.listy.importNameAfterImport}</span>
+                <span>{t.listy.importProdShort}</span>
               </div>
               <div className="divide-y divide-border max-h-80 overflow-y-auto">
                 {detectedSections.map((section, i) => (
@@ -830,10 +835,10 @@ export default function ImportListDialog({ open, onOpenChange }: ImportListDialo
 
             <div className="flex items-center justify-between pt-1">
               <Button variant="outline" size="lg" onClick={() => setStep("mapping")}>
-                Wróć
+                {t.listy.importBack}
               </Button>
               <Button size="lg" onClick={() => setStep("client")}>
-                Dalej
+                {t.listy.importNext}
                 <ChevronRight size={16} className="ml-1" />
               </Button>
             </div>
@@ -846,9 +851,9 @@ export default function ImportListDialog({ open, onOpenChange }: ImportListDialo
         {step === "client" && (
           <div className="space-y-6">
             <div>
-              <p className="text-base font-semibold text-foreground mb-1">Przypisz do klienta</p>
+              <p className="text-base font-semibold text-foreground mb-1">{t.listy.importAssignClient}</p>
               <p className="text-sm text-muted-foreground">
-                Opcjonalne — możesz pominąć i przypisać klienta później z poziomu listy.
+                {t.listy.importAssignClientDesc}
               </p>
             </div>
 
@@ -873,7 +878,7 @@ export default function ImportListDialog({ open, onOpenChange }: ImportListDialo
                 <div className="relative">
                   <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
                   <Input
-                    placeholder="Szukaj klienta..."
+                    placeholder={t.listy.importSearchClient}
                     value={clientSearch}
                     onChange={(e) => setClientSearch(e.target.value)}
                     className="pl-10 h-10 text-sm"
@@ -881,10 +886,10 @@ export default function ImportListDialog({ open, onOpenChange }: ImportListDialo
                 </div>
                 <div className="max-h-60 overflow-y-auto rounded-xl border border-border">
                   {loadingClients ? (
-                    <p className="text-sm text-muted-foreground text-center py-8">Ładowanie...</p>
+                    <p className="text-sm text-muted-foreground text-center py-8">{t.listy.importLoading}</p>
                   ) : filteredClients.length === 0 ? (
                     <p className="text-sm text-muted-foreground text-center py-8">
-                      {clientSearch ? "Brak wyników" : "Brak klientów"}
+                      {clientSearch ? t.listy.importNoResults : t.listy.importNoClients}
                     </p>
                   ) : (
                     filteredClients.map((c, i) => (
@@ -912,43 +917,43 @@ export default function ImportListDialog({ open, onOpenChange }: ImportListDialo
 
             {/* Summary before import */}
             <div className="p-4 rounded-xl bg-muted/50 border border-border space-y-2.5">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Podsumowanie importu</p>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">{t.listy.importSummaryTitle}</p>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Nazwa listy</span>
+                <span className="text-sm text-muted-foreground">{t.listy.importSummaryListName}</span>
                 <span className="text-sm font-semibold truncate max-w-[250px]">{listName}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Produktów</span>
+                <span className="text-sm text-muted-foreground">{t.listy.importSummaryProducts}</span>
                 <span className="text-sm font-semibold">{mappedCount}</span>
               </div>
               {parseResult?.hasImages && (
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Zdjęcia</span>
+                  <span className="text-sm text-muted-foreground">{t.listy.importSummaryPhotos}</span>
                   <span className="text-sm font-semibold text-green-700 dark:text-green-400">
-                    {parseResult.imageCount} szt.
+                    {parseResult.imageCount} {t.listy.importPcsSuffix}
                   </span>
                 </div>
               )}
               <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Klient</span>
+                <span className="text-sm text-muted-foreground">{t.listy.importSummaryClient}</span>
                 <span className="text-sm font-semibold">{selectedClient?.name ?? "—"}</span>
               </div>
             </div>
 
             <div className="flex gap-3 justify-between pt-1">
               <Button variant="outline" size="lg" onClick={() => setStep(detectedSections.length > 1 ? "sections" : "mapping")}>
-                Wróć
+                {t.listy.importBack}
               </Button>
               <div className="flex gap-3">
                 {!selectedClient && (
                   <Button variant="ghost" size="lg" onClick={handleImport}>
-                    Pomiń i importuj
+                    {t.listy.importSkipAndImport}
                   </Button>
                 )}
                 <Button size="lg" onClick={handleImport}>
                   {parseResult?.hasImages
-                    ? `Importuj ${mappedCount} produktów + ${parseResult.imageCount} zdjęć`
-                    : `Importuj ${mappedCount} produktów`}
+                    ? t.listy.importImportWithPhotos.replace("{products}", String(mappedCount)).replace("{photos}", String(parseResult.imageCount))
+                    : t.listy.importImportProducts.replace("{count}", String(mappedCount))}
                 </Button>
               </div>
             </div>
@@ -966,7 +971,7 @@ export default function ImportListDialog({ open, onOpenChange }: ImportListDialo
               {importProgress.total > 0 && (
                 <>
                   <p className="text-sm text-muted-foreground">
-                    {importProgress.current} / {importProgress.total} zdjęć
+                    {importProgress.current} / {importProgress.total} {t.listy.importPhotosProgress}
                   </p>
                   <div className="w-64 h-2 bg-muted rounded-full overflow-hidden mt-3 mx-auto">
                     <div
@@ -977,7 +982,7 @@ export default function ImportListDialog({ open, onOpenChange }: ImportListDialo
                 </>
               )}
             </div>
-            <p className="text-sm text-muted-foreground">Nie zamykaj tego okna — trwa import</p>
+            <p className="text-sm text-muted-foreground">{t.listy.importDoNotClose}</p>
           </div>
         )}
       </DialogContent>

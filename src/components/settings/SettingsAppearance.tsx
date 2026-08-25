@@ -61,7 +61,7 @@ export function SettingsAppearance({
   async function handleCurrencyChange(currency: string) {
     setDefaultCurrencyState(currency);
     const res = await patchUser({ defaultCurrency: currency });
-    if (!res.ok) { toast.error("Nie udało się zapisać waluty"); setDefaultCurrencyState(defaultCurrency); }
+    if (!res.ok) { toast.error(t.settings.currencySaveError); setDefaultCurrencyState(defaultCurrency); }
     else router.refresh();
   }
   const [savingCustomTheme, setSavingCustomTheme] = useState(false);
@@ -189,14 +189,14 @@ export function SettingsAppearance({
   return (
     <div className="max-w-3xl space-y-10">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Wygląd</h1>
-        <p className="text-sm text-gray-500 mt-1">Motyw, interfejs, widoczność modułów i kolejność w sidebarze.</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t.settings.appearanceTitle}</h1>
+        <p className="text-sm text-gray-500 mt-1">{t.settings.appearanceSubtitle}</p>
       </div>
 
       {/* Motyw kolorystyczny */}
       <section className="space-y-4">
         <SectionHeader title={t.settings.colorTheme} />
-        <p className="text-sm text-muted-foreground -mt-1">Wybrany motyw obowiązuje w całej aplikacji — Twoi klienci widzą panel w tym samym motywie co Ty.</p>
+        <p className="text-sm text-muted-foreground -mt-1">{t.settings.colorThemeDesc}</p>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           {COLOR_THEMES.map(({ slug, name, subtitle, sidebar, background, primary, accent }) => {
             const active = colorTheme === slug;
@@ -231,11 +231,11 @@ export function SettingsAppearance({
                       <div className="h-1.5 w-1/2 rounded-sm opacity-50" style={{ background: customColors.primary }} />
                     </div>
                   </div>
-                  <p className={`text-sm font-semibold leading-tight ${active ? "text-primary" : "text-foreground"}`}>Własny motyw</p>
-                  <p className="text-xs text-muted-foreground mt-0.5 leading-tight">Dostosuj do swojego brandu</p>
+                  <p className={`text-sm font-semibold leading-tight ${active ? "text-primary" : "text-foreground"}`}>{t.settings.customTheme}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5 leading-tight">{t.settings.customThemeSubtitle}</p>
                 </button>
                 <button type="button" onClick={(e) => { e.stopPropagation(); setShowCustomEditor(true); }}
-                  className="absolute top-2 right-2 p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-black/10 dark:hover:bg-white/10 transition-colors" title="Edytuj motyw">
+                  className="absolute top-2 right-2 p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-black/10 dark:hover:bg-white/10 transition-colors" title={t.settings.editTheme}>
                   <Pencil size={13} />
                 </button>
               </div>
@@ -245,16 +245,16 @@ export function SettingsAppearance({
 
         {showCustomEditor && (
           <div className="bg-card border border-border rounded-2xl p-5 space-y-4">
-            <p className="text-sm font-semibold text-foreground">Dostosuj kolory motywu</p>
+            <p className="text-sm font-semibold text-foreground">{t.settings.customizeColors}</p>
             {([
               [
-                { key: "primary", label: "Kolor główny", desc: "Przyciski, linki, aktywne elementy" },
-                { key: "background", label: "Tło aplikacji", desc: "Główna powierzchnia treści" },
-                { key: "sidebar", label: "Sidebar", desc: "Tło paska bocznego i navbaru" },
+                { key: "primary", label: t.settings.colorPrimary, desc: t.settings.colorPrimaryDesc },
+                { key: "background", label: t.settings.colorBackground, desc: t.settings.colorBackgroundDesc },
+                { key: "sidebar", label: t.settings.colorSidebarBg, desc: t.settings.colorSidebarBgDesc },
               ],
               [
-                { key: "contentText", label: "Tekst główny", desc: "Kolor tekstu w ekranie wewnętrznym" },
-                { key: "sidebarText", label: "Tekst sidebar", desc: "Kolor tekstu w sidebar i navbarze" },
+                { key: "contentText", label: t.settings.colorContentText, desc: t.settings.colorContentTextDesc },
+                { key: "sidebarText", label: t.settings.colorSidebarText, desc: t.settings.colorSidebarTextDesc },
               ],
             ] as { key: keyof CustomThemeColors; label: string; desc: string }[][]).map((row, rowIdx) => (
               <div key={rowIdx} className="grid grid-cols-2 sm:grid-cols-3 gap-4">
@@ -276,9 +276,9 @@ export function SettingsAppearance({
               </div>
             ))}
             <div className="flex items-center gap-2 pt-1">
-              <Button onClick={handleSaveCustomTheme} disabled={savingCustomTheme} size="sm">{savingCustomTheme ? "Zapisywanie…" : "Zapisz i aktywuj"}</Button>
-              <Button variant="outline" size="sm" onClick={() => setShowCustomEditor(false)}>Anuluj</Button>
-              <Button variant="outline" size="sm" className="ml-auto" onClick={() => setCustomColors(DEFAULT_CUSTOM)}>Przywróć domyślne</Button>
+              <Button onClick={handleSaveCustomTheme} disabled={savingCustomTheme} size="sm">{savingCustomTheme ? t.common.saving : t.settings.saveAndActivate}</Button>
+              <Button variant="outline" size="sm" onClick={() => setShowCustomEditor(false)}>{t.common.cancel}</Button>
+              <Button variant="outline" size="sm" className="ml-auto" onClick={() => setCustomColors(DEFAULT_CUSTOM)}>{t.settings.restoreDefaults}</Button>
             </div>
           </div>
         )}

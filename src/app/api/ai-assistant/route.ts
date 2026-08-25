@@ -646,9 +646,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { messages } = await req.json();
+  const { messages, locale } = await req.json();
   if (!Array.isArray(messages) || messages.length === 0) {
-    return NextResponse.json({ error: "Brak wiadomości" }, { status: 400 });
+    return NextResponse.json({ error: locale === "en" ? "No messages" : "Brak wiadomości" }, { status: 400 });
   }
 
   const user = await prisma.user.findUnique({
@@ -685,8 +685,11 @@ export async function POST(req: NextRequest) {
     data: { aiQueryCount: newCount, aiQueryResetAt: newResetAt },
   });
 
+  const promptFile = locale === "en"
+    ? "ASYSTENT_INSTRUKCJA_veedeck_en.md"
+    : "ASYSTENT_INSTRUKCJA_veedeck.md";
   const SYSTEM_PROMPT = readFileSync(
-    join(process.cwd(), "ASYSTENT_INSTRUKCJA_veedeck.md"),
+    join(process.cwd(), promptFile),
     "utf-8"
   );
 
@@ -782,7 +785,7 @@ export async function POST(req: NextRequest) {
       } catch (err) {
         console.error("[ai-assistant] error:", err);
         controller.enqueue(
-          encoder.encode("Przepraszam, wystąpił błąd. Spróbuj ponownie.")
+          encoder.encode(locale === "en" ? "Sorry, an error occurred. Please try again." : "Przepraszam, wystąpił błąd. Spróbuj ponownie.")
         );
       } finally {
         controller.close();

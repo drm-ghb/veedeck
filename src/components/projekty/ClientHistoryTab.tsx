@@ -6,6 +6,7 @@ import {
   Pin, MessageSquare, ShoppingCart, Check, X, RefreshCw, FileSearch,
   Eye, List, LogIn, ClipboardList, ChevronRight,
 } from "lucide-react";
+import { useT } from "@/lib/i18n";
 
 interface HistoryEvent {
   id: string;
@@ -36,7 +37,7 @@ const TYPE_CONFIG: Record<string, { icon: React.ReactNode; color: string }> = {
 };
 
 function formatDate(iso: string) {
-  return new Date(iso).toLocaleString("pl-PL", {
+  return new Date(iso).toLocaleString(undefined, {
     day: "2-digit", month: "short", year: "numeric",
     hour: "2-digit", minute: "2-digit",
   });
@@ -47,7 +48,7 @@ function groupByDay(events: HistoryEvent[]) {
   let current: { label: string; events: HistoryEvent[] } | null = null;
 
   for (const ev of events) {
-    const day = new Date(ev.date).toLocaleDateString("pl-PL", {
+    const day = new Date(ev.date).toLocaleDateString(undefined, {
       day: "numeric", month: "long", year: "numeric",
     });
     if (!current || current.label !== day) {
@@ -59,7 +60,35 @@ function groupByDay(events: HistoryEvent[]) {
   return groups;
 }
 
+function buildLabel(
+  type: string,
+  meta: Record<string, unknown>,
+  fallbackLabel: string,
+  projekty: Record<string, string>,
+): string {
+  const name = (meta.renderName ?? meta.productName ?? meta.listName ?? meta.surveyName ?? "") as string;
+  const map: Record<string, string> = {
+    pin: projekty.historyPin,
+    chat_comment: projekty.historyComment,
+    list_comment: projekty.historyListComment,
+    status_request: projekty.historyStatusRequest,
+    version_request: projekty.historyVersionRequest,
+    survey_response: projekty.historySurveyResponse,
+    login: projekty.historyLogin,
+    render_view: projekty.historyRenderView,
+    list_view: projekty.historyListView,
+    product_approved: projekty.historyProductApproved,
+    product_rejected: projekty.historyProductRejected,
+    render_accepted: projekty.historyRenderAccepted,
+    render_rejected: projekty.historyRenderRejected,
+  };
+  const template = map[type];
+  if (!template) return fallbackLabel;
+  return template.replace("{name}", name);
+}
+
 export default function ClientHistoryTab({ apiUrl }: { apiUrl: string }) {
+  const t = useT();
   const [events, setEvents] = useState<HistoryEvent[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -72,15 +101,15 @@ export default function ClientHistoryTab({ apiUrl }: { apiUrl: string }) {
   }, [apiUrl]);
 
   if (loading) {
-    return <div className="py-16 text-center text-sm text-muted-foreground">Ładowanie historii…</div>;
+    return <div className="py-16 text-center text-sm text-muted-foreground">{t.projekty.loadingHistory}</div>;
   }
 
   if (events.length === 0) {
     return (
       <div className="py-16 text-center text-muted-foreground">
         <Eye size={32} className="mx-auto mb-3 opacity-30" />
-        <p className="text-sm font-medium">Brak aktywności klienta</p>
-        <p className="text-xs mt-1">Aktywność pojawi się gdy klient zaloguje się i zacznie korzystać z projektu.</p>
+        <p className="text-sm font-medium">{t.projekty.noClientActivity}</p>
+        <p className="text-xs mt-1">{t.projekty.noActivityHint}</p>
       </div>
     );
   }
@@ -103,7 +132,7 @@ export default function ClientHistoryTab({ apiUrl }: { apiUrl: string }) {
                     {cfg.icon}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground leading-snug">{ev.label}</p>
+                    <p className="text-sm font-medium text-foreground leading-snug">{buildLabel(ev.type, ev.meta, ev.label, t.projekty as unknown as Record<string, string>)}</p>
                     {ev.detail && (
                       <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{ev.detail}</p>
                     )}

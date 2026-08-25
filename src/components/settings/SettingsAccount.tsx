@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Trash2, CalendarDays } from "@/components/ui/icons";
-import { useT } from "@/lib/i18n";
+import { useT, useLang } from "@/lib/i18n";
 import { signOut } from "next-auth/react";
 import { SectionHeader } from "./SettingsShared";
 
@@ -17,10 +17,11 @@ interface Props {
 export function SettingsAccount({ isDesigner, createdAt }: Props) {
   const router = useRouter();
   const t = useT();
+  const { lang } = useLang();
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
-  const joinDate = new Date(createdAt).toLocaleDateString("pl-PL", {
+  const joinDate = new Date(createdAt).toLocaleDateString(lang === "en" ? "en-US" : "pl-PL", {
     day: "numeric",
     month: "long",
     year: "numeric",
@@ -41,20 +42,20 @@ export function SettingsAccount({ isDesigner, createdAt }: Props) {
   return (
     <div className="max-w-3xl space-y-10">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Konto</h1>
-        <p className="text-sm text-gray-500 mt-1">Informacje o koncie i opcje usunięcia.</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t.settings.accountTitle}</h1>
+        <p className="text-sm text-gray-500 mt-1">{t.settings.accountSubtitle}</p>
       </div>
 
       {/* Data dołączenia */}
       <section className="space-y-4">
-        <SectionHeader title="Informacje o koncie" />
+        <SectionHeader title={t.settings.accountInfo} />
         <div className="bg-card border border-border rounded-2xl p-6">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
               <CalendarDays size={18} className="text-primary" />
             </div>
             <div>
-              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Data dołączenia</p>
+              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">{t.settings.joinDate}</p>
               <p className="text-base font-semibold text-foreground mt-0.5">{joinDate}</p>
             </div>
           </div>

@@ -142,11 +142,11 @@ const STATUS_BADGE: Record<CommentStatus, string> = {
   DONE: "bg-green-100 text-green-700",
 };
 
-const STATUS_LABEL: Record<CommentStatus, string> = {
-  NEW: "Nowy",
-  IN_PROGRESS: "W trakcie",
-  DONE: "Gotowe",
-};
+function getStatusLabel(s: CommentStatus, t: { pinStatusNew: string; pinStatusInProgress: string; pinStatusDone: string }) {
+  if (s === "NEW") return t.pinStatusNew;
+  if (s === "IN_PROGRESS") return t.pinStatusInProgress;
+  return t.pinStatusDone;
+}
 
 function Avatar({ name, logoUrl }: { name: string; logoUrl?: string | null }) {
   if (logoUrl) {
@@ -660,7 +660,7 @@ export default function RenderViewer({
         });
       }));
       setSidebarUploading(false);
-      toast.success(res.length > 1 ? `Dodano ${res.length} pliki` : "Plik dodany");
+      toast.success(res.length > 1 ? t.render.filesAddedCount.replace("{count}", String(res.length)) : t.render.fileAdded);
       router.refresh();
     },
     onUploadError: () => {
@@ -965,7 +965,7 @@ export default function RenderViewer({
         setComments((prev) => prev.some((c) => c.id === created.id) ? prev : [...prev, { ...created, replies: [] }]);
       }
       cancelPending();
-      toast.success("Komentarz dodany");
+      toast.success(t.render.commentAdded);
     } catch {
       toast.error(t.render.commentAddError);
     } finally {
@@ -1431,10 +1431,10 @@ export default function RenderViewer({
 
   async function deleteVersion(versionId: string) {
     const res = await fetch(`/api/renders/${renderId}/versions/${versionId}`, { method: "DELETE" });
-    if (!res.ok) { toast.error("Nie udało się usunąć wersji"); return; }
+    if (!res.ok) { toast.error(t.render.versionDeleteError); return; }
     setVersionsList(prev => prev.filter(v => v.id !== versionId));
     setConfirmDeleteVersionId(null);
-    toast.success("Wersja usunięta");
+    toast.success(t.render.versionDeleted);
   }
 
   async function saveVersionLabel(versionId: string, label: string) {
@@ -1443,7 +1443,7 @@ export default function RenderViewer({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ label }),
     });
-    if (!res.ok) { toast.error("Nie udało się zapisać etykiety"); return; }
+    if (!res.ok) { toast.error(t.render.labelSaveError); return; }
     setVersionsList(prev => prev.map(v => v.id === versionId ? { ...v, label: label.trim() || null } : v));
     setEditingVersionLabelId(null);
   }
@@ -1818,12 +1818,12 @@ export default function RenderViewer({
             {/* Zone 1: Primary actions */}
             {(isDesigner || allowClientComments) && (
               <button disabled={isDesigner && expired} onClick={() => { if (isDesigner && expired) return; setMode(mode === "pin" ? "view" : "pin"); setProductPinMode(false); setPendingProductPos(null); }} className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md border transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${mode === "pin" ? "bg-primary text-primary-foreground border-primary" : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted"}`}>
-                <Pin size={14} /> Dodaj pin
+                <Pin size={14} /> {t.render.addPinLabel}
               </button>
             )}
             {isDesigner && (
               <button disabled={expired} onClick={() => { if (expired) return; setProductPinMode((v) => !v); setMode("view"); setPending(null); setPendingProductPos(null); }} className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md border transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${productPinMode ? "bg-primary text-primary-foreground border-primary" : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted"}`}>
-                <Package size={14} /> Dodaj produkt
+                <Package size={14} /> {t.render.addProductLabel}
               </button>
             )}
 
@@ -1841,14 +1841,14 @@ export default function RenderViewer({
               <SplitSquareHorizontal size={15} />
             </button>
             {isDesigner && (
-              <button onClick={() => setShowVersionHistory(true)} title={`Historia wersji${versionsList.length > 0 ? ` (${versionsList.length})` : ""}`} className="relative flex items-center justify-center w-8 h-8 rounded-md border border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted transition-colors">
+              <button onClick={() => setShowVersionHistory(true)} title={`${t.render.versionHistoryTitle}${versionsList.length > 0 ? ` (${versionsList.length})` : ""}`} className="relative flex items-center justify-center w-8 h-8 rounded-md border border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted transition-colors">
                 <History size={15} />
                 {versions.length > 0 && (
                   <span className="absolute -top-1 -right-1 min-w-[14px] h-3.5 px-0.5 bg-gray-400 text-white text-[9px] font-bold rounded-full flex items-center justify-center leading-none">{versions.length}</span>
                 )}
               </button>
             )}
-            <button onClick={downloadFile} title="Pobierz plik" className="flex items-center justify-center w-8 h-8 rounded-md border border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted transition-colors">
+            <button onClick={downloadFile} title={t.render.downloadFileBtn} className="flex items-center justify-center w-8 h-8 rounded-md border border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted transition-colors">
               <Download size={15} />
             </button>
             {isDesigner && (
@@ -1864,24 +1864,24 @@ export default function RenderViewer({
             {isDesigner ? (
               <DropdownMenu>
                 <DropdownMenuTrigger className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-md border transition-colors ${expired ? "pointer-events-none opacity-40" : ""} ${renderStatus === "ACCEPTED" ? "bg-green-500 text-white border-green-600" : renderStatus === "REJECTED" ? "bg-red-500 text-white border-red-600" : "bg-blue-500 text-white border-blue-600"}`}>
-                  {renderStatus === "ACCEPTED" ? "Zaakceptowany" : renderStatus === "REJECTED" ? "Odrzucony" : "Do weryfikacji"}
+                  {renderStatus === "ACCEPTED" ? t.render.statusAccepted : renderStatus === "REJECTED" ? t.render.statusRejected : t.render.statusReview}
                   <ChevronDown size={11} />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem onClick={() => updateRenderStatus("REVIEW")} className={renderStatus === "REVIEW" ? "font-semibold" : ""}>
-                    Do weryfikacji
+                    {t.render.statusReview}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => updateRenderStatus("ACCEPTED")} className={renderStatus === "ACCEPTED" ? "font-semibold" : ""}>
-                    Zaakceptowany
+                    {t.render.statusAccepted}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => updateRenderStatus("REJECTED")} className={renderStatus === "REJECTED" ? "font-semibold" : ""}>
-                    Odrzucony
+                    {t.render.statusRejected}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : renderStatus === "ACCEPTED" ? (
               <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-green-100 text-green-700">Zaakceptowany</span>
+                <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-green-100 text-green-700">{t.render.statusAccepted}</span>
                 {allowDirectStatusChange ? (
                   <button onClick={() => updateRenderStatus("REVIEW")} className="text-xs text-gray-400 hover:text-gray-600 underline transition-colors">{t.render.undoAcceptance}</button>
                 ) : onStatusRequest ? (
@@ -1890,18 +1890,18 @@ export default function RenderViewer({
               </div>
             ) : renderStatus === "REJECTED" ? (
               <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-red-100 text-red-700">Odrzucony</span>
+                <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-red-100 text-red-700">{t.render.statusRejected}</span>
                 {(allowDirectStatusChange || allowClientAcceptance) && (
-                  <button onClick={() => updateRenderStatus("REVIEW")} className="text-xs text-gray-400 hover:text-gray-600 underline transition-colors">Cofnij odrzucenie</button>
+                  <button onClick={() => updateRenderStatus("REVIEW")} className="text-xs text-gray-400 hover:text-gray-600 underline transition-colors">{t.render.undoRejection}</button>
                 )}
               </div>
             ) : allowClientAcceptance ? (
               <div className="flex items-center gap-1.5">
-                <button onClick={() => updateRenderStatus("ACCEPTED")} className="text-xs font-semibold px-2.5 py-1 rounded-md bg-green-500 text-white hover:bg-green-600 transition-colors">Zaakceptuj</button>
-                <button onClick={() => updateRenderStatus("REJECTED")} className="text-xs font-semibold px-2.5 py-1 rounded-md bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors">Odrzuć</button>
+                <button onClick={() => updateRenderStatus("ACCEPTED")} className="text-xs font-semibold px-2.5 py-1 rounded-md bg-green-500 text-white hover:bg-green-600 transition-colors">{t.render.acceptBtn}</button>
+                <button onClick={() => updateRenderStatus("REJECTED")} className="text-xs font-semibold px-2.5 py-1 rounded-md bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors">{t.render.rejectBtn}</button>
               </div>
             ) : (
-              <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-blue-100 text-blue-700">Do weryfikacji</span>
+              <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-blue-100 text-blue-700">{t.render.statusReview}</span>
             )}
 
             {/* Separator */}
@@ -1912,7 +1912,7 @@ export default function RenderViewer({
               onClick={() => setShowComments((v) => { const next = !v; sessionStorage.setItem("renderflow_showComments", String(next)); if (next && sidebarTabRef.current === "chat") markChatRead(); return next; })}
               className={`relative flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md border transition-colors ${showComments ? "bg-primary text-primary-foreground border-primary" : chatUnreadCount > 0 ? "border-violet-400 text-violet-600 bg-violet-50 dark:bg-violet-950/30 dark:text-violet-400 dark:border-violet-700" : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-muted"}`}
             >
-              <svg viewBox="0 0 24 24" className="w-[14px] h-[14px]" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg> Dyskusja
+              <svg viewBox="0 0 24 24" className="w-[14px] h-[14px]" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg> {t.render.discussionLabel}
               {(() => {
                 const total = comments.filter(c => c.posX === null && c.posY === null).length;
                 if (total === 0) return null;
@@ -2367,7 +2367,7 @@ export default function RenderViewer({
                       }
                       title={
                         newContent.trim() || pendingVoiceUrl
-                          ? "Dodaj pin"
+                          ? t.render.addPinLabel
                           : t.render.recordVoice
                       }
                       className="absolute right-2 bottom-2 z-10 flex items-center justify-center w-8 h-8 rounded-md transition-colors text-muted-foreground hover:text-foreground disabled:opacity-40"
@@ -2412,7 +2412,7 @@ export default function RenderViewer({
                         placeholder={t.render.pinTitlePlaceholder}
                         className="flex-1 h-7 text-sm min-w-0"
                       />
-                      <button onClick={() => setEditingTitleMode(false)} className="text-xs text-gray-400 hover:text-gray-700 flex-shrink-0 transition-colors">Anuluj</button>
+                      <button onClick={() => setEditingTitleMode(false)} className="text-xs text-gray-400 hover:text-gray-700 flex-shrink-0 transition-colors">{t.common.cancel}</button>
                       <button onClick={() => handleEditTitle(selectedComment.id, editingTitleText)} className="text-xs text-primary font-medium hover:opacity-80 flex-shrink-0 transition-colors">Zapisz</button>
                     </>
                   ) : (
@@ -2485,7 +2485,7 @@ export default function RenderViewer({
                           rows={2}
                         />
                         <div className="flex gap-1 justify-end">
-                          <button onClick={() => setEditingCommentMode(false)} className="px-2 py-1 text-xs text-gray-400 hover:text-gray-700 transition-colors">Anuluj</button>
+                          <button onClick={() => setEditingCommentMode(false)} className="px-2 py-1 text-xs text-gray-400 hover:text-gray-700 transition-colors">{t.common.cancel}</button>
                           <button onClick={() => handleEditComment(selectedComment.id, editingCommentText)} className="px-2 py-1 text-xs bg-primary text-primary-foreground rounded-lg hover:opacity-90">Zapisz</button>
                         </div>
                       </div>
@@ -2559,7 +2559,7 @@ export default function RenderViewer({
                             rows={2}
                           />
                           <div className="flex gap-1 justify-end">
-                            <button onClick={() => setEditingReplyId(null)} className="px-2 py-1 text-xs text-gray-400 hover:text-gray-700 transition-colors">Anuluj</button>
+                            <button onClick={() => setEditingReplyId(null)} className="px-2 py-1 text-xs text-gray-400 hover:text-gray-700 transition-colors">{t.common.cancel}</button>
                             <button onClick={() => handleEditReply(selectedComment.id, r.id, editingReplyText)} className="px-2 py-1 text-xs bg-primary text-primary-foreground rounded-lg hover:opacity-90">Zapisz</button>
                           </div>
                         </div>
@@ -2616,7 +2616,7 @@ export default function RenderViewer({
                   <div className="px-4 py-2 border-t flex items-center gap-2 flex-shrink-0">
                     <DropdownMenu>
                       <DropdownMenuTrigger className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg border transition-colors ${STATUS_BADGE[selectedComment.status]}`}>
-                        {STATUS_LABEL[selectedComment.status]}
+                        {getStatusLabel(selectedComment.status, t.render)}
                         <ChevronDown size={11} />
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="start">
@@ -2626,7 +2626,7 @@ export default function RenderViewer({
                             onClick={() => updateStatus(selectedComment.id, s)}
                             className={selectedComment.status === s ? "font-semibold" : ""}
                           >
-                            {STATUS_LABEL[s]}
+                            {getStatusLabel(s, t.render)}
                           </DropdownMenuItem>
                         ))}
                       </DropdownMenuContent>
@@ -2734,7 +2734,7 @@ export default function RenderViewer({
                 }`}
               >
                 <Pin size={13} />
-                Piny {pinComments.length > 0 && <span className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded-full px-1.5 py-0.5 text-[10px]">{pinComments.length}</span>}
+                {t.render.pinsTab} {pinComments.length > 0 && <span className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded-full px-1.5 py-0.5 text-[10px]">{pinComments.length}</span>}
               </button>
               <button
                 onClick={() => { setSidebarTab("chat"); markChatRead(); }}
@@ -2745,7 +2745,7 @@ export default function RenderViewer({
                 }`}
               >
                 <svg viewBox="0 0 24 24" className="w-[13px] h-[13px]" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>
-                Czat {comments.filter(c => c.posX === null).length > 0 && <span className={`rounded-full px-1.5 py-0.5 text-[10px] ${chatUnreadCount > 0 ? "bg-blue-500 text-white" : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300"}`}>{comments.filter(c => c.posX === null).length}</span>}
+                {t.render.chatTab} {comments.filter(c => c.posX === null).length > 0 && <span className={`rounded-full px-1.5 py-0.5 text-[10px] ${chatUnreadCount > 0 ? "bg-blue-500 text-white" : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300"}`}>{comments.filter(c => c.posX === null).length}</span>}
               </button>
               <button
                 onClick={() => { setShowComments(false); sessionStorage.setItem("renderflow_showComments", "false"); }}
@@ -2834,7 +2834,7 @@ export default function RenderViewer({
                                 <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{displayTitle}</span>
                                 {c.isInternal && <Lock size={11} className="text-slate-400 flex-shrink-0" />}
                                 <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${STATUS_BADGE[c.status]}`}>
-                                  {STATUS_LABEL[c.status]}
+                                  {getStatusLabel(c.status, t.render)}
                                 </span>
                               </div>
                               {c.content && c.content !== "[wiadomość głosowa]" && (
@@ -2892,7 +2892,7 @@ export default function RenderViewer({
                       className="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 text-xs font-medium rounded-lg bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300 hover:bg-violet-100 dark:hover:bg-violet-900/30 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                     >
                       <Sparkles size={12} />
-                      {generatingSummary ? "Generowanie…" : "Podsumowanie AI"}
+                      {generatingSummary ? t.render.generatingSummary : t.render.aiSummary}
                     </button>
                     {aiSummaryMarkdown && (
                       <button
@@ -2935,7 +2935,7 @@ export default function RenderViewer({
                                 <div className="rounded-xl border border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-900/20 px-3 py-2.5">
                                   <div className="flex items-center gap-1.5 mb-1.5">
                                     <Sparkles size={11} className="text-violet-500 flex-shrink-0" />
-                                    <span className="text-[10px] font-semibold text-violet-600 dark:text-violet-400">Podsumowanie AI</span>
+                                    <span className="text-[10px] font-semibold text-violet-600 dark:text-violet-400">{t.render.aiSummary}</span>
                                     <span className="text-[10px] text-gray-400 ml-auto">{formatDate(item.createdAt)}</span>
                                     <button
                                       onClick={() => {
@@ -2984,7 +2984,7 @@ export default function RenderViewer({
                                     </span>
                                     {item.isInternal && <Lock size={9} className="text-slate-400" />}
                                     <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${STATUS_BADGE[item.status]}`}>
-                                      {STATUS_LABEL[item.status]}
+                                      {getStatusLabel(item.status, t.render)}
                                     </span>
                                   </div>
                                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-2 leading-relaxed">{item.content}</p>
@@ -2998,9 +2998,9 @@ export default function RenderViewer({
                             try {
                               const data = JSON.parse(item.content);
                               if (data.event === "version_upload") {
-                                eventText = `Wgrano wersję ${data.versionNumber}${data.label ? ` — ${data.label}` : ""}`;
+                                eventText = `${t.render.versionUploadedEvent.replace("{num}", data.versionNumber)}${data.label ? ` — ${data.label}` : ""}`;
                               } else if (data.event === "version_restore") {
-                                eventText = `Przywrócono wersję ${data.versionNumber}${data.label ? ` — ${data.label}` : ""}`;
+                                eventText = `${t.render.versionRestoredEvent.replace("{num}", data.versionNumber)}${data.label ? ` — ${data.label}` : ""}`;
                               }
                             } catch {}
                             return (
@@ -3040,7 +3040,7 @@ export default function RenderViewer({
                                       rows={2}
                                     />
                                     <div className="flex gap-1 justify-end">
-                                      <button onClick={() => setEditingChatId(null)} className="px-2 py-1 text-xs text-muted-foreground hover:text-foreground rounded-lg border">Anuluj</button>
+                                      <button onClick={() => setEditingChatId(null)} className="px-2 py-1 text-xs text-muted-foreground hover:text-foreground rounded-lg border">{t.common.cancel}</button>
                                       <button onClick={() => { handleEditComment(item.id, editingChatText); setEditingChatId(null); }} className="px-2 py-1 text-xs bg-primary text-primary-foreground rounded-lg hover:opacity-90">Zapisz</button>
                                     </div>
                                   </div>
@@ -3308,7 +3308,7 @@ export default function RenderViewer({
                   }}
                   className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${mode === "pin" ? "bg-white/20 text-white" : "bg-white text-black hover:bg-white/90"}`}
                 >
-                  <Pin size={14} /> {mode === "pin" ? "Anuluj" : "Dodaj pin"}
+                  <Pin size={14} /> {mode === "pin" ? t.render.cancelProductPin : t.render.addPinLabel}
                 </button>
               )}
               {isDesigner && (
@@ -3323,7 +3323,7 @@ export default function RenderViewer({
                   }}
                   className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${productPinMode ? "bg-white/20 text-white" : "bg-white text-black hover:bg-white/90"}`}
                 >
-                  <Package size={14} /> {productPinMode ? "Anuluj" : "Dodaj produkt"}
+                  <Package size={14} /> {productPinMode ? t.render.cancelProductPin : t.render.addProductLabel}
                 </button>
               )}
               <button
@@ -3688,7 +3688,7 @@ export default function RenderViewer({
                         }
                         title={
                           newContent.trim() || pendingVoiceUrl
-                            ? "Dodaj pin"
+                            ? t.render.addPinLabel
                             : t.render.recordVoice
                         }
                         className="absolute right-2 bottom-2 z-10 flex items-center justify-center w-8 h-8 rounded-md transition-colors text-muted-foreground hover:text-foreground disabled:opacity-40"
@@ -3730,7 +3730,7 @@ export default function RenderViewer({
                           placeholder={t.render.pinTitlePlaceholder}
                           className="flex-1 h-7 text-sm min-w-0"
                         />
-                        <button onClick={() => setEditingTitleMode(false)} className="text-xs text-gray-400 hover:text-gray-700 flex-shrink-0 transition-colors">Anuluj</button>
+                        <button onClick={() => setEditingTitleMode(false)} className="text-xs text-gray-400 hover:text-gray-700 flex-shrink-0 transition-colors">{t.common.cancel}</button>
                         <button onClick={() => handleEditTitle(selectedComment.id, editingTitleText)} className="text-xs text-primary font-medium hover:opacity-80 flex-shrink-0 transition-colors">Zapisz</button>
                       </>
                     ) : (
@@ -3786,7 +3786,7 @@ export default function RenderViewer({
                             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleEditComment(selectedComment.id, editingCommentText); } if (e.key === "Escape") setEditingCommentMode(false); }}
                             className="w-full px-2 py-1.5 text-sm border border-border rounded-lg bg-background focus:outline-none resize-none" rows={2} />
                           <div className="flex gap-1 justify-end">
-                            <button onClick={() => setEditingCommentMode(false)} className="px-2 py-1 text-xs text-muted-foreground hover:text-foreground rounded-lg border">Anuluj</button>
+                            <button onClick={() => setEditingCommentMode(false)} className="px-2 py-1 text-xs text-muted-foreground hover:text-foreground rounded-lg border">{t.common.cancel}</button>
                             <button onClick={() => handleEditComment(selectedComment.id, editingCommentText)} className="px-2 py-1 text-xs bg-primary text-primary-foreground rounded-lg hover:opacity-90">Zapisz</button>
                           </div>
                         </div>
@@ -3854,7 +3854,7 @@ export default function RenderViewer({
                               onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleEditReply(selectedComment.id, r.id, editingReplyText); } if (e.key === "Escape") setEditingReplyId(null); }}
                               className="w-full px-2 py-1.5 text-sm border border-border rounded-lg bg-background focus:outline-none resize-none" rows={2} />
                             <div className="flex gap-1 justify-end">
-                              <button onClick={() => setEditingReplyId(null)} className="px-2 py-1 text-xs text-muted-foreground hover:text-foreground rounded-lg border">Anuluj</button>
+                              <button onClick={() => setEditingReplyId(null)} className="px-2 py-1 text-xs text-muted-foreground hover:text-foreground rounded-lg border">{t.common.cancel}</button>
                               <button onClick={() => handleEditReply(selectedComment.id, r.id, editingReplyText)} className="px-2 py-1 text-xs bg-primary text-primary-foreground rounded-lg hover:opacity-90">Zapisz</button>
                             </div>
                           </div>
@@ -3910,7 +3910,7 @@ export default function RenderViewer({
                     <div className="px-4 py-2 border-t flex items-center gap-2 flex-shrink-0">
                       <DropdownMenu>
                         <DropdownMenuTrigger className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg border transition-colors ${STATUS_BADGE[selectedComment.status]}`}>
-                          {STATUS_LABEL[selectedComment.status]}
+                          {getStatusLabel(selectedComment.status, t.render)}
                           <ChevronDown size={11} />
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="start">
@@ -3920,7 +3920,7 @@ export default function RenderViewer({
                               onClick={() => updateStatus(selectedComment.id, s)}
                               className={selectedComment.status === s ? "font-semibold" : ""}
                             >
-                              {STATUS_LABEL[s]}
+                              {getStatusLabel(s, t.render)}
                             </DropdownMenuItem>
                           ))}
                         </DropdownMenuContent>
@@ -4280,13 +4280,13 @@ export default function RenderViewer({
                       ) : (
                         <div className="flex items-center gap-1.5">
                           <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">
-                            {v.label || `Wersja ${v.versionNumber}`}
+                            {v.label || `${t.render.versionPrefix} ${v.versionNumber}`}
                           </p>
                           {isDesigner && (
                             <button
                               onClick={() => { setEditingVersionLabelId(v.id); setEditingVersionLabelText(v.label || ""); }}
                               className="flex-shrink-0 text-gray-300 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-                              title="Edytuj etykietę"
+                              title={t.render.editLabel}
                             >
                               <Pencil size={11} />
                             </button>
@@ -4299,7 +4299,7 @@ export default function RenderViewer({
                       {v.pinCount !== undefined && (
                         <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
                           <Pin size={10} className="flex-shrink-0" />
-                          {v.pinCount === 0 ? "Brak pinów" : `${v.pinCount} ${v.pinCount === 1 ? "pin" : v.pinCount < 5 ? "piny" : "pinów"}`}
+                          {v.pinCount === 0 ? t.render.pinCountZero : `${v.pinCount} ${v.pinCount === 1 ? t.render.pinCountSg : v.pinCount < 5 ? t.render.pinCountFew : t.render.pinCountMany}`}
                         </p>
                       )}
                     </div>
@@ -4325,7 +4325,7 @@ export default function RenderViewer({
                           className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md border border-border text-gray-600 dark:text-gray-300 hover:bg-muted transition-colors disabled:opacity-50"
                           title={
                             v.id === activeVersionId
-                              ? "To jest aktywna wersja"
+                              ? t.render.activeVersionHint
                               : !isDesigner && !allowClientVersionRestore
                               ? t.render.requestRestoreDesc
                               : t.render.restoreThisVersion
@@ -4342,18 +4342,18 @@ export default function RenderViewer({
                       {isDesigner && (
                         confirmDeleteVersionId === v.id ? (
                           <div className="flex items-center gap-1">
-                            <span className="text-xs text-red-500">Usunąć?</span>
+                            <span className="text-xs text-red-500">{t.render.deleteConfirmQuestion}</span>
                             <button
                               onClick={() => deleteVersion(v.id)}
                               className="text-xs px-1.5 py-0.5 rounded bg-red-500 text-white hover:bg-red-600 transition-colors"
                             >
-                              Tak
+                              {t.render.yes}
                             </button>
                             <button
                               onClick={() => setConfirmDeleteVersionId(null)}
                               className="text-xs px-1.5 py-0.5 rounded border border-border text-muted-foreground hover:bg-muted transition-colors"
                             >
-                              Nie
+                              {t.render.no}
                             </button>
                           </div>
                         ) : (
@@ -4361,10 +4361,10 @@ export default function RenderViewer({
                             onClick={() => setConfirmDeleteVersionId(v.id)}
                             disabled={v.id === activeVersionId}
                             className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md border border-border text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:border-red-200 dark:hover:border-red-800 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                            title={v.id === activeVersionId ? "Nie można usunąć aktywnej wersji" : "Usuń wersję"}
+                            title={v.id === activeVersionId ? t.render.cannotDeleteActiveVersion : t.render.deleteVersion}
                           >
                             <Trash2 size={12} />
-                            Usuń
+                            {t.common.delete}
                           </button>
                         )
                       )}
@@ -4419,7 +4419,7 @@ export default function RenderViewer({
             {/* Toggle chevron — always visible, on the LEFT */}
             <button
               onClick={() => setMobileToolbarCollapsed((v) => !v)}
-              aria-label={mobileToolbarCollapsed ? "Rozwiń pasek" : "Zwiń pasek"}
+              aria-label={mobileToolbarCollapsed ? t.render.expandToolbar : t.render.collapseToolbar}
               className="flex items-center justify-center w-14 h-14 flex-shrink-0 text-muted-foreground hover:text-foreground transition-colors"
             >
               <ChevronRight
@@ -4446,7 +4446,7 @@ export default function RenderViewer({
                   {/* Add Product */}
                   <button
                     onClick={() => { setProductPinMode((v) => !v); setMode("view"); setPending(null); setPendingProductPos(null); }}
-                    aria-label="Dodaj produkt"
+                    aria-label={t.render.addProductLabel}
                     className={`flex items-center justify-center w-16 h-16 rounded-full mx-1 flex-shrink-0 transition-colors ${
                       productPinMode ? "bg-violet-600 text-white" : "text-muted-foreground hover:bg-muted hover:text-foreground"
                     }`}
@@ -4457,7 +4457,7 @@ export default function RenderViewer({
                   {/* Add Pin */}
                   <button
                     onClick={() => { setMode(mode === "pin" ? "view" : "pin"); setProductPinMode(false); setPendingProductPos(null); }}
-                    aria-label="Dodaj pin"
+                    aria-label={t.render.addPinLabel}
                     className={`flex items-center justify-center w-16 h-16 rounded-full mx-1 flex-shrink-0 transition-colors ${
                       mode === "pin" ? "bg-violet-600 text-white" : "text-muted-foreground hover:bg-muted hover:text-foreground"
                     }`}
@@ -4470,7 +4470,7 @@ export default function RenderViewer({
                   {/* Discussion */}
                   <button
                     onClick={() => setShowComments((v) => { const next = !v; sessionStorage.setItem("renderflow_showComments", String(next)); if (next && sidebarTabRef.current === "chat") markChatRead(); return next; })}
-                    aria-label="Otwórz dyskusję"
+                    aria-label={t.render.openDiscussion}
                     className={`relative flex items-center justify-center w-16 h-16 rounded-full mx-1 flex-shrink-0 transition-colors ${
                       showComments ? "bg-violet-600 text-white" : chatUnreadCount > 0 ? "text-violet-600 bg-violet-100 dark:bg-violet-950/40 dark:text-violet-400" : "text-muted-foreground hover:bg-muted hover:text-foreground"
                     }`}
@@ -4495,7 +4495,7 @@ export default function RenderViewer({
                   {(allowDirectStatusChange || allowClientAcceptance) && (
                     <button
                       onClick={() => updateRenderStatus(renderStatus === "REJECTED" ? "REVIEW" : "REJECTED")}
-                      aria-label="Odrzuć wizualizację"
+                      aria-label={t.render.rejectVisualization}
                       className={`flex items-center justify-center w-16 h-16 rounded-full mx-1 flex-shrink-0 transition-colors ${
                         renderStatus === "REJECTED"
                           ? "bg-destructive/10 text-destructive"
@@ -4510,7 +4510,7 @@ export default function RenderViewer({
                   {(allowClientAcceptance || allowDirectStatusChange) && (
                     <button
                       onClick={() => updateRenderStatus(renderStatus === "ACCEPTED" ? "REVIEW" : "ACCEPTED")}
-                      aria-label="Zaakceptuj wizualizację"
+                      aria-label={t.render.acceptVisualization}
                       className={`flex items-center justify-center w-16 h-16 rounded-full mx-1 flex-shrink-0 transition-colors ${
                         renderStatus === "ACCEPTED"
                           ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
@@ -4526,7 +4526,7 @@ export default function RenderViewer({
                   {/* Discussion */}
                   <button
                     onClick={() => setShowComments((v) => { const next = !v; sessionStorage.setItem("renderflow_showComments", String(next)); if (next && sidebarTabRef.current === "chat") markChatRead(); return next; })}
-                    aria-label="Otwórz dyskusję"
+                    aria-label={t.render.openDiscussion}
                     className={`relative flex items-center justify-center w-16 h-16 rounded-full mx-1 flex-shrink-0 transition-colors ${
                       showComments ? "bg-violet-600 text-white" : chatUnreadCount > 0 ? "text-violet-600 bg-violet-100 dark:bg-violet-950/40 dark:text-violet-400" : "text-muted-foreground hover:bg-muted hover:text-foreground"
                     }`}
@@ -4549,7 +4549,7 @@ export default function RenderViewer({
                   {allowClientComments && (
                     <button
                       onClick={() => { setMode(mode === "pin" ? "view" : "pin"); setProductPinMode(false); setPendingProductPos(null); }}
-                      aria-label="Dodaj pin"
+                      aria-label={t.render.addPinLabel}
                       className={`flex items-center justify-center w-16 h-16 rounded-full mx-1 flex-shrink-0 transition-colors ${
                         mode === "pin" ? "bg-violet-600 text-white" : "text-muted-foreground hover:bg-muted hover:text-foreground"
                       }`}

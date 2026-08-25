@@ -131,12 +131,12 @@ export function SettingsBranding({
     <div className="max-w-3xl space-y-10">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Branding</h1>
-          <p className="text-sm text-gray-500 mt-1">Dostosuj wygląd panelu klienta i wykonawcy.</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t.settings.brandingTitle}</h1>
+          <p className="text-sm text-gray-500 mt-1">{t.settings.brandingSubtitle}</p>
         </div>
         <Button variant="outline" size="sm" onClick={() => setPreviewOpen(true)} className="shrink-0 mt-1">
           <Eye size={14} className="mr-1.5" />
-          Podgląd panelu klienta
+          {t.settings.previewClientPanel}
         </Button>
       </div>
 
@@ -191,16 +191,16 @@ export function SettingsBranding({
           <div className="flex items-center justify-between w-full max-w-5xl mb-3" onClick={e => e.stopPropagation()}>
             <div className="flex items-center gap-2 text-white/80 text-sm font-medium">
               <Eye size={15} />
-              Podgląd panelu klienta — tak widzą go Twoi klienci
+              {t.settings.previewClientPanelLabel}
             </div>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setIframeKey(k => k + 1)}
                 className="flex items-center gap-1.5 text-white/60 hover:text-white transition-colors px-2.5 py-1.5 rounded-lg hover:bg-white/10 text-xs font-medium"
-                title="Odśwież podgląd (po zapisaniu zmian)"
+                title={t.settings.refreshPreview}
               >
                 <RefreshCw size={13} />
-                Odśwież
+                {t.settings.refresh}
               </button>
               <button
                 onClick={() => setPreviewOpen(false)}
@@ -221,11 +221,11 @@ export function SettingsBranding({
               key={iframeKey}
               src="/branding-preview"
               className="w-full h-full border-0"
-              title="Podgląd panelu klienta"
+              title={t.settings.previewClientPanel}
             />
           </div>
 
-          <p className="text-white/40 text-xs mt-3">Kliknij poza oknem, aby zamknąć · po zapisaniu zmian kliknij Odśwież</p>
+          <p className="text-white/40 text-xs mt-3">{t.settings.previewCloseHint}</p>
         </div>
       )}
 

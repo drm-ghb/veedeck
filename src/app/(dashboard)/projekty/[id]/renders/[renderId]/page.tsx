@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getWorkspaceUserId } from "@/lib/workspace";
 import { notFound } from "next/navigation";
 import RenderViewer from "@/components/render/RenderViewer";
+import RenderFixedWrapper from "@/components/render/RenderFixedWrapper";
 
 interface Props {
   params: Promise<{ id: string; renderId: string }>;
@@ -60,7 +61,7 @@ export default async function RenderPage({ params }: Props) {
   });
 
   return (
-    <div className="fixed inset-0 top-[57px] z-40 bg-background md:left-14 md:rounded-tl-2xl">
+    <RenderFixedWrapper>
       <RenderViewer
         renderId={render.id}
         renderName={render.name}
@@ -94,6 +95,6 @@ export default async function RenderPage({ params }: Props) {
         initialProductPins={productPins}
         activeVersionId={(render as any).activeVersionId ?? null}
       />
-    </div>
+    </RenderFixedWrapper>
   );
 }

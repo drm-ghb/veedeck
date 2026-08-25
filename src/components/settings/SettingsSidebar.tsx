@@ -15,24 +15,24 @@ export default function SettingsSidebar({ isOwner = true }: { isOwner?: boolean 
   const t = useT();
 
   const allItems = [
-    { href: "/ustawienia/profil",             label: "Profil",                icon: <UserCircle size={16} />, ownerOnly: false },
-    { href: "/ustawienia/branding",           label: "Branding",              icon: <Image size={16} />,      ownerOnly: true  },
-    { href: "/ustawienia/wyglad",             label: "Wygląd",                icon: <Palette size={16} />,    ownerOnly: false },
-    { href: "/ustawienia/uzytkownicy",        label: t.settings.usersNav,     icon: <Users size={16} />,      ownerOnly: true  },
-    { href: "/ustawienia/powiadomienia",      label: "Powiadomienia",         icon: <Bell size={16} />,       ownerOnly: false },
-    { href: "/ustawienia/wtyczka",            label: t.settings.pluginNav,    icon: <Puzzle size={16} />,     ownerOnly: true  },
-    { href: "/ustawienia/integracje",         label: "Integracje",            icon: <Link2 size={16} />,      ownerOnly: true  },
-    { href: "/ustawienia/instrukcja",         label: t.settings.guideNav,     icon: <BookOpen size={16} />,   ownerOnly: false },
-    { href: "/ustawienia/plan-i-rozliczenia", label: "Plan i rozliczenia",    icon: <Payments size={16} />,   ownerOnly: true  },
-    { href: "/ustawienia/konto",              label: "Konto",                 icon: <UserMinus size={16} />,  ownerOnly: false },
+    { href: "/ustawienia/profil",             label: t.settings.profileNav,        icon: <UserCircle size={16} />, ownerOnly: false },
+    { href: "/ustawienia/branding",           label: t.settings.brandingNav,       icon: <Image size={16} />,      ownerOnly: true  },
+    { href: "/ustawienia/wyglad",             label: t.settings.appearanceNav,     icon: <Palette size={16} />,    ownerOnly: false },
+    { href: "/ustawienia/uzytkownicy",        label: t.settings.usersNav,          icon: <Users size={16} />,      ownerOnly: true  },
+    { href: "/ustawienia/powiadomienia",      label: t.settings.notificationsNav,  icon: <Bell size={16} />,       ownerOnly: false },
+    { href: "/ustawienia/wtyczka",            label: t.settings.pluginNav,         icon: <Puzzle size={16} />,     ownerOnly: true  },
+    { href: "/ustawienia/integracje",         label: t.settings.integrationsNav,   icon: <Link2 size={16} />,      ownerOnly: true  },
+    { href: "/ustawienia/instrukcja",         label: t.settings.guideNav,          icon: <BookOpen size={16} />,   ownerOnly: false },
+    { href: "/ustawienia/plan-i-rozliczenia", label: t.settings.planNav,           icon: <Payments size={16} />,   ownerOnly: true  },
+    { href: "/ustawienia/konto",              label: t.settings.accountNav,        icon: <UserMinus size={16} />,  ownerOnly: false },
   ];
 
   const items = isOwner ? allItems : allItems.filter((i) => !i.ownerOnly);
 
   const moduleItems = [
-    { href: "/ustawienia/projectflow",   label: "ProjectFlow",              icon: <Eye size={16} /> },
-    { href: "/ustawienia/listy",         label: "Listy zakupowe",           icon: <LocalMall size={16} /> },
-    { href: "/ustawienia/zadania",       label: "Zadania",                  icon: <ClipboardList size={16} /> },
+    { href: "/ustawienia/projectflow",   label: "ProjectFlow",                    icon: <Eye size={16} /> },
+    { href: "/ustawienia/listy",         label: t.settings.shoppingListsNav,     icon: <LocalMall size={16} /> },
+    { href: "/ustawienia/zadania",       label: t.settings.tasksNav,              icon: <ClipboardList size={16} /> },
   ];
 
   return (
@@ -101,7 +101,7 @@ export default function SettingsSidebar({ isOwner = true }: { isOwner?: boolean 
           })}
         </ul>
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground px-3 mb-1">Moduły</p>
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground px-3 mb-1">{t.settings.modulesNav}</p>
           <ul className="space-y-0.5">
             {moduleItems.map((item) => {
               const active = pathname === item.href || pathname.startsWith(item.href + "/");

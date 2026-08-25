@@ -163,8 +163,8 @@ export function SettingsProfile({
   return (
     <div className="max-w-3xl space-y-10">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Profil</h1>
-        <p className="text-sm text-gray-500 mt-1">Zarządzaj swoimi danymi osobowymi i hasłem.</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t.settings.profileTitle}</h1>
+        <p className="text-sm text-gray-500 mt-1">{t.settings.profileSubtitle}</p>
       </div>
 
       <section className="space-y-4">
