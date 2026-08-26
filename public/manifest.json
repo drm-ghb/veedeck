@@ -1,0 +1,17 @@
+{
+  "name": "veedeck",
+  "short_name": "veedeck",
+  "description": "Platforma dla projektantów wnętrz",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#4F46E5",
+  "icons": [
+    {
+      "src": "/vee-icon.png",
+      "sizes": "414x414",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

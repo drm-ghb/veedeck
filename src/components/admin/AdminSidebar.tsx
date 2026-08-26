@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { Users, Activity, ShieldCheck, LogOut, Inbox } from "lucide-react";
+import { Users, Activity, ShieldCheck, LogOut, Inbox, Megaphone } from "lucide-react";
 import { useT } from "@/lib/i18n";
 import { useState, useEffect, useRef } from "react";
 import Pusher from "pusher-js";
@@ -50,6 +50,7 @@ export default function AdminSidebar({
   const items = [
     { href: "/admin/users", label: t.admin.usersNav, icon: <Users size={15} />, badge: 0 },
     { href: "/admin/tickets", label: "Zgłoszenia", icon: <Inbox size={15} />, badge: openTickets },
+    { href: "/admin/komunikaty", label: t.admin.announcementsNav, icon: <Megaphone size={15} />, badge: 0 },
     { href: "/admin/logs", label: t.admin.logsNav, icon: <Activity size={15} />, badge: 0 },
   ];
 

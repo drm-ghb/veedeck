@@ -1334,6 +1334,32 @@ model Moodboard {
   project            Project? @relation(fields: [projectId], references: [id])
 }
 
+model Announcement {
+  id            String                  @id @default(cuid())
+  title         String                  @default("")
+  content       String                  @default("")
+  status        String                  @default("draft") // draft | sent
+  frequency     String                  @default("once") // once | recurring
+  intervalDays  Int?                    // for recurring: every N days
+  publishAt     DateTime?
+  endAt         DateTime?               // for recurring: stop showing after this date
+  recipientType String                  @default("all") // all | selected
+  recipientIds  String[]                @default([])    // user IDs when recipientType=selected
+  createdAt     DateTime                @default(now())
+  updatedAt     DateTime                @updatedAt
+  dismissals    AnnouncementDismissal[]
+}
+
+model AnnouncementDismissal {
+  id             String       @id @default(cuid())
+  announcementId String
+  userId         String
+  dismissedAt    DateTime     @default(now())
+  announcement   Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+
+  @@unique([announcementId, userId])
+}
+
 model ListChangeLog {
   id        String       @id @default(cuid())
   listId    String

@@ -12,6 +12,7 @@ import CancelledBadge from "@/components/dashboard/CancelledBadge";
 import AppNavbar from "@/components/dashboard/AppNavbar";
 import { TrialContextProvider } from "@/lib/trial-context";
 import FloatingChatPanel from "@/components/dyskusje/FloatingChatPanel";
+import AnnouncementPopup from "@/components/dashboard/AnnouncementPopup";
 import { getMemberHiddenModules } from "@/lib/permissions";
 
 export default async function VeedeckLayout({
@@ -88,6 +89,7 @@ export default async function VeedeckLayout({
       <TrialCheck />
       <OnboardingModal show={showOnboarding} userId={session.user.id!} />
       <FloatingChatPanel userId={session.user.id!} currentUserAvatarUrl={avatarUrl} />
+      <AnnouncementPopup />
     </div>
   );
 }

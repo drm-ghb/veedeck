@@ -44,6 +44,15 @@ export const metadata: Metadata = {
     default: "veedeck — platforma dla projektantów wnętrz",
   },
   description: "Centralizuj feedback do renderów w jednym miejscu",
+  manifest: "/manifest.json",
+  icons: {
+    apple: "/vee-icon.png",
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "veedeck",
+  },
 };
 
 export default async function RootLayout({

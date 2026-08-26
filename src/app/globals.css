@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+@plugin "@tailwindcss/typography";
 
 /* Hide navbar when lightbox is open */
 body.lightbox-open #app-navbar { display: none; }
@@ -536,6 +537,18 @@ body.lightbox-open #app-navbar { display: none; }
     @apply font-semibold tracking-tight;
   }
 }
+
+/* ── Announcement popup content ─────────────────────────────────── */
+.announcement-content strong { color: var(--foreground); font-weight: 600; }
+.announcement-content em { font-style: italic; }
+.announcement-content u { text-decoration: underline; }
+.announcement-content a { color: var(--primary); text-decoration: none; }
+.announcement-content a:hover { text-decoration: underline; }
+.announcement-content p { margin: 0 0 0.75em; }
+.announcement-content p:last-child { margin-bottom: 0; }
+.announcement-content ul { list-style: disc; padding-left: 1.5em; margin: 0.5em 0; }
+.announcement-content ol { list-style: decimal; padding-left: 1.5em; margin: 0.5em 0; }
+.announcement-content li + li { margin-top: 0.25em; }
 
 /* ── TipTap Note Editor ─────────────────────────────────────────── */
 .note-editor .tiptap {
