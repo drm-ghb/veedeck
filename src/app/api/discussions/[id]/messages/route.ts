@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { pusherServer } from "@/lib/pusher";
-import { getWorkspaceUserId } from "@/lib/workspace";
+import { getWorkspaceUserId, hasDiscussionAccess } from "@/lib/workspace";
 import { getClientUserIds } from "@/lib/client-notify";
 
 export async function GET(
@@ -16,7 +16,9 @@ export async function GET(
 
   const discussion = await prisma.discussion.findUnique({ where: { id } });
   if (!discussion) return NextResponse.json({ error: "Nie znaleziono" }, { status: 404 });
-  if (discussion.ownerId !== userId) return NextResponse.json({ error: "Brak dostępu" }, { status: 403 });
+  if (!await hasDiscussionAccess(id, discussion.ownerId, session.user.id!, userId)) {
+    return NextResponse.json({ error: "Brak dostępu" }, { status: 403 });
+  }
 
   const messages = await prisma.discussionMessage.findMany({
     where: { discussionId: id },
@@ -49,7 +51,9 @@ export async function POST(
 
   const discussion = await prisma.discussion.findUnique({ where: { id } });
   if (!discussion) return NextResponse.json({ error: "Nie znaleziono" }, { status: 404 });
-  if (discussion.ownerId !== userId) return NextResponse.json({ error: "Brak dostępu" }, { status: 403 });
+  if (!await hasDiscussionAccess(id, discussion.ownerId, session.user.id!, userId)) {
+    return NextResponse.json({ error: "Brak dostępu" }, { status: 403 });
+  }
 
   const { content, attachmentUrl, attachmentName, attachmentType, replyToId, replyToContent, replyToAuthor } = await req.json();
   if (!content?.trim() && !attachmentUrl) return NextResponse.json({ error: "Treść lub załącznik jest wymagany" }, { status: 400 });

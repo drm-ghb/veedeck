@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { getWorkspaceUserId } from "@/lib/workspace";
+import { getWorkspaceUserId, hasDiscussionAccess } from "@/lib/workspace";
 import { pusherServer } from "@/lib/pusher";
 
 async function getDiscussionAndOwner(id: string, userId: string) {
@@ -20,6 +20,7 @@ async function getDiscussionAndOwner(id: string, userId: string) {
     },
   });
   if (!discussion) return null;
+  // Note: this helper is only used for mutation (POST/DELETE), keep owner-only check
   if (discussion.ownerId !== userId) return null;
   return discussion;
 }
@@ -47,7 +48,9 @@ export async function GET(
     },
   });
   if (!discussion) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  if (discussion.ownerId !== userId) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!await hasDiscussionAccess(id, discussion.ownerId, session.user.id!, userId)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   // Team members of the designer
   const teamMembers = await prisma.user.findMany({

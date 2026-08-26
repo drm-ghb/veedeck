@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { getWorkspaceUserId } from "@/lib/workspace";
+import { getWorkspaceUserId, hasDiscussionAccess } from "@/lib/workspace";
 
 export async function PATCH(
   req: NextRequest,
@@ -14,7 +14,9 @@ export async function PATCH(
 
   const discussion = await prisma.discussion.findUnique({ where: { id } });
   if (!discussion) return NextResponse.json({ error: "Nie znaleziono" }, { status: 404 });
-  if (discussion.ownerId !== userId) return NextResponse.json({ error: "Brak dostępu" }, { status: 403 });
+  if (!await hasDiscussionAccess(id, discussion.ownerId, session.user.id!, userId)) {
+    return NextResponse.json({ error: "Brak dostępu" }, { status: 403 });
+  }
 
   const { title, projectId, contractorAssignmentId, archived, avatarUrl } = await req.json();
   if (!title && projectId === undefined && contractorAssignmentId === undefined && archived === undefined && avatarUrl === undefined) {
@@ -78,7 +80,9 @@ export async function DELETE(
 
   const discussion = await prisma.discussion.findUnique({ where: { id } });
   if (!discussion) return NextResponse.json({ error: "Nie znaleziono" }, { status: 404 });
-  if (discussion.ownerId !== userId) return NextResponse.json({ error: "Brak dostępu" }, { status: 403 });
+  if (!await hasDiscussionAccess(id, discussion.ownerId, session.user.id!, userId)) {
+    return NextResponse.json({ error: "Brak dostępu" }, { status: 403 });
+  }
 
   await prisma.discussion.delete({ where: { id } });
   return NextResponse.json({ ok: true });

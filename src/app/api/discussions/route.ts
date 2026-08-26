@@ -14,12 +14,13 @@ export async function GET() {
   const sessionUserId = session.user.id!;
   const allowedIds = await getAllowedClientIds(session);
 
-  // Detect if team member (has ownerId)
-  const dbUser = await prisma.user.findUnique({ where: { id: userId }, select: { ownerId: true } });
+  // Detect if team member (has ownerId) or client
+  const dbUser = await prisma.user.findUnique({ where: { id: userId }, select: { ownerId: true, role: true } });
   const isTeamMember = !!dbUser?.ownerId;
+  const isClient = dbUser?.role === "client";
 
-  const where = isTeamMember
-    ? { participants: { some: { userId } } }
+  const where = isTeamMember || isClient
+    ? { participants: { some: { userId: sessionUserId } } }
     : {
         ownerId: userId,
         ...(allowedIds ? { project: { clientId: { in: allowedIds } } } : {}),
@@ -32,8 +33,9 @@ export async function GET() {
       _count: { select: { messages: true } },
       messages: { orderBy: { createdAt: "desc" }, take: 1 },
       readReceipts: {
-        where: { readerId: sessionUserId },
+        where: { readerId: { in: [sessionUserId, `client:${sessionUserId}`] } },
         include: { lastMessage: { select: { createdAt: true } } },
+        orderBy: { readAt: "desc" },
         take: 1,
       },
       participants: {

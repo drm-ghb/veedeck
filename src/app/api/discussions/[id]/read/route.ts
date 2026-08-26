@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { pusherServer } from "@/lib/pusher";
-import { getWorkspaceUserId } from "@/lib/workspace";
+import { getWorkspaceUserId, hasDiscussionAccess } from "@/lib/workspace";
 
 export async function POST(
   req: NextRequest,
@@ -15,7 +15,9 @@ export async function POST(
 
   const discussion = await prisma.discussion.findUnique({ where: { id } });
   if (!discussion) return NextResponse.json({ error: "Nie znaleziono" }, { status: 404 });
-  if (discussion.ownerId !== userId) return NextResponse.json({ error: "Brak dostępu" }, { status: 403 });
+  if (!await hasDiscussionAccess(id, discussion.ownerId, session.user.id!, userId)) {
+    return NextResponse.json({ error: "Brak dostępu" }, { status: 403 });
+  }
 
   const { lastMessageId } = await req.json();
   if (!lastMessageId) return NextResponse.json({ error: "lastMessageId wymagany" }, { status: 400 });

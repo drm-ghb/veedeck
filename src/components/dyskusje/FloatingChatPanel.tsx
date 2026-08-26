@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ChatBubble, X, ChevronLeft, ChevronDown, ExternalLink, Send, Paperclip, Mic, Square, Loader2, Search, FolderOpen, MoreVertical, Edit2, Archive, ArchiveRestore, Trash2, Users } from "@/components/ui/icons";
 import { useT } from "@/lib/i18n";
 import { toast } from "sonner";
@@ -71,6 +71,7 @@ function DiscAvatar({ title, avatarUrl, type, small }: { title: string; avatarUr
 export default function FloatingChatPanel({ userId, currentUserAvatarUrl }: { userId: string; currentUserAvatarUrl?: string | null }) {
   const t = useT();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const router = useRouter();
 
   const [panelOpen, setPanelOpen] = useState(false);
@@ -119,7 +120,7 @@ export default function FloatingChatPanel({ userId, currentUserAvatarUrl }: { us
 
   const { startUpload } = useUploadThing("discussionAttachmentUploader");
 
-  const onDyskusje = pathname.startsWith("/dyskusje");
+  const onDyskusje = pathname.startsWith("/dyskusje") || searchParams.get("view") === "discussion";
   const onRenderView = /\/projekty\/[^/]+\/renders\//.test(pathname);
 
   // ── Hide button while HelpWidget is open ──────────────────────────────────
@@ -275,6 +276,13 @@ export default function FloatingChatPanel({ userId, currentUserAvatarUrl }: { us
     }, 800);
   }, []);
 
+  // ── Sync badge when ClientDiscussionView marks messages as read ────────────
+  useEffect(() => {
+    function onShareRead() { refetchBadgeCount(); }
+    window.addEventListener("share-discussion-read", onShareRead);
+    return () => window.removeEventListener("share-discussion-read", onShareRead);
+  }, [refetchBadgeCount]);
+
   // ── Subscribe to all known discussion channels for badge updates ───────────
   useEffect(() => {
     if (discussions.length === 0) return;
@@ -314,6 +322,14 @@ export default function FloatingChatPanel({ userId, currentUserAvatarUrl }: { us
       setTotalUnread(newTotal);
       window.dispatchEvent(new Event("discussions-unread-updated"));
       selectedDiscUnreadRef.current = 0;
+    }
+
+    // Bridge: also clear ShareSidebar badge for this discussion's project
+    const disc = discussions.find((d) => d.id === selectedId);
+    if (disc?.project?.id) {
+      localStorage.setItem(`client-discussion-unread-${disc.project.id}`, "0");
+      localStorage.setItem(`client-discussion-last-read-${disc.project.id}`, new Date().toISOString());
+      window.dispatchEvent(new CustomEvent("share-discussion-read", { detail: { token: "" } }));
     }
 
     isInitialScrollRef.current = false;
